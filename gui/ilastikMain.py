@@ -8,7 +8,7 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.setGeometry(50,50,768,512)
         self.iconPath = '../../icons/32x32/'
-        self.setWindowTitle("Ilastik 0.0." + "")
+        self.setWindowTitle("Ilastik 0.0." + "$Revision$")
 
 
 if __name__ == "__main__":
