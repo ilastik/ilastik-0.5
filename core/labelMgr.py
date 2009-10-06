@@ -1,6 +1,9 @@
 import numpy
 
 class label_Base:
+    """ label structure
+    convention for label values: 0 is unlabeled, first label is 1 and so on.
+    """
     def __init__(self, size):
         self.size = size
         self.dims = size.__len__()
@@ -29,6 +32,9 @@ class label_Patch(label_Base):
     def getPatchNrFromPosition(self, pos):
         pass
     
+    def getPositionFromPatchNr(self, nr):
+        pass
+    
     def getPatchCount(self):
         lastpos = []
         for el in self.size:
@@ -41,7 +47,18 @@ class label_Patch(label_Base):
     def getLabel(self, pos):
         return self.labelArray[ self.getPatchNrFromPosition(pos)]
     
-class label_Pixel(label_Patch):
+    def getObjects(self):
+        # use generator expressions for memory efficiency
+        len = self.labelArray.__len__()
+        for i in xrange(len):
+            el = self.labelArray[i]
+            if el != 0:
+                yield el
+
+class label_Grid(label_Patch):
+    pass
+            
+class label_Pixel(label_Grid):
     def __init__(self, size):
         label_Patch.__init__(self, size)
     
@@ -57,6 +74,9 @@ class label_Pixel(label_Patch):
             #nr += blocksize * getattr(pos, chr(attrnr))
             nr += blocksize * pos[i]
             blocksize *= self.dims[i]
+            
+    def getPositionFromPatchNr(self, nr):
+        pass
     
     def getPatchCount(self):
         cnt = self.dims[0]
