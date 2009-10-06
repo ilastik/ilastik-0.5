@@ -14,6 +14,9 @@ class label_Base:
 
     def setLabel(self, pos):
         pass
+    
+    def getLabel(self, pos):
+        pass
 
 class label_Patch(label_Base):
     def __init__(self, size):
@@ -34,6 +37,9 @@ class label_Patch(label_Base):
     
     def setLabel(self, pos, label):
         self.labelArray[ self.getPatchNrFromPosition(pos) ] = label
+        
+    def getLabel(self, pos):
+        return self.labelArray[ self.getPatchNrFromPosition(pos)]
     
 class label_Pixel(label_Patch):
     def __init__(self, size):
