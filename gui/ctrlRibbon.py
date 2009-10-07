@@ -9,6 +9,9 @@ class Ribbon(QtGui.QTabWidget):
             self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
 
     def orientationEvent(self, orientation):
+        for tab in self.tabList:
+            lo = tab[0].layout()
+            lo.setDirection(lo.Direction(orientation))
         if orientation == QtCore.Qt.Horizontal: 
             self.setTabPosition(self.North)
         if orientation == QtCore.Qt.Vertical: 
@@ -37,11 +40,12 @@ class RibbonButtonItem(QtGui.QPushButton):
 class RibbonTabContainer(QtGui.QWidget):
     def __init__(self,parent=None):
         QtGui.QWidget.__init__(self)
-        self.layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight)
-        self.setLayout(self.layout)
-        self.layout.setAlignment(QtCore.Qt.AlignLeft)
+        #careful: QWidget.layout() is a member function - don't overwrite!
+        layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight)
+        layout.setAlignment(QtCore.Qt.AlignLeft)
+        self.setLayout(layout)
     def addItem(self, item):
-        self.layout.addWidget(item)
+        self.layout().addWidget(item)
 
 class RibbonEntry():
     def __init__(self, name, icon_file=None, tool_tip=None, type=RibbonButtonItem, callback=None):
