@@ -13,16 +13,20 @@ class MainWindow(QtGui.QMainWindow):
         self.iconPath = '../../icons/32x32/'
         self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         self.createRibbons()
+        self.createImageWindows()
         
     def createRibbons(self):                     
       
         self.toolbar = self.addToolBar("ToolBarForRibbons")
         
-        ribbon = ctrlRibbon.Ribbon()
+        ribbon = ctrlRibbon.Ribbon(self.toolbar)
         for ribbon_group in ctrlRibbon.createRibbons():
             tabs = ribbon_group.makeTab()   
             ribbon.addTab(tabs,ribbon_group.name)  
-        self.toolbar.addWidget(ribbon)    
+        self.toolbar.addWidget(ribbon)
+    
+    def createImageWindows(self):
+        pass
                      
 
 
