@@ -1,6 +1,7 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 import sys, random, numpy
+from core import labelMgr
 
 
 #************************

@@ -5,6 +5,7 @@ import pdb
 from PyQt4 import QtCore, QtGui
 from core import version
 from gui import ctrlRibbon
+from gui import imgLabel
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -12,22 +13,35 @@ class MainWindow(QtGui.QMainWindow):
         self.setGeometry(50,50,768,512)
         self.iconPath = '../../icons/32x32/'
         self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
+        
         self.createRibbons()
+        self.initImageWindows()
         self.createImageWindows()
         
     def createRibbons(self):                     
       
-        self.toolbar = self.addToolBar("ToolBarForRibbons")
+        self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
         
-        ribbon = ctrlRibbon.Ribbon(self.toolbar)
+        self.ribbon = ctrlRibbon.Ribbon(self.ribbonToolbar)
         for ribbon_group in ctrlRibbon.createRibbons():
             tabs = ribbon_group.makeTab()   
-            ribbon.addTab(tabs,ribbon_group.name)  
-        self.toolbar.addWidget(ribbon)
+            self.ribbon.addTab(tabs,ribbon_group.name)  
+        self.ribbonToolbar.addWidget(self.ribbon)
+    
+    def initImageWindows(self):
+        self.labelDocks = []
     
     def createImageWindows(self):
-        pass
-                     
+        label_w = imgLabel.labelWidget(self, ["test.tif", "test2.tif"])
+        
+        dock = QtGui.QDockWidget("ImageDock_main", self)
+        dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea| QtCore.Qt.TopDockWidgetArea| QtCore.Qt.LeftDockWidgetArea)
+        dock.setWidget(label_w)
+        
+        area=QtCore.Qt.BottomDockWidgetArea
+        
+        self.addDockWidget(area, dock)
+        self.labelDocks.append(dock)
 
 
 if __name__ == "__main__":
