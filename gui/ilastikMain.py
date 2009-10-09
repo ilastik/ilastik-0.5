@@ -55,7 +55,8 @@ class MainWindow(QtGui.QMainWindow):
 class ProjectDlg():
     def __init__(self, parent=None):
         self.parent = parent
-        self.fileList = []        
+        self.fileList = []
+        self.thumbList = []        
         self.initDlg()
         
     def initDlg(self):
@@ -69,6 +70,8 @@ class ProjectDlg():
         self.projectDlgNew.connect(self.projectDlgNew.addFile, QtCore.SIGNAL("clicked()"), self.addFile)
         self.projectDlgNew.connect(self.projectDlgNew.confirmButtons, QtCore.SIGNAL("accepted()"), self.accept)
         self.projectDlgNew.connect(self.projectDlgNew.confirmButtons, QtCore.SIGNAL("rejected()"), self.reject)
+        self.projectDlgNew.connect(self.projectDlgNew.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
+        
         
         self.fileDialog = QtGui.QFileDialog()
         self.projectDlgNew.show()
@@ -79,6 +82,7 @@ class ProjectDlg():
         
         file_name = self.fileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")    
         if file_name:
+            self.fileList.append(file_name)
             rowCount = self.projectDlgNew.tableWidget.rowCount()
             self.projectDlgNew.tableWidget.insertRow(0)
             self.projectDlgNew.r = []
@@ -92,12 +96,22 @@ class ProjectDlg():
                 r.setCheckState(QtCore.Qt.Checked)
                 self.projectDlgNew.r.append(r)
                 self.projectDlgNew.tableWidget.setItem(0, i+1, r)
-#            picture = Image.open(file_name)
-#            picture.thumbnail((72, 72), Image.ANTIALIAS)
-#            icon = QtGui.QIcon(QPixmap.fromImage(ImageQt.ImageQt(picture)))
-#            item = QtGui.QListWidgetItem(os.path.basename(url)[:20] + "...", self.pictureListWidget)
-#            item.setStatusTip(url)
-#            item.setIcon(icon)
+            self.initThumbnail(file_name)
+    
+    def initThumbnail(self, file_name):
+        picture = Image.open(file_name.__str__())
+        picture.thumbnail((128, 128), Image.ANTIALIAS)
+        icon = QtGui.QPixmap.fromImage(ImageQt.ImageQt(picture))
+        self.thumbList.append(icon)
+        self.projectDlgNew.thumbnailImage.setPixmap(icon)
+                    
+    def updateThumbnail(self, row=0, col=0):
+        print row
+        #print self.thumbList
+        self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-row])
+        
+
+        
                 
     def accept(self):
         projectName = self.projectDlgNew.projectName
