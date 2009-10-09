@@ -1,0 +1,75 @@
+<ui version="4.0" >
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>628</width>
+    <height>350</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Dialog</string>
+  </property>
+  <widget class="QDialogButtonBox" name="buttonBox" >
+   <property name="geometry" >
+    <rect>
+     <x>450</x>
+     <y>320</y>
+     <width>171</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="standardButtons" >
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>330</x>
+     <y>0</y>
+     <width>291</width>
+     <height>311</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout_2" >
+    <item row="1" column="1" >
+     <widget class="QTableWidget" name="tableWidget" >
+      <row/>
+      <column>
+       <property name="text" >
+        <string>File</string>
+       </property>
+      </column>
+      <column>
+       <property name="text" >
+        <string>Labels</string>
+       </property>
+      </column>
+      <column>
+       <property name="text" >
+        <string>Train</string>
+       </property>
+      </column>
+      <column>
+       <property name="text" >
+        <string>Test</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+    <item row="1" column="0" >
+     <widget class="QPushButton" name="addFile" >
+      <property name="text" >
+       <string>Add >></string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
