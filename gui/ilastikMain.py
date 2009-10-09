@@ -6,7 +6,7 @@ from PyQt4 import QtCore, QtGui, uic
 from core import version
 from gui import ctrlRibbon
 from gui import imgLabel
-import pythoncom
+#import pythoncom
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -63,13 +63,9 @@ class ProjectDlg():
         self.projectDlgNew.show()
     
     def addFile(self):
-        print "before"
-        sys.stdout = None
-        file_name = QtGui.QFileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")
-        sys.stdout = STDOUT
-        
+        file_name = QtGui.QFileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")      
         print file_name
-        print "ASDF"
+
         rowCount = self.projectDlgNew.tableWidget.rowCount()
         self.projectDlgNew.r = []
         r = QtGui.QTableWidgetItem()
