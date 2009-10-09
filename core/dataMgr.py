@@ -20,8 +20,9 @@ class DataItemBase():
         self.data = "This is not an Image..."
 
 class DataItemImage(DataItemBase):
-    def __init__(self):
+    def __init__(self, fileName):
        DataItemBase.__init__(self) 
+       self.fileName = fileName
        
     def loadData(self):
         self.data = vm.readImage(self.fileName)

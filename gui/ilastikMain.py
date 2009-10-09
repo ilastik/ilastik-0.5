@@ -5,6 +5,7 @@ import pdb
 from PyQt4 import QtCore, QtGui, uic
 from core import version, dataMgr, projectMgr
 from gui import ctrlRibbon, imgLabel
+from PIL import Image, ImageQt
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -78,7 +79,6 @@ class ProjectDlg():
         
         file_name = self.fileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")    
         if file_name:
-            print file_name
             rowCount = self.projectDlgNew.tableWidget.rowCount()
             self.projectDlgNew.tableWidget.insertRow(0)
             self.projectDlgNew.r = []
@@ -92,14 +92,26 @@ class ProjectDlg():
                 r.setCheckState(QtCore.Qt.Checked)
                 self.projectDlgNew.r.append(r)
                 self.projectDlgNew.tableWidget.setItem(0, i+1, r)
+#            picture = Image.open(file_name)
+#            picture.thumbnail((72, 72), Image.ANTIALIAS)
+#            icon = QtGui.QIcon(QPixmap.fromImage(ImageQt.ImageQt(picture)))
+#            item = QtGui.QListWidgetItem(os.path.basename(url)[:20] + "...", self.pictureListWidget)
+#            item.setStatusTip(url)
+#            item.setIcon(icon)
                 
     def accept(self):
         projectName = self.projectDlgNew.projectName
         labeler = self.projectDlgNew.labeler
         description = self.projectDlgNew.description
-        
         self.parent.project = projectMgr.Project(projectName, labeler, description,[])
+        
+        rowCount = self.projectDlgNew.tableWidget.rowCount()
+        dataItemList = []
+        for k in range(0, rowCount):
+            fileName = self.projectDlgNew.tableWidget.itemAt(k, 0).text()
+            dataItemList.append(DataItemImage(fileName))             
         self.projectDlgNew.close()
+        return dataItemList
         
     def reject(self):
         self.projectDlgNew.close()
