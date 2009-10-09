@@ -3,10 +3,9 @@ import sys
 sys.path.append("..")
 import pdb
 from PyQt4 import QtCore, QtGui, uic
-from core import version
-from gui import ctrlRibbon
-from gui import imgLabel
-#import pythoncom
+from core import version, dataMgr, projectMgr
+from gui import ctrlRibbon, imgLabel
+
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -54,31 +53,58 @@ class MainWindow(QtGui.QMainWindow):
 
 class ProjectDlg():
     def __init__(self, parent=None):
-        self.initDlg()
         self.parent = parent
+        self.fileList = []        
+        self.initDlg()
         
     def initDlg(self):
         self.projectDlgNew = uic.loadUi('dlgProject.ui') 
+        self.projectDlgNew.tableWidget.resizeRowsToContents()
+        self.projectDlgNew.tableWidget.resizeColumnsToContents()
+        self.projectDlgNew.tableWidget.setColumnWidth(0,350)
+        self.projectDlgNew.tableWidget.setAlternatingRowColors(True)
+        self.projectDlgNew.tableWidget.setShowGrid(False)
+        
         self.projectDlgNew.connect(self.projectDlgNew.addFile, QtCore.SIGNAL("clicked()"), self.addFile)
+        self.projectDlgNew.connect(self.projectDlgNew.confirmButtons, QtCore.SIGNAL("accepted()"), self.accept)
+        self.projectDlgNew.connect(self.projectDlgNew.confirmButtons, QtCore.SIGNAL("rejected()"), self.reject)
+        
+        self.fileDialog = QtGui.QFileDialog()
         self.projectDlgNew.show()
+        
+
     
     def addFile(self):
-        file_name = QtGui.QFileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")      
-        print file_name
-
-        rowCount = self.projectDlgNew.tableWidget.rowCount()
-        self.projectDlgNew.r = []
-        r = QtGui.QTableWidgetItem()
-        r.setText(file_name)
-        self.projectDlgNew.r.append(r)
-        self.projectDlgNew.tableWidget.setItem(rowCount-1, 0, r)
-        for i in range(0,3):
-            print i
+        
+        file_name = self.fileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")    
+        if file_name:
+            print file_name
+            rowCount = self.projectDlgNew.tableWidget.rowCount()
+            self.projectDlgNew.tableWidget.insertRow(0)
+            self.projectDlgNew.r = []
             r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Checked)
+            r.setText(file_name)
             self.projectDlgNew.r.append(r)
-            self.projectDlgNew.tableWidget.setItem(rowCount-1, i+1, r)
+            self.projectDlgNew.tableWidget.setItem(0, 0, r)
+            for i in range(0,4):
+                r = QtGui.QTableWidgetItem()
+                r.data(QtCore.Qt.CheckStateRole)
+                r.setCheckState(QtCore.Qt.Checked)
+                self.projectDlgNew.r.append(r)
+                self.projectDlgNew.tableWidget.setItem(0, i+1, r)
+                
+    def accept(self):
+        projectName = self.projectDlgNew.projectName
+        labeler = self.projectDlgNew.labeler
+        description = self.projectDlgNew.description
+        
+        self.parent.project = projectMgr.Project(projectName, labeler, description,[])
+        self.projectDlgNew.close()
+        
+    def reject(self):
+        self.projectDlgNew.close()
+
+        
                 
             
             

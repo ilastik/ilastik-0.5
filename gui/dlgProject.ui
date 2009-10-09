@@ -5,20 +5,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>628</width>
-    <height>350</height>
+    <width>648</width>
+    <height>370</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Dialog</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox" >
+  <widget class="QDialogButtonBox" name="confirmButtons" >
    <property name="geometry" >
     <rect>
      <x>450</x>
-     <y>320</y>
+     <y>340</y>
      <width>171</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="standardButtons" >
@@ -28,19 +28,115 @@
   <widget class="QWidget" name="gridLayoutWidget" >
    <property name="geometry" >
     <rect>
-     <x>330</x>
-     <y>0</y>
-     <width>291</width>
-     <height>311</height>
+     <x>10</x>
+     <y>10</y>
+     <width>621</width>
+     <height>321</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_2" >
-    <item row="1" column="1" >
+    <item row="0" column="0" >
+     <widget class="QLabel" name="label" >
+      <property name="text" >
+       <string>Project Name:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2" >
+     <widget class="QLineEdit" name="projectName" >
+      <property name="text" >
+       <string>mySurvey</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" >
+     <widget class="QLabel" name="label_2" >
+      <property name="text" >
+       <string>Labeler</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" >
+     <widget class="QLineEdit" name="labeler" >
+      <property name="text" >
+       <string>Terence Hill</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0" >
+     <widget class="QLabel" name="label_3" >
+      <property name="text" >
+       <string>Description</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2" >
+     <widget class="QTextEdit" name="description" >
+      <property name="maximumSize" >
+       <size>
+        <width>16777215</width>
+        <height>75</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" >
+     <widget class="QLabel" name="label_4" >
+      <property name="text" >
+       <string>Groups</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0" >
+     <layout class="QVBoxLayout" name="verticalLayout" >
+      <item>
+       <widget class="QPushButton" name="addFile" >
+        <property name="text" >
+         <string>Add >></string>
+        </property>
+        <property name="default" >
+         <bool>true</bool>
+        </property>
+        <property name="flat" >
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_2" >
+        <property name="text" >
+         <string>Remove &lt;&lt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton_3" >
+        <property name="text" >
+         <string>Preview</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="5" column="2" >
      <widget class="QTableWidget" name="tableWidget" >
-      <row/>
+      <property name="sizePolicy" >
+       <sizepolicy vsizetype="Expanding" hsizetype="MinimumExpanding" >
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="styleSheet" >
+       <string notr="true" />
+      </property>
       <column>
        <property name="text" >
         <string>File</string>
+       </property>
+      </column>
+      <column>
+       <property name="text" >
+        <string>Group</string>
        </property>
       </column>
       <column>
@@ -58,13 +154,6 @@
         <string>Test</string>
        </property>
       </column>
-     </widget>
-    </item>
-    <item row="1" column="0" >
-     <widget class="QPushButton" name="addFile" >
-      <property name="text" >
-       <string>Add >></string>
-      </property>
      </widget>
     </item>
    </layout>
