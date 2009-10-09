@@ -13,18 +13,16 @@ class Ribbon(QtGui.QTabWidget):
             lo = tab[0].layout()
             lo.setDirection(lo.Direction(orientation))
         if orientation == QtCore.Qt.Horizontal: 
-            self.setTabPosition(self.North)
+            self.setTabPosition(self.North)            
         if orientation == QtCore.Qt.Vertical: 
             self.setTabPosition(self.West)
-        
+            
     def moveEvent(self, event):
         QtGui.QTabWidget.moveEvent(self, event)
     
     def addTab(self, w, s="TabName"):
         self.tabList.append((w,s))
-        QtGui.QTabWidget.addTab(self,w,s)
-        
-        
+        QtGui.QTabWidget.addTab(self,w,s)              
         
 class RibbonButtonItem(QtGui.QPushButton):
     def __init__(self,  ribbon_entry):
@@ -33,7 +31,7 @@ class RibbonButtonItem(QtGui.QPushButton):
         self.setIconSize(ribbon_entry.size)
         self.setText(ribbon_entry.name)
         self.setToolTip(ribbon_entry.tool_tip)
-        self.setMaximumSize(QtCore.QSize(128,128))
+        self.setMaximumSize(QtCore.QSize(128,128))     
         
 
 
@@ -43,8 +41,13 @@ class RibbonTabContainer(QtGui.QWidget):
         #careful: QWidget.layout() is a member function - don't overwrite!
         layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight)
         layout.setAlignment(QtCore.Qt.AlignLeft)
+        layout.setAlignment(QtCore.Qt.AlignTop)
         self.setLayout(layout)
+        self.itemList = []
+        self.signalList = []
     def addItem(self, item):
+        self.itemList.append(item)
+        self.signalList.append(QtCore.SIGNAL('clicked()'))
         self.layout().addWidget(item)
 
 class RibbonEntry():
@@ -78,7 +81,7 @@ def createRibbons():
     RibbonGroupObjects.append(RibbonEntryGroup("Features"))   
     RibbonGroupObjects.append(RibbonEntryGroup("Classification"))   
     
-    RibbonGroupObjects[0].append(RibbonEntry("New", "actions/document-new.png" ,"New"))
+    RibbonGroupObjects[0].append(RibbonEntry("New", "actions/document-new.png" ,"New",callback="MainWindow.new()"))
     RibbonGroupObjects[0].append(RibbonEntry("Open", "actions/document-open.png" ,"Open"))
     RibbonGroupObjects[0].append(RibbonEntry("Edit", "actions/document-properties.png" ,"Edit"))
     
@@ -87,9 +90,6 @@ def createRibbons():
     
     RibbonGroupObjects[2].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Classifier"))
     RibbonGroupObjects[2].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Train Classifier"))
-    return RibbonGroupObjects
-
- 
-    
+    return RibbonGroupObjects   
         
         
