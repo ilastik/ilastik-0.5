@@ -14,8 +14,15 @@ class label_Base:
         #            [ [pos,r], [pos,r], [pos,r], ... ] for circles
         #            [ [pos,r1,r2], [pos,r1,r2], [pos,r1,r2], ... ] for ellipses  
         pass
+    
+    def getLastObject(self):
+        # returns label-object that has been added with the previous "setLabel" call
+        pass
 
-    def setLabel(self, pos):
+    def setLabel(self, pos, label):
+        pass
+    
+    def setLabelLine2D(self, pos1, pos2, label):
         pass
     
     def getLabel(self, pos):
@@ -25,6 +32,7 @@ class label_Patch(label_Base):
     def __init__(self, size):
         label_Base.__init__(self, size)
         self.init_storage()
+        self.lastPatchNr = 0
         
     def init_storage(self):
         self.labelArray = {}   # not sure how this performs. better use special storage like arrays in descendant classes.
@@ -42,7 +50,37 @@ class label_Patch(label_Base):
         return getPatchNrFromPosition(self, lastpos)
     
     def setLabel(self, pos, label):
-        self.labelArray[ self.getPatchNrFromPosition(pos) ] = label
+        self.lastPatchNr = self.getPatchNrFromPosition(pos)
+        self.labelArray[ self.lastPatchNr ] = label
+        
+    def setLabelLine2D(self, pos1, pos2, label):
+        (x0, y0) = pos1
+        (x1, y1) = pos2
+        steep = abs(y1 - y0) > abs(x1 - x0)
+        if steep:
+            x0, y0 = y0, x0
+            x1, y1 = y1, x1
+        if x0 > x1:
+            x0, x1 = x1, x0
+            y0, y1 = y1, y0
+        if y0 < y1: 
+            ystep = 1
+        else:
+            ystep = -1
+        deltax = x1 - x0
+        deltay = abs(y1 - y0)
+        error = -deltax / 2
+        y = y0
+        for x in range(x0, x1 + 1): # We add 1 to x1 so that the range includes x1
+            if steep:
+                self.setLabel((y, x), label)
+            else:
+                self.setLabel((x, y), label)
+            error = error + deltay
+            if error > 0:
+                y = y + ystep
+                error = error - deltax
+
         
     def getLabel(self, pos):
         return self.labelArray[ self.getPatchNrFromPosition(pos)]
@@ -54,6 +92,10 @@ class label_Patch(label_Base):
             el = self.labelArray[i]
             if el != 0:
                 yield el
+                
+    def getLastObject(self):
+         return self.labelArray[ self.lastPatchNr ]
+                    
 
 class label_Grid(label_Patch):
     pass
