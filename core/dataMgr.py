@@ -2,7 +2,7 @@ import numpy
 from vigra import vigranumpycmodule as vm
 
 class DataItemBase():
-    def __init__(self):
+    def __init__(self, filename):
         self.fileName = fileName
         self.hasLabels = False
         self.isTraining = True
@@ -21,8 +21,7 @@ class DataItemBase():
 
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
-       DataItemBase.__init__(self) 
-       self.fileName = fileName
+       DataItemBase.__init__(self, filename)
        
     def loadData(self):
         self.data = vm.readImage(self.fileName)
