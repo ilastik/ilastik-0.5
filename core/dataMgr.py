@@ -2,7 +2,7 @@ import numpy
 from vigra import vigranumpycmodule as vm
 
 class DataItemBase():
-    def __init__(self, filename):
+    def __init__(self, fileName):
         self.fileName = fileName
         self.hasLabels = False
         self.isTraining = True
