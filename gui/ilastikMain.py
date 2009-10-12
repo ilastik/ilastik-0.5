@@ -109,10 +109,10 @@ class ProjectDlg():
         # self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-1])
                     
     def updateThumbnail(self, row=0, col=0):
+        pass
         #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
 #        self.projectDlgNew.thumbnailImage.clear()
 #        self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-row-1])  
-                
     def accept(self):
         projectName = self.projectDlgNew.projectName
         labeler = self.projectDlgNew.labeler
