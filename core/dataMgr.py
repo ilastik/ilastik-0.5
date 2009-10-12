@@ -21,7 +21,7 @@ class DataItemBase():
 
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
-       DataItemBase.__init__(self, filename)
+       DataItemBase.__init__(self, fileName) 
        
     def loadData(self):
         self.data = vm.readImage(self.fileName)

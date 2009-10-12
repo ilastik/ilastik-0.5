@@ -73,14 +73,14 @@ class ProjectDlg():
         self.projectDlgNew.connect(self.projectDlgNew.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
         
         
-        self.fileDialog = QtGui.QFileDialog()
+        self.projectDlgNew.fileDialog = QtGui.QFileDialog()
         self.projectDlgNew.show()
         
 
     
     def addFile(self):
         
-        file_name = self.fileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")    
+        file_name = self.projectDlgNew.fileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")    
         if file_name:
             self.fileList.append(file_name)
             rowCount = self.projectDlgNew.tableWidget.rowCount()
@@ -100,18 +100,18 @@ class ProjectDlg():
     
     def initThumbnail(self, file_name):
         picture = Image.open(file_name.__str__())
-        picture.thumbnail((128, 128), Image.ANTIALIAS)
+        picture.thumbnail((68, 68), Image.ANTIALIAS)
+        w,h = picture.size
+        print "Thumbnail size = ", w, " width and ", h ," height"
         icon = QtGui.QPixmap.fromImage(ImageQt.ImageQt(picture))
         self.thumbList.append(icon)
-        self.projectDlgNew.thumbnailImage.setPixmap(icon)
+        #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
+        # self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-1])
                     
     def updateThumbnail(self, row=0, col=0):
-        print row
-        #print self.thumbList
-        self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-row])
-        
-
-        
+        #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
+#        self.projectDlgNew.thumbnailImage.clear()
+#        self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-row-1])  
                 
     def accept(self):
         projectName = self.projectDlgNew.projectName
@@ -123,7 +123,7 @@ class ProjectDlg():
         dataItemList = []
         for k in range(0, rowCount):
             fileName = self.projectDlgNew.tableWidget.itemAt(k, 0).text()
-            dataItemList.append(DataItemImage(fileName))             
+            dataItemList.append(dataMgr.DataItemImage(fileName))             
         self.projectDlgNew.close()
         return dataItemList
         
