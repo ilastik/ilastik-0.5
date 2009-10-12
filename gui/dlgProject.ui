@@ -5,8 +5,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>648</width>
-    <height>370</height>
+    <width>629</width>
+    <height>542</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -16,7 +16,7 @@
    <property name="geometry" >
     <rect>
      <x>450</x>
-     <y>340</y>
+     <y>510</y>
      <width>171</width>
      <height>21</height>
     </rect>
@@ -28,72 +28,13 @@
   <widget class="QWidget" name="gridLayoutWidget" >
    <property name="geometry" >
     <rect>
-     <x>10</x>
+     <x>0</x>
      <y>10</y>
      <width>621</width>
-     <height>321</height>
+     <height>492</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout_2" >
-    <item row="0" column="0" >
-     <widget class="QLabel" name="label" >
-      <property name="text" >
-       <string>Project Name:               </string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2" >
-     <widget class="QLineEdit" name="projectName" >
-      <property name="text" >
-       <string>mySurvey</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0" >
-     <widget class="QLabel" name="label_2" >
-      <property name="text" >
-       <string>Labeler</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2" >
-     <widget class="QLineEdit" name="labeler" >
-      <property name="text" >
-       <string>Eric Idle</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0" >
-     <widget class="QLabel" name="label_3" >
-      <property name="text" >
-       <string>Description</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="2" >
-     <widget class="QTextEdit" name="description" >
-      <property name="maximumSize" >
-       <size>
-        <width>16777215</width>
-        <height>75</height>
-       </size>
-      </property>
-      <property name="html" >
-       <string>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;style type="text/css">
-p, li { white-space: pre-wrap; }
-&lt;/style>&lt;/head>&lt;body style=" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;">
-&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">i wanna be a lumber jack...&lt;/p>&lt;/body>&lt;/html></string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0" >
-     <widget class="QLabel" name="label_4" >
-      <property name="text" >
-       <string>Groups</string>
-      </property>
-     </widget>
-    </item>
     <item row="5" column="0" >
      <layout class="QVBoxLayout" name="verticalLayout" >
       <item>
@@ -124,13 +65,82 @@ p, li { white-space: pre-wrap; }
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="addFile2" >
+        <property name="text" >
+         <string>Add 2</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="thumbnailImage" >
         <property name="text" >
          <string/>
         </property>
+        <property name="pixmap" >
+         <pixmap>placeholder.png</pixmap>
+        </property>
        </widget>
       </item>
      </layout>
+    </item>
+    <item row="0" column="0" >
+     <widget class="QLabel" name="label" >
+      <property name="text" >
+       <string>Project Name:               </string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2" >
+     <widget class="QLineEdit" name="projectName" >
+      <property name="text" >
+       <string>mySurvey</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" >
+     <widget class="QLabel" name="label_2" >
+      <property name="text" >
+       <string>Labeler</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2" >
+     <widget class="QLineEdit" name="labeler" >
+      <property name="text" >
+       <string>Terry</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0" >
+     <widget class="QLabel" name="label_3" >
+      <property name="text" >
+       <string>Description</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="0" >
+     <widget class="QLabel" name="label_4" >
+      <property name="text" >
+       <string>Groups</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="2" >
+     <widget class="QTextEdit" name="description" >
+      <property name="maximumSize" >
+       <size>
+        <width>16777215</width>
+        <height>75</height>
+       </size>
+      </property>
+      <property name="html" >
+       <string>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;style type="text/css">
+p, li { white-space: pre-wrap; }
+&lt;/style>&lt;/head>&lt;body style=" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;">
+&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;">i wanna be a lumber jack...&lt;/p>&lt;/body>&lt;/html></string>
+      </property>
+     </widget>
     </item>
     <item row="5" column="2" >
      <widget class="QTableWidget" name="tableWidget" >

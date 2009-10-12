@@ -47,56 +47,57 @@ class MainWindow(QtGui.QMainWindow):
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea| QtCore.Qt.TopDockWidgetArea| QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(label_w)
         
-        area=QtCore.Qt.BottomDockWidgetArea
+        area = QtCore.Qt.BottomDockWidgetArea
         
         self.addDockWidget(area, dock)
         self.labelDocks.append(dock)
 
-class ProjectDlg():
+class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self)
         self.parent = parent
         self.fileList = []
         self.thumbList = []        
         self.initDlg()
         
     def initDlg(self):
-        self.projectDlgNew = uic.loadUi('dlgProject.ui') 
-        self.projectDlgNew.tableWidget.resizeRowsToContents()
-        self.projectDlgNew.tableWidget.resizeColumnsToContents()
-        self.projectDlgNew.tableWidget.setColumnWidth(0,350)
-        self.projectDlgNew.tableWidget.setAlternatingRowColors(True)
-        self.projectDlgNew.tableWidget.setShowGrid(False)
+        uic.loadUi('dlgProject.ui', self) 
+        self.tableWidget.resizeRowsToContents()
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.setColumnWidth(0,350)
+        self.tableWidget.setAlternatingRowColors(True)
+        self.tableWidget.setShowGrid(False)
         
-        self.projectDlgNew.connect(self.projectDlgNew.addFile, QtCore.SIGNAL("clicked()"), self.addFile)
-        self.projectDlgNew.connect(self.projectDlgNew.confirmButtons, QtCore.SIGNAL("accepted()"), self.accept)
-        self.projectDlgNew.connect(self.projectDlgNew.confirmButtons, QtCore.SIGNAL("rejected()"), self.reject)
-        self.projectDlgNew.connect(self.projectDlgNew.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
+#        self.connect(self.addFile, QtCore.SIGNAL("clicked()"), self.addFile)
+#        self.connect(self.confirmButtons, QtCore.SIGNAL("accepted()"), self.accept)
+#        self.connect(self.confirmButtons, QtCore.SIGNAL("rejected()"), self.reject)
+        self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
         
-        
-        self.projectDlgNew.fileDialog = QtGui.QFileDialog()
-        self.projectDlgNew.show()
+        # Still have to beautify a bit with sth like that 
+#        self.filesTable.setHorizontalHeaderLabels(labels)
+#        self.filesTable.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+#        self.filesTable.verticalHeader().hide()
+#        self.filesTable.setShowGrid(False)
+        self.show()
         
 
-    
-    def addFile(self):
+    @QtCore.pyqtSignature("")
+    def on_addFile_clicked(self):
         
-        file_name = self.projectDlgNew.fileDialog.getOpenFileName(self.parent, "Open Image", ".", "Image Files (*.png *.jpg *.bmp)")    
-        if file_name:
-            self.fileList.append(file_name)
-            rowCount = self.projectDlgNew.tableWidget.rowCount()
-            self.projectDlgNew.tableWidget.insertRow(0)
-            self.projectDlgNew.r = []
-            r = QtGui.QTableWidgetItem()
-            r.setText(file_name)
-            self.projectDlgNew.r.append(r)
-            self.projectDlgNew.tableWidget.setItem(0, 0, r)
-            for i in range(0,4):
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
-                self.projectDlgNew.r.append(r)
-                self.projectDlgNew.tableWidget.setItem(0, i+1, r)
-            self.initThumbnail(file_name)
+        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif)")    
+        if fileNames:
+            for file_name in fileNames:
+                self.fileList.append(file_name)
+                rowCount = self.tableWidget.rowCount()
+                self.tableWidget.insertRow(0)
+                r = QtGui.QTableWidgetItem(file_name)
+                self.tableWidget.setItem(0, 0, r)
+                for i in range(0,4):
+                    r = QtGui.QTableWidgetItem()
+                    r.data(QtCore.Qt.CheckStateRole)
+                    r.setCheckState(QtCore.Qt.Checked)
+                    self.tableWidget.setItem(0, i+1, r)
+                self.initThumbnail(file_name)
     
     def initThumbnail(self, file_name):
         picture = Image.open(file_name.__str__())
@@ -106,29 +107,33 @@ class ProjectDlg():
         icon = QtGui.QPixmap.fromImage(ImageQt.ImageQt(picture))
         self.thumbList.append(icon)
         #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
-        # self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-1])
+        #self.thumbnailImage.setPixmap(self.thumbList[-1])
                     
     def updateThumbnail(self, row=0, col=0):
-        pass
         #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
-#        self.projectDlgNew.thumbnailImage.clear()
-#        self.projectDlgNew.thumbnailImage.setPixmap(self.thumbList[-row-1])  
-    def accept(self):
-        projectName = self.projectDlgNew.projectName
-        labeler = self.projectDlgNew.labeler
-        description = self.projectDlgNew.description
+        #self.thumbnailImage.clear()
+        #self.thumbnailImage.setPixmap(self.thumbList[-row-1]) 
+        pass
+    
+    @QtCore.pyqtSignature("")     
+    def on_confirmButtons_accepted(self):
+        projectName = self.projectName
+        labeler = self.labeler
+        description = self.description
         self.parent.project = projectMgr.Project(projectName, labeler, description,[])
         
-        rowCount = self.projectDlgNew.tableWidget.rowCount()
+        rowCount = self.tableWidget.rowCount()
         dataItemList = []
         for k in range(0, rowCount):
-            fileName = self.projectDlgNew.tableWidget.itemAt(k, 0).text()
-            dataItemList.append(dataMgr.DataItemImage(fileName))             
-        self.projectDlgNew.close()
-        return dataItemList
+            fileName = self.tableWidget.itemAt(k, 0).text()
+            dataItemList.append(dataMgr.DataItemImage(fileName))     
+        self.parent = dataItemList        
+        self.close()
         
-    def reject(self):
-        self.projectDlgNew.close()
+    
+    @QtCore.pyqtSignature("")    
+    def on_confirmButtons_rejected(self):
+        self.close()
 
         
                 
