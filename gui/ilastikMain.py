@@ -158,7 +158,7 @@ class ProjectDlg(QtGui.QDialog):
         rowCount = self.tableWidget.rowCount()
         dataItemList = []
         for k in range(0, rowCount):
-            fileName = self.tableWidget.itemAt(k, self.columnPos['Labels']).text()
+            fileName = self.tableWidget.item(k, self.columnPos['File']).text()
             theDataItem = dataMgr.DataItemImage(fileName)
             dataItemList.append( theDataItem )
             
@@ -166,32 +166,18 @@ class ProjectDlg(QtGui.QDialog):
             for i in xrange( self.tableWidget.cellWidget(k, self.columnPos['Groups']).count() ):
                 groups.append( str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)) )
             theDataItem.groupMembership = groups
-            print "groups: ", groups
             
-            s = """
-            theDataItem.groupMembership = self.tableWidget.item(k, self.columnPos['Groups']).text()
-            theDataItem.hasLabels = 
-            theDataItem. name
-            theDataItem. test
-            theDataItem.
+            theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']) == QtCore.Qt.Checked
+            theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']) == QtCore.Qt.Checked
+            theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']) == QtCore.Qt.Checked
             
+            contained = false
+            for pr in theDataItem.projects:
+                if pr==self.parent.project:
+                    contained = true
+            if not contained:
+                theDataItem.project.append(self.parent.project)
             
-        self.fileName = fileName
-        self.hasLabels = False
-        self.isTraining = True
-        self.isTesting = False
-        self.groupMember = []
-        self.project = []
-        
-        self.data = None
-        self.labels = []
-        self.dataType = None
-        self.dataDimensions = []
-        self.thumbnail = None
-            
-            """
-            
-                 
         self.parent.project.setDataList(dataItemList)        
         self.close()
         
