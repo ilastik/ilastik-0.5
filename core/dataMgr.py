@@ -36,3 +36,8 @@ class DataItemImage(DataItemBase):
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
         self.data = None
+        
+class DataMgr():
+    # We may not use this one
+    def __init__(self, dataItems):
+        self.dataItems = dataItems

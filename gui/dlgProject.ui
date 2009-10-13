@@ -65,13 +65,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="addFile2" >
-        <property name="text" >
-         <string>Add 2</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QLabel" name="thumbnailImage" >
         <property name="text" >
          <string/>
