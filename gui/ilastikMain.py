@@ -127,7 +127,7 @@ class ProjectDlg(QtGui.QDialog):
         for k in range(0, rowCount):
             fileName = self.tableWidget.itemAt(k, 0).text()
             dataItemList.append(dataMgr.DataItemImage(fileName))     
-        self.parent = dataItemList        
+        self.parent.project.dataList = dataItemList        
         self.close()
         
     
