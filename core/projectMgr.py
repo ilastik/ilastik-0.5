@@ -1,10 +1,12 @@
+from core import dataMgr
+
 class Project():
-    def __init__(self, name, labeler, description, dataList):
+    def __init__(self, name, labeler, description, dataMgr):
         self.name = name
         self.labeler = labeler
         self.description = description
-        self.dataList = dataList
+        self.dataMgr = dataMgr
         
-    def setDataList(self, dataList):
-        self.dataList = dataList
+#    def setDataMgr(self, dataList):
+#        self.dataMgr = dataMagr.dataMagr(dataList)
     

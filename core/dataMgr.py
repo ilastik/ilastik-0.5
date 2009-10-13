@@ -10,7 +10,7 @@ except:
 
 class DataItemBase():
     def __init__(self, fileName):
-        self.fileName = fileName
+        self.fileName = str(fileName)
         self.hasLabels = False
         self.isTraining = True
         self.isTesting = False
@@ -38,6 +38,24 @@ class DataItemImage(DataItemBase):
         self.data = None
         
 class DataMgr():
-    # We may not use this one
-    def __init__(self, dataItems):
+    def __init__(self, dataItems=[]):
         self.dataItems = dataItems
+        self.dataItemsLoaded = [False] * len(dataItems)
+        
+    def setDataList(self, dataItems):
+        self.dataItems = dataItems
+        self.dataItemsLoaded = [False] * len(dataItems)
+        
+    def __getitem__(self, ind):
+        if not self.dataItemsLoaded[ind]:
+            self.dataItems[ind].loadData()
+            self.dataItemsLoaded[ind] = True
+        return self.dataItems[ind]
+    
+    def __len__(self):
+        return len(self.dataItems)
+        
+        
+
+
+        

@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 import pdb
 from PyQt4 import QtCore, QtGui, uic
-from core import version, dataMgr, projectMgr
+from core import version, dataMgr, projectMgr, featureMgr
 from gui import ctrlRibbon, imgLabel
 from PIL import Image, ImageQt
 
@@ -18,6 +18,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createRibbons()
         self.initImageWindows()
         self.createImageWindows()
+        self.createFeatures()
         
         
     def createRibbons(self):                     
@@ -32,10 +33,19 @@ class MainWindow(QtGui.QMainWindow):
         
         # Wee, this is really ugly... anybody have better ideas for connecting 
         # the signals. This way has no future and is just a workarround
+        
+        # Project->New
         self.connect(self.ribbon.tabList[0][0].itemList[0], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
-    
+        # Features->Select
+        self.connect(self.ribbon.tabList[1][0].itemList[0], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
+        # Features->Compute
+        self.connect(self.ribbon.tabList[1][0].itemList[1], QtCore.SIGNAL('clicked()'), self.featureCompute)
+        
     def newProjectDlg(self):      
         self.projectDlg = ProjectDlg(self)
+        
+    def newFeatureDlg(self):
+        self.newFeatureDlg = FeatureDlg(self)
         
     def initImageWindows(self):
         self.labelDocks = []
@@ -51,6 +61,12 @@ class MainWindow(QtGui.QMainWindow):
         
         self.addDockWidget(area, dock)
         self.labelDocks.append(dock)
+    def createFeatures(self):
+        self.featureList = featureMgr.ilastikFeatures
+        
+    def featureCompute(self):
+        self.project.featureMgr.triggerCompute(self.project.dataMgr)
+        
 
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -153,7 +169,7 @@ class ProjectDlg(QtGui.QDialog):
         projectName = self.projectName
         labeler = self.labeler
         description = self.description
-        self.parent.project = projectMgr.Project(projectName, labeler, description,[])
+        self.parent.project = projectMgr.Project(projectName, labeler, description, dataMgr.DataMgr())
         
         rowCount = self.tableWidget.rowCount()
         dataItemList = []
@@ -178,10 +194,37 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem.projects.append(self.parent.project)
             
-        self.parent.project.setDataList(dataItemList)        
+        self.parent.project.dataMgr.setDataList(dataItemList)        
         self.close()
         
     
+    @QtCore.pyqtSignature("")    
+    def on_confirmButtons_rejected(self):
+        self.close()
+
+class FeatureDlg(QtGui.QDialog):
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self)
+        self.parent = parent
+        self.initDlg()
+        
+    def initDlg(self):
+        uic.loadUi('dlgFeature.ui', self) 
+        for featureItem in self.parent.featureList:
+            self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
+        self.show()
+        
+    @QtCore.pyqtSignature("")     
+    def on_confirmButtons_accepted(self):  
+        self.parent.project.featureMgr = featureMgr.FeatureMgr()
+
+        featureSelectionList = []
+        for k in range(0, self.featureList.count()):
+            if self.featureList.item(k).isSelected():
+                featureSelectionList.append(self.parent.featureList[k])
+        self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
+        self.close()
+        
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
         self.close()
