@@ -59,6 +59,11 @@ class ProjectDlg(QtGui.QDialog):
         self.fileList = []
         self.thumbList = []        
         self.initDlg()
+
+        # this enables   self.columnPos['File']:
+        self.columnPos = {}        
+        for i in xrange( self.tableWidget.columnCount() ):
+            self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         
     def initDlg(self):
         uic.loadUi('dlgProject.ui', self) 
@@ -84,7 +89,7 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")
     def on_addFile_clicked(self):
         
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif)")    
+        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif)")
         if fileNames:
             for file_name in fileNames:
                 self.fileList.append(file_name)
@@ -95,41 +100,35 @@ class ProjectDlg(QtGui.QDialog):
                 flagON = ~theFlag | theFlag 
                 flagOFF = ~theFlag
                 
-                i=0
-                
                 # file name
                 r = QtGui.QTableWidgetItem(file_name)
-                self.tableWidget.setItem(0, i, r)
-                i+=1
+                self.tableWidget.setItem(0, self.columnPos['File'], r)
                 
                 # group
                 r = QtGui.QComboBox()
-                self.tableWidget.setCellWidget(0, i, r)
-                i+=1
+                r.setEditable(True)
+                self.tableWidget.setCellWidget(0, self.columnPos['Groups'], r)
                 
                 # labels
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Checked)
                 r.setFlags(r.flags() & flagOFF);
-                self.tableWidget.setItem(0, i, r)
-                i+=1
+                self.tableWidget.setItem(0, self.columnPos['Labels'], r)
                 
                 # train
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Checked)
                 r.setFlags(r.flags() & flagON);
-                self.tableWidget.setItem(0, i, r)
-                i+=1
+                self.tableWidget.setItem(0, self.columnPos['Train'], r)
                 
                 # test
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Checked)
                 r.setFlags(r.flags() & flagON);
-                self.tableWidget.setItem(0, i, r)
-                i+=1
+                self.tableWidget.setItem(0, self.columnPos['Test'], r)
                 
                 self.initThumbnail(file_name)
     
@@ -159,11 +158,18 @@ class ProjectDlg(QtGui.QDialog):
         rowCount = self.tableWidget.rowCount()
         dataItemList = []
         for k in range(0, rowCount):
-            fileName = self.tableWidget.itemAt(k, 0).text()
+            fileName = self.tableWidget.itemAt(k, self.columnPos['Labels']).text()
             theDataItem = dataMgr.DataItemImage(fileName)
             dataItemList.append( theDataItem )
+            
+            groups = []
+            for i in xrange( self.tableWidget.cellWidget(k, self.columnPos['Groups']).count() ):
+                groups.append( str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)) )
+            theDataItem.groupMembership = groups
+            print "groups: ", groups
+            
             s = """
-            theDataItem.groupMembership = self.tableWidget.itemAt(k, 0).text()
+            theDataItem.groupMembership = self.tableWidget.item(k, self.columnPos['Groups']).text()
             theDataItem.hasLabels = 
             theDataItem. name
             theDataItem. test
