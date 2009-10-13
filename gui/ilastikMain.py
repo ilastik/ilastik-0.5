@@ -90,21 +90,47 @@ class ProjectDlg(QtGui.QDialog):
                 self.fileList.append(file_name)
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(0)
-                r = QtGui.QTableWidgetItem(file_name)
-                self.tableWidget.setItem(0, 0, r)
+                
                 theFlag = QtCore.Qt.ItemIsEnabled
                 flagON = ~theFlag | theFlag 
                 flagOFF = ~theFlag
-                enabledANDFlags = [ flagON, flagOFF, flagON, flagON]
-                # [group, labels, train, test]
-                for i in range(0,4):
-                    r = QtGui.QTableWidgetItem()
-                    print "before: ", r.flags().__int__()
-                    r.data(QtCore.Qt.CheckStateRole)
-                    r.setCheckState(QtCore.Qt.Checked)
-                    r.setFlags(r.flags() & enabledANDFlags[i]);
-                    print "after: ", r.flags().__int__()
-                    self.tableWidget.setItem(0, i+1, r)
+                
+                i=0
+                
+                # file name
+                r = QtGui.QTableWidgetItem(file_name)
+                self.tableWidget.setItem(0, i, r)
+                i+=1
+                
+                # group
+                r = QtGui.QComboBox()
+                self.tableWidget.setCellWidget(0, i, r)
+                i+=1
+                
+                # labels
+                r = QtGui.QTableWidgetItem()
+                r.data(QtCore.Qt.CheckStateRole)
+                r.setCheckState(QtCore.Qt.Checked)
+                r.setFlags(r.flags() & flagOFF);
+                self.tableWidget.setItem(0, i, r)
+                i+=1
+                
+                # train
+                r = QtGui.QTableWidgetItem()
+                r.data(QtCore.Qt.CheckStateRole)
+                r.setCheckState(QtCore.Qt.Checked)
+                r.setFlags(r.flags() & flagON);
+                self.tableWidget.setItem(0, i, r)
+                i+=1
+                
+                # test
+                r = QtGui.QTableWidgetItem()
+                r.data(QtCore.Qt.CheckStateRole)
+                r.setCheckState(QtCore.Qt.Checked)
+                r.setFlags(r.flags() & flagON);
+                self.tableWidget.setItem(0, i, r)
+                i+=1
+                
                 self.initThumbnail(file_name)
     
     def initThumbnail(self, file_name):
