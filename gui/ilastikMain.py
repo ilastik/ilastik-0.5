@@ -171,12 +171,12 @@ class ProjectDlg(QtGui.QDialog):
             theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']) == QtCore.Qt.Checked
             theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']) == QtCore.Qt.Checked
             
-            contained = false
+            contained = False
             for pr in theDataItem.projects:
                 if pr==self.parent.project:
                     contained = true
             if not contained:
-                theDataItem.project.append(self.parent.project)
+                theDataItem.projects.append(self.parent.project)
             
         self.parent.project.setDataList(dataItemList)        
         self.close()
