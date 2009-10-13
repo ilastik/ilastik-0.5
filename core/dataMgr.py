@@ -1,5 +1,12 @@
 import numpy
-from vigra import vigranumpycmodule as vm
+
+try:
+    from vigra import vigranumpycmodule as vm
+except:
+    try:
+        import vigranumpycmodule as vm
+    except:
+        pass
 
 class DataItemBase():
     def __init__(self, fileName):
