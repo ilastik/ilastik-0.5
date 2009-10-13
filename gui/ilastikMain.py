@@ -92,10 +92,18 @@ class ProjectDlg(QtGui.QDialog):
                 self.tableWidget.insertRow(0)
                 r = QtGui.QTableWidgetItem(file_name)
                 self.tableWidget.setItem(0, 0, r)
+                theFlag = QtCore.Qt.ItemIsEnabled
+                flagON = ~theFlag | theFlag 
+                flagOFF = ~theFlag
+                enabledANDFlags = [ flagON, flagOFF, flagON, flagON]
+                # [group, labels, train, test]
                 for i in range(0,4):
                     r = QtGui.QTableWidgetItem()
+                    print "before: ", r.flags().__int__()
                     r.data(QtCore.Qt.CheckStateRole)
                     r.setCheckState(QtCore.Qt.Checked)
+                    r.setFlags(r.flags() & enabledANDFlags[i]);
+                    print "after: ", r.flags().__int__()
                     self.tableWidget.setItem(0, i+1, r)
                 self.initThumbnail(file_name)
     
@@ -126,7 +134,32 @@ class ProjectDlg(QtGui.QDialog):
         dataItemList = []
         for k in range(0, rowCount):
             fileName = self.tableWidget.itemAt(k, 0).text()
-            dataItemList.append(dataMgr.DataItemImage(fileName))     
+            theDataItem = dataMgr.DataItemImage(fileName)
+            dataItemList.append( theDataItem )
+            s = """
+            theDataItem.groupMembership = self.tableWidget.itemAt(k, 0).text()
+            theDataItem.hasLabels = 
+            theDataItem. name
+            theDataItem. test
+            theDataItem.
+            
+            
+        self.fileName = fileName
+        self.hasLabels = False
+        self.isTraining = True
+        self.isTesting = False
+        self.groupMember = []
+        self.project = []
+        
+        self.data = None
+        self.labels = []
+        self.dataType = None
+        self.dataDimensions = []
+        self.thumbnail = None
+            
+            """
+            
+                 
         self.parent.project.setDataList(dataItemList)        
         self.close()
         
