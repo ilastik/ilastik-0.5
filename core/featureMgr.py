@@ -11,20 +11,20 @@ except:
 class FeatureMgr():
     def __init__(self, featureItems=[]):
         self.featureItems = featureItems
+        self.featuresComputed = [False] * len(self.featureItems)
         
     def setFeatureItems(self, featureItems):
         self.featureItems = featureItems
         
     def triggerCompute(self, dataMgr):
-        for dataIndex in xrange(0,len(dataMgr)):
-            
-            # data will be loaded if not
+        for dataIndex in xrange(0,len(dataMgr)):   
+            # data will be loaded, if not there yet
             data = dataMgr[dataIndex]
-            print '\nData Item %s: ' % data.fileName
+            print 'Data Item: %s: ' % data.fileName
             for fi in self.featureItems:
-                print 'Compute %s' % fi.__str__()
-                F = fi.compute(data)
-
+                print 'Compute %s' % str(fi)
+                dataMgr.dataFeatures.append((fi.compute(data),fi))
+                
 class FeatureBase():
     def __init__(self):
         self.featureFunktor = None

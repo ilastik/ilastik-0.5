@@ -15,7 +15,7 @@ class DataItemBase():
         self.isTraining = True
         self.isTesting = False
         self.groupMember = []
-        self.project = []
+        self.projects = []
         
         self.data = None
         self.labels = []
@@ -28,7 +28,7 @@ class DataItemBase():
 
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
-       DataItemBase.__init__(self, fileName) 
+        DataItemBase.__init__(self, fileName) 
        
     def loadData(self):
         self.data = vm.readImage(self.fileName)
@@ -41,6 +41,7 @@ class DataMgr():
     def __init__(self, dataItems=[]):
         self.dataItems = dataItems
         self.dataItemsLoaded = [False] * len(dataItems)
+        self.dataFeatures = []
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems

@@ -66,6 +66,7 @@ class MainWindow(QtGui.QMainWindow):
         
     def featureCompute(self):
         self.project.featureMgr.triggerCompute(self.project.dataMgr)
+        print self.project.dataMgr.dataFeatures
         
 
 class ProjectDlg(QtGui.QDialog):
