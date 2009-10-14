@@ -39,9 +39,9 @@ class DataItemImage(DataItemBase):
         
 class DataMgr():
     def __init__(self, dataItems=[]):
-        self.dataItems = dataItems
-        self.dataItemsLoaded = [False] * len(dataItems)
+        self.setDataList(dataItems)
         self.dataFeatures = []
+        self.labels = [None] * len(dataItems)
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
