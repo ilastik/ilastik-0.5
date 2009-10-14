@@ -11,7 +11,10 @@ class drawSettings:
     def __init__(self):
         self.label = 0
         self.size = 1
-        self.color = QtGui.QColor(255,0,0)
+        self.color ={}   # manage per label-class
+        self.color[0] = QtGui.QColor(255,0,0)
+        self.opacity = {}   # manage per label-class
+        self.opacity[0] = 1;
     
     def connectSignals(self, drawManager):
         #todo: signals/slots  or rather make this part of drawManager??? 
@@ -23,7 +26,7 @@ class drawManager:
         self.labelmngr = labelmngr
         self.canvas = canvas
         self.undolist = None
-        self.drawSettings = None
+        self.drawSettings = drawSettings()
         
     def setDrawSettings(self, drawSettings):
         self.drawSettings = drawSettings
@@ -33,8 +36,10 @@ class drawManager:
         self.drawSettings.label = label
     def setDrawSize(self, size):
         self.drawSettings.size = size
-    def setDrawColor(self, color):
-        self.drawSettings.color = color
+    def setDrawColor(self, color, label):
+        self.drawSettings.color[label] = color
+    def setDrawOpacity(self, opacity, label):
+        self.drawSettings.opacity[label] = opacity 
         
     def setUndoList(self, undolist):
         self.undolist = undolist
@@ -59,6 +64,12 @@ class draw_geomObject(drawManager):
         drawManager.__init__(self, labelmngr, canvas)
         self.topLevelItems = []
         self.topLevelItems_dict = {}
+        self.drawColor = self.drawSettings.color[self.drawSettings.label]
+        
+    def setDrawOpacity(self, opacity, label):
+        drawManager.setDrawOpacity(self, opacity, label)
+        for item in self.topLevelItems:
+            item.setOpacity(opacity)
         
     def setDrawLabel(self, label):
         drawManager.setDrawLabel(self, label)
@@ -74,6 +85,7 @@ class draw_geomObject(drawManager):
     def InitDraw(self, pos):
         self.topLevelItems.append( TopLevelItem() )
         self.canvas.addItem(self.topLevelItems[-1])
+        self.topLevelItems[-1].setOpacity(self.drawSettings.opacity[self.drawSettings.label])
         self.lastPoint = pos
         self.DoDraw(pos)
         #todo: undolist
@@ -90,9 +102,10 @@ class draw_Ellipse(draw_geomObject):
         draw_geomObject.__init__(self, labelmngr, canvas)
         
     def addObject(self,pos):
+        print self.drawColor
         ell = QtGui.QGraphicsEllipseItem(pos[0], pos[1], self.drawSettings.size, self.drawSettings.size)
-        ell.setPen(QtGui.QPen(self.drawSettings.color))
-        ell.setBrush(QtGui.QBrush(self.drawSettings.color))
+        ell.setPen(QtGui.QPen(self.drawColor))
+        ell.setBrush(QtGui.QBrush(self.drawColor))
         ell.setParentItem(self.topLevelItems[-1])
       
 
@@ -100,37 +113,38 @@ class draw_Patch(drawManager):
     def __init__(self, labelmngr, canvas):
         drawManager.__init__(self, labelmngr, canvas)
         
-        self.image = QtGui.QImage( 150, 150, QtGui.QImage.Format_Indexed8 )
-        #value = QtGui.qRgb(122, 163, 39)
-        value = QtGui.qRgb(255,0,0)
-        self.image.setColor(0, value)
-        value = QtGui.qRgb(0, 0, 0)
-        self.image.setColor(1, value)
+        self.size = labelmngr.getSize()
+        #self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_Indexed8 )
+        self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_ARGB32 )
+        #value = QtGui.qRgb(255,0,0)
+        #self.image.setColor(0, value)
+        #value = QtGui.qRgb(0, 0, 0)
+        #self.image.setColor(1, value)
         
-        # todo: imageItem ...
-        #canvas.addPixmap(QtGui.QPixmap.fromImage(self.pixmap))
         self.imageItem = ImageItem( self.image)
+        self.imageItem.setOpacity(self.drawSettings.opacity[self.drawSettings.label])
         canvas.addItem(self.imageItem)
         labelmngr.setDrawCallback(self.setPixel)
+        self.drawColor = self.drawSettings.color[self.drawSettings.label].rgb()
         
-    def setDrawColor(self, color):
-        drawManager.setDrawColor(self, color)
-        self.image.setColor(0, color)
+    def setDrawOpacity(self, opacity, label):
+        drawManager.setDrawOpacity(self, opacity, label)
+        self.imageItem.setOpacity(opacity)
         
     def setDrawLabel(self, label):
         drawManager.setDrawLabel(self, label)
-        #todo: manage pixmap-Dict for label.
+        #todo: manage qimage-Dict for label.
         
     @staticmethod
     def __undoOperation(self):
         pass
     
     def changeSize(self):
-        # todo: adjust pixmap to new size
+        # todo: adjust qimage to new size
         pass
     
     def repaint(self):
-        # todo: clear pixmap, get labels from labelmngr and paint them.
+        # todo: clear qimage, get labels from labelmngr and paint them.
         pass
     
     def InitDraw(self, pos):
@@ -138,24 +152,19 @@ class draw_Patch(drawManager):
         self.lastPos = pos
         
         self.labelmngr.setLabel(pos, self.drawSettings.label)
-        # todo: create/get pixmap and add to self.canvas.
+        self.drawColor = self.drawSettings.color[self.drawSettings.label].rgb()
+        # todo: create/get qimage for given label and add to self.canvas.
         self.DoDraw(pos)
     
     # callback for label-manager:
     def setPixel(self, pos):
-        #self.image.setPixel(pos[0], pos[1], self.drawSettings.label)
-        vorher = self.image.pixel(pos[0], pos[1])
-        self.image.setPixel(pos[0], pos[1], 1)
+        self.image.setPixel(pos[0], pos[1], self.drawColor)
         self.imageItem.update()
-        nachher = self.image.pixel(pos[0], pos[1])
-        print pos
-        print vorher, " -> ", nachher
     
     def DoDraw(self, pos):
         if pos != self.lastPos:
             self.labelmngr.setLabelLine2D(self.lastPos, pos, self.drawSettings.label)
             self.lastPos = pos
-            # todo: update pixmap
     
     def EndDraw(self, pos):
         self.labelmngr.setLabel(pos, self.drawSettings.label)
@@ -608,6 +617,7 @@ class labelWidget(QtGui.QWidget):
             img.label.addClass()
             img.label.addClass("Klasse ", QtGui.QColor(0,255,0), 10)
         self.updateClassList()
+        self.changeImage(0)
         
     def saveLayout(self, storage):
         print "save labelWidget"
@@ -624,20 +634,25 @@ class labelWidget(QtGui.QWidget):
     def initCanvas(self):
         self.imageData = self.imageList.getImageData(self.activeImage)
         self.imageList.addUser(self.activeImage, self)
-        self.canvas = DisplayPanel()
-        pm = QtGui.QPixmap.fromImage(self.imageData)
-        self.pixmapitem = self.canvas.addPixmap(pm)
+        self.canvas = DisplayPanel(self)
+        #pm = QtGui.QPixmap.fromImage(self.imageData)
+        #self.pixmapitem = self.canvas.addPixmap(pm)
         self.canvas.setLabelObject(self.image.label)
         for labelClass in self.image.label.LabelObjects:
             for tli in labelClass:
                 self.canvas.addItem(tli)
                 
         # temporary - hardcode pixel-type-labels:
-        self.labelmngr = labelMgr.label_Pixel([10, 20])
-        self.drawmngr  = draw_Pixel(self.labelmngr, self.canvas)
+        self.labelManager = labelMgr.label_Pixel([400, 400])
+        #self.drawManager = draw_Ellipse(self.labelManager, self.canvas)
+        self.drawManager = draw_Pixel(self.labelManager, self.canvas)
+        theDrawSettings = drawSettings()
+        theDrawSettings.size = 10
+        self.drawManager.setDrawSettings(theDrawSettings)
                 
     def changeOpacity(self, op):
         self.image.label.changeOpacity(self.labelClass, op/100.0)
+        self.drawManager.setDrawOpacity(op/100.0, self.labelClass)
     
     def changeImage(self, nr):
         self.imageList.freeImageData(self.activeImage)
@@ -726,7 +741,7 @@ class ImageItem(QtGui.QGraphicsItem):
             #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect(), self.scene().sceneRect())
             #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect())
             painter.drawImage( self.image.rect(), self.image  )
-            print "painting.."
+            #print "painting.."
 
 class SceneItem(QtGui.QGraphicsItem):
     def __init__(self, scene = None):
@@ -817,13 +832,6 @@ class DisplayPanel(QtGui.QGraphicsScene):
         self.labelObject = None
         self.classNr = 0
         self.setItemIndexMethod(self.NoIndex)   # todo: test if drawing becomes faster...
-        
-        self.labelmngr = labelMgr.label_Pixel([100, 100])
-        #self.drawManager = draw_Ellipse(self.labelmngr, self)
-        self.drawManager = draw_Pixel(self.labelmngr, self)
-        theDrawSettings = drawSettings()
-        #theDrawSettings.
-        self.drawManager.setDrawSettings(theDrawSettings)
 
     def setLabelObject(self, lo):
         self.labelObject = lo
@@ -844,7 +852,7 @@ class DisplayPanel(QtGui.QGraphicsScene):
             #self.addSomeStuffToCanvas(event.scenePos())
             ##self.makeView()
             pos = [event.scenePos().x(), event.scenePos().y()] 
-            self.drawManager.InitDraw(pos)
+            self.parent().drawManager.InitDraw(pos)
          
     def mouseMoveEvent(self, event):
         if (event.buttons() == QtCore.Qt.LeftButton) and self.labeling:
@@ -852,13 +860,13 @@ class DisplayPanel(QtGui.QGraphicsScene):
             #self.addSomeStuffToCanvas(event.scenePos())
             ##self.makeView()
             pos = [event.scenePos().x(), event.scenePos().y()]
-            self.drawManager.DoDraw(pos)
+            self.parent().drawManager.DoDraw(pos)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and self.labeling:
             ##print "Mouse Released at " ,event.scenePos()
             pos = [event.scenePos().x(), event.scenePos().y()]
-            self.drawManager.EndDraw(pos)
+            self.parent().drawManager.EndDraw(pos)
             self.labeling = False
             
     def addSomeStuffToCanvas(self,pos):
@@ -873,6 +881,6 @@ class DisplayPanel(QtGui.QGraphicsScene):
 if __name__ == "__main__":
     print "Qt Version: ", QtCore.QT_VERSION_STR
     app = QtGui.QApplication(sys.argv)
-    a = labelWidget(None,['test.tif','test2.tif'])
+    a = labelWidget(None,['rgb1.jpg','rgb2.tif'])
     a.show()
     sys.exit(app.exec_())
