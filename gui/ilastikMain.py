@@ -51,7 +51,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks = []
     
     def createImageWindows(self):
-        label_w = imgLabel.labelWidget(self, ["test.tif", "test2.tif"])
+        label_w = imgLabel.labelWidget(self, ['rgb1.jpg','rgb2.tif'])
         
         dock = QtGui.QDockWidget("ImageDock_main", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea| QtCore.Qt.TopDockWidgetArea| QtCore.Qt.LeftDockWidgetArea)
