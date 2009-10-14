@@ -626,8 +626,8 @@ class labelWidget(QtGui.QWidget):
                 
         # temporary - hardcode pixel-type-labels:
         self.labelManager = labelMgr.label_Pixel([400, 400])
-        self.drawManager = draw_Ellipse(self.labelManager, self.canvas)
-        #self.drawManager = draw_Pixel(self.labelManager, self.canvas)
+        #self.drawManager = draw_Ellipse(self.labelManager, self.canvas)
+        self.drawManager = draw_Pixel(self.labelManager, self.canvas)
         self.drawManager.setDrawSize(10)
                 
     def changeOpacity(self, op):
