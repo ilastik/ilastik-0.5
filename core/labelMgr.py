@@ -7,6 +7,10 @@ class label_Base:
     def __init__(self, size):
         self.size = size
         self.dims = size.__len__()
+        self.drawCallback = None
+        
+    def setDrawCallback(self, callback):
+        self.drawCallback = callback
     
     def getObjects(self):
         # retruns generator expression of the parameters of label-objects.
@@ -17,10 +21,12 @@ class label_Base:
     
     def getLastObject(self):
         # returns label-object that has been added with the previous "setLabel" call
+        # todo: remove or convert to return object-stack since last call.
         pass
 
     def setLabel(self, pos, label):
-        pass
+        if self.drawCallback != None:
+            self.drawCallback(pos)
     
     def setLabelLine2D(self, pos1, pos2, label):
         pass
@@ -52,6 +58,7 @@ class label_Patch(label_Base):
     def setLabel(self, pos, label):
         self.lastPatchNr = self.getPatchNrFromPosition(pos)
         self.labelArray[ self.lastPatchNr ] = label
+        label_Base.setLabel(self, pos, label)
         
     def setLabelLine2D(self, pos1, pos2, label):
         (x0, y0) = pos1
@@ -98,7 +105,8 @@ class label_Patch(label_Base):
                     
 
 class label_Grid(label_Patch):
-    pass
+    def __init__(self, size):
+        label_Patch.__init__(self, size)
             
 class label_Pixel(label_Grid):
     def __init__(self, size):
@@ -115,15 +123,15 @@ class label_Pixel(label_Grid):
             #if hasattr(pos, chr(attrnr)):
             #nr += blocksize * getattr(pos, chr(attrnr))
             nr += blocksize * pos[i]
-            blocksize *= self.dims[i]
+            blocksize *= self.size[i]
             
     def getPositionFromPatchNr(self, nr):
         pass
     
     def getPatchCount(self):
-        cnt = self.dims[0]
+        cnt = self.size[0]
         for i in xrange(1,self.dims):
-            cnt *= self.dims[i]
+            cnt *= self.size[i]
         return cnt
             
             
