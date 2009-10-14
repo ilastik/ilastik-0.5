@@ -7,39 +7,28 @@ from core import labelMgr
 
 #************************
 
-class drawSettings:
-    def __init__(self):
-        self.label = 0
-        self.size = 1
-        self.color ={}   # manage per label-class
-        self.color[0] = QtGui.QColor(255,0,0)
-        self.opacity = {}   # manage per label-class
-        self.opacity[0] = 1;
-    
-    def connectSignals(self, drawManager):
-        #todo: signals/slots  or rather make this part of drawManager??? 
-        pass
-
 class drawManager:
     #todo: manage draw-data (topLevelItems, Pixmaps) in a dictionary: seperate labeltypes to make changing [opacity, color, ...] easy.    
     def __init__(self, labelmngr, canvas):
         self.labelmngr = labelmngr
         self.canvas = canvas
         self.undolist = None
-        self.drawSettings = drawSettings()
         
-    def setDrawSettings(self, drawSettings):
-        self.drawSettings = drawSettings
-    
+        self.drawLabel = 0
+        self.drawSize = 1
+        self.drawColor = QtGui.QColor(255,0,0)
+        self.drawOpacity = 1;
+
+        
     # drawSettings:
     def setDrawLabel(self, label):
-        self.drawSettings.label = label
+        self.drawLabel = label
     def setDrawSize(self, size):
-        self.drawSettings.size = size
-    def setDrawColor(self, color, label):
-        self.drawSettings.color[label] = color
-    def setDrawOpacity(self, opacity, label):
-        self.drawSettings.opacity[label] = opacity 
+        self.drawSize = size
+    def setDrawColor(self, color):
+        self.drawColor = color
+    def setDrawOpacity(self, opacity):
+        self.drawOpacity = opacity
         
     def setUndoList(self, undolist):
         self.undolist = undolist
@@ -64,10 +53,9 @@ class draw_geomObject(drawManager):
         drawManager.__init__(self, labelmngr, canvas)
         self.topLevelItems = []
         self.topLevelItems_dict = {}
-        self.drawColor = self.drawSettings.color[self.drawSettings.label]
         
-    def setDrawOpacity(self, opacity, label):
-        drawManager.setDrawOpacity(self, opacity, label)
+    def setDrawOpacity(self, opacity):
+        drawManager.setDrawOpacity(self, opacity)
         for item in self.topLevelItems:
             item.setOpacity(opacity)
         
@@ -85,14 +73,14 @@ class draw_geomObject(drawManager):
     def InitDraw(self, pos):
         self.topLevelItems.append( TopLevelItem() )
         self.canvas.addItem(self.topLevelItems[-1])
-        self.topLevelItems[-1].setOpacity(self.drawSettings.opacity[self.drawSettings.label])
+        self.topLevelItems[-1].setOpacity(self.drawOpacity)
         self.lastPoint = pos
         self.DoDraw(pos)
         #todo: undolist
     
     def DoDraw(self, pos):
         self.addObject(pos)
-        self.labelmngr.setLabel(pos, self.drawSettings.label)
+        self.labelmngr.setLabel(pos, self.drawLabel)
     
     def EndDraw(self, pos):
         pass
@@ -102,8 +90,7 @@ class draw_Ellipse(draw_geomObject):
         draw_geomObject.__init__(self, labelmngr, canvas)
         
     def addObject(self,pos):
-        print self.drawColor
-        ell = QtGui.QGraphicsEllipseItem(pos[0], pos[1], self.drawSettings.size, self.drawSettings.size)
+        ell = QtGui.QGraphicsEllipseItem(pos[0], pos[1], self.drawSize, self.drawSize)
         ell.setPen(QtGui.QPen(self.drawColor))
         ell.setBrush(QtGui.QBrush(self.drawColor))
         ell.setParentItem(self.topLevelItems[-1])
@@ -114,21 +101,16 @@ class draw_Patch(drawManager):
         drawManager.__init__(self, labelmngr, canvas)
         
         self.size = labelmngr.getSize()
-        #self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_Indexed8 )
         self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_ARGB32 )
-        #value = QtGui.qRgb(255,0,0)
-        #self.image.setColor(0, value)
-        #value = QtGui.qRgb(0, 0, 0)
-        #self.image.setColor(1, value)
-        
+
         self.imageItem = ImageItem( self.image)
-        self.imageItem.setOpacity(self.drawSettings.opacity[self.drawSettings.label])
+        self.imageItem.setOpacity(self.drawOpacity)
         canvas.addItem(self.imageItem)
+        self.pixelColor = self.drawColor.rgb()
         labelmngr.setDrawCallback(self.setPixel)
-        self.drawColor = self.drawSettings.color[self.drawSettings.label].rgb()
         
-    def setDrawOpacity(self, opacity, label):
-        drawManager.setDrawOpacity(self, opacity, label)
+    def setDrawOpacity(self, opacity):
+        drawManager.setDrawOpacity(self, opacity)
         self.imageItem.setOpacity(opacity)
         
     def setDrawLabel(self, label):
@@ -151,23 +133,23 @@ class draw_Patch(drawManager):
         self.startPos = pos
         self.lastPos = pos
         
-        self.labelmngr.setLabel(pos, self.drawSettings.label)
-        self.drawColor = self.drawSettings.color[self.drawSettings.label].rgb()
+        self.labelmngr.setLabel(pos, self.drawLabel)
+        self.pixelColor = self.drawColor.rgb()
         # todo: create/get qimage for given label and add to self.canvas.
         self.DoDraw(pos)
     
     # callback for label-manager:
     def setPixel(self, pos):
-        self.image.setPixel(pos[0], pos[1], self.drawColor)
+        self.image.setPixel(pos[0], pos[1], self.pixelColor)
         self.imageItem.update()
     
     def DoDraw(self, pos):
         if pos != self.lastPos:
-            self.labelmngr.setLabelLine2D(self.lastPos, pos, self.drawSettings.label)
+            self.labelmngr.setLabelLine2D(self.lastPos, pos, self.drawLabel)
             self.lastPos = pos
     
     def EndDraw(self, pos):
-        self.labelmngr.setLabel(pos, self.drawSettings.label)
+        self.labelmngr.setLabel(pos, self.drawLabel)
         
 class draw_Pixel(draw_Patch):
     def __init__(self, labelmngr, canvas):
@@ -644,15 +626,13 @@ class labelWidget(QtGui.QWidget):
                 
         # temporary - hardcode pixel-type-labels:
         self.labelManager = labelMgr.label_Pixel([400, 400])
-        #self.drawManager = draw_Ellipse(self.labelManager, self.canvas)
-        self.drawManager = draw_Pixel(self.labelManager, self.canvas)
-        theDrawSettings = drawSettings()
-        theDrawSettings.size = 10
-        self.drawManager.setDrawSettings(theDrawSettings)
+        self.drawManager = draw_Ellipse(self.labelManager, self.canvas)
+        #self.drawManager = draw_Pixel(self.labelManager, self.canvas)
+        self.drawManager.setDrawSize(10)
                 
     def changeOpacity(self, op):
         self.image.label.changeOpacity(self.labelClass, op/100.0)
-        self.drawManager.setDrawOpacity(op/100.0, self.labelClass)
+        self.drawManager.setDrawOpacity(op/100.0)
     
     def changeImage(self, nr):
         self.imageList.freeImageData(self.activeImage)
