@@ -1,10 +1,170 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 import sys, random, numpy
+sys.path.append("..")
 from core import labelMgr
 
 
 #************************
+
+class drawSettings:
+    def __init__(self):
+        self.label = 0
+        self.size = 1
+        self.color = QtGui.QColor(255,0,0)
+    
+    def connectSignals(self, drawManager):
+        #todo: signals/slots  or rather make this part of drawManager??? 
+        pass
+
+class drawManager:
+    #todo: manage draw-data (topLevelItems, Pixmaps) in a dictionary: seperate labeltypes to make changing [opacity, color, ...] easy.    
+    def __init__(self, labelmngr, canvas):
+        self.labelmngr = labelmngr
+        self.canvas = canvas
+        self.undolist = None
+        self.drawSettings = None
+        
+    def setDrawSettings(self, drawSettings):
+        self.drawSettings = drawSettings
+    
+    # drawSettings:
+    def setDrawLabel(self, label):
+        self.drawSettings.label = label
+    def setDrawSize(self, size):
+        self.drawSettings.size = size
+    def setDrawColor(self, color):
+        self.drawSettings.color = color
+        
+    def setUndoList(self, undolist):
+        self.undolist = undolist
+        
+    def repaint(self):
+        pass
+
+    def InitDraw(self, pos):
+        pass
+    
+    def DoDraw(self, pos):
+        pass
+    
+    def EndDraw(self, pos):
+        pass
+    
+    def changeSize(self, size):
+        pass
+
+class draw_geomObject(drawManager):
+    def __init__(self, labelmngr, canvas):
+        drawManager.__init__(self, labelmngr, canvas)
+        self.topLevelItems = []
+        self.topLevelItems_dict = {}
+        
+    def setDrawLabel(self, label):
+        drawManager.setDrawLabel(self, label)
+        #todo: manage topLevelItems-Dict for label.
+        
+    def addObject(self, pos):
+        pass
+    
+    def repaint(self):
+        for tli in self.topLevelItems:
+            self.canvas.addItem(tli)
+
+    def InitDraw(self, pos):
+        self.topLevelItems.append( TopLevelItem() )
+        self.canvas.addItem(self.topLevelItems[-1])
+        self.lastPoint = pos
+        self.DoDraw(pos)
+        #todo: undolist
+    
+    def DoDraw(self, pos):
+        self.addObject(pos)
+        self.labelmngr.setLabel(pos, self.drawSettings.label)
+    
+    def EndDraw(self, pos):
+        pass
+
+class draw_Ellipse(draw_geomObject):
+    def __init__(self, labelmngr, canvas):
+        draw_geomObject.__init__(self, labelmngr, canvas)
+        
+    def addObject(self,pos):
+        ell = QtGui.QGraphicsEllipseItem(pos[0], pos[1], self.drawSettings.size, self.drawSettings.size)
+        ell.setPen(QtGui.QPen(self.drawSettings.color))
+        ell.setBrush(QtGui.QBrush(self.drawSettings.color))
+        ell.setParentItem(self.topLevelItems[-1])
+      
+
+class draw_Patch(drawManager):
+    def __init__(self, labelmngr, canvas):
+        drawManager.__init__(self, labelmngr, canvas)
+        
+        self.image = QtGui.QImage( 150, 150, QtGui.QImage.Format_Indexed8 )
+        #value = QtGui.qRgb(122, 163, 39)
+        value = QtGui.qRgb(255,0,0)
+        self.image.setColor(0, value)
+        value = QtGui.qRgb(0, 0, 0)
+        self.image.setColor(1, value)
+        
+        # todo: imageItem ...
+        #canvas.addPixmap(QtGui.QPixmap.fromImage(self.pixmap))
+        self.imageItem = ImageItem( self.image)
+        canvas.addItem(self.imageItem)
+        labelmngr.setDrawCallback(self.setPixel)
+        
+    def setDrawColor(self, color):
+        drawManager.setDrawColor(self, color)
+        self.image.setColor(0, color)
+        
+    def setDrawLabel(self, label):
+        drawManager.setDrawLabel(self, label)
+        #todo: manage pixmap-Dict for label.
+        
+    @staticmethod
+    def __undoOperation(self):
+        pass
+    
+    def changeSize(self):
+        # todo: adjust pixmap to new size
+        pass
+    
+    def repaint(self):
+        # todo: clear pixmap, get labels from labelmngr and paint them.
+        pass
+    
+    def InitDraw(self, pos):
+        self.startPos = pos
+        self.lastPos = pos
+        
+        self.labelmngr.setLabel(pos, self.drawSettings.label)
+        # todo: create/get pixmap and add to self.canvas.
+        self.DoDraw(pos)
+    
+    # callback for label-manager:
+    def setPixel(self, pos):
+        #self.image.setPixel(pos[0], pos[1], self.drawSettings.label)
+        vorher = self.image.pixel(pos[0], pos[1])
+        self.image.setPixel(pos[0], pos[1], 1)
+        self.imageItem.update()
+        nachher = self.image.pixel(pos[0], pos[1])
+        print pos
+        print vorher, " -> ", nachher
+    
+    def DoDraw(self, pos):
+        if pos != self.lastPos:
+            self.labelmngr.setLabelLine2D(self.lastPos, pos, self.drawSettings.label)
+            self.lastPos = pos
+            # todo: update pixmap
+    
+    def EndDraw(self, pos):
+        self.labelmngr.setLabel(pos, self.drawSettings.label)
+        
+class draw_Pixel(draw_Patch):
+    def __init__(self, labelmngr, canvas):
+        draw_Patch.__init__(self, labelmngr, canvas)
+
+
 class labelType:
     def __init__(self, size=1, canvas=None):
         self.canvas = canvas
@@ -464,13 +624,17 @@ class labelWidget(QtGui.QWidget):
     def initCanvas(self):
         self.imageData = self.imageList.getImageData(self.activeImage)
         self.imageList.addUser(self.activeImage, self)
-        self.canvas = DisplayPanel(QtCore.QRectF(0,0,self.imageData.width(), self.imageData.height()))
+        self.canvas = DisplayPanel()
         pm = QtGui.QPixmap.fromImage(self.imageData)
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.canvas.setLabelObject(self.image.label)
         for labelClass in self.image.label.LabelObjects:
             for tli in labelClass:
                 self.canvas.addItem(tli)
+                
+        # temporary - hardcode pixel-type-labels:
+        self.labelmngr = labelMgr.label_Pixel([10, 20])
+        self.drawmngr  = draw_Pixel(self.labelmngr, self.canvas)
                 
     def changeOpacity(self, op):
         self.image.label.changeOpacity(self.labelClass, op/100.0)
@@ -536,6 +700,33 @@ class TopLevelItem(QtGui.QGraphicsItem):
         return QtCore.QRectF(0,0,0,0)
     def paint(self, painter, option, widget):
         return
+
+class ImageItem(QtGui.QGraphicsItem):
+    def __init__(self, image = None):
+        QtGui.QGraphicsItem.__init__(self)
+        self.setImage(image)
+
+    def boundingRect(self):
+        if self.image:
+            return QtCore.QRectF(self.image.rect())
+        else:
+            return QtCore.QRectF(0,0,0,0)
+
+    def setImage(self, image):
+        self.image = image
+        #image.connect(image, QtCore.SIGNAL("changed(const QList<QRectF>&)"), self.update)
+
+    def paint(self, painter, option, widget):
+        if self.image:
+            #self.scene.render(painter, )
+            #render (self, QPainter painter, QRectF target = QRectF(), QRect source = QRect(), Qt.AspectRatioMode aspectRatioMode = Qt.KeepAspectRatio)
+            #drawItems (self, QPainter painter, list items, list options)
+            
+            #self.scene.drawItems(painter, self.scene.items(), None)
+            #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect(), self.scene().sceneRect())
+            #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect())
+            painter.drawImage( self.image.rect(), self.image  )
+            print "painting.."
 
 class SceneItem(QtGui.QGraphicsItem):
     def __init__(self, scene = None):
@@ -626,6 +817,13 @@ class DisplayPanel(QtGui.QGraphicsScene):
         self.labelObject = None
         self.classNr = 0
         self.setItemIndexMethod(self.NoIndex)   # todo: test if drawing becomes faster...
+        
+        self.labelmngr = labelMgr.label_Pixel([100, 100])
+        #self.drawManager = draw_Ellipse(self.labelmngr, self)
+        self.drawManager = draw_Pixel(self.labelmngr, self)
+        theDrawSettings = drawSettings()
+        #theDrawSettings.
+        self.drawManager.setDrawSettings(theDrawSettings)
 
     def setLabelObject(self, lo):
         self.labelObject = lo
@@ -635,26 +833,32 @@ class DisplayPanel(QtGui.QGraphicsScene):
         
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            self.col = self.labelObject.getColor(self.classNr)
-            self.siz = self.labelObject.getSize(self.classNr)
-            self.topLevelObject = TopLevelItem()
-            self.labelObject.addLabelObject(self.classNr, self.topLevelObject)
-            self.addItem(self.topLevelObject)
-            self.lastPoint = event.scenePos()
+            #self.col = self.labelObject.getColor(self.classNr)
+            #self.siz = self.labelObject.getSize(self.classNr)
+            #self.topLevelObject = TopLevelItem()
+            #self.labelObject.addLabelObject(self.classNr, self.topLevelObject)
+            #self.addItem(self.topLevelObject)
+            #self.lastPoint = event.scenePos()
             self.labeling = True
-            #print event.buttons(), " == " ,QtCore.Qt.LeftButton, "=" ,event.button() == QtCore.Qt.LeftButton
-            self.addSomeStuffToCanvas(event.scenePos())
-            #self.makeView()
+            ##print event.buttons(), " == " ,QtCore.Qt.LeftButton, "=" ,event.button() == QtCore.Qt.LeftButton
+            #self.addSomeStuffToCanvas(event.scenePos())
+            ##self.makeView()
+            pos = [event.scenePos().x(), event.scenePos().y()] 
+            self.drawManager.InitDraw(pos)
          
     def mouseMoveEvent(self, event):
         if (event.buttons() == QtCore.Qt.LeftButton) and self.labeling:
-            #print "Mouse Moving at " ,event.pos()
-            self.addSomeStuffToCanvas(event.scenePos())
-            #self.makeView()
+            ##print "Mouse Moving at " ,event.pos()
+            #self.addSomeStuffToCanvas(event.scenePos())
+            ##self.makeView()
+            pos = [event.scenePos().x(), event.scenePos().y()]
+            self.drawManager.DoDraw(pos)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and self.labeling:
-            #print "Mouse Released at " ,event.scenePos()
+            ##print "Mouse Released at " ,event.scenePos()
+            pos = [event.scenePos().x(), event.scenePos().y()]
+            self.drawManager.EndDraw(pos)
             self.labeling = False
             
     def addSomeStuffToCanvas(self,pos):
