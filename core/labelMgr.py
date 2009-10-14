@@ -33,6 +33,9 @@ class label_Base:
     
     def getLabel(self, pos):
         pass
+    
+    def getSize(self):
+        return self.size
 
 class label_Patch(label_Base):
     def __init__(self, size):
