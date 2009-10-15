@@ -54,6 +54,9 @@ class MainWindow(QtGui.QMainWindow):
         self.project = projectMgr.Project.loadFromDisk(str(fileName))
         
     def editProjectDlg(self):
+        if not hasattr(self, 'project'):
+            self.newProjectDlg()
+            return        
         if hasattr(self, 'projectDlg'):
             self.projectDlg.show()
             return
