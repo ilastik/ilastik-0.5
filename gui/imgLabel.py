@@ -21,7 +21,7 @@ class labelingForOneImage:
         return self.DrawManagers[self.activeDrawManager]
         
     def setActiveLabel(self, label):
-        self.activeLabel = label 
+        self.activeLabel = label
         
     def setOpacity(self, op):
         for dmngr in self.DrawManagers:
@@ -875,7 +875,11 @@ class DisplayPanel(QtGui.QGraphicsScene):
             #self.addSomeStuffToCanvas(event.scenePos())
             ##self.makeView()
             pos = [event.scenePos().x(), event.scenePos().y()]
-            self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager() 
+            self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
+            #print self.parent().parent().parent()
+            if hasattr(self.parent().parent().parent(),'project'):
+                self.drawManager.setDrawColor( QtGui.QColor.fromRgb( self.parent().parent().parent().project.labelColors.get(self.parent().labelForImage[self.parent().activeImage].activeLabel,0) ) )
+                print QtGui.QColor.fromRgb( self.parent().parent().parent().project.labelColors.get(self.parent().labelForImage[self.parent().activeImage].activeLabel,0) ) 
             self.drawManager.InitDraw(pos)
          
     def mouseMoveEvent(self, event):
