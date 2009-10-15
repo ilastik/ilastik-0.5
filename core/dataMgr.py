@@ -1,13 +1,13 @@
 import numpy
-from vigra import vigranumpycmodule as vm
+import sys
 
 try:
     from vigra import vigranumpycmodule as vm
-except:
+except ImportError:
     try:
         import vigranumpycmodule as vm
-    except:
-        pass
+    except ImportError:
+        sys.exit("vigranumpycmodule not found!")
 
 class DataItemBase():
     def __init__(self, fileName):
