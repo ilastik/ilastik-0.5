@@ -127,7 +127,15 @@ class ProjectDlg(QtGui.QDialog):
         
 
     @QtCore.pyqtSignature("")
-    
+    def on_btnLabelColor_clicked(self):
+        colordlg = QtGui.QColorDialog()
+        col = colordlg.getColor()
+        self.btnLabelColor.setAutoFillBackground(True)
+        #self.btnLabelColor.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(255, 255, 255)")
+        self.btnLabelColor.setStyleSheet("background-color: %s; color: rgb(255, 255, 255)" % (col.name()) )
+        print "labelcolor", col.rgb(), dir(col)
+
+    @QtCore.pyqtSignature("")
     def updateDlg(self, project):
         self.projectName.setText(project.name)
         self.labeler.setText(project.labeler)
