@@ -8,14 +8,14 @@ class Project(object):
         self.dataMgr = dataMgr
     
     def saveToDisk(self, fileName):
-        fileHandle = open(fileName,'w')
-        pickle.dump(self, fileHandle)
+        fileHandle = open(fileName,'wb')
+        pickle.dump(self, fileHandle, True)
         fileHandle.close()
         print "Project %s saved to %s " % (self.name, fileName)
     
     @staticmethod
     def loadFromDisk(fileName):
-        fileHandle = open(fileName,'r')
+        fileHandle = open(fileName,'rb')
         p = pickle.load(fileHandle)
         fileHandle.close()
         print "Project %s loaded from %s " % (p.name, fileName)
