@@ -85,8 +85,8 @@ def createRibbons():
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification",2)   
     
     RibbonGroupObjects["Projects"].append(RibbonEntry("New", "actions/document-new.png" ,"New"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Save", "actions/document-save.png" ,"Save"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Open", "actions/document-open.png" ,"Open"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("Save", "actions/document-save.png" ,"Save"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", "actions/document-properties.png" ,"Edit"))
     
     RibbonGroupObjects["Features"].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Features"))

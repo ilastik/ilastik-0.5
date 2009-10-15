@@ -39,8 +39,15 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
-
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
+        
+        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        
+        #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
+        #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
+        
+        self.ribbon.setCurrentIndex (0)
         
     def newProjectDlg(self):      
         self.projectDlg = ProjectDlg(self)
@@ -52,6 +59,8 @@ class MainWindow(QtGui.QMainWindow):
     def loadProjectDlg(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
         self.project = projectMgr.Project.loadFromDisk(str(fileName))
+        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True) 
         
     def editProjectDlg(self):
         if hasattr(self, 'projectDlg'):
@@ -61,20 +70,7 @@ class MainWindow(QtGui.QMainWindow):
             self.newProjectDlg()
             return
         self.projectDlg = ProjectDlg(self)
-        self.projectDlg.projectName.setText(self.project.name)
-        self.projectDlg.labeler.setText(self.project.labeler)
-        self.projectDlg.description.setText(self.project.description)
-
-        for d in self.project.dataMgr.dataItems:
-            rowCount = self.projectDlg.tableWidget.rowCount()
-            self.projectDlg.tableWidget.insertRow(0)
-            
-            theFlag = QtCore.Qt.ItemIsEnabled
-            flagON = ~theFlag | theFlag 
-            flagOFF = ~theFlag
-            r = QtGui.QTableWidgetItem(d.fileName)
-            self.projectDlg.tableWidget.setItem(0, self.projectDlg.columnPos['File'], r)
-        self.projectDlg.update()
+        self.projectDlg.updateDlg(self.project)
             
         
         
@@ -131,6 +127,54 @@ class ProjectDlg(QtGui.QDialog):
         
 
     @QtCore.pyqtSignature("")
+    
+    def updateDlg(self, project):
+        self.projectName.setText(project.name)
+        self.labeler.setText(project.labeler)
+        self.description.setText(project.description)
+        
+        theFlag = QtCore.Qt.ItemIsEnabled
+        flagON = ~theFlag | theFlag 
+        flagOFF = ~theFlag
+            
+        for d in project.dataMgr.dataItems:
+            rowCount = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(0)
+            
+            # File Name
+            r = QtGui.QTableWidgetItem(d.fileName)
+            self.tableWidget.setItem(0, self.columnPos['File'], r)
+            
+            r = QtGui.QComboBox()
+            r.setEditable(True)
+            self.tableWidget.setCellWidget(0, self.columnPos['Groups'], r)
+            
+            # Here comes the cool python "checker" use it for if_than_else in lambdas
+            checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
+            
+            # labels
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(checker(d.hasLabels))
+            r.setFlags(r.flags() & flagOFF);
+            self.tableWidget.setItem(0, self.columnPos['Labels'], r)
+            
+            # train
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(checker(d.isTraining))
+            r.setFlags(r.flags() & flagON);
+            self.tableWidget.setItem(0, self.columnPos['Train'], r)
+            
+            # test
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(checker(d.isTesting))
+            r.setFlags(r.flags() & flagON);
+            self.tableWidget.setItem(0, self.columnPos['Test'], r)
+                  
+        self.update()
+        
     def on_addFile_clicked(self):
         
         fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif)")
@@ -151,6 +195,7 @@ class ProjectDlg(QtGui.QDialog):
                 # group
                 r = QtGui.QComboBox()
                 r.setEditable(True)
+                r
                 self.tableWidget.setCellWidget(0, self.columnPos['Groups'], r)
                 
                 # labels
@@ -211,9 +256,9 @@ class ProjectDlg(QtGui.QDialog):
                 groups.append( str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)) )
             theDataItem.groupMembership = groups
             
-            theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']) == QtCore.Qt.Checked
-            theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']) == QtCore.Qt.Checked
-            theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']) == QtCore.Qt.Checked
+            theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
+            theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']).checkState() == QtCore.Qt.Checked
+            theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']).checkState() == QtCore.Qt.Checked
             
             contained = False
             for pr in theDataItem.projects:
@@ -222,7 +267,9 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem.projects.append(self.parent.project)
             
-        self.parent.project.dataMgr.setDataList(dataItemList)        
+        self.parent.project.dataMgr.setDataList(dataItemList) 
+        self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)       
         self.close()
         
     
