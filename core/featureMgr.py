@@ -23,7 +23,7 @@ class FeatureMgr():
             print 'Data Item: %s: ' % data.fileName
             for fi in self.featureItems:
                 print 'Compute %s' % str(fi)
-                dataMgr.dataFeatures.append((fi.compute(data),fi))
+                dataMgr.dataFeatures.append((fi.compute(data), fi))
                 
 class FeatureBase():
     def __init__(self):

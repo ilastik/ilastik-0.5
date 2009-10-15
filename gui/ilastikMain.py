@@ -26,7 +26,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
         
         self.ribbon = ctrlRibbon.Ribbon(self.ribbonToolbar)
-        for ribbon_group in ctrlRibbon.createRibbons():
+        for ribbon_name, ribbon_group in ctrlRibbon.createRibbons().items():
             tabs = ribbon_group.makeTab()   
             self.ribbon.addTab(tabs, ribbon_group.name)  
         self.ribbonToolbar.addWidget(self.ribbon)
@@ -34,21 +34,55 @@ class MainWindow(QtGui.QMainWindow):
         # Wee, this is really ugly... anybody have better ideas for connecting 
         # the signals. This way has no future and is just a workarround
         
-        # Project->New
-        self.connect(self.ribbon.tabList[0][0].itemList[0], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
-        # Features->Select
-        self.connect(self.ribbon.tabList[1][0].itemList[0], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
-        # Features->Compute
-        self.connect(self.ribbon.tabList[1][0].itemList[1], QtCore.SIGNAL('clicked()'), self.featureCompute)
+        self.connect(self.ribbon.tabDict['Projects'].itemDict['New'], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
+        self.connect(self.ribbon.tabDict['Projects'].itemDict['Save'], QtCore.SIGNAL('clicked()'), self.saveProjectDlg)
+        self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
+        self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
+        self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
+
+        self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
         
     def newProjectDlg(self):      
         self.projectDlg = ProjectDlg(self)
+    
+    def saveProjectDlg(self):
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ".", "Project Files (*.ilp)")
+        self.project.saveToDisk(str(fileName))
+        
+    def loadProjectDlg(self):
+        fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
+        self.project = projectMgr.Project.loadFromDisk(str(fileName))
+        
+    def editProjectDlg(self):
+        if hasattr(self, 'projectDlg'):
+            self.projectDlg.show()
+            return
+        self.projectDlg = ProjectDlg(self)
+        self.projectDlg.projectName.setText(self.project.name)
+        self.projectDlg.labeler.setText(self.project.labeler)
+        self.projectDlg.description.setText(self.project.description)
+
+        for d in self.project.dataMgr.dataItems:
+            rowCount = self.projectDlg.tableWidget.rowCount()
+            self.projectDlg.tableWidget.insertRow(0)
+            
+            theFlag = QtCore.Qt.ItemIsEnabled
+            flagON = ~theFlag | theFlag 
+            flagOFF = ~theFlag
+            r = QtGui.QTableWidgetItem(d.fileName)
+            self.projectDlg.tableWidget.setItem(0, self.projectDlg.columnPos['File'], r)
+        self.projectDlg.update()
+            
+        
+        
+        
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
         
     def initImageWindows(self):
         self.labelDocks = []
+        
     
     def createImageWindows(self):
         label_w = imgLabel.labelWidget(self, ['rgb1.jpg','rgb2.tif'])
@@ -76,7 +110,6 @@ class ProjectDlg(QtGui.QDialog):
         self.fileList = []
         self.thumbList = []        
         self.initDlg()
-
         # this enables   self.columnPos['File']:
         self.columnPos = {}        
         for i in xrange( self.tableWidget.columnCount() ):
@@ -86,20 +119,11 @@ class ProjectDlg(QtGui.QDialog):
         uic.loadUi('dlgProject.ui', self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
-        self.tableWidget.setColumnWidth(0,350)
         self.tableWidget.setAlternatingRowColors(True)
         self.tableWidget.setShowGrid(False)
-        
-#        self.connect(self.addFile, QtCore.SIGNAL("clicked()"), self.addFile)
-#        self.connect(self.confirmButtons, QtCore.SIGNAL("accepted()"), self.accept)
-#        self.connect(self.confirmButtons, QtCore.SIGNAL("rejected()"), self.reject)
+        self.tableWidget.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+        self.tableWidget.verticalHeader().hide()
         self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
-        
-        # Still have to beautify a bit with sth like that 
-#        self.filesTable.setHorizontalHeaderLabels(labels)
-#        self.filesTable.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
-#        self.filesTable.verticalHeader().hide()
-#        self.filesTable.setShowGrid(False)
         self.show()
         
 
@@ -170,7 +194,7 @@ class ProjectDlg(QtGui.QDialog):
         projectName = self.projectName
         labeler = self.labeler
         description = self.description
-        self.parent.project = projectMgr.Project(projectName, labeler, description, dataMgr.DataMgr())
+        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dataMgr.DataMgr())
         
         rowCount = self.tableWidget.rowCount()
         dataItemList = []

@@ -1,4 +1,5 @@
 import numpy
+from vigra import vigranumpycmodule as vm
 
 try:
     from vigra import vigranumpycmodule as vm
@@ -52,6 +53,10 @@ class DataMgr():
             self.dataItems[ind].loadData()
             self.dataItemsLoaded[ind] = True
         return self.dataItems[ind]
+    def clearDataList(self):
+        self.dataItems = []
+        self.dataFeatures = []
+        self.labels = [None] * len(self.dataItems)
     
     def __len__(self):
         return len(self.dataItems)

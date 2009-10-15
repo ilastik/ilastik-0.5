@@ -4,7 +4,7 @@ import sys
 class Ribbon(QtGui.QTabWidget):
     def __init__(self, parent=None):
         QtGui.QTabBar.__init__(self, parent)
-        self.tabList = []
+        self.tabDict = {}
         if parent:     
             self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
 
@@ -21,12 +21,13 @@ class Ribbon(QtGui.QTabWidget):
         QtGui.QTabWidget.moveEvent(self, event)
     
     def addTab(self, w, s="TabName"):
-        self.tabList.append((w,s))
-        QtGui.QTabWidget.addTab(self,w,s)              
+        self.tabDict[s] = w
+        QtGui.QTabWidget.insertTab(self, w.position, w, s)              
         
 class RibbonButtonItem(QtGui.QPushButton):
     def __init__(self,  ribbon_entry):
         QtGui.QPushButton.__init__(self)
+        self.name = ribbon_entry.name
         self.setIcon(ribbon_entry.icon)   
         self.setIconSize(ribbon_entry.size)
         self.setText(ribbon_entry.name)
@@ -36,18 +37,19 @@ class RibbonButtonItem(QtGui.QPushButton):
 
 
 class RibbonTabContainer(QtGui.QWidget):
-    def __init__(self,parent=None):
+    def __init__(self, position, parent=None, ):
         QtGui.QWidget.__init__(self)
         #careful: QWidget.layout() is a member function - don't overwrite!
         layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight)
         layout.setAlignment(QtCore.Qt.AlignLeft)
         layout.setAlignment(QtCore.Qt.AlignTop)
+        self.position = position
         self.setLayout(layout)
-        self.itemList = []
+        self.itemDict = {}
         self.signalList = []
     def addItem(self, item):
-        self.itemList.append(item)
-        self.signalList.append(QtCore.SIGNAL('clicked()'))
+        self.itemDict[item.name] = item
+        #self.signalList.append(QtCore.SIGNAL('clicked()'))
         self.layout().addWidget(item)
 
 class RibbonEntry():
@@ -61,35 +63,37 @@ class RibbonEntry():
         self.size = QtCore.QSize(32,32)
     
 class RibbonEntryGroup():
-    def __init__(self, name):
+    def __init__(self, name, position):
         self.name = name
         self.entries = []
+        self.position = position
         
     def append(self, entry):
         self.entries.append(entry)
         
     def makeTab(self):
-        tabs = RibbonTabContainer()
+        tabs = RibbonTabContainer(self.position)
         for rib in self.entries:
             item = rib.type(rib)
             tabs.addItem(item)  
         return tabs   
 
 def createRibbons():
-    RibbonGroupObjects = []
-    RibbonGroupObjects.append(RibbonEntryGroup("Projects"))       
-    RibbonGroupObjects.append(RibbonEntryGroup("Features"))   
-    RibbonGroupObjects.append(RibbonEntryGroup("Classification"))   
+    RibbonGroupObjects = {}
+    RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects",0)       
+    RibbonGroupObjects["Features"] = RibbonEntryGroup("Features",1)   
+    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification",2)   
     
-    RibbonGroupObjects[0].append(RibbonEntry("New", "actions/document-new.png" ,"New",callback="MainWindow.new()"))
-    RibbonGroupObjects[0].append(RibbonEntry("Open", "actions/document-open.png" ,"Open"))
-    RibbonGroupObjects[0].append(RibbonEntry("Edit", "actions/document-properties.png" ,"Edit"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("New", "actions/document-new.png" ,"New"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("Save", "actions/document-save.png" ,"Save"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("Open", "actions/document-open.png" ,"Open"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", "actions/document-properties.png" ,"Edit"))
     
-    RibbonGroupObjects[1].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Features"))
-    RibbonGroupObjects[1].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Compute Features"))
+    RibbonGroupObjects["Features"].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Features"))
+    RibbonGroupObjects["Features"].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Compute Features"))
     
-    RibbonGroupObjects[2].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Classifier"))
-    RibbonGroupObjects[2].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Train Classifier"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Classifier"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Train Classifier"))
     return RibbonGroupObjects   
         
         
