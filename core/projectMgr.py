@@ -1,11 +1,14 @@
 from core import dataMgr
 import cPickle as pickle
+
 class Project(object):
     def __init__(self, name, labeler, description, dataMgr):
         self.name = name
         self.labeler = labeler
         self.description = description
         self.dataMgr = dataMgr
+        self.labelNames = []
+        self.labelColors = {}
     
     def saveToDisk(self, fileName):
         fileHandle = open(fileName,'wb')

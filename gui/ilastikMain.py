@@ -110,7 +110,8 @@ class ProjectDlg(QtGui.QDialog):
         self.thumbList = []        
         self.initDlg()
         # this enables   self.columnPos['File']:
-        self.columnPos = {}        
+        self.columnPos = {}
+        self.labelColor = {}        
         for i in xrange( self.tableWidget.columnCount() ):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         
@@ -126,14 +127,37 @@ class ProjectDlg(QtGui.QDialog):
         self.show()
         
 
+    @QtCore.pyqtSignature("int")
+    def on_cmbLabelName_currentIndexChanged(self, nr):
+        self.txtLabelName.setText( self.cmbLabelName.currentText() )
+        col = QtGui.QColor.fromRgb( self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb() ) )
+        self.setLabelColorButtonColor(col)
+
+    @QtCore.pyqtSignature("")
+    def on_btnAddLabel_clicked(self):
+        self.cmbLabelName.addItem("label")
+        self.cmbLabelName.setCurrentIndex( self.cmbLabelName.count()-1 )
+        #self.on_cmbLabelName_currentIndexChanged( self.cmbLabelName.count()-1 )
+        
+    def setLabelColorButtonColor(self, col):
+        self.btnLabelColor.setAutoFillBackground(True)
+        fgcol = QtGui.QColor()
+        fgcol.setRed( 255-col.red())
+        fgcol.setGreen( 255-col.green())
+        fgcol.setBlue( 255-col.blue())
+        self.btnLabelColor.setStyleSheet("background-color: %s; color: %s" % (col.name(), fgcol.name()) )
+
     @QtCore.pyqtSignature("")
     def on_btnLabelColor_clicked(self):
         colordlg = QtGui.QColorDialog()
         col = colordlg.getColor()
-        self.btnLabelColor.setAutoFillBackground(True)
-        #self.btnLabelColor.setStyleSheet("background-color: rgb(255, 0, 0); color: rgb(255, 255, 255)")
-        self.btnLabelColor.setStyleSheet("background-color: %s; color: rgb(255, 255, 255)" % (col.name()) )
-        print "labelcolor", col.rgb(), dir(col)
+        labelnr = self.cmbLabelName.currentIndex()
+        self.labelColor[labelnr] = col.rgb()
+        self.setLabelColorButtonColor(col)
+        
+    @QtCore.pyqtSignature("QString")
+    def on_txtLabelName_textChanged(self, text):
+        self.cmbLabelName.setItemText(self.cmbLabelName.currentIndex(), text)
 
     @QtCore.pyqtSignature("")
     def updateDlg(self, project):
@@ -180,7 +204,13 @@ class ProjectDlg(QtGui.QDialog):
             r.setCheckState(checker(d.isTesting))
             r.setFlags(r.flags() & flagON);
             self.tableWidget.setItem(0, self.columnPos['Test'], r)
-                  
+        
+        self.cmbLabelName.clear()
+        self.labelColor = project.labelColors
+        for name in project.labelNames:
+            print name.__class__
+            self.cmbLabelName.addItem(name)
+
         self.update()
         
     def on_addFile_clicked(self):
@@ -251,6 +281,11 @@ class ProjectDlg(QtGui.QDialog):
         labeler = self.labeler
         description = self.description
         self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dataMgr.DataMgr())
+        self.parent.project.labelColors = self.labelColor
+        self.parent.project.labelNames = []
+        for i in xrange( self.cmbLabelName.count() ):
+            self.parent.project.labelNames.append( str(self.cmbLabelName.itemText(i)) )
+            
         
         rowCount = self.tableWidget.rowCount()
         dataItemList = []
@@ -277,7 +312,8 @@ class ProjectDlg(QtGui.QDialog):
             
         self.parent.project.dataMgr.setDataList(dataItemList) 
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)       
+        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        
         self.close()
         
     
