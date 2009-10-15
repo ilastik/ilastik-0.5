@@ -599,6 +599,7 @@ class labelWidget(QtGui.QWidget):
             img.label.addClass()
             img.label.addClass("Klasse ", QtGui.QColor(0,255,0), 10)
         self.updateClassList()
+        self.pixmapitem = None
         self.changeImage(0)
         
     def saveLayout(self, storage):
@@ -645,7 +646,8 @@ class labelWidget(QtGui.QWidget):
         self.image = self.imageList.list[self.activeImage]
         self.imageData = self.imageList.getImageData(self.activeImage)
         self.imageList.addUser(self.activeImage, self)
-        self.canvas.removeItem(self.pixmapitem)
+        if self.pixmapitem:
+            self.canvas.removeItem(self.pixmapitem)
         pm = QtGui.QPixmap.fromImage(self.imageData)
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.pixmapitem.setZValue(-1)
