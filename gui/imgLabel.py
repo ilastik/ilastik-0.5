@@ -7,6 +7,38 @@ from core import labelMgr
 
 #************************
 
+class labelingForOneImage:
+    def __init__(self):
+        self.DrawManagers = []       # different labeling-types (patch, pixel, geom...)
+        self.activeLabel = None
+        self.activeDrawManager = None
+        
+    def addDrawManager(self, dmngr):
+        self.DrawManagers.append(dmngr)
+        self.activeDrawManager = self.DrawManagers.__len__()-1
+        
+    def getActiveDrawManager(self):
+        return self.DrawManagers[self.activeDrawManager]
+        
+    def setActiveLabel(self, label):
+        self.activeLabel = label 
+        
+    def setOpacity(self, op):
+        for dmngr in self.DrawManagers:
+            dmngr.setDrawOpacity(op)
+    
+    def getLabelValue(self, pos, label):
+        # todo: what, if different label-types (e.g. pixel, geom. objects..) are contradictory?
+        value = 0
+        for dmngr in self.DrawManagers[label]:
+                value = dmngr.labelmngr.getLabel(pos)
+        return value
+        
+    def setCanvas(self, canvas):
+        for dmngr in self.DrawManagers:
+            dmngr.setCanvas(canvas)
+    
+
 class drawManager:
     #todo: manage draw-data (topLevelItems, Pixmaps) in a dictionary: seperate labeltypes to make changing [opacity, color, ...] easy.    
     def __init__(self, labelmngr, canvas):
@@ -29,6 +61,9 @@ class drawManager:
         self.drawColor = color
     def setDrawOpacity(self, opacity):
         self.drawOpacity = opacity
+        
+    def setCanvas(self, canvas):
+        self.canvas = canvas
         
     def setUndoList(self, undolist):
         self.undolist = undolist
@@ -535,7 +570,6 @@ class labelWidget(QtGui.QWidget):
         
         
         self.initCanvas()
-        self.labelClass = 0
         self.canvas.setClass(0)
         self.makeView()
         
@@ -551,14 +585,6 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList = QtGui.QComboBox()
         self.connect(self.cmbClassList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeClass)
         
-        self.sldOpacity = QtGui.QSlider()
-        self.sldOpacity.setMinimum(0)
-        self.sldOpacity.setMaximum(100)
-        self.sldOpacity.setOrientation(QtCore.Qt.Horizontal)
-        self.sldOpacity.setValue(25)
-        self.changeOpacity(25)
-        self.connect(self.sldOpacity, QtCore.SIGNAL("valueChanged(int)"), self.changeOpacity)
-        
         self.btnCloneView = QtGui.QPushButton("clone View")
         self.connect(self.btnCloneView, QtCore.SIGNAL("clicked()"), self.makeCloneView)
         
@@ -566,7 +592,6 @@ class labelWidget(QtGui.QWidget):
         layout_lists.addWidget(self.cmbImageList,2,1)
         layout_lists.addWidget(self.cmbChannelList,2,2)
         layout_lists.addWidget(self.cmbClassList,2,3)
-        layout_lists.addWidget(self.sldOpacity,3,3)
         layout_lists.addWidget(self.btnUndo,2,4)
         layout_lists.addWidget(self.btnCloneView,2,5)
         
@@ -601,6 +626,16 @@ class labelWidget(QtGui.QWidget):
         self.updateClassList()
         self.pixmapitem = None
         self.changeImage(0)
+        self.prepareLabeling()
+        
+        self.sldOpacity = QtGui.QSlider()
+        self.sldOpacity.setMinimum(0)
+        self.sldOpacity.setMaximum(100)
+        self.sldOpacity.setOrientation(QtCore.Qt.Horizontal)
+        self.sldOpacity.setValue(25)
+        self.changeOpacity(25)      
+        self.connect(self.sldOpacity, QtCore.SIGNAL("valueChanged(int)"), self.changeOpacity)
+        layout_lists.addWidget(self.sldOpacity,3,3)
         
     def saveLayout(self, storage):
         print "save labelWidget"
@@ -624,16 +659,23 @@ class labelWidget(QtGui.QWidget):
         for labelClass in self.image.label.LabelObjects:
             for tli in labelClass:
                 self.canvas.addItem(tli)
-                
+
+    def prepareLabeling(self):
         # temporary - hardcode pixel-type-labels:
-        self.labelManager = labelMgr.label_Pixel([400, 400])
-        self.drawManager = draw_Ellipse(self.labelManager, self.canvas)
-        #self.drawManager = draw_Pixel(self.labelManager, self.canvas)
-        self.drawManager.setDrawSize(10)
+        self.labelForImage = {}
+        self.labelForImage[self.activeImage] = labelingForOneImage()
+        self.labelForImage[self.activeImage].setActiveLabel(0)
+        labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
+        #drawManager = draw_Ellipse(labelManager, self.canvas)
+        drawManager = draw_Pixel(labelManager, self.canvas)
+        self.labelForImage[self.activeImage].addDrawManager( drawManager )
+        
                 
     def changeOpacity(self, op):
-        self.image.label.changeOpacity(self.labelClass, op/100.0)
-        self.drawManager.setDrawOpacity(op/100.0)
+        #self.image.label.changeOpacity(self.labelClass, op/100.0)
+        #self.drawManager.setDrawOpacity(op/100.0)
+        self.labelForImage[self.activeImage].setOpacity(op/100.0)
+        
     
     def changeImage(self, nr):
         self.imageList.freeImageData(self.activeImage)
@@ -665,8 +707,7 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
     def changeClass(self, nr):
-        self.labelClass = nr
-        self.canvas.setClass(nr)
+        self.labelForImage[self.activeImage].setActiveLabel(nr)
                 
     def undo(self):
         self.image.undolist.undo()
@@ -833,8 +874,9 @@ class DisplayPanel(QtGui.QGraphicsScene):
             ##print event.buttons(), " == " ,QtCore.Qt.LeftButton, "=" ,event.button() == QtCore.Qt.LeftButton
             #self.addSomeStuffToCanvas(event.scenePos())
             ##self.makeView()
-            pos = [event.scenePos().x(), event.scenePos().y()] 
-            self.parent().drawManager.InitDraw(pos)
+            pos = [event.scenePos().x(), event.scenePos().y()]
+            self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager() 
+            self.drawManager.InitDraw(pos)
          
     def mouseMoveEvent(self, event):
         if (event.buttons() == QtCore.Qt.LeftButton) and self.labeling:
@@ -842,13 +884,13 @@ class DisplayPanel(QtGui.QGraphicsScene):
             #self.addSomeStuffToCanvas(event.scenePos())
             ##self.makeView()
             pos = [event.scenePos().x(), event.scenePos().y()]
-            self.parent().drawManager.DoDraw(pos)
+            self.drawManager.DoDraw(pos)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and self.labeling:
             ##print "Mouse Released at " ,event.scenePos()
             pos = [event.scenePos().x(), event.scenePos().y()]
-            self.parent().drawManager.EndDraw(pos)
+            self.drawManager.EndDraw(pos)
             self.labeling = False
             
     def addSomeStuffToCanvas(self,pos):
