@@ -3,6 +3,8 @@ from PyQt4 import QtCore
 import sys, random, numpy
 sys.path.append("..")
 from core import labelMgr
+from gui import qimage2ndarray
+import os
 
 
 #************************
@@ -550,6 +552,7 @@ class labelWidget(QtGui.QWidget):
     def __init__(self, parent=None, imageList=None):
         QtGui.QWidget.__init__(self, parent)
 
+        self.project = None
         if isinstance(imageList,str): imageList = [imageList]
         if isinstance(imageList,list):
             dpil = displayImageList()
@@ -560,6 +563,7 @@ class labelWidget(QtGui.QWidget):
             dpi = displayImage('test.tif', self)
             imageList = displayImageList(dpi)
         
+        self.labelForImage = {}
         self.cloneviews = []
         
         self.imageList = imageList
@@ -574,7 +578,6 @@ class labelWidget(QtGui.QWidget):
         self.makeView()
         
         self.cmbImageList = QtGui.QComboBox()
-        self.cmbImageList.addItems(self.imageList.getFilenames())
         self.connect(self.cmbImageList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
         
         self.btnUndo = QtGui.QPushButton("Undo")
@@ -626,7 +629,6 @@ class labelWidget(QtGui.QWidget):
         self.updateClassList()
         self.pixmapitem = None
         self.changeImage(0)
-        self.prepareLabeling()
         
         self.sldOpacity = QtGui.QSlider()
         self.sldOpacity.setMinimum(0)
@@ -636,6 +638,10 @@ class labelWidget(QtGui.QWidget):
         self.changeOpacity(25)      
         self.connect(self.sldOpacity, QtCore.SIGNAL("valueChanged(int)"), self.changeOpacity)
         layout_lists.addWidget(self.sldOpacity,3,3)
+        try:
+            self.updateProject( self.parent().project)
+        except AttributeError:
+            pass
         
     def saveLayout(self, storage):
         print "save labelWidget"
@@ -660,8 +666,29 @@ class labelWidget(QtGui.QWidget):
             for tli in labelClass:
                 self.canvas.addItem(tli)
 
+    def changeOpacity(self, op):
+        #self.image.label.changeOpacity(self.labelClass, op/100.0)
+        #self.drawManager.setDrawOpacity(op/100.0)
+        if self.labelForImage.get(self.activeImage, None):
+            self.labelForImage[self.activeImage].setOpacity(op/100.0)
+        
+    def updateProject(self, project):
+        self.project = project
+        self.loadImageList()
+        self.updateDrawSettings()
+        
+    def updateDrawSettings(self):
+        pass 
+        
+    def loadImageList(self):
+        self.cmbImageList.clear()
+        imagenames = [os.path.basename(item.fileName) for item in self.project.dataMgr.dataItems]
+        print imagenames
+        self.cmbImageList.addItems(imagenames)
+
     def prepareLabeling(self):
         # temporary - hardcode pixel-type-labels:
+        
         self.labelForImage = {}
         self.labelForImage[self.activeImage] = labelingForOneImage()
         self.labelForImage[self.activeImage].setActiveLabel(0)
@@ -670,44 +697,60 @@ class labelWidget(QtGui.QWidget):
         drawManager = draw_Pixel(labelManager, self.canvas)
         self.labelForImage[self.activeImage].addDrawManager( drawManager )
         
-                
-    def changeOpacity(self, op):
-        #self.image.label.changeOpacity(self.labelClass, op/100.0)
-        #self.drawManager.setDrawOpacity(op/100.0)
-        self.labelForImage[self.activeImage].setOpacity(op/100.0)
         
     
     def changeImage(self, nr):
-        self.imageList.freeImageData(self.activeImage)
-        self.imageList.removeUser(self.activeImage, self)
-        for labelClass in self.image.label.LabelObjects:
-            for tli in labelClass:
-                self.canvas.removeItem(tli)
+        
+        if not self.project: return
+        #self.imageList.freeImageData(self.activeImage)
+        #self.imageList.removeUser(self.activeImage, self)
+        #for labelClass in self.image.label.LabelObjects:
+        #    for tli in labelClass:
+        #        self.canvas.removeItem(tli)
         
         self.activeImage = nr
-        self.image = self.imageList.list[self.activeImage]
-        self.imageData = self.imageList.getImageData(self.activeImage)
-        self.imageList.addUser(self.activeImage, self)
+        #self.image = self.imageList.list[self.activeImage]
+        #self.imageData = self.imageList.getImageData(self.activeImage)
+        #self.imageList.addUser(self.activeImage, self)
         if self.pixmapitem:
+            print "delete"
             self.canvas.removeItem(self.pixmapitem)
-        pm = QtGui.QPixmap.fromImage(self.imageData)
+
+        #try:
+        #    self.img = QtGui.QImage(100,100,QtGui.QImage.Format_ARGB32)
+        #    self.img.load(self.project.dataMgr.dataItems[nr].fileName)
+        #except Exception, inst:
+        #    print "displayImage.__loadImage: Fehler beim Laden: ", inst
+        
+        # todo: use data-manager instance of vigra-image
+        self.img = qimage2ndarray.numpy2qimage(self.project.dataMgr[nr].data)
+        
+        pm = QtGui.QPixmap.fromImage(self.img)
+        
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.pixmapitem.setZValue(-1)
         
-        self.canvas.setLabelObject(self.image.label)
-        self.updateClassList()
+        #self.canvas.setLabelObject(self.image.label)
+        #self.updateClassList()
         
-        for labelClass in self.image.label.LabelObjects:
-            for tli in labelClass:
-                #tli.setZValue(1000)
-                self.canvas.addItem(tli)
-                
+        #for labelClass in self.image.label.LabelObjects:
+        #    for tli in labelClass:
+        #        #tli.setZValue(1000)
+        #        self.canvas.addItem(tli)
+        if not self.labelForImage.get(nr, None):
+            self.labelForImage[nr] = labelingForOneImage()
+            self.labelForImage[nr].setActiveLabel(0)
+            labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
+            drawManager = draw_Pixel(labelManager, self.canvas)
+            self.labelForImage[self.activeImage].addDrawManager( drawManager )        
+
     def updateClassList(self):
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
     def changeClass(self, nr):
-        self.labelForImage[self.activeImage].setActiveLabel(nr)
+        if self.labelForImage.get(self.activeImage, None):
+            self.labelForImage[self.activeImage].setActiveLabel(nr)
                 
     def undo(self):
         self.image.undolist.undo()
@@ -870,6 +913,11 @@ class DisplayPanel(QtGui.QGraphicsScene):
             #self.labelObject.addLabelObject(self.classNr, self.topLevelObject)
             #self.addItem(self.topLevelObject)
             #self.lastPoint = event.scenePos()
+            try:
+                self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
+            except KeyError, AttributeError:
+                return
+
             self.labeling = True
             ##print event.buttons(), " == " ,QtCore.Qt.LeftButton, "=" ,event.button() == QtCore.Qt.LeftButton
             #self.addSomeStuffToCanvas(event.scenePos())
@@ -877,9 +925,10 @@ class DisplayPanel(QtGui.QGraphicsScene):
             pos = [event.scenePos().x(), event.scenePos().y()]
             self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
             #print self.parent().parent().parent()
-            if hasattr(self.parent().parent().parent(),'project'):
+            try:
                 self.drawManager.setDrawColor( QtGui.QColor.fromRgb( self.parent().parent().parent().project.labelColors.get(self.parent().labelForImage[self.parent().activeImage].activeLabel,0) ) )
-                print QtGui.QColor.fromRgb( self.parent().parent().parent().project.labelColors.get(self.parent().labelForImage[self.parent().activeImage].activeLabel,0) ) 
+            except AttributeError:
+                pass
             self.drawManager.InitDraw(pos)
          
     def mouseMoveEvent(self, event):

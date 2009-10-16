@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+
+# profile with python -m cProfile ilastikMain.py
+# python -m cProfile -o profiling.prf  ilastikMain.py
+# import pstats
+# p = pstats.Stats('fooprof')
+# p.sort_stats('time').print_stats()
+# possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
+
+
 import sys
 sys.path.append("..")
 import pdb
@@ -60,7 +69,8 @@ class MainWindow(QtGui.QMainWindow):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
         self.project = projectMgr.Project.loadFromDisk(str(fileName))
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True) 
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        self.ProjectModified() 
         
     def editProjectDlg(self):
         if hasattr(self, 'projectDlg'):
@@ -71,10 +81,11 @@ class MainWindow(QtGui.QMainWindow):
             return
         self.projectDlg = ProjectDlg(self)
         self.projectDlg.updateDlg(self.project)
+        self.ProjectModified()
             
         
-        
-        
+    def ProjectModified(self):
+        self.labelWidget.updateProject(self.project)
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
@@ -89,6 +100,7 @@ class MainWindow(QtGui.QMainWindow):
         dock = QtGui.QDockWidget("ImageDock_main", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea| QtCore.Qt.TopDockWidgetArea| QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(label_w)
+        self.labelWidget = label_w  # todo: user defined list of labelwidgets
         
         area = QtCore.Qt.BottomDockWidgetArea
         
@@ -351,6 +363,7 @@ class FeatureDlg(QtGui.QDialog):
                 featureSelectionList.append(self.parent.featureList[k])
         self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         self.close()
+        self.parent.projectModified()
         
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
