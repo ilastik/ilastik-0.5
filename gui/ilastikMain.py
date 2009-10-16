@@ -98,8 +98,16 @@ class MainWindow(QtGui.QMainWindow):
         self.featureList = featureMgr.ilastikFeatures
         
     def featureCompute(self):
-        self.project.featureMgr.triggerCompute(self.project.dataMgr)
-        print self.project.dataMgr.dataFeatures
+        self.project.featureMgr.triggerCompute(self.project.dataMgr)   
+        featureListRib = ctrlRibbon.RibbonListItem(ctrlRibbon.RibbonEntry("featureList","", "fatureList", ctrlRibbon.RibbonListItem))
+        for f in self.project.featureMgr.featureItems:
+            featureListRib.addItem(str(f))       
+        self.ribbon.tabDict['Features'].addItem(featureListRib)
+        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
+        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
+    def featureShow(self, item):
+        print "egg"
+        print item
         
 
 class ProjectDlg(QtGui.QDialog):
@@ -147,7 +155,7 @@ class ProjectDlg(QtGui.QDialog):
         fgcol.setBlue( 255-col.blue())
         self.btnLabelColor.setStyleSheet("background-color: %s; color: %s" % (col.name(), fgcol.name()) )
 
-    @QtCore.pyqtSignature("")
+    @QtCore.pyqtSignature("") 
     def on_btnLabelColor_clicked(self):
         colordlg = QtGui.QColorDialog()
         col = colordlg.getColor()
@@ -203,7 +211,7 @@ class ProjectDlg(QtGui.QDialog):
             r.data(QtCore.Qt.CheckStateRole)
             r.setCheckState(checker(d.isTesting))
             r.setFlags(r.flags() & flagON);
-            self.tableWidget.setItem(0, self.columnPos['Test'], r)
+            self.tableWidget.setItem(0, self.columnPos['Test'], r)                  
         
         self.cmbLabelName.clear()
         self.labelColor = project.labelColors
@@ -213,6 +221,7 @@ class ProjectDlg(QtGui.QDialog):
 
         self.update()
         
+    @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         
         fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif)")
@@ -233,7 +242,6 @@ class ProjectDlg(QtGui.QDialog):
                 # group
                 r = QtGui.QComboBox()
                 r.setEditable(True)
-                r
                 self.tableWidget.setCellWidget(0, self.columnPos['Groups'], r)
                 
                 # labels

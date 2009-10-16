@@ -23,18 +23,27 @@ class Ribbon(QtGui.QTabWidget):
     def addTab(self, w, s="TabName"):
         self.tabDict[s] = w
         QtGui.QTabWidget.insertTab(self, w.position, w, s)              
-        
-class RibbonButtonItem(QtGui.QPushButton):
+
+class RibbonBaseItem(QtGui.QWidget):
     def __init__(self,  ribbon_entry):
         QtGui.QPushButton.__init__(self)
         self.name = ribbon_entry.name
+        self.setToolTip(ribbon_entry.tool_tip)
+        self.setMaximumSize(QtCore.QSize(128,48)) 
+        
+class RibbonButtonItem(QtGui.QPushButton,RibbonBaseItem):
+    def __init__(self,  ribbon_entry):
+        QtGui.QPushButton.__init__(self)
+        RibbonBaseItem.__init__(self,  ribbon_entry)
         self.setIcon(ribbon_entry.icon)   
         self.setIconSize(ribbon_entry.size)
         self.setText(ribbon_entry.name)
-        self.setToolTip(ribbon_entry.tool_tip)
-        self.setMaximumSize(QtCore.QSize(128,128))     
-        
 
+class RibbonListItem(QtGui.QListWidget, RibbonBaseItem):
+    def __init__(self,  ribbon_entry):
+        QtGui.QPushButton.__init__(self)
+        RibbonBaseItem.__init__(self, ribbon_entry)
+        self.setMaximumSize(QtCore.QSize(300,40)) 
 
 class RibbonTabContainer(QtGui.QWidget):
     def __init__(self, position, parent=None, ):
@@ -58,7 +67,7 @@ class RibbonEntry():
         self.icon_file = icon_file
         self.tool_tip = tool_tip
         self.callback = callback
-        self.icon = QtGui.QIcon('../../icons/32x32/' + self.icon_file) 
+        self.icon = QtGui.QIcon('../../icons/32x32/' + str(self.icon_file)) 
         self.type = type
         self.size = QtCore.QSize(32,32)
     
