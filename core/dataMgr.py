@@ -20,8 +20,9 @@ class DataItemBase():
         
         self.data = None
         self.labels = []
+        self.dataKind = None
         self.dataType = None
-        self.dataDimensions = []
+        self.dataDimensions = 0
         self.thumbnail = None
         
     def loadData(self):
@@ -30,13 +31,42 @@ class DataItemBase():
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
+        self.dataDimensions = 2
        
     def loadData(self):
         self.data = vm.readImage(self.fileName)
-        
+        self.dataType = self.data.dtype
+        if len(self.data.shape) == 3:
+            if self.data.shape[2] == 3:
+                self.dataKind = 'rgb'
+            elif self.data.shape[2] > 3:
+                self.dataKind = 'multi'
+        elif len(self.data.shape) == 2:
+            self.dataKind = 'gray'
+            
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
         self.data = None
+class DataItemVolume(DataItemBase):
+    def __init__(self, fileName):
+        DataItemBase.__init__(self, fileName) 
+       
+    def loadData(self):
+        self.data = vm.readVolume(self.fileName)
+        self.dataDimensions = 3
+        self.dataType = self.data.dtype
+        if len(self.data.shape) == 4:
+            if self.data.shape[3] == 3:
+                self.dataKind = 'rgb'
+            elif self.data.shape[3] > 3:
+                self.dataKind = 'multi'
+        elif len(self.data.shape) == 3:
+            self.dataKind = 'gray'
+            
+    def unLoadData(self):
+        # TODO: delete permanently here for better garbage collection
+        self.data = None
+    
         
 class DataMgr():
     def __init__(self, dataItems=[]):

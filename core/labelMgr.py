@@ -60,7 +60,7 @@ class label_Patch(label_Base):
     
     def setLabel(self, pos, label):
         self.lastPatchNr = self.getPatchNrFromPosition(pos)
-        self.labelArray[ self.lastPatchNr ] = label
+        #self.labelArray[ self.lastPatchNr ] = label
         label_Base.setLabel(self, pos, label)
         
     def setLabelLine2D(self, pos1, pos2, label):

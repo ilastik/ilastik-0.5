@@ -110,13 +110,43 @@ class MainWindow(QtGui.QMainWindow):
         self.featureList = featureMgr.ilastikFeatures
         
     def featureCompute(self):
-        self.project.featureMgr.triggerCompute(self.project.dataMgr)   
-        featureListRib = ctrlRibbon.RibbonListItem(ctrlRibbon.RibbonEntry("featureList","", "fatureList", ctrlRibbon.RibbonListItem))
-        for f in self.project.featureMgr.featureItems:
-            featureListRib.addItem(str(f))       
-        self.ribbon.tabDict['Features'].addItem(featureListRib)
-        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
-        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
+        self.myTimer = QtCore.QTimer()
+        self.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
+        
+        numberOfJobs = self.project.featureMgr.prepareCompute(self.project.dataMgr)  
+        self.initFeatureProgress(numberOfJobs)
+
+        self.project.featureMgr.triggerCompute()
+        self.myTimer.start(100) 
+#        featureListRib = ctrlRibbon.RibbonListItem(ctrlRibbon.RibbonEntry("featureList","", "fatureList", ctrlRibbon.RibbonListItem))
+#        for f in self.project.featureMgr.featureItems:
+#            featureListRib.addItem(str(f))       
+#        self.ribbon.tabDict['Features'].addItem(featureListRib)
+#        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
+#        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
+    def initFeatureProgress(self, numberOfJobs):
+        print numberOfJobs
+        statusBar = self.statusBar()
+        self.myFeatureProgressBar = QtGui.QProgressBar()
+        self.myFeatureProgressBar.setMinimum(0)
+        self.myFeatureProgressBar.setMaximum(numberOfJobs)
+        self.myFeatureProgressBar.setFormat(' Features... %p%')
+        statusBar.addWidget(self.myFeatureProgressBar)
+        statusBar.show()
+        #self.setStatusBar(self.myStatusBar)
+    
+    def updateFeatureProgress(self):
+        val = self.project.featureMgr.getCount() 
+        self.myFeatureProgressBar.setValue(val)
+        if not self.project.featureMgr.featureProcess.is_alive():
+            self.myTimer.stop()
+            print "Finished"
+            self.terminateFeatureProgressBar()
+    def terminateFeatureProgressBar(self):
+        self.statusBar().removeWidget(self.myFeatureProgressBar)
+        self.statusBar().hide()
+        
+    
     def featureShow(self, item):
         print "egg"
         print item
@@ -280,14 +310,15 @@ class ProjectDlg(QtGui.QDialog):
                 self.initThumbnail(file_name)
     
     def initThumbnail(self, file_name):
-        picture = Image.open(file_name.__str__())
-        picture.thumbnail((68, 68), Image.ANTIALIAS)
-        w,h = picture.size
-        print "Thumbnail size = ", w, " width and ", h ," height"
-        icon = QtGui.QPixmap.fromImage(ImageQt.ImageQt(picture))
-        self.thumbList.append(icon)
+        #picture = Image.open(file_name.__str__())
+        #picture.thumbnail((68, 68), Image.ANTIALIAS)
+        #icon = QtGui.QPixmap.fromImage(ImageQt.ImageQt(picture))
+        #self.thumbList.append(icon)
         #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
         #self.thumbnailImage.setPixmap(self.thumbList[-1])
+        #picture.save('c:/test_pil.jpg')
+        #print icon.save('c:/test_qt.jpg')
+        pass
                     
     def updateThumbnail(self, row=0, col=0):
         #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
