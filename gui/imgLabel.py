@@ -653,7 +653,7 @@ class labelWidget(QtGui.QWidget):
             img.label.addClass()
             img.label.addClass()
             img.label.addClass("Klasse ", QtGui.QColor(0,255,0), 10)
-        self.updateClassList()
+        #self.updateClassList()
         self.pixmapitem = None
         self.changeImage(0)
         
@@ -768,6 +768,7 @@ class labelWidget(QtGui.QWidget):
         #    for tli in labelClass:
         #        #tli.setZValue(1000)
         #        self.canvas.addItem(tli)
+        self.changeClass(self.cmbClassList.currentIndex() )
                     
 
     def updateClassList(self):
