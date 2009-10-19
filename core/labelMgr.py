@@ -117,8 +117,8 @@ class label_Pixel(label_Grid):
     
     def init_storage(self):
         #self.labelArray = numpy.ndarray(self.getPatchCount())
-        self.labelArray = numpy.array(self.getPatchCount())
-    
+        self.labelArray = numpy.zeros(self.getPatchCount())         
+        
     def getPatchNrFromPosition(self, pos):
         nr = 0
         blocksize = 1
@@ -128,6 +128,7 @@ class label_Pixel(label_Grid):
             #nr += blocksize * getattr(pos, chr(attrnr))
             nr += blocksize * pos[i]
             blocksize *= self.size[i]
+        return nr
             
     def getPositionFromPatchNr(self, nr):
         pass
@@ -137,6 +138,12 @@ class label_Pixel(label_Grid):
         for i in xrange(1,self.dims):
             cnt *= self.size[i]
         return cnt
-            
-            
-            
+
+# ---------------------------
+
+class labelSettings_base:
+    pass
+
+class labelSettings_pixel:
+    def __init__(self):
+        self.brushSize = 1
