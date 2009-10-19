@@ -39,7 +39,14 @@ class labelingForOneImage:
     def setCanvas(self, canvas):
         for dmngr in self.DrawManagers:
             dmngr.setCanvas(canvas)
-    
+            
+    def canvas_clear(self):
+        for dmngr in self.DrawManagers:
+            dmngr.canvas_clear()
+        
+    def canvas_paint(self):
+        for dmngr in self.DrawManagers:
+            dmngr.canvas_paint()
 
 class drawManager:
     #todo: manage draw-data (topLevelItems, Pixmaps) in a dictionary: seperate labeltypes to make changing [opacity, color, ...] easy.    
@@ -72,6 +79,12 @@ class drawManager:
         
     def repaint(self):
         pass
+    
+    def canvas_clear(self):
+        pass
+    
+    def canvas_paint(self):
+        pass
 
     def InitDraw(self, pos):
         pass
@@ -103,9 +116,16 @@ class draw_geomObject(drawManager):
     def addObject(self, pos):
         pass
     
-    def repaint(self):
+    def canvas_clear(self):
+        for tli in self.topLevelItems:
+            self.canvas.removeItem(tli)
+    
+    def canvas_paint(self):
         for tli in self.topLevelItems:
             self.canvas.addItem(tli)
+            
+    def repaint(self):
+        pass
 
     def InitDraw(self, pos):
         self.topLevelItems.append( TopLevelItem() )
@@ -165,6 +185,13 @@ class draw_Patch(drawManager):
     def repaint(self):
         # todo: clear qimage, get labels from labelmngr and paint them.
         pass
+        
+    def canvas_clear(self):
+        #self.imageItem.scene().removeItem(self.imageItem)
+        self.canvas.removeItem(self.imageItem)
+    
+    def canvas_paint(self):
+        self.canvas.addItem(self.imageItem)
     
     def InitDraw(self, pos):
         self.startPos = pos
@@ -686,17 +713,6 @@ class labelWidget(QtGui.QWidget):
         print imagenames
         self.cmbImageList.addItems(imagenames)
 
-    def prepareLabeling(self):
-        # temporary - hardcode pixel-type-labels:
-        
-        self.labelForImage = {}
-        self.labelForImage[self.activeImage] = labelingForOneImage()
-        self.labelForImage[self.activeImage].setActiveLabel(0)
-        labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
-        #drawManager = draw_Ellipse(labelManager, self.canvas)
-        drawManager = draw_Pixel(labelManager, self.canvas)
-        self.labelForImage[self.activeImage].addDrawManager( drawManager )
-        
         
     
     def changeImage(self, nr):
@@ -707,6 +723,9 @@ class labelWidget(QtGui.QWidget):
         #for labelClass in self.image.label.LabelObjects:
         #    for tli in labelClass:
         #        self.canvas.removeItem(tli)
+        
+        if self.labelForImage.get(self.activeImage, None):
+            self.labelForImage[self.activeImage].canvas_clear()
         
         self.activeImage = nr
         #self.image = self.imageList.list[self.activeImage]
@@ -729,6 +748,15 @@ class labelWidget(QtGui.QWidget):
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.pixmapitem.setZValue(-1)
         
+        if self.labelForImage.get(self.activeImage, None):
+            self.labelForImage[self.activeImage].canvas_paint()
+        else:
+            self.labelForImage[nr] = labelingForOneImage()
+            self.labelForImage[nr].setActiveLabel(0)
+            labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
+            drawManager = draw_Pixel(labelManager, self.canvas)
+            self.labelForImage[self.activeImage].addDrawManager( drawManager ) 
+        
         #self.canvas.setLabelObject(self.image.label)
         #self.updateClassList()
         
@@ -736,12 +764,7 @@ class labelWidget(QtGui.QWidget):
         #    for tli in labelClass:
         #        #tli.setZValue(1000)
         #        self.canvas.addItem(tli)
-        if not self.labelForImage.get(nr, None):
-            self.labelForImage[nr] = labelingForOneImage()
-            self.labelForImage[nr].setActiveLabel(0)
-            labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
-            drawManager = draw_Pixel(labelManager, self.canvas)
-            self.labelForImage[self.activeImage].addDrawManager( drawManager )        
+                    
 
     def updateClassList(self):
         self.cmbClassList.clear()
