@@ -713,7 +713,6 @@ class labelWidget(QtGui.QWidget):
         #self.imageData = self.imageList.getImageData(self.activeImage)
         #self.imageList.addUser(self.activeImage, self)
         if self.pixmapitem:
-            print "delete"
             self.canvas.removeItem(self.pixmapitem)
 
         #try:
