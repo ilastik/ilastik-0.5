@@ -24,18 +24,20 @@ class labelingForOneImage:
         
     def setActiveLabel(self, label):
         self.activeLabel = label
+        for dmng in self.DrawManagers:
+            dmng.setDrawLabel(label)
         
     def setOpacity(self, op):
         for dmngr in self.DrawManagers:
             dmngr.setDrawOpacity(op)
     
-    def getLabelValue(self, pos, label):
+    def getLabelValue(self, pos):
         # todo: what, if different label-types (e.g. pixel, geom. objects..) are contradictory?
         value = 0
-        for dmngr in self.DrawManagers[label]:
+        for dmngr in self.DrawManagers:
                 value = dmngr.labelmngr.getLabel(pos)
         return value
-        
+    
     def setCanvas(self, canvas):
         for dmngr in self.DrawManagers:
             dmngr.setCanvas(canvas)
@@ -717,7 +719,11 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.project.labelNames)
 
-        
+    def getLabel(self, imageNr):
+        lfi = self.labelForImage.get(imageNr, None)
+        if not lfi:
+            return
+        return lfi.getLabelFromPixNr( nr )
     
     def changeImage(self, nr):
         
@@ -776,6 +782,7 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
     def changeClass(self, nr):
+        nr+=1  # 0 is unlabeled !!
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
                 

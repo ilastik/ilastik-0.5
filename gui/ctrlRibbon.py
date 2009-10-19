@@ -102,7 +102,7 @@ def createRibbons():
     RibbonGroupObjects["Features"].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Compute Features"))
     
     RibbonGroupObjects["Classification"].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Classifier"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Train Classifier"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Train", "categories/applications-system.png" ,"Train Classifier"))
     return RibbonGroupObjects   
         
         

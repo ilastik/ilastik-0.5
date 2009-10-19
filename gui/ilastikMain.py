@@ -49,6 +49,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.classificationTrain)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -125,6 +126,44 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
 
+    def classificationTrain(self):
+        return
+        if self.project:
+            TrainingFeatureList = []    # each list entry is a feature vector for a training example.
+            TrainingLabelList = []
+            shape = self.project.dataMgr.dataFeatures[0][0][0].shape
+            nFeatures = 0
+            for featureImage, featureString in self.project.dataMgr.dataFeatures[0]:
+                nFeatures += featureImage.shape.__len__()
+                
+            # ToDo: get label matrix from label-widget. something like that: iw.renderLabelMatrix(shape)
+            # for now, use this ugly code:
+            dataItemNr = 0
+            for dataItem in self.project.dataMgr.dataFeatures:
+                if True:  # todo:
+                #if self.project. labelWidget.hasLabels(dataItemNr):
+                    for pixelNr in xrange( shape[0]*shape[1] ):
+                        ###pos = 
+                        label = self.labelWidget.getLabel(dataItemNr, pixelNr)
+                        if label > 0:
+                            featureVector = numpy.ndarray( nFeatures )
+                            featureNr = 0
+                            for featureImage, featureString in dataItem:  # featureImage can be multi-dimensional, e.g. 3 dim for hesse-matrix
+                                # todo: fix hardcoded 2D:
+                                n = 1   # n: number of feature-values per pixel
+                                if featureImage.shape.__len__() > 2:
+                                    n = featureImage.shape[2]
+                                for i in xrange( n ):
+                                    if n==1:
+                                        featureValues = featureImage
+                                    else:
+                                        featureValues = featureImage[:,:,i]
+                                        featureVector[featureNr] = featureImage.flat[pixelNr]
+                                featureNr+=1 
+                            TrainingFeatureList.append()
+                            TrainingLabelList.append(label)
+            
+
     def initFeatureProgress(self, numberOfJobs):
         print numberOfJobs
         statusBar = self.statusBar()
@@ -159,13 +198,14 @@ class MainWindow(QtGui.QMainWindow):
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self)
+        # this enables   self.columnPos['File']:
+        self.columnPos = {}
+        self.labelColor = {}
         self.parent = parent
         self.fileList = []
         self.thumbList = []        
         self.initDlg()
-        # this enables   self.columnPos['File']:
-        self.columnPos = {}
-        self.labelColor = {}        
+        self.on_cmbLabelName_currentIndexChanged(0)
         for i in xrange(self.tableWidget.columnCount()):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         
@@ -178,13 +218,18 @@ class ProjectDlg(QtGui.QDialog):
         self.tableWidget.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.tableWidget.verticalHeader().hide()
         self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
+        self.on_cmbLabelName_currentIndexChanged(0)
         self.show()
         
 
     @QtCore.pyqtSignature("int")
     def on_cmbLabelName_currentIndexChanged(self, nr):
+        nr+=1 # 0 is unlabeled !!
         self.txtLabelName.setText(self.cmbLabelName.currentText())
-        col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
+        #col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
+        if not self.labelColor.get(nr,None):
+            self.labelColor[nr] = self.labelColor[1] = QtGui.QColor(QtCore.Qt.red).rgb()  # default: red
+        col = QtGui.QColor.fromRgb(self.labelColor[nr])
         self.setLabelColorButtonColor(col)
 
     @QtCore.pyqtSignature("")
@@ -205,7 +250,7 @@ class ProjectDlg(QtGui.QDialog):
     def on_btnLabelColor_clicked(self):
         colordlg = QtGui.QColorDialog()
         col = colordlg.getColor()
-        labelnr = self.cmbLabelName.currentIndex()
+        labelnr = self.cmbLabelName.currentIndex()+1
         self.labelColor[labelnr] = col.rgb()
         self.setLabelColorButtonColor(col)
         
