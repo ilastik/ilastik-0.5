@@ -35,6 +35,7 @@ class DataItemImage(DataItemBase):
        
     def loadData(self):
         self.data = vm.readImage(self.fileName)
+        self.data = self.data.transpose()
         self.dataType = self.data.dtype
         if len(self.data.shape) == 3:
             if self.data.shape[2] == 3:
