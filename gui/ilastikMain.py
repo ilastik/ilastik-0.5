@@ -145,8 +145,6 @@ class MainWindow(QtGui.QMainWindow):
             print "Finished"
             self.terminateFeatureProgressBar()
             self.project.featureMgr.joinCompute(self.project.dataMgr)
-            for k in self.project.dataMgr.dataFeatures:
-                print k
             
     def terminateFeatureProgressBar(self):
         self.statusBar().removeWidget(self.myFeatureProgressBar)

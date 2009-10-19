@@ -99,7 +99,6 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                 for c in channels:
                     for fi in features:
                         print c.shape, str(fi)
-                        # TODO fi braucht calculate
                         result.append((fi.compute(c), str(fi)))
                         time.sleep(0.05)
                         self.count += 1
