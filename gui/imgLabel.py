@@ -702,6 +702,7 @@ class labelWidget(QtGui.QWidget):
     def updateProject(self, project):
         self.project = project
         self.loadImageList()
+        self.loadLabelList()
         self.updateDrawSettings()
         
     def updateDrawSettings(self):
@@ -710,8 +711,11 @@ class labelWidget(QtGui.QWidget):
     def loadImageList(self):
         self.cmbImageList.clear()
         imagenames = [os.path.basename(item.fileName) for item in self.project.dataMgr.dataItems]
-        print imagenames
         self.cmbImageList.addItems(imagenames)
+        
+    def loadLabelList(self):
+        self.cmbClassList.clear()
+        self.cmbClassList.addItems(self.project.labelNames)
 
         
     

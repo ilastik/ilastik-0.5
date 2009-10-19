@@ -20,7 +20,7 @@ from PIL import Image, ImageQt
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         QtGui.QMainWindow.__init__(self)
-        self.setGeometry(50,50,768,512)
+        self.setGeometry(50, 50, 768, 512)
         self.iconPath = '../../icons/32x32/'
         self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         
@@ -70,7 +70,7 @@ class MainWindow(QtGui.QMainWindow):
         self.project = projectMgr.Project.loadFromDisk(str(fileName))
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        self.ProjectModified() 
+        self.projectModified() 
         
     def editProjectDlg(self):
         if hasattr(self, 'projectDlg'):
@@ -81,10 +81,10 @@ class MainWindow(QtGui.QMainWindow):
             return
         self.projectDlg = ProjectDlg(self)
         self.projectDlg.updateDlg(self.project)
-        self.ProjectModified()
+        self.projectModified()
             
         
-    def ProjectModified(self):
+    def projectModified(self):
         self.labelWidget.updateProject(self.project)
         
     def newFeatureDlg(self):
@@ -95,10 +95,10 @@ class MainWindow(QtGui.QMainWindow):
         
     
     def createImageWindows(self):
-        label_w = imgLabel.labelWidget(self, ['rgb1.jpg','rgb2.tif'])
+        label_w = imgLabel.labelWidget(self, ['rgb1.jpg', 'rgb2.tif'])
         
         dock = QtGui.QDockWidget("ImageDock_main", self)
-        dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea| QtCore.Qt.TopDockWidgetArea| QtCore.Qt.LeftDockWidgetArea)
+        dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(label_w)
         self.labelWidget = label_w  # todo: user defined list of labelwidgets
         
@@ -162,7 +162,7 @@ class ProjectDlg(QtGui.QDialog):
         # this enables   self.columnPos['File']:
         self.columnPos = {}
         self.labelColor = {}        
-        for i in xrange( self.tableWidget.columnCount() ):
+        for i in xrange(self.tableWidget.columnCount()):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         
     def initDlg(self):
@@ -179,23 +179,23 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("int")
     def on_cmbLabelName_currentIndexChanged(self, nr):
-        self.txtLabelName.setText( self.cmbLabelName.currentText() )
-        col = QtGui.QColor.fromRgb( self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb() ) )
+        self.txtLabelName.setText(self.cmbLabelName.currentText())
+        col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
         self.setLabelColorButtonColor(col)
 
     @QtCore.pyqtSignature("")
     def on_btnAddLabel_clicked(self):
         self.cmbLabelName.addItem("label")
-        self.cmbLabelName.setCurrentIndex( self.cmbLabelName.count()-1 )
+        self.cmbLabelName.setCurrentIndex(self.cmbLabelName.count() - 1)
         #self.on_cmbLabelName_currentIndexChanged( self.cmbLabelName.count()-1 )
         
     def setLabelColorButtonColor(self, col):
         self.btnLabelColor.setAutoFillBackground(True)
         fgcol = QtGui.QColor()
-        fgcol.setRed( 255-col.red())
-        fgcol.setGreen( 255-col.green())
-        fgcol.setBlue( 255-col.blue())
-        self.btnLabelColor.setStyleSheet("background-color: %s; color: %s" % (col.name(), fgcol.name()) )
+        fgcol.setRed(255 - col.red())
+        fgcol.setGreen(255 - col.green())
+        fgcol.setBlue(255 - col.blue())
+        self.btnLabelColor.setStyleSheet("background-color: %s; color: %s" % (col.name(), fgcol.name()))
 
     @QtCore.pyqtSignature("") 
     def on_btnLabelColor_clicked(self):
@@ -334,8 +334,8 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dataMgr.DataMgr())
         self.parent.project.labelColors = self.labelColor
         self.parent.project.labelNames = []
-        for i in xrange( self.cmbLabelName.count() ):
-            self.parent.project.labelNames.append( str(self.cmbLabelName.itemText(i)) )
+        for i in xrange(self.cmbLabelName.count()):
+            self.parent.project.labelNames.append(str(self.cmbLabelName.itemText(i)))
             
         
         rowCount = self.tableWidget.rowCount()
@@ -343,11 +343,11 @@ class ProjectDlg(QtGui.QDialog):
         for k in range(0, rowCount):
             fileName = self.tableWidget.item(k, self.columnPos['File']).text()
             theDataItem = dataMgr.DataItemImage(fileName)
-            dataItemList.append( theDataItem )
+            dataItemList.append(theDataItem)
             
             groups = []
-            for i in xrange( self.tableWidget.cellWidget(k, self.columnPos['Groups']).count() ):
-                groups.append( str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)) )
+            for i in xrange(self.tableWidget.cellWidget(k, self.columnPos['Groups']).count()):
+                groups.append(str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)))
             theDataItem.groupMembership = groups
             
             theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
@@ -356,7 +356,7 @@ class ProjectDlg(QtGui.QDialog):
             
             contained = False
             for pr in theDataItem.projects:
-                if pr==self.parent.project:
+                if pr == self.parent.project:
                     contained = true
             if not contained:
                 theDataItem.projects.append(self.parent.project)
@@ -364,6 +364,8 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.project.dataMgr.setDataList(dataItemList) 
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        
+        self.parent.projectModified()
         
         self.close()
         
