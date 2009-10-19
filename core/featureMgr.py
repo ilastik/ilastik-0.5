@@ -2,16 +2,15 @@ import numpy
 import threading 
 import multiprocessing
 import time
-from vigra import vigranumpycmodule as vm
 from PyQt4 import QtCore
 
 try:
     from vigra import vigranumpycmodule as vm
-except:
+except ImportError:
     try:
         import vigranumpycmodule as vm
-    except:
-        pass
+    except ImportError:
+        sys.exit("vigranumpycmodule not found!")
     
 class FeatureMgr():
     def __init__(self, featureItems=[]):
