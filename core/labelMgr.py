@@ -60,7 +60,7 @@ class label_Patch(label_Base):
     
     def setLabel(self, pos, label):
         self.lastPatchNr = self.getPatchNrFromPosition(pos)
-        #self.labelArray[ self.lastPatchNr ] = label
+        self.labelArray[ self.lastPatchNr ] = label
         label_Base.setLabel(self, pos, label)
         
     def setLabelLine2D(self, pos1, pos2, label):
@@ -116,7 +116,8 @@ class label_Pixel(label_Grid):
         label_Patch.__init__(self, size)
     
     def init_storage(self):
-        self.labelArray = numpy.ndarray(self.getPatchCount())
+        #self.labelArray = numpy.ndarray(self.getPatchCount())
+        self.labelArray = numpy.array(self.getPatchCount())
     
     def getPatchNrFromPosition(self, pos):
         nr = 0
