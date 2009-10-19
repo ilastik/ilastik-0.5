@@ -117,12 +117,14 @@ class MainWindow(QtGui.QMainWindow):
         self.initFeatureProgress(numberOfJobs)
         self.project.featureMgr.triggerCompute()
         self.myTimer.start(200) 
+        
 #        featureListRib = ctrlRibbon.RibbonListItem(ctrlRibbon.RibbonEntry("featureList","", "fatureList", ctrlRibbon.RibbonListItem))
 #        for f in self.project.featureMgr.featureItems:
 #            featureListRib.addItem(str(f))       
 #        self.ribbon.tabDict['Features'].addItem(featureListRib)
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
+
     def initFeatureProgress(self, numberOfJobs):
         print numberOfJobs
         statusBar = self.statusBar()
@@ -143,6 +145,8 @@ class MainWindow(QtGui.QMainWindow):
             print "Finished"
             self.terminateFeatureProgressBar()
             self.project.featureMgr.joinCompute(self.project.dataMgr)
+            for k in self.project.dataMgr.dataFeatures:
+                print k
             
     def terminateFeatureProgressBar(self):
         self.statusBar().removeWidget(self.myFeatureProgressBar)

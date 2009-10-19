@@ -50,34 +50,29 @@ class FeatureMgr():
             return self.featureProcess.count
           
     def joinCompute(self, dataMgr):
-        self.featureProcess.join()                     
+        self.featureProcess.join()  
+        dataMgr.dataFeatures = self.featureProcess.result;                
                 
 class FeatureBase(object):
     def __init__(self):
         self.featureFunktor = None
    
-    def compute(self, dataItem):
-        return None
-    
-       
+    def compute(self, channel):
+        return None  
     
 class LocalFeature(FeatureBase):
     def __init__(self, name, maskSize, featureFunktor):
         FeatureBase.__init__(self)
+        self.name = featureFunktor.__name__
         self.maskSize = maskSize
         self.sigma = maskSize / 3
         self.featureFunktor = featureFunktor
     
-#    def prepareCompute(self, dataItem):
-#        channels = self.unpackChannels(dataItem);
-#        featureProcessList = []
-#        for channel in channels:
-#            featureProcessList.append(FeatureProcess(self, self.featureFunktor, (channel, self.sigma)))     
-#        return featureProcessList
+    def compute(self, channel):
+        return self.featureFunktor()(channel, self.sigma)
 
-    
     def __str__(self):
-        return '%s: Masksize=%d, Sigma=%5.3f' % (self.featureFunktor.__name__ , self.maskSize, self.sigma)
+        return '%s: Masksize=%d, Sigma=%5.3f' % (self.name , self.maskSize, self.sigma)
 
 
 class FeatureParallelBase(object):
@@ -100,12 +95,15 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
     def run(self):          
         for data in self.featureProcessList:
             for channels, features in data:
+                result = []
                 for c in channels:
                     for fi in features:
                         print c.shape, str(fi)
-                        self.result.append(fi.featureFunktor()(c, fi.sigma))
+                        # TODO fi braucht calculate
+                        result.append((fi.compute(c), str(fi)))
                         time.sleep(0.05)
                         self.count += 1
+                self.result.append(result)
 
 class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
     def __init__(self, featureProcessList, conn):
@@ -114,12 +112,18 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
         self.conn = conn
         
     def run(self):          
-        for channels, fi in self.featureProcessList:
-            
-            for c in channels:
-               self.result.append(fi.featureFunktor()(c, fi.sigma))
-               self.count += 1
-               self.conn.send(self.count)
+        for data in self.featureProcessList:
+            for channels, features in data:
+                result = []
+                for c in channels:
+                    for fi in features:
+                        print c.shape, str(fi)
+                        # TODO fi braucht calculate
+                        result.append((fi.featureFunktor()(c, fi.sigma), str(fi)))
+                        time.sleep(0.05)
+                        self.count += 1
+                        self.conn.send(self.count)
+                self.result.append(result)
         self.conn.close()     
 
 def gaussianGradientMagnitude():
