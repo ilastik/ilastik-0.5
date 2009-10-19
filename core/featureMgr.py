@@ -19,20 +19,19 @@ class FeatureMgr():
         self.parent_conn = None
         self.child_conn = None
         self.parallelType = ['Process', 'Thread'][1]
+        self.featureProcessList = []
         
     def setFeatureItems(self, featureItems):
         self.featureItems = featureItems
         
     def prepareCompute(self, dataMgr):
-        self.featureProcessList = []
+        self.featureProcessList = [[] for i in range(0, len(dataMgr))]
         for dataIndex in xrange(0, len(dataMgr)):   
             # data will be loaded, if not there yet
             data = dataMgr[dataIndex]
             print 'Data Item: %s: ' % data.fileName
-            for fi in self.featureItems:
-                #print 'Prepare %s' % str(fi)
-                channelsList = fi.unpackChannels(data)
-                self.featureProcessList.append((channelsList, fi))
+            channelsList = data.unpackChannels()          
+            self.featureProcessList[dataIndex].append((channelsList, self.featureItems))
         
         if self.parallelType == 'Process':
             self.parent_conn, self.child_conn = multiprocessing.Pipe()
@@ -49,8 +48,9 @@ class FeatureMgr():
             return self.parent_conn.recv()
         else:
             return self.featureProcess.count
-        
-                
+          
+    def joinCompute(self, dataMgr):
+        self.featureProcess.join()                     
                 
 class FeatureBase(object):
     def __init__(self):
@@ -59,13 +59,7 @@ class FeatureBase(object):
     def compute(self, dataItem):
         return None
     
-    def unpackChannels(self, dataItem):
-        if dataItem.dataKind in ['rgb']:
-            return [ dataItem.data[:,:,k] for k in range(0,3) ]
-        elif dataItem.dataKind in ['multi']:
-            return [ dataItem.data[:,:,k] for k in range(0, dataItem.data.shape[2]) ]
-        elif dataItem.dataKind in ['gray']:
-            return [ dataItem.data ]          
+       
     
 class LocalFeature(FeatureBase):
     def __init__(self, name, maskSize, featureFunktor):
@@ -95,22 +89,23 @@ class FeatureParallelBase(object):
         self.computeNumberOfJobs()
     
     def computeNumberOfJobs(self):
-        for channels, fi in self.featureProcessList:
-            for c in channels:
-                self.jobs += 1
-
+        for data in self.featureProcessList:
+            for channels, features in data:
+                    self.jobs += len(channels) * len(features)
 
 class FeatureThread(threading.Thread, FeatureParallelBase):
     def __init__(self, featureProcessList):
         FeatureParallelBase.__init__(self, featureProcessList)
         threading.Thread.__init__(self)  
     def run(self):          
-        for channels, fi in self.featureProcessList:
-            for c in channels:
-               #time.sleep(0.2)
-               self.result.append(fi.featureFunktor()(c, fi.sigma))
-               time.sleep(0.04)
-               self.count += 1
+        for data in self.featureProcessList:
+            for channels, features in data:
+                for c in channels:
+                    for fi in features:
+                        print c.shape, str(fi)
+                        self.result.append(fi.featureFunktor()(c, fi.sigma))
+                        time.sleep(0.05)
+                        self.count += 1
 
 class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
     def __init__(self, featureProcessList, conn):
@@ -120,15 +115,12 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
         
     def run(self):          
         for channels, fi in self.featureProcessList:
+            
             for c in channels:
-               #time.sleep(0.4) 
                self.result.append(fi.featureFunktor()(c, fi.sigma))
                self.count += 1
                self.conn.send(self.count)
-        self.conn.close()
-
-            
-        
+        self.conn.close()     
 
 def gaussianGradientMagnitude():
     return vm.gaussianGradientMagnitude
@@ -141,7 +133,6 @@ def hessianMatrixOfGaussian():
 
 def identity():
     return lambda x, sigma: x
-
 
 ilastikFeatures = []
 ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", 7, hessianMatrixOfGaussian))

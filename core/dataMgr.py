@@ -27,6 +27,14 @@ class DataItemBase():
         
     def loadData(self):
         self.data = "This is not an Image..."
+    
+    def unpackChannels(self):
+        if self.dataKind in ['rgb']:
+            return [ self.data[:,:,k] for k in range(0,3) ]
+        elif self.dataKind in ['multi']:
+            return [ self.data[:,:,k] for k in range(0, self.data.shape[2]) ]
+        elif self.dataKind in ['gray']:
+            return [ self.data ]   
 
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
@@ -84,6 +92,7 @@ class DataMgr():
             self.dataItems[ind].loadData()
             self.dataItemsLoaded[ind] = True
         return self.dataItems[ind]
+    
     def clearDataList(self):
         self.dataItems = []
         self.dataFeatures = []
