@@ -9,6 +9,7 @@
 
 
 import sys
+import numpy
 sys.path.append("..")
 import pdb
 from PyQt4 import QtCore, QtGui, uic
@@ -129,6 +130,57 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
 
     def classificationTrain(self):
+        if not self.project:
+            return
+
+        shape = self.project.dataMgr.dataFeatures[0][0][0].shape
+        print shape
+        res_labeledFeatures = []
+        res_labels = []
+        res_names = []
+        dataItemNr = 0
+        for dataItem in self.project.dataMgr.dataFeatures:
+            # todo: generalize to nD.
+            # problem: feature-dimension can be higher than image-dimension.
+            if dataItem[0][0].shape[0] != shape[0]:
+                print "dimensions do not match, skipping dataItem."
+                continue
+            if dataItem[0][0].shape[1] != shape[1]:
+                print "dimensions do not match, skipping dataItem."
+                continue
+            #todo:
+            #if !self.labelWidget.hasLabels(dataItemNr):
+            #    continue
+            
+            # get label-matrix:
+            labelmatrix = numpy.ndarray(shape)
+            # todo: generalize to nD.
+            for pixX in xrange(shape[0]):
+                print "generating labelImage: ", pixX, " / ", shape[0]
+                for pixY in xrange(shape[1]):
+                    labelmatrix[pixX,pixY] = self.labelWidget.getLabel(dataItemNr, [pixY,pixX])
+            res_labels = labelmatrix.nonzero()
+            for featureImage, featureString in dataItem:
+                print featureImage
+                print featureImage.shape
+                # todo: fix hardcoded 2D:
+                n = 1   # n: number of feature-values per pixel
+                if featureImage.shape.__len__() > 2:
+                    n = featureImage.shape[2]
+                if n<=1:
+                    res_labeledFeatures.append( featureImage[labelmatrix.nonzero()] )
+                    res_names.append( featureString )
+                else:
+                    for featureDim in xrange(n):
+                        print featureImage.shape
+                        print labelmatrix.shape
+                        print featureImage[:,:,featureDim].shape
+                        print labelmatrix.nonzero().shape
+                        res_labeledFeatures.append( (featureImage[:,:,featureDim])[labelmatrix.nonzero()] )
+                        res_names.append( featureString + "_%i" %(featureDim))
+            dataItemNr+=1
+        trainingMatrix = numpy.concatenate( res_labeledFeatures)
+        
         return
         if self.project:
             TrainingFeatureList = []    # each list entry is a feature vector for a training example.

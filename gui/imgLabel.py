@@ -719,11 +719,11 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.project.labelNames)
 
-    def getLabel(self, imageNr):
+    def getLabel(self, imageNr, pos):
         lfi = self.labelForImage.get(imageNr, None)
         if not lfi:
             return
-        return lfi.getLabelFromPixNr( nr )
+        return lfi.getLabelValue(pos)
     
     def changeImage(self, nr):
         
