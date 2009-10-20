@@ -69,8 +69,7 @@ class ClassifierTrainThread(threading.Thread):
         while not self.featLabelTupel.empty():
             (features, labels) = self.featLabelTupel.get()
             while not self.classifierList.full():
-                while self.stopped:
-                    time.sleep(0.05)
+                if self.stopped:
+                    return
                 self.classifierList.put( (1, ClassifierRandomForest(features, labels)) )
                 self.count += 1
-                time.sleep(0.05)

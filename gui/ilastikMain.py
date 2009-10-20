@@ -249,19 +249,18 @@ class MainWindow(QtGui.QMainWindow):
         print "egg"
         print item
         
-    def classificationInteractive(self):
-        self.myTimer = QtCore.QTimer()
-        self.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-        numberOfJobs = 100
-        
+    def classificationInteractive(self):               
         if not self.ribbon.tabDict['Classification'].itemDict['Interactive'].isChecked():
             self.classificationProcess.stopped = True
-            self.myTimer.stop()
-            print "Interactive Mode left by User"
+            self.classificationTimer.stop()
             self.classificationProcess.join()
+            print "Interactive Mode left by User"
             self.terminateClassificationProgressBar()
             return
-                      
+        
+        self.classificationTimer = QtCore.QTimer()
+        self.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
+        numberOfJobs = 10              
         
         self.initClassificationProgress(numberOfJobs)
         
@@ -274,7 +273,7 @@ class MainWindow(QtGui.QMainWindow):
        
         self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
         self.classificationProcess.start()
-        self.myTimer.start(200) 
+        self.classificationTimer.start(200) 
 
     def initClassificationProgress(self, numberOfJobs):
         statusBar = self.statusBar()
@@ -289,8 +288,8 @@ class MainWindow(QtGui.QMainWindow):
         val = self.classificationProcess.count
         self.myClassificationProgressBar.setValue(val)
         if not self.classificationProcess.is_alive():
-            self.myTimer.stop()
-            print "Classification Finished"
+            self.classificationTimer.stop()
+            print "Training Finished"
             self.classificationProcess.join()
             self.terminateClassificationProgressBar()
             
