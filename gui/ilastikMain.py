@@ -4,7 +4,7 @@
 # python -m cProfile -o profiling.prf  ilastikMain.py
 # import pstats
 # p = pstats.Stats('fooprof')
-# p.sort_stats('time').reverse_order().print_stats()
+# p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
 
 
@@ -12,10 +12,11 @@ import sys
 sys.path.append("..")
 import pdb
 from PyQt4 import QtCore, QtGui, uic
-from core import version, dataMgr, projectMgr, featureMgr
+from core import version, dataMgr, projectMgr, featureMgr, classificationMgr
 from gui import ctrlRibbon, imgLabel
 from PIL import Image, ImageQt
-
+from Queue import PriorityQueue as pq
+import numpy
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -50,6 +51,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.classificationTrain)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.classificationCompute)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -189,10 +191,50 @@ class MainWindow(QtGui.QMainWindow):
         self.statusBar().removeWidget(self.myFeatureProgressBar)
         self.statusBar().hide()
         
-    
     def featureShow(self, item):
         print "egg"
         print item
+        
+    def classificationCompute(self):
+        self.myTimer = QtCore.QTimer()
+        self.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)
+        
+        numberOfJobs = 100
+        self.initClassificationProgress(numberOfJobs)
+        F = numpy.random.rand(500,10)
+        L = numpy.floor(numpy.random.rand(500,1)+0.5)
+        L = numpy.array(L,dtype=numpy.uint32)
+        featLabelTupel = pq()
+        featLabelTupel.put((F,L))
+        
+        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
+        self.classificationProcess.start()
+        self.myTimer.start(200) 
+
+    def initClassificationProgress(self, numberOfJobs):
+        statusBar = self.statusBar()
+        self.myClassificationProgressBar = QtGui.QProgressBar()
+        self.myClassificationProgressBar.setMinimum(0)
+        self.myClassificationProgressBar.setMaximum(numberOfJobs)
+        self.myClassificationProgressBar.setFormat(' Classifier... %p%')
+        statusBar.addWidget(self.myClassificationProgressBar)
+        statusBar.show()
+    
+    def updateClassificationProgress(self):
+        val = self.classificationProcess.count
+        self.myClassificationProgressBar.setValue(val)
+        if not self.classificationProcess.is_alive():
+            self.myTimer.stop()
+            print "Classification Finished"
+            self.classificationProcess.join()
+            self.terminateClassificationProgressBar()
+            
+            
+                
+            
+    def terminateClassificationProgressBar(self):
+        self.statusBar().removeWidget(self.myClassificationProgressBar)
+        self.statusBar().hide()
         
 
 class ProjectDlg(QtGui.QDialog):

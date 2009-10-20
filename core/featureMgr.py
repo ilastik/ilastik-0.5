@@ -2,7 +2,6 @@ import numpy
 import threading 
 import multiprocessing
 import time
-from PyQt4 import QtCore
 
 try:
     from vigra import vigranumpycmodule as vm
