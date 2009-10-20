@@ -51,7 +51,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.classificationTrain)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.classificationCompute)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked()'), self.classificationCompute)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -196,6 +196,14 @@ class MainWindow(QtGui.QMainWindow):
         print item
         
     def classificationCompute(self):
+        if not self.ribbon.tabDict['Classification'].itemDict['Interactive'].isChecked():
+            self.classificationProcess.stopped = True
+            self.myTimer.stop()
+            print "Classification Finished"
+            self.classificationProcess.join()
+            self.terminateClassificationProgressBar()
+            return
+                      
         self.myTimer = QtCore.QTimer()
         self.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)
         
@@ -206,7 +214,7 @@ class MainWindow(QtGui.QMainWindow):
         L = numpy.array(L,dtype=numpy.uint32)
         featLabelTupel = pq()
         featLabelTupel.put((F,L))
-        
+       
         self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
         self.classificationProcess.start()
         self.myTimer.start(200) 

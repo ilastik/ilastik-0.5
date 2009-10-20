@@ -39,6 +39,15 @@ class RibbonButtonItem(QtGui.QPushButton,RibbonBaseItem):
         self.setIconSize(ribbon_entry.size)
         self.setText(ribbon_entry.name)
 
+class RibbonToggleButtonItem(QtGui.QToolButton,RibbonBaseItem):
+    def __init__(self,  ribbon_entry):
+        QtGui.QToolButton.__init__(self)
+        RibbonBaseItem.__init__(self,  ribbon_entry)
+        self.setIcon(ribbon_entry.icon)   
+        self.setIconSize(ribbon_entry.size)
+        self.setText(ribbon_entry.name)
+        self.setCheckable(True)
+
 class RibbonListItem(QtGui.QListWidget, RibbonBaseItem):
     def __init__(self,  ribbon_entry):
         QtGui.QPushButton.__init__(self)
@@ -101,8 +110,10 @@ def createRibbons():
     RibbonGroupObjects["Features"].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Features"))
     RibbonGroupObjects["Features"].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Compute Features"))
     
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Classifier"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train", "categories/applications-system.png" ,"Train Classifier"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", "actions/edit-select-all.png" ,"Select Classifier")) 
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", "actions/media-playback-start.png" ,"Interactive Classifier",type=RibbonToggleButtonItem))
+    
     return RibbonGroupObjects   
         
         
