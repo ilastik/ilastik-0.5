@@ -60,18 +60,18 @@ class FeatureBase(object):
         return None  
     
 class LocalFeature(FeatureBase):
-    def __init__(self, name, maskSize, featureFunktor):
+    def __init__(self, name, args, arg_names, featureFunktor):
         FeatureBase.__init__(self)
         self.name = featureFunktor.__name__
-        self.maskSize = maskSize
-        self.sigma = maskSize / 3
+        self.args = args
+        self.arg_names = arg_names
         self.featureFunktor = featureFunktor
     
     def compute(self, channel):
-        return self.featureFunktor()(channel, self.sigma)
+        return self.featureFunktor()(channel, * self.args)
 
     def __str__(self):
-        return '%s: Masksize=%d, Sigma=%5.3f' % (self.name , self.maskSize, self.sigma)
+        return '%s: %s' % (self.name , ', '.join(["%s = %d" % (x[0], x[1]) for x in zip(self.arg_names, self.args)]))
 
 
 class FeatureParallelBase(object):
@@ -99,7 +99,6 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                     for fi in features:
                         print c.shape, str(fi)
                         result.append((fi.compute(c), str(fi)))
-                        time.sleep(0.05)
                         self.count += 1
                 self.result.append(result)
 
@@ -117,8 +116,7 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
                     for fi in features:
                         print c.shape, str(fi)
                         # TODO fi braucht calculate
-                        result.append((fi.featureFunktor()(c, fi.sigma), str(fi)))
-                        time.sleep(0.05)
+                        result.append((fi.compute(c), str(fi)))
                         self.count += 1
                         self.conn.send(self.count)
                 self.result.append(result)
@@ -133,14 +131,20 @@ def structureTensor():
 def hessianMatrixOfGaussian():
     return vm.hessianMatrixOfGaussian
 
+def eigStructureTensor2d():
+    return vm.eigStructureTensor2d
+
 def identity():
-    return lambda x, sigma: x
+    return lambda x: x
 
 ilastikFeatures = []
-ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", 7, hessianMatrixOfGaussian))
-ilastikFeatures.append(LocalFeature("Identity", 0, identity))
-ilastikFeatures.append(LocalFeature("GradientMag", 3, gaussianGradientMagnitude))
-ilastikFeatures.append(LocalFeature("GradientMag", 7, gaussianGradientMagnitude))
-ilastikFeatures.append(LocalFeature("structureTensor", 3, structureTensor))
-ilastikFeatures.append(LocalFeature("structureTensor", 7, structureTensor))
-ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", 3, hessianMatrixOfGaussian))
+
+ilastikFeatures.append(LocalFeature("Identity", [], [''],  identity))
+ilastikFeatures.append(LocalFeature("GradientMag", [1], ['Sigma'], gaussianGradientMagnitude))
+ilastikFeatures.append(LocalFeature("GradientMag", [2], ['Sigma'], gaussianGradientMagnitude))
+ilastikFeatures.append(LocalFeature("structureTensor", [1], ['Sigma'], structureTensor))
+ilastikFeatures.append(LocalFeature("structureTensor", [2], ['Sigma'], structureTensor))
+ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", [1], ['Sigma'], hessianMatrixOfGaussian))
+ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", [2], ['Sigma'], hessianMatrixOfGaussian))
+ilastikFeatures.append(LocalFeature("eigStructureTensor2d", [1, 1], ['InnerScale', 'OuterScale'] , eigStructureTensor2d))
+

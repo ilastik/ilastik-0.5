@@ -31,6 +31,8 @@ class MainWindow(QtGui.QMainWindow):
         self.createImageWindows()
         self.createFeatures()
         
+        self.classificationProcess = None
+        
         
     def createRibbons(self):                     
       
@@ -52,7 +54,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.classificationTrain)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked()'), self.classificationCompute)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked()'), self.classificationInteractive)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -247,22 +249,25 @@ class MainWindow(QtGui.QMainWindow):
         print "egg"
         print item
         
-    def classificationCompute(self):
+    def classificationInteractive(self):
+        self.myTimer = QtCore.QTimer()
+        self.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
+        numberOfJobs = 100
+        
         if not self.ribbon.tabDict['Classification'].itemDict['Interactive'].isChecked():
             self.classificationProcess.stopped = True
             self.myTimer.stop()
-            print "Classification Finished"
+            print "Interactive Mode left by User"
             self.classificationProcess.join()
             self.terminateClassificationProgressBar()
             return
                       
-        self.myTimer = QtCore.QTimer()
-        self.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)
         
-        numberOfJobs = 100
         self.initClassificationProgress(numberOfJobs)
-        F = numpy.random.rand(500,10)
-        L = numpy.floor(numpy.random.rand(500,1)+0.5)
+        
+        # Get Train Data
+        F = numpy.random.rand(5000,30)
+        L = numpy.floor(numpy.random.rand(5000,1)+0.5)
         L = numpy.array(L,dtype=numpy.uint32)
         featLabelTupel = pq()
         featLabelTupel.put((F,L))
