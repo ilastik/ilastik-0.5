@@ -33,7 +33,7 @@ class ClassifierRandomForest(ClassifierBase):
     
     def train(self, features, labels):
         if not labels.dtype == numpy.uint32:
-            labels = numpy.array(l,dtype=numpy.uint32)
+            labels = numpy.array(labels,dtype=numpy.uint32)
         if not features == numpy.float32:
             features = numpy.array(features,dtype=numpy.float32)
         self.classifier = vm.RandomForest(features, labels, self.treeCount)
@@ -41,9 +41,9 @@ class ClassifierRandomForest(ClassifierBase):
     
     def predict(self, target):
         if self.classifier:
-            if not target == numpy.float32:
+            if not target.dtype == numpy.float32:
                 target = numpy.array(target, dtype=numpy.float32)
-                return self.classifier.predictProbabilities(target)      
+            return self.classifier.predictProbabilities(target)      
 
 class ClassifierSVM(ClassifierBase):
     def __init__(self):
@@ -62,16 +62,14 @@ class ClassifierTrainThread(threading.Thread):
         self.queueSize = queueSize
         self.featLabelTupel = featLabelTupel
         self.count = 0
-        self.classifierList = pq(self.queueSize)
+        self.classifierList = []
         self.stopped = False
     
     def run(self):
         while not self.featLabelTupel.empty():
             (features, labels) = self.featLabelTupel.get()
-            while not self.classifierList.full():
-                if self.stopped:
-                    return
-                self.classifierList.put( ClassifierRandomForest(features, labels) )
+            while self.count != self.queueSize:
+                self.classifierList.append( ClassifierRandomForest(features, labels) )
                 self.count += 1
                 
 class ClassifierPredictThread(threading.Thread):
@@ -86,10 +84,13 @@ class ClassifierPredictThread(threading.Thread):
     def run(self):
         for feature in self.featureList:
             cnt = 0
-            for classifier in self.classifierList.queue:
+            print "Feature Item"
+            for classifier in self.classifierList:
                 if cnt == 0:
-                    prediction = classifier.predict(feature)
+                    print "Classifier %d prediction" % cnt
+                    prediction = classifier.predict(feature)      
                 else:
+                    print "Classifier %d prediction" % cnt
                     prediction += classifier.predict(feature)
                 cnt += 1
                 self.count += 1

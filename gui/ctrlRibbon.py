@@ -44,10 +44,13 @@ class RibbonToggleButtonItem(QtGui.QToolButton,RibbonBaseItem):
     def __init__(self,  ribbon_entry):
         QtGui.QToolButton.__init__(self)
         RibbonBaseItem.__init__(self,  ribbon_entry)
-        self.setIcon(ribbon_entry.icon)   
+        action = QtGui.QAction(self)
+        action.setIcon(ribbon_entry.icon)   
         self.setIconSize(ribbon_entry.size)
-        self.setText(ribbon_entry.name)
+        action.setIconText(ribbon_entry.name)
         self.setCheckable(True)
+        self.setToolButtonStyle(2)
+        self.setDefaultAction(action)
 
 class RibbonListItem(QtGui.QListWidget, RibbonBaseItem):
     def __init__(self,  ribbon_entry):
@@ -102,7 +105,7 @@ def createRibbons():
     RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects",0)    
     RibbonGroupObjects["View"] = RibbonEntryGroup("View", 1)     
     RibbonGroupObjects["Features"] = RibbonEntryGroup("Features",0)   
-    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 0)   
+    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 1)   
     RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)   
     RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 4)   
     

@@ -26,6 +26,9 @@ class Project(object):
         fileHandle.close()
         print "Project %s loaded from %s " % (p.name, fileName)
         return p
+    
+
+        
             
 #    def setDataMgr(self, dataList):
 #        self.dataMgr = dataMagr.dataMagr(dataList)

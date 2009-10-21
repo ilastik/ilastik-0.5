@@ -17,7 +17,12 @@ from core import version, dataMgr, projectMgr, featureMgr, classificationMgr
 from gui import ctrlRibbon, imgLabel
 from PIL import Image, ImageQt
 from Queue import PriorityQueue as pq
+from Queue import Queue as queue
 import numpy
+import copy 
+
+from IPython.Shell import IPShellEmbed 
+
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -182,7 +187,7 @@ class MainWindow(QtGui.QMainWindow):
             dataItemNr+=1
         trainingMatrix = numpy.concatenate( res_labeledFeatures).T
         self.project.trainingMatrix = trainingMatrix
-        self.project.traininLabels = res_labels
+        self.project.trainingLabels = res_labels
         self.project.trainingFeatureNames = res_names
         print "training data has been generated."
         return
@@ -538,9 +543,8 @@ class ClassificationTrain(object):
         self.initClassificationProgress(numberOfJobs)
         
         # Get Train Data
-        F = numpy.random.rand(1000,30)
-        L = numpy.floor(numpy.random.rand(1000,1)+0.5)
-        L = numpy.array(L,dtype=numpy.uint32)
+        F = copy.copy(self.parent.project.trainingMatrix)
+        L = copy.copy(self.parent.project.trainingLabels)
         featLabelTupel = pq()
         featLabelTupel.put((F,L))
        
@@ -565,10 +569,24 @@ class ClassificationTrain(object):
             print "Training Finished"
             self.classificationProcess.join()
             self.parent.project.classifierList = self.classificationProcess.classifierList
-            
-            # Delete Thread Class
-            self.classificationProcess = None
             self.terminateClassificationProgressBar()
+            
+            F = numpy.array(self.parent.project.trainingMatrix, dtype=numpy.float32)
+            
+            print "Predicting on Training Set"
+            for c in self.parent.project.classifierList:
+                print ".",
+                c.classifier.predictProbabilities(F)
+            
+            print "Predicting on Everything: Here it crashes, if more then one image was selected..."
+            print "maybe there is a problem on the generation of the TrainingMatrix for training?"
+            
+            featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
+            for c in self.parent.project.classifierList:
+                for d in featureQueue:
+                    print ",",
+                    FF = numpy.array(d, dtype=numpy.float32)
+                    c.classifier.predictProbabilities(FF)
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
@@ -590,16 +608,15 @@ class ClassificationPredict(object):
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         
         # Get Predict Data
-        F = []
-        F.append(numpy.random.rand(65000,30))
-        F.append(numpy.random.rand(65000,30))
+        # self.featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
+        self.featureQueue = []
+        for k in range(0,4):
+            self.featureQueue.append(numpy.random.rand(256*256,17))
         
-        numberOfJobs = 10 * len(F)             
+        numberOfJobs = len(self.featureQueue) * len(self.parent.project.classifierList)
+        print numberOfJobs
         self.initClassificationProgress(numberOfJobs)
-        
-        
-       
-        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, F)
+        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, self.featureQueue)
         self.classificationPredict.start()
         self.classificationTimer.start(200) 
 
@@ -620,8 +637,6 @@ class ClassificationPredict(object):
             print "Training Finished"
             self.classificationPredict.join()
             self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList           
-            # Delete Thread Class
-            self.classificationPredict = None
             self.terminateClassificationProgressBar()         
             
     def terminateClassificationProgressBar(self):
@@ -630,12 +645,7 @@ class ClassificationPredict(object):
         
                 
             
-            
-            
-            
-            
-        
-                     
+                 
 
 
 
@@ -643,5 +653,7 @@ class ClassificationPredict(object):
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow()  
-    mainwindow.show()
+    mainwindow.show() 
+    ipshell = IPShellEmbed() 
+
     sys.exit(app.exec_())

@@ -1,5 +1,7 @@
 import numpy
 import sys
+from Queue import Queue as queue
+from copy import copy
 
 try:
     from vigra import vigranumpycmodule as vm
@@ -84,6 +86,7 @@ class DataMgr():
         #self.labels = [None] * len(dataItems)
         self.labels = {}
         self.prediction = [None] * len(dataItems)
+        self.dataFeatures = None
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
@@ -102,6 +105,27 @@ class DataMgr():
     
     def __len__(self):
         return len(self.dataItems)
+    
+    def buildFeatureMatrix(self):
+        self.featureMatrixList = []    
+        for dataFeatures in self.dataFeatures:
+            fTuple = []
+            for features in dataFeatures:
+                f = features[0]
+                fSize = f.shape[0] * f.shape[1] 
+                if len(f.shape) == 2:
+                    f = f.reshape(fSize,1)
+                else:
+                    f = f.reshape(fSize,f.shape[2])
+                    
+                fTuple.append(f)  
+            self.featureMatrixList.append( numpy.concatenate(fTuple,axis=1) )
+        return self.featureMatrixList
+
+                    
+                    
+                    
+                
         
         
 
