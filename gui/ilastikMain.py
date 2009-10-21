@@ -578,12 +578,16 @@ class ClassificationPredict(object):
     def start(self):               
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-        numberOfJobs = 10              
-        
-        self.initClassificationProgress(numberOfJobs)
         
         # Get Predict Data
-        F = numpy.random.rand(65000,30)
+        F = []
+        F.append(numpy.random.rand(65000,30))
+        F.append(numpy.random.rand(65000,30))
+        
+        numberOfJobs = 10 * len(F)             
+        self.initClassificationProgress(numberOfJobs)
+        
+        
        
         self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, F)
         self.classificationPredict.start()
@@ -605,6 +609,9 @@ class ClassificationPredict(object):
             self.classificationTimer.stop()
             print "Training Finished"
             self.classificationPredict.join()
+            self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList           
+            # Delete Thread Class
+            self.classificationPredict = None
             self.terminateClassificationProgressBar()         
             
     def terminateClassificationProgressBar(self):

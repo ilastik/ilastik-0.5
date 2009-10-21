@@ -75,19 +75,22 @@ class ClassifierTrainThread(threading.Thread):
                 self.count += 1
                 
 class ClassifierPredictThread(threading.Thread):
-    def __init__(self, classifierList, features):
+    def __init__(self, classifierList, featureList):
         threading.Thread.__init__(self)
         self.classifierList = classifierList
         self.count = 0
-        self.features = features
+        self.featureList = featureList
         self.stopped = False
-        self.prediction = None
+        self.predictionList = []
     
     def run(self):
-        for classifier in self.classifierList.queue:
-            if self.count == 0:
-                prediction = classifier.predict(self.features)
-            else:
-                prediction += classifier.predict(self.features)
-            self.count += 1
-        self.prediction =  prediction / self.count
+        for feature in self.featureList:
+            cnt = 0
+            for classifier in self.classifierList.queue:
+                if cnt == 0:
+                    prediction = classifier.predict(feature)
+                else:
+                    prediction += classifier.predict(feature)
+                cnt += 1
+                self.count += 1
+            self.predictionList.append(prediction / cnt)
