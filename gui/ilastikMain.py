@@ -177,7 +177,7 @@ class MainWindow(QtGui.QMainWindow):
                     res_names.append( featureString )
                 else:
                     for featureDim in xrange(n):
-                        res_labeledFeatures.append( (featureImage[:,:,featureDim])[labeled_indices].reshape(1,n_labels ) )
+                        res_labeledFeatures.append( featureImage[:,:,featureDim].flat[labeled_indices].reshape(1,n_labels ) )
                         res_names.append( featureString + "_%i" %(featureDim))
             dataItemNr+=1
         trainingMatrix = numpy.concatenate( res_labeledFeatures).T
