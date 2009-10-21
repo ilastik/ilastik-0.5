@@ -639,6 +639,7 @@ class labelWidget(QtGui.QWidget):
         
         self.labelForImage = {}
         self.cloneviews = []
+        self.overlayPixmapItems = []
         
         self.imageList = imageList
         self.activeImage = 0
@@ -716,6 +717,20 @@ class labelWidget(QtGui.QWidget):
             self.updateProject( self.parent().project)
         except AttributeError:
             pass
+        
+    def addOverlayPixmap(self, pm):
+        if isinstance(pm, numpy.ndarray):
+            img = qimage2ndarray.numpy2qimage(pm)
+            pm = QtGui.QPixmap.fromImage(img)
+        pi = self.canvas.addPixmap(pm)
+        self.overlayPixmapItems.append( pi )
+        return pi
+    def drawOverlayPixmaps(self):
+        for pi in self.overlayPixmapItems:
+            self.canvas.addItem(pi)
+    def removeOverlayPixmap(self, pixmapItem):
+        self.overlayPixmapItems.remove(pixmapItem)
+        self.canvas.removeItem(pixmapItem)
         
     def saveLayout(self, storage):
         print "save labelWidget"
