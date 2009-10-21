@@ -28,10 +28,14 @@ class ClassifierRandomForest(ClassifierBase):
         self.classifier = None
         self.treeCount = 5
 #        if features and labels:
-#            self.train(features, labels)
+    #            self.train(features, labels)
         self.train(features, labels)
     
     def train(self, features, labels):
+        
+        if features.shape[0] != labels.shape[0]:
+            print " 3, 2 ,1 ... BOOOM!! #features != # labels"
+            
         if not labels.dtype == numpy.uint32:
             labels = numpy.array(labels,dtype=numpy.uint32)
         if not features == numpy.float32:

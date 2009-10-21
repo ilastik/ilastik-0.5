@@ -60,7 +60,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="pushButton_2" >
+       <widget class="QPushButton" name="removeFile" >
         <property name="text" >
          <string>Remove &lt;&lt;</string>
         </property>

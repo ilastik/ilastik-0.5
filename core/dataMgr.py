@@ -116,8 +116,7 @@ class DataMgr():
                 if len(f.shape) == 2:
                     f = f.reshape(fSize,1)
                 else:
-                    f = f.reshape(fSize,f.shape[2])
-                    
+                    f = f.reshape(fSize,f.shape[2])    
                 fTuple.append(f)  
             self.featureMatrixList.append( numpy.concatenate(fTuple,axis=1) )
         return self.featureMatrixList

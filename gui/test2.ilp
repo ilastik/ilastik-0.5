@@ -4,10 +4,15 @@ q(ccore.projectMgr
 Project
 qc__builtin__
 object
-qNtRq}q(UlabelerqUTerryqUnameqUmySurveyq	UlabelColorsq
-}q(KL4282729983L
-KL4288734207L
-uUdataMgrq(ccore.dataMgr
+qNtRq}q(U
+labelNamesq]qULabel 1qaUnameq	UmySurveyq
+UlabelColorsq}qUdataMgrq(ccore.dataMgr
 DataMgr
-qoq}q(UdataFeaturesq]qUlabelsq]qUdataItemsLoadedq]qU	dataItemsq]qubUlabelSettingsq}qU
-labelNamesq]q(ULabel 1qUlabel2qUlabel3qeUdescriptionqUi wanna be a lumber jack...q ub.
+qoq}q(UdataFeaturesq]qUlabelsq]qUdataItemsLoadedq]qI00
+aU	dataItemsq]q(ccore.dataMgr
+DataItemImage
+qoq}q(UdataKindqNUdataTypeqNUdataDimensionsqKh]qU	hasLabelsq I01
+U	isTestingq!I01
+UfileNameq"UZC:/Documents and Settings/sommechr.CEU/My Documents/Python/ilastik/trunk/src/gui/gray1.bmpq#UgroupMemberq$]q%UgroupMembershipq&]q'U
+isTrainingq(I01
+Udataq)NU	thumbnailq*NUprojectsq+]q,haubaubUlabelerq-UTerryq.Udescriptionq/Ui wanna be a lumber jack...q0ub.

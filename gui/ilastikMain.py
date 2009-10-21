@@ -11,7 +11,6 @@
 import sys
 import numpy
 sys.path.append("..")
-import pdb
 from PyQt4 import QtCore, QtGui, uic
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr
 from gui import ctrlRibbon, imgLabel
@@ -19,9 +18,7 @@ from PIL import Image, ImageQt
 from Queue import PriorityQueue as pq
 from Queue import Queue as queue
 import numpy
-import copy 
 
-#from IPython.Shell import IPShellEmbed 
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -132,6 +129,7 @@ class MainWindow(QtGui.QMainWindow):
     def on_classificationTrain(self):
         self.generateTrainingData()
         self.classificationTrain = ClassificationTrain(self)
+        
     def on_classificationPredict(self):
         self.classificationPredict = ClassificationPredict(self)
     def on_classificationInteractive(self):
@@ -412,6 +410,11 @@ class ProjectDlg(QtGui.QDialog):
                 
                 self.initThumbnail(file_name)
     
+    def on_removeFile_clicked(self):
+        row = self.tableWidget.currentRow()
+        print row
+        
+        
     def initThumbnail(self, file_name):
         #picture = Image.open(file_name.__str__())
         #picture.thumbnail((68, 68), Image.ANTIALIAS)
@@ -558,12 +561,13 @@ class ClassificationTrain(object):
         self.initClassificationProgress(numberOfJobs)
         
         # Get Train Data
-        F = copy.copy(self.parent.project.trainingMatrix)
-        L = copy.copy(self.parent.project.trainingLabels)
-        featLabelTupel = pq()
+        F = self.parent.project.trainingMatrix
+        L = self.parent.project.trainingLabels
+        featLabelTupel = queue()
         featLabelTupel.put((F,L))
        
         self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
+        print "Before Thread start"
         self.classificationProcess.start()
         self.classificationTimer.start(200) 
 
@@ -572,7 +576,7 @@ class ClassificationTrain(object):
         self.myClassificationProgressBar = QtGui.QProgressBar()
         self.myClassificationProgressBar.setMinimum(0)
         self.myClassificationProgressBar.setMaximum(numberOfJobs)
-        self.myClassificationProgressBar.setFormat(' Classifier... %p%')
+        self.myClassificationProgressBar.setFormat(' Training... %p%')
         statusBar.addWidget(self.myClassificationProgressBar)
         statusBar.show()
     
@@ -592,22 +596,22 @@ class ClassificationTrain(object):
             self.parent.project.classifierList = self.classificationProcess.classifierList
             self.terminateClassificationProgressBar()
             
-            F = numpy.array(self.parent.project.trainingMatrix, dtype=numpy.float32)
-            
-            print "Predicting on Training Set"
-            for c in self.parent.project.classifierList:
-                print ".",
-                c.classifier.predictProbabilities(F)
-            
-            print "Predicting on Everything: Here it crashes, if more then one image was selected..."
-            print "maybe there is a problem on the generation of the TrainingMatrix for training?"
-            
-            featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
-            for c in self.parent.project.classifierList:
-                for d in featureQueue:
-                    print ",",
-                    FF = numpy.array(d, dtype=numpy.float32)
-                    print "labels: ",FF
+#            F = numpy.array(self.parent.project.trainingMatrix, dtype=numpy.float32)
+#            
+#            print "Predicting on Training Set"
+#            for c in self.parent.project.classifierList:
+#                print ".",
+#                c.classifier.predictProbabilities(F)
+#            
+#            print "Predicting on Everything: Here it crashes, if more then one image was selected..."
+#            print "maybe there is a problem on the generation of the TrainingMatrix for training?"
+#            
+#            featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
+#            for c in self.parent.project.classifierList:
+#                for d in featureQueue:
+#                    print ",",
+#                    FF = numpy.array(d, dtype=numpy.float32)
+#                    print "labels: ",FF
                     xx = c.classifier.predictProbabilities(FF)
             xx = xx[:,0]
             print xx
@@ -639,10 +643,10 @@ class ClassificationPredict(object):
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         
         # Get Predict Data
-        # self.featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
-        self.featureQueue = []
-        for k in range(0,4):
-            self.featureQueue.append(numpy.random.rand(256*256,17))
+        self.featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
+#        self.featureQueue = []
+#        for k in range(0,4):
+#            self.featureQueue.append(numpy.random.rand(256*256,17))
         
         numberOfJobs = len(self.featureQueue) * len(self.parent.project.classifierList)
         print numberOfJobs
@@ -673,18 +677,10 @@ class ClassificationPredict(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
-        
-                
-            
-                 
-
-
 
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow()  
     mainwindow.show() 
-    #ipshell = IPShellEmbed() 
-
     sys.exit(app.exec_())

@@ -4,26 +4,13 @@ q(ccore.projectMgr
 Project
 qc__builtin__
 object
-qNtRq}q(UdataMgrq(ccore.dataMgr
-DataMgr
-qoq}q	(UdataFeaturesq
-]qUlabelsq]qUdataItemsLoadedq]q(I00
-I00
-I00
-I00
-eU	dataItemsq]q((ccore.dataMgr
-DataItemImage
-qoq}q(UdataTypeqNUdataDimensionsq]qh]qU	hasLabelsqI01
-U	isTestingqI01
-UfileNameqUYC:/Documents and Settings/sommechr.CEU/My Documents/Python/ilastik/trunk/src/gui/rgb1.jpgqUgroupMemberq]qUgroupMembershipq]q U
-isTrainingq!I00
-Udataq"NU	thumbnailq#NUprojectsq$]q%haub(hoq&}q'(hNh]q(h]q)hI01
-hI00
-hUZC:/Documents and Settings/sommechr.CEU/My Documents/Python/ilastik/trunk/src/gui/gray1.bmpq*h]q+h]q,h!I01
-h"Nh#Nh$]q-haub(hoq.}q/(hNh]q0h]q1hI01
-hI01
-hU`C:/Documents and Settings/sommechr.CEU/My Documents/Python/ilastik/trunk/src/gui/placeholder.pngq2h]q3h]q4h!I00
-h"Nh#Nh$]q5haub(hoq6}q7(hNh]q8h]q9hI01
-hI00
-hUYC:/Documents and Settings/sommechr.CEU/My Documents/Python/ilastik/trunk/src/gui/rgb2.tifq:h]q;h]q<h!I01
-h"Nh#Nh$]q=haubeubUlabelerq>Ueggbertq?Unameq@UmySurveyqAUdescriptionqBUhamqCub.
+qNtRq}q(U
+featureMgrq(ccore.featureMgr
+FeatureMgr
+qoq}q	(UparallelTypeq
+UThreadqUfeatureProcessqh(ccore.featureMgr
+FeatureThread
+qhNtRq}q(UcountqK	U_Thread__argsq)UjobsqK	U_Thread__blockqh(cthreading
+_Condition
+qhNtRq}q(U_Verbose__verboseqI00
+U_Condition__lockq
