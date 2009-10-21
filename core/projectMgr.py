@@ -9,6 +9,9 @@ class Project(object):
         self.dataMgr = dataMgr
         self.labelNames = []
         self.labelColors = {}
+        self.trainingMatrix = None
+        self.trainingLabels = None
+        self.trainingFeatureNames = None
     
     def saveToDisk(self, fileName):
         fileHandle = open(fileName,'wb')

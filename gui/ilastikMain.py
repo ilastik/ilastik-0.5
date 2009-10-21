@@ -125,18 +125,18 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
 
     def on_classificationTrain(self):
+        self.generateTrainingData()
         self.classificationTrain = ClassificationTrain(self)
     def on_classificationPredict(self):
         self.classificationPredict = ClassificationPredict(self)
     def on_classificationInteractive(self):
         self.classificationInteractive = ClassificationInteractive(self)
         
-    def classificationTrain(self):
+    def generateTrainingData(self):
         if not self.project:
             return
-
         shape = self.project.dataMgr.dataFeatures[0][0][0].shape
-        print shape
+        print "using dimension of first image: ", shape
         res_labeledFeatures = []
         res_labels = []
         res_names = []
@@ -154,34 +154,44 @@ class MainWindow(QtGui.QMainWindow):
             #if !self.labelWidget.hasLabels(dataItemNr):
             #    continue
             
-            # get label-matrix:
-            labelmatrix = numpy.ndarray(shape)
-            # todo: generalize to nD.
-            for pixX in xrange(shape[0]):
-                print "generating labelImage: ", pixX, " / ", shape[0]
-                for pixY in xrange(shape[1]):
-                    labelmatrix[pixX,pixY] = self.labelWidget.getLabel(dataItemNr, [pixY,pixX])
-            res_labels = labelmatrix.nonzero()
+            if False:
+                # get label-matrix:
+                labelmatrix = numpy.ndarray(shape)
+                # todo: generalize to nD.
+                for pixX in xrange(shape[0]):
+                    print "generating labelImage: ", pixX, " / ", shape[0]
+                    for pixY in xrange(shape[1]):
+                        labelmatrix[pixX,pixY] = self.labelWidget.getLabel(dataItemNr, [pixY,pixX])
+            if True:
+                labelmatrix = self.labelWidget.labelForImage[self.labelWidget.activeImage].DrawManagers[0].labelmngr.labelArray
+            labeled_indices = labelmatrix.nonzero()[0]
+            n_labels = labeled_indices.shape[0]
+            res_labels = labelmatrix[labeled_indices] 
             for featureImage, featureString in dataItem:
-                print featureImage
-                print featureImage.shape
                 # todo: fix hardcoded 2D:
                 n = 1   # n: number of feature-values per pixel
                 if featureImage.shape.__len__() > 2:
                     n = featureImage.shape[2]
                 if n<=1:
-                    res_labeledFeatures.append( featureImage[labelmatrix.nonzero()] )
+                    res_labeledFeatures.append( featureImage.flat[labeled_indices].reshape(1,n_labels) )
                     res_names.append( featureString )
                 else:
                     for featureDim in xrange(n):
-                        print featureImage.shape
-                        print labelmatrix.shape
-                        print featureImage[:,:,featureDim].shape
-                        print labelmatrix.nonzero().shape
-                        res_labeledFeatures.append( (featureImage[:,:,featureDim])[labelmatrix.nonzero()] )
+                        res_labeledFeatures.append( (featureImage[:,:,featureDim])[labeled_indices].reshape(1,n_labels ) )
                         res_names.append( featureString + "_%i" %(featureDim))
             dataItemNr+=1
-        trainingMatrix = numpy.concatenate( res_labeledFeatures)
+        trainingMatrix = numpy.concatenate( res_labeledFeatures).T
+        self.project.trainingMatrix = trainingMatrix
+        self.project.traininLabels = res_labels
+        self.project.trainingFeatureNames = res_names
+        print "training data has been generated."
+        return
+        print trainingMatrix.T
+        print trainingMatrix.shape
+        for m in res_labeledFeatures:
+            print m
+        for n in res_names:
+            print n
         
         return
         if self.project:
@@ -505,7 +515,7 @@ class FeatureComputation(object):
             self.myTimer.stop()
             print "Finished"
             self.terminateFeatureProgressBar()
-            self.parent.project.featureMgr.joinCompute(self.project.dataMgr)
+            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
             
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
