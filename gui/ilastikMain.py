@@ -53,8 +53,9 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.classificationTrain)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked()'), self.classificationInteractive)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked()'), self.on_classificationInteractive)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -99,7 +100,6 @@ class MainWindow(QtGui.QMainWindow):
     def initImageWindows(self):
         self.labelDocks = []
         
-    
     def createImageWindows(self):
         label_w = imgLabel.labelWidget(self, ['rgb1.jpg', 'rgb2.tif'])
         
@@ -116,14 +116,7 @@ class MainWindow(QtGui.QMainWindow):
         self.featureList = featureMgr.ilastikFeatures
         
     def featureCompute(self):
-        self.myTimer = QtCore.QTimer()
-        self.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
-        
-        numberOfJobs = self.project.featureMgr.prepareCompute(self.project.dataMgr)  
-        self.initFeatureProgress(numberOfJobs)
-        self.project.featureMgr.triggerCompute()
-        self.myTimer.start(200) 
-        
+        self.featureComputation = FeatureComputation(self)
 #        featureListRib = ctrlRibbon.RibbonListItem(ctrlRibbon.RibbonEntry("featureList","", "fatureList", ctrlRibbon.RibbonListItem))
 #        for f in self.project.featureMgr.featureItems:
 #            featureListRib.addItem(str(f))       
@@ -131,6 +124,13 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
 
+    def on_classificationTrain(self):
+        self.classificationTrain = ClassificationTrain(self)
+    def on_classificationPredict(self):
+        self.classificationPredict = ClassificationPredict(self)
+    def on_classificationInteractive(self):
+        self.classificationInteractive = ClassificationInteractive(self)
+        
     def classificationTrain(self):
         if not self.project:
             return
@@ -218,89 +218,7 @@ class MainWindow(QtGui.QMainWindow):
                                 featureNr+=1 
                             TrainingFeatureList.append()
                             TrainingLabelList.append(label)
-            
-
-    def initFeatureProgress(self, numberOfJobs):
-        print numberOfJobs
-        statusBar = self.statusBar()
-        self.myFeatureProgressBar = QtGui.QProgressBar()
-        self.myFeatureProgressBar.setMinimum(0)
-        self.myFeatureProgressBar.setMaximum(numberOfJobs)
-        self.myFeatureProgressBar.setFormat(' Features... %p%')
-        statusBar.addWidget(self.myFeatureProgressBar)
-        statusBar.show()
-        #self.setStatusBar(self.myStatusBar)
-    
-    def updateFeatureProgress(self):
-        val = self.project.featureMgr.getCount() 
-        self.myFeatureProgressBar.setValue(val)
-        if not self.project.featureMgr.featureProcess.is_alive():
-            print "Alive = ", self.project.featureMgr.featureProcess.is_alive()
-            self.myTimer.stop()
-            print "Finished"
-            self.terminateFeatureProgressBar()
-            self.project.featureMgr.joinCompute(self.project.dataMgr)
-            
-    def terminateFeatureProgressBar(self):
-        self.statusBar().removeWidget(self.myFeatureProgressBar)
-        self.statusBar().hide()
         
-    def featureShow(self, item):
-        print "egg"
-        print item
-        
-    def classificationInteractive(self):               
-        if not self.ribbon.tabDict['Classification'].itemDict['Interactive'].isChecked():
-            self.classificationProcess.stopped = True
-            self.classificationTimer.stop()
-            self.classificationProcess.join()
-            print "Interactive Mode left by User"
-            self.terminateClassificationProgressBar()
-            return
-        
-        self.classificationTimer = QtCore.QTimer()
-        self.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-        numberOfJobs = 10              
-        
-        self.initClassificationProgress(numberOfJobs)
-        
-        # Get Train Data
-        F = numpy.random.rand(5000,30)
-        L = numpy.floor(numpy.random.rand(5000,1)+0.5)
-        L = numpy.array(L,dtype=numpy.uint32)
-        featLabelTupel = pq()
-        featLabelTupel.put((F,L))
-       
-        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
-        self.classificationProcess.start()
-        self.classificationTimer.start(200) 
-
-    def initClassificationProgress(self, numberOfJobs):
-        statusBar = self.statusBar()
-        self.myClassificationProgressBar = QtGui.QProgressBar()
-        self.myClassificationProgressBar.setMinimum(0)
-        self.myClassificationProgressBar.setMaximum(numberOfJobs)
-        self.myClassificationProgressBar.setFormat(' Classifier... %p%')
-        statusBar.addWidget(self.myClassificationProgressBar)
-        statusBar.show()
-    
-    def updateClassificationProgress(self):
-        val = self.classificationProcess.count
-        self.myClassificationProgressBar.setValue(val)
-        if not self.classificationProcess.is_alive():
-            self.classificationTimer.stop()
-            print "Training Finished"
-            self.classificationProcess.join()
-            self.terminateClassificationProgressBar()
-            
-            
-                
-            
-    def terminateClassificationProgressBar(self):
-        self.statusBar().removeWidget(self.myClassificationProgressBar)
-        self.statusBar().hide()
-        
-
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self)
@@ -557,6 +475,151 @@ class FeatureDlg(QtGui.QDialog):
     def on_confirmButtons_rejected(self):
         self.close()
 
+class FeatureComputation(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.featureCompute()
+    
+    def featureCompute(self):
+        self.myTimer = QtCore.QTimer()
+        self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
+        
+        numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)  
+        self.initFeatureProgress(numberOfJobs)
+        self.parent.project.featureMgr.triggerCompute()
+        self.myTimer.start(200) 
+        
+    def initFeatureProgress(self, numberOfJobs):
+        statusBar = self.parent.statusBar()
+        self.myFeatureProgressBar = QtGui.QProgressBar()
+        self.myFeatureProgressBar.setMinimum(0)
+        self.myFeatureProgressBar.setMaximum(numberOfJobs)
+        self.myFeatureProgressBar.setFormat(' Features... %p%')
+        statusBar.addWidget(self.myFeatureProgressBar)
+        statusBar.show()
+    
+    def updateFeatureProgress(self):
+        val = self.parent.project.featureMgr.getCount() 
+        self.myFeatureProgressBar.setValue(val)
+        if not self.parent.project.featureMgr.featureProcess.is_alive():
+            self.myTimer.stop()
+            print "Finished"
+            self.terminateFeatureProgressBar()
+            self.parent.project.featureMgr.joinCompute(self.project.dataMgr)
+            
+    def terminateFeatureProgressBar(self):
+        self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
+        self.parent.statusBar().hide()
+        
+    def featureShow(self, item):
+        print "egg"
+        print item
+
+class ClassificationTrain(object):
+    def __init__(self, parent):
+        self.parent = parent
+        print "Classification Train"
+        self.start()
+        
+    def start(self):               
+        self.classificationTimer = QtCore.QTimer()
+        self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
+        numberOfJobs = 20                 
+        self.initClassificationProgress(numberOfJobs)
+        
+        # Get Train Data
+        F = numpy.random.rand(1000,30)
+        L = numpy.floor(numpy.random.rand(1000,1)+0.5)
+        L = numpy.array(L,dtype=numpy.uint32)
+        featLabelTupel = pq()
+        featLabelTupel.put((F,L))
+       
+        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
+        self.classificationProcess.start()
+        self.classificationTimer.start(200) 
+
+    def initClassificationProgress(self, numberOfJobs):
+        statusBar = self.parent.statusBar()
+        self.myClassificationProgressBar = QtGui.QProgressBar()
+        self.myClassificationProgressBar.setMinimum(0)
+        self.myClassificationProgressBar.setMaximum(numberOfJobs)
+        self.myClassificationProgressBar.setFormat(' Classifier... %p%')
+        statusBar.addWidget(self.myClassificationProgressBar)
+        statusBar.show()
+    
+    def updateClassificationProgress(self):
+        val = self.classificationProcess.count
+        self.myClassificationProgressBar.setValue(val)
+        if not self.classificationProcess.is_alive():
+            self.classificationTimer.stop()
+            print "Training Finished"
+            self.classificationProcess.join()
+            self.terminateClassificationProgressBar()
+                      
+    def terminateClassificationProgressBar(self):
+        self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
+        self.parent.statusBar().hide()
+
+class ClassificationPredict(object):
+    def __init__(self, parent):
+        self.parent = parent
+        print "Classification Predict"
+    
+class ClassificationInteractive(object):
+    def __init__(self, parent):
+        self.parent = parent
+        print "Classification Interactive"
+    
+    def classificationInteractive(self):               
+        if not self.ribbon.tabDict['Classification'].itemDict['Interactive'].isChecked():
+            self.classificationProcess.stopped = True
+            self.classificationTimer.stop()
+            self.classificationProcess.join()
+            print "Interactive Mode left by User"
+            self.terminateClassificationProgressBar()
+            return
+        
+        self.classificationTimer = QtCore.QTimer()
+        self.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
+        numberOfJobs = 10              
+        
+        self.initClassificationProgress(numberOfJobs)
+        
+        # Get Train Data
+        F = numpy.random.rand(5000,30)
+        L = numpy.floor(numpy.random.rand(5000,1)+0.5)
+        L = numpy.array(L,dtype=numpy.uint32)
+        featLabelTupel = pq()
+        featLabelTupel.put((F,L))
+       
+        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
+        self.classificationProcess.start()
+        self.classificationTimer.start(200) 
+
+    def initClassificationProgress(self, numberOfJobs):
+        statusBar = self.statusBar()
+        self.myClassificationProgressBar = QtGui.QProgressBar()
+        self.myClassificationProgressBar.setMinimum(0)
+        self.myClassificationProgressBar.setMaximum(numberOfJobs)
+        self.myClassificationProgressBar.setFormat(' Classifier... %p%')
+        statusBar.addWidget(self.myClassificationProgressBar)
+        statusBar.show()
+    
+    def updateClassificationProgress(self):
+        val = self.classificationProcess.count
+        self.myClassificationProgressBar.setValue(val)
+        if not self.classificationProcess.is_alive():
+            self.classificationTimer.stop()
+            print "Training Finished"
+            self.classificationProcess.join()
+            self.terminateClassificationProgressBar()
+            
+            
+                
+            
+    def terminateClassificationProgressBar(self):
+        self.statusBar().removeWidget(self.myClassificationProgressBar)
+        self.statusBar().hide()
         
                 
             

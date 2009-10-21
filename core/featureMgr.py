@@ -115,7 +115,6 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
                 for c in channels:
                     for fi in features:
                         print c.shape, str(fi)
-                        # TODO fi braucht calculate
                         result.append((fi.compute(c), str(fi)))
                         self.count += 1
                         self.conn.send(self.count)

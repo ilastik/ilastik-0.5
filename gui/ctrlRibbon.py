@@ -111,7 +111,7 @@ def createRibbons():
     RibbonGroupObjects["Features"].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Compute Features"))
     
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train", "categories/applications-system.png" ,"Train Classifier"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", "actions/edit-select-all.png" ,"Select Classifier")) 
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", "status/dialog-information.png" ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", "actions/media-playback-start.png" ,"Interactive Classifier",type=RibbonToggleButtonItem))
     
     return RibbonGroupObjects   
