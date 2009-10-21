@@ -71,5 +71,23 @@ class ClassifierTrainThread(threading.Thread):
             while not self.classifierList.full():
                 if self.stopped:
                     return
-                self.classifierList.put( (1, ClassifierRandomForest(features, labels)) )
+                self.classifierList.put( ClassifierRandomForest(features, labels) )
                 self.count += 1
+                
+class ClassifierPredictThread(threading.Thread):
+    def __init__(self, classifierList, features):
+        threading.Thread.__init__(self)
+        self.classifierList = classifierList
+        self.count = 0
+        self.features = features
+        self.stopped = False
+        self.prediction = None
+    
+    def run(self):
+        for classifier in self.classifierList.queue:
+            if self.count == 0:
+                prediction = classifier.predict(self.features)
+            else:
+                prediction += classifier.predict(self.features)
+            self.count += 1
+        self.prediction =  prediction / self.count

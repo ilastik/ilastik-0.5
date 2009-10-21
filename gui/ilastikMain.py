@@ -554,72 +554,62 @@ class ClassificationTrain(object):
             self.classificationTimer.stop()
             print "Training Finished"
             self.classificationProcess.join()
+            self.parent.project.classifierList = self.classificationProcess.classifierList
+            
+            # Delete Thread Class
+            self.classificationProcess = None
             self.terminateClassificationProgressBar()
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
 
-class ClassificationPredict(object):
-    def __init__(self, parent):
-        self.parent = parent
-        print "Classification Predict"
-    
 class ClassificationInteractive(object):
     def __init__(self, parent):
         self.parent = parent
         print "Classification Interactive"
     
-    def classificationInteractive(self):               
-        if not self.ribbon.tabDict['Classification'].itemDict['Interactive'].isChecked():
-            self.classificationProcess.stopped = True
-            self.classificationTimer.stop()
-            self.classificationProcess.join()
-            print "Interactive Mode left by User"
-            self.terminateClassificationProgressBar()
-            return
-        
+class ClassificationPredict(object):
+    def __init__(self, parent):
+        self.parent = parent
+        print "Classification Predict"
+        self.start()
+    
+    def start(self):               
         self.classificationTimer = QtCore.QTimer()
-        self.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
+        self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         numberOfJobs = 10              
         
         self.initClassificationProgress(numberOfJobs)
         
-        # Get Train Data
-        F = numpy.random.rand(5000,30)
-        L = numpy.floor(numpy.random.rand(5000,1)+0.5)
-        L = numpy.array(L,dtype=numpy.uint32)
-        featLabelTupel = pq()
-        featLabelTupel.put((F,L))
+        # Get Predict Data
+        F = numpy.random.rand(65000,30)
        
-        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
-        self.classificationProcess.start()
+        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, F)
+        self.classificationPredict.start()
         self.classificationTimer.start(200) 
 
     def initClassificationProgress(self, numberOfJobs):
-        statusBar = self.statusBar()
+        statusBar = self.parent.statusBar()
         self.myClassificationProgressBar = QtGui.QProgressBar()
         self.myClassificationProgressBar.setMinimum(0)
         self.myClassificationProgressBar.setMaximum(numberOfJobs)
-        self.myClassificationProgressBar.setFormat(' Classifier... %p%')
+        self.myClassificationProgressBar.setFormat(' Prediction... %p%')
         statusBar.addWidget(self.myClassificationProgressBar)
         statusBar.show()
     
     def updateClassificationProgress(self):
-        val = self.classificationProcess.count
+        val = self.classificationPredict.count
         self.myClassificationProgressBar.setValue(val)
-        if not self.classificationProcess.is_alive():
+        if not self.classificationPredict.is_alive():
             self.classificationTimer.stop()
             print "Training Finished"
-            self.classificationProcess.join()
-            self.terminateClassificationProgressBar()
-            
-            
-                
+            self.classificationPredict.join()
+            self.terminateClassificationProgressBar()         
             
     def terminateClassificationProgressBar(self):
-        self.statusBar().removeWidget(self.myClassificationProgressBar)
-        self.statusBar().hide()
+        self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
+        self.parent.statusBar().hide()
         
                 
             
