@@ -21,6 +21,7 @@ class Ribbon(QtGui.QTabWidget):
         QtGui.QTabWidget.moveEvent(self, event)
     
     def addTab(self, w, s="TabName"):
+        print s
         self.tabDict[s] = w
         QtGui.QTabWidget.insertTab(self, w.position, w, s)              
 
@@ -98,9 +99,12 @@ class RibbonEntryGroup():
 
 def createRibbons():
     RibbonGroupObjects = {}
-    RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects",0)       
-    RibbonGroupObjects["Features"] = RibbonEntryGroup("Features",1)   
-    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification",2)   
+    RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects",0)    
+    RibbonGroupObjects["View"] = RibbonEntryGroup("View", 1)     
+    RibbonGroupObjects["Features"] = RibbonEntryGroup("Features",0)   
+    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 0)   
+    RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)   
+    RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 4)   
     
     RibbonGroupObjects["Projects"].append(RibbonEntry("New", "actions/document-new.png" ,"New"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Open", "actions/document-open.png" ,"Open"))
@@ -114,6 +118,12 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", "status/dialog-information.png" ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", "actions/media-playback-start.png" ,"Interactive Classifier",type=RibbonToggleButtonItem))
     
+    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", "actions/my-segment.png" ,"Segmentation"))
+    
+    RibbonGroupObjects["View"].append(RibbonEntry("ProbabilityMaps", "categories/preferences-system.png" ,"View Probability map"))
+    RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation"))
+    
+    RibbonGroupObjects["Export"].append(RibbonEntry("Export", "categories/preferences-system.png" ,"Export"))
     return RibbonGroupObjects   
         
         
