@@ -608,9 +608,15 @@ class ClassificationTrain(object):
                     print ",",
                     FF = numpy.array(d, dtype=numpy.float32)
                     print "labels: ",FF
-                    c.classifier.predictProbabilities(FF)
-            pi = self.parent.labelWidget.addOverlayPixmap(self.parent.project.classifierList[0])
-            pi.setOpacity(0)
+                    xx = c.classifier.predictProbabilities(FF)
+            xx = xx[:,0]
+            print xx
+            print xx.shape
+            xx=xx.reshape(256,256)
+            xx*=255
+            print xx.shape
+            pi = self.parent.labelWidget.addOverlayPixmap(xx)
+            pi.setOpacity(0.5)
             
                       
     def terminateClassificationProgressBar(self):
