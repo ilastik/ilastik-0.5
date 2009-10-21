@@ -5,9 +5,17 @@ class label_Base:
     convention for label values: 0 is unlabeled, first label is 1 and so on.
     """
     def __init__(self, size):
+        self.classId = labelManagerID.IDlabel_Base
         self.size = size
         self.dims = size.__len__()
         self.drawCallback = None
+    
+    def __getstate__(self):
+        self.drawCallback = None
+        return self.__dict__
+        
+    def __setstate__(self, dict):
+        self.__dict__.update(dict)
         
     def setDrawCallback(self, callback):
         self.drawCallback = callback
@@ -40,6 +48,7 @@ class label_Base:
 class label_Patch(label_Base):
     def __init__(self, size):
         label_Base.__init__(self, size)
+        self.classId = labelManagerID.IDlabel_Patch
         self.init_storage()
         self.lastPatchNr = 0
         
@@ -93,6 +102,7 @@ class label_Patch(label_Base):
 
         
     def getLabel(self, pos):
+        #print "pos: ", pos, "patchNr: ", self.getPatchNrFromPosition(pos), "size: ", self.size, "shape: ", self.labelArray.shape
         return self.labelArray[ self.getPatchNrFromPosition(pos)]
     
     def getObjects(self):
@@ -110,10 +120,12 @@ class label_Patch(label_Base):
 class label_Grid(label_Patch):
     def __init__(self, size):
         label_Patch.__init__(self, size)
+        self.classId = labelManagerID.IDlabel_Grid
             
 class label_Pixel(label_Grid):
     def __init__(self, size):
         label_Patch.__init__(self, size)
+        self.classId = labelManagerID.IDlabel_Pixel
     
     def init_storage(self):
         #self.labelArray = numpy.ndarray(self.getPatchCount())
@@ -138,7 +150,19 @@ class label_Pixel(label_Grid):
         for i in xrange(1,self.dims):
             cnt *= self.size[i]
         return cnt
+    
 
+class labelManagerID:
+    IDlabel_Base = 0
+    IDlabel_Patch = 1
+    IDlabel_Grid = 2
+    IDlabel_Pixel = 3
+    labelManagerObject = {
+        IDlabel_Base: label_Base,
+        IDlabel_Patch: label_Patch,
+        IDlabel_Grid: label_Grid,
+        IDlabel_Pixel: label_Pixel
+    }
 # ---------------------------
 
 class labelSettings_base:

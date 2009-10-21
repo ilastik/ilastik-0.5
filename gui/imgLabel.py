@@ -9,6 +9,9 @@ import os
 
 #************************
 
+labelwidgetInstance = None   # UGLY global
+      
+
 class labelingForOneImage:
     def __init__(self):
         self.DrawManagers = []       # different labeling-types (patch, pixel, geom...)
@@ -49,10 +52,33 @@ class labelingForOneImage:
     def canvas_paint(self):
         for dmngr in self.DrawManagers:
             dmngr.canvas_paint()
+    
+    def __getstate__(self):
+        self.pickleinfo_DrawManager_ids = []
+        self.pickleinfo_LabelManagers = []
+        #print self.pickleinfo
+        for dm in self.DrawManagers:
+            self.pickleinfo_DrawManager_ids.append(dm.classId)
+            self.pickleinfo_LabelManagers.append( dm.labelmngr )
+        cdict = self.__dict__.copy()
+        del cdict['DrawManagers']
+        return cdict
+    
+    def __setstate__(self, dict):
+        self.__dict__.update(dict)
+        self.DrawManagers = []
+        i=0
+        for id in self.pickleinfo_DrawManager_ids:
+            dmObject = drawManagerID.drawManagerObject[id]
+            lm = self.pickleinfo_LabelManagers[i]
+            self.DrawManagers.append(dmObject(lm, labelwidgetInstance.canvas))   # UGLY global
+            i+=1
+        pass
 
 class drawManager:
     #todo: manage draw-data (topLevelItems, Pixmaps) in a dictionary: seperate labeltypes to make changing [opacity, color, ...] easy.    
     def __init__(self, labelmngr, canvas):
+        self.classId = drawManagerID.IDdrawManager
         self.labelmngr = labelmngr
         self.canvas = canvas
         self.undolist = None
@@ -103,6 +129,7 @@ class drawManager:
 class draw_geomObject(drawManager):
     def __init__(self, labelmngr, canvas):
         drawManager.__init__(self, labelmngr, canvas)
+        self.classId = drawManagerID.IDdraw_geomObject
         self.topLevelItems = []
         self.topLevelItems_dict = {}
         
@@ -147,6 +174,7 @@ class draw_geomObject(drawManager):
 class draw_Ellipse(draw_geomObject):
     def __init__(self, labelmngr, canvas):
         draw_geomObject.__init__(self, labelmngr, canvas)
+        self.classId = drawManagerID.IDdraw_Ellipse
         
     def addObject(self,pos):
         ell = QtGui.QGraphicsEllipseItem(pos[0], pos[1], self.drawSize, self.drawSize)
@@ -158,6 +186,7 @@ class draw_Ellipse(draw_geomObject):
 class draw_Patch(drawManager):
     def __init__(self, labelmngr, canvas):
         drawManager.__init__(self, labelmngr, canvas)
+        self.classId = drawManagerID.IDdraw_Patch
         
         self.size = labelmngr.getSize()
         self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_ARGB32 )
@@ -220,6 +249,21 @@ class draw_Patch(drawManager):
 class draw_Pixel(draw_Patch):
     def __init__(self, labelmngr, canvas):
         draw_Patch.__init__(self, labelmngr, canvas)
+        self.classId = drawManagerID.IDdraw_Pixel
+
+class drawManagerID:
+    IDdrawManager = 0
+    IDdraw_geomObject = 1
+    IDdraw_Ellipse = 2
+    IDdraw_Patch = 3
+    IDdraw_Pixel = 4
+    drawManagerObject = {
+        IDdrawManager: drawManager,
+        IDdraw_geomObject: draw_geomObject,
+        IDdraw_Ellipse: draw_Ellipse,
+        IDdraw_Patch: draw_Patch,
+        IDdraw_Pixel: draw_Pixel
+    }
 
 
 class labelType:
@@ -580,7 +624,8 @@ class cloneViewWidget(QtGui.QDockWidget):
 class labelWidget(QtGui.QWidget):
     def __init__(self, parent=None, imageList=None):
         QtGui.QWidget.__init__(self, parent)
-
+        global labelwidgetInstance          # UGLY global
+        labelwidgetInstance = self          # UGLY global
         self.project = None
         if isinstance(imageList,str): imageList = [imageList]
         if isinstance(imageList,list):
@@ -706,6 +751,9 @@ class labelWidget(QtGui.QWidget):
         self.loadImageList()
         self.loadLabelList()
         self.updateDrawSettings()
+        project.dataMgr.labels = self.labelForImage
+        print project.dataMgr.labels
+        self.labelForImage = project.dataMgr.labels
         
     def updateDrawSettings(self):
         pass 
@@ -986,7 +1034,6 @@ class DisplayPanel(QtGui.QGraphicsScene):
         ell.setBrush(QtGui.QBrush(self.col))
         #self.addItem(ell)
         ell.setParentItem(self.topLevelObject)
-
 
         
 if __name__ == "__main__":
