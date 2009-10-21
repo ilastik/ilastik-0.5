@@ -21,7 +21,7 @@ from Queue import Queue as queue
 import numpy
 import copy 
 
-from IPython.Shell import IPShellEmbed 
+#from IPython.Shell import IPShellEmbed 
 
 
 class MainWindow(QtGui.QMainWindow):
@@ -178,7 +178,7 @@ class MainWindow(QtGui.QMainWindow):
                 labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
             labeled_indices = labelmatrix.nonzero()[0]
             n_labels = labeled_indices.shape[0]
-            res_labels = labelmatrix[labeled_indices] 
+            res_labels.append(labelmatrix[labeled_indices]) 
             for featureImage, featureString in dataItem:
                 # todo: fix hardcoded 2D:
                 n = 1   # n: number of feature-values per pixel
@@ -197,10 +197,12 @@ class MainWindow(QtGui.QMainWindow):
         print res_labeledFeatures
         trainingMatrix = numpy.concatenate( trainingMatrices_perDataItem )
         self.project.trainingMatrix = trainingMatrix
-        self.project.trainingLabels = res_labels
+        self.project.trainingLabels = numpy.concatenate(res_labels)
         self.project.trainingFeatureNames = res_names
         
         print "training data has been generated."
+        print self.project.trainingMatrix.shape
+        print self.project.trainingLabels.shape
         #return
     
         print trainingMatrix
@@ -607,6 +609,9 @@ class ClassificationTrain(object):
                     FF = numpy.array(d, dtype=numpy.float32)
                     print "labels: ",FF
                     c.classifier.predictProbabilities(FF)
+            pi = self.parent.labelWidget.addOverlayPixmap(self.parent.project.classifierList[0])
+            pi.setOpacity(0)
+            
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
@@ -674,6 +679,6 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow()  
     mainwindow.show() 
-    ipshell = IPShellEmbed() 
+    #ipshell = IPShellEmbed() 
 
     sys.exit(app.exec_())
