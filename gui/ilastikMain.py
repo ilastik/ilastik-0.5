@@ -167,6 +167,8 @@ class MainWindow(QtGui.QMainWindow):
             # temporary hack that only works for pixel-labels:
             #    ... ToDo: get label matrix from label-widget. something like that: iw.renderLabelMatrix(shape)
             if True:
+                if not self.labelWidget.labelForImage.get(dataItemNr, None):
+                    continue
                 labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
             labeled_indices = labelmatrix.nonzero()[0]
             n_labels = labeled_indices.shape[0]
@@ -667,7 +669,10 @@ class ClassificationPredict(object):
             self.classificationPredict.join()
             self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList           
             self.terminateClassificationProgressBar()
-            #xxxx  : display result         
+            #xxxx  : display result
+            print self.classificationPredict.predictionList[0].shape
+            
+            
             
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
