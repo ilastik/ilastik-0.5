@@ -607,13 +607,6 @@ class ClassificationTrain(object):
             self.parent.project.classifierList = self.classificationProcess.classifierList
             self.terminateClassificationProgressBar()
             
-                   
-#            xx = xx[:,0]
-#            xx=xx.reshape(256,256)
-#            xx*=255
-#            pi = self.parent.labelWidget.addOverlayPixmap(xx)
-#            pi.setOpacity(0.5)
-            
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
@@ -679,11 +672,18 @@ class ClassificationPredict(object):
             self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList           
             self.terminateClassificationProgressBar()
 
-#            xx = self.parent.project.dataMgr.prediction[0][:,0]
-#            xx=xx.reshape(256,256)
-#            xx*=255
-#            pi = self.parent.labelWidget.addOverlayPixmap(xx)
-#            pi.setOpacity(0.9)
+            print self.parent.project.dataMgr[0].data.shape
+            
+            displayClassNr = 2
+            displayImage = self.parent.labelWidget.activeImage
+            predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
+            image = self.classificationPredict.predictionList[displayImage][:,displayClassNr-1]
+            # hack: 2d special case:
+            imshape = self.parent.project.dataMgr[0].data.shape
+            image = image.reshape( [imshape[0],imshape[1]] )
+            self.parent.labelWidget.predictionImage_clearAll()
+            self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
+            self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
             
             
             

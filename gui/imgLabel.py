@@ -638,11 +638,13 @@ class labelWidget(QtGui.QWidget):
             imageList = displayImageList(dpi)
         
         self.labelForImage = {}
+        self.predictions = {}                # predictions[imageNr]
         self.cloneviews = []
         self.overlayPixmapItems = []
         
         self.imageList = imageList
         self.activeImage = 0
+        self.activeLabel = 1
         self.image = imageList.list[self.activeImage]
         self.imageData = None
         self.pixmapitem = None
@@ -732,6 +734,47 @@ class labelWidget(QtGui.QWidget):
         self.overlayPixmapItems.remove(pixmapItem)
         self.canvas.removeItem(pixmapItem)
         
+    def predictionImage_add(self, dataItemIndex, classnr, predictionMatrix):
+        if not self.predictions.get(dataItemIndex, None):
+            self.predictions[dataItemIndex] = {}
+        if self.predictions[dataItemIndex].get(classnr, None):
+            self.canvas.removeItem( self.predictions[dataItemIndex][classnr] )
+        classColor = QtGui.QColor.fromRgb( self.parent().parent().project.labelColors.get(classnr,0) )
+        gray = numpy.require(predictionMatrix, numpy.uint8, 'C') * 255
+        h, w = gray.shape
+        image = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
+        image.ndarray = gray
+        col = classColor
+        print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() )
+        for i in range(256):
+            col = classColor.darker((256-i)*100)
+            print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() ) 
+            image.setColor(i, classColor.darker(i*10).rgb() )
+        print gray
+        pm = QtGui.QPixmap.fromImage(image)
+        self.predictions[dataItemIndex][classnr] = self.canvas.addPixmap(pm)
+        self.predictions[dataItemIndex][classnr].setZValue(-2)
+        
+    def predictionImage_setOpacity(self, dataItemIndex, classnr, opacity):
+        if not self.predictions.get(dataItemIndex, None):
+            return
+        if not self.predictions[dataItemIndex].get(classnr, None):
+            return
+        self.predictions[dataItemIndex][classnr].setOpacity(opacity)
+        
+    def predictionImage_remove(self, dataItemIndex, classnr):
+        if not self.predictions.get(dataItemIndex, None):
+            return
+        if not self.predictions[dataItemIndex].get(classnr, None):
+            return
+        self.canvas.removeItem(self.predictions[dataItemIndex][classnr])
+    
+    def predictionImage_clearAll(self):
+        print self.predictions
+        for key, val in self.predictions.items():
+            for key2, val2 in val.items():
+                self.canvas.removeItem(val2)
+        
     def saveLayout(self, storage):
         print "save labelWidget"
         oAttributeList = []
@@ -789,6 +832,7 @@ class labelWidget(QtGui.QWidget):
         return lfi.getLabelValue(pos)
     
     def changeImage(self, nr):
+        self.predictionImage_remove(self.activeImage, self.activeLabel)
         
         if not self.project: return
         #self.imageList.freeImageData(self.activeImage)
@@ -819,7 +863,7 @@ class labelWidget(QtGui.QWidget):
         pm = QtGui.QPixmap.fromImage(self.img)
         
         self.pixmapitem = self.canvas.addPixmap(pm)
-        self.pixmapitem.setZValue(-1)
+        self.pixmapitem.setZValue(-2)
         
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].canvas_paint()
@@ -845,6 +889,7 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
     def changeClass(self, nr):
+        self.activeLabel = nr
         nr+=1  # 0 is unlabeled !!
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
