@@ -843,6 +843,9 @@ class labelWidget(QtGui.QWidget):
             return
         return lfi.getLabelValue(pos)
     
+    def newLabelsPending(self):
+        self.emit(QtCore.SIGNAL('newLabelsPending'), ())
+    
     def changeImage(self, nr):
         if not self.project: return
         #self.imageList.freeImageData(self.activeImage)
@@ -1106,7 +1109,7 @@ class DisplayPanel(QtGui.QGraphicsScene):
             pos = [event.scenePos().x(), event.scenePos().y()]
             self.drawManager.EndDraw(pos)
             self.labeling = False
-            self.emit(QtCore.SIGNAL('newLabelsPending'), ())
+            self.parent.newLabelsPending()
             
     def addSomeStuffToCanvas(self,pos):
         ell = QtGui.QGraphicsEllipseItem(pos.x(), pos.y(), self.siz, self.siz)
