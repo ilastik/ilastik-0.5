@@ -882,6 +882,7 @@ class labelWidget(QtGui.QWidget):
         #        #tli.setZValue(1000)
         #        self.canvas.addItem(tli)
         self.changeClass(self.cmbClassList.currentIndex() )
+        self.emit( QtCore.SIGNAL("ImageChanged"), nr)
                     
 
     def updateClassList(self):
