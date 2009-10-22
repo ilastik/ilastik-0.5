@@ -753,7 +753,14 @@ class labelWidget(QtGui.QWidget):
         print gray
         pm = QtGui.QPixmap.fromImage(image)
         self.predictions[dataItemIndex][classnr] = self.canvas.addPixmap(pm)
-        self.predictions[dataItemIndex][classnr].setZValue(-2)
+        self.predictions[dataItemIndex][classnr].setZValue(-1)
+        
+    def predictionImage_show(self, dataItemIndex, classnr):
+        if not self.predictions.get(dataItemIndex, None):
+            return
+        if not self.predictions[dataItemIndex].get(classnr, None):
+            return
+        self.canvas.addItem( self.predictions[dataItemIndex][classnr] )
         
     def predictionImage_setOpacity(self, dataItemIndex, classnr, opacity):
         if not self.predictions.get(dataItemIndex, None):
@@ -770,10 +777,15 @@ class labelWidget(QtGui.QWidget):
         self.canvas.removeItem(self.predictions[dataItemIndex][classnr])
     
     def predictionImage_clearAll(self):
-        print self.predictions
         for key, val in self.predictions.items():
             for key2, val2 in val.items():
                 self.canvas.removeItem(val2)
+    
+    def predictionImage_clearImage(self, dataItemIndex):
+        if not self.predictions.get(dataItemIndex, None):
+            return
+        for key, val in self.predictions[dataItemIndex]:
+            self.canvas.removeItem(val)
         
     def saveLayout(self, storage):
         print "save labelWidget"
@@ -832,8 +844,6 @@ class labelWidget(QtGui.QWidget):
         return lfi.getLabelValue(pos)
     
     def changeImage(self, nr):
-        self.predictionImage_remove(self.activeImage, self.activeLabel)
-        
         if not self.project: return
         #self.imageList.freeImageData(self.activeImage)
         #self.imageList.removeUser(self.activeImage, self)
@@ -890,10 +900,16 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
     def changeClass(self, nr):
-        self.activeLabel = nr
         nr+=1  # 0 is unlabeled !!
+        self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
+        if not self.predictions == {}:
+            print "ding"
+        #self.predictionImage_remove(self.activeImage, self.activeLabel)
+        #self.predictionImage_clearImage(self.activeImage)
+        self.predictionImage_clearAll()
+        self.predictionImage_show(self.activeImage, self.activeLabel)
         self.emit( QtCore.SIGNAL("labelChanged"), nr)
 
                 
