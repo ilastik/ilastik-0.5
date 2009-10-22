@@ -199,53 +199,49 @@ class MainWindow(QtGui.QMainWindow):
         self.project.trainingFeatureNames = res_names
         
         print "training data has been generated."
-        print self.project.trainingMatrix.shape
-        print self.project.trainingLabels.shape
-        #return
-    
-        print trainingMatrix
-        print trainingMatrix.shape
-        for m in res_labeledFeatures:
-            print m
-        for n in res_names:
-            print n
-        
         return
+        #
+        #
+        #
         # Old code: fetch labels pixel-wise:
-        if self.project:
-            TrainingFeatureList = []    # each list entry is a feature vector for a training example.
-            TrainingLabelList = []
-            shape = self.project.dataMgr.dataFeatures[0][0][0].shape
-            nFeatures = 0
-            for featureImage, featureString in self.project.dataMgr.dataFeatures[0]:
-                nFeatures += featureImage.shape.__len__()
-                
-            # ToDo: get label matrix from label-widget. something like that: iw.renderLabelMatrix(shape)
-            # for now, use this ugly code:
-            dataItemNr = 0
-            for dataItem in self.project.dataMgr.dataFeatures:
-                if True:  # todo:
-                #if self.project. labelWidget.hasLabels(dataItemNr):
-                    for pixelNr in xrange( shape[0]*shape[1] ):
-                        ###pos = 
-                        label = self.labelWidget.getLabel(dataItemNr, pixelNr)
-                        if label > 0:
-                            featureVector = numpy.ndarray( nFeatures )
-                            featureNr = 0
-                            for featureImage, featureString in dataItem:  # featureImage can be multi-dimensional, e.g. 3 dim for hesse-matrix
-                                # todo: fix hardcoded 2D:
-                                n = 1   # n: number of feature-values per pixel
-                                if featureImage.shape.__len__() > 2:
-                                    n = featureImage.shape[2]
-                                for i in xrange( n ):
-                                    if n==1:
-                                        featureValues = featureImage
-                                    else:
-                                        featureValues = featureImage[:,:,i]
-                                        featureVector[featureNr] = featureImage.flat[pixelNr]
-                                featureNr+=1 
-                            TrainingFeatureList.append()
-                            TrainingLabelList.append(label)
+        # saves memory, but is not as fast as using numpy for matrix operations.
+        #
+        #
+        #
+#        if self.project:
+#            TrainingFeatureList = []    # each list entry is a feature vector for a training example.
+#            TrainingLabelList = []
+#            shape = self.project.dataMgr.dataFeatures[0][0][0].shape
+#            nFeatures = 0
+#            for featureImage, featureString in self.project.dataMgr.dataFeatures[0]:
+#                nFeatures += featureImage.shape.__len__()
+#                
+#            # ToDo: get label matrix from label-widget. something like that: iw.renderLabelMatrix(shape)
+#            # for now, use this ugly code:
+#            dataItemNr = 0
+#            for dataItem in self.project.dataMgr.dataFeatures:
+#                if True:  # todo:
+#                #if self.project. labelWidget.hasLabels(dataItemNr):
+#                    for pixelNr in xrange( shape[0]*shape[1] ):
+#                        ###pos = 
+#                        label = self.labelWidget.getLabel(dataItemNr, pixelNr)
+#                        if label > 0:
+#                            featureVector = numpy.ndarray( nFeatures )
+#                            featureNr = 0
+#                            for featureImage, featureString in dataItem:  # featureImage can be multi-dimensional, e.g. 3 dim for hesse-matrix
+#                                # todo: fix hardcoded 2D:
+#                                n = 1   # n: number of feature-values per pixel
+#                                if featureImage.shape.__len__() > 2:
+#                                    n = featureImage.shape[2]
+#                                for i in xrange( n ):
+#                                    if n==1:
+#                                        featureValues = featureImage
+#                                    else:
+#                                        featureValues = featureImage[:,:,i]
+#                                        featureVector[featureNr] = featureImage.flat[pixelNr]
+#                                featureNr+=1 
+#                            TrainingFeatureList.append()
+#                            TrainingLabelList.append(label)
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -596,22 +592,22 @@ class ClassificationTrain(object):
             self.parent.project.classifierList = self.classificationProcess.classifierList
             self.terminateClassificationProgressBar()
             
-#            F = numpy.array(self.parent.project.trainingMatrix, dtype=numpy.float32)
-#            
-#            print "Predicting on Training Set"
-#            for c in self.parent.project.classifierList:
-#                print ".",
-#                c.classifier.predictProbabilities(F)
-#            
-#            print "Predicting on Everything: Here it crashes, if more then one image was selected..."
-#            print "maybe there is a problem on the generation of the TrainingMatrix for training?"
-#            
-#            featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
-#            for c in self.parent.project.classifierList:
-#                for d in featureQueue:
-#                    print ",",
-#                    FF = numpy.array(d, dtype=numpy.float32)
-#                    print "labels: ",FF
+            F = numpy.array(self.parent.project.trainingMatrix, dtype=numpy.float32)
+            
+            print "Predicting on Training Set"
+            for c in self.parent.project.classifierList:
+                print ".",
+                c.classifier.predictProbabilities(F)
+            
+            print "Predicting on Everything: Here it crashes, if more then one image was selected..."
+            print "maybe there is a problem on the generation of the TrainingMatrix for training?"
+            
+            featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
+            for c in self.parent.project.classifierList:
+                for d in featureQueue:
+                    print ",",
+                    FF = numpy.array(d, dtype=numpy.float32)
+                    print "labels: ",FF
                     xx = c.classifier.predictProbabilities(FF)
             xx = xx[:,0]
             print xx
