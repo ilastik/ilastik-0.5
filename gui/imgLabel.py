@@ -1106,6 +1106,7 @@ class DisplayPanel(QtGui.QGraphicsScene):
             pos = [event.scenePos().x(), event.scenePos().y()]
             self.drawManager.EndDraw(pos)
             self.labeling = False
+            self.emit(QtCore.SIGNAL('newLabelsPending'), viewrect)
             
     def addSomeStuffToCanvas(self,pos):
         ell = QtGui.QGraphicsEllipseItem(pos.x(), pos.y(), self.siz, self.siz)
