@@ -151,6 +151,7 @@ class ClassifierInteractiveThread(threading.Thread):
                         print ".",
                         prediction += classifier.predict(predictItem)
                     cnt += 1 
+                    prediction /= cnt
                 print " "
                 
                 if self.predictResultListCounter[predictIndex] == 0:
@@ -161,9 +162,12 @@ class ClassifierInteractiveThread(threading.Thread):
                 self.predictResultListCounter[predictIndex] += 1
                 predictIndex += 1
             
-            self.predictResultList = [x/y for x,y in zip(self.predictResultList, self.predictResultListCounter)]
+            self.predictResultNormalized = [x/y for x,y in zip(self.predictResultList, self.predictResultListCounter)]
             
-            xx = self.predictResultList[0]
+            print map(numpy.max, self.predictResultNormalized)
+            print map(numpy.min, self.predictResultNormalized)
+            
+            xx = self.predictResultNormalized[0].copy()
             xx = xx[:,0]
             xx=xx.reshape(256,256)
             xx*=255
