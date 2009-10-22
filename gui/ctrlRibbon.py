@@ -9,8 +9,8 @@ class Ribbon(QtGui.QTabWidget):
             self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
 
     def orientationEvent(self, orientation):
-        for tab in self.tabList:
-            lo = tab[0].layout()
+        for name, tab in self.tabDict.items():
+            lo = tab.layout()
             lo.setDirection(lo.Direction(orientation))
         if orientation == QtCore.Qt.Horizontal: 
             self.setTabPosition(self.North)            
