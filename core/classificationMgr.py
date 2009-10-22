@@ -107,7 +107,7 @@ class ClassifierPredictThread(threading.Thread):
             self.predictionList.append(prediction / cnt)
 
 class ClassifierInteractiveThread(threading.Thread):
-    def __init__(self, trainingQueue, predictDataList, labelWidget):
+    def __init__(self, trainingQueue, predictDataList, labelWidget, dataMgr):
         threading.Thread.__init__(self)
         self.stopped = False
         self.trainingQueue = trainingQueue
@@ -116,6 +116,7 @@ class ClassifierInteractiveThread(threading.Thread):
         self.predictResultListCounter = [0 for k in range(0,len(predictDataList))]
         self.classifierList = queue(20)
         self.labelWidget = labelWidget
+        self.dataMgr = dataMgr
         
     def run(self):
         init = 1
@@ -137,48 +138,48 @@ class ClassifierInteractiveThread(threading.Thread):
                 print "Train classifier and put to Classifier Queue %d" % self.classifierList.qsize() 
                 self.classifierList.put(ClassifierRandomForest(features, labels))
             
-            predictIndex = 0
-            for predictItem in self.predictDataList:
-                print "Predict for Image %d " % predictIndex
-                cnt = 0
-                for classifier in self.classifierList.queue:
-                    if classifier.usedForPrediction == len(self.predictDataList):
-                        continue
-                    if cnt == 0:
-                        print ".",
-                        prediction = classifier.predict(predictItem)      
-                    else:
-                        print ".",
-                        prediction += classifier.predict(predictItem)
-                    cnt += 1 
-                    prediction /= cnt
-                print " "
-                
-                if self.predictResultListCounter[predictIndex] == 0:
-                    self.predictResultList[predictIndex] = prediction
+            predictIndex = self.labelWidget.activeImage
+            predictItem = self.predictDataList[0]
+#            for predictItem in self.predictDataList:
+            
+            print "Predict for Image %d " % predictIndex
+            cnt = 0
+            for classifier in self.classifierList.queue:
+                if classifier.usedForPrediction == len(self.predictDataList):
+                    continue
+                if cnt == 0:
+                    print ".",
+                    prediction = classifier.predict(predictItem)      
                 else:
-                    self.predictResultList[predictIndex] += prediction
-                
-                self.predictResultListCounter[predictIndex] += 1
-                predictIndex += 1
+                    print ".",
+                    prediction += classifier.predict(predictItem)
+                cnt += 1 
+                prediction /= cnt
+            print " "
             
-            self.predictResultNormalized = [x/y for x,y in zip(self.predictResultList, self.predictResultListCounter)]
-            
-            print map(numpy.max, self.predictResultNormalized)
-            print map(numpy.min, self.predictResultNormalized)
-            
-            xx = self.predictResultNormalized[0].copy()
-            xx = xx[:,0]
-            xx=xx.reshape(256,256)
-            xx*=255
-            if init:
-                pi = self.labelWidget.addOverlayPixmap(xx)
-                pi.setOpacity(0.7)
-                init = 0
+            if self.predictResultListCounter[predictIndex] == 0:
+                self.predictResultList[predictIndex] = prediction
             else:
-                dummy = self.labelWidget.overlayPixmapItems.pop()
-                pi = self.labelWidget.addOverlayPixmap(xx)
-                pi.setOpacity(0.7)
+                self.predictResultList[predictIndex] += prediction
+            
+            self.predictResultListCounter[predictIndex] += 1
+#            predictIndex += 1
+            
+            self.predictResultNormalized = [None for k in range(0,len(self.predictResultList))]
+            self.predictResultNormalized[predictIndex] = self.predictResultList[predictIndex] / self.predictResultListCounter[predictIndex]
+            
+#            print map(numpy.max, self.predictResultNormalized)
+#            print map(numpy.min, self.predictResultNormalized)
+            
+            displayClassNr = 2
+#            predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
+            
+            image = self.predictResultNormalized[predictIndex][:,displayClassNr-1].copy()
+            # hack: 2d special case:
+            imshape = self.dataMgr[predictIndex].data.shape
+            image = image.reshape( [imshape[0],imshape[1]] )
+            self.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
+            self.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
                     
                     
                     

@@ -70,8 +70,14 @@ class MainWindow(QtGui.QMainWindow):
     def initProbmapButton(self):
         probMapButton = self.ribbon.tabDict['View'].itemDict['ProbabilityMaps']
         menu = QtGui.QMenu("MenuName",self)
+        cnt = 1
         for labelName in self.project.labelNames:
-            menu.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/applications-system.png'), labelName, menu))
+            pixmap = QtGui.QPixmap(16,16)
+            color = QtGui.QColor(self.project.labelColors[cnt])
+            pixmap.fill(color)
+            icon = QtGui.QIcon(pixmap )
+            menu.addAction(QtGui.QAction(icon, labelName, menu))
+            cnt += 1
         menu.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/preferences-system.png'), "Clear", menu))
         probMapButton.setMenu(menu)
         
@@ -618,6 +624,10 @@ class ClassificationInteractive(object):
         self.stopped = False
         print "Classification Interactive"
         self.start()
+        self.connect(self, PYSIGNAL("labelsChanged"), self.test)
+        
+    def test(self, bla):
+        print "Labels changed", bla
         
     def start(self):
         
@@ -630,7 +640,7 @@ class ClassificationInteractive(object):
         
         (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
         
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(trainingQueue, predictDataList, self.parent.labelWidget)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(trainingQueue, predictDataList, self.parent.labelWidget, self.parent.project.dataMgr)
         print "Before Interactive Thread start:\n"
         self.classificationInteractive.start()
     
