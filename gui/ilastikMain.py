@@ -35,6 +35,8 @@ class MainWindow(QtGui.QMainWindow):
         
         self.classificationProcess = None
         
+    def test(self):
+        print "Labels changed"
         
     def createRibbons(self):                     
       
@@ -62,6 +64,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        
         
         #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
         #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
@@ -495,6 +498,8 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
+        self.parent.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.parent.test)
+        
         self.parent.projectModified()
         
         self.close()
@@ -629,10 +634,9 @@ class ClassificationInteractive(object):
         self.stopped = False
         print "Classification Interactive"
         self.start()
-        self.connect(self, PYSIGNAL("labelsChanged"), self.test)
+        self.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.test)
         
-    def test(self, bla):
-        print "Labels changed", bla
+    
         
     def start(self):
         
