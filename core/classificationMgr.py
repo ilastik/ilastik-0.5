@@ -2,8 +2,9 @@ import numpy
 import threading 
 import multiprocessing
 import time
-from Queue import PriorityQueue as pq
 from Queue import Queue as queue
+from Queue import Empty as QueueEmpty
+
 import numpy
 
 try:
@@ -21,7 +22,7 @@ class ClassificationMgr(object):
 
 class ClassifierBase(object):
     def __init__(self):
-        pass
+        self.usedForPrediction = 0
     
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None):
@@ -48,7 +49,9 @@ class ClassifierRandomForest(ClassifierBase):
         if self.classifier:
             if not target.dtype == numpy.float32:
                 target = numpy.array(target, dtype=numpy.float32)
-            return self.classifier.predictProbabilities(target)      
+            self.usedForPrediction += 1
+            return self.classifier.predictProbabilities(target)    
+          
 
 class ClassifierSVM(ClassifierBase):
     def __init__(self):
@@ -109,52 +112,69 @@ class ClassifierInteractiveThread(threading.Thread):
         self.stopped = False
         self.trainingQueue = trainingQueue
         self.predictDataList = predictDataList
-        self.predictResultList = []
+        self.predictResultList = [None for k in range(0,len(predictDataList))]
+        self.predictResultListCounter = [0 for k in range(0,len(predictDataList))]
         self.classifierList = queue(20)
         self.labelWidget = labelWidget
         
     def run(self):
         init = 1
-        while 1 and not self.stopped:
+        while not self.stopped:
             print "Waiting for new training data..."
-            (features, labels) = self.trainingQueue.get()
-            print "Fetched training data from Queue"
+            try:
+                (features, labels) = self.trainingQueue.get(True, 0.5)
+                print "Fetched training data from Queue"
+#                for tmp in range(0,len(self.classifierList.qsize()) / 2 ):
+#                    if not self.classifierList.empty():
+#                        trash = self.classifierList.get()           
+            except QueueEmpty:
+                print "No new Training Data available"
+   
+            for tmp in range(0,2):
+                if self.classifierList.full():
+                    trash = self.classifierList.get()
+                    print "Classifier List full, removing..."
+                print "Train classifier and put to Classifier Queue %d" % self.classifierList.qsize() 
+                self.classifierList.put(ClassifierRandomForest(features, labels))
             
-            while not self.stopped:
-                for tmp in range(0,2):
-                    if self.classifierList.full():
-                        trash = self.classifierList.get()
-                        print "Classifier List full, removing..."
-                    print "Train classifier and put to Classifier Queue %d" % tmp 
-                    self.classifierList.put(ClassifierRandomForest(features, labels))
+            predictIndex = 0
+            for predictItem in self.predictDataList:
+                print "Predict for Image %d " % predictIndex
+                cnt = 0
+                for classifier in self.classifierList.queue:
+                    if classifier.usedForPrediction == len(self.predictDataList):
+                        continue
+                    if cnt == 0:
+                        print ".",
+                        prediction = classifier.predict(predictItem)      
+                    else:
+                        print ".",
+                        prediction += classifier.predict(predictItem)
+                    cnt += 1 
+                print " "
                 
-                self.predictResultList = []
-                for predictItem in self.predictDataList:
-                    print "Predict with Classifiers from current Classifier List"
-                    cnt = 0
-                    for classifier in self.classifierList.queue:
-                        if cnt == 0:
-                            print ".",
-                            prediction = classifier.predict(predictItem)      
-                        else:
-                            print ".",
-                            prediction += classifier.predict(predictItem)
-                        cnt += 1 
-                    print ""
-                    self.predictResultList.append(prediction / cnt)
-                
-                xx = self.predictResultList[0]
-                xx = xx[:,0]
-                xx=xx.reshape(256,256)
-                xx*=255
-                if init:
-                    pi = self.labelWidget.addOverlayPixmap(xx)
-                    pi.setOpacity(0.7)
-                    init = 0
+                if self.predictResultListCounter[predictIndex] == 0:
+                    self.predictResultList[predictIndex] = prediction
                 else:
-                    dummy = self.labelWidget.overlayPixmapItems.pop()
-                    pi = self.labelWidget.addOverlayPixmap(xx)
-                    pi.setOpacity(0.7)
+                    self.predictResultList[predictIndex] += prediction
+                
+                self.predictResultListCounter[predictIndex] += 1
+                predictIndex += 1
+            
+            self.predictResultList = [x/y for x,y in zip(self.predictResultList, self.predictResultListCounter)]
+            
+            xx = self.predictResultList[0]
+            xx = xx[:,0]
+            xx=xx.reshape(256,256)
+            xx*=255
+            if init:
+                pi = self.labelWidget.addOverlayPixmap(xx)
+                pi.setOpacity(0.7)
+                init = 0
+            else:
+                dummy = self.labelWidget.overlayPixmapItems.pop()
+                pi = self.labelWidget.addOverlayPixmap(xx)
+                pi.setOpacity(0.7)
                     
                     
                     
