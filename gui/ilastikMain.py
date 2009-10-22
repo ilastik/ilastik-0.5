@@ -66,6 +66,14 @@ class MainWindow(QtGui.QMainWindow):
         #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
         
         self.ribbon.setCurrentIndex (0)
+    
+    def initProbmapButton(self):
+        probMapButton = self.ribbon.tabDict['View'].itemDict['ProbabilityMaps']
+        menu = QtGui.QMenu("MenuName",self)
+        for labelName in self.project.labelNames:
+            menu.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/applications-system.png'), labelName, menu))
+        menu.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/preferences-system.png'), "Clear", menu))
+        probMapButton.setMenu(menu)
         
     def newProjectDlg(self):      
         self.projectDlg = ProjectDlg(self)
@@ -95,6 +103,7 @@ class MainWindow(QtGui.QMainWindow):
         
     def projectModified(self):
         self.labelWidget.updateProject(self.project)
+        self.initProbmapButton()
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
@@ -612,6 +621,7 @@ class ClassificationTrain(object):
                 for d in featureQueue:
                     FF = numpy.array(d, dtype=numpy.float32)
                     xx = c.classifier.predictProbabilities(FF)
+                    
             xx = xx[:,0]
             xx=xx.reshape(256,256)
             xx*=255
@@ -677,6 +687,8 @@ class ClassificationPredict(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
+    
+
 
 
 if __name__ == "__main__":

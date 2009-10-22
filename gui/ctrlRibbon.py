@@ -21,7 +21,6 @@ class Ribbon(QtGui.QTabWidget):
         QtGui.QTabWidget.moveEvent(self, event)
     
     def addTab(self, w, s="TabName"):
-        print s
         self.tabDict[s] = w
         QtGui.QTabWidget.insertTab(self, w.position, w, s)              
 
@@ -41,6 +40,20 @@ class RibbonButtonItem(QtGui.QPushButton,RibbonBaseItem):
         self.setText(ribbon_entry.name)
 
 class RibbonToggleButtonItem(QtGui.QToolButton,RibbonBaseItem):
+    def __init__(self,  ribbon_entry):
+        QtGui.QToolButton.__init__(self)
+        RibbonBaseItem.__init__(self,  ribbon_entry)
+        action = QtGui.QAction(self)
+        action.setIcon(ribbon_entry.icon)   
+        self.setIconSize(ribbon_entry.size)
+        action.setIconText(ribbon_entry.name)
+        #self.setCheckable(True)
+        self.setToolButtonStyle(2)
+        self.setDefaultAction(action)
+        self.setPopupMode(2)
+
+
+class RibbonDropButtonItem(QtGui.QToolButton,RibbonBaseItem):
     def __init__(self,  ribbon_entry):
         QtGui.QToolButton.__init__(self)
         RibbonBaseItem.__init__(self,  ribbon_entry)
@@ -123,7 +136,7 @@ def createRibbons():
     
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", "actions/my-segment.png" ,"Segmentation"))
     
-    RibbonGroupObjects["View"].append(RibbonEntry("ProbabilityMaps", "categories/preferences-system.png" ,"View Probability map"))
+    RibbonGroupObjects["View"].append(RibbonEntry("ProbabilityMaps", "categories/preferences-system.png" ,"View Probability map",type=RibbonToggleButtonItem))
     RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation"))
     
     RibbonGroupObjects["Export"].append(RibbonEntry("Export", "categories/preferences-system.png" ,"Export"))
