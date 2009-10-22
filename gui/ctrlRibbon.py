@@ -48,9 +48,9 @@ class RibbonToggleButtonItem(QtGui.QToolButton,RibbonBaseItem):
         action.setCheckable(True)
         self.setIconSize(ribbon_entry.size)
         action.setIconText(ribbon_entry.name)
-#        self.setToolButtonStyle(2)
-#        self.setDefaultAction(action)
-#        self.setPopupMode(2)
+        self.setToolButtonStyle(2)
+        self.setDefaultAction(action)
+        self.setPopupMode(2)
 
 
 class RibbonDropButtonItem(QtGui.QToolButton,RibbonBaseItem):
