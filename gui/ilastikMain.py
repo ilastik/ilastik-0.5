@@ -58,6 +58,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked()'), self.on_classificationInteractive)
+        self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked()'), self.on_ViewProbabilities)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -68,18 +69,19 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.setCurrentIndex (0)
     
     def initProbmapButton(self):
-        probMapButton = self.ribbon.tabDict['View'].itemDict['ProbabilityMaps']
-        menu = QtGui.QMenu("MenuName",self)
-        cnt = 1
-        for labelName in self.project.labelNames:
-            pixmap = QtGui.QPixmap(16,16)
-            color = QtGui.QColor(self.project.labelColors[cnt])
-            pixmap.fill(color)
-            icon = QtGui.QIcon(pixmap )
-            menu.addAction(QtGui.QAction(icon, labelName, menu))
-            cnt += 1
-        menu.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/preferences-system.png'), "Clear", menu))
-        probMapButton.setMenu(menu)
+        pass
+#        probMapButton = self.ribbon.tabDict['View'].itemDict['ProbabilityMaps']
+#        menu = QtGui.QMenu("MenuName",self)
+#        cnt = 1
+#        for labelName in self.project.labelNames:
+#            pixmap = QtGui.QPixmap(16,16)
+#            color = QtGui.QColor(self.project.labelColors[cnt])
+#            pixmap.fill(color)
+#            icon = QtGui.QIcon(pixmap )
+#            menu.addAction(QtGui.QAction(icon, labelName, menu))
+#            cnt += 1
+#        menu.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/preferences-system.png'), "Clear", menu))
+#        probMapButton.setMenu(menu)
         
     def newProjectDlg(self):      
         self.projectDlg = ProjectDlg(self)
@@ -140,6 +142,9 @@ class MainWindow(QtGui.QMainWindow):
 #        self.ribbon.tabDict['Features'].addItem(featureListRib)
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
+
+    def on_ViewProbabilities(self):
+        self.project.View_showProbmaps = 1
 
     def on_classificationTrain(self):
         self.generateTrainingData()
@@ -684,7 +689,7 @@ class ClassificationPredict(object):
 
             print self.parent.project.dataMgr[0].data.shape
             
-            displayClassNr = 2
+            displayClassNr = self.parent.labelWidget.activeLabel
             displayImage = self.parent.labelWidget.activeImage
             predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
             image = self.classificationPredict.predictionList[displayImage][:,displayClassNr-1]
@@ -694,8 +699,6 @@ class ClassificationPredict(object):
             self.parent.labelWidget.predictionImage_clearAll()
             self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
             self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
-            
-            
             
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
