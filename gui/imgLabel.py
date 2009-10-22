@@ -893,6 +893,8 @@ class labelWidget(QtGui.QWidget):
         nr+=1  # 0 is unlabeled !!
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
+        self.emit( QtCore.SIGNAL("labelChanged"), theEvent)
+
                 
     def undo(self):
         self.image.undolist.undo()
