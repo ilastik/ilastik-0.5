@@ -141,7 +141,9 @@ class MainWindow(QtGui.QMainWindow):
         
     def on_classificationPredict(self):
         self.classificationPredict = ClassificationPredict(self)
+    
     def on_classificationInteractive(self):
+        self.generateTrainingData()
         self.classificationInteractive = ClassificationInteractive(self)
         
     def generateTrainingData(self):
@@ -605,28 +607,12 @@ class ClassificationTrain(object):
             self.parent.project.classifierList = self.classificationProcess.classifierList
             self.terminateClassificationProgressBar()
             
-            F = numpy.array(self.parent.project.trainingMatrix, dtype=numpy.float32)
-            
-            print "Predicting on Training Set"
-            for c in self.parent.project.classifierList:
-                print ".",
-                c.classifier.predictProbabilities(F)
-            
-            print "Predicting on Everything: Here it crashes, if more then one image was selected..."
-            print "maybe there is a problem on the generation of the TrainingMatrix for training?"
-            
-            (featureQueue, featureQueue_dataIndices) = self.parent.project.dataMgr.buildFeatureMatrix()
-            xx = numpy.zeros([256,256])
-            for c in self.parent.project.classifierList:
-                for d in featureQueue:
-                    FF = numpy.array(d, dtype=numpy.float32)
-                    xx = c.classifier.predictProbabilities(FF)
-                    
-            xx = xx[:,0]
-            xx=xx.reshape(256,256)
-            xx*=255
-            pi = self.parent.labelWidget.addOverlayPixmap(xx)
-            pi.setOpacity(0.5)
+                   
+#            xx = xx[:,0]
+#            xx=xx.reshape(256,256)
+#            xx*=255
+#            pi = self.parent.labelWidget.addOverlayPixmap(xx)
+#            pi.setOpacity(0.5)
             
                       
     def terminateClassificationProgressBar(self):
@@ -636,7 +622,24 @@ class ClassificationTrain(object):
 class ClassificationInteractive(object):
     def __init__(self, parent):
         self.parent = parent
+        self.stopped = False
         print "Classification Interactive"
+        self.start()
+        
+    def start(self):
+        
+        F = self.parent.project.trainingMatrix
+        L = self.parent.project.trainingLabels
+        trainingQueue = queue()
+        trainingQueue.put((F,L))
+        print L
+        print L.shape
+        
+        (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
+        
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(trainingQueue, predictDataList, self.parent.labelWidget)
+        print "Before Interactive Thread start:\n"
+        self.classificationInteractive.start()
     
 class ClassificationPredict(object):
     def __init__(self, parent):
@@ -648,14 +651,10 @@ class ClassificationPredict(object):
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         
-        # Get Predict Data
         (self.featureQueue, self.featureQueue_dataIndices) = self.parent.project.dataMgr.buildFeatureMatrix()
-#        self.featureQueue = []
-#        for k in range(0,4):
-#            self.featureQueue.append(numpy.random.rand(256*256,17))
         
         numberOfJobs = len(self.featureQueue) * len(self.parent.project.classifierList)
-        print numberOfJobs
+        
         self.initClassificationProgress(numberOfJobs)
         self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, self.featureQueue, self.featureQueue_dataIndices)
         self.classificationPredict.start()
@@ -679,8 +678,12 @@ class ClassificationPredict(object):
             self.classificationPredict.join()
             self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList           
             self.terminateClassificationProgressBar()
-            #xxxx  : display result
-            print self.classificationPredict.predictionList[0].shape
+
+#            xx = self.parent.project.dataMgr.prediction[0][:,0]
+#            xx=xx.reshape(256,256)
+#            xx*=255
+#            pi = self.parent.labelWidget.addOverlayPixmap(xx)
+#            pi.setOpacity(0.9)
             
             
             

@@ -3,6 +3,7 @@ import threading
 import multiprocessing
 import time
 from Queue import PriorityQueue as pq
+from Queue import Queue as queue
 import numpy
 
 try:
@@ -82,7 +83,7 @@ class ClassifierPredictThread(threading.Thread):
         self.classifierList = classifierList
         self.count = 0
         self.featureList = featureList
-        self. featureList_dataIndices = featureList_dataIndices
+        self.featureList_dataIndices = featureList_dataIndices
         self.stopped = False
         self.predictionList = []
         self.predictionList_dataIndices = featureList_dataIndices
@@ -101,3 +102,62 @@ class ClassifierPredictThread(threading.Thread):
                 cnt += 1
                 self.count += 1
             self.predictionList.append(prediction / cnt)
+
+class ClassifierInteractiveThread(threading.Thread):
+    def __init__(self, trainingQueue, predictDataList, labelWidget):
+        threading.Thread.__init__(self)
+        self.stopped = False
+        self.trainingQueue = trainingQueue
+        self.predictDataList = predictDataList
+        self.predictResultList = []
+        self.classifierList = queue(20)
+        self.labelWidget = labelWidget
+        
+    def run(self):
+        init = 1
+        while 1 and not self.stopped:
+            print "Waiting for new training data..."
+            (features, labels) = self.trainingQueue.get()
+            print "Fetched training data from Queue"
+            
+            while not self.stopped:
+                for tmp in range(0,2):
+                    if self.classifierList.full():
+                        trash = self.classifierList.get()
+                        print "Classifier List full, removing..."
+                    print "Train classifier and put to Classifier Queue %d" % tmp 
+                    self.classifierList.put(ClassifierRandomForest(features, labels))
+                
+                self.predictResultList = []
+                for predictItem in self.predictDataList:
+                    print "Predict with Classifiers from current Classifier List"
+                    cnt = 0
+                    for classifier in self.classifierList.queue:
+                        if cnt == 0:
+                            print ".",
+                            prediction = classifier.predict(predictItem)      
+                        else:
+                            print ".",
+                            prediction += classifier.predict(predictItem)
+                        cnt += 1 
+                    print ""
+                    self.predictResultList.append(prediction / cnt)
+                
+                xx = self.predictResultList[0]
+                xx = xx[:,0]
+                xx=xx.reshape(256,256)
+                xx*=255
+                if init:
+                    pi = self.labelWidget.addOverlayPixmap(xx)
+                    pi.setOpacity(0.7)
+                    init = 0
+                else:
+                    dummy = self.labelWidget.overlayPixmapItems.pop()
+                    pi = self.labelWidget.addOverlayPixmap(xx)
+                    pi.setOpacity(0.7)
+                    
+                    
+                    
+                
+            
+        
