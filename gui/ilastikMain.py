@@ -138,45 +138,39 @@ class MainWindow(QtGui.QMainWindow):
     def generateTrainingData(self):
         if not self.project:
             return
-        shape = self.project.dataMgr.dataFeatures[0][0][0].shape
         
         numpyarrayobject = self.project.dataMgr.dataFeatures[0][0][0]
         pi = self.labelWidget.addOverlayPixmap(numpyarrayobject)
         pi.setOpacity(0.5)
         self.labelWidget.removeOverlayPixmap(pi)
         
-        print "using dimension of first image: ", shape
+        print "using feature dimension of first image."
         trainingMatrices_perDataItem = []
         res_labels = []
         res_names = []
         dataItemNr = 0
         for dataItem in self.project.dataMgr.dataFeatures:
             res_labeledFeatures = []
-            # todo: generalize to nD.
-            # problem: feature-dimension can be higher than image-dimension.
-            if dataItem[0][0].shape[0] != shape[0]:
-                print "dimensions do not match, skipping dataItem."
-                continue
-            if dataItem[0][0].shape[1] != shape[1]:
-                print "dimensions do not match, skipping dataItem."
-                continue
             #todo:
             #if !self.labelWidget.hasLabels(dataItemNr):
             #    continue
             
             if False:
                 # get label-matrix:
-                labelmatrix = numpy.ndarray(shape)
+                # hack: special case for 2D: have to get real image dimension.
+                labelmatrix = numpy.ndarray( [dataItem[0][0].shape[0],dataItem[0][0].shape[1]] )
                 # todo: generalize to nD.
-                for pixX in xrange(shape[0]):
-                    print "generating labelImage: ", pixX, " / ", shape[0]
-                    for pixY in xrange(shape[1]):
+                for pixX in xrange(dataItem[0][0].shape[0]):
+                    print "generating labelImage: ", pixX, " / ", dataItem[0][0].shape[0]
+                    for pixY in xrange(dataItem[0][0].shape[1]):
                         labelmatrix[pixX,pixY] = self.labelWidget.getLabel(dataItemNr, [pixY,pixX])
+            # temporary hack that only works for pixel-labels:
+            #    ... ToDo: get label matrix from label-widget. something like that: iw.renderLabelMatrix(shape)
             if True:
                 labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
             labeled_indices = labelmatrix.nonzero()[0]
             n_labels = labeled_indices.shape[0]
-            res_labels.append(labelmatrix[labeled_indices]) 
+            nFeatures = 0
             for featureImage, featureString in dataItem:
                 # todo: fix hardcoded 2D:
                 n = 1   # n: number of feature-values per pixel
@@ -184,21 +178,31 @@ class MainWindow(QtGui.QMainWindow):
                     n = featureImage.shape[2]
                 if n<=1:
                     res_labeledFeatures.append( featureImage.flat[labeled_indices].reshape(1,n_labels) )
-                    res_names.append( featureString )
+                    if dataItemNr == 0:
+                        res_names.append( featureString )
                 else:
                     for featureDim in xrange(n):
                         res_labeledFeatures.append( featureImage[:,:,featureDim].flat[labeled_indices].reshape(1,n_labels ) )
-                        res_names.append( featureString + "_%i" %(featureDim))
+                        if dataItemNr == 0:
+                            res_names.append( featureString + "_%i" %(featureDim))
+                nFeatures+=1
+            if (dataItemNr==0):
+                nFeatures_ofFirstImage = nFeatures
+            if nFeatures == nFeatures_ofFirstImage:
+                trainingMatrices_perDataItem.append( numpy.concatenate( res_labeledFeatures).T )
+                res_labels.append(labelmatrix[labeled_indices])
+            else:
+                print "feature dimensions don't match (maybe #channels differ?). Skipping image."
             dataItemNr+=1
-            trainingMatrices_perDataItem.append( numpy.concatenate( res_labeledFeatures).T )
-        print "!!!!!!!!!:"
-        print res_labeledFeatures
         trainingMatrix = numpy.concatenate( trainingMatrices_perDataItem )
         self.project.trainingMatrix = trainingMatrix
         self.project.trainingLabels = numpy.concatenate(res_labels)
         self.project.trainingFeatureNames = res_names
         
         print "training data has been generated."
+        print trainingMatrix
+        print trainingMatrix.shape
+        print self.project.trainingLabels.shape
         return
         #
         #
@@ -582,8 +586,6 @@ class ClassificationTrain(object):
         if not self.classificationProcess.is_alive():
             self.classificationTimer.stop()
             print "Training Finished"
-            print "Training matrix:"
-            print self.parent.project.trainingMatrix
             #self.project.trainingMatrix
             #self.project.trainingLabels
             #self.project.trainingFeatureNames
@@ -602,19 +604,15 @@ class ClassificationTrain(object):
             print "Predicting on Everything: Here it crashes, if more then one image was selected..."
             print "maybe there is a problem on the generation of the TrainingMatrix for training?"
             
-            featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
+            (featureQueue, featureQueue_dataIndices) = self.parent.project.dataMgr.buildFeatureMatrix()
+            xx = numpy.zeros([256,256])
             for c in self.parent.project.classifierList:
                 for d in featureQueue:
-                    print ",",
                     FF = numpy.array(d, dtype=numpy.float32)
-                    print "labels: ",FF
                     xx = c.classifier.predictProbabilities(FF)
             xx = xx[:,0]
-            print xx
-            print xx.shape
             xx=xx.reshape(256,256)
             xx*=255
-            print xx.shape
             pi = self.parent.labelWidget.addOverlayPixmap(xx)
             pi.setOpacity(0.5)
             
@@ -639,7 +637,7 @@ class ClassificationPredict(object):
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         
         # Get Predict Data
-        self.featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
+        (self.featureQueue, self.featureQueue_dataIndices) = self.parent.project.dataMgr.buildFeatureMatrix()
 #        self.featureQueue = []
 #        for k in range(0,4):
 #            self.featureQueue.append(numpy.random.rand(256*256,17))
@@ -647,7 +645,7 @@ class ClassificationPredict(object):
         numberOfJobs = len(self.featureQueue) * len(self.parent.project.classifierList)
         print numberOfJobs
         self.initClassificationProgress(numberOfJobs)
-        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, self.featureQueue)
+        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, self.featureQueue, self.featureQueue_dataIndices)
         self.classificationPredict.start()
         self.classificationTimer.start(200) 
 
@@ -668,7 +666,8 @@ class ClassificationPredict(object):
             print "Training Finished"
             self.classificationPredict.join()
             self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList           
-            self.terminateClassificationProgressBar()         
+            self.terminateClassificationProgressBar()
+            #xxxx  : display result         
             
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)

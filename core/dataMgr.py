@@ -107,9 +107,12 @@ class DataMgr():
         return len(self.dataItems)
     
     def buildFeatureMatrix(self):
-        self.featureMatrixList = []    
+        self.featureMatrixList = []
+        self.featureMatrixList_DataItemIndices = []    
+        dataItemNr = 0
         for dataFeatures in self.dataFeatures:
             fTuple = []
+            nFeatures = 0
             for features in dataFeatures:
                 f = features[0]
                 fSize = f.shape[0] * f.shape[1] 
@@ -117,9 +120,17 @@ class DataMgr():
                     f = f.reshape(fSize,1)
                 else:
                     f = f.reshape(fSize,f.shape[2])    
-                fTuple.append(f)  
-            self.featureMatrixList.append( numpy.concatenate(fTuple,axis=1) )
-        return self.featureMatrixList
+                fTuple.append(f)
+                nFeatures+=1
+            if dataItemNr == 0:
+                nFeatures_forFirstImage = nFeatures
+            if nFeatures == nFeatures_forFirstImage:
+                self.featureMatrixList.append( numpy.concatenate(fTuple,axis=1) )
+                self.featureMatrixList_DataItemIndices.append(dataItemNr)
+            else:
+                print "generate feature matrix: nFeatures don't match for data item nr ", dataItemNr
+            dataItemNr+=1
+        return (self.featureMatrixList, self.featureMatrixList_DataItemIndices)
 
                     
                     
