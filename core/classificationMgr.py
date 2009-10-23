@@ -4,6 +4,7 @@ import multiprocessing
 import time
 from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
+from collections import deque
 
 import numpy
 
@@ -22,7 +23,7 @@ class ClassificationMgr(object):
 
 class ClassifierBase(object):
     def __init__(self):
-        self.usedForPrediction = 0
+        self.usedForPrediction = []
     
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None):
@@ -49,7 +50,6 @@ class ClassifierRandomForest(ClassifierBase):
         if self.classifier:
             if not target.dtype == numpy.float32:
                 target = numpy.array(target, dtype=numpy.float32)
-            self.usedForPrediction += 1
             return self.classifier.predictProbabilities(target)    
           
 
@@ -70,7 +70,7 @@ class ClassifierTrainThread(threading.Thread):
         self.queueSize = queueSize
         self.featLabelTupel = featLabelTupel
         self.count = 0
-        self.classifierList = []
+        self.classifierList = deque(self.queueSize)
         self.stopped = False
     
     def run(self):
@@ -112,40 +112,43 @@ class ClassifierInteractiveThread(threading.Thread):
         self.stopped = False
         self.trainingQueue = trainingQueue
         self.predictDataList = predictDataList
-        self.predictResultList = [None for k in range(0,len(predictDataList))]
+        self.predictResultList = [ deque(maxlen=10) for k in range(0,len(predictDataList))]
         self.predictResultListCounter = [0 for k in range(0,len(predictDataList))]
-        self.classifierList = queue(20)
+        self.classifierList = deque(maxlen=20)
         self.labelWidget = labelWidget
         self.dataMgr = dataMgr
+
+        
         
     def run(self):
         init = 1
+        self.predictResultNormalized = [None for k in range(0,len(self.predictResultList))]
+        
         while not self.stopped:
             print "Waiting for new training data..."
             try:
                 (features, labels) = self.trainingQueue.get(True, 0.5)
-                print "Fetched training data from Queue"
-#                for tmp in range(0,len(self.classifierList.qsize()) / 2 ):
-#                    if not self.classifierList.empty():
-#                        trash = self.classifierList.get()           
+          
             except QueueEmpty:
                 print "No new Training Data available"
-   
+            
+            if numpy.unique(labels).size < 2:
+                if self.stopped:
+                    return
+                time.sleep(0.5)
+                continue
+            
             for tmp in range(0,2):
-                if self.classifierList.full():
-                    trash = self.classifierList.get()
-                    print "Classifier List full, removing..."
-                print "Train classifier and put to Classifier Queue %d" % self.classifierList.qsize() 
-                self.classifierList.put(ClassifierRandomForest(features, labels))
+                print "Train classifier and put to Classifier Deque %d" % len(self.classifierList) 
+                self.classifierList.append( ClassifierRandomForest(features, labels) )
             
             predictIndex = self.labelWidget.activeImage
-            predictItem = self.predictDataList[0]
-#            for predictItem in self.predictDataList:
+            predictItem = self.predictDataList[predictIndex]
             
             print "Predict for Image %d " % predictIndex
             cnt = 0
-            for classifier in self.classifierList.queue:
-                if classifier.usedForPrediction == len(self.predictDataList):
+            for classifier in self.classifierList:
+                if predictIndex in classifier.usedForPrediction :
                     continue
                 if cnt == 0:
                     print ".",
@@ -154,30 +157,29 @@ class ClassifierInteractiveThread(threading.Thread):
                     print ".",
                     prediction += classifier.predict(predictItem)
                 cnt += 1 
-                prediction /= cnt
-            print " "
+                classifier.usedForPrediction.append(predictIndex)
+                self.predictResultList[predictIndex].append((prediction, cnt))
+            print ""
+
+            totalCnt = 0
+            for p, c in self.predictResultList[predictIndex]:
+                if totalCnt == 0:
+                    image = p
+                else:
+                    image += p
+                totalCnt += c
+            image = image / totalCnt
+                
+            print "Maximum" ,numpy.max(image)
+            print "Minimum", numpy.min(image)
             
-            if self.predictResultListCounter[predictIndex] == 0:
-                self.predictResultList[predictIndex] = prediction
-            else:
-                self.predictResultList[predictIndex] += prediction
             
-            self.predictResultListCounter[predictIndex] += 1
-#            predictIndex += 1
-            
-            self.predictResultNormalized = [None for k in range(0,len(self.predictResultList))]
-            self.predictResultNormalized[predictIndex] = self.predictResultList[predictIndex] / self.predictResultListCounter[predictIndex]
-            
-#            print map(numpy.max, self.predictResultNormalized)
-#            print map(numpy.min, self.predictResultNormalized)
-            
-            displayClassNr = 2
-#            predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
-            
-            image = self.predictResultNormalized[predictIndex][:,displayClassNr-1].copy()
-            # hack: 2d special case:
+            displayClassNr = self.labelWidget.activeLabel           
+            image = image[:,displayClassNr-1]
             imshape = self.dataMgr[predictIndex].data.shape
             image = image.reshape( [imshape[0],imshape[1]] )
+            
+            
             self.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
             self.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
                     

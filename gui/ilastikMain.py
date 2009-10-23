@@ -35,8 +35,6 @@ class MainWindow(QtGui.QMainWindow):
         
         self.classificationProcess = None
         
-    def test(self):
-        print "Labels changed"
         
     def createRibbons(self):                     
       
@@ -59,7 +57,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked()'), self.on_classificationInteractive)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked()'), self.on_ViewProbabilities)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
@@ -156,9 +154,12 @@ class MainWindow(QtGui.QMainWindow):
     def on_classificationPredict(self):
         self.classificationPredict = ClassificationPredict(self)
     
-    def on_classificationInteractive(self):
-        self.generateTrainingData()
-        self.classificationInteractive = ClassificationInteractive(self)
+    def on_classificationInteractive(self, state):
+        if state:
+            self.generateTrainingData()
+            self.classificationInteractive = ClassificationInteractive(self)
+        else:
+            self.classificationInteractive.classificationInteractive.stopped = True
         
     def generateTrainingData(self):
         if not self.project:
@@ -498,8 +499,6 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
-        self.parent.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.parent.test)
-        
         self.parent.projectModified()
         
         self.close()
@@ -632,24 +631,31 @@ class ClassificationInteractive(object):
     def __init__(self, parent):
         self.parent = parent
         self.stopped = False
+        self.trainingQueue = queue(1)
         print "Classification Interactive"
         self.start()
-        self.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.test)
+        self.parent.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
         
-    
+    def updateTrainingQueue(self):
+        print "New Labels"
+        self.parent.generateTrainingData()
+        
+        F = self.parent.project.trainingMatrix
+        L = self.parent.project.trainingLabels   
+        if self.trainingQueue.full():
+            trash = self.trainingQueue.get(False)
+        self.trainingQueue.put((F,L))
         
     def start(self):
         
         F = self.parent.project.trainingMatrix
         L = self.parent.project.trainingLabels
-        trainingQueue = queue()
-        trainingQueue.put((F,L))
-        print L
-        print L.shape
+        
+        self.trainingQueue.put((F,L))
         
         (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
         
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(trainingQueue, predictDataList, self.parent.labelWidget, self.parent.project.dataMgr)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, self.parent.project.dataMgr)
         print "Before Interactive Thread start:\n"
         self.classificationInteractive.start()
     
