@@ -116,7 +116,7 @@ class ClassifierInteractiveThread(threading.Thread):
         self.classifierList = deque(maxlen=10)
         self.labelWidget = labelWidget
         self.resultLock = threading.Lock() 
-        self.result = numpy.array(1)
+        self.result = deque(maxlen=1)
         
     def run(self):
         while not self.stopped:
@@ -133,8 +133,7 @@ class ClassifierInteractiveThread(threading.Thread):
                 continue
             
             # Learn Classifier new with newest Data
-            self.classifierList.append( ClassifierRandomForest(features, labels) )
-            self.classifierList.append( ClassifierRandomForest(features, labels) )
+            self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=10) )
             
             # Predict wich classifiers
             predictIndex = self.labelWidget.activeImage
@@ -146,12 +145,8 @@ class ClassifierInteractiveThread(threading.Thread):
                     continue
                 prediction = classifier.predict(predictItem)      
                 classifier.usedForPrediction.append(predictIndex)
-                
-                self.resultLock.acquire()
                 self.resultList[predictIndex].append(prediction)   
-                self.resultLock.release()
         
-            predictIndex = 0
             cnt = 0
             for p in self.resultList[predictIndex]:
                 if cnt == 0:
@@ -163,7 +158,8 @@ class ClassifierInteractiveThread(threading.Thread):
                 continue
             
             self.resultLock.acquire()
-            self.result = image / cnt
+
+            self.result.append( image / cnt)
             self.resultLock.release()
              
                

@@ -663,11 +663,12 @@ class ClassificationInteractive(object):
     def updateLabelWidget(self):
         print "clock... **********************"
         
-        if self.classificationInteractive.result.size > 1:
-            image = self.classificationInteractive.result
-        else:
+        try:
+            image = self.classificationInteractive.result.pop()
+        except IndexError:
             return
-        
+                
+        max = numpy.max(image)
         print "Maximum" ,numpy.max(image), "Shape", image.shape
         print "Minimum", numpy.min(image), "mean",  numpy.mean(image), "unique", numpy.unique(image).size
         
@@ -677,10 +678,11 @@ class ClassificationInteractive(object):
         image = image[:,displayClassNr-1]
         imshape = self.parent.project.dataMgr[predictIndex].data.shape
         image = image.reshape( [imshape[0],imshape[1]] )
+        #image = (image > 0.5).astype(numpy.float32)
         
         self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
-        self.parent.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
-        vm.writeImage(image.T, 'c:/vigra%04d.jpg'%self.tmp_count)
+        #self.parent.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
+        #vm.writeImage(image.T, 'interactive%04d.jpg' % self.tmp_count)
         self.tmp_count+=1
         
     def start(self):
@@ -751,6 +753,7 @@ class ClassificationPredict(object):
             self.parent.labelWidget.predictionImage_clearAll()
             self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
             self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
+            vm.writeImage(image.T, 'static_predict.jpg')
             
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)

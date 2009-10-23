@@ -5,6 +5,15 @@ sys.path.append("..")
 from core import labelMgr
 from gui import qimage2ndarray
 import os
+try:
+    from vigra import vigranumpycmodule as vm
+except ImportError:
+    try:
+        import vigranumpycmodule as vm
+    except ImportError:
+        sys.exit("vigranumpycmodule not found!")
+import PyQt4.Qwt5 as qwt
+
 
 
 #************************
@@ -735,22 +744,32 @@ class labelWidget(QtGui.QWidget):
         self.canvas.removeItem(pixmapItem)
         
     def predictionImage_add(self, dataItemIndex, classnr, predictionMatrix):
+        
+        #vm.writeImage(predictionMatrix,'1_predictionMatrix.jpg')
         if not self.predictions.get(dataItemIndex, None):
             self.predictions[dataItemIndex] = {}
         if self.predictions[dataItemIndex].get(classnr, None):
             self.canvas.removeItem( self.predictions[dataItemIndex][classnr] )
         classColor = QtGui.QColor.fromRgb( self.parent().parent().project.labelColors.get(classnr,0) )
-        gray = numpy.require(predictionMatrix, numpy.uint8, 'C') * 255
-        h, w = gray.shape
-        image = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
-        image.ndarray = gray
-        col = classColor
+        #gray = numpy.require(predictionMatrix, numpy.uint8, 'C') * 255
+        # This looks promising
+        image = qwt.toQImage((predictionMatrix*255).astype(numpy.uint8))
+        #image.save('5_QWT5_moduleToConvertNumpy2QImage.jpg')
+        #vm.writeImage(predictionMatrix,'2_afterNumpyRequir.jpg')
+        #h, w = gray.shape
+        #image = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
+        #image.ndarray = gray.T
+        #image.save('3_QimageWithGrayAsNdArray.jpg')
+        #col = classColor
         #print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() )
         for i in range(256):
-            col = classColor.darker((256-i)*100)
+            #col = classColor.darker((256-i)*100)
             #print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() ) 
-            image.setColor(i, classColor.darker(i*10).rgb() )
+            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i/3*2)
+            image.setColor(i, col.rgba())
         #print gray
+
+        #image.save('4_QimageAfterColorConversion.jpg')
         pm = QtGui.QPixmap.fromImage(image)
         self.predictions[dataItemIndex][classnr] = self.canvas.addPixmap(pm)
         self.predictions[dataItemIndex][classnr].setZValue(-1)
