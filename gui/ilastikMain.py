@@ -7,7 +7,7 @@
 # p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
 
-
+import threading 
 import sys
 import numpy
 sys.path.append("..")
@@ -17,7 +17,15 @@ from gui import ctrlRibbon, imgLabel
 from PIL import Image, ImageQt
 from Queue import PriorityQueue as pq
 from Queue import Queue as queue
+from collections import deque
 import numpy
+try:
+    from vigra import vigranumpycmodule as vm
+except ImportError:
+    try:
+        import vigranumpycmodule as vm
+    except ImportError:
+        sys.exit("vigranumpycmodule not found!")
 
 
 
@@ -159,7 +167,7 @@ class MainWindow(QtGui.QMainWindow):
             self.generateTrainingData()
             self.classificationInteractive = ClassificationInteractive(self)
         else:
-            self.classificationInteractive.classificationInteractive.stopped = True
+            self.classificationInteractive.stop()
         
     def generateTrainingData(self):
         if not self.project:
@@ -170,7 +178,7 @@ class MainWindow(QtGui.QMainWindow):
         pi.setOpacity(0.5)
         self.labelWidget.removeOverlayPixmap(pi)
         
-        print "using feature dimension of first image."
+        #print "using feature dimension of first image."
         trainingMatrices_perDataItem = []
         res_labels = []
         res_names = []
@@ -187,7 +195,7 @@ class MainWindow(QtGui.QMainWindow):
                 labelmatrix = numpy.ndarray( [dataItem[0][0].shape[0],dataItem[0][0].shape[1]] )
                 # todo: generalize to nD.
                 for pixX in xrange(dataItem[0][0].shape[0]):
-                    print "generating labelImage: ", pixX, " / ", dataItem[0][0].shape[0]
+                    #print "generating labelImage: ", pixX, " / ", dataItem[0][0].shape[0]
                     for pixY in xrange(dataItem[0][0].shape[1]):
                         labelmatrix[pixX,pixY] = self.labelWidget.getLabel(dataItemNr, [pixY,pixX])
             # temporary hack that only works for pixel-labels:
@@ -227,8 +235,8 @@ class MainWindow(QtGui.QMainWindow):
         self.project.trainingLabels = numpy.concatenate(res_labels)
         self.project.trainingFeatureNames = res_names
         
-        print "training data has been generated."
-        print trainingMatrix
+        #print "training data has been generated."
+        #print trainingMatrix
         print trainingMatrix.shape
         print self.project.trainingLabels.shape
         return
@@ -585,7 +593,7 @@ class ClassificationTrain(object):
     def start(self):               
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-        numberOfJobs = 20                 
+        numberOfJobs = 10                 
         self.initClassificationProgress(numberOfJobs)
         
         # Get Train Data
@@ -629,35 +637,69 @@ class ClassificationTrain(object):
 
 class ClassificationInteractive(object):
     def __init__(self, parent):
+        print "Classification Interactive"
+        
         self.parent = parent
         self.stopped = False
-        self.trainingQueue = queue(1)
-        print "Classification Interactive"
-        self.start()
+        self.trainingQueue = deque(maxlen=1)
+        self.predictResultList = []
+        self.lock = threading.Lock()
+        
         self.parent.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
+        self.interactiveTimer = QtCore.QTimer()
+        self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      
+        
+        self.start()
+        self.interactiveTimer.start(250)
+        self.tmp_count = 0
         
     def updateTrainingQueue(self):
-        print "New Labels"
         self.parent.generateTrainingData()
-        
         F = self.parent.project.trainingMatrix
         L = self.parent.project.trainingLabels   
-        if self.trainingQueue.full():
-            trash = self.trainingQueue.get(False)
-        self.trainingQueue.put((F,L))
+
+        self.trainingQueue.append((F,L))
+
+    def updateLabelWidget(self):
+        print "clock... **********************"
+        
+        if self.classificationInteractive.result.size > 1:
+            image = self.classificationInteractive.result
+        else:
+            return
+        
+        print "Maximum" ,numpy.max(image), "Shape", image.shape
+        print "Minimum", numpy.min(image), "mean",  numpy.mean(image), "unique", numpy.unique(image).size
+        
+        predictIndex = self.parent.labelWidget.activeImage
+        displayClassNr = self.parent.labelWidget.activeLabel  
+        print "displayClassNr", displayClassNr        
+        image = image[:,displayClassNr-1]
+        imshape = self.parent.project.dataMgr[predictIndex].data.shape
+        image = image.reshape( [imshape[0],imshape[1]] )
+        
+        self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
+        self.parent.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
+        vm.writeImage(image.T, 'c:/vigra%04d.jpg'%self.tmp_count)
+        self.tmp_count+=1
         
     def start(self):
         
         F = self.parent.project.trainingMatrix
         L = self.parent.project.trainingLabels
         
-        self.trainingQueue.put((F,L))
+        self.trainingQueue.append((F,L))
         
         (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
+        self.predictResultList = [ deque(maxlen=10) for k in range(0,len(predictDataList))]
         
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, self.parent.project.dataMgr)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.predictResultList, self.parent.labelWidget )
         print "Before Interactive Thread start:\n"
         self.classificationInteractive.start()
+    def stop(self):
+        self.interactiveTimer.stop()
+        self.classificationInteractive.stopped = True
+        
     
 class ClassificationPredict(object):
     def __init__(self, parent):

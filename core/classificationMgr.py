@@ -26,10 +26,10 @@ class ClassifierBase(object):
         self.usedForPrediction = []
     
 class ClassifierRandomForest(ClassifierBase):
-    def __init__(self, features=None, labels=None):
+    def __init__(self, features=None, labels=None, treeCount=10):
         ClassifierBase.__init__(self)
         self.classifier = None
-        self.treeCount = 5
+        self.treeCount = treeCount
 #        if features and labels:
     #            self.train(features, labels)
         self.train(features, labels)
@@ -70,7 +70,7 @@ class ClassifierTrainThread(threading.Thread):
         self.queueSize = queueSize
         self.featLabelTupel = featLabelTupel
         self.count = 0
-        self.classifierList = deque(self.queueSize)
+        self.classifierList = deque(maxlen=self.queueSize)
         self.stopped = False
     
     def run(self):
@@ -107,84 +107,64 @@ class ClassifierPredictThread(threading.Thread):
             self.predictionList.append(prediction / cnt)
 
 class ClassifierInteractiveThread(threading.Thread):
-    def __init__(self, trainingQueue, predictDataList, labelWidget, dataMgr):
+    def __init__(self, trainingQueue, predictDataList, resultList, labelWidget):
         threading.Thread.__init__(self)
         self.stopped = False
         self.trainingQueue = trainingQueue
+        self.resultList = resultList
         self.predictDataList = predictDataList
-        self.predictResultList = [ deque(maxlen=10) for k in range(0,len(predictDataList))]
-        self.predictResultListCounter = [0 for k in range(0,len(predictDataList))]
-        self.classifierList = deque(maxlen=20)
+        self.classifierList = deque(maxlen=10)
         self.labelWidget = labelWidget
-        self.dataMgr = dataMgr
-
-        
+        self.resultLock = threading.Lock() 
+        self.result = numpy.array(1)
         
     def run(self):
-        init = 1
-        self.predictResultNormalized = [None for k in range(0,len(self.predictResultList))]
-        
         while not self.stopped:
             print "Waiting for new training data..."
             try:
-                (features, labels) = self.trainingQueue.get(True, 0.5)
-          
-            except QueueEmpty:
-                print "No new Training Data available"
+                (features, labels) = self.trainingQueue.pop()
+            except IndexError:
+                pass
             
             if numpy.unique(labels).size < 2:
                 if self.stopped:
                     return
-                time.sleep(0.5)
+                time.sleep(0.2)
                 continue
             
-            for tmp in range(0,2):
-                print "Train classifier and put to Classifier Deque %d" % len(self.classifierList) 
-                self.classifierList.append( ClassifierRandomForest(features, labels) )
+            # Learn Classifier new with newest Data
+            self.classifierList.append( ClassifierRandomForest(features, labels) )
+            self.classifierList.append( ClassifierRandomForest(features, labels) )
             
+            # Predict wich classifiers
             predictIndex = self.labelWidget.activeImage
             predictItem = self.predictDataList[predictIndex]
+            print "predictIndex", predictIndex
             
-            print "Predict for Image %d " % predictIndex
-            cnt = 0
             for classifier in self.classifierList:
-                if predictIndex in classifier.usedForPrediction :
+                if predictIndex in classifier.usedForPrediction:
                     continue
-                if cnt == 0:
-                    print ".",
-                    prediction = classifier.predict(predictItem)      
-                else:
-                    print ".",
-                    prediction += classifier.predict(predictItem)
-                cnt += 1 
+                prediction = classifier.predict(predictItem)      
                 classifier.usedForPrediction.append(predictIndex)
-                self.predictResultList[predictIndex].append((prediction, cnt))
-            print ""
-
-            totalCnt = 0
-            for p, c in self.predictResultList[predictIndex]:
-                if totalCnt == 0:
+                
+                self.resultLock.acquire()
+                self.resultList[predictIndex].append(prediction)   
+                self.resultLock.release()
+        
+            predictIndex = 0
+            cnt = 0
+            for p in self.resultList[predictIndex]:
+                if cnt == 0:
                     image = p
                 else:
                     image += p
-                totalCnt += c
-            image = image / totalCnt
-                
-            print "Maximum" ,numpy.max(image)
-            print "Minimum", numpy.min(image)
+                cnt += 1
+            if cnt == 0:
+                continue
             
-            
-            displayClassNr = self.labelWidget.activeLabel           
-            image = image[:,displayClassNr-1]
-            imshape = self.dataMgr[predictIndex].data.shape
-            image = image.reshape( [imshape[0],imshape[1]] )
-            
-            
-            self.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
-            self.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
-                    
-                    
-                    
-                
-            
+            self.resultLock.acquire()
+            self.result = image / cnt
+            self.resultLock.release()
+             
+               
         

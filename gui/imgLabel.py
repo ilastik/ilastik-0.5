@@ -745,12 +745,12 @@ class labelWidget(QtGui.QWidget):
         image = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
         image.ndarray = gray
         col = classColor
-        print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() )
+        #print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() )
         for i in range(256):
             col = classColor.darker((256-i)*100)
-            print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() ) 
+            #print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() ) 
             image.setColor(i, classColor.darker(i*10).rgb() )
-        print gray
+        #print gray
         pm = QtGui.QPixmap.fromImage(image)
         self.predictions[dataItemIndex][classnr] = self.canvas.addPixmap(pm)
         self.predictions[dataItemIndex][classnr].setZValue(-1)
@@ -844,7 +844,6 @@ class labelWidget(QtGui.QWidget):
         return lfi.getLabelValue(pos)
     
     def newLabelsPending(self):
-        print "Emit"
         self.emit(QtCore.SIGNAL('newLabelsPending'))
     
     def changeImage(self, nr):
