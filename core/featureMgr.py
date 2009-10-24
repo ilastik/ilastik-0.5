@@ -124,6 +124,9 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
 def gaussianGradientMagnitude():
     return vm.gaussianGradientMagnitude
 
+def gaussianSmooth():
+    return vm.gaussianSmooth2d
+
 def structureTensor():
     return vm.structureTensor
 
@@ -139,6 +142,8 @@ def identity():
 ilastikFeatures = []
 
 ilastikFeatures.append(LocalFeature("Identity", [], [''],  identity))
+ilastikFeatures.append(LocalFeature("gaussianSmooth", [1], ['Sigma'], gaussianSmooth))
+ilastikFeatures.append(LocalFeature("gaussianSmooth", [2], ['Sigma'], gaussianSmooth))
 ilastikFeatures.append(LocalFeature("GradientMag", [1], ['Sigma'], gaussianGradientMagnitude))
 ilastikFeatures.append(LocalFeature("GradientMag", [2], ['Sigma'], gaussianGradientMagnitude))
 ilastikFeatures.append(LocalFeature("structureTensor", [1], ['Sigma'], structureTensor))

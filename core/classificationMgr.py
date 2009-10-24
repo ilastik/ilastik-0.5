@@ -5,6 +5,7 @@ import time
 from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
 from collections import deque
+from PyQt4 import QtCore
 
 import numpy
 
@@ -23,7 +24,7 @@ class ClassificationMgr(object):
 
 class ClassifierBase(object):
     def __init__(self):
-        self.usedForPrediction = []
+        self.usedForPrediction = set()
     
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None, treeCount=10):
@@ -107,60 +108,89 @@ class ClassifierPredictThread(threading.Thread):
             self.predictionList.append(prediction / cnt)
 
 class ClassifierInteractiveThread(threading.Thread):
-    def __init__(self, trainingQueue, predictDataList, resultList, labelWidget):
+    def __init__(self, trainingQueue, predictDataList, resultList, labelWidget, numberOfClasses, numberOfClassifiers=10, treeCount=10):
         threading.Thread.__init__(self)
         self.stopped = False
         self.trainingQueue = trainingQueue
         self.resultList = resultList
         self.predictDataList = predictDataList
-        self.classifierList = deque(maxlen=10)
+        self.numberOfClassifiers = numberOfClassifiers
+        self.treeCount = treeCount
+        self.classifierList = deque(maxlen=numberOfClassifiers)
         self.labelWidget = labelWidget
         self.resultLock = threading.Lock() 
         self.result = deque(maxlen=1)
+        self.numberOfClasses = numberOfClasses
         
+    def classifierListFull(self):
+        return self.numberOfClassifiers == len(self.classifierList)
+    
     def run(self):
         while not self.stopped:
-            print "Waiting for new training data..."
+            #print ",",
             try:
-                (features, labels) = self.trainingQueue.pop()
+                features, labels = self.trainingQueue.pop()    
+                newTrainingPending = self.numberOfClassifiers
             except IndexError:
-                pass
+                newTrainingPending -= 1
             
-            if numpy.unique(labels).size < 2:
+            if numpy.unique(labels).size < self.numberOfClasses:
                 if self.stopped:
                     return
-                time.sleep(0.2)
+                time.sleep(0.01)
                 continue
             
             # Learn Classifier new with newest Data
-            self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=10) )
+            if newTrainingPending > 1:
+                print "New Training Data used %3.1f %% " % (100 - 100*(float(newTrainingPending)/self.numberOfClassifiers))
+                self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
+            else:
+                print "All Classifiers learned"
             
             # Predict wich classifiers
             predictIndex = self.labelWidget.activeImage
             predictItem = self.predictDataList[predictIndex]
-            print "predictIndex", predictIndex
+            #print "predictIndex", predictIndex
             
+            newPredictionsMade = False
             for classifier in self.classifierList:
                 if predictIndex in classifier.usedForPrediction:
                     continue
+                newPredictionsMade = True
                 prediction = classifier.predict(predictItem)      
-                classifier.usedForPrediction.append(predictIndex)
+                classifier.usedForPrediction.add(predictIndex)
                 self.resultList[predictIndex].append(prediction)   
-        
-            cnt = 0
-            for p in self.resultList[predictIndex]:
-                if cnt == 0:
-                    image = p
-                else:
-                    image += p
-                cnt += 1
-            if cnt == 0:
+            
+            if not newPredictionsMade and len(self.predictDataList) > 1:
+                # Predict the others while idle
+                
+                restList = range(0,len(self.predictDataList))
+                restList.remove(predictIndex)
+                for k in restList:
+                    for classifier in self.classifierList:
+                        if not k in classifier.usedForPrediction:
+                            print "Time to Predict other images once" 
+                            predictItemIdle = self.predictDataList[k]
+                            predictionIdle = classifier.predict(predictItemIdle)      
+                            classifier.usedForPrediction.add(k)
+                            self.resultList[k].append(predictionIdle) 
+                            break
+                        print "Images %d is fully predicted with curren classifier set" % k 
+            
+            if len(self.resultList[predictIndex]) == 0:
                 continue
+            else:
+                if newPredictionsMade:
+                    image = reduce(numpy.ndarray.__add__, self.resultList[predictIndex]) / len(self.resultList[predictIndex])
             
             self.resultLock.acquire()
-
-            self.result.append( image / cnt)
+            self.result.append(image)
             self.resultLock.release()
+            #time.sleep(2)
+            print "CLOCK **********************************************"
+            
+            # Ist leider zu langsam, siehe interactiveTimer
+            #self.labelWidget.emit(QtCore.SIGNAL("newPredictionPending()"))
              
                
         

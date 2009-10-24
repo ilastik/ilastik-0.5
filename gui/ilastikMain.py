@@ -645,13 +645,13 @@ class ClassificationInteractive(object):
         self.predictResultList = []
         self.lock = threading.Lock()
         
-        self.parent.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
+        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
         self.interactiveTimer = QtCore.QTimer()
         self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      
         
         self.start()
-        self.interactiveTimer.start(250)
-        self.tmp_count = 0
+        self.interactiveTimer.start(100)
+        #self.tmp_count = 0
         
     def updateTrainingQueue(self):
         self.parent.generateTrainingData()
@@ -661,7 +661,6 @@ class ClassificationInteractive(object):
         self.trainingQueue.append((F,L))
 
     def updateLabelWidget(self):
-        print "clock... **********************"
         
         try:
             image = self.classificationInteractive.result.pop()
@@ -669,8 +668,11 @@ class ClassificationInteractive(object):
             return
                 
         max = numpy.max(image)
-        print "Maximum" ,numpy.max(image), "Shape", image.shape
-        print "Minimum", numpy.min(image), "mean",  numpy.mean(image), "unique", numpy.unique(image).size
+        if max != 1:
+            print "*"*30
+            print "Maximum" ,numpy.max(image), "Shape", image.shape
+            print "Minimum", numpy.min(image), "mean",  numpy.mean(image), "unique", numpy.unique(image).size
+            print "*"*30
         
         predictIndex = self.parent.labelWidget.activeImage
         displayClassNr = self.parent.labelWidget.activeLabel  
@@ -683,7 +685,7 @@ class ClassificationInteractive(object):
         self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
         #self.parent.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
         #vm.writeImage(image.T, 'interactive%04d.jpg' % self.tmp_count)
-        self.tmp_count+=1
+        #self.tmp_count+=1
         
     def start(self):
         
@@ -695,8 +697,14 @@ class ClassificationInteractive(object):
         (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
         self.predictResultList = [ deque(maxlen=10) for k in range(0,len(predictDataList))]
         
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.predictResultList, self.parent.labelWidget )
-        print "Before Interactive Thread start:\n"
+        numberOfClasses = len(self.parent.project.labelNames)
+        numberOfClassifiers=8
+        treeCount=4
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.predictResultList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
+        
+        # Ist leider zu langsam und blockiert den main thread zu sehr
+        #self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL("newPredictionPending()"), self.updateLabelWidget)
+        
         self.classificationInteractive.start()
     def stop(self):
         self.interactiveTimer.stop()
