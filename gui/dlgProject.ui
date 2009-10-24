@@ -8,8 +8,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>667</width>
-    <height>576</height>
+    <width>735</width>
+    <height>584</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -20,7 +20,7 @@
     <rect>
      <x>5</x>
      <y>205</y>
-     <width>656</width>
+     <width>726</width>
      <height>276</height>
     </rect>
    </property>
@@ -30,28 +30,15 @@
    <widget class="QWidget" name="horizontalLayoutWidget" >
     <property name="geometry" >
      <rect>
-      <x>10</x>
+      <x>0</x>
       <y>15</y>
-      <width>641</width>
+      <width>721</width>
       <height>251</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_2" >
      <item>
       <layout class="QVBoxLayout" name="verticalLayout_5" >
-       <item>
-        <spacer name="verticalSpacer" >
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0" >
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item>
         <widget class="QPushButton" name="addFile" >
          <property name="text" >
@@ -81,6 +68,19 @@
           <pixmap>placeholder.png</pixmap>
          </property>
         </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer" >
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </item>
@@ -124,8 +124,6 @@
      </item>
     </layout>
    </widget>
-   <zorder>tableWidget</zorder>
-   <zorder>horizontalLayoutWidget</zorder>
   </widget>
   <widget class="QGroupBox" name="groupBox_2" >
    <property name="enabled" >
@@ -135,7 +133,7 @@
     <rect>
      <x>5</x>
      <y>0</y>
-     <width>656</width>
+     <width>726</width>
      <height>51</height>
     </rect>
    </property>
@@ -151,9 +149,9 @@
    <widget class="QLineEdit" name="projectName" >
     <property name="geometry" >
      <rect>
-      <x>10</x>
+      <x>5</x>
       <y>20</y>
-      <width>541</width>
+      <width>716</width>
       <height>20</height>
      </rect>
     </property>
@@ -167,7 +165,7 @@
     <rect>
      <x>5</x>
      <y>55</y>
-     <width>656</width>
+     <width>726</width>
      <height>51</height>
     </rect>
    </property>
@@ -195,9 +193,9 @@
    <widget class="QLineEdit" name="labeler" >
     <property name="geometry" >
      <rect>
-      <x>10</x>
+      <x>5</x>
       <y>20</y>
-      <width>541</width>
+      <width>716</width>
       <height>21</height>
      </rect>
     </property>
@@ -211,16 +209,13 @@
      <string>Terry</string>
     </property>
    </widget>
-   <zorder>labeler</zorder>
-   <zorder>verticalLayoutWidget_2</zorder>
-   <zorder>groupBox_2</zorder>
   </widget>
   <widget class="QGroupBox" name="groupBox_3" >
    <property name="geometry" >
     <rect>
      <x>5</x>
      <y>110</y>
-     <width>656</width>
+     <width>726</width>
      <height>91</height>
     </rect>
    </property>
@@ -230,9 +225,9 @@
    <widget class="QTextEdit" name="description" >
     <property name="geometry" >
      <rect>
-      <x>10</x>
-      <y>24</y>
-      <width>541</width>
+      <x>5</x>
+      <y>25</y>
+      <width>716</width>
       <height>57</height>
      </rect>
     </property>
@@ -256,15 +251,13 @@ p, li { white-space: pre-wrap; }
 &lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans Serif'; font-size:9pt;">&lt;span style=" font-family:'MS Shell Dlg 2'; font-size:8pt;">i wanna be a lumber jack...&lt;/span>&lt;/p>&lt;/body>&lt;/html></string>
     </property>
    </widget>
-   <zorder>description</zorder>
-   <zorder>groupBox</zorder>
   </widget>
   <widget class="QGroupBox" name="groupBox_4" >
    <property name="geometry" >
     <rect>
      <x>5</x>
      <y>485</y>
-     <width>656</width>
+     <width>726</width>
      <height>59</height>
     </rect>
    </property>
@@ -307,8 +300,8 @@ p, li { white-space: pre-wrap; }
   <widget class="QDialogButtonBox" name="confirmButtons" >
    <property name="geometry" >
     <rect>
-     <x>220</x>
-     <y>540</y>
+     <x>300</x>
+     <y>545</y>
      <width>171</width>
      <height>36</height>
     </rect>
