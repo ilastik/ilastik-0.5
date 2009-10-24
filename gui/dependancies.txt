@@ -1,0 +1,4 @@
+PyQt 4.5
+numpy
+vigranumpycmodule
+PyQwt5
