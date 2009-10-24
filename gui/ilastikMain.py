@@ -68,7 +68,8 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-        self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked()'), self.on_ViewProbabilities)
+        self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
+        self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -154,8 +155,17 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
 
-    def on_ViewProbabilities(self):
-        self.project.View_showProbmaps = 1
+    def on_ViewProbabilities(self, state):
+        if state:
+            self.project.View_showProbmaps = 1
+        else:
+            self.project.View_showProbmaps = 0
+                    
+    def on_ViewSegmentation(self, state):
+        if state:
+            self.project.View_showSegmentations = 1
+        else:
+            self.project.View_showSegmentations = 0
     
     def on_segmentation(self):
 
@@ -173,7 +183,7 @@ class MainWindow(QtGui.QMainWindow):
             t.join()
             self.project.dataMgr.segmentation[cnt] = seg[cnt].result
         
-        self.project.View_showSegmentations = 1
+        
 
     def on_classificationTrain(self):
         self.generateTrainingData()

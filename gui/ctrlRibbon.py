@@ -136,7 +136,7 @@ def createRibbons():
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", "actions/my-segment.png" ,"Segmentation"))
     
     RibbonGroupObjects["View"].append(RibbonEntry("ProbabilityMaps", "categories/preferences-system.png" ,"View Probability map",type=RibbonToggleButtonItem))
-    RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation"))
+    RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation",type=RibbonToggleButtonItem))
     
     RibbonGroupObjects["Export"].append(RibbonEntry("Export", "categories/preferences-system.png" ,"Export"))
     return RibbonGroupObjects   
