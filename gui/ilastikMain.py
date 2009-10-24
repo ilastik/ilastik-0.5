@@ -12,13 +12,14 @@ import sys
 import numpy
 sys.path.append("..")
 from PyQt4 import QtCore, QtGui, uic
-from core import version, dataMgr, projectMgr, featureMgr, classificationMgr
+from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr
 from gui import ctrlRibbon, imgLabel
 from PIL import Image, ImageQt
 from Queue import PriorityQueue as pq
 from Queue import Queue as queue
 from collections import deque
 import numpy
+from core.utilities import irange
 try:
     from vigra import vigranumpycmodule as vm
 except ImportError:
@@ -66,6 +67,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
+        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked()'), self.on_ViewProbabilities)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
@@ -154,6 +156,23 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_ViewProbabilities(self):
         self.project.View_showProbmaps = 1
+    
+    def on_segmentation(self):
+
+        segThreads = []
+        for propmap in self.parent.prediction:
+            seg.append(segmentationMgr.LocallyDominantSegmentation())fo
+            
+            t = threading.Thread(target=res.segment, args=(propmap,)
+            segThreads.append(t)
+            t.start()         
+        
+        cnt = 0    
+        for t in segThreads:
+            t.join()
+            self.project.dataMgr.segmentation[cnt] = 
+        
+        self.project.View_showSegmentations = 1
 
     def on_classificationTrain(self):
         self.generateTrainingData()
@@ -620,9 +639,11 @@ class ClassificationTrain(object):
             #self.project.trainingFeatureNames
             
             self.classificationProcess.join()
-            self.parent.project.classifierList = self.classificationProcess.classifierList
+            self.finalize()
             self.terminateClassificationProgressBar()
             
+    def finalize(self):
+        self.parent.project.classifierList = self.classificationProcess.classifierList
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
@@ -711,12 +732,19 @@ class ClassificationInteractive(object):
     def stop(self):
         self.interactiveTimer.stop()
         self.classificationInteractive.stopped = True
+        
         self.classificationInteractive.join()
+        self.finalize()
+        
         self.terminateClassificationProgressBar()
     
     def finalize(self):
-        pass
-        # TODO[CSo]: Get all Stuff out of the Classifier
+        self.parent.project.classifierList = list(self.classificationInteractive.classifierList)
+        
+        # TODO[CSo] Here we need another Thread, would be nice to reuse ClassificationPredict
+        # self.classificationInteractive.finishPredictions()
+        
+        self.parent.project.dataMgr.prediction = self.classificationInteractive.resultList
         
     
 class ClassificationPredict(object):
@@ -752,9 +780,10 @@ class ClassificationPredict(object):
         self.myClassificationProgressBar.setValue(val)
         if not self.classificationPredict.is_alive():
             self.classificationTimer.stop()
-            print "Training Finished"
+
             self.classificationPredict.join()
-            self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList           
+            self.finalize()           
+            
             self.terminateClassificationProgressBar()
 
             print self.parent.project.dataMgr[0].data.shape
@@ -771,6 +800,9 @@ class ClassificationPredict(object):
             self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
             vm.writeImage(image.T, 'static_predict.jpg')
             
+    def finalize(self):
+        self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList
+        
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()

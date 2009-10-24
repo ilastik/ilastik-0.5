@@ -87,6 +87,7 @@ class DataMgr():
         self.labels = {}
         self.prediction = [None] * len(dataItems)
         self.dataFeatures = None
+        self.segmentation = []
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems

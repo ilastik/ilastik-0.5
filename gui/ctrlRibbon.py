@@ -52,7 +52,6 @@ class RibbonToggleButtonItem(QtGui.QToolButton,RibbonBaseItem):
         self.setDefaultAction(action)
         self.setPopupMode(2)
 
-
 class RibbonDropButtonItem(QtGui.QToolButton,RibbonBaseItem):
     def __init__(self,  ribbon_entry):
         QtGui.QToolButton.__init__(self)

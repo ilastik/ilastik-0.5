@@ -125,6 +125,18 @@ class ClassifierInteractiveThread(threading.Thread):
     def classifierListFull(self):
         return self.numberOfClassifiers == len(self.classifierList)
     
+    def finishPredictions(self):
+        predictItemIndices = range(0,len(self.predictDataList))
+        for k in predictItemIndices:
+            for classifier in self.classifierList:
+                if not k in classifier.usedForPrediction:
+                    predictItem = self.predictDataList[k]
+                    prediction = classifier.predict(predictItem)      
+                    classifier.usedForPrediction.add(k)
+                    self.resultList[k].append(prediction) 
+        for k in self.resultList:
+            k = list(k)
+                    
     def run(self):
         while not self.stopped:
             #print ",",
@@ -186,7 +198,7 @@ class ClassifierInteractiveThread(threading.Thread):
             self.resultLock.acquire()
             self.result.append(image)
             self.resultLock.release()
-            #time.sleep(2)
+
             print "CLOCK **********************************************"
             
             # Ist leider zu langsam, siehe interactiveTimer
