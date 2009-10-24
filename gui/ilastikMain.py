@@ -445,6 +445,7 @@ class ProjectDlg(QtGui.QDialog):
                 self.tableWidget.setItem(0, self.columnPos['Test'], r)
                 
                 self.initThumbnail(file_name)
+                self.tableWidget.setCurrentCell(0, 0)
     
     def on_removeFile_clicked(self):
         row = self.tableWidget.currentRow()
@@ -452,21 +453,13 @@ class ProjectDlg(QtGui.QDialog):
         
         
     def initThumbnail(self, file_name):
-        #picture = Image.open(file_name.__str__())
-        #picture.thumbnail((68, 68), Image.ANTIALIAS)
-        #icon = QtGui.QPixmap.fromImage(ImageQt.ImageQt(picture))
-        #self.thumbList.append(icon)
-        #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
-        #self.thumbnailImage.setPixmap(self.thumbList[-1])
-        #picture.save('c:/test_pil.jpg')
-        #print icon.save('c:/test_qt.jpg')
-        pass
+        thumb = QtGui.QPixmap(str(file_name))
+        thumb = thumb.scaledToWidth(128)
+        self.thumbList.append(thumb)
+        self.thumbnailImage.setPixmap(self.thumbList[-1])
                     
     def updateThumbnail(self, row=0, col=0):
-        #In Windows I get strange seg faults from time to time, sometimes the image is not displayed properly, why?
-        #self.thumbnailImage.clear()
-        #self.thumbnailImage.setPixmap(self.thumbList[-row-1]) 
-        pass
+        self.thumbnailImage.setPixmap(self.thumbList[-row-1]) 
     
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):
@@ -683,9 +676,18 @@ class ClassificationInteractive(object):
         #image = (image > 0.5).astype(numpy.float32)
         
         self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
-        #self.parent.labelWidget.predictionImage_setOpacity(predictIndex, displayClassNr, 0.7)
-        #vm.writeImage(image.T, 'interactive%04d.jpg' % self.tmp_count)
-        #self.tmp_count+=1
+
+    def initInteractiveProgressBar(self):
+        statusBar = self.parent.statusBar()
+        self.myInteractionProgressBar = QtGui.QProgressBar()
+        self.myInteractionProgressBar.setMinimum(0)
+        self.myInteractionProgressBar.setMaximum(0)
+        statusBar.addWidget(self.myInteractionProgressBar)
+        statusBar.show()
+        
+    def terminateClassificationProgressBar(self):
+        self.parent.statusBar().removeWidget(self.myInteractionProgressBar)
+        self.parent.statusBar().hide()
         
     def start(self):
         
@@ -701,7 +703,7 @@ class ClassificationInteractive(object):
         numberOfClassifiers=8
         treeCount=4
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.predictResultList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
-        
+        self.initInteractiveProgressBar()
         # Ist leider zu langsam und blockiert den main thread zu sehr
         #self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL("newPredictionPending()"), self.updateLabelWidget)
         
@@ -709,6 +711,12 @@ class ClassificationInteractive(object):
     def stop(self):
         self.interactiveTimer.stop()
         self.classificationInteractive.stopped = True
+        self.classificationInteractive.join()
+        self.terminateClassificationProgressBar()
+    
+    def finalize(self):
+        pass
+        # TODO[CSo]: Get all Stuff out of the Classifier
         
     
 class ClassificationPredict(object):

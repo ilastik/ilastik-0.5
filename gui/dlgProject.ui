@@ -8,229 +8,314 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>697</width>
-    <height>597</height>
+    <width>667</width>
+    <height>576</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Dialog</string>
   </property>
+  <widget class="QGroupBox" name="groupBox_5" >
+   <property name="geometry" >
+    <rect>
+     <x>5</x>
+     <y>205</y>
+     <width>656</width>
+     <height>276</height>
+    </rect>
+   </property>
+   <property name="title" >
+    <string>Data</string>
+   </property>
+   <widget class="QWidget" name="horizontalLayoutWidget" >
+    <property name="geometry" >
+     <rect>
+      <x>10</x>
+      <y>15</y>
+      <width>641</width>
+      <height>251</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" >
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_5" >
+       <item>
+        <spacer name="verticalSpacer" >
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="addFile" >
+         <property name="text" >
+          <string>Add >></string>
+         </property>
+         <property name="default" >
+          <bool>true</bool>
+         </property>
+         <property name="flat" >
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="removeFile" >
+         <property name="text" >
+          <string>Remove &lt;&lt;</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="thumbnailImage" >
+         <property name="text" >
+          <string/>
+         </property>
+         <property name="pixmap" >
+          <pixmap>placeholder.png</pixmap>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QTableWidget" name="tableWidget" >
+       <property name="sizePolicy" >
+        <sizepolicy vsizetype="Minimum" hsizetype="MinimumExpanding" >
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet" >
+        <string notr="true" />
+       </property>
+       <column>
+        <property name="text" >
+         <string>File</string>
+        </property>
+       </column>
+       <column>
+        <property name="text" >
+         <string>Groups</string>
+        </property>
+       </column>
+       <column>
+        <property name="text" >
+         <string>Labels</string>
+        </property>
+       </column>
+       <column>
+        <property name="text" >
+         <string>Train</string>
+        </property>
+       </column>
+       <column>
+        <property name="text" >
+         <string>Test</string>
+        </property>
+       </column>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <zorder>tableWidget</zorder>
+   <zorder>horizontalLayoutWidget</zorder>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_2" >
+   <property name="enabled" >
+    <bool>true</bool>
+   </property>
+   <property name="geometry" >
+    <rect>
+     <x>5</x>
+     <y>0</y>
+     <width>656</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="sizePolicy" >
+    <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="title" >
+    <string>Project</string>
+   </property>
+   <widget class="QLineEdit" name="projectName" >
+    <property name="geometry" >
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>541</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text" >
+     <string>mySurvey</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QGroupBox" name="groupBox" >
+   <property name="geometry" >
+    <rect>
+     <x>5</x>
+     <y>55</y>
+     <width>656</width>
+     <height>51</height>
+    </rect>
+   </property>
+   <property name="sizePolicy" >
+    <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize" >
+    <size>
+     <width>10</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize" >
+    <size>
+     <width>10000</width>
+     <height>10000</height>
+    </size>
+   </property>
+   <property name="title" >
+    <string>Labeler</string>
+   </property>
+   <widget class="QLineEdit" name="labeler" >
+    <property name="geometry" >
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>541</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="sizePolicy" >
+     <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="text" >
+     <string>Terry</string>
+    </property>
+   </widget>
+   <zorder>labeler</zorder>
+   <zorder>verticalLayoutWidget_2</zorder>
+   <zorder>groupBox_2</zorder>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_3" >
+   <property name="geometry" >
+    <rect>
+     <x>5</x>
+     <y>110</y>
+     <width>656</width>
+     <height>91</height>
+    </rect>
+   </property>
+   <property name="title" >
+    <string>Description</string>
+   </property>
+   <widget class="QTextEdit" name="description" >
+    <property name="geometry" >
+     <rect>
+      <x>10</x>
+      <y>24</y>
+      <width>541</width>
+      <height>57</height>
+     </rect>
+    </property>
+    <property name="sizePolicy" >
+     <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="maximumSize" >
+     <size>
+      <width>16777215</width>
+      <height>1623452</height>
+     </size>
+    </property>
+    <property name="html" >
+     <string>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;style type="text/css">
+p, li { white-space: pre-wrap; }
+&lt;/style>&lt;/head>&lt;body style=" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;">
+&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans Serif'; font-size:9pt;">&lt;span style=" font-family:'MS Shell Dlg 2'; font-size:8pt;">i wanna be a lumber jack...&lt;/span>&lt;/p>&lt;/body>&lt;/html></string>
+    </property>
+   </widget>
+   <zorder>description</zorder>
+   <zorder>groupBox</zorder>
+  </widget>
+  <widget class="QGroupBox" name="groupBox_4" >
+   <property name="geometry" >
+    <rect>
+     <x>5</x>
+     <y>485</y>
+     <width>656</width>
+     <height>59</height>
+    </rect>
+   </property>
+   <property name="title" >
+    <string>Classes</string>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_3" >
+    <item>
+     <widget class="QComboBox" name="cmbLabelName" >
+      <item>
+       <property name="text" >
+        <string>Class 1</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLineEdit" name="txtLabelName" >
+      <property name="text" >
+       <string>Class 1</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnAddLabel" >
+      <property name="text" >
+       <string>Create Class</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="btnLabelColor" >
+      <property name="text" >
+       <string>Choose Color</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QDialogButtonBox" name="confirmButtons" >
    <property name="geometry" >
     <rect>
-     <x>530</x>
-     <y>570</y>
-     <width>160</width>
-     <height>21</height>
+     <x>220</x>
+     <y>540</y>
+     <width>171</width>
+     <height>36</height>
     </rect>
    </property>
    <property name="standardButtons" >
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
-  </widget>
-  <widget class="QWidget" name="gridLayoutWidget" >
-   <property name="geometry" >
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>691</width>
-     <height>564</height>
-    </rect>
-   </property>
-   <layout class="QGridLayout" name="gridLayout_2" >
-    <property name="sizeConstraint" >
-     <enum>QLayout::SetMaximumSize</enum>
-    </property>
-    <property name="margin" >
-     <number>3</number>
-    </property>
-    <item row="5" column="0" >
-     <layout class="QVBoxLayout" name="verticalLayout" >
-      <item>
-       <widget class="QPushButton" name="addFile" >
-        <property name="text" >
-         <string>Add >></string>
-        </property>
-        <property name="default" >
-         <bool>true</bool>
-        </property>
-        <property name="flat" >
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="removeFile" >
-        <property name="text" >
-         <string>Remove &lt;&lt;</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="pushButton_3" >
-        <property name="text" >
-         <string>Preview</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="thumbnailImage" >
-        <property name="text" >
-         <string/>
-        </property>
-        <property name="pixmap" >
-         <pixmap>placeholder.png</pixmap>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="0" column="2" >
-     <widget class="QLineEdit" name="projectName" >
-      <property name="text" >
-       <string>mySurvey</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0" >
-     <widget class="QLabel" name="label_2" >
-      <property name="text" >
-       <string>Labeler</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2" >
-     <widget class="QLineEdit" name="labeler" >
-      <property name="text" >
-       <string>Terry</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0" >
-     <widget class="QLabel" name="label_3" >
-      <property name="text" >
-       <string>Description</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="2" >
-     <widget class="QTextEdit" name="description" >
-      <property name="maximumSize" >
-       <size>
-        <width>16777215</width>
-        <height>75</height>
-       </size>
-      </property>
-      <property name="html" >
-       <string>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;style type="text/css">
-p, li { white-space: pre-wrap; }
-&lt;/style>&lt;/head>&lt;body style=" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;">
-&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans Serif'; font-size:9pt;">&lt;span style=" font-family:'MS Shell Dlg 2'; font-size:8pt;">i wanna be a lumber jack...&lt;/span>&lt;/p>&lt;/body>&lt;/html></string>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="2" >
-     <widget class="QTableWidget" name="tableWidget" >
-      <property name="sizePolicy" >
-       <sizepolicy vsizetype="Expanding" hsizetype="MinimumExpanding" >
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="styleSheet" >
-       <string notr="true" />
-      </property>
-      <column>
-       <property name="text" >
-        <string>File</string>
-       </property>
-      </column>
-      <column>
-       <property name="text" >
-        <string>Groups</string>
-       </property>
-      </column>
-      <column>
-       <property name="text" >
-        <string>Labels</string>
-       </property>
-      </column>
-      <column>
-       <property name="text" >
-        <string>Train</string>
-       </property>
-      </column>
-      <column>
-       <property name="text" >
-        <string>Test</string>
-       </property>
-      </column>
-     </widget>
-    </item>
-    <item row="0" column="0" >
-     <widget class="QLabel" name="label" >
-      <property name="text" >
-       <string>Project Name:               </string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="2" >
-     <layout class="QGridLayout" name="gridLayout" >
-      <item row="1" column="3" >
-       <widget class="QPushButton" name="btnLabelColor" >
-        <property name="text" >
-         <string>Color</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2" >
-       <widget class="QLabel" name="label_6" >
-        <property name="text" >
-         <string>Label Name</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3" >
-       <widget class="QLabel" name="label_7" >
-        <property name="text" >
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0" >
-       <layout class="QGridLayout" name="gridLayout_3" >
-        <item row="0" column="0" >
-         <widget class="QComboBox" name="cmbLabelName" >
-          <item>
-           <property name="text" >
-            <string>Label 1</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item row="1" column="0" >
-         <widget class="QPushButton" name="btnAddLabel" >
-          <property name="text" >
-           <string>create Label</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item row="1" column="1" >
-       <widget class="QLineEdit" name="txtLabelName" />
-      </item>
-     </layout>
-    </item>
-    <item row="6" column="0" >
-     <widget class="QLabel" name="label_4" >
-      <property name="text" >
-       <string>Labels</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
   </widget>
  </widget>
  <resources/>
