@@ -160,17 +160,18 @@ class MainWindow(QtGui.QMainWindow):
     def on_segmentation(self):
 
         segThreads = []
-        for propmap in self.parent.prediction:
-            seg.append(segmentationMgr.LocallyDominantSegmentation())fo
+        seg = []
+        for shape, propmap in zip(self.project.dataMgr.dataItemsShapes(), self.project.dataMgr.prediction):
+            s = segmentationMgr.LocallyDominantSegmentation2D(shape)
+            seg.append(s)
             
-            t = threading.Thread(target=res.segment, args=(propmap,)
+            t = threading.Thread(target=s.segment, args=(propmap,))
             segThreads.append(t)
             t.start()         
         
-        cnt = 0    
-        for t in segThreads:
+        for cnt, t in irange(segThreads):
             t.join()
-            self.project.dataMgr.segmentation[cnt] = 
+            self.project.dataMgr.segmentation[cnt] = seg[cnt].result
         
         self.project.View_showSegmentations = 1
 
@@ -722,7 +723,7 @@ class ClassificationInteractive(object):
         
         numberOfClasses = len(self.parent.project.labelNames)
         numberOfClassifiers=8
-        treeCount=4
+        treeCount=8
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.predictResultList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
         self.initInteractiveProgressBar()
         # Ist leider zu langsam und blockiert den main thread zu sehr
@@ -798,7 +799,6 @@ class ClassificationPredict(object):
             self.parent.labelWidget.predictionImage_clearAll()
             self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
             self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
-            vm.writeImage(image.T, 'static_predict.jpg')
             
     def finalize(self):
         self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList

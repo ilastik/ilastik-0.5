@@ -26,6 +26,10 @@ class DataItemBase():
         self.dataType = None
         self.dataDimensions = 0
         self.thumbnail = None
+        self.shape = ()
+        
+    def shape(self):
+        return self.shape
         
     def loadData(self):
         self.data = "This is not an Image..."
@@ -47,6 +51,7 @@ class DataItemImage(DataItemBase):
         self.data = vm.readImage(self.fileName)
         self.data = self.data.swapaxes(0,1)
         self.dataType = self.data.dtype
+        self.shape = self.data.shape
         if len(self.data.shape) == 3:
             if self.data.shape[2] == 3:
                 self.dataKind = 'rgb'
@@ -58,6 +63,7 @@ class DataItemImage(DataItemBase):
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
         self.data = None
+        
 class DataItemVolume(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
@@ -87,12 +93,17 @@ class DataMgr():
         self.labels = {}
         self.prediction = [None] * len(dataItems)
         self.dataFeatures = None
-        self.segmentation = []
+        self.segmentation = [None] * len(dataItems)
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
         self.dataItemsLoaded = [False] * len(dataItems)
+        self.segmentation = [None] * len(dataItems)
         
+    def dataItemsShapes(self):     
+        return map(DataItemBase.shape, self)
+        
+    
     def __getitem__(self, ind):
         if not self.dataItemsLoaded[ind]:
             self.dataItems[ind].loadData()
