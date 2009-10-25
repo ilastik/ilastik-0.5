@@ -731,7 +731,8 @@ class labelWidget(QtGui.QWidget):
         
     def addOverlayPixmap(self, pm):
         if isinstance(pm, numpy.ndarray):
-            img = qimage2ndarray.numpy2qimage(pm)
+            #img = qimage2ndarray.numpy2qimage(pm)
+            img = qwt.toQImage((pm).astype(numpy.uint8))
             pm = QtGui.QPixmap.fromImage(img)
         pi = self.canvas.addPixmap(pm)
         self.overlayPixmapItems.append( pi )
@@ -744,6 +745,7 @@ class labelWidget(QtGui.QWidget):
         self.canvas.removeItem(pixmapItem)
         
     def predictionImage_add(self, dataItemIndex, classnr, predictionMatrix):
+        #print "predictionImage_add: ", dataItemIndex, classnr
         
         #vm.writeImage(predictionMatrix,'1_predictionMatrix.jpg')
         if not self.predictions.get(dataItemIndex, None):
@@ -751,23 +753,14 @@ class labelWidget(QtGui.QWidget):
         if self.predictions[dataItemIndex].get(classnr, None):
             self.canvas.removeItem( self.predictions[dataItemIndex][classnr] )
         classColor = QtGui.QColor.fromRgb( self.parent().parent().project.labelColors.get(classnr,0) )
-        #gray = numpy.require(predictionMatrix, numpy.uint8, 'C') * 255
         # This looks promising
         image = qwt.toQImage((predictionMatrix*255).astype(numpy.uint8))
         #image.save('5_QWT5_moduleToConvertNumpy2QImage.jpg')
         #vm.writeImage(predictionMatrix,'2_afterNumpyRequir.jpg')
-        #h, w = gray.shape
-        #image = QtGui.QImage(gray.data, w, h, QtGui.QImage.Format_Indexed8)
-        #image.ndarray = gray.T
         #image.save('3_QimageWithGrayAsNdArray.jpg')
-        #col = classColor
-        #print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() )
         for i in range(256):
-            #col = classColor.darker((256-i)*100)
-            #print "r: %i, g: %i, b: %i" % (col.red(), col.green(), col.blue() ) 
             col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i/3*2)
             image.setColor(i, col.rgba())
-        #print gray
 
         #image.save('4_QimageAfterColorConversion.jpg')
         pm = QtGui.QPixmap.fromImage(image)
@@ -891,6 +884,7 @@ class labelWidget(QtGui.QWidget):
         
         # todo: use data-manager instance of vigra-image
         self.img = qimage2ndarray.numpy2qimage(self.project.dataMgr[nr].data)
+        self.img = qwt.toQImage(self.project.dataMgr[nr].data.astype(numpy.uint8))
         
         pm = QtGui.QPixmap.fromImage(self.img)
         
