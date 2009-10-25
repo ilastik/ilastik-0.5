@@ -6,6 +6,7 @@ from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
 from collections import deque
 from PyQt4 import QtCore
+from core.utilities import irange
 
 import numpy
 
@@ -112,19 +113,22 @@ class ClassifierPredictThread(threading.Thread):
             self.predictionList.append(prediction / cnt)
 
 class ClassifierInteractiveThread(threading.Thread):
-    def __init__(self, trainingQueue, predictDataList, resultList, labelWidget, numberOfClasses, numberOfClassifiers=10, treeCount=10):
+    def __init__(self, trainingQueue, predictDataList, labelWidget, numberOfClasses, numberOfClassifiers=10, treeCount=10):
         threading.Thread.__init__(self)
         self.stopped = False
         self.trainingQueue = trainingQueue
-        self.resultList = resultList
+        self.resultList = [deque(maxlen=10) for k in range(0,len(predictDataList))]
         self.predictDataList = predictDataList
         self.numberOfClassifiers = numberOfClassifiers
         self.treeCount = treeCount
         self.classifierList = deque(maxlen=numberOfClassifiers)
         self.labelWidget = labelWidget
         self.resultLock = threading.Lock() 
-        self.result = deque(maxlen=1)
         self.numberOfClasses = numberOfClasses
+        self.result = [deque(maxlen=1) for k in range(len(self.predictDataList))]
+        for ind, pred in irange(self.result):
+            initPred = numpy.zeros(( self.predictDataList[ind].shape[0], self.numberOfClasses), dtype=numpy.float32 )
+            pred.append(initPred)
         
     def classifierListFull(self):
         return self.numberOfClassifiers == len(self.classifierList)
@@ -134,10 +138,10 @@ class ClassifierInteractiveThread(threading.Thread):
         for k in predictItemIndices:
             for classifier in self.classifierList:
                 if not k in classifier.usedForPrediction:
-                    predictItem = self.predictDataList[k]
-                    prediction = classifier.predict(predictItem)      
+                    predictItemIdle = self.predictDataList[k]
+                    predictionIdle = classifier.predict(predictItemIdle)      
                     classifier.usedForPrediction.add(k)
-                    self.resultList[k].append(prediction) 
+                    self.resultList[k].append(predictionIdle) 
         for k in self.resultList:
             k = list(k)
                     
@@ -196,12 +200,12 @@ class ClassifierInteractiveThread(threading.Thread):
             if len(self.resultList[predictIndex]) == 0:
                 continue
             else:
-                if newPredictionsMade:
-                    image = reduce(numpy.ndarray.__add__, self.resultList[predictIndex]) / len(self.resultList[predictIndex])
+                image = reduce(numpy.ndarray.__add__, self.resultList[predictIndex]) / len(self.resultList[predictIndex])
             
-            self.resultLock.acquire()
-            self.result.append(image)
-            self.resultLock.release()
+            print "Tick for image ", predictIndex
+            #self.resultLock.acquire()
+            self.result[predictIndex].append(image)
+            #self.resultLock.release()
 
             interactiveMessagePrint( "CLOCK **********************************************" )
             

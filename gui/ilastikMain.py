@@ -667,13 +667,12 @@ class ClassificationInteractive(object):
         self.parent = parent
         self.stopped = False
         self.trainingQueue = deque(maxlen=1)
-        self.predictResultList = []
         self.lock = threading.Lock()
         
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
         self.interactiveTimer = QtCore.QTimer()
         self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      
-        
+        self.temp_cnt = 0
         self.start()
         self.interactiveTimer.start(100)
         #self.tmp_count = 0
@@ -685,12 +684,16 @@ class ClassificationInteractive(object):
 
         self.trainingQueue.append((F,L))
 
-    def updateLabelWidget(self):
-        
+    def updateLabelWidget(self):  
+        predictIndex = self.parent.labelWidget.activeImage
+        displayClassNr = self.parent.labelWidget.activeLabel  
         try:
-            image = self.classificationInteractive.result.pop()
+            image = self.classificationInteractive.result[predictIndex].pop()
         except IndexError:
             return
+        
+        if predictIndex == 1:
+            pass
                 
         max = numpy.max(image)
         if max != 1:
@@ -698,16 +701,17 @@ class ClassificationInteractive(object):
             print "Maximum" ,numpy.max(image), "Shape", image.shape
             print "Minimum", numpy.min(image), "mean",  numpy.mean(image), "unique", numpy.unique(image).size
             print "*"*30
-        
-        predictIndex = self.parent.labelWidget.activeImage
-        displayClassNr = self.parent.labelWidget.activeLabel  
+  
         print "displayClassNr", displayClassNr        
         image = image[:,displayClassNr-1]
         imshape = self.parent.project.dataMgr[predictIndex].data.shape
-        image = image.reshape( [imshape[0],imshape[1]] )
+        image = image.reshape( [imshape[0],imshape[1]])
+        
+        displayImage = image.copy()
         #image = (image > 0.5).astype(numpy.float32)
         
-        self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
+        self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, displayImage)
+        
 
     def initInteractiveProgressBar(self):
         statusBar = self.parent.statusBar()
@@ -729,12 +733,12 @@ class ClassificationInteractive(object):
         self.trainingQueue.append((F,L))
         
         (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
-        self.predictResultList = [ deque(maxlen=10) for k in range(0,len(predictDataList))]
+        
         
         numberOfClasses = len(self.parent.project.labelNames)
         numberOfClassifiers=8
         treeCount=8
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.predictResultList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
         self.initInteractiveProgressBar()
         # Ist leider zu langsam und blockiert den main thread zu sehr
         #self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL("newPredictionPending()"), self.updateLabelWidget)
