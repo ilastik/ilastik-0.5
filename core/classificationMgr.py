@@ -9,6 +9,10 @@ from PyQt4 import QtCore
 
 import numpy
 
+def interactiveMessagePrint(* args):
+    pass
+    #print args
+
 try:
     from vigra import vigranumpycmodule as vm
 except ImportError:
@@ -38,7 +42,7 @@ class ClassifierRandomForest(ClassifierBase):
     def train(self, features, labels):
         
         if features.shape[0] != labels.shape[0]:
-            print " 3, 2 ,1 ... BOOOM!! #features != # labels"
+            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
             
         if not labels.dtype == numpy.uint32:
             labels = numpy.array(labels,dtype=numpy.uint32)
@@ -95,13 +99,13 @@ class ClassifierPredictThread(threading.Thread):
     def run(self):
         for feature in self.featureList:
             cnt = 0
-            print "Feature Item"
+            interactiveMessagePrint( "Feature Item" )
             for classifier in self.classifierList:
                 if cnt == 0:
-                    print "Classifier %d prediction" % cnt
+                    interactiveMessagePrint ( "Classifier %d prediction" % cnt )
                     prediction = classifier.predict(feature)      
                 else:
-                    print "Classifier %d prediction" % cnt
+                    interactiveMessagePrint( "Classifier %d prediction" % cnt )
                     prediction += classifier.predict(feature)
                 cnt += 1
                 self.count += 1
@@ -154,10 +158,10 @@ class ClassifierInteractiveThread(threading.Thread):
             
             # Learn Classifier new with newest Data
             if newTrainingPending > 1:
-                print "New Training Data used %3.1f %% " % (100 - 100*(float(newTrainingPending)/self.numberOfClassifiers))
+                interactiveMessagePrint( "New Training Data used %3.1f %% " % (100 - 100*(float(newTrainingPending)/self.numberOfClassifiers)) )
                 self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
             else:
-                print "All Classifiers learned"
+                interactiveMessagePrint( "All Classifiers learned" )
             
             # Predict wich classifiers
             predictIndex = self.labelWidget.activeImage
@@ -181,13 +185,13 @@ class ClassifierInteractiveThread(threading.Thread):
                 for k in restList:
                     for classifier in self.classifierList:
                         if not k in classifier.usedForPrediction:
-                            print "Time to Predict other images once" 
+                            interactiveMessagePrint( "Time to Predict other images once" ) 
                             predictItemIdle = self.predictDataList[k]
                             predictionIdle = classifier.predict(predictItemIdle)      
                             classifier.usedForPrediction.add(k)
                             self.resultList[k].append(predictionIdle) 
                             break
-                        print "Images %d is fully predicted with curren classifier set" % k 
+                        interactiveMessagePrint( "Images %d is fully predicted with curren classifier set" % k ) 
             
             if len(self.resultList[predictIndex]) == 0:
                 continue
@@ -199,7 +203,7 @@ class ClassifierInteractiveThread(threading.Thread):
             self.result.append(image)
             self.resultLock.release()
 
-            print "CLOCK **********************************************"
+            interactiveMessagePrint( "CLOCK **********************************************" )
             
             # Ist leider zu langsam, siehe interactiveTimer
             #self.labelWidget.emit(QtCore.SIGNAL("newPredictionPending()"))
