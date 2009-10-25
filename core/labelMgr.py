@@ -8,6 +8,7 @@ class label_Base:
         self.classId = labelManagerID.IDlabel_Base
         self.size = size
         self.dims = size.__len__()
+        self.rad = 3 # todo: hack.... add settings-class
         self.drawCallback = None
     
     def __getstate__(self):
@@ -19,6 +20,9 @@ class label_Base:
         
     def setDrawCallback(self, callback):
         self.drawCallback = callback
+        
+    def setPaintRad(self, rad):
+        self.rad = rad
     
     def getObjects(self):
         # retruns generator expression of the parameters of label-objects.
@@ -68,9 +72,15 @@ class label_Patch(label_Base):
         return getPatchNrFromPosition(self, lastpos)
     
     def setLabel(self, pos, label):
-        self.lastPatchNr = self.getPatchNrFromPosition(pos)
-        self.labelArray[ self.lastPatchNr ] = label
-        label_Base.setLabel(self, pos, label)
+        #self.lastPatchNr = self.getPatchNrFromPosition(pos)
+        #self.labelArray[ self.lastPatchNr ] = label
+        #label_Base.setLabel(self, pos, label)
+        rad = self.rad # todo: hack.... add settings-class
+        for x in xrange(pos[0]-rad, pos[0]+rad):
+            for y in xrange(pos[1]-rad, pos[1]+rad): 
+                self.lastPatchNr = self.getPatchNrFromPosition([x,y])
+                self.labelArray[ self.lastPatchNr ] = label
+                label_Base.setLabel(self, [x,y], label)
         
     def setLabelLine2D(self, pos1, pos2, label):
         (x0, y0) = pos1

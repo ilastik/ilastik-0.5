@@ -69,6 +69,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
         self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
+        self.connect(self.ribbon.tabDict['Paint'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -182,7 +183,8 @@ class MainWindow(QtGui.QMainWindow):
             t.join()
             self.project.dataMgr.segmentation[cnt] = seg[cnt].result
         
-        
+    def on_changeBrushSize(self, rad):
+        self.labelWidget.setBrushSize(rad)
 
     def on_classificationTrain(self):
         self.generateTrainingData()
@@ -203,9 +205,9 @@ class MainWindow(QtGui.QMainWindow):
             return
         
         numpyarrayobject = self.project.dataMgr.dataFeatures[0][0][0]
-        pi = self.labelWidget.addOverlayPixmap(numpyarrayobject)
-        pi.setOpacity(0.5)
-        self.labelWidget.removeOverlayPixmap(pi)
+        #pi = self.labelWidget.addOverlayPixmap(numpyarrayobject)
+        #pi.setOpacity(0.5)
+        #self.labelWidget.removeOverlayPixmap(pi)
         
         #print "using feature dimension of first image."
         trainingMatrices_perDataItem = []

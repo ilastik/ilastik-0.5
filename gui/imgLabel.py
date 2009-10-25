@@ -42,7 +42,10 @@ class labelingForOneImage:
     def setOpacity(self, op):
         for dmngr in self.DrawManagers:
             dmngr.setDrawOpacity(op)
-    
+            
+    def setBrushSize(self, rad):
+        for dmngr in self.DrawManagers:
+            dmngr.labelmngr.setPaintRad(rad)    
     def getLabelValue(self, pos):
         # todo: what, if different label-types (e.g. pixel, geom. objects..) are contradictory?
         value = 0
@@ -751,6 +754,7 @@ class labelWidget(QtGui.QWidget):
         if not self.predictions.get(dataItemIndex, None):
             self.predictions[dataItemIndex] = {}
         if self.predictions[dataItemIndex].get(classnr, None):
+            #print "3 self.canvas: ", self.canvas, "imageitem canvas: ", self.predictions[dataItemIndex][classnr].scene()
             self.canvas.removeItem( self.predictions[dataItemIndex][classnr] )
         classColor = QtGui.QColor.fromRgb( self.parent().parent().project.labelColors.get(classnr,0) )
         # This looks promising
@@ -786,17 +790,20 @@ class labelWidget(QtGui.QWidget):
             return
         if not self.predictions[dataItemIndex].get(classnr, None):
             return
+        #print "2 self.canvas: ", self.canvas, "imageitem canvas: ", self.predictions[dataItemIndex][classnr].scene()
         self.canvas.removeItem(self.predictions[dataItemIndex][classnr])
     
     def predictionImage_clearAll(self):
         for key, val in self.predictions.items():
             for key2, val2 in val.items():
+                #print "1 self.canvas: ", self.canvas, "imageitem canvas: ", val2.scene()
                 self.canvas.removeItem(val2)
     
     def predictionImage_clearImage(self, dataItemIndex):
         if not self.predictions.get(dataItemIndex, None):
             return
         for key, val in self.predictions[dataItemIndex]:
+            #print "4 self.canvas: ", self.canvas, "imageitem canvas: ", val.scene()
             self.canvas.removeItem(val)
         
     def saveLayout(self, storage):
@@ -829,13 +836,28 @@ class labelWidget(QtGui.QWidget):
             self.labelForImage[self.activeImage].setOpacity(op/100.0)
         
     def updateProject(self, project):
+        print "updateProject"
+        #self.labelForImage = {}
+        #self.predictions = {}                # predictions[imageNr]
+        #self.cloneviews = []
+        #self.overlayPixmapItems = []
+        
+        #self.initCanvas()
+        #self.__init__( self.parent(), self.imageList )
+        
+        
         self.project = project
         self.loadImageList()
+        self.changeImage(0)
         self.loadLabelList()
         self.updateDrawSettings()
+        #self.pixmapitem = None
         project.dataMgr.labels = self.labelForImage
         print project.dataMgr.labels
         self.labelForImage = project.dataMgr.labels
+        
+    def setBrushSize(self, rad):
+        self.labelForImage[self.activeImage].setBrushSize(rad)
         
     def updateDrawSettings(self):
         pass 
@@ -908,6 +930,7 @@ class labelWidget(QtGui.QWidget):
         #        #tli.setZValue(1000)
         #        self.canvas.addItem(tli)
         self.changeClass(self.cmbClassList.currentIndex() )
+        #self.canvas.update()
         self.emit( QtCore.SIGNAL("imageChanged"), nr)
                     
 
