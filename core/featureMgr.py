@@ -143,12 +143,12 @@ ilastikFeatures = []
 
 ilastikFeatures.append(LocalFeature("Identity", [], [''],  identity))
 ilastikFeatures.append(LocalFeature("gaussianSmooth", [1], ['Sigma'], gaussianSmooth))
-ilastikFeatures.append(LocalFeature("gaussianSmooth", [2], ['Sigma'], gaussianSmooth))
+ilastikFeatures.append(LocalFeature("gaussianSmooth", [0.5], ['Sigma'], gaussianSmooth))
 ilastikFeatures.append(LocalFeature("GradientMag", [1], ['Sigma'], gaussianGradientMagnitude))
-ilastikFeatures.append(LocalFeature("GradientMag", [2], ['Sigma'], gaussianGradientMagnitude))
+ilastikFeatures.append(LocalFeature("GradientMag", [0.5], ['Sigma'], gaussianGradientMagnitude))
 ilastikFeatures.append(LocalFeature("structureTensor", [1], ['Sigma'], structureTensor))
-ilastikFeatures.append(LocalFeature("structureTensor", [2], ['Sigma'], structureTensor))
+ilastikFeatures.append(LocalFeature("structureTensor", [0.5], ['Sigma'], structureTensor))
 ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", [1], ['Sigma'], hessianMatrixOfGaussian))
-ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", [2], ['Sigma'], hessianMatrixOfGaussian))
+ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", [0.5], ['Sigma'], hessianMatrixOfGaussian))
 ilastikFeatures.append(LocalFeature("eigStructureTensor2d", [1, 1], ['InnerScale', 'OuterScale'] , eigStructureTensor2d))
 

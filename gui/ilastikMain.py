@@ -14,12 +14,11 @@ sys.path.append("..")
 from PyQt4 import QtCore, QtGui, uic
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr
 from gui import ctrlRibbon, imgLabel
-from PIL import Image, ImageQt
-from Queue import PriorityQueue as pq
 from Queue import Queue as queue
 from collections import deque
-import numpy
+import time
 from core.utilities import irange
+
 try:
     from vigra import vigranumpycmodule as vm
 except ImportError:
@@ -674,8 +673,9 @@ class ClassificationInteractive(object):
         self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      
         self.temp_cnt = 0
         self.start()
-        self.interactiveTimer.start(100)
+        self.interactiveTimer.start(500)
         #self.tmp_count = 0
+        self.resultLock = threading.Lock()
         
     def updateTrainingQueue(self):
         self.parent.generateTrainingData()
@@ -687,31 +687,27 @@ class ClassificationInteractive(object):
     def updateLabelWidget(self):  
         predictIndex = self.parent.labelWidget.activeImage
         displayClassNr = self.parent.labelWidget.activeLabel  
+        #print self.parent.project.labelNames
+        #print "Locking now on image %s as %d with class %d" % (self.parent.project.dataMgr[predictIndex].fileName, predictIndex, displayClassNr)
         try:
             image = self.classificationInteractive.result[predictIndex].pop()
         except IndexError:
+            #print "no new prediction there"
+            time.sleep(0.01)
             return
         
+        print "new prediction there"
         if predictIndex == 1:
             pass
                 
-        max = numpy.max(image)
-        if max != 1:
-            print "*"*30
-            print "Maximum" ,numpy.max(image), "Shape", image.shape
-            print "Minimum", numpy.min(image), "mean",  numpy.mean(image), "unique", numpy.unique(image).size
-            print "*"*30
-  
-        print "displayClassNr", displayClassNr        
+       
         image = image[:,displayClassNr-1]
         imshape = self.parent.project.dataMgr[predictIndex].data.shape
         image = image.reshape( [imshape[0],imshape[1]])
         
-        displayImage = image.copy()
-        #image = (image > 0.5).astype(numpy.float32)
-        
-        self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, displayImage)
-        
+        print "new prediction displayed"
+        self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
+        time.sleep(0.1)
 
     def initInteractiveProgressBar(self):
         statusBar = self.parent.statusBar()
@@ -737,12 +733,10 @@ class ClassificationInteractive(object):
         
         numberOfClasses = len(self.parent.project.labelNames)
         numberOfClassifiers=8
-        treeCount=8
+        treeCount=4
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
         self.initInteractiveProgressBar()
-        # Ist leider zu langsam und blockiert den main thread zu sehr
-        #self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL("newPredictionPending()"), self.updateLabelWidget)
-        
+               
         self.classificationInteractive.start()
     def stop(self):
         self.interactiveTimer.stop()
@@ -808,7 +802,7 @@ class ClassificationPredict(object):
             predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
             image = self.classificationPredict.predictionList[displayImage][:,displayClassNr-1]
             # hack: 2d special case:
-            imshape = self.parent.project.dataMgr[0].data.shape
+            imshape = self.parent.project.dataMgr[predictionIndex].data.shape
             image = image.reshape( [imshape[0],imshape[1]] )
             self.parent.labelWidget.predictionImage_clearAll()
             self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)

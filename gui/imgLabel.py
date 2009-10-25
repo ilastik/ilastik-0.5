@@ -731,8 +731,8 @@ class labelWidget(QtGui.QWidget):
         
     def addOverlayPixmap(self, pm):
         if isinstance(pm, numpy.ndarray):
-            #img = qimage2ndarray.numpy2qimage(pm)
-            img = qwt.toQImage((pm).astype(numpy.uint8))
+            img = qimage2ndarray.numpy2qimage(pm)
+            #img = qwt.toQImage((pm).astype(numpy.uint8))
             pm = QtGui.QPixmap.fromImage(img)
         pi = self.canvas.addPixmap(pm)
         self.overlayPixmapItems.append( pi )
@@ -884,7 +884,7 @@ class labelWidget(QtGui.QWidget):
         
         # todo: use data-manager instance of vigra-image
         self.img = qimage2ndarray.numpy2qimage(self.project.dataMgr[nr].data)
-        self.img = qwt.toQImage(self.project.dataMgr[nr].data.astype(numpy.uint8))
+        #self.img = qwt.toQImage(self.project.dataMgr[nr].data.astype(numpy.uint8))
         
         pm = QtGui.QPixmap.fromImage(self.img)
         

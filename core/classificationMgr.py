@@ -11,8 +11,8 @@ from core.utilities import irange
 import numpy
 
 def interactiveMessagePrint(* args):
-    pass
-    #print args
+    #pass
+    print "Thread: ", args
 
 try:
     from vigra import vigranumpycmodule as vm
@@ -147,7 +147,6 @@ class ClassifierInteractiveThread(threading.Thread):
                     
     def run(self):
         while not self.stopped:
-            #print ",",
             try:
                 features, labels = self.trainingQueue.pop()    
                 newTrainingPending = self.numberOfClassifiers
@@ -155,62 +154,44 @@ class ClassifierInteractiveThread(threading.Thread):
                 newTrainingPending -= 1
             
             if numpy.unique(labels).size < self.numberOfClasses:
-                if self.stopped:
-                    return
-                time.sleep(0.01)
                 continue
             
             # Learn Classifier new with newest Data
             if newTrainingPending > 1:
-                interactiveMessagePrint( "New Training Data used %3.1f %% " % (100 - 100*(float(newTrainingPending)/self.numberOfClassifiers)) )
+                interactiveMessagePrint("New Training Data used %3.1f %% " % (100 - 100*(float(newTrainingPending)/self.numberOfClassifiers)) )
                 self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
             else:
-                interactiveMessagePrint( "All Classifiers learned" )
+                interactiveMessagePrint("All Classifiers learned" )
             
-            # Predict wich classifiers
             predictIndex = self.labelWidget.activeImage
             predictItem = self.predictDataList[predictIndex]
-            #print "predictIndex", predictIndex
             
-            newPredictionsMade = False
+            newPredictionsMade = 0
             for classifier in self.classifierList:
                 if predictIndex in classifier.usedForPrediction:
                     continue
-                newPredictionsMade = True
+                newPredictionsMade += 1
                 prediction = classifier.predict(predictItem)      
                 classifier.usedForPrediction.add(predictIndex)
                 self.resultList[predictIndex].append(prediction)   
             
-            if not newPredictionsMade and len(self.predictDataList) > 1:
+            if newPredictionsMade < 1 and len(self.predictDataList) > 1:
                 # Predict the others while idle
-                
                 restList = range(0,len(self.predictDataList))
                 restList.remove(predictIndex)
                 for k in restList:
                     for classifier in self.classifierList:
                         if not k in classifier.usedForPrediction:
-                            interactiveMessagePrint( "Time to Predict other images once" ) 
+                            print ".",
                             predictItemIdle = self.predictDataList[k]
                             predictionIdle = classifier.predict(predictItemIdle)      
                             classifier.usedForPrediction.add(k)
                             self.resultList[k].append(predictionIdle) 
                             break
-                        interactiveMessagePrint( "Images %d is fully predicted with curren classifier set" % k ) 
-            
-            if len(self.resultList[predictIndex]) == 0:
-                continue
-            else:
-                image = reduce(numpy.ndarray.__add__, self.resultList[predictIndex]) / len(self.resultList[predictIndex])
-            
-            print "Tick for image ", predictIndex
-            #self.resultLock.acquire()
-            self.result[predictIndex].append(image)
-            #self.resultLock.release()
 
-            interactiveMessagePrint( "CLOCK **********************************************" )
+            image = reduce(numpy.ndarray.__add__, self.resultList[predictIndex]) / len(self.resultList[predictIndex])
             
-            # Ist leider zu langsam, siehe interactiveTimer
-            #self.labelWidget.emit(QtCore.SIGNAL("newPredictionPending()"))
-             
-               
-        
+            self.resultLock.acquire()
+            self.result[predictIndex].append(image)
+            interactiveMessagePrint("appending new prediction of image %d" % predictIndex)
+            self.resultLock.release()
