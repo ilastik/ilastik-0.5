@@ -8,7 +8,7 @@ class label_Base:
         self.classId = labelManagerID.IDlabel_Base
         self.size = size
         self.dims = size.__len__()
-        self.rad = 3 # todo: hack.... add settings-class
+        self.rad = 1 # todo: hack.... add settings-class
         self.drawCallback = None
     
     def __getstate__(self):

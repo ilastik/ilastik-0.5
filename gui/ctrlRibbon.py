@@ -56,6 +56,10 @@ class RibbonSlider(QtGui.QSlider,RibbonBaseItem):
     def __init__(self, ribbon_entry):
         QtGui.QSlider.__init__(self)
         RibbonBaseItem.__init__(self, ribbon_entry)
+        self.setMaximumSize(QtCore.QSize(20,40)) 
+        self.setMinimum(1)
+        self.setMaximum(6)
+        self.setSliderPosition(1)
         
 
 class RibbonDropButtonItem(QtGui.QToolButton,RibbonBaseItem):
@@ -125,7 +129,7 @@ def createRibbons():
     RibbonGroupObjects["Features"] = RibbonEntryGroup("Features",0)   
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 1)   
     RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)
-    RibbonGroupObjects["Paint"] = RibbonEntryGroup("Paint", 0)
+    RibbonGroupObjects["Label"] = RibbonEntryGroup("Label", 0)
     RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 4)   
     
     RibbonGroupObjects["Projects"].append(RibbonEntry("New", "actions/document-new.png" ,"New"))
@@ -145,7 +149,7 @@ def createRibbons():
     RibbonGroupObjects["View"].append(RibbonEntry("ProbabilityMaps", "categories/preferences-system.png" ,"View Probability map",type=RibbonToggleButtonItem))
     RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation",type=RibbonToggleButtonItem))
     
-    RibbonGroupObjects["Paint"].append(RibbonEntry("Brushsize", "categories/preferences-system.png" ,"Change Brush size",type=RibbonSlider))
+    RibbonGroupObjects["Label"].append(RibbonEntry("Brushsize", "categories/preferences-system.png" ,"Change Brush size",type=RibbonSlider))
     
     RibbonGroupObjects["Export"].append(RibbonEntry("Export", "categories/preferences-system.png" ,"Export"))
     return RibbonGroupObjects   

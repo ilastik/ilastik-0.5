@@ -69,7 +69,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
         self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
-        self.connect(self.ribbon.tabDict['Paint'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
+        self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -184,6 +184,9 @@ class MainWindow(QtGui.QMainWindow):
             self.project.dataMgr.segmentation[cnt] = seg[cnt].result
         
     def on_changeBrushSize(self, rad):
+        #if rad / 2 != 0:
+        #    rad + 1 
+            
         self.labelWidget.setBrushSize(rad)
 
     def on_classificationTrain(self):
@@ -599,6 +602,7 @@ class FeatureComputation(object):
             print "Finished"
             self.terminateFeatureProgressBar()
             self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
+            self
             
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
@@ -734,8 +738,8 @@ class ClassificationInteractive(object):
         
         
         numberOfClasses = len(self.parent.project.labelNames)
-        numberOfClassifiers=8
-        treeCount=4
+        numberOfClassifiers=4
+        treeCount=8
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
         self.initInteractiveProgressBar()
                
@@ -755,7 +759,7 @@ class ClassificationInteractive(object):
         # TODO[CSo] Here we need another Thread, would be nice to reuse ClassificationPredict
         # self.classificationInteractive.finishPredictions()
         
-        self.parent.project.dataMgr.prediction = self.classificationInteractive.resultList
+        self.parent.project.dataMgr.prediction = map(lambda x:x.pop(), self.classificationInteractive.resultList)
         
     
 class ClassificationPredict(object):
@@ -796,8 +800,6 @@ class ClassificationPredict(object):
             self.finalize()           
             
             self.terminateClassificationProgressBar()
-
-            print self.parent.project.dataMgr[0].data.shape
             
             displayClassNr = self.parent.labelWidget.activeLabel
             displayImage = self.parent.labelWidget.activeImage

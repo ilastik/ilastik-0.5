@@ -50,7 +50,8 @@ class FeatureMgr():
           
     def joinCompute(self, dataMgr):
         self.featureProcess.join()  
-        dataMgr.dataFeatures = self.featureProcess.result;                
+        dataMgr.dataFeatures = self.featureProcess.result; 
+        self.featureProcess = None               
                 
 class FeatureBase(object):
     def __init__(self):
@@ -71,7 +72,7 @@ class LocalFeature(FeatureBase):
         return self.featureFunktor()(channel, * self.args)
 
     def __str__(self):
-        return '%s: %s' % (self.name , ', '.join(["%s = %d" % (x[0], x[1]) for x in zip(self.arg_names, self.args)]))
+        return '%s: %s' % (self.name , ', '.join(["%s = %f" % (x[0], x[1]) for x in zip(self.arg_names, self.args)]))
 
 
 class FeatureParallelBase(object):
