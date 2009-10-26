@@ -738,8 +738,8 @@ class ClassificationInteractive(object):
         
         
         numberOfClasses = len(self.parent.project.labelNames)
-        numberOfClassifiers=4
-        treeCount=8
+        numberOfClassifiers=6
+        treeCount=6
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
         self.initInteractiveProgressBar()
                
@@ -801,16 +801,21 @@ class ClassificationPredict(object):
             
             self.terminateClassificationProgressBar()
             
-            displayClassNr = self.parent.labelWidget.activeLabel
-            displayImage = self.parent.labelWidget.activeImage
-            predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
-            image = self.classificationPredict.predictionList[displayImage][:,displayClassNr-1]
-            # hack: 2d special case:
-            imshape = self.parent.project.dataMgr[predictionIndex].data.shape
-            image = image.reshape( [imshape[0],imshape[1]] )
-            self.parent.labelWidget.predictionImage_clearAll()
-            self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
-            self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
+            for classNr in range(len(self.parent.project.labelNames)):
+                #displayClassNr = self.parent.labelWidget.activeLabel
+                displayClassNr = classNr +1
+                displayImage = self.parent.labelWidget.activeImage
+                predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
+                
+                
+                image = self.classificationPredict.predictionList[displayImage][:,displayClassNr-1]
+                # hack: 2d special case:
+                
+                imshape = self.parent.project.dataMgr[predictionIndex].data.shape
+                image = image.reshape( [imshape[0],imshape[1]] )
+                #self.parent.labelWidget.predictionImage_clearAll()
+                self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
+               # self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
             
     def finalize(self):
         self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList
