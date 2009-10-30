@@ -161,16 +161,10 @@ class label_Pixel(label_Grid):
             return
         ind = self.undoIndices.pop()
         values = self.undoValues.pop()
-        print "------------"
-        print ind
-        print values
         self.labelArray[ind]-=values
-        print "-------"
-        print self.labelArray
         self.undoLabelArray_lastState = self.labelArray.copy()
     
     def undoPush(self, undoPointDescription):
-        print "udnopush"
         label_Base.undoPush(self, undoPointDescription)
         diff = self.labelArray - self.undoLabelArray_lastState
         ind = diff.nonzero()
