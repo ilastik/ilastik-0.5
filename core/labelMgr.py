@@ -167,6 +167,7 @@ class label_Pixel(label_Grid):
         self.labelArray[ind]-=values
         print "-------"
         print self.labelArray
+        self.undoLabelArray_lastState = self.labelArray.copy()
     
     def undoPush(self, undoPointDescription):
         print "udnopush"
