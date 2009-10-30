@@ -10,6 +10,8 @@ class label_Base:
         self.dims = size.__len__()
         self.rad = 1 # todo: hack.... add settings-class
         self.drawCallback = None
+        
+        self.undoDescriptions = []
     
     def __getstate__(self):
         self.drawCallback = None
@@ -17,6 +19,12 @@ class label_Base:
         
     def __setstate__(self, dict):
         self.__dict__.update(dict)
+        
+    def undoPush(self, undoPointDescription):
+        self.undoDescriptions.append(undoPointDescription)
+    
+    def undo(self):
+        pass
         
     def setDrawCallback(self, callback):
         self.drawCallback = callback
@@ -131,15 +139,43 @@ class label_Grid(label_Patch):
     def __init__(self, size):
         label_Patch.__init__(self, size)
         self.classId = labelManagerID.IDlabel_Grid
-            
+
 class label_Pixel(label_Grid):
     def __init__(self, size):
         label_Patch.__init__(self, size)
         self.classId = labelManagerID.IDlabel_Pixel
-    
+        self.undoIndices = []
+        self.undoValues = [] 
+           
     def init_storage(self):
         #self.labelArray = numpy.ndarray(self.getPatchCount())
-        self.labelArray = numpy.zeros(self.getPatchCount())         
+        self.labelArray = numpy.zeros(self.getPatchCount())
+        self.undoLabelArray_lastState = self.labelArray.copy()
+    
+    
+    # todo: move all undo-stuff one or two levels up to grid or patch
+    def undo(self):
+        print self.labelArray
+        if len(self.undoIndices)<1:
+            print "nothing to undo"
+            return
+        ind = self.undoIndices.pop()
+        values = self.undoValues.pop()
+        print "------------"
+        print ind
+        print values
+        self.labelArray[ind]-=values
+        print "-------"
+        print self.labelArray
+    
+    def undoPush(self, undoPointDescription):
+        print "udnopush"
+        label_Base.undoPush(self, undoPointDescription)
+        diff = self.labelArray - self.undoLabelArray_lastState
+        ind = diff.nonzero()
+        self.undoIndices.append(ind)
+        self.undoValues.append( diff[ind] )
+        self.undoLabelArray_lastState = self.labelArray.copy()
         
     def getPatchNrFromPosition(self, pos):
         nr = 0

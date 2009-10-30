@@ -27,6 +27,14 @@ class labelingForOneImage:
         self.activeLabel = None
         self.activeDrawManager = None
         
+    def undoPush(self, undoPointDescription):
+        for dmng in self.DrawManagers:
+            dmng.undoPush(undoPointDescription)
+    
+    def undo(self):
+        for dmng in self.DrawManagers:
+            dmng.undo()
+        
     def addDrawManager(self, dmngr):
         self.DrawManagers.append(dmngr)
         self.activeDrawManager = self.DrawManagers.__len__()-1
@@ -116,6 +124,13 @@ class drawManager:
         
     def setUndoList(self, undolist):
         self.undolist = undolist
+        
+    def undoPush(self, undoPointDescription):
+        self.labelmngr.undoPush(undoPointDescription)
+    
+    def undo(self):
+        self.labelmngr.undo()
+        self.repaint()
         
     def repaint(self):
         pass
@@ -227,7 +242,14 @@ class draw_Patch(drawManager):
     
     def repaint(self):
         # todo: clear qimage, get labels from labelmngr and paint them.
-        pass
+        #self.image.loadFromData( self.labelmngr.labelArray )
+        for x in xrange(self.size[0]):
+            for y in xrange(self.size[1]):
+                if self.labelmngr.getLabel([x,y]):
+                    self.image.setPixel(x,y,self.pixelColor)
+                else:
+                    self.image.setPixel(x,y,0)
+        self.imageItem.update()
         
     def canvas_clear(self):
         #self.imageItem.scene().removeItem(self.imageItem)
@@ -257,6 +279,7 @@ class draw_Patch(drawManager):
     
     def EndDraw(self, pos):
         self.labelmngr.setLabel(pos, self.drawLabel)
+        self.labelmngr.undoPush("after paint")
         
 class draw_Pixel(draw_Patch):
     def __init__(self, labelmngr, canvas):
@@ -953,7 +976,7 @@ class labelWidget(QtGui.QWidget):
 
                 
     def undo(self):
-        self.image.undolist.undo()
+        self.labelForImage[self.activeImage].undo()
         
     def makeView(self):
         #self.view = QtGui.QGraphicsView()
