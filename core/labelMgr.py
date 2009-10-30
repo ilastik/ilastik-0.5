@@ -155,7 +155,6 @@ class label_Pixel(label_Grid):
     
     # todo: move all undo-stuff one or two levels up to grid or patch
     def undo(self):
-        print self.labelArray
         if len(self.undoIndices)<1:
             print "nothing to undo"
             return
