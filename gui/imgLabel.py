@@ -105,17 +105,21 @@ class drawManager:
         
         self.drawLabel = 0
         self.drawSize = 1
-        self.drawColor = QtGui.QColor(255,0,0)
+        self.drawColor = {}
+        self.activeDrawColor = QtGui.QColor(255,0,0)
         self.drawOpacity = 1;
 
         
     # drawSettings:
     def setDrawLabel(self, label):
         self.drawLabel = label
+        col = self.drawColor.get(label,None)
+        if col:
+            self.activeDrawColor = col
     def setDrawSize(self, size):
         self.drawSize = size
-    def setDrawColor(self, color):
-        self.drawColor = color
+    def setDrawColor(self, label, color):
+        self.drawColor[label] = color
     def setDrawOpacity(self, opacity):
         self.drawOpacity = opacity
         
@@ -205,8 +209,8 @@ class draw_Ellipse(draw_geomObject):
         
     def addObject(self,pos):
         ell = QtGui.QGraphicsEllipseItem(pos[0], pos[1], self.drawSize, self.drawSize)
-        ell.setPen(QtGui.QPen(self.drawColor))
-        ell.setBrush(QtGui.QBrush(self.drawColor))
+        ell.setPen(QtGui.QPen(self.activeDrawColor))
+        ell.setBrush(QtGui.QBrush(self.activeDrawColor))
         ell.setParentItem(self.topLevelItems[-1])
       
 
@@ -221,7 +225,7 @@ class draw_Patch(drawManager):
         self.imageItem = ImageItem( self.image)
         self.imageItem.setOpacity(self.drawOpacity)
         canvas.addItem(self.imageItem)
-        self.pixelColor = self.drawColor.rgb()
+        self.pixelColor = self.activeDrawColor.rgb()
         labelmngr.setDrawCallback(self.setPixel)
         
     def setDrawOpacity(self, opacity):
@@ -243,10 +247,14 @@ class draw_Patch(drawManager):
     def repaint(self):
         # todo: clear qimage, get labels from labelmngr and paint them.
         #self.image.loadFromData( self.labelmngr.labelArray )
+        pixcol = {}
+        for label, col in self.drawColor.items():
+            pixcol[label] = col.rgb()
         for x in xrange(self.size[0]):
             for y in xrange(self.size[1]):
-                if self.labelmngr.getLabel([x,y]):
-                    self.image.setPixel(x,y,self.pixelColor)
+                lbl = self.labelmngr.getLabel([x,y])
+                if lbl:
+                    self.image.setPixel(x,y,pixcol[lbl])
                 else:
                     self.image.setPixel(x,y,0)
         self.imageItem.update()
@@ -263,7 +271,7 @@ class draw_Patch(drawManager):
         self.lastPos = pos
         
         self.labelmngr.setLabel(pos, self.drawLabel)
-        self.pixelColor = self.drawColor.rgb()
+        self.pixelColor = self.activeDrawColor.rgb()
         # todo: create/get qimage for given label and add to self.canvas.
         self.DoDraw(pos)
     
@@ -1149,7 +1157,9 @@ class DisplayPanel(QtGui.QGraphicsScene):
             self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
             #print self.parent().parent().parent()
             try:
-                self.drawManager.setDrawColor( QtGui.QColor.fromRgb( self.parent().parent().parent().project.labelColors.get(self.parent().labelForImage[self.parent().activeImage].activeLabel,0) ) )
+                for label, col in self.parent().parent().parent().project.labelColors.items():
+                    self.drawManager.setDrawColor(label, QtGui.QColor.fromRgb(col) )
+                #self.drawManager.setDrawColor( QtGui.QColor.fromRgb( self.parent().parent().parent().project.labelColors.get(self.parent().labelForImage[self.parent().activeImage].activeLabel,0) ) )
             except AttributeError:
                 pass
             self.drawManager.InitDraw(pos)
