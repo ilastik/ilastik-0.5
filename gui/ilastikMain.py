@@ -553,7 +553,53 @@ class FeatureDlg(QtGui.QDialog):
         uic.loadUi('dlgFeature.ui', self) 
         for featureItem in self.parent.featureList:
             self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
+        
+        for k, groupName in irange(featureMgr.ilastikFeatureGroups.groupNames):
+            rc = self.featureTable.rowCount()
+            self.featureTable.insertRow(rc)
+        self.featureTable.setVerticalHeaderLabels(featureMgr.ilastikFeatureGroups.groupNames)
+        
+        for k, scaleName in irange(featureMgr.ilastikFeatureGroups.groupScaleNames):
+            rc = self.featureTable.columnCount()
+            self.featureTable.insertColumn(rc)
+        self.featureTable.setHorizontalHeaderLabels(featureMgr.ilastikFeatureGroups.groupScaleNames)
+        
+        self.featureTable.resizeRowsToContents()
+        self.featureTable.resizeColumnsToContents()
+        for c in range(self.featureTable.columnCount()):
+            self.featureTable.horizontalHeader().resizeSection(c, 54)#(0, QtGui.QHeaderView.Stretch)
+
+        self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+        self.featureTable.setShowGrid(False)
+        
+        
+        for r in range(self.featureTable.rowCount()):
+            for c in range(self.featureTable.columnCount()):
+                item = QtGui.QTableWidgetItem()
+                if featureMgr.ilastikFeatureGroups.selection[r][c]:
+                    item.setIcon(QtGui.QIcon(self.parent.iconPath + "categories/preferences-system.png"))
+                self.featureTable.setItem(r,c,item)
+        self.setStyleSheet("selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0.5, y2: 0.5, stop: 0 #BBBBDD, stop: 1 white)")
         self.show()
+    
+    def on_featureTable_itemSelectionChanged(self):  
+        sel = self.featureTable.selectedItems()
+        sel_flag = False
+        for i in sel:
+            if i.icon().isNull():
+                sel_flag = True
+        
+        if sel_flag:
+            for i in sel:
+                icon = QtGui.QIcon(self.parent.iconPath + "categories/preferences-system.png")
+                i.setIcon(icon)
+                featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = True  
+                           
+        else:
+            for i in sel:
+                icon = QtGui.QIcon()
+                i.setIcon(icon)   
+                featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = False     
         
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):  
@@ -563,6 +609,8 @@ class FeatureDlg(QtGui.QDialog):
         for k in range(0, self.featureList.count()):
             if self.featureList.item(k).isSelected():
                 featureSelectionList.append(self.parent.featureList[k])
+        
+        featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         self.close()
         self.parent.projectModified()

@@ -2,6 +2,9 @@ import numpy
 import threading 
 import multiprocessing
 import time
+import sys
+sys.path.append("..")
+from core.utilities import irange
 
 try:
     from vigra import vigranumpycmodule as vm
@@ -69,7 +72,7 @@ class LocalFeature(FeatureBase):
         self.featureFunktor = featureFunktor
     
     def compute(self, channel):
-        return self.featureFunktor()(channel, * self.args)
+        return self.featureFunktor(channel, * self.args)
 
     def __str__(self):
         return '%s: %s' % (self.name , ', '.join(["%s = %f" % (x[0], x[1]) for x in zip(self.arg_names, self.args)]))
@@ -122,34 +125,54 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
                 self.result.append(result)
         self.conn.close()     
 
-def gaussianGradientMagnitude():
-    return vm.gaussianGradientMagnitude
+###########################################################################
+###########################################################################
+class FeatureGroups(object):
+    def __init__(self):
+        self.groupNames = ['Color', 'Texture', 'Edge']
+        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
+        self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
+        self.groupScaleValues = [0.4, 1, 1.6, 2.2, 4]
+        
+        self.members = {}
+        for g in self.groupNames:
+            self.members[g] = []        
+        self.createMemberFeatures()
+        
+    def createMemberFeatures(self):
+        self.members['Color'].append(identity)
+        self.members['Color'].append(gaussianSmooth)
+        
+        self.members['Texture'].append(gaussianGradientMagnitude)
+        self.members['Texture'].append(structureTensor)
+        self.members['Texture'].append(hessianMatrixOfGaussian)
+        self.members['Texture'].append(eigStructureTensor2d)
+        
+        self.members['Edge'].append(gaussianGradientMagnitude)
+        self.members['Edge'].append(eigStructureTensor2d)
+        
+    def createList(self):
+        resList = []
+        for groupIndex, scaleList in irange(self.selection):
+            for scaleIndex, selected in irange(scaleList):
+                for feat in self.members[self.groupNames[groupIndex]]:
+                    featFunc = feat[0]
+                    argNames = feat[1]
+                    if selected:
+                        scaleValue = self.groupScaleValues[scaleIndex]
+                        resList.append(LocalFeature(featFunc.__name__, [scaleValue for k in argNames], argNames , featFunc))
+                        print featFunc.__name__, scaleValue    
+        return resList
+                    
+gaussianGradientMagnitude = vm.gaussianGradientMagnitude, ['Sigma' ]
+gaussianSmooth = vm.gaussianSmooth2d, ['Sigma']
+structureTensor = vm.structureTensor, ['Sigma']
+hessianMatrixOfGaussian = vm.hessianMatrixOfGaussian, ['Sigma']
+eigStructureTensor2d = vm.eigStructureTensor2d, ['InnerScale', 'OuterScale']
 
-def gaussianSmooth():
-    return vm.gaussianSmooth2d
+identity = lambda x: x, []
+identity[0].__name__ = "identity"
 
-def structureTensor():
-    return vm.structureTensor
-
-def hessianMatrixOfGaussian():
-    return vm.hessianMatrixOfGaussian
-
-def eigStructureTensor2d():
-    return vm.eigStructureTensor2d
-
-def identity():
-    return lambda x: x
-
-ilastikFeatures = []
-
-ilastikFeatures.append(LocalFeature("Identity", [], [''],  identity))
-ilastikFeatures.append(LocalFeature("gaussianSmooth", [1], ['Sigma'], gaussianSmooth))
-ilastikFeatures.append(LocalFeature("gaussianSmooth", [0.5], ['Sigma'], gaussianSmooth))
-ilastikFeatures.append(LocalFeature("GradientMag", [1], ['Sigma'], gaussianGradientMagnitude))
-ilastikFeatures.append(LocalFeature("GradientMag", [0.5], ['Sigma'], gaussianGradientMagnitude))
-ilastikFeatures.append(LocalFeature("structureTensor", [1], ['Sigma'], structureTensor))
-ilastikFeatures.append(LocalFeature("structureTensor", [0.5], ['Sigma'], structureTensor))
-ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", [1], ['Sigma'], hessianMatrixOfGaussian))
-ilastikFeatures.append(LocalFeature("hessianMatrixOfGaussian", [0.5], ['Sigma'], hessianMatrixOfGaussian))
-ilastikFeatures.append(LocalFeature("eigStructureTensor2d", [1, 1], ['InnerScale', 'OuterScale'] , eigStructureTensor2d))
+ilastikFeatureGroups = FeatureGroups()
+ilastikFeatures = ilastikFeatureGroups.createList()
 

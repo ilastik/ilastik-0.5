@@ -667,8 +667,8 @@ class cloneViewWidget(QtGui.QDockWidget):
 class labelWidget(QtGui.QWidget):
     def __init__(self, parent=None, imageList=None):
         QtGui.QWidget.__init__(self, parent)
-        global labelwidgetInstance          # UGLY global
-        labelwidgetInstance = self          # UGLY global
+        global labelwidgetInstance          # TODO: UGLY global
+        labelwidgetInstance = self          # TODO: UGLY global
         self.project = None
         if isinstance(imageList,str): imageList = [imageList]
         if isinstance(imageList,list):
@@ -754,8 +754,9 @@ class labelWidget(QtGui.QWidget):
         self.sldOpacity.setMinimum(0)
         self.sldOpacity.setMaximum(100)
         self.sldOpacity.setOrientation(QtCore.Qt.Horizontal)
-        self.sldOpacity.setValue(25)
-        self.changeOpacity(25)      
+        self.sldOpacity.setValue(100)
+        self.sldOpacity.setMaximumWidth(100)
+        self.changeOpacity(100)      
         self.connect(self.sldOpacity, QtCore.SIGNAL("valueChanged(int)"), self.changeOpacity)
         layout_lists.addWidget(self.sldOpacity,3,3)
         try:
@@ -1129,7 +1130,25 @@ class DisplayPanel(QtGui.QGraphicsScene):
         self.labelObject = None
         self.classNr = 0
         self.setItemIndexMethod(self.NoIndex)   # todo: test if drawing becomes faster...
+        
+        self.contextMenuLabel = None
+        
+        b1 = QtGui.QBitmap("brush_icon.bmp")
+        
+        b2 = QtGui.QBitmap(32,32)
+        b2.fill(QtCore.Qt.color0)
+        
+        #b = b1.scaled(64,64)
+        #m = QtGui.QBitmap(b2.scaled(64,64))
 
+        
+        #b1.fill(QtCore.Qt.color0)
+
+        #b2.fill(color1)
+
+        self.myCursor = QtGui.QCursor(b1, b2)
+        #self.myCursor.setShape(QtCore.Qt.BitmapCursor)
+        
     def setLabelObject(self, lo):
         self.labelObject = lo
     
@@ -1163,6 +1182,12 @@ class DisplayPanel(QtGui.QGraphicsScene):
             except AttributeError:
                 pass
             self.drawManager.InitDraw(pos)
+        if event.button() == QtCore.Qt.RightButton:
+            pos = QtCore.QPoint( event.scenePos().x(), event.scenePos().y() )
+            self.contextMenuLabel.popup(pos)
+            self.parent().view.setCursor(self.myCursor)
+            #QtGui.QApplication.setOverrideCursor(self.myCursor)
+            #print "bla"
          
     def mouseMoveEvent(self, event):
         if (event.buttons() == QtCore.Qt.LeftButton) and self.labeling:
@@ -1187,7 +1212,20 @@ class DisplayPanel(QtGui.QGraphicsScene):
         #self.addItem(ell)
         ell.setParentItem(self.topLevelObject)
 
-        
+class contextMenuLabel(QtGui.QMenu):
+    def __init__(self, parent=None):
+        QtGui.QMenu.__init__(self)
+        self.parent = parent
+        for labelName in self.parent.project.labelNames:
+            pixmap = QtGui.QPixmap(16,16)
+            color = QtGui.QColor(self.parent.project.labelColors[cnt])
+            pixmap.fill(color)
+            icon = QtGui.QIcon(pixmap)
+            self.addAction(QtGui.QAction(icon, labelName, self))
+            cnt += 1
+        self.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/preferences-system.png'), "Clear", self))
+
+
 if __name__ == "__main__":
     print "Qt Version: ", QtCore.QT_VERSION_STR
     app = QtGui.QApplication(sys.argv)
