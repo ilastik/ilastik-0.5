@@ -5,6 +5,7 @@ sys.path.append("..")
 from core import labelMgr
 from gui import qimage2ndarray
 import os
+from core.utilities import irange
 try:
     from vigra import vigranumpycmodule as vm
 except ImportError:
@@ -670,6 +671,7 @@ class labelWidget(QtGui.QWidget):
         global labelwidgetInstance          # TODO: UGLY global
         labelwidgetInstance = self          # TODO: UGLY global
         self.project = None
+        self.iconPath = '../../icons/32x32/'
         if isinstance(imageList,str): imageList = [imageList]
         if isinstance(imageList,list):
             dpil = displayImageList()
@@ -698,25 +700,28 @@ class labelWidget(QtGui.QWidget):
         self.makeView()
         
         self.cmbImageList = QtGui.QComboBox()
+        self.cmbImageList.setMinimumWidth(142)
         self.connect(self.cmbImageList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
         
-        self.btnUndo = QtGui.QPushButton("Undo")
+        self.btnUndo = QtGui.QPushButton(QtGui.QIcon(self.iconPath + "actions/edit-undo.png") , "Undo")
         self.connect(self.btnUndo,QtCore.SIGNAL("clicked()"), self.undo)
         
         self.cmbChannelList = QtGui.QComboBox()
+        self.cmbChannelList.setMinimumWidth(250)
+        self.cmbChannelList.hide()
         
         self.cmbClassList = QtGui.QComboBox()
+        self.cmbClassList.setMinimumWidth(142)
         self.connect(self.cmbClassList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeClass)
         
-        self.btnCloneView = QtGui.QPushButton("clone View")
+        self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(self.parent().iconPath + 'actions/media-seek-forward.png'), "Clone")
         self.connect(self.btnCloneView, QtCore.SIGNAL("clicked()"), self.makeCloneView)
         
-        layout_lists = QtGui.QGridLayout()
-        layout_lists.addWidget(self.cmbImageList,2,1)
-        layout_lists.addWidget(self.cmbChannelList,2,2)
-        layout_lists.addWidget(self.cmbClassList,2,3)
-        layout_lists.addWidget(self.btnUndo,2,4)
-        layout_lists.addWidget(self.btnCloneView,2,5)
+        layout_lists = QtGui.QHBoxLayout()
+        layout_lists.addWidget(self.cmbImageList)
+        layout_lists.addWidget(self.cmbChannelList)
+        layout_lists.addWidget(self.cmbClassList)
+        
         
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.view)
@@ -758,7 +763,10 @@ class labelWidget(QtGui.QWidget):
         self.sldOpacity.setMaximumWidth(100)
         self.changeOpacity(100)      
         self.connect(self.sldOpacity, QtCore.SIGNAL("valueChanged(int)"), self.changeOpacity)
-        layout_lists.addWidget(self.sldOpacity,3,3)
+        layout_lists.addWidget(self.sldOpacity)
+        layout_lists.addWidget(self.btnUndo)
+        layout_lists.addWidget(self.btnCloneView)
+        layout_lists.addStretch()
         try:
             self.updateProject( self.parent().project)
         except AttributeError:
@@ -902,6 +910,7 @@ class labelWidget(QtGui.QWidget):
     def loadLabelList(self):
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.project.labelNames)
+        self.contextMenuLabel = contextMenuLabel(self.project.labelNames, self.project.labelColors, self.canvas)
 
     def getLabel(self, imageNr, pos):
         lfi = self.labelForImage.get(imageNr, None)
@@ -965,12 +974,12 @@ class labelWidget(QtGui.QWidget):
         #self.canvas.update()
         self.emit( QtCore.SIGNAL("imageChanged"), nr)
                     
-
     def updateClassList(self):
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
     def changeClass(self, nr):
+        print "change Class called with", nr
         nr+=1  # 0 is unlabeled !!
         self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):
@@ -1131,7 +1140,7 @@ class DisplayPanel(QtGui.QGraphicsScene):
         self.classNr = 0
         self.setItemIndexMethod(self.NoIndex)   # todo: test if drawing becomes faster...
         
-        self.contextMenuLabel = None
+        
         
         b1 = QtGui.QBitmap("brush_icon.bmp")
         
@@ -1146,7 +1155,7 @@ class DisplayPanel(QtGui.QGraphicsScene):
 
         #b2.fill(color1)
 
-        self.myCursor = QtGui.QCursor(b1, b2)
+        #self.myCursor = QtGui.QCursor(b1, b2)
         #self.myCursor.setShape(QtCore.Qt.BitmapCursor)
         
     def setLabelObject(self, lo):
@@ -1183,9 +1192,9 @@ class DisplayPanel(QtGui.QGraphicsScene):
                 pass
             self.drawManager.InitDraw(pos)
         if event.button() == QtCore.Qt.RightButton:
-            pos = QtCore.QPoint( event.scenePos().x(), event.scenePos().y() )
-            self.contextMenuLabel.popup(pos)
-            self.parent().view.setCursor(self.myCursor)
+            self.parent().contextMenuLabel.popup(event.screenPos())
+            
+            #self.parent().view.setCursor(self.myCursor)
             #QtGui.QApplication.setOverrideCursor(self.myCursor)
             #print "bla"
          
@@ -1213,17 +1222,43 @@ class DisplayPanel(QtGui.QGraphicsScene):
         ell.setParentItem(self.topLevelObject)
 
 class contextMenuLabel(QtGui.QMenu):
-    def __init__(self, parent=None):
+    def __init__(self, labelNames, labelColors, parent=None):
         QtGui.QMenu.__init__(self)
         self.parent = parent
-        for labelName in self.parent.project.labelNames:
+        self.action = []
+        self.iconPath = '../../icons/32x32/'
+        for cnt, labelName in irange(labelNames):
             pixmap = QtGui.QPixmap(16,16)
-            color = QtGui.QColor(self.parent.project.labelColors[cnt])
+            color = QtGui.QColor(labelColors[cnt+1])
             pixmap.fill(color)
             icon = QtGui.QIcon(pixmap)
-            self.addAction(QtGui.QAction(icon, labelName, self))
-            cnt += 1
-        self.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/preferences-system.png'), "Clear", self))
+            self.action.append(QtGui.QAction(icon, labelName, self))
+            receiver = lambda cnt=cnt: parent.parent().cmbClassList.setCurrentIndex(cnt)
+            self.connect(self.action[cnt], QtCore.SIGNAL("triggered()"), receiver)
+            self.addAction(self.action[cnt])
+        self.addSeparator()
+        brushSelector = self.addMenu(QtGui.QIcon(self.iconPath + 'actions/edit-clear.png'),'Brush Size')
+        for rad, rad_ in irange(range(5,29,4)):
+            icon = QtGui.QIcon(self.createCirclePixmap(rad_))
+            action = QtGui.QAction(icon, '', self);
+            receiver = lambda rad=rad: parent.parent().parent().parent().ribbon.tabDict['Label'].itemDict['Brushsize'].setValue(rad)
+            self.connect(action, QtCore.SIGNAL("triggered()"), receiver)
+            
+            brushSelector.addAction(action)
+    
+    def createCirclePixmap(self, rad):
+        pixmap = QtGui.QPixmap(32,32)
+        pixmap.fill(QtCore.Qt.transparent)
+        painter = QtGui.QPainter(pixmap)
+        brush = QtGui.QBrush(QtGui.QColor(0,0,0))
+        painter.setBrush(brush)
+        painter.drawEllipse(16-rad/2,16-rad/2,rad,rad)
+        return pixmap
+        
+        
+
+
+       
 
 
 if __name__ == "__main__":

@@ -140,16 +140,26 @@ class FeatureGroups(object):
         self.createMemberFeatures()
         
     def createMemberFeatures(self):
-        self.members['Color'].append(identity)
+        #self.members['Color'].append(identity)
         self.members['Color'].append(gaussianSmooth)
         
-        self.members['Texture'].append(gaussianGradientMagnitude)
+        
         self.members['Texture'].append(structureTensor)
-        self.members['Texture'].append(hessianMatrixOfGaussian)
+        self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
+        self.members['Texture'].append(hessianMatrixOfGaussian)
+        self.members['Texture'].append(laplacianOfGaussian)
+        self.members['Texture'].append(morphologicalOpening)
+        self.members['Texture'].append(morphologicalClosing)
+        self.members['Texture'].append(gaussianGradientMagnitude)
+        self.members['Texture'].append(differenceOfGaussians)
         
         self.members['Edge'].append(gaussianGradientMagnitude)
         self.members['Edge'].append(eigStructureTensor2d)
+        self.members['Edge'].append(eigHessianTensor2d)
+        self.members['Edge'].append(laplacianOfGaussian)
+        self.members['Edge'].append(differenceOfGaussians)
+        self.members['Edge'].append(cannyEdge)
         
     def createList(self):
         resList = []
@@ -169,6 +179,12 @@ gaussianSmooth = vm.gaussianSmooth2d, ['Sigma']
 structureTensor = vm.structureTensor, ['Sigma']
 hessianMatrixOfGaussian = vm.hessianMatrixOfGaussian, ['Sigma']
 eigStructureTensor2d = vm.eigStructureTensor2d, ['InnerScale', 'OuterScale']
+laplacianOfGaussian = vm.laplacianOfGaussian, ['Sigma']
+morphologicalOpening = lambda x,s: vm.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
+morphologicalClosing = lambda x,s: vm.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
+eigHessianTensor2d = vm.eigHessian2d, ['Sigma']
+differenceOfGaussians = lambda x, s: vm.gaussianSmooth2d(x,s) - vm.gaussianSmooth2d(x,s/3*2), ['Sigma']
+cannyEdge = lambda x, s: vm.cannyEdgeImage(x, s, 0, 1), ['Sigma']
 
 identity = lambda x: x, []
 identity[0].__name__ = "identity"
