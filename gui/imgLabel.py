@@ -1172,10 +1172,10 @@ class DisplayPanel(QtGui.QGraphicsScene):
             #self.labelObject.addLabelObject(self.classNr, self.topLevelObject)
             #self.addItem(self.topLevelObject)
             #self.lastPoint = event.scenePos()
-            try:
-                self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
-            except KeyError, AttributeError:
-                return
+#            try:
+#                self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
+#            except KeyError, AttributeError:
+#                return
 
             self.labeling = True
             ##print event.buttons(), " == " ,QtCore.Qt.LeftButton, "=" ,event.button() == QtCore.Qt.LeftButton
@@ -1191,6 +1191,7 @@ class DisplayPanel(QtGui.QGraphicsScene):
             except AttributeError:
                 pass
             self.drawManager.InitDraw(pos)
+            
         if event.button() == QtCore.Qt.RightButton:
             self.parent().contextMenuLabel.popup(event.screenPos())
             
@@ -1200,9 +1201,6 @@ class DisplayPanel(QtGui.QGraphicsScene):
          
     def mouseMoveEvent(self, event):
         if (event.buttons() == QtCore.Qt.LeftButton) and self.labeling:
-            ##print "Mouse Moving at " ,event.pos()
-            #self.addSomeStuffToCanvas(event.scenePos())
-            ##self.makeView()
             pos = [event.scenePos().x(), event.scenePos().y()]
             self.drawManager.DoDraw(pos)
 
@@ -1238,7 +1236,8 @@ class contextMenuLabel(QtGui.QMenu):
             self.addAction(self.action[cnt])
         self.addSeparator()
         brushSelector = self.addMenu(QtGui.QIcon(self.iconPath + 'actions/edit-clear.png'),'Brush Size')
-        for rad, rad_ in irange(range(5,29,4)):
+        for rad in range(1,6):
+            rad_ = rad*2-1
             icon = QtGui.QIcon(self.createCirclePixmap(rad_))
             action = QtGui.QAction(icon, '', self);
             receiver = lambda rad=rad: parent.parent().parent().parent().ribbon.tabDict['Label'].itemDict['Brushsize'].setValue(rad)
@@ -1252,7 +1251,7 @@ class contextMenuLabel(QtGui.QMenu):
         painter = QtGui.QPainter(pixmap)
         brush = QtGui.QBrush(QtGui.QColor(0,0,0))
         painter.setBrush(brush)
-        painter.drawEllipse(16-rad/2,16-rad/2,rad,rad)
+        painter.drawEllipse(16-rad/2,16-rad/2,rad*2+1,rad*2+1)
         return pixmap
         
         

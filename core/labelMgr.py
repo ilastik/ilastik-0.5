@@ -84,11 +84,13 @@ class label_Patch(label_Base):
         #self.labelArray[ self.lastPatchNr ] = label
         #label_Base.setLabel(self, pos, label)
         rad = self.rad # todo: hack.... add settings-class
+        t = rad**2
         for x in xrange(pos[0]-rad, pos[0]+rad):
             for y in xrange(pos[1]-rad, pos[1]+rad): 
-                self.lastPatchNr = self.getPatchNrFromPosition([x,y])
-                self.labelArray[ self.lastPatchNr ] = label
-                label_Base.setLabel(self, [x,y], label)
+                if (x-pos[0])**2 + (y-pos[1])**2 < t:
+                    self.lastPatchNr = self.getPatchNrFromPosition([x,y])
+                    self.labelArray[ self.lastPatchNr ] = label
+                    label_Base.setLabel(self, [x,y], label)
         
     def setLabelLine2D(self, pos1, pos2, label):
         (x0, y0) = pos1
