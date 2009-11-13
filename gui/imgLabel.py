@@ -271,15 +271,17 @@ class draw_Patch(drawManager):
         self.startPos = pos
         self.lastPos = pos
         
-        self.labelmngr.setLabel(pos, self.drawLabel)
         self.pixelColor = self.activeDrawColor.rgb()
+        self.labelmngr.setLabel(pos, self.drawLabel)
+        
         # todo: create/get qimage for given label and add to self.canvas.
         self.DoDraw(pos)
     
     # callback for label-manager:
     def setPixel(self, pos):
-        self.image.setPixel(pos[0], pos[1], self.pixelColor)
-        self.imageItem.update()
+        if pos[0] > -1 and pos[1] > -1 and pos[0] < self.size[0] and pos[1] < self.size[1]:
+            self.image.setPixel(pos[0], pos[1], self.pixelColor)
+            self.imageItem.update()
     
     def DoDraw(self, pos):
         if pos != self.lastPos:

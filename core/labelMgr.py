@@ -88,10 +88,11 @@ class label_Patch(label_Base):
         for x in xrange(pos[0]-rad, pos[0]+rad):
             for y in xrange(pos[1]-rad, pos[1]+rad): 
                 if (x-pos[0])**2 + (y-pos[1])**2 < t:
-                    self.lastPatchNr = self.getPatchNrFromPosition([x,y])
-                    self.labelArray[ self.lastPatchNr ] = label
-                    label_Base.setLabel(self, [x,y], label)
-        
+                    if x > -1 and y > -1 and y < self.size[0] and y < self.size[1]:
+                        self.lastPatchNr = self.getPatchNrFromPosition([x,y])
+                        self.labelArray[ self.lastPatchNr ] = label
+                        label_Base.setLabel(self, [x,y], label)
+            
     def setLabelLine2D(self, pos1, pos2, label):
         (x0, y0) = pos1
         (x1, y1) = pos2
