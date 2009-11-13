@@ -20,6 +20,7 @@ TODO:
 
 import numpy
 from PyQt4.QtGui import QImage, QColor
+import PyQt4.Qwt5 as qwt
 
 bgra_dtype = numpy.dtype({'b': (numpy.uint8, 0),
 						  'g': (numpy.uint8, 1),
@@ -64,27 +65,9 @@ def numpy2qimage(array):
 	raise ValueError("can only convert 2D or 3D arrays")
 
 def gray2qimage(gray):
-	"""Convert the 2D numpy array `gray` into a 8-bit QImage with a gray
-	colormap.  The first dimension represents the vertical image axis.
-
-	ATTENTION: This QImage carries an attribute `ndimage` with a
-	reference to the underlying numpy array that holds the data. On
-	Windows, the conversion into a QPixmap does not copy the data, so
-	that you have to take care that the QImage does not get garbage
-	collected (otherwise PyQt will throw away the wrapper, effectively
-	freeing the underlying memory - boom!)."""
-	if len(gray.shape) != 2:
-		raise ValueError("gray2QImage can only convert 2D arrays")
-
-	gray = numpy.require(gray, numpy.uint8, 'C')
-
-	h, w = gray.shape
-
-	result = QImage(gray.data, w, h, QImage.Format_Indexed8)
-	result.ndarray = gray
-	for i in range(256):
-		result.setColor(i, QColor(i, i, i).rgb())
-	return result
+    if len(gray.shape) != 2:
+        raise ValueError("gray2QImage can only convert 2D arrays")
+    return qwt.toQImage(gray.astype(numpy.uint8))
 
 def rgb2qimage(rgb):
 	"""Convert the 3D numpy array `rgb` into a 32-bit QImage.  `rgb` must

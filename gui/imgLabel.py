@@ -686,8 +686,11 @@ class labelWidget(QtGui.QWidget):
         
         self.labelForImage = {}
         self.predictions = {}                # predictions[imageNr]
+        self.segmentation = {}
+        self.uncertainty = {}
         self.cloneviews = []
         self.overlayPixmapItems = []
+        self.contextMenuLabel = None
         
         self.imageList = imageList
         self.activeImage = 0
@@ -716,7 +719,7 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.setMinimumWidth(142)
         self.connect(self.cmbClassList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeClass)
         
-        self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(self.parent().iconPath + 'actions/media-seek-forward.png'), "Clone")
+        self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(self.iconPath + 'actions/media-seek-forward.png'), "Clone")
         self.connect(self.btnCloneView, QtCore.SIGNAL("clicked()"), self.makeCloneView)
         
         layout_lists = QtGui.QHBoxLayout()
@@ -790,35 +793,51 @@ class labelWidget(QtGui.QWidget):
         self.canvas.removeItem(pixmapItem)
         
     def predictionImage_add(self, dataItemIndex, classnr, predictionMatrix):
-        #print "predictionImage_add: ", dataItemIndex, classnr
-        
-        #vm.writeImage(predictionMatrix,'1_predictionMatrix.jpg')
         if not self.predictions.get(dataItemIndex, None):
             self.predictions[dataItemIndex] = {}
         if self.predictions[dataItemIndex].get(classnr, None):
             #print "3 self.canvas: ", self.canvas, "imageitem canvas: ", self.predictions[dataItemIndex][classnr].scene()
             self.canvas.removeItem( self.predictions[dataItemIndex][classnr] )
         classColor = QtGui.QColor.fromRgb( self.parent().parent().project.labelColors.get(classnr,0) )
-        # This looks promising
+
         image = qwt.toQImage((predictionMatrix*255).astype(numpy.uint8))
-        #image.save('5_QWT5_moduleToConvertNumpy2QImage.jpg')
-        #vm.writeImage(predictionMatrix,'2_afterNumpyRequir.jpg')
-        #image.save('3_QimageWithGrayAsNdArray.jpg')
+
         for i in range(256):
             col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i/3*2)
             image.setColor(i, col.rgba())
 
-        #image.save('4_QimageAfterColorConversion.jpg')
         pm = QtGui.QPixmap.fromImage(image)
         self.predictions[dataItemIndex][classnr] = self.canvas.addPixmap(pm)
         self.predictions[dataItemIndex][classnr].setZValue(-1)
+    
+    def segmentationImage_add(self, segmentation):
+        k = self.activeImage;
+        seg = segmentation[k]
+        image = qwt.toQImage((seg).astype(numpy.uint8))
+        
+        for i in range(seg.max()+1):
+            classColor = QtGui.QColor.fromRgb(self.parent().parent().project.labelColors[i+1])
+            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), 255)
+            image.setColor(i, col.rgba())
+        pm = QtGui.QPixmap.fromImage(image)
+        self.segmentation[k] = self.canvas.addPixmap(pm)
+    
+    def segmentationImage_remove(self, dataItemIndex):
+        if not self.segmentation.get(dataItemIndex, None):
+            return
+        if not self.segmentation[dataItemIndex].get(classnr, None):
+            return
+        #print "2 self.canvas: ", self.canvas, "imageitem canvas: ", self.predictions[dataItemIndex][classnr].scene()
+        self.canvas.removeItem(self.segmentation[dataItemIndex])
+
         
     def predictionImage_show(self, dataItemIndex, classnr):
         if not self.predictions.get(dataItemIndex, None):
             return
         if not self.predictions[dataItemIndex].get(classnr, None):
             return
-        self.canvas.addItem( self.predictions[dataItemIndex][classnr] )
+        self.canvas.addItem(self.predictions[dataItemIndex][classnr] )
+
         
     def predictionImage_setOpacity(self, dataItemIndex, classnr, opacity):
         if not self.predictions.get(dataItemIndex, None):
@@ -839,7 +858,18 @@ class labelWidget(QtGui.QWidget):
         for key, val in self.predictions.items():
             for key2, val2 in val.items():
                 #print "1 self.canvas: ", self.canvas, "imageitem canvas: ", val2.scene()
-                self.canvas.removeItem(val2)
+                try:
+                    self.canvas.removeItem(val2)
+                except:
+                    print 'remove failed: Prop'
+                    pass
+                
+        for key, seg in self.segmentation.items():
+            try:
+                self.canvas.removeItem(seg)
+            except:
+                print 'remove failed: seg'
+                pass
     
     def predictionImage_clearImage(self, dataItemIndex):
         if not self.predictions.get(dataItemIndex, None):
@@ -1088,6 +1118,7 @@ class panView(QtGui.QGraphicsView):
         #self.setSceneRect(QtCore.QRectF(-1e100, -1e100, 1e100, 1e100))
         self.panning = False
         self.zooming = False
+        self.zoomFactor = 0.05
         
     def scrollContentsBy(self, dx, dy):
         QtGui.QGraphicsView.scrollContentsBy(self, dx, dy)
@@ -1124,7 +1155,8 @@ class panView(QtGui.QGraphicsView):
             delta /=500                             # todo: --> unhardcode zoomfactor
             delta += QtCore.QPointF(1,1)
             m = QtGui.QMatrix(self.zoom_origmatrix)
-            m.scale(delta.x(), delta.y())
+            print delta.x()
+            m.scale((delta.x()+delta.y())/2,(delta.x()+delta.y())/2 )
             self.setMatrix(m)
             self.requestROIupdate()                 # todo: inlining, no function?
 
@@ -1133,7 +1165,18 @@ class panView(QtGui.QGraphicsView):
         if event.button() == QtCore.Qt.MidButton:
             self.panning = False
             self.zooming = False
-
+    
+    def wheelEvent(self, wheel):
+        if wheel.modifiers() & QtCore.Qt.ControlModifier:
+            self.zoom_origin = self.mapToScene( wheel.pos() )
+            self.zoom_origmatrix = QtGui.QMatrix(self.matrix())
+            sig = numpy.float32(numpy.sign(wheel.delta()))
+            delta = 1 + sig * self.zoomFactor                 
+            m = QtGui.QMatrix(self.zoom_origmatrix)
+            m.scale(delta, delta)
+            self.setMatrix(m)
+            self.requestROIupdate()  
+        
 class DisplayPanel(QtGui.QGraphicsScene):
     def __init__(self, parent=None):
         QtGui.QGraphicsScene.__init__(self, parent)
@@ -1195,11 +1238,11 @@ class DisplayPanel(QtGui.QGraphicsScene):
             self.drawManager.InitDraw(pos)
             
         if event.button() == QtCore.Qt.RightButton:
-            self.parent().contextMenuLabel.popup(event.screenPos())
+            if self.parent().contextMenuLabel:
+                self.parent().contextMenuLabel.popup(event.screenPos())
             
             #self.parent().view.setCursor(self.myCursor)
             #QtGui.QApplication.setOverrideCursor(self.myCursor)
-            #print "bla"
          
     def mouseMoveEvent(self, event):
         if (event.buttons() == QtCore.Qt.LeftButton) and self.labeling:

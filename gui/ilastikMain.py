@@ -12,7 +12,7 @@ import sys
 import numpy
 sys.path.append("..")
 from PyQt4 import QtCore, QtGui, uic
-from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr
+from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning
 from gui import ctrlRibbon, imgLabel
 from Queue import Queue as queue
 from collections import deque
@@ -67,7 +67,9 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-        self.connect(self.ribbon.tabDict['View'].itemDict['ProbabilityMaps'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
+        self.connect(self.ribbon.tabDict['View'].itemDict['Image'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewImage)
+        self.connect(self.ribbon.tabDict['View'].itemDict['Probabilities'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
+        self.connect(self.ribbon.tabDict['View'].itemDict['Uncertainty'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewUncertainty)
         self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
@@ -156,16 +158,30 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
 
     def on_ViewProbabilities(self, state):
-        if state:
-            self.project.View_showProbmaps = 1
-        else:
-            self.project.View_showProbmaps = 0
+        for classNr in range(len(self.project.labelNames)):
+            displayClassNr = classNr +1
+            displayImage = self.labelWidget.activeImage
+            image = self.project.dataMgr.prediction[displayImage][:,displayClassNr-1]         
+            imshape = self.project.dataMgr[displayImage].data.shape
+            image = image.reshape( [imshape[0],imshape[1]] )
+            self.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
                     
     def on_ViewSegmentation(self, state):
-        if state:
-            self.project.View_showSegmentations = 1
-        else:
-            self.project.View_showSegmentations = 0
+        self.labelWidget.segmentationImage_add(self.project.dataMgr.segmentation)
+        
+    
+    def on_ViewImage(self, state):
+        self.labelWidget.predictionImage_clearAll()
+        
+    def on_ViewUncertainty(self, state):
+        activeLearner = activeLearning.EnsembleMargin()
+          
+        displayImage = self.labelWidget.activeImage
+        pmap = self.project.dataMgr.prediction[displayImage]    
+        image = activeLearner.compute(pmap)
+        imshape = self.project.dataMgr[displayImage].data.shape
+        image = image.reshape( [imshape[0],imshape[1]] )
+        self.labelWidget.predictionImage_add(displayImage, 1, image)
     
     def on_segmentation(self):
 
@@ -437,7 +453,7 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif)")
+        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif)")
         if fileNames:
             for file_name in fileNames:
                 self.fileList.append(file_name)
@@ -761,7 +777,7 @@ class ClassificationInteractive(object):
         
         print "new prediction displayed"
         self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
-        time.sleep(0.1)
+
 
     def initInteractiveProgressBar(self):
         statusBar = self.parent.statusBar()
