@@ -807,6 +807,11 @@ class labelWidget(QtGui.QWidget):
             image.setColor(i, col.rgba())
 
         pm = QtGui.QPixmap.fromImage(image)
+        
+        if dataItemIndex in self.predictions.keys():
+            if classnr in self.predictions[dataItemIndex].keys():
+                self.canvas.removeItem(self.predictions[dataItemIndex][classnr])
+        
         self.predictions[dataItemIndex][classnr] = self.canvas.addPixmap(pm)
         self.predictions[dataItemIndex][classnr].setZValue(-1)
     
@@ -820,6 +825,9 @@ class labelWidget(QtGui.QWidget):
             col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), 255)
             image.setColor(i, col.rgba())
         pm = QtGui.QPixmap.fromImage(image)
+
+        if k in self.segmentation.keys():
+            self.canvas.removeItem(self.segmentation[k])
         self.segmentation[k] = self.canvas.addPixmap(pm)
     
     def segmentationImage_remove(self, dataItemIndex):
@@ -1281,7 +1289,7 @@ class contextMenuLabel(QtGui.QMenu):
             self.addAction(self.action[cnt])
         self.addSeparator()
         brushSelector = self.addMenu(QtGui.QIcon(self.iconPath + 'actions/edit-clear.png'),'Brush Size')
-        for rad in range(1,6):
+        for rad in range(1,7):
             rad_ = rad*2-1
             icon = QtGui.QIcon(self.createCirclePixmap(rad_))
             action = QtGui.QAction(icon, '', self);

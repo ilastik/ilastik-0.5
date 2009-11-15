@@ -159,11 +159,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_ViewProbabilities(self, state):
         for classNr in range(len(self.project.labelNames)):
-            displayClassNr = classNr +1
+            displayClassNr = classNr + 1
             displayImage = self.labelWidget.activeImage
             image = self.project.dataMgr.prediction[displayImage][:,displayClassNr-1]         
             imshape = self.project.dataMgr[displayImage].data.shape
-            image = image.reshape( [imshape[0],imshape[1]] )
+            image = image.reshape( [imshape[0],imshape[1]] ).copy()
             self.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
                     
     def on_ViewSegmentation(self, state):
@@ -180,7 +180,7 @@ class MainWindow(QtGui.QMainWindow):
         pmap = self.project.dataMgr.prediction[displayImage]    
         image = activeLearner.compute(pmap)
         imshape = self.project.dataMgr[displayImage].data.shape
-        image = image.reshape( [imshape[0],imshape[1]] )
+        image = image.reshape( [imshape[0],imshape[1]] ).copy()
         self.labelWidget.predictionImage_add(displayImage, 1, image)
     
     def on_segmentation(self):
