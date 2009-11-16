@@ -132,7 +132,7 @@ class FeatureGroups(object):
         self.groupNames = ['Color', 'Texture', 'Edge']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
-        self.groupScaleValues = [0.4, 1, 1.6, 2.2, 4]
+        self.groupScaleValues = [0.2, 0.5, 1, 1.6, 3]
         
         self.members = {}
         for g in self.groupNames:
@@ -143,14 +143,13 @@ class FeatureGroups(object):
         #self.members['Color'].append(identity)
         self.members['Color'].append(gaussianSmooth)
         
-        
         self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
         self.members['Texture'].append(hessianMatrixOfGaussian)
         self.members['Texture'].append(laplacianOfGaussian)
-        self.members['Texture'].append(morphologicalOpening)
-        self.members['Texture'].append(morphologicalClosing)
+        #self.members['Texture'].append(morphologicalOpening)
+        #self.members['Texture'].append(morphologicalClosing)
         self.members['Texture'].append(gaussianGradientMagnitude)
         self.members['Texture'].append(differenceOfGaussians)
         

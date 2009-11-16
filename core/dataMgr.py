@@ -29,7 +29,8 @@ class DataItemBase():
         self.shape = ()
         
     def shape(self):
-        return self.shape
+        if self.dataKind in ['rgb', 'multi', 'gray']:
+            return self.shape[0:2]
         
     def loadData(self):
         self.data = "This is not an Image..."

@@ -536,14 +536,17 @@ class displayImage:
 class displayImageList:
     def __init__(self, Image = None):
         self.list = []
-        if isinstance(Image, displayImage): self.list.append(Image)
+        if isinstance(Image, displayImage): 
+            self.list.append(Image)
         if isinstance(Image, str):
             img = DisplayImage(Image)
             self.list.append(img)
         
     def appendImage(self, image):
-        if not image: return
-        if isinstance(image, displayImage): self.list.append(image)
+        if not image: 
+            return
+        if isinstance(image, displayImage): 
+            self.list.append(image)
         if isinstance(image, str):
             image = [image]
         if isinstance(image, list):
@@ -674,12 +677,14 @@ class labelWidget(QtGui.QWidget):
         labelwidgetInstance = self          # TODO: UGLY global
         self.project = None
         self.iconPath = '../../icons/32x32/'
-        if isinstance(imageList,str): imageList = [imageList]
-        if isinstance(imageList,list):
+        if isinstance(imageList, str): 
+            imageList = [imageList]
+        if isinstance(imageList, list):
             dpil = displayImageList()
             for item in imageList:
                 dpil.appendImage(item)
             imageList = dpil
+            
         if not imageList:
             dpi = displayImage('test.tif', self)
             imageList = displayImageList(dpi)
@@ -731,32 +736,16 @@ class labelWidget(QtGui.QWidget):
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.view)
         layout.addLayout(layout_lists)
-        
-        #self.view2 = QtGui.QGraphicsView()
-        #self.sceneitem = SceneItem(self.view.scene())
-        #self.scene2 = QtGui.QGraphicsScene()
-        #self.scene2.addItem(self.sceneitem)
-        #self.view2.setScene(self.scene2)
-        ##self.view2.fitInView(self.view2.sceneRect())
-        #self.view2.scale(0.2,0.2)
-        #layout.addWidget(self.view2)
-        
+
         self.setLayout(layout)
         
-       
-        
-        # debug
-        #self.image.label.addClass()
-        #self.image.label.addClass()
-        #self.image.label.addClass()
-        #self.image.label.addClass("Klasse ", QtGui.QColor(0,255,0), 10)
-        #self.updateClassList()
+
         for img in self.imageList.list:
             img.label.addClass()
             img.label.addClass()
             img.label.addClass()
             img.label.addClass("Klasse ", QtGui.QColor(0,255,0), 10)
-        #self.updateClassList()
+
         self.pixmapitem = None
         self.changeImage(0)
         
@@ -785,9 +774,11 @@ class labelWidget(QtGui.QWidget):
         pi = self.canvas.addPixmap(pm)
         self.overlayPixmapItems.append( pi )
         return pi
+    
     def drawOverlayPixmaps(self):
         for pi in self.overlayPixmapItems:
             self.canvas.addItem(pi)
+            
     def removeOverlayPixmap(self, pixmapItem):
         self.overlayPixmapItems.remove(pixmapItem)
         self.canvas.removeItem(pixmapItem)
@@ -878,6 +869,10 @@ class labelWidget(QtGui.QWidget):
             except:
                 print 'remove failed: seg'
                 pass
+    def pixmaps_clearAll(self):
+        for item in self.canvas.items():
+            if item.zValue != 0:
+                self.canvas.removeItem(item)
     
     def predictionImage_clearImage(self, dataItemIndex):
         if not self.predictions.get(dataItemIndex, None):
@@ -935,7 +930,8 @@ class labelWidget(QtGui.QWidget):
         project.dataMgr.labels = self.labelForImage
         print project.dataMgr.labels
         self.labelForImage = project.dataMgr.labels
-        
+        self.OverlayMgr = OverlayMgr(self.canvas, project.labelColors, project.dataMgr.dataItemsShapes(), self)
+        self.connect(self, QtCore.SIGNAL("imageChanged"), self.OverlayMgr.clearAll)
     def setBrushSize(self, rad):
         self.labelForImage[self.activeImage].setBrushSize(rad)
         
@@ -1195,10 +1191,10 @@ class DisplayPanel(QtGui.QGraphicsScene):
         
         
         
-        b1 = QtGui.QBitmap("brush_icon.bmp")
-        
-        b2 = QtGui.QBitmap(32,32)
-        b2.fill(QtCore.Qt.color0)
+#        b1 = QtGui.QBitmap("brush_icon.bmp")
+#        
+#        b2 = QtGui.QBitmap(32,32)
+#        b2.fill(QtCore.Qt.color0)
         
         #b = b1.scaled(64,64)
         #m = QtGui.QBitmap(b2.scaled(64,64))
@@ -1304,15 +1300,146 @@ class contextMenuLabel(QtGui.QMenu):
         painter = QtGui.QPainter(pixmap)
         brush = QtGui.QBrush(QtGui.QColor(0,0,0))
         painter.setBrush(brush)
-        painter.drawEllipse(16-rad/2,16-rad/2,rad*2+1,rad*2+1)
+        painter.drawEllipse(16-rad/2, 16-rad/2, rad*2+1, rad*2+1)
         return pixmap
+
+class OverlayMgr(object):
+    def __init__(self, canvas, classColors, imageShapes, parent):   
+        
+        self.labelWidget  = parent
+        self.classColors = classColors;
+        self.imageCount = len(imageShapes)
+        self.classCount = len(classColors)
+        
+        self.canvas = canvas
+        self.imageShapes = imageShapes
+        
+        self.predictionPixmaps = {}
+        for img in range(self.imageCount):
+            self.predictionPixmaps[img] = {}
+            for k in range(self.classCount):
+                self.predictionPixmaps[img][k] = [False, False]
+        
+        self.segmentationPixmaps = {}
+        for img in range(self.imageCount):
+            self.segmentationPixmaps[img] = [False, False]
+            
+        self.uncertaintyPixmaps = {}
+        for img in range(self.imageCount):
+            self.uncertaintyPixmaps[img] = [False, False]
         
         
 
+    def updatePredictionsPixmaps(self, predictions):
+        print "Active Image ", self.labelWidget.activeImage
+        for imageIndex, prediction in predictions.iteritems():
+            for classNr in range(self.classCount):
+                pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[classNr+1]), 'continious', 0.7)
+                self.predictionPixmaps[imageIndex][classNr][0] = pm 
+    
+    def updateSegmentationPixmaps(self, segmentations):
+        print "Active Image ", self.labelWidget.activeImage
+        for imageIndex, segmentation in segmentations.iteritems():
+            pm = self.rawImage2pixmap(segmentation, 1, 'discrete', 1)
+            self.segmentationPixmaps[imageIndex][0] = pm
+    
+    def updateUncertaintyPixmaps(self, uncertainties):
+        print "Active Image ", self.labelWidget.activeImage
+        for imageIndex, uncertainty in uncertainties.iteritems():
+            pm = self.rawImage2pixmap(uncertainty.reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[1]), 'continious', 0.7)
+            self.uncertaintyPixmaps[imageIndex][0] = pm 
+    
+    
+    def showPredictionsPixmaps(self, classIndex=-1):
+        self.clearAll()
+        imageIndex = self.labelWidget.activeImage
+        if imageIndex == 1:
+            pass
+        if classIndex == -1:
+            classes = range(self.classCount)
+        else:
+            classes = [classIndex-1]
+            
+        for classNr in classes:
+            if self.predictionPixmaps[imageIndex][classNr][1]:
+                self.predictionPixmaps[imageIndex][classNr][1].setPixmap(self.predictionPixmaps[imageIndex][classNr][0])
+            else:
+                if self.predictionPixmaps[imageIndex][classNr][0]:
+                    self.predictionPixmaps[imageIndex][classNr][1] = self.canvas.addPixmap(self.predictionPixmaps[imageIndex][classNr][0])
+                    self.predictionPixmaps[imageIndex][classNr][1].setZValue(-1) 
 
-       
+    def showSegmentationPixmaps(self, classIndex=-1):
+        self.clearAll()
+        imageIndex = self.labelWidget.activeImage
+        if classIndex == -1:
+            classes = range(self.classCount)
+        else:
+            classes = [classIndex-1]
+            
+        for classNr in classes:
+            if self.segmentationPixmaps[imageIndex][1]:
+                self.segmentationPixmaps[imageIndex][1].setPixmap(self.segmentationPixmaps[imageIndex][0])
+            else:
+                if self.segmentationPixmaps[imageIndex][0]:
+                    self.segmentationPixmaps[imageIndex][1] = self.canvas.addPixmap(self.segmentationPixmaps[imageIndex][0])
+                    self.segmentationPixmaps[imageIndex][1].setZValue(-1) 
+    
+    def showUncertaintyPixmaps(self):
+        self.clearAll()
+        imageIndex = self.labelWidget.activeImage
 
+        if self.uncertaintyPixmaps[imageIndex][1]:
+            self.uncertaintyPixmaps[imageIndex][1].setPixmap(self.uncertaintyPixmaps[imageIndex][0])
+        else:
+            if self.uncertaintyPixmaps[imageIndex][0]:
+                self.uncertaintyPixmaps[imageIndex][1] = self.canvas.addPixmap(self.uncertaintyPixmaps[imageIndex][0])
+                self.uncertaintyPixmaps[imageIndex][1].setZValue(-1) 
+    
+    def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7):
+        if type == 'continious':
+            image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
+            for i in range(256):
+                col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
+                image.setColor(i, col.rgba())
 
+        if type == 'discrete':
+            image = qwt.toQImage(rawImage.astype(numpy.uint8))
+            classColor = self.classColors
+            for i in range(rawImage.max()+1):
+                classColor = QtGui.QColor(self.classColors[i+1])
+                col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), 255 * opasity)
+                image.setColor(i, col.rgba())
+        
+        return QtGui.QPixmap.fromImage(image)
+    
+    def clearAll(self):
+        for imageIndex in self.predictionPixmaps.keys():
+            for classNr in range(self.classCount):
+                if self.predictionPixmaps[imageIndex][classNr][1]:
+                    self.canvas.removeItem(self.predictionPixmaps[imageIndex][classNr][1])
+                    self.predictionPixmaps[imageIndex][classNr][1] = False
+                                          
+        
+        for imageIndex in self.segmentationPixmaps.keys():
+           if self.segmentationPixmaps[imageIndex][1]:
+               self.canvas.removeItem(self.segmentationPixmaps[imageIndex][1])
+               self.segmentationPixmaps[imageIndex][1] = False
+        
+        for imageIndex in self.uncertaintyPixmaps.keys():
+           if self.uncertaintyPixmaps[imageIndex][1]:
+               self.canvas.removeItem(self.uncertaintyPixmaps[imageIndex][1])
+               self.uncertaintyPixmaps[imageIndex][1] = False
+    
+    
+    
+    
+    
+    
+        
+    
+    
+        
+        
 if __name__ == "__main__":
     print "Qt Version: ", QtCore.QT_VERSION_STR
     app = QtGui.QApplication(sys.argv)

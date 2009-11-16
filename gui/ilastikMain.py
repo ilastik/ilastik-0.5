@@ -158,30 +158,28 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
 
     def on_ViewProbabilities(self, state):
-        for classNr in range(len(self.project.labelNames)):
-            displayClassNr = classNr + 1
-            displayImage = self.labelWidget.activeImage
-            image = self.project.dataMgr.prediction[displayImage][:,displayClassNr-1]         
-            imshape = self.project.dataMgr[displayImage].data.shape
-            image = image.reshape( [imshape[0],imshape[1]] ).copy()
-            self.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
+        displayImage = self.labelWidget.activeImage
+        self.labelWidget.OverlayMgr.showPredictionsPixmaps()
                     
     def on_ViewSegmentation(self, state):
-        self.labelWidget.segmentationImage_add(self.project.dataMgr.segmentation)
+        displayImage = self.labelWidget.activeImage
+        self.labelWidget.OverlayMgr.showSegmentationPixmaps()
         
     
     def on_ViewImage(self, state):
-        self.labelWidget.predictionImage_clearAll()
+        self.labelWidget.OverlayMgr.clearAll()
         
-    def on_ViewUncertainty(self, state):
+    def on_ViewUncertainty(self, state): 
         activeLearner = activeLearning.EnsembleMargin()
-          
+  
         displayImage = self.labelWidget.activeImage
+        
         pmap = self.project.dataMgr.prediction[displayImage]    
         image = activeLearner.compute(pmap)
-        imshape = self.project.dataMgr[displayImage].data.shape
-        image = image.reshape( [imshape[0],imshape[1]] ).copy()
-        self.labelWidget.predictionImage_add(displayImage, 1, image)
+        
+        displayImage = self.labelWidget.activeImage
+        self.labelWidget.OverlayMgr.updateUncertaintyPixmaps({displayImage:image})
+        self.labelWidget.OverlayMgr.showUncertaintyPixmaps()
     
     def on_segmentation(self):
 
@@ -198,6 +196,9 @@ class MainWindow(QtGui.QMainWindow):
         for cnt, t in irange(segThreads):
             t.join()
             self.project.dataMgr.segmentation[cnt] = seg[cnt].result
+        
+        self.labelWidget.OverlayMgr.updateSegmentationPixmaps(dict(irange(self.project.dataMgr.segmentation)))
+        
         
     def on_changeBrushSize(self, rad):
         #if rad / 2 != 0:
@@ -757,26 +758,20 @@ class ClassificationInteractive(object):
     def updateLabelWidget(self):  
         predictIndex = self.parent.labelWidget.activeImage
         displayClassNr = self.parent.labelWidget.activeLabel  
-        #print self.parent.project.labelNames
-        #print "Locking now on image %s as %d with class %d" % (self.parent.project.dataMgr[predictIndex].fileName, predictIndex, displayClassNr)
-        try:
-            image = self.classificationInteractive.result[predictIndex].pop()
-        except IndexError:
-            #print "no new prediction there"
-            time.sleep(0.01)
-            return
-        
-        print "new prediction there"
-        if predictIndex == 1:
-            pass
-                
-       
-        image = image[:,displayClassNr-1]
-        imshape = self.parent.project.dataMgr[predictIndex].data.shape
-        image = image.reshape( [imshape[0],imshape[1]])
-        
-        print "new prediction displayed"
-        self.parent.labelWidget.predictionImage_add(predictIndex, displayClassNr, image)
+#        try:
+#            image = self.classificationInteractive.result[predictIndex].pop()
+#        except IndexError:
+#            time.sleep(0.01)
+#            return
+        viewPredictions = {}
+        for i, predict in irange(self.classificationInteractive.result):
+            try:
+                viewPredictions[i]=predict.pop()
+            except IndexError:
+                pass
+
+        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(viewPredictions)
+        self.parent.labelWidget.OverlayMgr.showPredictionsPixmaps(displayClassNr)
 
 
     def initInteractiveProgressBar(self):
@@ -865,21 +860,11 @@ class ClassificationPredict(object):
             
             self.terminateClassificationProgressBar()
             
-            for classNr in range(len(self.parent.project.labelNames)):
-                #displayClassNr = self.parent.labelWidget.activeLabel
-                displayClassNr = classNr +1
-                displayImage = self.parent.labelWidget.activeImage
-                predictionIndex = self.classificationPredict.predictionList_dataIndices.index(displayImage)
-                
-                
-                image = self.classificationPredict.predictionList[displayImage][:,displayClassNr-1]
-                # hack: 2d special case:
-                
-                imshape = self.parent.project.dataMgr[predictionIndex].data.shape
-                image = image.reshape( [imshape[0],imshape[1]] )
-                #self.parent.labelWidget.predictionImage_clearAll()
-                self.parent.labelWidget.predictionImage_add(displayImage, displayClassNr, image)
-               # self.parent.labelWidget.predictionImage_setOpacity(displayImage, displayClassNr, 0.7)
+
+            displayImage = self.parent.labelWidget.activeImage
+            predictions = dict(irange(self.classificationPredict.predictionList))
+            self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(predictions)
+            self.parent.labelWidget.OverlayMgr.showPredictionsPixmaps()
             
     def finalize(self):
         self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList
