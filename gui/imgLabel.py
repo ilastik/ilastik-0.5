@@ -1418,8 +1418,7 @@ class OverlayMgr(object):
                 if self.predictionPixmaps[imageIndex][classNr][1]:
                     self.canvas.removeItem(self.predictionPixmaps[imageIndex][classNr][1])
                     self.predictionPixmaps[imageIndex][classNr][1] = False
-                                          
-        
+                                                 
         for imageIndex in self.segmentationPixmaps.keys():
            if self.segmentationPixmaps[imageIndex][1]:
                self.canvas.removeItem(self.segmentationPixmaps[imageIndex][1])
