@@ -83,12 +83,12 @@ class label_Patch(label_Base):
         #self.lastPatchNr = self.getPatchNrFromPosition(pos)
         #self.labelArray[ self.lastPatchNr ] = label
         #label_Base.setLabel(self, pos, label)
-        rad = self.rad # todo: hack.... add settings-class
+        rad = self.rad # TODO: hack.... add settings-class
         t = rad**2
         for x in xrange(pos[0]-rad, pos[0]+rad):
             for y in xrange(pos[1]-rad, pos[1]+rad): 
                 if (x-pos[0])**2 + (y-pos[1])**2 < t:
-                    if x > -1 and y > -1 and y < self.size[0] and y < self.size[1]:
+                    if x > -1 and y > -1 and x < self.size[0] and y < self.size[1]:
                         self.lastPatchNr = self.getPatchNrFromPosition([x,y])
                         self.labelArray[ self.lastPatchNr ] = label
                         label_Base.setLabel(self, [x,y], label)
@@ -111,7 +111,7 @@ class label_Patch(label_Base):
         deltay = abs(y1 - y0)
         error = -deltax / 2
         y = y0
-        for x in range(x0, x1 + 1): # We add 1 to x1 so that the range includes x1
+        for x in range(int(x0), int(x1 + 1)): # TODO We add 1 to x1 so that the range includes x1
             if steep:
                 self.setLabel((y, x), label)
             else:

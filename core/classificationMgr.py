@@ -2,10 +2,13 @@ import numpy
 import threading 
 import multiprocessing
 import time
+import sys
+import os
 from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
 from collections import deque
 from PyQt4 import QtCore
+sys.path.append('..')
 from core.utilities import irange
 
 import numpy
@@ -26,10 +29,17 @@ class ClassificationMgr(object):
     def __init__(self):
         pass
     
+    
 
 class ClassifierBase(object):
     def __init__(self):
-        self.usedForPrediction = set()
+        pass
+        
+    def train(self):
+        pass
+    
+    def predict(self):
+        pass
     
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None, treeCount=10):
@@ -39,6 +49,7 @@ class ClassifierRandomForest(ClassifierBase):
 #        if features and labels:
     #            self.train(features, labels)
         self.train(features, labels)
+        self.usedForPrediction = set()
     
     def train(self, features, labels):
         
@@ -60,7 +71,7 @@ class ClassifierRandomForest(ClassifierBase):
           
 
 class ClassifierSVM(ClassifierBase):
-    def __init__(self):
+    def __init__(self, features=None, labels=None):
         ClassifierBase.__init__(self)
         pass
     
@@ -70,20 +81,109 @@ class ClassifierSVM(ClassifierBase):
     def predict(self):
         pass
     
+    
+class ClassifierVW(ClassifierBase):
+    def __init__(self, features=None, labels=None, tmpFolder='.', regressorFile='vopalVabbitRegressor', trainFile='tmp_svm_light_file', testFile='tmp_svm_light_file_test', predictFile='tmp_svm_light_output'):
+        ClassifierBase.__init__(self)
+        self.tmpFolder = tmpFolder
+        myjoin = lambda p,f: "%s/%s" % (p,f)
+        self.regressorFile = myjoin(tmpFolder, regressorFile)
+        self.trainFile = myjoin(tmpFolder, trainFile)
+        self.predictFile = myjoin(tmpFolder, predictFile)
+        self.testFile = myjoin(tmpFolder, testFile)
+        
+        if 'win' in sys.platform:
+            self.trainCommand = 'c:/cygwin/bin/bash -c "./vw %s"'
+            self.predictCommand = 'c:/cygwin/bin/bash -c "./vw %s"'
+            
+        elif 'linux' in sys.platform:
+            self.trainCommand = './vw %s'
+            self.predictCommand = './vw %s'
+        else:
+            print "ClassifierVW: Unkown platform"
+        
+        self.train(features, labels)
+        
+        
+    def train(self, train_data, train_labels):
+        #export the data
+        ClassificationImpex.exportToSVMLight(train_data, train_labels, self.trainFile, True)
+        
+        options = " -d %s -f %s" % (self.trainFile, self.regressorFile)
+        print self.trainCommand % options
+        os.system(self.trainCommand % options)
+
+        
+
+        
+    
+    def predict(self, test_data):
+        ClassificationImpex.exportToSVMLightNoLabels(test_data, self.testFile, True)
+        options = " -t -d %s -i %s  -p %s" % (self.testFile, self.regressorFile, self.predictFile)
+        print options
+        os.system(self.predictCommand % options)
+        res = ClassificationImpex.readSVMLightClassification(self.predictFile)
+        res.shape = res.shape[0],-1
+        res = numpy.concatenate((res,1-res),axis=1)
+        return res
+    
+    
+class ClassificationImpex(object):
+    def __init__(self):
+        print "Dont do it"
+            
+    @staticmethod
+    def exportToSVMLight(data, labels, filename, with_namespace):
+        if data.shape[0]!=labels.shape[0]:
+            raise "labels must have same size as data has columns"
+        
+        if labels.ndim == 2:
+            labels.shape = labels.shape[0]
+            
+        permInd = numpy.random.permutation(data.shape[0])
+        f=open(filename,'wb')
+        #go through examples
+        for i in xrange(data.shape[0]):
+            f.write(str(int(labels[permInd[i]]-1))+" ")
+            if with_namespace==True:
+                f.write("|features ")
+            for j in xrange(data.shape[1]):
+                #if data[i,j]==0:
+                #    continue
+                f.write(repr(j+1)+":"+repr(data[permInd[i],j])+" ")
+            f.write("\n")
+        f.close()
+    
+    @staticmethod
+    def exportToSVMLightNoLabels(data, filename, with_namespace):
+        labels = numpy.zeros((data.shape[0]),dtype=numpy.int)
+        ClassificationImpex.exportToSVMLight(data, labels, filename, with_namespace)
+        
+    @staticmethod
+    def readSVMLightClassification(filename, labels=(1,0)):
+        f=open(filename,'r')
+        res=[]
+        for line in f:
+            val=float(line)
+            res.append(val)
+        return numpy.array(res, dtype=numpy.int)
+     
+    
 class ClassifierTrainThread(threading.Thread):
     def __init__(self, queueSize, featLabelTupel):
         threading.Thread.__init__(self)
-        self.queueSize = queueSize
+        self.queueSize = 1
         self.featLabelTupel = featLabelTupel
         self.count = 0
         self.classifierList = deque(maxlen=self.queueSize)
         self.stopped = False
+        self.classifier = ClassifierVW
     
     def run(self):
         while not self.featLabelTupel.empty():
             (features, labels) = self.featLabelTupel.get()
             while self.count != self.queueSize:
-                self.classifierList.append( ClassifierRandomForest(features, labels) )
+                self.classifierList.append( self.classifier(features, labels) )
                 self.count += 1
                 
 class ClassifierPredictThread(threading.Thread):

@@ -217,6 +217,7 @@ class draw_Ellipse(draw_geomObject):
 
 class draw_Patch(drawManager):
     def __init__(self, labelmngr, canvas):
+        print "Init Draw Mgr"
         drawManager.__init__(self, labelmngr, canvas)
         self.classId = drawManagerID.IDdraw_Patch
         
@@ -927,9 +928,9 @@ class labelWidget(QtGui.QWidget):
         self.loadLabelList()
         self.updateDrawSettings()
         #self.pixmapitem = None
-        project.dataMgr.labels = self.labelForImage
-        print project.dataMgr.labels
-        self.labelForImage = project.dataMgr.labels
+        #project.dataMgr.labels = self.labelForImage
+
+        #self.labelForImage = project.dataMgr.labels
         self.OverlayMgr = OverlayMgr(self.canvas, project.labelColors, project.dataMgr.dataItemsShapes(), self)
         self.connect(self, QtCore.SIGNAL("imageChanged"), self.OverlayMgr.clearAll)
     def setBrushSize(self, rad):
@@ -958,7 +959,14 @@ class labelWidget(QtGui.QWidget):
         self.emit(QtCore.SIGNAL('newLabelsPending'))
     
     def changeImage(self, nr):
-        if not self.project: return
+        if nr < 0:
+            print "Caution: Call to change Image to nr ", nr
+            return
+            
+            
+        if not self.project: 
+            print "Caution: Call to change Image to nr, but no project", nr
+            return
         #self.imageList.freeImageData(self.activeImage)
         #self.imageList.removeUser(self.activeImage, self)
         #for labelClass in self.image.label.LabelObjects:
@@ -1015,7 +1023,8 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
     def changeClass(self, nr):
-        print "change Class called with", nr
+        if nr < 0:
+            return
         nr+=1  # 0 is unlabeled !!
         self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):

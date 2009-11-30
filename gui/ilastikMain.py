@@ -73,6 +73,9 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
+        
+        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.debug)
+        
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
         
@@ -81,6 +84,9 @@ class MainWindow(QtGui.QMainWindow):
         #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
         
         self.ribbon.setCurrentIndex (0)
+    
+    def debug(self):
+        print "Number of Sceneitems", len(self.labelWidget.canvas.items())
     
     def initProbmapButton(self):
         pass
@@ -546,7 +552,8 @@ class ProjectDlg(QtGui.QDialog):
                     contained = true
             if not contained:
                 theDataItem.projects.append(self.parent.project)
-            
+        
+        dataItemList.sort(lambda x,y: cmp(x.fileName, y.fileName))    
         self.parent.project.dataMgr.setDataList(dataItemList) 
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
