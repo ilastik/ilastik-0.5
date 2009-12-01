@@ -718,7 +718,7 @@ class labelWidget(QtGui.QWidget):
         self.connect(self.btnUndo,QtCore.SIGNAL("clicked()"), self.undo)
         
         self.cmbChannelList = QtGui.QComboBox()
-        self.cmbChannelList.setMinimumWidth(250)
+        self.cmbChannelList.setMinimumWidth(142)
         self.cmbChannelList.hide()
         
         self.cmbClassList = QtGui.QComboBox()
@@ -728,15 +728,23 @@ class labelWidget(QtGui.QWidget):
         self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(self.iconPath + 'actions/media-seek-forward.png'), "Clone")
         self.connect(self.btnCloneView, QtCore.SIGNAL("clicked()"), self.makeCloneView)
         
-        layout_lists = QtGui.QHBoxLayout()
+        self.labelingToolBox = QtGui.QWidget()
+        
+        layout_lists = QtGui.QVBoxLayout()
         layout_lists.addWidget(self.cmbImageList)
         layout_lists.addWidget(self.cmbChannelList)
         layout_lists.addWidget(self.cmbClassList)
         
+        self.labelingToolBox.setLayout(layout_lists)
         
-        layout = QtGui.QVBoxLayout()
+        self.toolBox = QtGui.QToolBox()
+        self.toolBox.setMaximumWidth(160)
+        self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(self.iconPath + 'actions/media-seek-forward.png'), 'Labeling')
+        self.toolBox.addItem(QtGui.QPushButton("Bla"), 'View')
+        
+        layout = QtGui.QHBoxLayout()
         layout.addWidget(self.view)
-        layout.addLayout(layout_lists)
+        layout.addWidget(self.toolBox)
 
         self.setLayout(layout)
         
