@@ -217,13 +217,18 @@ class draw_Ellipse(draw_geomObject):
 
 class draw_Patch(drawManager):
     def __init__(self, labelmngr, canvas):
-        print "Init Draw Mgr"
         drawManager.__init__(self, labelmngr, canvas)
         self.classId = drawManagerID.IDdraw_Patch
         
+        # Get Size of the labelOverlay, = size of rawimage
         self.size = labelmngr.getSize()
+        
+        # Init Fully transparent Label OVerlay with correct size
+        # Store it in self.image
         self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_ARGB32 )
         self.image.fill(0)
+        
+        # self.imageItem is jused to display self.image, remember it the labelOverlay
         self.imageItem = ImageItem( self.image)
         self.imageItem.setOpacity(self.drawOpacity)
         canvas.addItem(self.imageItem)
@@ -236,7 +241,7 @@ class draw_Patch(drawManager):
         
     def setDrawLabel(self, label):
         drawManager.setDrawLabel(self, label)
-        #todo: manage qimage-Dict for label.
+        #TODO: manage qimage-Dict for label.
         
     @staticmethod
     def __undoOperation(self):
@@ -974,18 +979,14 @@ class labelWidget(QtGui.QWidget):
         self.emit(QtCore.SIGNAL('newLabelsPending'))
     
     def changeImage(self, nr):
+        # Check Call from ComboBox reset with nr == -1
         if nr < 0:
-            print "Caution: Call to change Image to nr ", nr
             return
      
+        # Check Call withour Project
         if not self.project: 
-            print "Caution: Call to change Image to nr, but no project", nr
+            print "changeImage: no project for Image # ", nr
             return
-        #self.imageList.freeImageData(self.activeImage)
-        #self.imageList.removeUser(self.activeImage, self)
-        #for labelClass in self.image.label.LabelObjects:
-        #    for tli in labelClass:
-        #        self.canvas.removeItem(tli)
         
         # Delete old Display Labels
         if self.labelForImage.get(self.activeImage, None):
@@ -993,31 +994,24 @@ class labelWidget(QtGui.QWidget):
         
         # Set new active Image    
         self.activeImage = nr
-        #self.image = self.imageList.list[self.activeImage]
-        #self.imageData = self.imageList.getImageData(self.activeImage)
-        #self.imageList.addUser(self.activeImage, self)
         
-        # Delete old Display Image
+        # Delete old Image Display pixmapitem == rawImage
         if self.pixmapitem:
             self.canvas.removeItem(self.pixmapitem)
-
-        #try:
-        #    self.img = QtGui.QImage(100,100,QtGui.QImage.Format_ARGB32)
-        #    self.img.load(self.project.dataMgr.dataItems[nr].fileName)
-        #except Exception, inst:
-        #    print "displayImage.__loadImage: Fehler beim Laden: ", inst
         
-        # todo: use data-manager instance of vigra-image
+        # TODO: use data-manager instance of vigra-image
         
-        # Set new Image
+        # Set new Image Display and save it in self.pixmapitem
         self.img = qimage2ndarray.numpy2qimage(self.project.dataMgr[nr].data)
         pm = QtGui.QPixmap.fromImage(self.img)
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.pixmapitem.setZValue(-2)
         
-        # Set new Label
+        # If it is already initialized, just paint it
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].canvas_paint()
+        
+        # Init Label -> Shoult be called once per image when changing to it
         else:
             self.labelForImage[nr] = labelingForOneImage()
             self.labelForImage[nr].setActiveLabel(0)
@@ -1025,16 +1019,7 @@ class labelWidget(QtGui.QWidget):
             drawManager = draw_Pixel(labelManager, self.canvas)
             self.labelForImage[self.activeImage].addDrawManager( drawManager ) 
         
-        #self.canvas.setLabelObject(self.image.label)
-        #self.updateClassList()
-        
-        #for labelClass in self.image.label.LabelObjects:
-        #    for tli in labelClass:
-        #        #tli.setZValue(1000)
-        #        self.canvas.addItem(tli)
-        #self.changeClass(self.cmbClassList.currentIndex() )
-        #self.canvas.update()
-        print QtGui.QColor(self.labelForImage[nr].getActiveDrawManager().pixelColor)
+        # Emit imageChanged Signal
         self.emit( QtCore.SIGNAL("imageChanged"), nr)
                     
     def updateClassList(self):

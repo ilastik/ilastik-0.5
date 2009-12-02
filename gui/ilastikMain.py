@@ -678,7 +678,6 @@ class FeatureComputation(object):
             print "Finished"
             self.terminateFeatureProgressBar()
             self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
-            self
             
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)

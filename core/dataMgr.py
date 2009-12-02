@@ -104,7 +104,6 @@ class DataMgr():
     def dataItemsShapes(self):     
         return map(DataItemBase.shape, self)
         
-    
     def __getitem__(self, ind):
         if not self.dataItemsLoaded[ind]:
             self.dataItems[ind].loadData()
