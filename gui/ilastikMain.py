@@ -19,6 +19,7 @@ from collections import deque
 import time
 from core.utilities import irange
 
+
 try:
     from vigra import vigranumpycmodule as vm
 except ImportError:
@@ -87,6 +88,9 @@ class MainWindow(QtGui.QMainWindow):
     
     def debug(self):
         print "Number of Sceneitems", len(self.labelWidget.canvas.items())
+        from IPython.Shell import IPShellEmbed
+        ipshell = IPShellEmbed()
+        ipshell()
     
     def initProbmapButton(self):
         pass
@@ -637,7 +641,7 @@ class FeatureDlg(QtGui.QDialog):
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         self.close()
-        self.parent.projectModified()
+        #self.parent.projectModified()
         
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
