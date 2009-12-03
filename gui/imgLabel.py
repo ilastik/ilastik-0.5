@@ -709,6 +709,7 @@ class labelWidget(QtGui.QWidget):
         self.cloneviews = []
         self.overlayPixmapItems = []
         self.contextMenuLabel = None
+        self.brushSize = 1
         
         self.imageList = imageList
         self.activeImage = 0
@@ -716,6 +717,7 @@ class labelWidget(QtGui.QWidget):
         self.image = imageList.list[self.activeImage]
         self.imageData = None
         self.pixmapitem = None
+        
         
         
         self.initCanvas()
@@ -956,6 +958,7 @@ class labelWidget(QtGui.QWidget):
         self.connect(self, QtCore.SIGNAL("imageChanged"), self.OverlayMgr.clearAll)
         
     def setBrushSize(self, rad):
+        self.brushSize = rad
         self.labelForImage[self.activeImage].setBrushSize(rad)
         
     def updateDrawSettings(self):
@@ -1014,6 +1017,7 @@ class labelWidget(QtGui.QWidget):
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].canvas_paint()
             self.labelForImage[nr].setActiveLabel(self.activeLabel)
+            self.setBrushSize(self.brushSize)
         
         # Init Label -> Should be called once per image when changing to it
         else:
@@ -1028,6 +1032,7 @@ class labelWidget(QtGui.QWidget):
             self.labelForImage[self.activeImage].addDrawManager( drawManager ) 
             # Change To Active Label
             self.labelForImage[nr].setActiveLabel(self.activeLabel)
+            self.setBrushSize(self.brushSize)
         
         # Emit imageChanged Signal
         self.emit( QtCore.SIGNAL("imageChanged"), nr)
@@ -1430,7 +1435,7 @@ class OverlayMgr(object):
 
         if type == 'discrete':
             #image = qwt.toQImage(rawImage.astype(numpy.uint8))
-            image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
+            image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
             classColor = self.classColors
             for i in range(rawImage.max()+1):
                 classColor = QtGui.QColor(self.classColors[i+1])
