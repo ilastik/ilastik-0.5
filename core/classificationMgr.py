@@ -177,7 +177,7 @@ class ClassifierTrainThread(threading.Thread):
         self.count = 0
         self.classifierList = deque(maxlen=self.queueSize)
         self.stopped = False
-        self.classifier = ClassifierVW
+        self.classifier = ClassifierRandomForest
     
     def run(self):
         while not self.featLabelTupel.empty():

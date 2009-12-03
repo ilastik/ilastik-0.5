@@ -49,8 +49,10 @@ class DataItemImage(DataItemBase):
         self.dataDimensions = 2
        
     def loadData(self):
-        self.data = vm.readImage(self.fileName)
+        self.data = numpy.array(vm.readImage(self.fileName))
         self.data = self.data.swapaxes(0,1)
+
+        #print "Shape after Loading and width",self.data.shape, self.data.width
         self.dataType = self.data.dtype
         self.shape = self.data.shape
         if len(self.data.shape) == 3:

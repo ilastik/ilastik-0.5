@@ -1,9 +1,9 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 import sys, random, numpy
+import qimage2ndarray
 sys.path.append("..")
 from core import labelMgr
-from gui import qimage2ndarray
 import os
 from core.utilities import irange
 try:
@@ -107,7 +107,7 @@ class drawManager:
         self.drawLabel = 0
         self.drawSize = 1
         self.drawColor = {}
-        self.activeDrawColor = QtGui.QColor(255,0,0)
+        self.activeDrawColor = QtGui.QColor(255,128,66)
         self.drawOpacity = 1;
 
         
@@ -115,10 +115,12 @@ class drawManager:
     def setDrawLabel(self, label):
         self.drawLabel = label
         col = self.drawColor.get(label,None)
+        print "Draw Color", col
         if col:
             self.activeDrawColor = col
     def setDrawSize(self, size):
         self.drawSize = size
+    
     def setDrawColor(self, label, color):
         self.drawColor[label] = color
     def setDrawOpacity(self, opacity):
@@ -787,7 +789,7 @@ class labelWidget(QtGui.QWidget):
         
     def addOverlayPixmap(self, pm):
         if isinstance(pm, numpy.ndarray):
-            img = qimage2ndarray.numpy2qimage(pm)
+            img = qimage2ndarray.array2qimage(pm)
             #img = qwt.toQImage((pm).astype(numpy.uint8))
             pm = QtGui.QPixmap.fromImage(img)
         pi = self.canvas.addPixmap(pm)
@@ -1002,7 +1004,8 @@ class labelWidget(QtGui.QWidget):
         # TODO: use data-manager instance of vigra-image
         
         # Set new Image Display and save it in self.pixmapitem
-        self.img = qimage2ndarray.numpy2qimage(self.project.dataMgr[nr].data)
+        self.img = qimage2ndarray.array2qimage(self.project.dataMgr[nr].data)
+        #print "QImage Shape and width", self.img.size(), self.img.width()
         pm = QtGui.QPixmap.fromImage(self.img)
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.pixmapitem.setZValue(-2)
@@ -1010,14 +1013,21 @@ class labelWidget(QtGui.QWidget):
         # If it is already initialized, just paint it
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].canvas_paint()
+            self.labelForImage[nr].setActiveLabel(self.activeLabel)
         
-        # Init Label -> Shoult be called once per image when changing to it
+        # Init Label -> Should be called once per image when changing to it
         else:
             self.labelForImage[nr] = labelingForOneImage()
-            self.labelForImage[nr].setActiveLabel(0)
+            print "Active Label" , self.activeLabel
             labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
             drawManager = draw_Pixel(labelManager, self.canvas)
+            # Init colors
+            for label, col in self.project.labelColors.items():
+                drawManager.setDrawColor(label, QtGui.QColor.fromRgb(col) )
+            
             self.labelForImage[self.activeImage].addDrawManager( drawManager ) 
+            # Change To Active Label
+            self.labelForImage[nr].setActiveLabel(self.activeLabel)
         
         # Emit imageChanged Signal
         self.emit( QtCore.SIGNAL("imageChanged"), nr)
@@ -1029,16 +1039,17 @@ class labelWidget(QtGui.QWidget):
     def changeClass(self, nr):
         if nr < 0:
             return
+        print "changeClass"
         nr+=1  # 0 is unlabeled !!
         self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
-        if not self.predictions == {}:
-            print "ding"
+        #if not self.predictions == {}:
+         #   print "ding"
         #self.predictionImage_remove(self.activeImage, self.activeLabel)
         #self.predictionImage_clearImage(self.activeImage)
-        self.predictionImage_clearAll()
-        self.predictionImage_show(self.activeImage, self.activeLabel)
+        #self.predictionImage_clearAll()
+        #self.predictionImage_show(self.activeImage, self.activeLabel)
         self.emit( QtCore.SIGNAL("labelChanged"), nr)
 
                 
@@ -1410,13 +1421,16 @@ class OverlayMgr(object):
     
     def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7):
         if type == 'continious':
-            image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
+            #vm.writeImage((rawImage*255).astype(numpy.uint8),'bla.png')
+            #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
+            image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())
 
         if type == 'discrete':
-            image = qwt.toQImage(rawImage.astype(numpy.uint8))
+            #image = qwt.toQImage(rawImage.astype(numpy.uint8))
+            image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
             classColor = self.classColors
             for i in range(rawImage.max()+1):
                 classColor = QtGui.QColor(self.classColors[i+1])
