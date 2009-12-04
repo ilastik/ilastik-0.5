@@ -146,11 +146,11 @@ def createRibbons():
     
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", "actions/my-segment.png" ,"Segmentation"))
     
-    RibbonGroupObjects["View"].append(RibbonEntry("Image", "categories/preferences-system.png" ,"View Probability map"))
-    RibbonGroupObjects["View"].append(RibbonEntry("Probabilities", "categories/preferences-system.png" ,"View Probability map"))
-    RibbonGroupObjects["View"].append(RibbonEntry("Uncertainty", "categories/preferences-system.png" ,"View Probability map"))
-    RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation"))
-    
+#    RibbonGroupObjects["View"].append(RibbonEntry("Image", "categories/preferences-system.png" ,"View Probability map"))
+#    RibbonGroupObjects["View"].append(RibbonEntry("Probabilities", "categories/preferences-system.png" ,"View Probability map"))
+#    RibbonGroupObjects["View"].append(RibbonEntry("Uncertainty", "categories/preferences-system.png" ,"View Probability map"))
+#    RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation"))
+#    
     RibbonGroupObjects["Label"].append(RibbonEntry("Brushsize", "categories/preferences-system.png" ,"Change Brush size",type=RibbonSlider))
     
     RibbonGroupObjects["Export"].append(RibbonEntry("Export", "categories/preferences-system.png" ,"Export"))

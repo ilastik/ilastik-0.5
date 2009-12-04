@@ -68,10 +68,6 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-        #self.connect(self.ribbon.tabDict['View'].itemDict['Image'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewImage)
-        #self.connect(self.ribbon.tabDict['View'].itemDict['Probabilities'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
-        #self.connect(self.ribbon.tabDict['View'].itemDict['Uncertainty'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewUncertainty)
-        #self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
         
