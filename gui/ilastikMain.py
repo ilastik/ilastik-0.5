@@ -68,10 +68,10 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-        self.connect(self.ribbon.tabDict['View'].itemDict['Image'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewImage)
-        self.connect(self.ribbon.tabDict['View'].itemDict['Probabilities'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
-        self.connect(self.ribbon.tabDict['View'].itemDict['Uncertainty'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewUncertainty)
-        self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
+        #self.connect(self.ribbon.tabDict['View'].itemDict['Image'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewImage)
+        #self.connect(self.ribbon.tabDict['View'].itemDict['Probabilities'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewProbabilities)
+        #self.connect(self.ribbon.tabDict['View'].itemDict['Uncertainty'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewUncertainty)
+        #self.connect(self.ribbon.tabDict['View'].itemDict['Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_ViewSegmentation)
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
         
@@ -91,21 +91,6 @@ class MainWindow(QtGui.QMainWindow):
         from IPython.Shell import IPShellEmbed
         ipshell = IPShellEmbed()
         ipshell()
-    
-    def initProbmapButton(self):
-        pass
-#        probMapButton = self.ribbon.tabDict['View'].itemDict['ProbabilityMaps']
-#        menu = QtGui.QMenu("MenuName",self)
-#        cnt = 1
-#        for labelName in self.project.labelNames:
-#            pixmap = QtGui.QPixmap(16,16)
-#            color = QtGui.QColor(self.project.labelColors[cnt])
-#            pixmap.fill(color)
-#            icon = QtGui.QIcon(pixmap )
-#            menu.addAction(QtGui.QAction(icon, labelName, menu))
-#            cnt += 1
-#        menu.addAction(QtGui.QAction(QtGui.QIcon('../../icons/32x32/categories/preferences-system.png'), "Clear", menu))
-#        probMapButton.setMenu(menu)
         
     def newProjectDlg(self):      
         self.projectDlg = ProjectDlg(self)
@@ -135,7 +120,6 @@ class MainWindow(QtGui.QMainWindow):
         
     def projectModified(self):
         self.labelWidget.updateProject(self.project)
-        self.initProbmapButton()
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
@@ -146,7 +130,7 @@ class MainWindow(QtGui.QMainWindow):
     def createImageWindows(self):
         label_w = imgLabel.labelWidget(self, ['rgb1.jpg', 'rgb2.tif'])
         
-        dock = QtGui.QDockWidget("ImageDock_main", self)
+        dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(label_w)
         self.labelWidget = label_w  # todo: user defined list of labelwidgets
@@ -160,36 +144,6 @@ class MainWindow(QtGui.QMainWindow):
         
     def featureCompute(self):
         self.featureComputation = FeatureComputation(self)
-#        featureListRib = ctrlRibbon.RibbonListItem(ctrlRibbon.RibbonEntry("featureList","", "fatureList", ctrlRibbon.RibbonListItem))
-#        for f in self.project.featureMgr.featureItems:
-#            featureListRib.addItem(str(f))       
-#        self.ribbon.tabDict['Features'].addItem(featureListRib)
-#        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked(QListWidgetItem)'), self.featureShow)
-#        self.connect(self.ribbon.tabDict['Features'].itemDict['featureList'], QtCore.SIGNAL('itemDoubleClicked()'), self.featureShow)
-
-    def on_ViewProbabilities(self, state):
-        displayImage = self.labelWidget.activeImage
-        self.labelWidget.OverlayMgr.setOverlayState('Prediction')
-                    
-    def on_ViewSegmentation(self, state):
-        displayImage = self.labelWidget.activeImage
-        self.labelWidget.OverlayMgr.setOverlayState('Segmentation')
-        
-    
-    def on_ViewImage(self, state):
-        self.labelWidget.OverlayMgr.clearAll()
-        
-    def on_ViewUncertainty(self, state): 
-        activeLearner = activeLearning.EnsembleMargin()
-  
-        displayImage = self.labelWidget.activeImage
-        
-        pmap = self.project.dataMgr.prediction[displayImage]    
-        image = activeLearner.compute(pmap)
-        
-        displayImage = self.labelWidget.activeImage
-        self.labelWidget.OverlayMgr.updateUncertaintyPixmaps({displayImage:image})
-        self.labelWidget.OverlayMgr.setOverlayState('Uncertainty')
     
     def on_segmentation(self):
 

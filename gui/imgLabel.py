@@ -1,10 +1,11 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+import PyQt4.Qwt5 as qwt
 import sys, random, numpy
+import os
 import qimage2ndarray
 sys.path.append("..")
-from core import labelMgr
-import os
+from core import labelMgr, activeLearning
 from core.utilities import irange
 try:
     from vigra import vigranumpycmodule as vm
@@ -13,8 +14,6 @@ except ImportError:
         import vigranumpycmodule as vm
     except ImportError:
         sys.exit("vigranumpycmodule not found!")
-import PyQt4.Qwt5 as qwt
-
 
 
 #************************
@@ -723,55 +722,33 @@ class labelWidget(QtGui.QWidget):
         self.initCanvas()
         self.canvas.setClass(0)
         self.makeView()
+        self.makeToolBox()
         
+    def makeToolBox(self):
+        # ComboBox for Image Change
         self.cmbImageList = QtGui.QComboBox()
         self.cmbImageList.setMinimumWidth(142)
         self.connect(self.cmbImageList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
         
+        # Undo Button for Image Change
         self.btnUndo = QtGui.QPushButton(QtGui.QIcon(self.iconPath + "actions/edit-undo.png") , "Undo")
         self.connect(self.btnUndo,QtCore.SIGNAL("clicked()"), self.undo)
         
+        # Channel Selector Combo Box
         self.cmbChannelList = QtGui.QComboBox()
         self.cmbChannelList.setMinimumWidth(142)
         self.cmbChannelList.hide()
         
+        # Class Selector Combo Box
         self.cmbClassList = QtGui.QComboBox()
         self.cmbClassList.setMinimumWidth(142)
         self.connect(self.cmbClassList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeClass)
         
+        # Clone View Button
         self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(self.iconPath + 'actions/media-seek-forward.png'), "Clone")
         self.connect(self.btnCloneView, QtCore.SIGNAL("clicked()"), self.makeCloneView)
         
-        self.labelingToolBox = QtGui.QWidget()
-        
-        layout_lists = QtGui.QVBoxLayout()
-        layout_lists.addWidget(self.cmbImageList)
-        layout_lists.addWidget(self.cmbChannelList)
-        layout_lists.addWidget(self.cmbClassList)
-        
-        self.labelingToolBox.setLayout(layout_lists)
-        
-        self.toolBox = QtGui.QToolBox()
-        self.toolBox.setMaximumWidth(160)
-        self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(self.iconPath + 'actions/media-seek-forward.png'), 'Labeling')
-        self.toolBox.addItem(QtGui.QPushButton("Bla"), 'View')
-        
-        layout = QtGui.QHBoxLayout()
-        layout.addWidget(self.view)
-        layout.addWidget(self.toolBox)
-
-        self.setLayout(layout)
-        
-
-        for img in self.imageList.list:
-            img.label.addClass()
-            img.label.addClass()
-            img.label.addClass()
-            img.label.addClass("Klasse ", QtGui.QColor(0,255,0), 10)
-
-        self.pixmapitem = None
-        self.changeImage(0)
-        
+        # Slider for Label Opasity
         self.sldOpacity = QtGui.QSlider()
         self.sldOpacity.setMinimum(0)
         self.sldOpacity.setMaximum(100)
@@ -780,129 +757,93 @@ class labelWidget(QtGui.QWidget):
         self.sldOpacity.setMaximumWidth(100)
         self.changeOpacity(100)      
         self.connect(self.sldOpacity, QtCore.SIGNAL("valueChanged(int)"), self.changeOpacity)
-        layout_lists.addWidget(self.sldOpacity)
-        layout_lists.addWidget(self.btnUndo)
-        layout_lists.addWidget(self.btnCloneView)
-        layout_lists.addStretch()
+        
+        # Container Widget for Labeling
+        self.labelingToolBox = QtGui.QWidget()
+        
+        
+        labelingToolBox_lists = QtGui.QVBoxLayout()
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Data Items'))
+        labelingToolBox_lists.addWidget(self.cmbImageList)
+        labelingToolBox_lists.addWidget(self.cmbChannelList)
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Classes'))
+        labelingToolBox_lists.addWidget(self.cmbClassList)
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Label Opasity'))
+        labelingToolBox_lists.addWidget(self.sldOpacity)
+        labelingToolBox_lists.addWidget(self.btnUndo)
+        labelingToolBox_lists.addWidget(self.btnCloneView)
+        labelingToolBox_lists.addStretch()
+        self.labelingToolBox.setLayout(labelingToolBox_lists)
+        
+        # Container Widget for Viewing
+        self.btnViewImage = QtGui.QPushButton('Image')
+        self.btnViewPrediction = QtGui.QPushButton('Prediction')
+        self.btnViewUncertainty = QtGui.QPushButton('Uncertainty')
+        self.btnViewSegmentation = QtGui.QPushButton('Segmentation')
+        
+        # Connects
+        self.connect(self.btnViewImage, QtCore.SIGNAL("clicked()"), self.on_viewImage)
+        self.connect(self.btnViewPrediction, QtCore.SIGNAL("clicked()"), self.on_viewPrediction)
+        self.connect(self.btnViewUncertainty, QtCore.SIGNAL("clicked()"), self.on_viewUncertainty)
+        self.connect(self.btnViewSegmentation, QtCore.SIGNAL("clicked()"), self.on_viewSegmentation)
+        
+        # ToolBox Entry
+        self.viewingToolBox = QtGui.QWidget()
+        
+        # Adding Buttons to Layout
+        viewingToolBox_lists = QtGui.QVBoxLayout()
+        viewingToolBox_lists.addWidget(self.btnViewImage)
+        viewingToolBox_lists.addWidget(self.btnViewPrediction)
+        viewingToolBox_lists.addWidget(self.btnViewUncertainty)
+        viewingToolBox_lists.addWidget(self.btnViewSegmentation)
+        
+        viewingToolBox_lists.addWidget(self.btnViewSegmentation)
+        viewingToolBox_lists.addStretch()
+
+        self.viewingToolBox.setLayout(viewingToolBox_lists)
+         
+        # Creating of the QToolBox
+        self.toolBox = QtGui.QToolBox()
+        self.toolBox.setMaximumWidth(160)
+        # Adding both Entries
+        self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(self.iconPath + 'actions/edit-clear.png'), 'Labeling')
+        self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(self.iconPath + 'emotes/face-glasses.png'),'View')
+        
+        # At the right side of view
+        layout = QtGui.QHBoxLayout()
+        layout.addWidget(self.view)
+        layout.addWidget(self.toolBox)
+
+        self.setLayout(layout)
+
+        self.pixmapitem = None
+        self.changeImage(0)       
+        
         try:
             self.updateProject( self.parent().project)
         except AttributeError:
             pass
         
-    def addOverlayPixmap(self, pm):
-        if isinstance(pm, numpy.ndarray):
-            img = qimage2ndarray.array2qimage(pm)
-            #img = qwt.toQImage((pm).astype(numpy.uint8))
-            pm = QtGui.QPixmap.fromImage(img)
-        pi = self.canvas.addPixmap(pm)
-        self.overlayPixmapItems.append( pi )
-        return pi
-    
-    def drawOverlayPixmaps(self):
-        for pi in self.overlayPixmapItems:
-            self.canvas.addItem(pi)
-            
-    def removeOverlayPixmap(self, pixmapItem):
-        self.overlayPixmapItems.remove(pixmapItem)
-        self.canvas.removeItem(pixmapItem)
+    def on_viewPrediction(self):
+        displayImage = self.activeImage
+        self.OverlayMgr.setOverlayState('Prediction')
+                    
+    def on_viewSegmentation(self):
+        displayImage = self.activeImage
+        self.OverlayMgr.setOverlayState('Segmentation')
         
-    def predictionImage_add(self, dataItemIndex, classnr, predictionMatrix):
-        if not self.predictions.get(dataItemIndex, None):
-            self.predictions[dataItemIndex] = {}
-        if self.predictions[dataItemIndex].get(classnr, None):
-            #print "3 self.canvas: ", self.canvas, "imageitem canvas: ", self.predictions[dataItemIndex][classnr].scene()
-            self.canvas.removeItem( self.predictions[dataItemIndex][classnr] )
-        classColor = QtGui.QColor.fromRgb( self.parent().parent().project.labelColors.get(classnr,0) )
+    def on_viewImage(self):
+        self.OverlayMgr.clearAll()
+        
+    def on_viewUncertainty(self): 
+        displayImage = self.activeImage
+        activeLearner = activeLearning.EnsembleMargin()
 
-        image = qwt.toQImage((predictionMatrix*255).astype(numpy.uint8))
+        pmap = self.project.dataMgr.prediction[displayImage]    
+        image = activeLearner.compute(pmap)
 
-        for i in range(256):
-            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i/3*2)
-            image.setColor(i, col.rgba())
-
-        pm = QtGui.QPixmap.fromImage(image)
-        
-        if dataItemIndex in self.predictions.keys():
-            if classnr in self.predictions[dataItemIndex].keys():
-                self.canvas.removeItem(self.predictions[dataItemIndex][classnr])
-        
-        self.predictions[dataItemIndex][classnr] = self.canvas.addPixmap(pm)
-        self.predictions[dataItemIndex][classnr].setZValue(-1)
-    
-    def segmentationImage_add(self, segmentation):
-        k = self.activeImage;
-        seg = segmentation[k]
-        image = qwt.toQImage((seg).astype(numpy.uint8))
-        
-        for i in range(seg.max()+1):
-            classColor = QtGui.QColor.fromRgb(self.parent().parent().project.labelColors[i+1])
-            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), 255)
-            image.setColor(i, col.rgba())
-        pm = QtGui.QPixmap.fromImage(image)
-
-        if k in self.segmentation.keys():
-            self.canvas.removeItem(self.segmentation[k])
-        self.segmentation[k] = self.canvas.addPixmap(pm)
-    
-    def segmentationImage_remove(self, dataItemIndex):
-        if not self.segmentation.get(dataItemIndex, None):
-            return
-        if not self.segmentation[dataItemIndex].get(classnr, None):
-            return
-        #print "2 self.canvas: ", self.canvas, "imageitem canvas: ", self.predictions[dataItemIndex][classnr].scene()
-        self.canvas.removeItem(self.segmentation[dataItemIndex])
-
-        
-    def predictionImage_show(self, dataItemIndex, classnr):
-        if not self.predictions.get(dataItemIndex, None):
-            return
-        if not self.predictions[dataItemIndex].get(classnr, None):
-            return
-        self.canvas.addItem(self.predictions[dataItemIndex][classnr] )
-
-        
-    def predictionImage_setOpacity(self, dataItemIndex, classnr, opacity):
-        if not self.predictions.get(dataItemIndex, None):
-            return
-        if not self.predictions[dataItemIndex].get(classnr, None):
-            return
-        self.predictions[dataItemIndex][classnr].setOpacity(opacity)
-        
-    def predictionImage_remove(self, dataItemIndex, classnr):
-        if not self.predictions.get(dataItemIndex, None):
-            return
-        if not self.predictions[dataItemIndex].get(classnr, None):
-            return
-        #print "2 self.canvas: ", self.canvas, "imageitem canvas: ", self.predictions[dataItemIndex][classnr].scene()
-        self.canvas.removeItem(self.predictions[dataItemIndex][classnr])
-    
-    def predictionImage_clearAll(self):
-        for key, val in self.predictions.items():
-            for key2, val2 in val.items():
-                #print "1 self.canvas: ", self.canvas, "imageitem canvas: ", val2.scene()
-                try:
-                    self.canvas.removeItem(val2)
-                except:
-                    print 'remove failed: Prop'
-                    pass
-                
-        for key, seg in self.segmentation.items():
-            try:
-                self.canvas.removeItem(seg)
-            except:
-                print 'remove failed: seg'
-                pass
-    def pixmaps_clearAll(self):
-        for item in self.canvas.items():
-            if item.zValue != 0:
-                self.canvas.removeItem(item)
-    
-    def predictionImage_clearImage(self, dataItemIndex):
-        if not self.predictions.get(dataItemIndex, None):
-            return
-        for key, val in self.predictions[dataItemIndex]:
-            #print "4 self.canvas: ", self.canvas, "imageitem canvas: ", val.scene()
-            self.canvas.removeItem(val)
+        self.OverlayMgr.updateUncertaintyPixmaps({displayImage:image})
+        self.OverlayMgr.setOverlayState('Uncertainty')
         
     def saveLayout(self, storage):
         print "save labelWidget"
@@ -934,15 +875,6 @@ class labelWidget(QtGui.QWidget):
             self.labelForImage[self.activeImage].setOpacity(op/100.0)
         
     def updateProject(self, project):
-        print "updateProject"
-        #self.labelForImage = {}
-        #self.predictions = {}                # predictions[imageNr]
-        #self.cloneviews = []
-        #self.overlayPixmapItems = []
-        
-        #self.initCanvas()
-        #self.__init__( self.parent(), self.imageList )
-        
         self.project = project
         self.loadImageList()
         self.labelForImage[self.activeImage].canvas_clear()
@@ -990,7 +922,6 @@ class labelWidget(QtGui.QWidget):
      
         # Check Call withour Project
         if not self.project: 
-            print "changeImage: no project for Image # ", nr
             return
         
         # Delete old Display Labels
@@ -1008,7 +939,6 @@ class labelWidget(QtGui.QWidget):
         
         # Set new Image Display and save it in self.pixmapitem
         self.img = qimage2ndarray.array2qimage(self.project.dataMgr[nr].data)
-        #print "QImage Shape and width", self.img.size(), self.img.width()
         pm = QtGui.QPixmap.fromImage(self.img)
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.pixmapitem.setZValue(-2)
@@ -1022,7 +952,6 @@ class labelWidget(QtGui.QWidget):
         # Init Label -> Should be called once per image when changing to it
         else:
             self.labelForImage[nr] = labelingForOneImage()
-            print "Active Label" , self.activeLabel
             labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
             drawManager = draw_Pixel(labelManager, self.canvas)
             # Init colors
@@ -1044,17 +973,10 @@ class labelWidget(QtGui.QWidget):
     def changeClass(self, nr):
         if nr < 0:
             return
-        print "changeClass"
         nr+=1  # 0 is unlabeled !!
         self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
-        #if not self.predictions == {}:
-         #   print "ding"
-        #self.predictionImage_remove(self.activeImage, self.activeLabel)
-        #self.predictionImage_clearImage(self.activeImage)
-        #self.predictionImage_clearAll()
-        #self.predictionImage_show(self.activeImage, self.activeLabel)
         self.emit( QtCore.SIGNAL("labelChanged"), nr)
 
                 
@@ -1113,7 +1035,6 @@ class ImageItem(QtGui.QGraphicsItem):
             #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect(), self.scene().sceneRect())
             #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect())
             painter.drawImage( self.image.rect(), self.image  )
-            #print "painting.."
 
 class SceneItem(QtGui.QGraphicsItem):
     def __init__(self, scene = None):
@@ -1188,7 +1109,6 @@ class panView(QtGui.QGraphicsView):
             delta /=500                             # todo: --> unhardcode zoomfactor
             delta += QtCore.QPointF(1,1)
             m = QtGui.QMatrix(self.zoom_origmatrix)
-            print delta.x()
             m.scale((delta.x()+delta.y())/2,(delta.x()+delta.y())/2 )
             self.setMatrix(m)
             self.requestROIupdate()                 # todo: inlining, no function?
@@ -1218,24 +1138,6 @@ class DisplayPanel(QtGui.QGraphicsScene):
         self.classNr = 0
         self.setItemIndexMethod(self.NoIndex)   # todo: test if drawing becomes faster...
         
-        
-        
-#        b1 = QtGui.QBitmap("brush_icon.bmp")
-#        
-#        b2 = QtGui.QBitmap(32,32)
-#        b2.fill(QtCore.Qt.color0)
-        
-        #b = b1.scaled(64,64)
-        #m = QtGui.QBitmap(b2.scaled(64,64))
-
-        
-        #b1.fill(QtCore.Qt.color0)
-
-        #b2.fill(color1)
-
-        #self.myCursor = QtGui.QCursor(b1, b2)
-        #self.myCursor.setShape(QtCore.Qt.BitmapCursor)
-        
     def setLabelObject(self, lo):
         self.labelObject = lo
     
@@ -1244,38 +1146,16 @@ class DisplayPanel(QtGui.QGraphicsScene):
         
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            #self.col = self.labelObject.getColor(self.classNr)
-            #self.siz = self.labelObject.getSize(self.classNr)
-            #self.topLevelObject = TopLevelItem()
-            #self.labelObject.addLabelObject(self.classNr, self.topLevelObject)
-            #self.addItem(self.topLevelObject)
-            #self.lastPoint = event.scenePos()
-#            try:
-#                self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
-#            except KeyError, AttributeError:
-#                return
-
             self.labeling = True
-            ##print event.buttons(), " == " ,QtCore.Qt.LeftButton, "=" ,event.button() == QtCore.Qt.LeftButton
-            #self.addSomeStuffToCanvas(event.scenePos())
-            ##self.makeView()
+
             pos = [event.scenePos().x(), event.scenePos().y()]
             self.drawManager = self.parent().labelForImage[self.parent().activeImage].getActiveDrawManager()
-            #print self.parent().parent().parent()
-            try:
-                for label, col in self.parent().parent().parent().project.labelColors.items():
-                    self.drawManager.setDrawColor(label, QtGui.QColor.fromRgb(col) )
-                #self.drawManager.setDrawColor( QtGui.QColor.fromRgb( self.parent().parent().parent().project.labelColors.get(self.parent().labelForImage[self.parent().activeImage].activeLabel,0) ) )
-            except AttributeError:
-                pass
+
             self.drawManager.InitDraw(pos)
             
         if event.button() == QtCore.Qt.RightButton:
             if self.parent().contextMenuLabel:
                 self.parent().contextMenuLabel.popup(event.screenPos())
-            
-            #self.parent().view.setCursor(self.myCursor)
-            #QtGui.QApplication.setOverrideCursor(self.myCursor)
          
     def mouseMoveEvent(self, event):
         if (event.buttons() == QtCore.Qt.LeftButton) and self.labeling:
@@ -1284,7 +1164,6 @@ class DisplayPanel(QtGui.QGraphicsScene):
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton and self.labeling:
-            ##print "Mouse Released at " ,event.scenePos()
             pos = [event.scenePos().x(), event.scenePos().y()]
             self.drawManager.EndDraw(pos)
             self.labeling = False
@@ -1294,7 +1173,6 @@ class DisplayPanel(QtGui.QGraphicsScene):
         ell = QtGui.QGraphicsEllipseItem(pos.x(), pos.y(), self.siz, self.siz)
         ell.setPen(QtGui.QPen(self.col))
         ell.setBrush(QtGui.QBrush(self.col))
-        #self.addItem(ell)
         ell.setParentItem(self.topLevelObject)
 
 class contextMenuLabel(QtGui.QMenu):
@@ -1342,7 +1220,7 @@ class OverlayMgr(object):
         self.canvas = canvas
         self.imageShapes = imageShapes
         
-        # Init of the handeld overlays
+        # Init of the handeled overlays
         self.predictionPixmaps = {}
         for img in range(self.imageCount):
             self.predictionPixmaps[img] = {}
