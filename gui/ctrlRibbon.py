@@ -1,5 +1,7 @@
 from PyQt4 import QtCore, QtGui
 import sys
+sys.path.append('..')
+from gui.iconMgr import ilastikIcons
 
 class Ribbon(QtGui.QTabWidget):
     def __init__(self, parent=None):
@@ -102,7 +104,7 @@ class RibbonEntry():
         self.icon_file = icon_file
         self.tool_tip = tool_tip
         self.callback = callback
-        self.icon = QtGui.QIcon('../../icons/32x32/' + str(self.icon_file)) 
+        self.icon = QtGui.QIcon(str(self.icon_file)) 
         self.type = type
         self.size = QtCore.QSize(32,32)
     
@@ -132,28 +134,28 @@ def createRibbons():
     RibbonGroupObjects["Label"] = RibbonEntryGroup("Label", 0)
     RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 4)   
     
-    RibbonGroupObjects["Projects"].append(RibbonEntry("New", "actions/document-new.png" ,"New"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Open", "actions/document-open.png" ,"Open"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Save", "actions/document-save.png" ,"Save"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", "actions/document-properties.png" ,"Edit"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("New", ilastikIcons.New ,"New"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("Open", ilastikIcons.Open ,"Open"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("Save", ilastikIcons.Save,"Save"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", ilastikIcons.Edit ,"Edit"))
     
-    RibbonGroupObjects["Features"].append(RibbonEntry("Select", "actions/edit-select-all.png" ,"Select Features"))
-    RibbonGroupObjects["Features"].append(RibbonEntry("Compute", "categories/applications-system.png" ,"Compute Features"))
+    RibbonGroupObjects["Features"].append(RibbonEntry("Select", ilastikIcons.Select ,"Select Features"))
+    RibbonGroupObjects["Features"].append(RibbonEntry("Compute", ilastikIcons.System ,"Compute Features"))
     
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Train", "categories/applications-system.png" ,"Train Classifier"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", "status/dialog-information.png" ,"Predict Classifier")) 
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", "actions/media-playback-start.png" ,"Interactive Classifier",type=RibbonToggleButtonItem))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Train", ilastikIcons.System ,"Train Classifier"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
     
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", "actions/my-segment.png" ,"Segmentation"))
+    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Segment ,"Segmentation"))
     
 #    RibbonGroupObjects["View"].append(RibbonEntry("Image", "categories/preferences-system.png" ,"View Probability map"))
 #    RibbonGroupObjects["View"].append(RibbonEntry("Probabilities", "categories/preferences-system.png" ,"View Probability map"))
 #    RibbonGroupObjects["View"].append(RibbonEntry("Uncertainty", "categories/preferences-system.png" ,"View Probability map"))
 #    RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation"))
 #    
-    RibbonGroupObjects["Label"].append(RibbonEntry("Brushsize", "categories/preferences-system.png" ,"Change Brush size",type=RibbonSlider))
+    RibbonGroupObjects["Label"].append(RibbonEntry("Brushsize", ilastikIcons.System  ,"Change Brush size",type=RibbonSlider))
     
-    RibbonGroupObjects["Export"].append(RibbonEntry("Export", "categories/preferences-system.png" ,"Export"))
+    RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
     return RibbonGroupObjects   
         
         

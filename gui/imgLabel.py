@@ -7,6 +7,7 @@ import qimage2ndarray
 sys.path.append("..")
 from core import labelMgr, activeLearning
 from core.utilities import irange
+from gui.iconMgr import ilastikIcons
 try:
     from vigra import vigranumpycmodule as vm
 except ImportError:
@@ -688,7 +689,6 @@ class labelWidget(QtGui.QWidget):
         global labelwidgetInstance          # TODO: UGLY global
         labelwidgetInstance = self          # TODO: UGLY global
         self.project = None
-        self.iconPath = '../../icons/32x32/'
         if isinstance(imageList, str): 
             imageList = [imageList]
         if isinstance(imageList, list):
@@ -731,7 +731,7 @@ class labelWidget(QtGui.QWidget):
         self.connect(self.cmbImageList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
         
         # Undo Button for Image Change
-        self.btnUndo = QtGui.QPushButton(QtGui.QIcon(self.iconPath + "actions/edit-undo.png") , "Undo")
+        self.btnUndo = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Undo) , "Undo")
         self.connect(self.btnUndo,QtCore.SIGNAL("clicked()"), self.undo)
         
         # Channel Selector Combo Box
@@ -745,7 +745,7 @@ class labelWidget(QtGui.QWidget):
         self.connect(self.cmbClassList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeClass)
         
         # Clone View Button
-        self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(self.iconPath + 'actions/media-seek-forward.png'), "Clone")
+        self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.DoubleArrow), "Clone")
         self.connect(self.btnCloneView, QtCore.SIGNAL("clicked()"), self.makeCloneView)
         
         # Slider for Label Opasity
@@ -806,8 +806,8 @@ class labelWidget(QtGui.QWidget):
         self.toolBox = QtGui.QToolBox()
         self.toolBox.setMaximumWidth(160)
         # Adding both Entries
-        self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(self.iconPath + 'actions/edit-clear.png'), 'Labeling')
-        self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(self.iconPath + 'emotes/face-glasses.png'),'View')
+        self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(ilastikIcons.Brush), 'Labeling')
+        self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(ilastikIcons.View),'View')
         
         # At the right side of view
         layout = QtGui.QHBoxLayout()
@@ -1180,7 +1180,6 @@ class contextMenuLabel(QtGui.QMenu):
         QtGui.QMenu.__init__(self)
         self.parent = parent
         self.action = []
-        self.iconPath = '../../icons/32x32/'
         for cnt, labelName in irange(labelNames):
             pixmap = QtGui.QPixmap(16,16)
             color = QtGui.QColor(labelColors[cnt+1])
@@ -1191,7 +1190,7 @@ class contextMenuLabel(QtGui.QMenu):
             self.connect(self.action[cnt], QtCore.SIGNAL("triggered()"), receiver)
             self.addAction(self.action[cnt])
         self.addSeparator()
-        brushSelector = self.addMenu(QtGui.QIcon(self.iconPath + 'actions/edit-clear.png'),'Brush Size')
+        brushSelector = self.addMenu(QtGui.QIcon(ilastikIcons.Brush),'Brush Size')
         for rad in range(1,7):
             rad_ = rad*2-1
             icon = QtGui.QIcon(self.createCirclePixmap(rad_))
