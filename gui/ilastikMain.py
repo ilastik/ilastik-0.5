@@ -169,11 +169,11 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_ViewProbabilities(self, state):
         displayImage = self.labelWidget.activeImage
-        self.labelWidget.OverlayMgr.showPredictionsPixmaps()
+        self.labelWidget.OverlayMgr.setOverlayState('Prediction')
                     
     def on_ViewSegmentation(self, state):
         displayImage = self.labelWidget.activeImage
-        self.labelWidget.OverlayMgr.showSegmentationPixmaps()
+        self.labelWidget.OverlayMgr.setOverlayState('Segmentation')
         
     
     def on_ViewImage(self, state):
@@ -189,7 +189,7 @@ class MainWindow(QtGui.QMainWindow):
         
         displayImage = self.labelWidget.activeImage
         self.labelWidget.OverlayMgr.updateUncertaintyPixmaps({displayImage:image})
-        self.labelWidget.OverlayMgr.showUncertaintyPixmaps()
+        self.labelWidget.OverlayMgr.setOverlayState('Uncertainty')
     
     def on_segmentation(self):
 
@@ -208,7 +208,7 @@ class MainWindow(QtGui.QMainWindow):
             self.project.dataMgr.segmentation[cnt] = seg[cnt].result
         
         self.labelWidget.OverlayMgr.updateSegmentationPixmaps(dict(irange(self.project.dataMgr.segmentation)))
-        
+        self.labelWidget.OverlayMgr.setOverlayState('Segmentation')
         
     def on_changeBrushSize(self, rad):
         #if rad / 2 != 0:
@@ -781,7 +781,7 @@ class ClassificationInteractive(object):
                 pass
 
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(viewPredictions)
-        self.parent.labelWidget.OverlayMgr.showPredictionsPixmaps(displayClassNr)
+        self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
 
 
     def initInteractiveProgressBar(self):
@@ -874,7 +874,7 @@ class ClassificationPredict(object):
             displayImage = self.parent.labelWidget.activeImage
             predictions = dict(irange(self.classificationPredict.predictionList))
             self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(predictions)
-            self.parent.labelWidget.OverlayMgr.showPredictionsPixmaps()
+            self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
             
     def finalize(self):
         self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList

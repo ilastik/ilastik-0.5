@@ -1333,8 +1333,7 @@ class contextMenuLabel(QtGui.QMenu):
         return pixmap
 
 class OverlayMgr(object):
-    def __init__(self, canvas, classColors, imageShapes, parent):   
-        
+    def __init__(self, canvas, classColors, imageShapes, parent):       
         self.labelWidget  = parent
         self.classColors = classColors;
         self.imageCount = len(imageShapes)
@@ -1343,6 +1342,7 @@ class OverlayMgr(object):
         self.canvas = canvas
         self.imageShapes = imageShapes
         
+        # Init of the handeld overlays
         self.predictionPixmaps = {}
         for img in range(self.imageCount):
             self.predictionPixmaps[img] = {}
@@ -1356,84 +1356,84 @@ class OverlayMgr(object):
         self.uncertaintyPixmaps = {}
         for img in range(self.imageCount):
             self.uncertaintyPixmaps[img] = [False, False]
+            
+        self.stateList = {}
+        self.stateList['Prediction'] = self.predictionPixmaps
+        self.stateList['Uncertainty'] = self.uncertaintyPixmaps
+        self.stateList['Segmentation'] = self.segmentationPixmaps
+        self.state = 'Prediction'
         
+        # self.classIndex = -1 all Classes at the same time, or just a specific nr.
+        self.classIndex = -1
         
+    def setOverlayState(self, state):
+        self.state = state
+        self.showOverlayPixmapByState()
+    
+    def setClassIndex(self, classIndex):
+        self.classIndex = classIndex           
 
     def updatePredictionsPixmaps(self, predictions):
-        print "Active Image ", self.labelWidget.activeImage
         for imageIndex, prediction in predictions.iteritems():
             for classNr in range(self.classCount):
                 pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[classNr+1]), 'continious', 0.7)
                 self.predictionPixmaps[imageIndex][classNr][0] = pm 
     
     def updateSegmentationPixmaps(self, segmentations):
-        print "Active Image ", self.labelWidget.activeImage
         for imageIndex, segmentation in segmentations.iteritems():
             pm = self.rawImage2pixmap(segmentation, 1, 'discrete', 1)
             self.segmentationPixmaps[imageIndex][0] = pm
     
     def updateUncertaintyPixmaps(self, uncertainties):
-        print "Active Image ", self.labelWidget.activeImage
         for imageIndex, uncertainty in uncertainties.iteritems():
             pm = self.rawImage2pixmap(uncertainty.reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[1]), 'continious', 0.7)
             self.uncertaintyPixmaps[imageIndex][0] = pm 
     
-    
-    def showPredictionsPixmaps(self, classIndex=-1):
-        self.clearAll()
-        imageIndex = self.labelWidget.activeImage
-        if imageIndex == 1:
-            pass
-        if classIndex == -1:
-            classes = range(self.classCount)
-        else:
-            classes = [classIndex-1]
-            
-        for classNr in classes:
-            if self.predictionPixmaps[imageIndex][classNr][1]:
-                self.predictionPixmaps[imageIndex][classNr][1].setPixmap(self.predictionPixmaps[imageIndex][classNr][0])
-            else:
-                if self.predictionPixmaps[imageIndex][classNr][0]:
-                    self.predictionPixmaps[imageIndex][classNr][1] = self.canvas.addPixmap(self.predictionPixmaps[imageIndex][classNr][0])
-                    self.predictionPixmaps[imageIndex][classNr][1].setZValue(-1) 
-
-    def showSegmentationPixmaps(self, classIndex=-1):
-        self.clearAll()
-        imageIndex = self.labelWidget.activeImage
-        if classIndex == -1:
-            classes = range(self.classCount)
-        else:
-            classes = [classIndex-1]
-            
-        for classNr in classes:
-            if self.segmentationPixmaps[imageIndex][1]:
-                self.segmentationPixmaps[imageIndex][1].setPixmap(self.segmentationPixmaps[imageIndex][0])
-            else:
-                if self.segmentationPixmaps[imageIndex][0]:
-                    self.segmentationPixmaps[imageIndex][1] = self.canvas.addPixmap(self.segmentationPixmaps[imageIndex][0])
-                    self.segmentationPixmaps[imageIndex][1].setZValue(-1) 
-    
-    def showUncertaintyPixmaps(self):
+    def showOverlayPixmapByState(self):
         self.clearAll()
         imageIndex = self.labelWidget.activeImage
 
-        if self.uncertaintyPixmaps[imageIndex][1]:
-            self.uncertaintyPixmaps[imageIndex][1].setPixmap(self.uncertaintyPixmaps[imageIndex][0])
+        classes = range(self.classCount)
+        
+        currentOverlay = self.stateList[self.state][imageIndex]
+        
+        # Some OVerlays Are For single Classes or all at once, Prediction could be both
+        if self.state in ['Prediction']:
+            if self.classIndex == -1:
+                classes = range(self.classCount)        
+            else:
+                classes = [classIndex-1]
+            
+            for classNr in classes:
+                if currentOverlay[classNr][1]:
+                    currentOverlay[classNr][1].setPixmap(currentOverlay[classNr][0])
+                else:
+                    if currentOverlay[classNr][0]:
+                        currentOverlay[classNr][1] = self.canvas.addPixmap(currentOverlay[classNr][0])
+                        currentOverlay[classNr][1].setZValue(-1)
+        # Some Overlay which does not depend on the current ClassIndex 
         else:
-            if self.uncertaintyPixmaps[imageIndex][0]:
-                self.uncertaintyPixmaps[imageIndex][1] = self.canvas.addPixmap(self.uncertaintyPixmaps[imageIndex][0])
-                self.uncertaintyPixmaps[imageIndex][1].setZValue(-1) 
-    
+            if currentOverlay[1]:
+                currentOverlay[1].setPixmap(currentOverlay[imageIndex][0])
+            else:
+                if currentOverlay[0]:
+                    currentOverlay[1] = self.canvas.addPixmap(currentOverlay[0])
+                    currentOverlay[1].setZValue(-1) 
+
     def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7):
+        
+        # Used for rawImages in [0,1]
         if type == 'continious':
-            #vm.writeImage((rawImage*255).astype(numpy.uint8),'bla.png')
+            # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
             image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())
-
+                
+        # Used for images with uint8 indices, like segmentations
         if type == 'discrete':
+            # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage(rawImage.astype(numpy.uint8))
             image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
             classColor = self.classColors
@@ -1460,17 +1460,7 @@ class OverlayMgr(object):
            if self.uncertaintyPixmaps[imageIndex][1]:
                self.canvas.removeItem(self.uncertaintyPixmaps[imageIndex][1])
                self.uncertaintyPixmaps[imageIndex][1] = False
-    
-    
-    
-    
-    
-    
-        
-    
-    
-        
-        
+          
 if __name__ == "__main__":
     print "Qt Version: ", QtCore.QT_VERSION_STR
     app = QtGui.QApplication(sys.argv)
