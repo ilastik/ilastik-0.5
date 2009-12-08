@@ -115,7 +115,6 @@ class drawManager:
     def setDrawLabel(self, label):
         self.drawLabel = label
         col = self.drawColor.get(label,None)
-        print "Draw Color", col
         if col:
             self.activeDrawColor = col
     def setDrawSize(self, size):
@@ -713,6 +712,8 @@ class labelWidget(QtGui.QWidget):
         self.imageList = imageList
         self.activeImage = 0
         self.activeLabel = 1
+        # -1 for all at once (gray, rgb) a number for multi-spec data
+        self.activeChannel = -1 
         self.image = imageList.list[self.activeImage]
         self.imageData = None
         self.pixmapitem = None
@@ -737,7 +738,8 @@ class labelWidget(QtGui.QWidget):
         # Channel Selector Combo Box
         self.cmbChannelList = QtGui.QComboBox()
         self.cmbChannelList.setMinimumWidth(142)
-        self.cmbChannelList.hide()
+        self.cmbChannelList.setEnabled(False)
+        self.connect(self.cmbChannelList,QtCore.SIGNAL("currentIndexChanged(int)"), self.changeChannel)
         
         # Class Selector Combo Box
         self.cmbClassList = QtGui.QComboBox()
@@ -765,6 +767,7 @@ class labelWidget(QtGui.QWidget):
         labelingToolBox_lists = QtGui.QVBoxLayout()
         labelingToolBox_lists.addWidget(QtGui.QLabel('Data Items'))
         labelingToolBox_lists.addWidget(self.cmbImageList)
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Channel'))
         labelingToolBox_lists.addWidget(self.cmbChannelList)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Classes'))
         labelingToolBox_lists.addWidget(self.cmbClassList)
@@ -817,12 +820,12 @@ class labelWidget(QtGui.QWidget):
         self.setLayout(layout)
 
         self.pixmapitem = None
-        self.changeImage(0)       
+        #self.changeImage(0)       
         
-        try:
-            self.updateProject( self.parent().project)
-        except AttributeError:
-            pass
+#        try:
+#            self.updateProject( self.parent().project)
+#        except AttributeError:
+#            pass
         
     def on_viewPrediction(self):
         displayImage = self.activeImage
@@ -876,11 +879,21 @@ class labelWidget(QtGui.QWidget):
         
     def updateProject(self, project):
         self.project = project
-        self.loadImageList()
-        self.labelForImage[self.activeImage].canvas_clear()
+        # Check for Multispectral Data and load ChannelList if present
+        if self.project.dataMgr[0].dataKind in ['multi']:
+            self.activeChannel = 0
+            self.loadChannelList(0)  
+        else:
+            self.activeChannel = -1
+            self.clearChannelList()
+            
+        for k in self.labelForImage:
+            self.labelForImage[k].canvas_clear()
         self.labelForImage = {}
-        self.changeImage(0)
+        
+        self.loadImageList()
         self.loadLabelList()
+        #self.changeImage(0)
         self.updateDrawSettings()
         #self.pixmapitem = None
         #project.dataMgr.labels = self.labelForImage
@@ -895,13 +908,28 @@ class labelWidget(QtGui.QWidget):
         
     def updateDrawSettings(self):
         pass 
+    
+    def loadChannelList(self, imageIndex=0):
+        print "loadChannelList for image ", imageIndex
+        self.cmbChannelList.clear()
+        self.cmbChannelList.addItems(self.project.dataMgr[imageIndex].channelDescription)
+        self.cmbChannelList.setEnabled(True)
+        
+        
+    def clearChannelList(self):
+        # self.disconnect(self.cmbChannelList,QtCore.SIGNAL("currentIndexChanged(int)"), self.changeChannel)
+        self.cmbChannelList.clear()
+        self.cmbChannelList.setEnabled(False)
+        self.activeChannel = -1
         
     def loadImageList(self):
+        #print "Call to load loadImgeList"
         self.cmbImageList.clear()
         imagenames = [os.path.basename(item.fileName) for item in self.project.dataMgr.dataItems]
         self.cmbImageList.addItems(imagenames)
         
     def loadLabelList(self):
+        print "Call to load loadLabelList"
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.project.labelNames)
         self.contextMenuLabel = contextMenuLabel(self.project.labelNames, self.project.labelColors, self.canvas)
@@ -915,71 +943,96 @@ class labelWidget(QtGui.QWidget):
     def newLabelsPending(self):
         self.emit(QtCore.SIGNAL('newLabelsPending'))
     
-    def changeImage(self, nr):
-        # Check Call from ComboBox reset with nr == -1
-        if nr < 0:
+    @QtCore.pyqtSignature("int")
+    def changeImage(self, newImage):
+        # Check Call from ComboBox reset with newImage == -1
+        print "Change Image to ", newImage
+        if newImage < 0:
             return
-     
-        # Check Call withour Project
+        # Check Call without Project
         if not self.project: 
             return
         
-        # Delete old Display Labels
-        if self.labelForImage.get(self.activeImage, None):
-            self.labelForImage[self.activeImage].canvas_clear()
-        
-        # Set new active Image    
-        self.activeImage = nr
+        if newImage != self.activeImage:
+            # Image changed indeed
+            self.loadChannelList(newImage)
+        else:
+            # Juat Channel changed
+            pass   
         
         # Delete old Image Display pixmapitem == rawImage
         if self.pixmapitem:
             self.canvas.removeItem(self.pixmapitem)
         
-        # TODO: use data-manager instance of vigra-image
-        
         # Set new Image Display and save it in self.pixmapitem
-        self.img = qimage2ndarray.array2qimage(self.project.dataMgr[nr].data)
+        if self.activeChannel < 0:
+            self.img = qimage2ndarray.array2qimage(self.project.dataMgr[newImage].data)
+        else:
+            tmpImg = self.project.dataMgr[newImage].data[:,:, self.activeChannel]
+            if tmpImg.max() > 0:
+                tmpImg = (tmpImg - tmpImg.min()) / tmpImg.max()
+            tmpImg = (tmpImg*255).astype(numpy.uint8)
+            self.img = qimage2ndarray.array2qimage(tmpImg)
+           
+            
         pm = QtGui.QPixmap.fromImage(self.img)
         self.pixmapitem = self.canvas.addPixmap(pm)
         self.pixmapitem.setZValue(-2)
         
-        # If it is already initialized, just paint it
+        # Delete old Display Labels
         if self.labelForImage.get(self.activeImage, None):
-            self.labelForImage[self.activeImage].canvas_paint()
-            self.labelForImage[nr].setActiveLabel(self.activeLabel)
-            self.setBrushSize(self.brushSize)
+            self.labelForImage[self.activeImage].canvas_clear()  
         
+        # If it is already initialized, just paint it
+        if self.labelForImage.get(newImage, None):
+            print "Reuse Label For Image"
+            self.labelForImage[newImage].canvas_paint()
+            self.labelForImage[newImage].setActiveLabel(self.activeLabel)
+            
         # Init Label -> Should be called once per image when changing to it
         else:
-            self.labelForImage[nr] = labelingForOneImage()
+            print "Init Label For Image"
+            self.labelForImage[newImage] = labelingForOneImage()
             labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
             drawManager = draw_Pixel(labelManager, self.canvas)
             # Init colors
             for label, col in self.project.labelColors.items():
                 drawManager.setDrawColor(label, QtGui.QColor.fromRgb(col) )
             
-            self.labelForImage[self.activeImage].addDrawManager( drawManager ) 
+            self.labelForImage[newImage].addDrawManager( drawManager ) 
             # Change To Active Label
-            self.labelForImage[nr].setActiveLabel(self.activeLabel)
-            self.setBrushSize(self.brushSize)
+            self.labelForImage[newImage].setActiveLabel(self.activeLabel)          
         
+        # Set new active Image    
+        self.activeImage = newImage
+        self.setBrushSize(self.brushSize)
         # Emit imageChanged Signal
-        self.emit( QtCore.SIGNAL("imageChanged"), nr)
+        self.emit( QtCore.SIGNAL("imageChanged"), self.activeImage)
                     
     def updateClassList(self):
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.image.label.getClassNames())
         
+    @QtCore.pyqtSignature("int")
     def changeClass(self, nr):
+        print "Call to changeClass with Class: ", nr
         if nr < 0:
             return
-        nr+=1  # 0 is unlabeled !!
+        nr += 1  # 0 is unlabeled !!
         self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
         self.emit( QtCore.SIGNAL("labelChanged"), nr)
-
-                
+    
+    @QtCore.pyqtSignature("int")
+    def changeChannel(self, channelIndex):
+        if channelIndex < 0:
+            print "Dumb Callbacks"
+            return
+        print "Change Channgel to ", channelIndex
+        self.activeChannel = channelIndex
+        self.changeImage(self.activeImage)
+         
     def undo(self):
         self.labelForImage[self.activeImage].undo()
         

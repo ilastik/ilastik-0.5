@@ -2,6 +2,7 @@ import numpy
 import sys
 from Queue import Queue as queue
 from copy import copy
+import os
 
 try:
     from vigra import vigranumpycmodule as vm
@@ -27,6 +28,7 @@ class DataItemBase():
         self.dataDimensions = 0
         self.thumbnail = None
         self.shape = ()
+        self.channelDescription = []
         
     def shape(self):
         if self.dataKind in ['rgb', 'multi', 'gray']:
@@ -49,9 +51,12 @@ class DataItemImage(DataItemBase):
         self.dataDimensions = 2
        
     def loadData(self):
-        self.data = numpy.array(vm.readImage(self.fileName))
-        self.data = self.data.swapaxes(0,1)
-
+        fBase, fExt = os.path.splitext(self.fileName)
+        if fExt == '.h5':
+            self.data, self.channelDescription, self.labels = DataImpex.loadMultispectralData(self.fileName)
+        else:
+            self.data = numpy.array(vm.readImage(self.fileName))
+            self.data = self.data.swapaxes(0,1)
         #print "Shape after Loading and width",self.data.shape, self.data.width
         self.dataType = self.data.dtype
         self.shape = self.data.shape
@@ -106,6 +111,7 @@ class DataMgr():
     def dataItemsShapes(self):     
         return map(DataItemBase.shape, self)
         
+        
     def __getitem__(self, ind):
         if not self.dataItemsLoaded[ind]:
             self.dataItems[ind].loadData()
@@ -145,6 +151,24 @@ class DataMgr():
                 print "generate feature matrix: nFeatures don't match for data item nr ", dataItemNr
             dataItemNr+=1
         return (self.featureMatrixList, self.featureMatrixList_DataItemIndices)
+
+class DataImpex(object):
+    @staticmethod
+    def loadMultispectralData(fileName):
+        import tables
+        h5file = tables.openFile(fileName,'r')       
+        try:
+            # Data sets below root are asumed to be data, labels and featureDescriptor
+            data = h5file.root.data.read()
+            labels = h5file.root.labels.read()
+            ChannelDescription = h5file.root.featureDescriptor.read()
+            ChannelDescription = map(str,ChannelDescription[:,0])
+        except Exception as e:
+            print "Error while reading H5 File %s " % fileName
+            print e
+        finally:
+            h5file.close()
+        return (data.astype(numpy.float32), ChannelDescription, labels)
 
                     
                     

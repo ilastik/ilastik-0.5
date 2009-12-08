@@ -72,6 +72,7 @@ class LocalFeature(FeatureBase):
         self.featureFunktor = featureFunktor
     
     def compute(self, channel):
+        print channel.shape
         return self.featureFunktor(channel, * self.args)
 
     def __str__(self):

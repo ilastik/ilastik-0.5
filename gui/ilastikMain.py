@@ -43,8 +43,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createFeatures()
         
         self.classificationProcess = None
-        
-        
+                
     def createRibbons(self):                     
       
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
@@ -56,7 +55,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbonToolbar.addWidget(self.ribbon)
         
         # Wee, this is really ugly... anybody have better ideas for connecting 
-        # the signals. This way has no future and is just a workarround
+        # the signals. This way has no future and is just a worka    round
         
         self.connect(self.ribbon.tabDict['Projects'].itemDict['New'], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Save'], QtCore.SIGNAL('clicked()'), self.saveProjectDlg)
@@ -414,7 +413,7 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif)")
+        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif);;Multi Spectral Data (*.h5)")
         if fileNames:
             for file_name in fileNames:
                 self.fileList.append(file_name)
@@ -513,7 +512,6 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
         self.parent.projectModified()
-        
         self.close()
         
     
@@ -697,7 +695,7 @@ class ClassificationInteractive(object):
         self.parent = parent
         self.stopped = False
         self.trainingQueue = deque(maxlen=1)
-        self.lock = threading.Lock()
+        #self.lock = threading.Lock()
         
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
         self.interactiveTimer = QtCore.QTimer()
@@ -706,7 +704,7 @@ class ClassificationInteractive(object):
         self.start()
         self.interactiveTimer.start(500)
         #self.tmp_count = 0
-        self.resultLock = threading.Lock()
+        #self.resultLock = threading.Lock()
         
     def updateTrainingQueue(self):
         self.parent.generateTrainingData()
