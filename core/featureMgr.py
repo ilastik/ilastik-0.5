@@ -54,7 +54,11 @@ class FeatureMgr():
     def joinCompute(self, dataMgr):
         self.featureProcess.join()  
         dataMgr.dataFeatures = self.featureProcess.result; 
-        self.featureProcess = None               
+        self.featureProcess = None  
+    
+    def __getstate__(self): 
+        # Delete This Instance for pickleling
+        return {}     
                 
 class FeatureBase(object):
     def __init__(self):

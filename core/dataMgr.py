@@ -56,8 +56,7 @@ class DataItemImage(DataItemBase):
         if fExt == '.h5':
             self.data, self.channelDescription, self.labels = DataImpex.loadMultispectralData(self.fileName)
         else:
-            self.data = numpy.array(vm.readImage(self.fileName))
-            self.data = self.data.swapaxes(0,1)
+            self.data = DataImpex.loadImageData(self.fileName)
         #print "Shape after Loading and width",self.data.shape, self.data.width
         self.dataType = self.data.dtype
         self.shape = self.data.shape
@@ -171,6 +170,13 @@ class DataImpex(object):
         finally:
             h5file.close()
         return (data.astype(numpy.float32), ChannelDescription, labels.astype(numpy.uint32))
+    
+    @staticmethod
+    def loadImageData(fileName):
+        data = numpy.array(vm.readImage(fileName))
+        data = data.swapaxes(0,1)
+        return data
+        
     @staticmethod
     def checkForLabels(fileName):
         fileName = str(fileName)

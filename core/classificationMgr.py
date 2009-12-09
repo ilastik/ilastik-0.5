@@ -68,6 +68,9 @@ class ClassifierRandomForest(ClassifierBase):
             if not target.dtype == numpy.float32:
                 target = numpy.array(target, dtype=numpy.float32)
             return self.classifier.predictProbabilities(target)    
+    def __getstate__(self): 
+        # Delete This Instance for pickleling
+        return {}    
           
 
 class ClassifierSVM(ClassifierBase):
