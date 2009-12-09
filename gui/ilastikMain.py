@@ -179,10 +179,8 @@ class MainWindow(QtGui.QMainWindow):
         else:
             self.classificationInteractive.stop()
         
+    # TODO: This whole function should NOT be here transfer it DataMgr. 
     def generateTrainingData(self):
-        if not self.project:
-            return
-        
         numpyarrayobject = self.project.dataMgr.dataFeatures[0][0][0]
         #pi = self.labelWidget.addOverlayPixmap(numpyarrayobject)
         #pi.setOpacity(0.5)
@@ -249,49 +247,6 @@ class MainWindow(QtGui.QMainWindow):
         #print trainingMatrix
         print trainingMatrix.shape
         print self.project.trainingLabels.shape
-        return
-        #
-        #
-        #
-        # Old code: fetch labels pixel-wise:
-        # saves memory, but is not as fast as using numpy for matrix operations.
-        #
-        #
-        #
-#        if self.project:
-#            TrainingFeatureList = []    # each list entry is a feature vector for a training example.
-#            TrainingLabelList = []
-#            shape = self.project.dataMgr.dataFeatures[0][0][0].shape
-#            nFeatures = 0
-#            for featureImage, featureString in self.project.dataMgr.dataFeatures[0]:
-#                nFeatures += featureImage.shape.__len__()
-#                
-#            # ToDo: get label matrix from label-widget. something like that: iw.renderLabelMatrix(shape)
-#            # for now, use this ugly code:
-#            dataItemNr = 0
-#            for dataItem in self.project.dataMgr.dataFeatures:
-#                if True:  # todo:
-#                #if self.project. labelWidget.hasLabels(dataItemNr):
-#                    for pixelNr in xrange( shape[0]*shape[1] ):
-#                        ###pos = 
-#                        label = self.labelWidget.getLabel(dataItemNr, pixelNr)
-#                        if label > 0:
-#                            featureVector = numpy.ndarray( nFeatures )
-#                            featureNr = 0
-#                            for featureImage, featureString in dataItem:  # featureImage can be multi-dimensional, e.g. 3 dim for hesse-matrix
-#                                # todo: fix hardcoded 2D:
-#                                n = 1   # n: number of feature-values per pixel
-#                                if featureImage.shape.__len__() > 2:
-#                                    n = featureImage.shape[2]
-#                                for i in xrange( n ):
-#                                    if n==1:
-#                                        featureValues = featureImage
-#                                    else:
-#                                        featureValues = featureImage[:,:,i]
-#                                        featureVector[featureNr] = featureImage.flat[pixelNr]
-#                                featureNr+=1 
-#                            TrainingFeatureList.append()
-#                            TrainingLabelList.append(label)
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -352,7 +307,7 @@ class ProjectDlg(QtGui.QDialog):
         colordlg = QtGui.QColorDialog()
         col = colordlg.getColor()
         labelnr = self.cmbLabelName.currentIndex() + 1
-        self.labelColor[labelnr] = col.rgb()
+        self.labelColor[labelnr] = col
         self.setLabelColorButtonColor(col)
         
     @QtCore.pyqtSignature("QString")
