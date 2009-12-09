@@ -326,7 +326,7 @@ class ProjectDlg(QtGui.QDialog):
         self.txtLabelName.setText(self.cmbLabelName.currentText())
         #col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
         if not self.labelColor.get(nr,None):
-            self.labelColor[nr] = self.labelColor[1] = QtGui.QColor(QtCore.Qt.red).rgb()  # default: red
+            self.labelColor[nr] = self.labelColor[1] = QtGui.QColor(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255)).rgb()  # default: red
         col = QtGui.QColor.fromRgb(self.labelColor[nr])
         self.setLabelColorButtonColor(col)
 
@@ -436,8 +436,14 @@ class ProjectDlg(QtGui.QDialog):
                 # labels
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
-                r.setFlags(r.flags() & flagOFF);
+                r.setCheckState(QtCore.Qt.Unchecked)
+                
+                labelsAvailable = dataMgr.DataImpex.checkForLabels(file_name)
+                if labelsAvailable:
+                    r.setFlags(r.flags() & flagON);
+                    
+                else:
+                    r.setFlags(r.flags() & flagOFF);
                 self.tableWidget.setItem(0, self.columnPos['Labels'], r)
                 
                 # train
@@ -498,6 +504,8 @@ class ProjectDlg(QtGui.QDialog):
             theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
             theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']).checkState() == QtCore.Qt.Checked
             theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']).checkState() == QtCore.Qt.Checked
+            
+            
             
             contained = False
             for pr in theDataItem.projects:

@@ -3,6 +3,7 @@ import sys
 from Queue import Queue as queue
 from copy import copy
 import os
+import tables
 
 try:
     from vigra import vigranumpycmodule as vm
@@ -67,6 +68,7 @@ class DataItemImage(DataItemBase):
                 self.dataKind = 'multi'
         elif len(self.data.shape) == 2:
             self.dataKind = 'gray'
+    
             
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
@@ -155,7 +157,7 @@ class DataMgr():
 class DataImpex(object):
     @staticmethod
     def loadMultispectralData(fileName):
-        import tables
+        
         h5file = tables.openFile(fileName,'r')       
         try:
             # Data sets below root are asumed to be data, labels and featureDescriptor
@@ -168,7 +170,32 @@ class DataImpex(object):
             print e
         finally:
             h5file.close()
-        return (data.astype(numpy.float32), ChannelDescription, labels)
+        return (data.astype(numpy.float32), ChannelDescription, labels.astype(numpy.uint32))
+    @staticmethod
+    def checkForLabels(fileName):
+        fileName = str(fileName)
+        fBase, fExt = os.path.splitext(fileName)
+        if fExt != '.h5':
+            return 0
+        
+        h5file = tables.openFile(fileName,'r')       
+        try:
+            # Data sets below root are asumed to be data, labels and featureDescriptor
+            if hasattr(h5file.root,'labels'):
+                res = 1
+            else:
+                res = 0
+        except Exception as e:
+            print "Error while reading H5 File %s " % fileName
+            print e
+        finally:
+            h5file.close()
+        return res
+        
+        
+        
+        
+        
 
                     
                     

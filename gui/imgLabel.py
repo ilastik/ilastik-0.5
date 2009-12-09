@@ -117,6 +117,7 @@ class drawManager:
         col = self.drawColor.get(label,None)
         if col:
             self.activeDrawColor = col
+            
     def setDrawSize(self, size):
         self.drawSize = size
     
@@ -229,7 +230,7 @@ class draw_Patch(drawManager):
         self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_ARGB32 )
         self.image.fill(0)
         
-        # self.imageItem is jused to display self.image, remember it the labelOverlay
+        # self.imageItem is just used to display self.image, remember it is the labelOverlay
         self.imageItem = ImageItem( self.image)
         self.imageItem.setOpacity(self.drawOpacity)
         canvas.addItem(self.imageItem)
@@ -242,6 +243,7 @@ class draw_Patch(drawManager):
         
     def setDrawLabel(self, label):
         drawManager.setDrawLabel(self, label)
+        self.pixelColor = self.activeDrawColor.rgb()
         #TODO: manage qimage-Dict for label.
         
     @staticmethod
@@ -265,7 +267,7 @@ class draw_Patch(drawManager):
                     self.image.setPixel(x,y,pixcol[lbl])
                 else:
                     self.image.setPixel(x,y,0)
-                print QtGui.QColor(pixcol[lbl])
+                #print QtGui.QColor(pixcol[lbl])
         self.imageItem.update()
         
     def canvas_clear(self):
@@ -1001,7 +1003,18 @@ class labelWidget(QtGui.QWidget):
             
             self.labelForImage[newImage].addDrawManager( drawManager ) 
             # Change To Active Label
-            self.labelForImage[newImage].setActiveLabel(self.activeLabel)          
+            self.labelForImage[newImage].setActiveLabel(self.activeLabel)     
+            
+            if self.project.dataMgr[newImage].hasLabels and self.project.dataMgr[newImage].labels != []:
+                labels = self.project.dataMgr[newImage].labels
+                for x in xrange(labels.shape[0]):
+                    for y in xrange(labels.shape[1]):
+                        if labels[x,y] != 0:
+                            # TODO: This is stupid but i have to set the DrawLabel, why??
+                            drawManager.setDrawLabel(labels[x,y])
+                            # Invertion of x and y, because QImage is x,y and Numpy is y,x
+                            labelManager.setLabel((y,x), labels[x,y])
+                        
         
         # Set new active Image    
         self.activeImage = newImage
