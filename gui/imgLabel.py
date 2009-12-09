@@ -999,7 +999,7 @@ class labelWidget(QtGui.QWidget):
             drawManager = draw_Pixel(labelManager, self.canvas)
             # Init colors
             for label, col in self.project.labelColors.items():
-                drawManager.setDrawColor(label, QtGui.QColor.fromRgb(col) )
+                drawManager.setDrawColor(label, col )
             
             self.labelForImage[newImage].addDrawManager( drawManager ) 
             # Change To Active Label

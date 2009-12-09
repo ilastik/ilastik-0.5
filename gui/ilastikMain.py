@@ -297,13 +297,15 @@ class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self)
         # this enables   self.columnPos['File']:
+        self.labelCounter = 2
         self.columnPos = {}
-        self.labelColor = {}
+        self.labelColor = { 1:QtGui.QColor(QtCore.Qt.red) }
         self.parent = parent
         self.fileList = []
         self.thumbList = []        
         self.initDlg()
         self.on_cmbLabelName_currentIndexChanged(0)
+        self.setLabelColorButtonColor(QtGui.QColor(QtCore.Qt.red))
         for i in xrange(self.tableWidget.columnCount()):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         
@@ -316,24 +318,25 @@ class ProjectDlg(QtGui.QDialog):
         self.tableWidget.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.tableWidget.verticalHeader().hide()
         self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
-        self.on_cmbLabelName_currentIndexChanged(0)
+        #self.on_cmbLabelName_currentIndexChanged(0)
         self.show()
         
 
     @QtCore.pyqtSignature("int")
     def on_cmbLabelName_currentIndexChanged(self, nr):
-        nr+=1 # 0 is unlabeled !!
+        nr += 1 # 0 is unlabeled !!
         self.txtLabelName.setText(self.cmbLabelName.currentText())
         #col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
         if not self.labelColor.get(nr,None):
-            self.labelColor[nr] = self.labelColor[1] = QtGui.QColor(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255)).rgb()  # default: red
-        col = QtGui.QColor.fromRgb(self.labelColor[nr])
+            self.labelColor[nr] = QtGui.QColor(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))  # default: red
+        col = self.labelColor[nr]
         self.setLabelColorButtonColor(col)
 
     @QtCore.pyqtSignature("")
     def on_btnAddLabel_clicked(self):
-        self.cmbLabelName.addItem("label")
+        self.cmbLabelName.addItem("Class %d" % self.labelCounter)
         self.cmbLabelName.setCurrentIndex(self.cmbLabelName.count() - 1)
+        self.labelCounter += 1
         #self.on_cmbLabelName_currentIndexChanged( self.cmbLabelName.count()-1 )
         
     def setLabelColorButtonColor(self, col):
@@ -348,7 +351,7 @@ class ProjectDlg(QtGui.QDialog):
     def on_btnLabelColor_clicked(self):
         colordlg = QtGui.QColorDialog()
         col = colordlg.getColor()
-        labelnr = self.cmbLabelName.currentIndex()+1
+        labelnr = self.cmbLabelName.currentIndex() + 1
         self.labelColor[labelnr] = col.rgb()
         self.setLabelColorButtonColor(col)
         
