@@ -1334,8 +1334,8 @@ class OverlayMgr(object):
     
     def showOverlayPixmapByState(self):
         self.clearAll()
-        imageIndex = self.labelWidget.activeImage
-
+        imageIndex = self.labelWidget.activeImage  
+        
         classes = range(self.classCount)
         
         currentOverlay = self.stateList[self.state][imageIndex]
