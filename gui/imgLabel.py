@@ -3,7 +3,7 @@ from PyQt4 import QtCore
 import PyQt4.Qwt5 as qwt
 import sys, random, numpy
 import os
-import qimage2ndarray
+#import qimage2ndarray
 sys.path.append("..")
 from core import labelMgr, activeLearning
 from core.utilities import irange, debug
