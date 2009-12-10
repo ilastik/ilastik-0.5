@@ -284,7 +284,7 @@ void optimizeKernelStep(laSvmSingleKernel<T,Kernel>& svm,int methode)
 }
 
 
-BOOST_PYTHON_MODULE(svm_new)
+BOOST_PYTHON_MODULE(lasvm)
 {
 	import_array();
 	numeric::array::set_module_and_type("numpy", "ndarray");

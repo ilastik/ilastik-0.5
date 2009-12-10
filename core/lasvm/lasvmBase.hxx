@@ -179,7 +179,7 @@ protected:
 	//Border for those vectors, we resample every time
 	double resample_border;
 	//A list of those
-	list<int> always_resample;
+  std::list<int> always_resample;
 	//List of unlearned data
 	vector<int> unlearned_data;
 public:
@@ -209,7 +209,7 @@ protected:
 	vector<int> labels;
 
 	//We keep track of the SV slots that are used. Carefull: this may not be the same as all unused SVs (see finish)
-	list<int> used_svs;
+  std::list<int> used_svs;
 
 	//For the online estimate of the variance...
 	//http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#On-line_algorithm
@@ -279,7 +279,7 @@ template<class T,class RowType>
 void laSvmBase<T,RowType>::getAlphas(vector<double>& ret)
 {
 	ret.clear();
-	list<int>::iterator i;
+  std::list<int>::iterator i;
 	for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
 	{
 		ret.push_back(SVs[*i].alpha);
@@ -289,7 +289,7 @@ template<class T,class RowType>
 void laSvmBase<T,RowType>::getXis(vector<double> &res)
 {
 	res.clear();
-	list<int>::iterator i;
+  std::list<int>::iterator i;
 
 	this->setMinMax_g();
     double b=(min_g+max_g)/2.0;
@@ -307,7 +307,7 @@ void laSvmBase<T,RowType>::getSVs(vector<vector<T> >& ret)
 {
 	ret.clear();
 	vector<T> tmp;
-	list<int>::iterator i;
+  std::list<int>::iterator i;
 	for(i=this->used_svs.begin();i!=used_svs.end();++i)
 	{
 		tmp.clear();
@@ -355,7 +355,7 @@ double laSvmBase<T,RowType>::predictF(const vector<T>& sample)
 {
 	this->setMinMax_g();
     double f=(min_g+max_g)/2.0;
-	list<int>::iterator i;
+    std::list<int>::iterator i;
 	for(i=used_svs.begin();i!=used_svs.end();++i)
 	{
 		assert(!SVs[*i].Unused());
@@ -368,7 +368,7 @@ double laSvmBase<T,RowType>::predictF(const vector<T>& sample)
 template<class T,class RowType>
 double laSvmBase<T,RowType>::getW2()
 {
-	list<int>::iterator i,j;
+  std::list<int>::iterator i,j;
 	double result=0.0;
 	for(i=used_svs.begin();i!=used_svs.end();++i)
 	{
@@ -389,7 +389,7 @@ double laSvmBase<T,RowType>::XiAlphaBound(double rho,bool smooth)
 	//Assumptions here are: K(x,x)=1
 	//Everything can be misclassified for which alpha*(1-min_k)-2*alpha*min(K)+error>=1
 	double result=0;
-	list<int>::iterator i;
+  std::list<int>::iterator i;
 	for(i=used_svs.begin();i!=used_svs.end();++i)
 	{
 		double alpha=fabsf(SVs[*i].alpha);
@@ -543,7 +543,7 @@ void laSvmBase<T,RowType>::removeData(const vector<int> & unique_ids)
 		}
 	}
 	//Recalculate gradients
-	list<int>::iterator iter;
+  std::list<int>::iterator iter;
 	for(iter=used_svs.begin();iter!=used_svs.end();++iter)
 	{
 		ComputeGradient(this->GetKernelRow(*iter),*iter);
@@ -715,7 +715,7 @@ void laSvmBase<T,RowType>::setMinMax_g()
         max_g=-FLT_MAX;
         min_g_index=-1;
         max_g_index=-1;
-        list<int>::iterator i;
+        std::list<int>::iterator i;
         for(i=used_svs.begin();i!=used_svs.end();++i)
         {
             if(SVs[*i].Unused())
@@ -739,7 +739,7 @@ void laSvmBase<T,RowType>::setMinMax_g()
 	/*if(max_g<min_g)
 	{
 		//Search for a SV, it should prevent this ...
-		list<int>::iterator i;
+		std::list<int>::iterator i;
 		cout<<"OK, this means we search for the reason of this ..."<<endl;
 		cout<<"min_g="<<min_g<<endl;
 		cout<<"max_g="<<max_g<<endl;
@@ -775,7 +775,7 @@ void laSvmBase<T,RowType>::cleanSVs()
 {
 	setMinMax_g();
 
-	list<int>::iterator i=used_svs.begin();
+  std::list<int>::iterator i=used_svs.begin();
 	while(i!=used_svs.end())
 	{
 		assert(!SVs[*i].Unused());
@@ -880,7 +880,7 @@ template<class T,class RowType>
 void laSvmBase<T,RowType>::ShrinkUsedSVs()
 {
 	setMinMax_g();
-	list<int>::iterator i=used_svs.begin();
+  std::list<int>::iterator i=used_svs.begin();
 	while(i!=used_svs.end())
 	{
 		assert(!SVs[*i].Unused());
@@ -904,13 +904,13 @@ void laSvmBase<T,RowType>::RestoreUsedSVs()
     int i;
 	vector<bool> already_used;
 	already_used.resize(this->sv_index_to_row.size(),false);
-	for(list<int>::iterator i=used_svs.begin();i!=used_svs.end();++i)
+  for(std::list<int>::iterator i=used_svs.begin();i!=used_svs.end();++i)
 	{
 		assert(!already_used[*i]);
 		already_used[*i]=true;
 	}
     //Restore list
-	list<int> new_used;
+  std::list<int> new_used;
 	for(i=0;i<this->sv_index_to_row.size();++i)
 	{
 		if(!SVs[i].Unused() && already_used[i]==false)
@@ -920,7 +920,7 @@ void laSvmBase<T,RowType>::RestoreUsedSVs()
 		}		
 	}
     //Recalculate gradients
-    list<int>::iterator iter;
+  std::list<int>::iterator iter;
     for(iter=new_used.begin();iter!=new_used.end();++iter)
     {
         ComputeGradient(this->GetKernelRow(*iter),*iter);
@@ -1011,7 +1011,7 @@ void laSvmBase<T,RowType>::choose_vectors(int& imin,int& imax,bool second_order)
 		{
 			assert(SVs[known_index].alpha!=SVs[known_index].cmin);
 		}
-		list<int>::iterator i;
+    std::list<int>::iterator i;
 		for(i=used_svs.begin();i!=used_svs.end();++i)
 		{	
 			assert(!SVs[*i].Unused());
@@ -1150,7 +1150,7 @@ void laSvmBase<T,RowType>::optimize(int& imin,int& imax,bool second_order)
 	//Perform updates
 	SVs[imax].alpha += step;
 	SVs[imin].alpha -= step;
-	list<int>::iterator i;
+  std::list<int>::iterator i;
 
     UpdateGradients(min_row,max_row,step);
     minmax_dirty=true;

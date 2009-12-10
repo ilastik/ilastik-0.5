@@ -149,7 +149,7 @@ public:
     template<class iter1,class iter2>
     inline T compute(const iter1 v1,const iter2 v2,int length);
     template<class iter1,class iter2>
-    inline T computeDerived(const iter1 v1,const iter2 v2,int length,vector<double> &dKernel);
+    inline void computeDerived(const iter1 v1,const iter2 v2,int length,vector<double> &dKernel);
     typedef vector<T> par_type;
     par_type gammas;
     inline void updateKernelPar(const vector<double> &dKernel);
@@ -234,21 +234,22 @@ T KernelGaussMultiParams<T>::compute(const iter1 v1,const iter2 v2,int length)
 
 template<class T>
 template<class iter1,class iter2>
-T KernelGaussMultiParams<T>::computeDerived(const iter1 v1,const iter2 v2,int length,vector<double> &dKernel)
+void KernelGaussMultiParams<T>::computeDerived(const iter1 v1,const iter2 v2,int length,vector<double> &dKernel)
 {
-    T dot[num_parameters];
+    T dot;
     T all_dot=0.0;
     assert(length==num_parameters);
     int i;
     for(i=0;i<num_parameters;++i)
     {
-        dot[i]=(v1[i]-v2[i])*(v1[i]-v2[i]);
-        all_dot+=dot[i]*gammas[i];
+        dot=(v1[i]-v2[i])*(v1[i]-v2[i]);
+        dKernel[i]=-dot*gammas[i]*sigma[i];
+        all_dot+=dot*gammas[i];
     }
     T k=exp(-all_dot);
     for(i=0;i<num_parameters;++i)
     {
-        dKernel[i]=-dot[i]*k*gammas[i]*sigma[i];
+        dKernel[i]*=k;
     }
 }
 

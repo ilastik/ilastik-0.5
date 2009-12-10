@@ -95,7 +95,7 @@ int laSvmSingleKernel<T,RowType>::throwOutsByMostDistant(const vector<vector<T> 
 template<class T,class RowType>
 double laSvmSingleKernel<T,RowType>::ShrinkFactorByPairing(double eta)
 {
-    list<int>::iterator sv_i,sv_ii;
+    std::list<int>::iterator sv_i,sv_ii;
     int pair_count=0;
     for(sv_i=this->used_svs.begin();sv_i!=this->used_svs.end();++sv_i)
     {
@@ -121,7 +121,7 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(vector<double>& res,dou
     double b=(this->min_g+this->max_g)/2.0;
     //Set the size of the output
     res.resize(kernel.num_parameters,0.0);
-    list<int>::iterator i,j;
+    std::list<int>::iterator i,j;
     vector<double> derivatives(kernel.num_parameters,0.0);
     vector<double> dKernel(kernel.num_parameters);
     for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
@@ -307,7 +307,7 @@ void laSvmSingleKernel<T,Kernel>::RecomputeKernel()
     //Invalidate current kernel
     this->InvalidateCache();
     //Update all gradients ... man this takes long I guess
-    list<int>::iterator i;
+    std::list<int>::iterator i;
     for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
     {
         vector<T> &row=this->GetKernelRow(*i);
@@ -330,7 +330,7 @@ void laSvmSingleKernel<T,Kernel>::UpdateRow(vector<T>& row,int sv_index)
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::FillRow(vector<T>& row,int sv_index)
 {
-    list<int>::iterator i;
+  std::list<int>::iterator i;
     assert(!SVs[sv_index].Unused());//Make sure the sv_index vector is set
     for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
     {
@@ -345,7 +345,7 @@ template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::ComputeGradient(const vector<T>& row,const int sv_index)
 {
     SVs[sv_index].g=this->getSVLabel(sv_index);
-    list<int>::iterator i;
+    std::list<int>::iterator i;
     for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
     { 
         SVs[sv_index].g-=SVs[*i].alpha * row[*i];
@@ -355,7 +355,7 @@ void laSvmSingleKernel<T,Kernel>::ComputeGradient(const vector<T>& row,const int
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::UpdateGradients(const vector<T>& min_row,const vector<T>& max_row,const double step)
 {
-    list<int>::iterator i;
+    std::list<int>::iterator i;
     for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
     {
         assert(!SVs[*i].Unused());

@@ -30,9 +30,9 @@ class SVHandler
 {
 protected:
 	//List of unsused slots
-	list<int> unused_svs;    //SV slots not used
-	list<int> unused_rows;   //kernel rows not used
-	list<int> unused_non_svs;//non svs not used
+  std::list<int> unused_svs;    //SV slots not used
+	std::list<int> unused_rows;   //kernel rows not used
+	std::list<int> unused_non_svs;//non svs not used
 	vector<int> sv_index_to_row;//Convert an SV index to an row
 private:
 	int GetSV();
