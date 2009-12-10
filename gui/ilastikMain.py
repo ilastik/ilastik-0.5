@@ -6,7 +6,6 @@
 # p = pstats.Stats('fooprof')
 # p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
-
 import threading 
 import sys
 import numpy
@@ -17,7 +16,7 @@ from gui import ctrlRibbon, imgLabel
 from Queue import Queue as queue
 from collections import deque
 import time
-from core.utilities import irange
+from core.utilities import irange, debug
 
 
 try:
@@ -43,6 +42,7 @@ class MainWindow(QtGui.QMainWindow):
         self.createFeatures()
         
         self.classificationProcess = None
+        self.classificationOnline = None
                 
     def createRibbons(self):                     
       
@@ -66,11 +66,12 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
         
-        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.debug)
+        #self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.debug)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -80,13 +81,7 @@ class MainWindow(QtGui.QMainWindow):
         #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
         
         self.ribbon.setCurrentIndex (0)
-    
-    def debug(self):
-        print "Number of Sceneitems", len(self.labelWidget.canvas.items())
-        from IPython.Shell import IPShellEmbed
-        ipshell = IPShellEmbed()
-        ipshell()
-        
+          
     def newProjectDlg(self):      
         self.projectDlg = ProjectDlg(self)
     
@@ -178,40 +173,30 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
+            
+    def on_classificationOnline(self, state):
+        if state:
+            if not self.classificationOnline:
+                self.classificationOnline = ClassificationOnline(self)
+            self.classificationOnline.start()
+        else:
+            self.classificationOnline.stop()
         
     # TODO: This whole function should NOT be here transfer it DataMgr. 
     def generateTrainingData(self):
-        numpyarrayobject = self.project.dataMgr.dataFeatures[0][0][0]
-        #pi = self.labelWidget.addOverlayPixmap(numpyarrayobject)
-        #pi.setOpacity(0.5)
-        #self.labelWidget.removeOverlayPixmap(pi)
-        
-        #print "using feature dimension of first image."
         trainingMatrices_perDataItem = []
         res_labels = []
         res_names = []
         dataItemNr = 0
         for dataItem in self.project.dataMgr.dataFeatures:
             res_labeledFeatures = []
-            #todo:
-            #if !self.labelWidget.hasLabels(dataItemNr):
-            #    continue
+
+            if not self.labelWidget.labelForImage.get(dataItemNr, None):
+                # No Labels available for that image
+                continue
             
-            if False:
-                # get label-matrix:
-                # hack: special case for 2D: have to get real image dimension.
-                labelmatrix = numpy.ndarray( [dataItem[0][0].shape[0],dataItem[0][0].shape[1]] )
-                # todo: generalize to nD.
-                for pixX in xrange(dataItem[0][0].shape[0]):
-                    #print "generating labelImage: ", pixX, " / ", dataItem[0][0].shape[0]
-                    for pixY in xrange(dataItem[0][0].shape[1]):
-                        labelmatrix[pixX,pixY] = self.labelWidget.getLabel(dataItemNr, [pixY,pixX])
-            # temporary hack that only works for pixel-labels:
-            #    ... ToDo: get label matrix from label-widget. something like that: iw.renderLabelMatrix(shape)
-            if True:
-                if not self.labelWidget.labelForImage.get(dataItemNr, None):
-                    continue
-                labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
+            # Extract labelMatrix
+            labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
             labeled_indices = labelmatrix.nonzero()[0]
             n_labels = labeled_indices.shape[0]
             nFeatures = 0
@@ -243,10 +228,8 @@ class MainWindow(QtGui.QMainWindow):
         self.project.trainingLabels = numpy.concatenate(res_labels)
         self.project.trainingFeatureNames = res_names
         
-        #print "training data has been generated."
-        #print trainingMatrix
-        print trainingMatrix.shape
-        print self.project.trainingLabels.shape
+        debug(trainingMatrix.shape)
+        debug(self.project.trainingLabels.shape)
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -363,7 +346,6 @@ class ProjectDlg(QtGui.QDialog):
         self.cmbLabelName.clear()
         self.labelColor = project.labelColors
         for name in project.labelNames:
-            print name.__class__
             self.cmbLabelName.addItem(name)
 
         self.update()
@@ -423,7 +405,6 @@ class ProjectDlg(QtGui.QDialog):
     
     def on_removeFile_clicked(self):
         row = self.tableWidget.currentRow()
-        print row
         
         
     def initThumbnail(self, file_name):
@@ -589,7 +570,6 @@ class FeatureComputation(object):
         self.myFeatureProgressBar.setValue(val)
         if not self.parent.project.featureMgr.featureProcess.is_alive():
             self.myTimer.stop()
-            print "Finished"
             self.terminateFeatureProgressBar()
             self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
             
@@ -598,13 +578,11 @@ class FeatureComputation(object):
         self.parent.statusBar().hide()
         
     def featureShow(self, item):
-        print "egg"
-        print item
+        pass
 
 class ClassificationTrain(object):
     def __init__(self, parent):
         self.parent = parent
-        print "Classification Train"
         self.start()
         
     def start(self):               
@@ -620,7 +598,6 @@ class ClassificationTrain(object):
         featLabelTupel.put((F,L))
        
         self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
-        print "Before Thread start"
         self.classificationProcess.start()
         self.classificationTimer.start(200) 
 
@@ -638,11 +615,6 @@ class ClassificationTrain(object):
         self.myClassificationProgressBar.setValue(val)
         if not self.classificationProcess.is_alive():
             self.classificationTimer.stop()
-            print "Training Finished"
-            #self.project.trainingMatrix
-            #self.project.trainingLabels
-            #self.project.trainingFeatureNames
-            
             self.classificationProcess.join()
             self.finalize()
             self.terminateClassificationProgressBar()
@@ -656,8 +628,6 @@ class ClassificationTrain(object):
 
 class ClassificationInteractive(object):
     def __init__(self, parent):
-        print "Classification Interactive"
-        
         self.parent = parent
         self.stopped = False
         self.trainingQueue = deque(maxlen=1)
@@ -744,11 +714,18 @@ class ClassificationInteractive(object):
         
         self.parent.project.dataMgr.prediction = map(lambda x:x.pop(), self.classificationInteractive.resultList)
         
+class ClassificationOnline(object):
+    def __init__(self, parent):
+        print "Online Classification initialized"
+    def start(self):
+        print "Online Classification started"
+    def stop(self):
+        print "Online Classification stopped"
+        
     
 class ClassificationPredict(object):
     def __init__(self, parent):
         self.parent = parent
-        print "Classification Predict"
         self.start()
     
     def start(self):               

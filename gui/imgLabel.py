@@ -6,10 +6,10 @@ import os
 import qimage2ndarray
 sys.path.append("..")
 from core import labelMgr, activeLearning
-from core.utilities import irange
+from core.utilities import irange, debug
 from gui.iconMgr import ilastikIcons
 try:
-    from vigra import vigranumpycmodule as vm
+    from vigra import vigranumpycmodule as vm, arraytypes as at
 except ImportError:
     try:
         import vigranumpycmodule as vm
@@ -267,7 +267,6 @@ class draw_Patch(drawManager):
                     self.image.setPixel(x,y,pixcol[lbl])
                 else:
                     self.image.setPixel(x,y,0)
-                #print QtGui.QColor(pixcol[lbl])
         self.imageItem.update()
         
     def canvas_clear(self):
@@ -294,7 +293,6 @@ class draw_Patch(drawManager):
         if pos[0] > -1 and pos[1] > -1 and pos[0] < self.size[0] and pos[1] < self.size[1]:
             self.image.setPixel(pos[0], pos[1], self.pixelColor)
             tmp =  QtGui.QColor(self.pixelColor)
-            # print "Alpha %d, Red: %d, Green %d, Blue %d" % (tmp.alpha(), tmp.red(), tmp.green(), tmp.blue(),)
             self.imageItem.update()
     
     def DoDraw(self, pos):
@@ -436,7 +434,7 @@ class displayLabel:
             self.undolist = None
 
     def __load(self, hash):
-        print ""
+        pass
         
     def addUndoList(self, undolist):
         self.undolist = undolist
@@ -543,7 +541,7 @@ class displayImage:
         return self.filename
     
     def addLabelItem(self, item, classnr):
-        print ""
+        pass
         
         
 
@@ -638,7 +636,6 @@ class cloneViewWidget(QtGui.QDockWidget):
         self.view.setSceneRect(self.sceneToDraw.sceneRect())
         
     def saveLayout(self, storage):
-        print "save cloneView"
         oAttributeList = []
         oAttributeValueList = []
 
@@ -851,7 +848,6 @@ class labelWidget(QtGui.QWidget):
         self.OverlayMgr.setOverlayState('Uncertainty')
         
     def saveLayout(self, storage):
-        print "save labelWidget"
         oAttributeList = []
         oAttributeValueList = []
 
@@ -912,7 +908,6 @@ class labelWidget(QtGui.QWidget):
         pass 
     
     def loadChannelList(self, imageIndex=0):
-        print "loadChannelList for image ", imageIndex
         self.cmbChannelList.clear()
         self.cmbChannelList.addItems(self.project.dataMgr[imageIndex].channelDescription)
         self.cmbChannelList.setEnabled(True)
@@ -925,13 +920,11 @@ class labelWidget(QtGui.QWidget):
         self.activeChannel = -1
         
     def loadImageList(self):
-        #print "Call to load loadImgeList"
         self.cmbImageList.clear()
         imagenames = [os.path.basename(item.fileName) for item in self.project.dataMgr.dataItems]
         self.cmbImageList.addItems(imagenames)
         
     def loadLabelList(self):
-        print "Call to load loadLabelList"
         self.cmbClassList.clear()
         self.cmbClassList.addItems(self.project.labelNames)
         self.contextMenuLabel = contextMenuLabel(self.project.labelNames, self.project.labelColors, self.canvas)
@@ -948,7 +941,6 @@ class labelWidget(QtGui.QWidget):
     @QtCore.pyqtSignature("int")
     def changeImage(self, newImage):
         # Check Call from ComboBox reset with newImage == -1
-        print "Change Image to ", newImage
         if newImage < 0:
             return
         # Check Call without Project
@@ -968,13 +960,14 @@ class labelWidget(QtGui.QWidget):
         
         # Set new Image Display and save it in self.pixmapitem
         if self.activeChannel < 0:
-            self.img = qimage2ndarray.array2qimage(self.project.dataMgr[newImage].data)
+#            self.img = qimage2ndarray.array2qimage(self.project.dataMgr[newImage].data)
+            self.img = self.project.dataMgr[newImage].data.qimage()
         else:
             tmpImg = self.project.dataMgr[newImage].data[:,:, self.activeChannel]
             if tmpImg.max() > 0:
                 tmpImg = (tmpImg - tmpImg.min()) / tmpImg.max()
             tmpImg = (tmpImg*255).astype(numpy.uint8)
-            self.img = qimage2ndarray.array2qimage(tmpImg)
+            self.img = at.ScalarImage(tmpImg).qimage()
            
             
         pm = QtGui.QPixmap.fromImage(self.img)
@@ -987,13 +980,11 @@ class labelWidget(QtGui.QWidget):
         
         # If it is already initialized, just paint it
         if self.labelForImage.get(newImage, None):
-            print "Reuse Label For Image"
             self.labelForImage[newImage].canvas_paint()
             self.labelForImage[newImage].setActiveLabel(self.activeLabel)
             
         # Init Label -> Should be called once per image when changing to it
         else:
-            print "Init Label For Image"
             self.labelForImage[newImage] = labelingForOneImage()
             labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
             drawManager = draw_Pixel(labelManager, self.canvas)
@@ -1369,7 +1360,8 @@ class OverlayMgr(object):
         if type == 'continious':
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
-            image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
+            #image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
+            image = at.ScalarImage(rawImage).qimage(normalize = True)
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())
@@ -1378,7 +1370,8 @@ class OverlayMgr(object):
         if type == 'discrete':
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage(rawImage.astype(numpy.uint8))
-            image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
+            #image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
+            image = at.ScalarImage(rawImage).qimage(normalize = True)
             classColor = self.classColors
             for i in range(rawImage.max()+1):
                 classColor = QtGui.QColor(self.classColors[i+1])

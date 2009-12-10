@@ -173,8 +173,8 @@ class DataImpex(object):
     
     @staticmethod
     def loadImageData(fileName):
-        data = numpy.array(vm.readImage(fileName))
-        data = data.swapaxes(0,1)
+        data = vm.readImage(fileName)
+        #data = data.swapaxes(0,1)
         return data
         
     @staticmethod

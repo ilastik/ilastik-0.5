@@ -85,8 +85,8 @@ class label_Patch(label_Base):
         #label_Base.setLabel(self, pos, label)
         rad = self.rad # TODO: hack.... add settings-class
         t = rad**2
-        for x in xrange(pos[0]-rad, pos[0]+rad):
-            for y in xrange(pos[1]-rad, pos[1]+rad): 
+        for x in xrange(int(pos[0]-rad), int(pos[0]+rad)):
+            for y in xrange(int(pos[1]-rad), int(pos[1]+rad)): 
                 if (x-pos[0])**2 + (y-pos[1])**2 < t:
                     if x > -1 and y > -1 and x < self.size[0] and y < self.size[1]:
                         self.lastPatchNr = self.getPatchNrFromPosition([x,y])
