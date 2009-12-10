@@ -10,6 +10,7 @@ from collections import deque
 from PyQt4 import QtCore
 sys.path.append('..')
 from core.utilities import irange
+from core import onlineClassifcator
 
 import numpy
 
@@ -298,3 +299,45 @@ class ClassifierInteractiveThread(threading.Thread):
             self.result[predictIndex].append(image)
             interactiveMessagePrint("appending new prediction of image %d" % predictIndex)
             self.resultLock.release()
+
+class ClassifierOnlineThread(threading.Thread):
+    def __init__(self, features, labels, ids, predictionList, predictionUpdated):
+        threading.Thread.__init__(self)
+        self.commandQueue = queue()
+        self.stopped = False
+        self.classifier = onlineClassifcator.OnlineLaSvm()
+        self.classifier.start(features, labels, ids)
+        
+        self.predictionList = predictionList
+        self.activeImageIndex = 0
+        
+        self.predictions = [deque(maxlen=1) for k in range(len(predictionList))]
+        self.predictionUpdated = predictionUpdated
+    
+    def run(self):
+        while not self.stopped:
+            try:
+                features, labels, ids, action = self.commandQueue.get(True, 0.5)
+            except QueueEmpty as empty:
+                action = 'improve'
+
+            if action == 'stop':
+                break
+            elif action == 'unlearn':
+                self.classifier.removeData(ids)
+            elif action == 'learn':
+                self.classifier.addData(features, labels, ids)
+                self.classifier.fastLearn(True)
+            elif action == 'improve':
+                self.classifier.improveSolution()
+                
+            if self.trainingQueue.empty():
+                result = self.classifier.predict(self.predictionList[self.activeImageIndex])
+                self.predictions[self.activeImageIndex].append(result)
+                self.predictionUpdated()
+            
+            
+        
+    
+    
+

@@ -162,6 +162,8 @@ class DataImpex(object):
             # Data sets below root are asumed to be data, labels and featureDescriptor
             data = h5file.root.data.read()
             labels = h5file.root.labels.read()
+            data = data.swapaxes(1,0)
+            labels = labels.swapaxes(1,0)
             ChannelDescription = h5file.root.featureDescriptor.read()
             ChannelDescription = map(str,ChannelDescription[:,0])
         except Exception as e:

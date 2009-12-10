@@ -11,7 +11,7 @@ import sys
 import numpy
 sys.path.append("..")
 from PyQt4 import QtCore, QtGui, uic
-from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning
+from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from gui import ctrlRibbon, imgLabel
 from Queue import Queue as queue
 from collections import deque
@@ -717,10 +717,41 @@ class ClassificationInteractive(object):
 class ClassificationOnline(object):
     def __init__(self, parent):
         print "Online Classification initialized"
+        self.parent = parent
+        self.parent.generateTrainingData()
+        
+        features = self.parent.project.trainingMatrix
+        labels = self.parent.project.trainingLabels  
+        predictionList, dummy = self.parent.project.dataMgr.buildFeatureMatrix()
+        ids = numpy.zeros( (len(labels),) )
+        self.OnlineThread = classificationMgr.ClassifierOnlineThread(features, labels, ids, predictionList, self.predictionUpdatedCallBack)
+        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingData)
+        
     def start(self):
         print "Online Classification started"
+        self.OnlineThread.start()
+        
     def stop(self):
         print "Online Classification stopped"
+        self.OnlineThread.stopped = True
+        self.OnlineThread.commandQueue.put((None,None,None,'stop'))
+        self.OnlineThread.joint()
+        self.OnlineThread = None
+    
+    def predictionUpdatedCallBack(self):
+        #self.labelWidget.emit(QtCore.SIGNAL('newLabelsPending'))
+        pass
+    
+    def updateTrainingData(self):
+        
+        self.parent.generateTrainingData()
+        features = self.parent.project.trainingMatrix
+        labels = self.parent.project.trainingLabels 
+        
+        self.OnlineThread.commandQueue.put((features, labels, None,'learn'))
+        
+        
+        
         
     
 class ClassificationPredict(object):

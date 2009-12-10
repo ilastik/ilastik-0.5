@@ -1004,7 +1004,7 @@ class labelWidget(QtGui.QWidget):
                             # TODO: This is stupid but i have to set the DrawLabel, why??
                             drawManager.setDrawLabel(labels[x,y])
                             # Invertion of x and y, because QImage is x,y and Numpy is y,x
-                            labelManager.setLabel((y,x), labels[x,y])
+                            labelManager.setLabel((x,y), labels[x,y])
                         
         
         # Set new active Image    
@@ -1371,7 +1371,7 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage(rawImage.astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
-            image = at.ScalarImage(rawImage).qimage(normalize = True)
+            image = at.ScalarImage(rawImage).qimage(normalize = False)
             classColor = self.classColors
             for i in range(rawImage.max()+1):
                 classColor = QtGui.QColor(self.classColors[i+1])
