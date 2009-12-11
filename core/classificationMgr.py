@@ -319,7 +319,7 @@ class ClassifierOnlineThread(threading.Thread):
             try:
                 features, labels, ids, action = self.commandQueue.get(True, 0.5)
             except QueueEmpty as empty:
-                action = 'noop'
+                action = 'improve'
 
             if action == 'stop':
                 break

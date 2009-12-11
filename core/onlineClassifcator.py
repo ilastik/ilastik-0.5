@@ -27,16 +27,17 @@ class OnlineLaSvm(OnlineClassifier):
         # TODO Cast to float64!
         features = features.astype(numpy.float64)
         labels = labels.astype(numpy.float64)
-        labels=labels*2-3;
-        self.svm=lasvm.createLaSvmMultiPar(1.0/features.shape[1],features.shape[1],1.0,0.001,self.cacheSize,True)
+        self.svm=lasvm.createLaSvmMultiPar(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
         self.addData(features,labels,ids)
         self.svm.enableResampleBorder(0.1)
+        self.fastLearn()
 
     def addData(self,features,labels,ids):
         # TODO Cast to float64!
-        features = features.astype(numpy.float64)
-        labels = labels.astype(numpy.float64)
+        features = features
+        labels = labels
         labels=labels*2-3;
+        print numpy.unique(labels)
         if(self.svm==None):
             raise RuntimeError("run \"start\" before addData")
         self.svm.addData(features,labels,ids)
@@ -49,18 +50,25 @@ class OnlineLaSvm(OnlineClassifier):
     def fastLearn(self):
         if self.svm==None:
             raise RuntimeError("run \"start\" first")
+        print "Begin fast learn"
         self.svm.fastLearn(2,1,True)
         self.svm.finish(True)
+        print "End fast learn"
 
     def improveSolution(self):
         if self.svm==None:
             raise RuntimeError("run \"start\" first")
+        print "Begin improving solution"
         self.svm.optimizeKernelStep(0)
+        print "Done improving solution"
 
     def predict(self,features):
         # TODO Cast to float64!
+        print "Begin predict"
         features = features.astype(numpy.float64)
-        return self.svm.predict(features)
+        pred=self.svm.predict(features)
+        print "End predict"
+        return pred
 
 
 

@@ -53,10 +53,10 @@ void add_data(laSvmSingleKernel<T,Kernel>& svm,
 		
 	}
 	for(i=0;i<num_samples;++i)
-		want_labels.push_back(extract<double>(labels[make_tuple(i)]));
+		want_labels.push_back(extract<T>(labels[make_tuple(i)]));
 	std::cerr<<"Begining with ids"<<std::endl;
 	for(i=0;i<num_samples;++i)
-		want_ids.push_back((int)extract<double>(unique_ids[make_tuple(i)]));
+		want_ids.push_back((int)extract<T>(unique_ids[make_tuple(i)]));
 	svm.addData(want_samples,want_labels,want_ids);
 }
 

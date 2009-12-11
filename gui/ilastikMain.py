@@ -723,6 +723,8 @@ class ClassificationOnline(object):
         
         features = self.parent.project.trainingMatrix
         labels = self.parent.project.trainingLabels  
+        
+        self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
         predictionList, dummy = self.parent.project.dataMgr.buildFeatureMatrix()
         ids = numpy.zeros( (len(labels),) )
         self.OnlineThread = classificationMgr.ClassifierOnlineThread(features, labels, ids, predictionList, self.predictionUpdatedCallBack)
@@ -741,19 +743,33 @@ class ClassificationOnline(object):
     
     def predictionUpdatedCallBack(self):
         #self.labelWidget.emit(QtCore.SIGNAL('newLabelsPending'))
+        new_pred=self.OnlineThread.predictions[0].pop()
+        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(irange(new_pred))
         pass
     
     def updateTrainingData(self):
-        
-        self.parent.generateTrainingData()
-        features = self.parent.project.trainingMatrix
-        labels = self.parent.project.trainingLabels 
-        ids = numpy.zeros( (len(labels),) )
-        
-        self.OnlineThread.commandQueue.put((features, labels, ids, 'learn'))
-        
-        
-        
+        Features=self.parent.project.dataMgr.buildFeatureMatrix()
+        queue=self.parent.labelWidget.labelForImage[0].DrawManagers[0].BrushQueues['onlineLearning']
+
+        while(True):
+            try:
+                step=queue.pop()
+            except IndexError:
+                break
+            #decompose step, start by removing data
+            remove_data=[]
+
+            for i in xrange(len(step.oldValues)):
+                if step.oldValues[i]!=0 or step.isUndo:
+                    remove_data.append(step.positions[i])
+            self.OnlineThread.commandQueue.put((None,None,remove_data,'remove'))
+            #add new data
+            add_indexes=[]
+            for i in xrange(len(step.oldValues)):
+                if (not step.isUndo and step.newLabel!=0) or (step.isUndo and step.oldValues[i]!=0): 
+                    add_indexes.append(step.positions[i])
+            #append it
+            self.OnlineThread.commandQueue.put((features[add_indexes,:],labels[add_indexes],numpy.array(add_indexes).astype(float32)))
         
     
 class ClassificationPredict(object):
