@@ -152,6 +152,13 @@ class DataMgr():
                 print "generate feature matrix: nFeatures don't match for data item nr ", dataItemNr
             dataItemNr+=1
         return (self.featureMatrixList, self.featureMatrixList_DataItemIndices)
+    
+    def export2Hdf5(self, fileName):
+        self.buildFeatureMatrix()
+        for k in featureMatrixList:
+            pass
+            #DataImpex.exportFeatureLabel2Hdf5(features, labels, fileName, h5group):
+        
 
 class DataImpex(object):
     @staticmethod
@@ -178,7 +185,58 @@ class DataImpex(object):
         data = vm.readImage(fileName)
         #data = data.swapaxes(0,1)
         return data
+    
+    @staticmethod    
+    def _exportFeatureLabel2Hdf5(features, labels, h5file, h5group):
+        try:
+            h5group = h5file.createGroup(h5file.root, h5group, 'Some Title')
+        except NodeError as ne:
+            print ne
+            print "_exportFeatureLabel2Hdf5: Overwriting"
+            h5file.removeNode(h5file.root, h5group, recursive=True)
+            h5group = h5file.createGroup(h5file.root, h5group, 'Some Title')
         
+        cnt = 0
+        for key in features:
+            val = features[key]    
+            tmp = h5file.createArray(h5group, key, val, "Description")
+            
+            tmp._v_attrs.order = cnt
+            tmp._v_attrs.type= 'INPUT'
+            tmp._v_attrs.scale = 'ORDINAL'
+            tmp._v_attrs.domain = 'REAL'
+            tmp._v_attrs.dimension = 2
+            tmp._v_attrs.missing_label = 0
+            cnt += 1
+        
+        for key in labels:
+            val = labels[key]
+                
+            tmp = h5file.createArray(h5group, key, val, "Description")
+            
+            tmp._v_attrs.order = cnt
+            tmp._v_attrs.type= 'OUTPUT'
+            tmp._v_attrs.scale = 'NOMINAL'
+            tmp._v_attrs.domain = numpy.array(range(val.max()+1))
+            tmp._v_attrs.dimension = 2
+            tmp._v_attrs.missing_label = 0
+            cnt += 1    
+            
+    @staticmethod
+    def exportFeatureLabel2Hdf5(features, labels, hFilename, h5group):
+        if os.path.isfile(hFilename):
+            mode = 'a'
+        else:
+            mode = 'w'
+        h5file = openFile(hFilename, mode = mode, title = "Ilastik File Version")
+        
+        try:
+            DataImpex._exportFeatureLabel2Hdf5(features, labels, h5file, h5group)
+        except Exception as e:
+            print e
+        finally:
+            h5file.close() 
+    
     @staticmethod
     def checkForLabels(fileName):
         fileName = str(fileName)

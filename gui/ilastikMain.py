@@ -72,7 +72,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
         
         
-        #self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.debug)
+        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
@@ -206,31 +206,34 @@ class MainWindow(QtGui.QMainWindow):
                 n = 1   # n: number of feature-values per pixel
                 if featureImage.shape.__len__() > 2:
                     n = featureImage.shape[2]
-                if n<=1:
-                    res_labeledFeatures.append( featureImage.flat[labeled_indices].reshape(1,n_labels) )
+                if n <= 1:
+                    res_labeledFeatures.append(featureImage.flat[labeled_indices].reshape(1, n_labels))
                     if dataItemNr == 0:
-                        res_names.append( featureString )
+                        res_names.append(featureString)
                 else:
                     for featureDim in xrange(n):
-                        res_labeledFeatures.append( featureImage[:,:,featureDim].flat[labeled_indices].reshape(1,n_labels ) )
+                        res_labeledFeatures.append(featureImage[:, :, featureDim].flat[labeled_indices].reshape(1, n_labels))
                         if dataItemNr == 0:
-                            res_names.append( featureString + "_%i" %(featureDim))
-                nFeatures+=1
-            if (dataItemNr==0):
+                            res_names.append(featureString + "_%i" % (featureDim))
+                nFeatures += 1
+            if (dataItemNr == 0):
                 nFeatures_ofFirstImage = nFeatures
             if nFeatures == nFeatures_ofFirstImage:
-                trainingMatrices_perDataItem.append( numpy.concatenate( res_labeledFeatures).T )
+                trainingMatrices_perDataItem.append(numpy.concatenate(res_labeledFeatures).T)
                 res_labels.append(labelmatrix[labeled_indices])
             else:
                 print "feature dimensions don't match (maybe #channels differ?). Skipping image."
-            dataItemNr+=1
-        trainingMatrix = numpy.concatenate( trainingMatrices_perDataItem )
+            dataItemNr += 1
+        trainingMatrix = numpy.concatenate(trainingMatrices_perDataItem)
         self.project.trainingMatrix = trainingMatrix
         self.project.trainingLabels = numpy.concatenate(res_labels)
         self.project.trainingFeatureNames = res_names
         
         debug(trainingMatrix.shape)
         debug(self.project.trainingLabels.shape)
+    
+    def export2Hdf5(self):
+        self.project.dataMgr.export2Hdf5('c:/test.h5')
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -266,8 +269,8 @@ class ProjectDlg(QtGui.QDialog):
         nr += 1 # 0 is unlabeled !!
         self.txtLabelName.setText(self.cmbLabelName.currentText())
         #col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
-        if not self.labelColor.get(nr,None):
-            self.labelColor[nr] = QtGui.QColor(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))  # default: red
+        if not self.labelColor.get(nr, None):
+            self.labelColor[nr] = QtGui.QColor(numpy.random.randint(255), numpy.random.randint(255), numpy.random.randint(255))  # default: red
         col = self.labelColor[nr]
         self.setLabelColorButtonColor(col)
 
@@ -415,7 +418,7 @@ class ProjectDlg(QtGui.QDialog):
         self.thumbnailImage.setPixmap(self.thumbList[-1])
                     
     def updateThumbnail(self, row=0, col=0):
-        self.thumbnailImage.setPixmap(self.thumbList[-row-1]) 
+        self.thumbnailImage.setPixmap(self.thumbList[-row - 1]) 
     
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):
@@ -454,7 +457,7 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem.projects.append(self.parent.project)
         
-        dataItemList.sort(lambda x,y: cmp(x.fileName, y.fileName))    
+        dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
         self.parent.project.dataMgr.setDataList(dataItemList) 
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
@@ -502,7 +505,7 @@ class FeatureDlg(QtGui.QDialog):
                 item = QtGui.QTableWidgetItem()
                 if featureMgr.ilastikFeatureGroups.selection[r][c]:
                     item.setIcon(QtGui.QIcon(self.parent.iconPath + "categories/preferences-system.png"))
-                self.featureTable.setItem(r,c,item)
+                self.featureTable.setItem(r, c, item)
         self.setStyleSheet("selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0.5, y2: 0.5, stop: 0 #BBBBDD, stop: 1 white)")
         self.show()
     
@@ -596,7 +599,7 @@ class ClassificationTrain(object):
         F = self.parent.project.trainingMatrix
         L = self.parent.project.trainingLabels
         featLabelTupel = queue()
-        featLabelTupel.put((F,L))
+        featLabelTupel.put((F, L))
        
         self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
         self.classificationProcess.start()
@@ -648,7 +651,7 @@ class ClassificationInteractive(object):
         F = self.parent.project.trainingMatrix
         L = self.parent.project.trainingLabels   
 
-        self.trainingQueue.append((F,L))
+        self.trainingQueue.append((F, L))
 
     def updateLabelWidget(self):  
         predictIndex = self.parent.labelWidget.activeImage
@@ -661,7 +664,7 @@ class ClassificationInteractive(object):
         viewPredictions = {}
         for i, predict in irange(self.classificationInteractive.result):
             try:
-                viewPredictions[i]=predict.pop()
+                viewPredictions[i] = predict.pop()
             except IndexError:
                 pass
 
@@ -686,15 +689,15 @@ class ClassificationInteractive(object):
         F = self.parent.project.trainingMatrix
         L = self.parent.project.trainingLabels
         
-        self.trainingQueue.append((F,L))
+        self.trainingQueue.append((F, L))
         
         (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
         
         
         numberOfClasses = len(self.parent.project.labelNames)
-        numberOfClassifiers=6
-        treeCount=6
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount )
+        numberOfClassifiers = 6
+        treeCount = 6
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount)
         self.initInteractiveProgressBar()
                
         self.classificationInteractive.start()
@@ -726,7 +729,7 @@ class ClassificationOnline(object):
         
         self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
         predictionList, dummy = self.parent.project.dataMgr.buildFeatureMatrix()
-        ids = numpy.zeros( (len(labels),) )
+        ids = numpy.zeros((len(labels),))
         self.OnlineThread = classificationMgr.ClassifierOnlineThread(features, labels, ids, predictionList, self.predictionUpdatedCallBack)
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingData)
         
@@ -737,19 +740,19 @@ class ClassificationOnline(object):
     def stop(self):
         print "Online Classification stopped"
         self.OnlineThread.stopped = True
-        self.OnlineThread.commandQueue.put((None,None,None,'stop'))
+        self.OnlineThread.commandQueue.put((None, None, None, 'stop'))
         self.OnlineThread.join()
         self.OnlineThread = None
     
     def predictionUpdatedCallBack(self):
         #self.labelWidget.emit(QtCore.SIGNAL('newLabelsPending'))
-        new_pred=self.OnlineThread.predictions[0].pop()
-        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(irange(new_pred))
-        pass
+        new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
+        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(dict(irange([new_pred])))
+        
     
     def updateTrainingData(self):
         Features=self.parent.project.dataMgr.buildFeatureMatrix()
-        queue=self.parent.labelWidget.labelForImage[0].DrawManagers[0].BrushQueues['onlineLearning']
+        queue=self.parent.labelWidget.labelForImage[self.parent.labelWidget.activeImage].DrawManagers[0].BrushQueues['onlineLearning']
 
         while(True):
             try:
