@@ -6,7 +6,7 @@ import os
 import tables
 
 try:
-    from vigra import vigranumpycmodule as vm
+    from vigra import vigranumpycmodule as vm, arraytypes as at
 except ImportError:
     try:
         import vigranumpycmodule as vm
@@ -163,7 +163,7 @@ class DataImpex(object):
             data = h5file.root.data.read()
             labels = h5file.root.labels.read()
             data = data.swapaxes(1,0)
-            labels = labels.swapaxes(1,0)
+            labels = at.ScalarImage(labels.T)
             ChannelDescription = h5file.root.featureDescriptor.read()
             ChannelDescription = map(str,ChannelDescription[:,0])
         except Exception as e:

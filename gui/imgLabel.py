@@ -4,12 +4,12 @@ import PyQt4.Qwt5 as qwt
 import sys, random, numpy
 import os
 from collections import deque
-#import qimage2ndarray
 sys.path.append("..")
 from core import labelMgr, activeLearning
 from core.utilities import irange, debug
 from gui.iconMgr import ilastikIcons
 import time
+
 try:
     from vigra import vigranumpycmodule as vm, arraytypes as at
 except ImportError:
@@ -61,7 +61,7 @@ class labelingForOneImage:
         # todo: what, if different label-types (e.g. pixel, geom. objects..) are contradictory?
         value = 0
         for dmngr in self.DrawManagers:
-                value = dmngr.labelmngr.getLabel(pos)
+            value = dmngr.labelmngr.getLabel(pos)
         return value
     
     def setCanvas(self, canvas):
@@ -100,7 +100,7 @@ class labelingForOneImage:
 
 class drawManager:
     #todo: manage draw-data (topLevelItems, Pixmaps) in a dictionary: seperate labeltypes to make changing [opacity, color, ...] easy.    
-    def __init__(self, labelmngr, canvas):
+    def __init__(self, labelmngr, canvas, imageIndex=0):
         self.classId = drawManagerID.IDdrawManager
         self.labelmngr = labelmngr
         self.canvas = canvas
@@ -112,6 +112,7 @@ class drawManager:
         self.activeDrawColor = QtGui.QColor(255,128,66)
         self.drawOpacity = 1;
         
+        self.imageIndex = imageIndex 
         self.BrushQueues = {}
         self.createBrushQueue('undo')
 
@@ -165,8 +166,7 @@ class drawManager:
 
     def InitDraw(self, pos):
         print "InitDraw"
-        #TODO ImageIndex
-        self.labelmngr.currentBrushQueueEntry = labelMgr.LabelBrushQueueEntry(self.drawLabel, 0)
+        self.labelmngr.currentBrushQueueEntry = labelMgr.LabelBrushQueueEntry(self.drawLabel, self.imageIndex)
         
     
     def DoDraw(self, pos):
@@ -190,8 +190,8 @@ class drawManager:
         
 
 class draw_geomObject(drawManager):
-    def __init__(self, labelmngr, canvas):
-        drawManager.__init__(self, labelmngr, canvas)
+    def __init__(self, labelmngr, canvas, imageIndex):
+        drawManager.__init__(self, labelmngr, canvas, imageIndex)
         self.classId = drawManagerID.IDdraw_geomObject
         self.topLevelItems = []
         self.topLevelItems_dict = {}
@@ -247,8 +247,8 @@ class draw_Ellipse(draw_geomObject):
       
 
 class draw_Patch(drawManager):
-    def __init__(self, labelmngr, canvas):
-        drawManager.__init__(self, labelmngr, canvas)
+    def __init__(self, labelmngr, canvas, imageIndex):
+        drawManager.__init__(self, labelmngr, canvas, imageIndex)
         self.classId = drawManagerID.IDdraw_Patch
         
         # Get Size of the labelOverlay, = size of rawimage
@@ -337,8 +337,8 @@ class draw_Patch(drawManager):
         drawManager.EndDraw(self, pos)
         
 class draw_Pixel(draw_Patch):
-    def __init__(self, labelmngr, canvas):
-        draw_Patch.__init__(self, labelmngr, canvas)
+    def __init__(self, labelmngr, canvas, imageIndex):
+        draw_Patch.__init__(self, labelmngr, canvas, imageIndex)
         self.classId = drawManagerID.IDdraw_Pixel
 
 class drawManagerID:
@@ -1019,7 +1019,7 @@ class labelWidget(QtGui.QWidget):
         else:
             self.labelForImage[newImage] = labelingForOneImage()
             labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
-            drawManager = draw_Pixel(labelManager, self.canvas)
+            drawManager = draw_Pixel(labelManager, self.canvas, newImage)
             # Init colors
             for label, col in self.project.labelColors.items():
                 drawManager.setDrawColor(label, col )
@@ -1028,16 +1028,17 @@ class labelWidget(QtGui.QWidget):
             # Change To Active Label
             self.labelForImage[newImage].setActiveLabel(self.activeLabel)     
             
-            if self.project.dataMgr[newImage].hasLabels and self.project.dataMgr[newImage].labels != []:
+            if self.project.dataMgr[newImage].hasLabels:
                 labels = self.project.dataMgr[newImage].labels
-                for x in xrange(labels.shape[0]):
-                    for y in xrange(labels.shape[1]):
-                        if labels[x,y] != 0:
-                            # TODO: This is stupid but i have to set the DrawLabel, why??
-                            drawManager.setDrawLabel(labels[x,y])
-                            # Invertion of x and y, because QImage is x,y and Numpy is y,x
-                            labelManager.setLabel((x,y), labels[x,y])
-                        
+#                for x in xrange(labels.shape[0]):
+#                    for y in xrange(labels.shape[1]):
+#                        if labels[x,y] != 0:
+#                            # TODO: This is stupid but i have to set the DrawLabel, why??
+#                            drawManager.setDrawLabel(labels[x,y])
+#                            # Invertion of x and y, because QImage is x,y and Numpy is y,x
+#                            labelManager.setLabel((x,y), labels[x,y])
+                labelManager.labelArray = labels.flatten()
+                drawManager.repaint()
         
         # Set new active Image    
         self.activeImage = newImage
