@@ -1,5 +1,6 @@
 from classificationMgr import *
 import lasvm
+import numpy
 
 class OnlineClassifier():
     def __init__(self):
@@ -23,12 +24,19 @@ class OnlineLaSvm(OnlineClassifier):
         self.svm=None
 
     def start(self,features,labels,ids):
-        labels=labels*2-1;
+        # TODO Cast to float64!
+        features = features.astype(numpy.float64)
+        labels = labels.astype(numpy.float64)
+        labels=labels*2-3;
         self.svm=lasvm.createLaSvmMultiPar(1.0/features.shape[1],features.shape[1],1.0,0.001,self.cacheSize,True)
         self.addData(features,labels,ids)
         self.svm.enableResampleBorder(0.1)
 
     def addData(self,features,labels,ids):
+        # TODO Cast to float64!
+        features = features.astype(numpy.float64)
+        labels = labels.astype(numpy.float64)
+        labels=labels*2-3;
         if(self.svm==None):
             raise RuntimeError("run \"start\" before addData")
         self.svm.addData(features,labels,ids)
@@ -50,7 +58,9 @@ class OnlineLaSvm(OnlineClassifier):
         self.svm.optimizeKernelStep(0)
 
     def predict(self,features):
-        return svm.predict(features)
+        # TODO Cast to float64!
+        features = features.astype(numpy.float64)
+        return self.svm.predict(features)
 
 
 

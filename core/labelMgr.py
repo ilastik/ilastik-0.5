@@ -1,5 +1,19 @@
 import numpy
 
+class LabelBrushQueueEntry(object):
+    """Label queue entry to get undo information and for online learning"""
+    def __init__(self, NewLabel, ImageID):
+        self.newLabel = NewLabel
+        self.imageID = ImageID
+        self.positions = []
+        self.oldValues = []
+        self.isUndo = False
+        
+    def finalize(self):
+        self.positions = numpy.array(self.positions).astype(numpy.uint32)
+        self.oldValues = numpy.array(self.oldValues).astype(numpy.uint32)
+        
+
 class label_Base:
     """ label structure
     convention for label values: 0 is unlabeled, first label is 1 and so on.
@@ -90,8 +104,13 @@ class label_Patch(label_Base):
                 if (x-pos[0])**2 + (y-pos[1])**2 < t:
                     if x > -1 and y > -1 and x < self.size[0] and y < self.size[1]:
                         self.lastPatchNr = self.getPatchNrFromPosition([x,y])
+                        oldLabel = self.labelArray[self.lastPatchNr]
                         self.labelArray[ self.lastPatchNr ] = label
                         label_Base.setLabel(self, [x,y], label)
+                        
+                        if oldLabel != self.currentBrushQueueEntry.newLabel:
+                            self.currentBrushQueueEntry.positions.append(self.lastPatchNr)
+                            self.currentBrushQueueEntry.oldValues.append(oldLabel)
             
     def setLabelLine2D(self, pos1, pos2, label):
         (x0, y0) = pos1
@@ -157,14 +176,17 @@ class label_Pixel(label_Grid):
     
     
     # todo: move all undo-stuff one or two levels up to grid or patch
-    def undo(self):
-        if len(self.undoIndices)<1:
-            print "nothing to undo"
-            return
-        ind = self.undoIndices.pop()
-        values = self.undoValues.pop()
-        self.labelArray[ind]-=values
-        self.undoLabelArray_lastState = self.labelArray.copy()
+    def undo(self, step):
+        # TODO: Move 2 Classes up
+        self.labelArray[step.positions] = step.oldValues
+        
+#        if len(self.undoIndices)<1:
+#            print "nothing to undo"
+#            return
+#        ind = self.undoIndices.pop()
+#        values = self.undoValues.pop()
+#        self.labelArray[ind]-=values
+#        self.undoLabelArray_lastState = self.labelArray.copy()
     
     def undoPush(self, undoPointDescription):
         label_Base.undoPush(self, undoPointDescription)

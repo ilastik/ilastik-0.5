@@ -3,11 +3,13 @@ from PyQt4 import QtCore
 import PyQt4.Qwt5 as qwt
 import sys, random, numpy
 import os
+from collections import deque
 #import qimage2ndarray
 sys.path.append("..")
 from core import labelMgr, activeLearning
 from core.utilities import irange, debug
 from gui.iconMgr import ilastikIcons
+import time
 try:
     from vigra import vigranumpycmodule as vm, arraytypes as at
 except ImportError:
@@ -109,6 +111,9 @@ class drawManager:
         self.drawColor = {}
         self.activeDrawColor = QtGui.QColor(255,128,66)
         self.drawOpacity = 1;
+        
+        self.BrushQueues = {}
+        self.createBrushQueue('undo')
 
         
     # drawSettings:
@@ -136,9 +141,19 @@ class drawManager:
         self.labelmngr.undoPush(undoPointDescription)
     
     def undo(self):
-        self.labelmngr.undo()
-        self.repaint()
+        tic = time.clock()
+        step = self.BrushQueues['undo'].pop()
+        self.labelmngr.undo(step)
+        step.isUndo = True
         
+        for bq in self.BrushQueues.values():
+            if bq != self.BrushQueues['undo']:
+                bq.push(step)
+        print "Undo Time %f " % (time.clock() - tic)
+        
+        tic = time.clock() 
+        self.repaint()
+        print "Repaint Time %f " % (time.clock() - tic)
     def repaint(self):
         pass
     
@@ -149,16 +164,30 @@ class drawManager:
         pass
 
     def InitDraw(self, pos):
-        pass
+        print "InitDraw"
+        #TODO ImageIndex
+        self.labelmngr.currentBrushQueueEntry = labelMgr.LabelBrushQueueEntry(self.drawLabel, 0)
+        
     
     def DoDraw(self, pos):
         pass
     
     def EndDraw(self, pos):
-        pass
+        self.labelmngr.currentBrushQueueEntry.finalize()
+        for bq in self.BrushQueues.values():
+            bq.append(self.labelmngr.currentBrushQueueEntry)
+        self.labelmngr.currentBrushQueueEntry = None
+        
     
     def changeSize(self, size):
         pass
+    
+    def createBrushQueue(self, BrushQueueName):
+        self.BrushQueues[BrushQueueName] = deque()       
+    
+    def deleteBrushQueue(self, BrushQueueName):
+        del self.BrushQueues[BrushQueueName] 
+        
 
 class draw_geomObject(drawManager):
     def __init__(self, labelmngr, canvas):
@@ -279,6 +308,8 @@ class draw_Patch(drawManager):
         self.canvas.addItem(self.imageItem)
     
     def InitDraw(self, pos):
+        drawManager.InitDraw(self, pos)
+        
         self.startPos = pos
         self.lastPos = pos
         
@@ -303,6 +334,7 @@ class draw_Patch(drawManager):
     def EndDraw(self, pos):
         self.labelmngr.setLabel(pos, self.drawLabel)
         self.labelmngr.undoPush("after paint")
+        drawManager.EndDraw(self, pos)
         
 class draw_Pixel(draw_Patch):
     def __init__(self, labelmngr, canvas):

@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python
 
 # profile with python -m cProfile ilastikMain.py
@@ -735,7 +736,7 @@ class ClassificationOnline(object):
         print "Online Classification stopped"
         self.OnlineThread.stopped = True
         self.OnlineThread.commandQueue.put((None,None,None,'stop'))
-        self.OnlineThread.joint()
+        self.OnlineThread.join()
         self.OnlineThread = None
     
     def predictionUpdatedCallBack(self):
@@ -747,8 +748,9 @@ class ClassificationOnline(object):
         self.parent.generateTrainingData()
         features = self.parent.project.trainingMatrix
         labels = self.parent.project.trainingLabels 
+        ids = numpy.zeros( (len(labels),) )
         
-        self.OnlineThread.commandQueue.put((features, labels, None,'learn'))
+        self.OnlineThread.commandQueue.put((features, labels, ids, 'learn'))
         
         
         

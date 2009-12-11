@@ -319,7 +319,7 @@ class ClassifierOnlineThread(threading.Thread):
             try:
                 features, labels, ids, action = self.commandQueue.get(True, 0.5)
             except QueueEmpty as empty:
-                action = 'improve'
+                action = 'noop'
 
             if action == 'stop':
                 break
@@ -327,11 +327,14 @@ class ClassifierOnlineThread(threading.Thread):
                 self.classifier.removeData(ids)
             elif action == 'learn':
                 self.classifier.addData(features, labels, ids)
-                self.classifier.fastLearn(True)
+                self.classifier.fastLearn()
             elif action == 'improve':
+                # get an segfault here
                 self.classifier.improveSolution()
+            elif action == 'noop':
+                pass
                 
-            if self.trainingQueue.empty():
+            if self.commandQueue.empty():
                 result = self.classifier.predict(self.predictionList[self.activeImageIndex])
                 self.predictions[self.activeImageIndex].append(result)
                 self.predictionUpdated()
