@@ -27,7 +27,7 @@ class FeatureMgr():
         self.featureItems = featureItems
         
     def prepareCompute(self, dataMgr):
-        self.featureProcessList = [[] for i in range(0, len(dataMgr))]
+        self.featureProcessList = [[] for i in range(len(dataMgr))]
         for dataIndex in xrange(0, len(dataMgr)):   
             # data will be loaded, if not there yet
             data = dataMgr[dataIndex]
@@ -104,10 +104,10 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
         for data in self.featureProcessList:
             for channels, features in data:
                 result = []
-                for c in channels:
+                for c_ind, c in irange(channels):
                     for fi in features:
                         print c.shape, str(fi)
-                        result.append((fi.compute(c), str(fi)))
+                        result.append((fi.compute(c), str(fi), c_ind))
                         self.count += 1
                 self.result.append(result)
 
@@ -121,10 +121,10 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
         for data in self.featureProcessList:
             for channels, features in data:
                 result = []
-                for c in channels:
+                for c_ind, c in irange(channels):
                     for fi in features:
                         print c.shape, str(fi)
-                        result.append((fi.compute(c), str(fi)))
+                        result.append(( fi.compute(c), str(fi), c_ind) )
                         self.count += 1
                         self.conn.send(self.count)
                 self.result.append(result)

@@ -4,6 +4,7 @@ from Queue import Queue as queue
 from copy import copy
 import os
 import tables
+from core.utilities import irange, debug
 
 try:
     from vigra import vigranumpycmodule as vm, arraytypes as at
@@ -153,11 +154,47 @@ class DataMgr():
             dataItemNr+=1
         return (self.featureMatrixList, self.featureMatrixList_DataItemIndices)
     
-    def export2Hdf5(self, fileName):
-        self.buildFeatureMatrix()
-        for k in featureMatrixList:
-            pass
-            #DataImpex.exportFeatureLabel2Hdf5(features, labels, fileName, h5group):
+    def updateLabelsOfDataItems(self, labelWidget):
+        """ Extract Label Information out of the label Manager and put it to the dataItems attribute"""
+        for dataItemIndex, dataItem in irange(self):
+            # Check for Labels
+            labelArray = labelWidget.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.labelArray
+            dataItem.labels = labelArray.reshape(dataItem.shape[0:2])
+            
+    
+    def export2Hdf5(self, fileName, labelWidget):
+        self.updateLabelsOfDataItems(labelWidget)
+        for imageIndex, dataFeatures in irange(self.dataFeatures):
+            groupName = os.path.split(self[imageIndex].fileName[:-3])[-1]
+            F = {}
+            F_name = {}
+            prefix = 'Channel'
+            for feat, f_name, channel_ind in dataFeatures:
+                if not F.has_key('%s%03d' % (prefix,channel_ind)):
+                    F['%s%03d' % (prefix,channel_ind)] = []
+                if not F_name.has_key('%s%03d' % (prefix,channel_ind)):
+                    F_name['%s%03d' % (prefix,channel_ind)] = []
+                
+                feat.shape = feat.shape[0], feat.shape[1], 1
+                F['%s%03d' % (prefix,channel_ind)].append(feat)
+                F_name['%s%03d' % (prefix,channel_ind)].append(f_name)
+                
+            F_res = {}
+            for f in F:
+                F_res[f] = numpy.concatenate(F[f], axis=2)
+            
+            P = self.prediction[imageIndex]
+            if P is not None:
+                F_res['Prediction'] = P.reshape(self[imageIndex].shape[0:2] +(-1,))
+            
+            
+            
+            L = {}
+            L['Labels'] = self[imageIndex].labels.T
+             
+                
+            DataImpex.exportFeatureLabel2Hdf5(F_res, L, fileName, groupName)
+        
         
 
 class DataImpex(object):
@@ -190,7 +227,7 @@ class DataImpex(object):
     def _exportFeatureLabel2Hdf5(features, labels, h5file, h5group):
         try:
             h5group = h5file.createGroup(h5file.root, h5group, 'Some Title')
-        except NodeError as ne:
+        except tables.NodeError as ne:
             print ne
             print "_exportFeatureLabel2Hdf5: Overwriting"
             h5file.removeNode(h5file.root, h5group, recursive=True)
@@ -202,7 +239,7 @@ class DataImpex(object):
             tmp = h5file.createArray(h5group, key, val, "Description")
             
             tmp._v_attrs.order = cnt
-            tmp._v_attrs.type= 'INPUT'
+            tmp._v_attrs.type = 'INPUT'
             tmp._v_attrs.scale = 'ORDINAL'
             tmp._v_attrs.domain = 'REAL'
             tmp._v_attrs.dimension = 2
@@ -217,7 +254,7 @@ class DataImpex(object):
             tmp._v_attrs.order = cnt
             tmp._v_attrs.type= 'OUTPUT'
             tmp._v_attrs.scale = 'NOMINAL'
-            tmp._v_attrs.domain = numpy.array(range(val.max()+1))
+            tmp._v_attrs.domain = numpy.array(range(int(val.max())+1))
             tmp._v_attrs.dimension = 2
             tmp._v_attrs.missing_label = 0
             cnt += 1    
@@ -228,7 +265,7 @@ class DataImpex(object):
             mode = 'a'
         else:
             mode = 'w'
-        h5file = openFile(hFilename, mode = mode, title = "Ilastik File Version")
+        h5file = tables.openFile(hFilename, mode = mode, title = "Ilastik File Version")
         
         try:
             DataImpex._exportFeatureLabel2Hdf5(features, labels, h5file, h5group)

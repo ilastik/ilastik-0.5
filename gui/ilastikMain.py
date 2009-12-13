@@ -201,7 +201,7 @@ class MainWindow(QtGui.QMainWindow):
             labeled_indices = labelmatrix.nonzero()[0]
             n_labels = labeled_indices.shape[0]
             nFeatures = 0
-            for featureImage, featureString in dataItem:
+            for featureImage, featureString, c_ind in dataItem:
                 # todo: fix hardcoded 2D:
                 n = 1   # n: number of feature-values per pixel
                 if featureImage.shape.__len__() > 2:
@@ -233,7 +233,8 @@ class MainWindow(QtGui.QMainWindow):
         debug(self.project.trainingLabels.shape)
     
     def export2Hdf5(self):
-        self.project.dataMgr.export2Hdf5('c:/test.h5')
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Features, Labels and Prediction", ".", "HDF5 FIles (*.h5)")
+        self.project.dataMgr.export2Hdf5(str(fileName), self.labelWidget)
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -810,9 +811,7 @@ class ClassificationPredict(object):
 
             self.classificationPredict.join()
             self.finalize()           
-            
             self.terminateClassificationProgressBar()
-            
 
             displayImage = self.parent.labelWidget.activeImage
             predictions = dict(irange(self.classificationPredict.predictionList))
