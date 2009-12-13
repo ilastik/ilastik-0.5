@@ -109,6 +109,8 @@ class DataMgr():
         self.dataItems = dataItems
         self.dataItemsLoaded = [False] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
+        self.prediction = [None] * len(dataItems)
+        self.segmentation = [None] * len(dataItems)
         
     def dataItemsShapes(self):     
         return map(DataItemBase.shape, self)
@@ -159,13 +161,14 @@ class DataMgr():
         for dataItemIndex, dataItem in irange(self):
             # Check for Labels
             labelArray = labelWidget.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.labelArray
-            dataItem.labels = labelArray.reshape(dataItem.shape[0:2])
+            dataItem.labels = labelArray.reshape(dataItem.shape[0:2], order='F')
             
     
     def export2Hdf5(self, fileName, labelWidget):
         self.updateLabelsOfDataItems(labelWidget)
         for imageIndex, dataFeatures in irange(self.dataFeatures):
-            groupName = os.path.split(self[imageIndex].fileName[:-3])[-1]
+            groupName = os.path.split(self[imageIndex].fileName)[-1]
+            groupName, dummy = os.path.splitext(groupName)
             F = {}
             F_name = {}
             prefix = 'Channel'
@@ -175,7 +178,9 @@ class DataMgr():
                 if not F_name.has_key('%s%03d' % (prefix,channel_ind)):
                     F_name['%s%03d' % (prefix,channel_ind)] = []
                 
-                feat.shape = feat.shape[0], feat.shape[1], 1
+                if len(feat.shape) == 2:
+                    feat.shape = feat.shape +  (1,)
+                    
                 F['%s%03d' % (prefix,channel_ind)].append(feat)
                 F_name['%s%03d' % (prefix,channel_ind)].append(f_name)
                 
@@ -190,10 +195,11 @@ class DataMgr():
             
             
             L = {}
-            L['Labels'] = self[imageIndex].labels.T
+            L['Labels'] = self[imageIndex].labels
              
                 
             DataImpex.exportFeatureLabel2Hdf5(F_res, L, fileName, groupName)
+            print "Object saved to disk: %s" % fileName
         
         
 

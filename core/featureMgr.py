@@ -149,7 +149,7 @@ class FeatureGroups(object):
         self.members['Color'].append(gaussianSmooth)
         
         self.members['Texture'].append(structureTensor)
-        self.members['Texture'].append(eigHessianTensor2d)
+        #self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
         self.members['Texture'].append(hessianMatrixOfGaussian)
         self.members['Texture'].append(laplacianOfGaussian)
@@ -160,7 +160,7 @@ class FeatureGroups(object):
         
         self.members['Edge'].append(gaussianGradientMagnitude)
         self.members['Edge'].append(eigStructureTensor2d)
-        self.members['Edge'].append(eigHessianTensor2d)
+        #self.members['Edge'].append(eigHessianTensor2d)
         self.members['Edge'].append(laplacianOfGaussian)
         self.members['Edge'].append(differenceOfGaussians)
         self.members['Edge'].append(cannyEdge)
