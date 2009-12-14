@@ -748,11 +748,16 @@ class ClassificationOnline(object):
     def predictionUpdatedCallBack(self):
         #self.labelWidget.emit(QtCore.SIGNAL('newLabelsPending'))
         new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
-        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(dict(irange([new_pred])))
+        preds=numpy.zeros((new_pred.shape[0],2))
+        for i in xrange(len(new_pred)):
+            preds[i,new_pred[i]]=1.0
+
+        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(dict(irange([preds])))
         
     
     def updateTrainingData(self):
         Features=self.parent.project.dataMgr.buildFeatureMatrix()
+        Labels=self.parent.labelWidget.labelForImage[self.parent.labelWidget.activeImage].DrawManagers[0].labelmngr.labelArray
         queue=self.parent.labelWidget.labelForImage[self.parent.labelWidget.activeImage].DrawManagers[0].BrushQueues['onlineLearning']
 
         while(True):
@@ -766,6 +771,7 @@ class ClassificationOnline(object):
             for i in xrange(len(step.oldValues)):
                 if step.oldValues[i]!=0 or step.isUndo:
                     remove_data.append(step.positions[i])
+            remove_data=numpy.array(remove_data).astype(numpy.float32)
             self.OnlineThread.commandQueue.put((None,None,remove_data,'remove'))
             #add new data
             add_indexes=[]
@@ -773,7 +779,8 @@ class ClassificationOnline(object):
                 if (not step.isUndo and step.newLabel!=0) or (step.isUndo and step.oldValues[i]!=0): 
                     add_indexes.append(step.positions[i])
             #append it
-            self.OnlineThread.commandQueue.put((features[add_indexes,:],labels[add_indexes],numpy.array(add_indexes).astype(float32)))
+            add_indexes=numpy.array(add_indexes)
+            self.OnlineThread.commandQueue.put((Features[add_indexes,:],Labels[add_indexes],numpy.array(add_indexes).astype(numpy.float32)))
         
     
 class ClassificationPredict(object):

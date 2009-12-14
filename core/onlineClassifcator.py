@@ -68,7 +68,7 @@ class OnlineLaSvm(OnlineClassifier):
         features = features.astype(numpy.float64)
         pred=self.svm.predict(features)
         print "End predict"
-        return pred
+        return (pred+1)/2
 
 
 
