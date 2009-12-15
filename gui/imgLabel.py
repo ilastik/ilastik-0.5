@@ -969,6 +969,14 @@ class labelWidget(QtGui.QWidget):
     def newLabelsPending(self):
         self.emit(QtCore.SIGNAL('newLabelsPending'))
     
+    def updateLabelsOfDataItems(self, dataMgr):
+        """ Extract Label Information out of the label Manager and put it to the dataItems attribute"""
+        for dataItemIndex, dataItem in irange(dataMgr):
+            # Check for Labels
+            labelArray = self.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.labelArray
+            # reshape to height x width
+            dataItem.labels = labelArray.reshape(dataItem.shape[1], dataItem.shape[0])
+    
     @QtCore.pyqtSignature("int")
     def changeImage(self, newImage):
         # Check Call from ComboBox reset with newImage == -1
@@ -1027,17 +1035,12 @@ class labelWidget(QtGui.QWidget):
             # Change To Active Label
             self.labelForImage[newImage].setActiveLabel(self.activeLabel)     
             
-            if self.project.dataMgr[newImage].hasLabels:
-                labels = self.project.dataMgr[newImage].labels
-#                for x in xrange(labels.shape[0]):
-#                    for y in xrange(labels.shape[1]):
-#                        if labels[x,y] != 0:
-#                            # TODO: This is stupid but i have to set the DrawLabel, why??
-#                            drawManager.setDrawLabel(labels[x,y])
-#                            # Invertion of x and y, because QImage is x,y and Numpy is y,x
-#                            labelManager.setLabel((x,y), labels[x,y])
-                labelManager.labelArray = labels.flatten()
-                drawManager.repaint()
+            if self.project.dataMgr[newImage].hasLabels or (not isinstance(self.project.dataMgr[newImage].labels, list)):
+                # This second part in or clause is to be backward compatible. we need to init the data.labels with None instead of [] !?!
+                if self.project.dataMgr[newImage].labels is not None:
+                    labels = self.project.dataMgr[newImage].labels
+                    labelManager.labelArray = labels.flatten()
+                    drawManager.repaint()
         
         # Set new active Image    
         self.activeImage = newImage

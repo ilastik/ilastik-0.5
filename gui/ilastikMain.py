@@ -87,6 +87,7 @@ class MainWindow(QtGui.QMainWindow):
         self.projectDlg = ProjectDlg(self)
     
     def saveProjectDlg(self):
+        self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ".", "Project Files (*.ilp)")
         self.project.saveToDisk(str(fileName))
         
@@ -234,7 +235,8 @@ class MainWindow(QtGui.QMainWindow):
     
     def export2Hdf5(self):
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Features, Labels and Prediction", ".", "HDF5 FIles (*.h5)")
-        self.project.dataMgr.export2Hdf5(str(fileName), self.labelWidget)
+        self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
+        self.project.dataMgr.export2Hdf5(str(fileName))
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):

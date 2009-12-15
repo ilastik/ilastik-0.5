@@ -24,9 +24,9 @@ class DataItemBase():
         self.projects = []
         
         self.data = None
-        self.labels = []
+        self.labels = None
         self.dataKind = None
-        self.dataType = None
+        self.dataType = []
         self.dataDimensions = 0
         self.thumbnail = None
         self.shape = ()
@@ -156,16 +156,7 @@ class DataMgr():
             dataItemNr+=1
         return (self.featureMatrixList, self.featureMatrixList_DataItemIndices)
     
-    def updateLabelsOfDataItems(self, labelWidget):
-        """ Extract Label Information out of the label Manager and put it to the dataItems attribute"""
-        for dataItemIndex, dataItem in irange(self):
-            # Check for Labels
-            labelArray = labelWidget.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.labelArray
-            dataItem.labels = labelArray.reshape(dataItem.shape[0:2], order='F')
-            
-    
-    def export2Hdf5(self, fileName, labelWidget):
-        self.updateLabelsOfDataItems(labelWidget)
+    def export2Hdf5(self, fileName):
         for imageIndex, dataFeatures in irange(self.dataFeatures):
             groupName = os.path.split(self[imageIndex].fileName)[-1]
             groupName, dummy = os.path.splitext(groupName)
@@ -242,6 +233,7 @@ class DataImpex(object):
         cnt = 0
         for key in features:
             val = features[key]    
+            #print val.flags
             tmp = h5file.createArray(h5group, key, val, "Description")
             
             tmp._v_attrs.order = cnt
@@ -254,8 +246,11 @@ class DataImpex(object):
         
         for key in labels:
             val = labels[key]
-                
-            tmp = h5file.createArray(h5group, key, val, "Description")
+            print val.flags
+            print '***************'
+            val = val.T
+            print val.flags
+            tmp = h5file.createArray(h5group, key  , val.T,  "Description")
             
             tmp._v_attrs.order = cnt
             tmp._v_attrs.type= 'OUTPUT'
