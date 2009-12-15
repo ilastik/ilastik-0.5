@@ -761,7 +761,7 @@ class ClassificationOnline(object):
         
         tmp = {}
         tmp[self.parent.labelWidget.activeImage] = preds
-        print "Senging prediction pixmap"
+        print "Sending prediction pixmap"
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
         self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
         
