@@ -1345,10 +1345,6 @@ class OverlayMgr(object):
     def updatePredictionsPixmaps(self, predictions):
         for imageIndex, prediction in predictions.iteritems():
             for classNr in range(self.classCount):
-                print "classNr",classNr
-                print "imageIndex",imageIndex
-                print "predictions",prediction
-                print "predictions.shape",prediction.shape
                 pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[classNr+1]), 'continious', 0.7)
                 self.predictionPixmaps[imageIndex][classNr][0] = pm 
     
@@ -1383,7 +1379,8 @@ class OverlayMgr(object):
                 else:
                     if currentOverlay[classNr][0]:
                         currentOverlay[classNr][1] = self.canvas.addPixmap(currentOverlay[classNr][0])
-                        currentOverlay[classNr][1].setZValue(-1)
+                        #currentOverlay[classNr][1].setZValue(-1)
+                        print currentOverlay[classNr][1]
         # Some Overlay which does not depend on the current ClassIndex 
         else:
             if currentOverlay[1]:
@@ -1400,7 +1397,7 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
-            image = at.ScalarImage(rawImage).qimage(normalize = True)
+            image = at.ScalarImage(rawImage).qimage(normalize = (0.0,1.0))
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())

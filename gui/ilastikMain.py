@@ -757,15 +757,18 @@ class ClassificationOnline(object):
 
     def updatePredictionData(self):
         new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
-        preds=numpy.zeros((new_pred.shape[0],2))
+        self.preds=numpy.zeros((new_pred.shape[0],2))
         for i in xrange(len(new_pred)):
-            preds[i,new_pred[i]]=1.0
+            self.preds[i,new_pred[i]]=1.0
+
+        print "CLass1",numpy.unique(self.preds[:,0])
+        print "Class2",numpy.unique(self.preds[:,1])
         
         tmp = {}
-        tmp[self.parent.labelWidget.activeImage] = preds
-        print "Sending prediction pixmap"
+        tmp[self.parent.labelWidget.activeImage] = self.preds
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
-        self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
+        self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
+        #self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
         
     
     def updateTrainingData(self):
