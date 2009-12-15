@@ -751,8 +751,11 @@ class ClassificationOnline(object):
         preds=numpy.zeros((new_pred.shape[0],2))
         for i in xrange(len(new_pred)):
             preds[i,new_pred[i]]=1.0
-
-        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(dict(irange([preds])))
+        
+        tmp = {}
+        tmp[self.parent.labelWidget.activeImage] = preds
+        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
+        self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
         
     
     def updateTrainingData(self):
