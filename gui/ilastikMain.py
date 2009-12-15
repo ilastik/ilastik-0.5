@@ -733,6 +733,11 @@ class ClassificationOnline(object):
         ids = numpy.zeros((len(labels),))
         self.OnlineThread = classificationMgr.ClassifierOnlineThread(features, labels, ids, predictionList, self.predictionUpdatedCallBack)
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingData)
+        self.parent.connect(self.parent, QtCore.SIGNAL('newPredictionsPending'), self.updatePredictionData)
+
+    def __del__(self):
+        self.parent.labelWidget.disconnect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'))
+        self.parent.disconnect(self.parent,self.QtCore.SIGNAL('newPredictionsPending'))
         
     def start(self):
         print "Online Classification started"
@@ -746,7 +751,9 @@ class ClassificationOnline(object):
         self.OnlineThread = None
     
     def predictionUpdatedCallBack(self):
-        #self.labelWidget.emit(QtCore.SIGNAL('newLabelsPending'))
+        self.parent.emit(QtCore.SIGNAL('newPredictionsPending'))
+
+    def updatePredictionData(self):
         new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
         preds=numpy.zeros((new_pred.shape[0],2))
         for i in xrange(len(new_pred)):
@@ -754,6 +761,7 @@ class ClassificationOnline(object):
         
         tmp = {}
         tmp[self.parent.labelWidget.activeImage] = preds
+        print "Senging prediction pixmap"
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
         self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
         

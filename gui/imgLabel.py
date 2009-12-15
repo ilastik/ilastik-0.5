@@ -1,6 +1,5 @@
 from PyQt4 import QtGui
 from PyQt4 import QtCore
-import PyQt4.Qwt5 as qwt
 import sys, random, numpy
 import os
 from collections import deque
