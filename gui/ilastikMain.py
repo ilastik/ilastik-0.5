@@ -100,14 +100,16 @@ class MainWindow(QtGui.QMainWindow):
         
     def editProjectDlg(self):
         if hasattr(self, 'projectDlg'):
+            self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
             self.projectDlg.show()
             return
         if not hasattr(self, 'project'):
             self.newProjectDlg()
             return
-        self.projectDlg = ProjectDlg(self)
-        self.projectDlg.updateDlg(self.project)
-        self.projectModified()
+#        print "*"*1000
+#        self.projectDlg = ProjectDlg(self)
+#        self.projectDlg.updateDlg(self.project)
+#        self.projectModified()
             
         
     def projectModified(self):
@@ -244,7 +246,7 @@ class ProjectDlg(QtGui.QDialog):
         # this enables   self.columnPos['File']:
         self.labelCounter = 2
         self.columnPos = {}
-        self.labelColor = { 1:QtGui.QColor(QtCore.Qt.red) }
+        self.labelColor = { 1:QtGui.QColor(QtCore.Qt.red), 2:QtGui.QColor(QtCore.Qt.green), 3:QtGui.QColor(QtCore.Qt.yellow), 4:QtGui.QColor(QtCore.Qt.blue), 5:QtGui.QColor(QtCore.Qt.magenta) , 6:QtGui.QColor(QtCore.Qt.darkYellow), 7:QtGui.QColor(QtCore.Qt.lightGray) }
         self.parent = parent
         self.fileList = []
         self.thumbList = []        
@@ -253,6 +255,7 @@ class ProjectDlg(QtGui.QDialog):
         self.setLabelColorButtonColor(QtGui.QColor(QtCore.Qt.red))
         for i in xrange(self.tableWidget.columnCount()):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
+        self.defaultLabelColors = {}
         
     def initDlg(self):
         uic.loadUi('dlgProject.ui', self) 
@@ -273,7 +276,8 @@ class ProjectDlg(QtGui.QDialog):
         self.txtLabelName.setText(self.cmbLabelName.currentText())
         #col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
         if not self.labelColor.get(nr, None):
-            self.labelColor[nr] = QtGui.QColor(numpy.random.randint(255), numpy.random.randint(255), numpy.random.randint(255))  # default: red
+            if nr > len(self.labelColor):
+                self.labelColor[nr] = QtGui.QColor(numpy.random.randint(255), numpy.random.randint(255), numpy.random.randint(255))  # default: red
         col = self.labelColor[nr]
         self.setLabelColorButtonColor(col)
 
@@ -388,6 +392,10 @@ class ProjectDlg(QtGui.QDialog):
                 labelsAvailable = dataMgr.DataImpex.checkForLabels(file_name)
                 if labelsAvailable:
                     r.setFlags(r.flags() & flagON);
+                    print "Found %d labels" % labelsAvailable
+                    for k in range(labelsAvailable-1):
+                        if self.labelCounter <= labelsAvailable:
+                            self.on_btnAddLabel_clicked()
                     
                 else:
                     r.setFlags(r.flags() & flagOFF);
@@ -436,8 +444,11 @@ class ProjectDlg(QtGui.QDialog):
             
         
         rowCount = self.tableWidget.rowCount()
-        dataItemList = []
+        dataItemList = self.parent.project.dataMgr.getDataList()
         for k in range(0, rowCount):
+            if k < len(dataItemList):
+                print "Nothing to do here"
+                continue
             fileName = self.tableWidget.item(k, self.columnPos['File']).text()
             theDataItem = dataMgr.DataItemImage(fileName)
             dataItemList.append(theDataItem)

@@ -111,6 +111,8 @@ class DataMgr():
         self.segmentation = [None] * len(dataItems)
         self.prediction = [None] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
+    def getDataList(self):
+        return self.dataItems
         
     def dataItemsShapes(self):     
         return map(DataItemBase.shape, self)
@@ -286,7 +288,8 @@ class DataImpex(object):
         try:
             # Data sets below root are asumed to be data, labels and featureDescriptor
             if hasattr(h5file.root,'labels'):
-                res = 1
+                labels = h5file.root.labels.read()
+                res = len(numpy.unique(labels)) - 1
             else:
                 res = 0
         except Exception as e:

@@ -973,9 +973,11 @@ class labelWidget(QtGui.QWidget):
         """ Extract Label Information out of the label Manager and put it to the dataItems attribute"""
         for dataItemIndex, dataItem in irange(dataMgr):
             # Check for Labels
-            labelArray = self.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.labelArray
-            # reshape to height x width
-            dataItem.labels = labelArray.reshape(dataItem.shape[1], dataItem.shape[0])
+            if self.labelForImage.get(dataItemIndex, False):
+                labelArray = self.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.labelArray
+                # reshape to height x width
+                dataItem.labels = labelArray.reshape(dataItem.shape[1], dataItem.shape[0])
+                dataItem.hasLabels = True
     
     @QtCore.pyqtSignature("int")
     def changeImage(self, newImage):
@@ -1035,7 +1037,7 @@ class labelWidget(QtGui.QWidget):
             # Change To Active Label
             self.labelForImage[newImage].setActiveLabel(self.activeLabel)     
             
-            if self.project.dataMgr[newImage].hasLabels or (not isinstance(self.project.dataMgr[newImage].labels, list)):
+            if self.project.dataMgr[newImage].hasLabels and (not isinstance(self.project.dataMgr[newImage].labels, list)):
                 # This second part in or clause is to be backward compatible. we need to init the data.labels with None instead of [] !?!
                 if self.project.dataMgr[newImage].labels is not None:
                     labels = self.project.dataMgr[newImage].labels
@@ -1397,7 +1399,7 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
-            image = at.ScalarImage(rawImage).qimage(normalize = (0.0,1.0))
+            image = at.ScalarImage(rawImage).qimage(normalize = (0.0, 1.0))
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())
