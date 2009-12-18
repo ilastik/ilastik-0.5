@@ -5,6 +5,9 @@
 #include <math.h>
 #include <assert.h>
 
+#ifndef SVHANDLER_INCLUDED
+#define SVHANDLER_INCLUDED
+
 using namespace std;
 
 template<class T>
@@ -28,9 +31,9 @@ inline void swap(T &a,T &b)
 template<class NV, class SV, class RowType,class T>
 class SVHandler
 {
-protected:
+public:
 	//List of unsused slots
-  std::list<int> unused_svs;    //SV slots not used
+	std::list<int> unused_svs;    //SV slots not used
 	std::list<int> unused_rows;   //kernel rows not used
 	std::list<int> unused_non_svs;//non svs not used
 	vector<int> sv_index_to_row;//Convert an SV index to an row
@@ -38,7 +41,7 @@ private:
 	int GetSV();
 	int GetRow();
 	int GetNonSV();
-protected:
+public:
 
 	//list of SVs
 	vector<SV> support_vectors;
@@ -48,7 +51,7 @@ protected:
 	//Cache of kernel between SVs
 	vector<RowType> kcache;		
 	//locked rows
-	vector<bool> row_locked;
+	vector<int> row_locked;
 	//maping row->sv
 	vector<int> row_to_sv_index;
 	//Initial size of the kernel
@@ -156,7 +159,7 @@ int SVHandler<NV,SV,RowType,T>::GetRow()
 	//Take a random row
 	int row;
 	//TODO: Maybe there is a better choice
-	for(row=rand() % cacheSize;row_locked[row]==true;row=(row+1) % cacheSize);
+	for(row=rand() % cacheSize;row_locked[row]!=0;row=(row+1) % cacheSize);
 	//Remove the sv->row entry
     assert(row_to_sv_index[row]>=0);
     assert(sv_index_to_row.size()>row_to_sv_index[row]);
@@ -186,7 +189,7 @@ SVHandler<NV,SV,RowType,T>::SVHandler(int overflowsize,RowType init_obj)
 	this->maxCacheElements=overflowsize*overflowsize;
 	//Initilize everything with overflowsize
 	kcache.resize(cacheSize,init_obj);
-	row_locked.resize(cacheSize,false);
+	row_locked.resize(cacheSize,0);
 	row_to_sv_index.resize(cacheSize,-1);
 	support_vectors.resize(cacheSize,SV());
 	//sv_index_to_row.resize(cacheSize,-1);
@@ -267,26 +270,27 @@ int SVHandler<NV,SV,RowType,T>::MakeNonSV(int index)
 template<class NV, class SV, class RowType,class T>
 RowType& SVHandler<NV,SV,RowType,T>::GetKernelRow(int index)
 {
-	//Maybe it's just there?
-	if(sv_index_to_row[index]>=0)
-	{
-		row_locked[sv_index_to_row[index]]=true;
-		UpdateRow(kcache[sv_index_to_row[index]],index);
-		return kcache[sv_index_to_row[index]];
-	}
-	//OK, we have to create it
-	int row=GetRow();
-	sv_index_to_row[index]=row;
+    //Maybe it's just there?
+    if(sv_index_to_row[index]>=0)
+    {
+        row_locked[sv_index_to_row[index]]++;
+        UpdateRow(kcache[sv_index_to_row[index]],index);
+        return kcache[sv_index_to_row[index]];
+    }
+    //OK, we have to create it
+    int row=GetRow();
+    sv_index_to_row[index]=row;
     row_to_sv_index[row]=index;
-	FillRow(kcache[row],index);
-	row_locked[row]=true;
-	return kcache[row];
+    FillRow(kcache[row],index);
+    row_locked[row]++;
+    return kcache[row];
 }
 template<class NV, class SV, class RowType,class T>
 void SVHandler<NV,SV,RowType,T>::UnlockKernelRow(int index)
 {
-	if(sv_index_to_row[index]>=0)
-		row_locked[sv_index_to_row[index]]=false;
+    if(sv_index_to_row[index]>=0)
+        row_locked[sv_index_to_row[index]]--;
 }
 
+#endif
 

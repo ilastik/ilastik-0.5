@@ -326,6 +326,9 @@ class ClassifierOnlineThread(threading.Thread):
             elif action == 'unlearn':
                 self.classifier.removeData(ids)
             elif action == 'learn':
+                print "*************************************"
+                print "************* LEARNING **************"
+                print "*************************************"
                 self.classifier.addData(features, labels, ids)
                 self.classifier.fastLearn()
             elif action == 'improve':

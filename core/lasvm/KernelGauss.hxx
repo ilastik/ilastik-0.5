@@ -7,6 +7,10 @@ template<class T>
 class KernelGauss
 {
 public:
+    typedef vector<T> RowType;
+    typedef T float_type;
+    
+    
     KernelGauss(T gamma){this->gamma=gamma;}
     static const int num_parameters=1;
     T gamma;
@@ -137,6 +141,9 @@ template<class T>
 class KernelGaussMultiParams
 {
 public:
+    typedef vector<T> RowType;
+    typedef T float_type;
+    
     int num_parameters;
     KernelGaussMultiParams(vector<T>& pars)
     {

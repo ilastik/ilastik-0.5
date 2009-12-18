@@ -736,15 +736,8 @@ class ClassificationOnline(object):
     def __init__(self, parent):
         print "Online Classification initialized"
         self.parent = parent
-        self.parent.generateTrainingData()
         
-        features = self.parent.project.trainingMatrix
-        labels = self.parent.project.trainingLabels  
-        
-        self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
-        predictionList, dummy = self.parent.project.dataMgr.buildFeatureMatrix()
-        ids = numpy.zeros((len(labels),))
-        self.OnlineThread = classificationMgr.ClassifierOnlineThread(features, labels, ids, predictionList, self.predictionUpdatedCallBack)
+        self.OnlineThread = None
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingData)
         self.parent.connect(self.parent, QtCore.SIGNAL('newPredictionsPending'), self.updatePredictionData)
 
@@ -753,39 +746,56 @@ class ClassificationOnline(object):
         self.parent.disconnect(self.parent,self.QtCore.SIGNAL('newPredictionsPending'))
         
     def start(self):
-        print "Online Classification started"
+        print "Online Classification starting"
+
+        self.parent.generateTrainingData()
+        
+        features = self.parent.project.trainingMatrix
+        labels = self.parent.project.trainingLabels  
+
+        self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
+        predictionList, dummy = self.parent.project.dataMgr.buildFeatureMatrix()
+        ids = numpy.zeros((len(labels),)).astype(numpy.int32)
+
+        self.OnlineThread = classificationMgr.ClassifierOnlineThread(features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
         self.OnlineThread.start()
         
     def stop(self):
         print "Online Classification stopped"
         self.OnlineThread.stopped = True
         self.OnlineThread.commandQueue.put((None, None, None, 'stop'))
+        print "Joining thread"
         self.OnlineThread.join()
+        print "Thread stopped"
         self.OnlineThread = None
+        self.parent.labelWidget.labelForImage[0].DrawManagers[0].deleteBrushQueue('onlineLearning')
     
     def predictionUpdatedCallBack(self):
         self.parent.emit(QtCore.SIGNAL('newPredictionsPending'))
 
     def updatePredictionData(self):
+        print "Updating prediction data"
+        if self.OnlineThread == None:
+            return
         new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
         self.preds=numpy.zeros((new_pred.shape[0],2))
         for i in xrange(len(new_pred)):
             self.preds[i,new_pred[i]]=1.0
 
-        print "CLass1",numpy.unique(self.preds[:,0])
-        print "Class2",numpy.unique(self.preds[:,1])
-        
         tmp = {}
         tmp[self.parent.labelWidget.activeImage] = self.preds
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
         self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
+        print "Done updating prediction data"
         #self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
         
     
     def updateTrainingData(self):
-        Features=self.parent.project.dataMgr.buildFeatureMatrix()
-        Labels=self.parent.labelWidget.labelForImage[self.parent.labelWidget.activeImage].DrawManagers[0].labelmngr.labelArray
-        queue=self.parent.labelWidget.labelForImage[self.parent.labelWidget.activeImage].DrawManagers[0].BrushQueues['onlineLearning']
+        active_image=self.parent.labelWidget.activeImage
+        (Features,dummy)=self.parent.project.dataMgr.buildFeatureMatrix()
+        Features=numpy.array(Features)
+        Labels=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].labelmngr.labelArray
+        queue=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].BrushQueues['onlineLearning']
 
         while(True):
             try:
@@ -807,7 +817,11 @@ class ClassificationOnline(object):
                     add_indexes.append(step.positions[i])
             #append it
             add_indexes=numpy.array(add_indexes)
-            self.OnlineThread.commandQueue.put((Features[add_indexes,:],Labels[add_indexes],numpy.array(add_indexes).astype(numpy.float32)))
+
+            print "*************************************"
+            print "************* SENDING ***************"
+            print "*************************************"
+            self.OnlineThread.commandQueue.put((Features[active_image,add_indexes,:],Labels[add_indexes].astype(numpy.int32),numpy.array(add_indexes).astype(numpy.int32),'learn'))
         
     
 class ClassificationPredict(object):

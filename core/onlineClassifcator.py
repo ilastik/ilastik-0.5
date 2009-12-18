@@ -25,8 +25,6 @@ class OnlineLaSvm(OnlineClassifier):
 
     def start(self,features,labels,ids):
         # TODO Cast to float64!
-        features = features.astype(numpy.float64)
-        labels = labels.astype(numpy.float64)
         self.svm=lasvm.createLaSvmMultiPar(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
         self.addData(features,labels,ids)
         self.svm.enableResampleBorder(0.1)
@@ -40,6 +38,9 @@ class OnlineLaSvm(OnlineClassifier):
         print numpy.unique(labels)
         if(self.svm==None):
             raise RuntimeError("run \"start\" before addData")
+        print features.dtype
+        print labels.dtype
+        print ids.dtype
         self.svm.addData(features,labels,ids)
 
     def removeData(self,ids):
@@ -63,9 +64,7 @@ class OnlineLaSvm(OnlineClassifier):
         print "Done improving solution"
 
     def predict(self,features):
-        # TODO Cast to float64!
         print "Begin predict"
-        features = features.astype(numpy.float64)
         pred=self.svm.predict(features)
         print "End predict"
         return (pred+1)/2

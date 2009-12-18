@@ -2,20 +2,19 @@
 #include <algorithm>
 
 template<class T,class Kernel>
-class laSvmSingleKernel : public laSvmBase<T,vector<T> >
+class laSvmSingleKernel : public laSvmBase<T,Kernel>
 {
 public:
     laSvmSingleKernel(typename Kernel::par_type kernel_par,
                       T C,double epsilon,
                       int precache_elements,bool verbose=false) 
-        : laSvmBase<T,vector<T> >(C,epsilon,precache_elements,verbose) 
-          , kernel(kernel_par)
+        : laSvmBase<T,Kernel>(kernel_par,C,epsilon,precache_elements,verbose) 
     {
         this->kernel_opt_step_size.clear();
-        this->last_derivatives.resize(kernel.num_parameters,0.0);
-        this->lower_bounds.resize(kernel.num_parameters,-1000000.0);
-        this->upper_bounds.resize(kernel.num_parameters,10000000.0);
-        this->close_mode.resize(kernel.num_parameters,false);
+        this->last_derivatives.resize(this->kernel.num_parameters,0.0);
+        this->lower_bounds.resize(this->kernel.num_parameters,-1000000.0);
+        this->upper_bounds.resize(this->kernel.num_parameters,10000000.0);
+        this->close_mode.resize(this->kernel.num_parameters,false);
     }
     void RecomputeKernel();
     void XiAlphaBoundDerivative(vector<double>& res,double rho=1.0);
@@ -30,9 +29,6 @@ public:
 protected:
     virtual void ComputeGradient(const vector<T>& row,const int sv_index);
     virtual void UpdateGradients(const vector<T>& min_row,const vector<T>& max_row,const double step);
-    virtual void FillRow(vector<T>& row,int sv_index); 
-    virtual void UpdateRow(vector<T>& row,int sv_index);
-    virtual T DirectKernel(int sv,const vector<T>& vec);
 public:
     vector<double> kernel_opt_step_size;
     //The derivatives of the last optimization step
@@ -42,7 +38,6 @@ public:
     vector<double> upper_bounds;
     //For mixed
     vector<bool> close_mode;
-    Kernel kernel;
 
     //Statistics
     double ShrinkFactorByPairing(double eta);
@@ -73,7 +68,7 @@ int laSvmSingleKernel<T,RowType>::throwOutsByMostDistant(const vector<vector<T> 
         std::cerr<<"b_dist="<<b_dist<<std::endl;
         for(j=0;j<samples.size();++j)
         {
-            double dist=sqrt(2.0-2.0*kernel.compute(samples[i].begin(),samples[j].begin(),this->VLength));
+            double dist=sqrt(2.0-2.0*this->kernel.compute(samples[i].begin(),samples[j].begin(),this->VLength));
             if(dist<b_dist)
                 count++;
         }
@@ -120,10 +115,10 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(vector<double>& res,dou
     this->setMinMax_g();
     double b=(this->min_g+this->max_g)/2.0;
     //Set the size of the output
-    res.resize(kernel.num_parameters,0.0);
+    res.resize(this->kernel.num_parameters,0.0);
     std::list<int>::iterator i,j;
-    vector<double> derivatives(kernel.num_parameters,0.0);
-    vector<double> dKernel(kernel.num_parameters);
+    vector<double> derivatives(this->kernel.num_parameters,0.0);
+    vector<double> dKernel(this->kernel.num_parameters);
     for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
     {
         int kp;
@@ -131,15 +126,15 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(vector<double>& res,dou
         double f=label-SVs[*i].g+b;
         double xi=1-label*f;
 
-        for(kp=0;kp<kernel.num_parameters;++kp)
+        for(kp=0;kp<this->kernel.num_parameters;++kp)
         {
             derivatives[kp]=0.0;
         }
         for(j=this->used_svs.begin();j!=this->used_svs.end();++j)
         {
-            kernel.computeDerived(this->data[SVs[*i].data_id].features,this->data[SVs[*j].data_id].features,this->VLength,dKernel);
+            this->kernel.computeDerived(this->data[SVs[*i].data_id].features,this->data[SVs[*j].data_id].features,this->VLength,dKernel);
 
-            for(kp=0;kp<kernel.num_parameters;++kp)
+            for(kp=0;kp<this->kernel.num_parameters;++kp)
                 derivatives[kp]-=dKernel[kp]*SVs[*j].alpha;
         }
         //Calculate the sigmoid
@@ -150,14 +145,14 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(vector<double>& res,dou
         if(fabs(alpha-fabs(SVs[*i].cmin-SVs[*i].cmax))<0.001)
         {
             //This affects xi! (d_alpha=0)
-            for(kp=0;kp<kernel.num_parameters;++kp)
+            for(kp=0;kp<this->kernel.num_parameters;++kp)
                 res[kp]+=sig*(1-sig)*sig_a*derivatives[kp]*label;
         }
         else
         {
             //This effects alpha!
             //Our special handling of alpha (letting alpha<0) needs us to multiply the label to it
-            for(kp=0;kp<kernel.num_parameters;++kp)
+            for(kp=0;kp<this->kernel.num_parameters;++kp)
                 res[kp]+=sig*(1-sig)*sig_a*rho*derivatives[kp]*label;
         }
     }
@@ -166,9 +161,9 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(vector<double>& res,dou
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode)
 {
-    kernel.setVariance(this->variance.begin(),this->variance.end());
+    this->kernel.setVariance(this->variance.begin(),this->variance.end());
     if(this->kernel_opt_step_size.empty())
-        this->kernel_opt_step_size=kernel.getInitialStepSizes();
+        this->kernel_opt_step_size=this->kernel.getInitialStepSizes();
     int i;
     //Make sure solutions is correct
     this->finish(true);
@@ -198,7 +193,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode)
                 kernel_opt_step_size[i]*=shrink_factor;
         }
         //Let kernel apply bounds
-        kernel.boundStepSize(kernel_opt_step_size);
+        this->kernel.boundStepSize(kernel_opt_step_size);
         //Fill step
         for(i=0;i<step.size();++i)
         {
@@ -231,7 +226,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode)
             step[i]=(lower_bounds[i]+upper_bounds[i])/2.0;
         }
         //Limit the steps
-        kernel.boundSteps(step);
+        this->kernel.boundSteps(step);
         //Shift the bounds
         for(i=0;i<der.size();++i)
         {
@@ -268,12 +263,12 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode)
             }
         }
         //Limit the step
-        kernel.boundSteps(step);
+        this->kernel.boundSteps(step);
         break;
     }
 
     //Update the kernel
-    kernel.updateKernelPar(step);
+    this->kernel.updateKernelPar(step);
     RecomputeKernel();
     //Retrain all
     this->trainOnline(2,0,true);
@@ -315,30 +310,6 @@ void laSvmSingleKernel<T,Kernel>::RecomputeKernel()
         this->UnlockKernelRow(*i);
     }
     this->minmax_dirty=true;
-}
-
-template<class T,class Kernel>
-T laSvmSingleKernel<T,Kernel>::DirectKernel(int sv,const vector<T>& vec)
-{
-    return kernel.compute(vec,this->getSVFeatures(sv),this->VLength);
-}
-
-template<class T,class Kernel>
-void laSvmSingleKernel<T,Kernel>::UpdateRow(vector<T>& row,int sv_index)
-{}
-
-template<class T,class Kernel>
-void laSvmSingleKernel<T,Kernel>::FillRow(vector<T>& row,int sv_index)
-{
-  std::list<int>::iterator i;
-    assert(!SVs[sv_index].Unused());//Make sure the sv_index vector is set
-    for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
-    {
-        row[*i]=kernel.compute(this->getSVFeatures(*i),
-                               this->getSVFeatures(sv_index),this->VLength);
-    }
-    row[sv_index]=kernel.compute(this->getSVFeatures(sv_index),
-                           this->getSVFeatures(sv_index),this->VLength);
 }
 
 template<class T,class Kernel>

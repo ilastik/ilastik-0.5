@@ -254,13 +254,14 @@ T getStepsize(laSvmSingleKernel<T,Kernel>& svm,int index)
 
 
 template<class T>
-laSvmSingleKernel<T,KernelGaussMultiParams<float> >* createLaSvmMultiPar(T gamma,
-																		 int num_features,
-																		 double C,double epsilon,
-																		 int precache_elements,bool verbose=false) 
+laSvmSingleKernel<T,KernelGaussMultiParams<float> >*
+createLaSvmMultiPar(T gamma,
+		    int num_features,
+		    double C,double epsilon,
+		    int precache_elements,bool verbose=false) 
 {
-	vector<T> gammas(num_features,gamma);
-	return new laSvmSingleKernel<T,KernelGaussMultiParams<float> >(gammas,C,epsilon,precache_elements,verbose);
+    vector<T> gammas(num_features,gamma);
+    return new laSvmSingleKernel<T,KernelGaussMultiParams<float> >(gammas,C,epsilon,precache_elements,verbose);
 }
 
 template<class T,class Kernel>
