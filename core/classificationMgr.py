@@ -61,7 +61,7 @@ class ClassifierRandomForest(ClassifierBase):
             labels = numpy.array(labels,dtype=numpy.uint32)
         if not features == numpy.float32:
             features = numpy.array(features,dtype=numpy.float32)
-        self.classifier = vm.RandomForest(features, labels, self.treeCount)
+        self.classifier = vm.RandomForest_new(features, labels, self.treeCount)
         
     
     def predict(self, target):
@@ -301,11 +301,17 @@ class ClassifierInteractiveThread(threading.Thread):
             self.resultLock.release()
 
 class ClassifierOnlineThread(threading.Thread):
-    def __init__(self, features, labels, ids, predictionList, predictionUpdated):
+    def __init__(self, name,features, labels, ids, predictionList, predictionUpdated):
         threading.Thread.__init__(self)
         self.commandQueue = queue()
         self.stopped = False
-        self.classifier = onlineClassifcator.OnlineLaSvm()
+        if name=="online laSvm":
+            self.classifier = onlineClassifcator.OnlineLaSvm()
+        else:
+            if name=="online RF":
+                self.classifier = onlineClassifcator.OnlineRF()
+            else:
+                    raise RuntimeError('unknown online classificator selected')
         self.classifier.start(features, labels, ids)
         
         self.predictionList = predictionList

@@ -78,7 +78,7 @@ class RibbonDropButtonItem(QtGui.QToolButton,RibbonBaseItem):
 
 class RibbonListItem(QtGui.QListWidget, RibbonBaseItem):
     def __init__(self,  ribbon_entry):
-        QtGui.QPushButton.__init__(self)
+        QtGui.QListWidget.__init__(self)
         RibbonBaseItem.__init__(self, ribbon_entry)
         self.setMaximumSize(QtCore.QSize(300,40)) 
 
@@ -146,6 +146,7 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Online", ilastikIcons.Play ,"Online Classifier", type=RibbonToggleButtonItem))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("OnlineClassificator", ilastikIcons.Select, "Select online classificator", type=RibbonListItem))
     
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Segment ,"Segmentation"))
     

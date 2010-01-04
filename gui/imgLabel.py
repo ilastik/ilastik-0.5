@@ -1346,7 +1346,11 @@ class OverlayMgr(object):
 
     def updatePredictionsPixmaps(self, predictions):
         for imageIndex, prediction in predictions.iteritems():
-            for classNr in range(self.classCount):
+            #if self.classCount>prediction.shape[1]:
+            #    raise RuntimeError('I got more classes than prediction pixmaps')
+            #TODO: The min (and the outcomented error above) is due to some bug, that has to be removed yet
+            for classNr in range(min(self.classCount,prediction.shape[1])):
+                print "classNr",classNr
                 pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[classNr+1]), 'continious', 0.7)
                 self.predictionPixmaps[imageIndex][classNr][0] = pm 
     

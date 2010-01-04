@@ -1,6 +1,7 @@
 from classificationMgr import *
 import lasvm
 import numpy
+import matplotlib as mpl
 
 try:
     from vigra import vigranumpycmodule as vm
@@ -64,15 +65,15 @@ class OnlineRF(CumulativeOnlineClassifier):
         self.learnedRange=0
 
     def start(self,features,labels,ids):
-        CumulativeOnlineClassifier.start(self,features,labels,ids)
+        CumulativeOnlineClassifier.start(self,features,labels.astype(numpy.uint32),ids)
         self.startRF()
 
     def startRF(self):
-        self.rf=vm.RandomForest_new(self.features,self.labels,self.tree_counts,prepare_online_learning=True)
+        self.rf=vm.RandomForest_new(self.features,self.labels,self.tree_count,prepare_online_learning=True)
         self.learnedRange=len(self.labels)
 
     def addData(self,features,labels,ids):
-        CumulativeOnlineClassifier.addData(self,features,labels,ids)
+        CumulativeOnlineClassifier.addData(self,features,labels.astype(numpy.uint32),ids)
 
     def removeData(self,ids):
         CumulativeOnlineClassifier.removeData(self,ids)
@@ -80,7 +81,7 @@ class OnlineRF(CumulativeOnlineClassifier):
 
     def fastLearn(self):
         #learn everything not learned so far
-        if(self.learnedRange==):
+        if(self.learnedRange==0):
             self.startRF()
         else:
             self.rf.onlineLearn(self.features,self.labels,self.learnedRange)
@@ -95,11 +96,12 @@ class OnlineRF(CumulativeOnlineClassifier):
 
 
 
-
 class OnlineLaSvm(OnlineClassifier):
     def __init__(self,cacheSize=1000):
         self.cacheSize=cacheSize
         self.svm=None
+        #mpl.interactive(True)
+        #mpl.use('WXAgg')
 
     def start(self,features,labels,ids):
         # TODO Cast to float64!
@@ -107,6 +109,10 @@ class OnlineLaSvm(OnlineClassifier):
         self.addData(features,labels,ids)
         self.svm.enableResampleBorder(0.1)
         self.fastLearn()
+        self.numFeatures=features.shape[1]
+        f=open('./g_run.txt','w')
+        f.close()
+        #pylab.figure()
 
     def addData(self,features,labels,ids):
         # TODO Cast to float64!
@@ -137,12 +143,21 @@ class OnlineLaSvm(OnlineClassifier):
         print "Begin improving solution"
         self.svm.optimizeKernelStep(0)
         print "Done improving solution"
+        f=open('g_run.txt','a')
+        for i in xrange(self.numFeatures):
+            f.write(repr(self.svm.gamma(i)))
+            if i==self.numFeatures-1:
+                f.write("\n")
+            else:
+                f.write("\t")
+        f.close()
 
     def predict(self,features):
         print "Begin predict"
         pred=self.svm.predict(features)
         print "End predict"
-        return (pred+1)/2
+        pred=pred.reshape((pred.shape[0],1))
+        return numpy.append(1.0-(pred+1)/2,(pred+1)/2.0,axis=1)
 
 
 

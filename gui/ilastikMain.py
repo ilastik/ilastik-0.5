@@ -70,6 +70,10 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
+
+        #add classificator for online
+        self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online laSvm')
+        self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online RF')
         
         
         self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
@@ -182,7 +186,8 @@ class MainWindow(QtGui.QMainWindow):
         if state:
             if not self.classificationOnline:
                 self.classificationOnline = ClassificationOnline(self)
-            self.classificationOnline.start()
+            name=self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].currentItem().text()
+            self.classificationOnline.start(name)
         else:
             self.classificationOnline.stop()
         
@@ -745,7 +750,7 @@ class ClassificationOnline(object):
         self.parent.labelWidget.disconnect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'))
         self.parent.disconnect(self.parent,self.QtCore.SIGNAL('newPredictionsPending'))
         
-    def start(self):
+    def start(self,name):
         print "Online Classification starting"
 
         self.parent.generateTrainingData()
@@ -757,7 +762,7 @@ class ClassificationOnline(object):
         predictionList, dummy = self.parent.project.dataMgr.buildFeatureMatrix()
         ids = numpy.zeros((len(labels),)).astype(numpy.int32)
 
-        self.OnlineThread = classificationMgr.ClassifierOnlineThread(features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
+        self.OnlineThread = classificationMgr.ClassifierOnlineThread(name,features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
         self.OnlineThread.start()
         
     def stop(self):
@@ -778,14 +783,17 @@ class ClassificationOnline(object):
         if self.OnlineThread == None:
             return
         new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
-        self.preds=numpy.zeros((new_pred.shape[0],2))
-        for i in xrange(len(new_pred)):
-            self.preds[i,new_pred[i]]=1.0
+        #self.preds=numpy.zeros((new_pred.shape[0],2))
+        #for i in xrange(len(new_pred)):
+        #    self.preds[i,0]=1.0-new_pred[i]
+        #    self.preds[i,1]=new_pred[i]
 
         tmp = {}
-        tmp[self.parent.labelWidget.activeImage] = self.preds
+        print new_pred.shape
+        tmp[self.parent.labelWidget.activeImage] = new_pred
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
         self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
+        
         print "Done updating prediction data"
         #self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
         
