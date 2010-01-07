@@ -61,7 +61,7 @@ class ClassifierRandomForest(ClassifierBase):
             labels = numpy.array(labels,dtype=numpy.uint32)
         if not features == numpy.float32:
             features = numpy.array(features,dtype=numpy.float32)
-        self.classifier = vm.RandomForest_new(features, labels, self.treeCount)
+        self.classifier = vm.RandomForest(features, labels, self.treeCount)
         
     
     def predict(self, target):
