@@ -1,6 +1,7 @@
 from classificationMgr import *
 import lasvm
 import numpy
+import math
 import matplotlib as mpl
 
 try:
@@ -38,9 +39,13 @@ class CumulativeOnlineClassifier(OnlineClassifier):
         self.features=features
         self.labels=labels
         self.ids=ids
+        print "Start features:",self.features
 
     def addData(self,features,labels,ids):
+        print "Features before:",self.features
+        print "Adding features:",features
         self.features=numpy.append(self.features,features,axis=0)
+        print "Result:",self.features
         self.labels=numpy.append(self.labels,labels)
         self.ids=numpy.append(self.ids,ids)
 
@@ -70,7 +75,7 @@ class OnlineRF(CumulativeOnlineClassifier):
 
     def startRF(self):
         self.rf=vm.RandomForest_new(self.features,self.labels,self.tree_count,prepare_online_learning=True)
-        self.learnedRange=len(self.labels)
+        self.learnedRange=len(self.labels.flatten())
 
     def addData(self,features,labels,ids):
         CumulativeOnlineClassifier.addData(self,features,labels.astype(numpy.uint32),ids)
@@ -85,7 +90,7 @@ class OnlineRF(CumulativeOnlineClassifier):
             self.startRF()
         else:
             self.rf.onlineLearn(self.features,self.labels,self.learnedRange)
-        self.learnedRange=len(self.labels)
+        self.learnedRange=len(self.labels.flatten())
 
     def improveSolution(self):
         #TODO: relearn trees
@@ -107,11 +112,16 @@ class OnlineLaSvm(OnlineClassifier):
         # TODO Cast to float64!
         self.svm=lasvm.createLaSvmMultiPar(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
         self.addData(features,labels,ids)
+        self.svm.startGuessParameters()
+        print numpy.min(features.flatten())
+        print numpy.max(features.flatten())
         self.svm.enableResampleBorder(0.1)
         self.fastLearn()
         self.numFeatures=features.shape[1]
         f=open('./g_run.txt','w')
+        f_v=open('./var_run.txt','w')
         f.close()
+        f_v.close()
         #pylab.figure()
 
     def addData(self,features,labels,ids):
@@ -144,18 +154,26 @@ class OnlineLaSvm(OnlineClassifier):
         self.svm.optimizeKernelStep(0)
         print "Done improving solution"
         f=open('g_run.txt','a')
+        f_v=open('./var_run.txt','a')
         for i in xrange(self.numFeatures):
-            f.write(repr(self.svm.gamma(i)))
+            f.write(repr(math.log(self.svm.gamma(i))))
+            f_v.write(repr(self.svm.variance(i)))
             if i==self.numFeatures-1:
                 f.write("\n")
+                f_v.write("\n")
             else:
                 f.write("\t")
+                f_v.write("\t")
         f.close()
+        f_v.close()
 
     def predict(self,features):
         print "Begin predict"
-        pred=self.svm.predict(features)
+        pred=self.svm.predictF(features)
+        pred=self.svm.predictFdualCoverTree(features,0.001);
         print "End predict"
+        pred=(pred>0.0)
+        pred=(pred.astype(numpy.int32)*2)-1
         pred=pred.reshape((pred.shape[0],1))
         return numpy.append(1.0-(pred+1)/2,(pred+1)/2.0,axis=1)
 

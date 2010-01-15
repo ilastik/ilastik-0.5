@@ -192,7 +192,7 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationOnline.stop()
         
     # TODO: This whole function should NOT be here transfer it DataMgr. 
-    def generateTrainingData(self):
+    def generateTrainingData(self,labelArrays=None):
         trainingMatrices_perDataItem = []
         res_labels = []
         res_names = []
@@ -205,7 +205,10 @@ class MainWindow(QtGui.QMainWindow):
                 continue
             
             # Extract labelMatrix
-            labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
+            if labelArrays==None:
+                labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
+            else:
+                labelmatrix=labelArrays[dataItemNr]
             labeled_indices = labelmatrix.nonzero()[0]
             n_labels = labeled_indices.shape[0]
             nFeatures = 0
@@ -800,12 +803,14 @@ class ClassificationOnline(object):
     
     def updateTrainingData(self):
         active_image=self.parent.labelWidget.activeImage
-        (Features,dummy)=self.parent.project.dataMgr.buildFeatureMatrix()
-        Features=numpy.array(Features)
         Labels=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].labelmngr.labelArray
         queue=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].BrushQueues['onlineLearning']
 
+        #TODO: make as many as there are images
+        labelArrays=[numpy.array([0])] * (active_image+1)
+
         while(True):
+            labelArrays[active_image]=numpy.zeros(Labels.shape,Labels.dtype)
             try:
                 step=queue.pop()
             except IndexError:
@@ -818,18 +823,23 @@ class ClassificationOnline(object):
                     remove_data.append(step.positions[i])
             remove_data=numpy.array(remove_data).astype(numpy.float32)
             self.OnlineThread.commandQueue.put((None,None,remove_data,'remove'))
+
             #add new data
             add_indexes=[]
             for i in xrange(len(step.oldValues)):
                 if (not step.isUndo and step.newLabel!=0) or (step.isUndo and step.oldValues[i]!=0): 
                     add_indexes.append(step.positions[i])
-            #append it
+                    labelArrays[active_image][step.positions[i]]=Labels[step.positions[i]]
+            #create the new features
+            self.parent.generateTrainingData(labelArrays)
             add_indexes=numpy.array(add_indexes)
 
             print "*************************************"
             print "************* SENDING ***************"
             print "*************************************"
-            self.OnlineThread.commandQueue.put((Features[active_image,add_indexes,:],Labels[add_indexes].astype(numpy.int32),numpy.array(add_indexes).astype(numpy.int32),'learn'))
+            self.OnlineThread.commandQueue.put((self.parent.project.trainingMatrix,
+                                                self.parent.project.trainingLabels.astype(numpy.int32),
+                                                numpy.array(add_indexes).astype(numpy.int32),'learn'))
         
     
 class ClassificationPredict(object):
