@@ -8,6 +8,8 @@ from core import labelMgr, activeLearning
 from core.utilities import irange, debug
 from gui.iconMgr import ilastikIcons
 import time
+#import qimage2ndarray
+import labelArrayDrawQImage
 
 try:
     from vigra import vigranumpycmodule as vm, arraytypes as at
@@ -16,7 +18,6 @@ except ImportError:
         import vigranumpycmodule as vm
     except ImportError:
         sys.exit("vigranumpycmodule not found!")
-
 
 #************************
 
@@ -283,11 +284,85 @@ class draw_Patch(drawManager):
         pass
     
     def repaint(self):
+	#array = qimage2ndarray.rgb_view(self.image)
+	#for x in xrange(self.size[0]):
+        #    for y in xrange(self.size[1]):
+		  #array[y,x]=;
+	#self.imageItem.update()
+	#return
+	
+	#a = self.labelmngr.labelArray.copy()
+	#print self.size
+	#print a.shape
+	#print " "
+	#a.shape = self.size
+	#size_rgb=self.size
+	#size_rgb.append(3)
+	#c=numpy.zeros(size_rgb)
+	#for label in xrange( len(self.drawColor) ):
+		#b= (a==label)
+		#c[0,:][b]=self.drawColor[label+1].r()
+		#c[1,:][b]=self.drawColor[label+1].g()
+		#c[2,:][b]=self.drawColor[label+1].b()
+		
+	#self.image = qimage2ndarray.array2qimage(c)
+	#self.imageItem.update()
+	#return
+		
+	#a = 
+	#print a.shape
+	#self.imageItem.update()
+	#return
         # todo: clear qimage, get labels from labelmngr and paint them.
         #self.image.loadFromData( self.labelmngr.labelArray )
+	
+	#a=numpy.ones(self.size)
+	#self.image = qimage2ndarray.array2qimage(a)
+	#self.imageItem.update()
+	#return
+
+	#
+	# c++ drawing:
+	pixcol = {}
+	for label, col in self.drawColor.items():
+        	pixcol[label] = col.rgb()
+	# todo: pixcol contains more entries than expected...
+	shp = self.labelmngr.labelArray.shape
+	#self.labelmngr.labelArray.shape = self.size
+	self.labelmngr.labelArray.shape = [self.size[1], self.size[0]]
+	#draw.drawImage(self.image, pixcol, self.labelmngr.labelArray.swapaxes(0,1).reshape(self.labelmngr.labelArray.shape))
+	labelArrayDrawQImage.drawImage(self.image, pixcol, self.labelmngr.labelArray)
+	self.labelmngr.labelArray.shape = shp
+	self.imageItem.update()
+	return
+	
+	#
+	# python drawing 1: use numpy to extract labeled pixels
+	pixcol = {}
+	for label, col in self.drawColor.items():
+        	pixcol[label] = col.rgb()
+	# todo: pixcol contains more entries than expected...
+	shp = self.labelmngr.labelArray.shape
+	self.labelmngr.labelArray.shape = self.size
+	xx, yy = self.labelmngr.labelArray.nonzero()
+	self.labelmngr.labelArray.shape = shp
+	print "shape: " + str(shp)
+	self.image.fill(0)
+	for i in xrange(len(xx)):
+		y=xx[i]
+		x=yy[i]
+		#print x,y
+		lbl = self.labelmngr.getLabel([x,y])
+		self.image.setPixel(x,y,pixcol[lbl])
+	self.imageItem.update()
+	return
+
+	#
+	# python drawing 2: draw all pixels in for loop. SLOOOWWW!!!
         pixcol = {}
         for label, col in self.drawColor.items():
             pixcol[label] = col.rgb()
+        # todo: pixcol contains more entries than expected...
         for x in xrange(self.size[0]):
             for y in xrange(self.size[1]):
                 lbl = self.labelmngr.getLabel([x,y])
@@ -1001,7 +1076,7 @@ class labelWidget(QtGui.QWidget):
         
         # Set new Image Display and save it in self.pixmapitem
         if self.activeChannel < 0:
-#            self.img = qimage2ndarray.array2qimage(self.project.dataMgr[newImage].data)
+            #self.img = qimage2ndarray.array2qimage(self.project.dataMgr[newImage].data)
             self.img = self.project.dataMgr[newImage].data.qimage()
         else:
             tmpImg = self.project.dataMgr[newImage].data[:,:, self.activeChannel]
