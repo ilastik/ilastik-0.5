@@ -25,7 +25,7 @@ void drawImage(QImage &image, SIP_PYOBJECT colDictp, SIP_PYOBJECT datap);
 {
 	numeric::array::set_module_and_type("numpy", "ndarray");
 	//numeric::array::set_module_and_type("numpy", "ArrayType");
-	dict colDict = extract<dict>( a1 );
+	dict colDict = extract<dict>(a1);
 	numeric::array data = extract<numeric::array>( a2 );
 	/*
 	handle <> dataph(borrowed(a2));
@@ -33,18 +33,16 @@ void drawImage(QImage &image, SIP_PYOBJECT colDictp, SIP_PYOBJECT datap);
 	handle <> colDictph(borrowed(a1));
 	dict& colDict = extract<dict&>( object(colDictph) );
 	*/
-	//std::cout <<  "xx: " << a0->width() << " yy: " << a0->height() << std::endl;
 	for (int xx=0; xx<a0->width(); xx++) for (int yy=0; yy<a0->height(); yy++) {
-		//int label = extract<int>( data[xx][yy] );		// doesn't work on 64 bit machines...
-		double dlabel = extract<double>( data[yy][xx] );	// hack...   [yy][xx]: numpy order
-		long int label = (long int) dlabel;			// hack
-		long int rgb;
+		//int label = extract<int>( data[xx][yy] );		// [WA] doesn't work on 64 bit machines...
+		double dlabel = extract<double>( data[yy][xx] );	// [WA] hack...   [yy][xx]: numpy order
+		long int label = (long int) dlabel;			// [WA] hack
+		double rgb;
 		if (label) {
-			////PyObject_Print( PyObject_Repr( PyObject_GetAttrString(colDict.get( label ), "__class__") ), stdout, 0 );
-			////std::string classstr = extract<std::string>( ((colDict.get( label )).attr("__class__")).attr("__name__") );
-			//char const* classstr = extract<char const*>( ((colDict.get( label )).attr("__class__")).attr("__name__") );
+			//std::string classstr = extract<std::string>( ((colDict.get( label )).attr("__class__")).attr("__name__") );
 			//std::cout << "label: " << label << " > " << classstr << std::endl;
-			rgb = extract<long int>(colDict.get( label ));
+			// [WA] here a double is extracted, it is actually a long but extract only works with double
+			rgb = extract<double>(colDict.get( label ));
 		}
 		else {
 			rgb = 0;
