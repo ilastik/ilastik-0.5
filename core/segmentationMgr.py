@@ -38,7 +38,7 @@ class LocallyDominantSegmentation2D(SegmentationBase):
             return None
         
         self.result = numpy.argmax(res, axis=2)
-        #vm.writeImage(self.result.astype(numpy.uint8),'c:/il_seg.jpg')
+        #vigra.impex.writeImage(self.result.astype(numpy.uint8),'c:/il_seg.jpg')
 
 if __name__ == "__main__":
     a = numpy.random.rand(256,256,4)
