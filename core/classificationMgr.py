@@ -19,12 +19,9 @@ def interactiveMessagePrint(* args):
     print "Thread: ", args
 
 try:
-    from vigra import vigranumpycmodule as vm
+    import vigra
 except ImportError:
-    try:
-        import vigranumpycmodule as vm
-    except ImportError:
-        sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigra module not found!")
 
 class ClassificationMgr(object):
     def __init__(self):
@@ -61,7 +58,7 @@ class ClassifierRandomForest(ClassifierBase):
             labels = numpy.array(labels,dtype=numpy.uint32)
         if not features == numpy.float32:
             features = numpy.array(features,dtype=numpy.float32)
-        self.classifier = vm.RandomForest(features, labels, self.treeCount)
+        self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
         
     
     def predict(self, target):
