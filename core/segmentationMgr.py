@@ -2,12 +2,9 @@ import numpy
 
 
 try:
-    from vigra import vigranumpycmodule as vm
+    import vigra
 except ImportError:
-    try:
-        import vigranumpycmodule as vm
-    except ImportError:
-        sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigra module not found!")
 
 class SegmentationBase(object):
     def __init__(self):
@@ -35,7 +32,7 @@ class LocallyDominantSegmentation2D(SegmentationBase):
         if self.smoothing in ['Gaussian']:
             res = numpy.zeros( propmap_.shape, dtype=numpy.float32)
             for k in range(0, propmap_.shape[2]):
-                res[:,:,k] = vm.gaussianSmooth2d(propmap_[:,:,k], self.sigma)
+                res[:,:,k] = vigra.filters.gaussianSmooth2d(propmap_[:,:,k], self.sigma)
         else:
             print "Invalid option for smoothing: %s" % self.smoothing
             return None
