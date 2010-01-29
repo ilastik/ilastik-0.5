@@ -7,12 +7,9 @@ sys.path.append("..")
 from core.utilities import irange
 
 try:
-    from vigra import vigranumpycmodule as vm
+    import vigra
 except ImportError:
-    try:
-        import vigranumpycmodule as vm
-    except ImportError:
-        sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigranumpycmodule not found!")
     
 class FeatureMgr():
     def __init__(self, featureItems=[]):
@@ -177,18 +174,18 @@ class FeatureGroups(object):
                         resList.append(LocalFeature(featFunc.__name__, [scaleValue for k in argNames], argNames , featFunc))
                         print featFunc.__name__, scaleValue    
         return resList
-                    
-gaussianGradientMagnitude = vm.gaussianGradientMagnitude, ['Sigma' ]
-gaussianSmooth = vm.gaussianSmooth2d, ['Sigma']
-structureTensor = vm.structureTensor, ['Sigma']
-hessianMatrixOfGaussian = vm.hessianMatrixOfGaussian, ['Sigma']
-eigStructureTensor2d = vm.eigStructureTensor2d, ['InnerScale', 'OuterScale']
-laplacianOfGaussian = vm.laplacianOfGaussian, ['Sigma']
-morphologicalOpening = lambda x,s: vm.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
-morphologicalClosing = lambda x,s: vm.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
-eigHessianTensor2d = vm.eigHessian2d, ['Sigma']
-differenceOfGaussians = lambda x, s: vm.gaussianSmooth2d(x,s) - vm.gaussianSmooth2d(x,s/3*2), ['Sigma']
-cannyEdge = lambda x, s: vm.cannyEdgeImage(x, s, 0, 1), ['Sigma']
+
+gaussianGradientMagnitude = vigra.convolution.gaussianGradientMagnitude, ['Sigma' ]
+gaussianSmooth = vigra.filters.gaussianSmooth2d, ['Sigma']
+structureTensor = vigra.convolution.structureTensor, ['Sigma']
+hessianMatrixOfGaussian = vigra.convolution.hessianMatrixOfGaussian, ['Sigma']
+eigStructureTensor2d = vigra.filters.eigStructureTensor2d, ['InnerScale', 'OuterScale']
+laplacianOfGaussian = vigra.convolution.laplacianOfGaussian, ['Sigma']
+morphologicalOpening = lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
+morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
+eigHessianTensor2d = vigra.filters.eigHessian2d, ['Sigma']
+differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmooth2d(x,s) - vigra.filters.gaussianSmooth2d(x,s/3*2), ['Sigma']
+cannyEdge = lambda x, s: vigra.edgedetection.cannyEdgeImage(x, s, 0, 1), ['Sigma']
 
 identity = lambda x: x, []
 identity[0].__name__ = "identity"
