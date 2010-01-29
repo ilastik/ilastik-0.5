@@ -5,12 +5,9 @@ import math
 import matplotlib as mpl
 
 try:
-    from vigra import vigranumpycmodule as vm
+    import vigra
 except ImportError:
-    try:
-        import vigranumpycmodule as vm
-    except ImportError:
-        sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigra module not found!")
 
 class OnlineClassifier():
     def __init__(self):
@@ -74,7 +71,7 @@ class OnlineRF(CumulativeOnlineClassifier):
         self.startRF()
 
     def startRF(self):
-        self.rf=vm.RandomForest_new(self.features,self.labels,self.tree_count,prepare_online_learning=True)
+        self.rf=vigra.classification.RandomForest(self.features,self.labels,self.tree_count,prepare_online_learning=True)
         self.learnedRange=len(self.labels.flatten())
 
     def addData(self,features,labels,ids):
