@@ -7,12 +7,10 @@ import tables
 from core.utilities import irange, debug
 
 try:
-    from vigra import vigranumpycmodule as vm, arraytypes as at
+    from vigra import arraytypes as at
+    import vigra
 except ImportError:
-    try:
-        import vigranumpycmodule as vm
-    except ImportError:
-        sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigra module not found!")
 
 class DataItemBase():
     def __init__(self, fileName):
@@ -79,7 +77,7 @@ class DataItemVolume(DataItemBase):
         DataItemBase.__init__(self, fileName) 
        
     def loadData(self):
-        self.data = vm.readVolume(self.fileName)
+        self.data = vigra.impex.readVolume(self.fileName)
         self.dataDimensions = 3
         self.dataType = self.data.dtype
         if len(self.data.shape) == 4:
@@ -218,7 +216,7 @@ class DataImpex(object):
     
     @staticmethod
     def loadImageData(fileName):
-        data = vm.readImage(fileName)
+        data = vigra.impex.readImage(fileName)
         #data = data.swapaxes(0,1)
         return data
     
