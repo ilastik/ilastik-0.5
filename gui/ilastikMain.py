@@ -899,8 +899,6 @@ class ClassificationPredict(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
-    
-
 
 
 if __name__ == "__main__":

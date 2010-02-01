@@ -727,15 +727,15 @@ class cloneView(QtGui.QGraphicsView):
                         if pos.x() >= rect.left():
                             if pos.x() <= rect.right():
                                 self.dragging = True
-            else:
-                self.origmatrix = QtGui.QMatrix(self.view_orig.matrix())
+            self.origmatrix = QtGui.QMatrix(self.view_orig.matrix())
             
     def mouseMoveEvent(self, event):
         QtGui.QGraphicsView.mouseMoveEvent(self, event)
         if self.zooming or self.dragging:
             pos = self.mapToScene(event.pos())
             delta = pos - self.clickpos
-        else: return        
+        else: return
+        m = QtGui.QMatrix( self.origmatrix )
         if self.zooming:
             oldrect = self.oldrect.boundingRect()
             #for k in self.zoomdir:
@@ -744,23 +744,13 @@ class cloneView(QtGui.QGraphicsView):
             scaley = 1.0
             if self.zoomdir["u"]: scaley= 1.0 + delta.y()/oldrect.height(); self.dragging=True; delta.setX(0.0)
             if self.zoomdir["d"]: scaley= 1.0 - delta.y()/oldrect.height()
-            if self.zoomdir["l"]: scalex= 1.0 + delta.x()/oldrect.height(); self.dragging=True; delta.setY(0.0)
-            if self.zoomdir["r"]: scalex= 1.0 - delta.x()/oldrect.height()
-            m = QtGui.QMatrix( self.origmatrix )
+            if self.zoomdir["l"]: scalex= 1.0 + delta.x()/oldrect.width(); self.dragging=True; delta.setY(0.0)
+            if self.zoomdir["r"]: scalex= 1.0 - delta.x()/oldrect.width()
             m.scale(scalex,scaley)
-            self.view_orig.setMatrix(m)
         if self.dragging:
-            #self.view_orig.translate(-delta.x(), -delta.y())
-            #mdelta = self.view_orig.mapFromScene(delta)
-            #self.view_orig.translate(-mdelta.x(), -mdelta.y())
-            dx = self.view_orig.mapFromScene(-delta.x())
-            dy = self.view_orig.mapFromScene(-delta.y())
-            self.view_orig.translate( dx,dy )
-            print mdelta
-            print delta
+            m.translate(-delta.x(), -delta.y())
+        self.view_orig.setMatrix(m)
         self.view_orig.requestROIupdate()
-        
-            
 
     def mouseReleaseEvent(self, event):
         QtGui.QGraphicsView.mouseReleaseEvent(self, event)
