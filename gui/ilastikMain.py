@@ -21,12 +21,9 @@ from core.utilities import irange, debug
 
 
 try:
-    from vigra import vigranumpycmodule as vm
+    import vigra
 except ImportError:
-    try:
-        import vigranumpycmodule as vm
-    except ImportError:
-        sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigranumpycmodule not found!")
 
 
 
@@ -41,6 +38,9 @@ class MainWindow(QtGui.QMainWindow):
         self.initImageWindows()
         self.createImageWindows()
         self.createFeatures()
+        
+        #self.labelDocks=[]
+        #self.labelWidget = None
         
         self.classificationProcess = None
         self.classificationOnline = None
@@ -117,6 +117,8 @@ class MainWindow(QtGui.QMainWindow):
             
         
     def projectModified(self):
+        self.destroyImageWindows()
+        self.createImageWindows()
         self.labelWidget.updateProject(self.project)
         
     def newFeatureDlg(self):
@@ -125,6 +127,12 @@ class MainWindow(QtGui.QMainWindow):
     def initImageWindows(self):
         self.labelDocks = []
         
+    def destroyImageWindows(self):
+        for dock in self.labelDocks:
+            self.removeDockWidget(dock)
+        self.labelDocks = []
+        self.labelWidget = None
+                
     def createImageWindows(self):
         label_w = imgLabel.labelWidget(self, ['rgb1.jpg', 'rgb2.tif'])
         
@@ -454,9 +462,10 @@ class ProjectDlg(QtGui.QDialog):
         rowCount = self.tableWidget.rowCount()
         dataItemList = self.parent.project.dataMgr.getDataList()
         for k in range(0, rowCount):
-            if k < len(dataItemList):
-                print "Nothing to do here"
-                continue
+            # todo: chris, i commented this out because change in filenames can occour even when number of files remains unchanged!
+            #if k < len(dataItemList):
+            #    print "Nothing to do here"
+            #    continue
             fileName = self.tableWidget.item(k, self.columnPos['File']).text()
             theDataItem = dataMgr.DataItemImage(fileName)
             dataItemList.append(theDataItem)
@@ -480,7 +489,7 @@ class ProjectDlg(QtGui.QDialog):
                 theDataItem.projects.append(self.parent.project)
         
         dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
-        self.parent.project.dataMgr.setDataList(dataItemList) 
+        self.parent.project.dataMgr.setDataList(dataItemList)
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         

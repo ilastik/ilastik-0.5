@@ -694,6 +694,91 @@ class displayImageList:
 
 
 # *********************************************************
+class cloneView(QtGui.QGraphicsView):
+    def __init__(self, view_orig):
+        QtGui.QGraphicsView.__init__(self)
+        self.clickdist = 5
+        self.dragging = False
+        self.zooming = False
+        self.view_orig = view_orig
+        self.zoom_box = None
+        self.zoomdir = {"ul":False, "u":False, "ur":False, "r":False, "rd":False, "d":False, "dl":False, "l":False}
+        self.oldrect = None
+        self.clickpos = None
+        
+    def setZoomBox(self, zoombox):
+        self.zoom_box = zoombox
+    
+    def mousePressEvent(self, event):
+        QtGui.QGraphicsView.mousePressEvent(self, event)
+        QtCore.Qt.LeftButton
+        rect = self.zoom_box.rect()
+        for k in self.zoomdir: self.zoomdir[k]=False
+        if event.button() == QtCore.Qt.LeftButton:
+            #self.oldrect = self.view_orig.sceneRect()
+            self.oldrect = self.view_orig.mapToScene(self.view_orig.rect())
+            pos = self.mapToScene(event.pos())
+            self.clickpos = pos
+            self.zooming = False
+            if abs(rect.top()-pos.y())<=self.clickdist: self.zoomdir["u"]=True; self.zooming = True
+            if abs(rect.right()-pos.x())<=self.clickdist: self.zoomdir["r"]=True; self.zooming = True
+            if abs(rect.bottom()-pos.y())<=self.clickdist: self.zoomdir["d"]=True; self.zooming = True
+            if abs(rect.left()-pos.x())<=self.clickdist: self.zoomdir["l"]=True; self.zooming = True
+            if not self.zooming:
+                if pos.y() <= rect.bottom():
+                    if pos.y() >= rect.top():
+                        if pos.x() >= rect.left():
+                            if pos.x() <= rect.right():
+                                self.dragging = True
+            else:
+                self.origmatrix = QtGui.QMatrix(self.view_orig.matrix())
+            
+    def mouseMoveEvent(self, event):
+        QtGui.QGraphicsView.mouseMoveEvent(self, event)
+        if self.zooming or self.dragging:
+            pos = self.mapToScene(event.pos())
+            delta = pos - self.clickpos
+        else: return        
+        if self.zooming:
+            oldrect = self.oldrect.boundingRect()
+            #for k in self.zoomdir:
+            #    if self.zoomdir[k]: print k
+            scalex = 1.0
+            scaley = 1.0
+            if self.zoomdir["u"]: scaley= 1.0 + delta.y()/oldrect.height(); self.dragging=True; delta.setX(0.0)
+            if self.zoomdir["d"]: scaley= 1.0 - delta.y()/oldrect.height()
+            if self.zoomdir["l"]: scalex= 1.0 + delta.x()/oldrect.height(); self.dragging=True; delta.setY(0.0)
+            if self.zoomdir["r"]: scalex= 1.0 - delta.x()/oldrect.height()
+            m = QtGui.QMatrix( self.origmatrix )
+            m.scale(scalex,scaley)
+            self.view_orig.setMatrix(m) 
+        if self.dragging:
+            #self.view_orig.translate(-delta.x(), -delta.y())
+            mdelta = self.view_orig.mapFromScene(delta)
+            self.view_orig.translate(-mdelta.x(), -mdelta.y())
+            print mdelta
+            print delta
+        self.view_orig.requestROIupdate()
+        
+            
+
+    def mouseReleaseEvent(self, event):
+        QtGui.QGraphicsView.mouseReleaseEvent(self, event)
+        if event.button() == QtCore.Qt.LeftButton:
+            self.dragging = False
+            self.zooming = False
+        
+class ZoomBox (QtGui.QGraphicsRectItem):
+    def __init__(self):
+        QtGui.QGraphicsRectItem.__init__(self)
+    
+    #def mouseMoveEvent(self, event):
+    #    QtGui.QGraphicsRectItem.mouseMoveEvent(self, event)
+    #    print "ZoomBox - mouseMoveEvent"
+        
+    #def sceneEvent(self, event):
+    #    print event.type()
+
 class cloneViewWidget(QtGui.QDockWidget):
     
     def __init_n(self, parent=None, labelwidget=None):
@@ -702,13 +787,8 @@ class cloneViewWidget(QtGui.QDockWidget):
     def initObject(self):
         self.constructChildren()
         self.initChildren()
-        
     
-        
-    
-
-    
-    def __init__(self, parent=None, labelwidget=None):
+    def __init__(self, parent=None, labelwidget=None, view_orig=None):
         QtGui.QWidget.__init__(self, parent)
         self.resize(100,100)
         self.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea| QtCore.Qt.TopDockWidgetArea| QtCore.Qt.LeftDockWidgetArea)
@@ -717,22 +797,31 @@ class cloneViewWidget(QtGui.QDockWidget):
 
         #self.view = panView()
         self.labelwidget = labelwidget
-        self.view = QtGui.QGraphicsView()
+        self.view = cloneView(view_orig)
         self.sceneToDraw = self.labelwidget.view.scene()
         self.sceneitem = SceneItem(self.sceneToDraw)
         self.par = parent
+        self.view_orig=view_orig
 
         self.col = QtGui.QColor(255,0,0)
-        self.roi = QtGui.QGraphicsRectItem()
+        #self.roi = QtGui.QGraphicsRectItem()
+        self.roi = ZoomBox()
         self.roi.setPen(QtGui.QPen(self.col))
-        #self.roi.setBrush(QtGui.QBrush(self.col))
+        #self.roi.setBrush(QtGui.QBrush(self.col))   # make solid for debugging purposes
         self.roi.setZValue(1)
-
+        self.view.setZoomBox(self.roi)
+        
         self.scene = QtGui.QGraphicsScene()
         self.scene.addItem(self.roi)
         self.scene.addItem(self.sceneitem)
 
         self.view.setScene(self.scene)
+        
+        # no events are passed to roi-object :-(
+        self.view.setInteractive(True)
+        self.roi.setAcceptHoverEvents(True)
+        #self.roi.setFlag(QtGui.QGraphicsItem.ItemIsMovable)
+        
         #self.view.scale(0.2,0.2)
         lo = QtGui.QHBoxLayout()
         lo.addWidget(self.view)
@@ -1027,6 +1116,8 @@ class labelWidget(QtGui.QWidget):
         
     def loadImageList(self):
         self.cmbImageList.clear()
+        for item in self.project.dataMgr.dataItems:
+            print item.fileName
         imagenames = [os.path.basename(item.fileName) for item in self.project.dataMgr.dataItems]
         self.cmbImageList.addItems(imagenames)
         
@@ -1160,7 +1251,7 @@ class labelWidget(QtGui.QWidget):
     def makeCloneView(self):
         par = self.parent()
         if par: par = par.parent()
-        cv = cloneViewWidget(par, self)
+        cv = cloneViewWidget(par, self, self.view)
         self.cloneviews.append(cv)
         cv.connectROISignal(self.view)
         self.view.requestROIupdate()
