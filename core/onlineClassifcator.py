@@ -11,6 +11,7 @@ except ImportError:
 
 class OnlineClassifier():
     def __init__(self):
+        self.predSets={}
         pass
     def start(self,features,labels,ids):
         pass
@@ -22,7 +23,9 @@ class OnlineClassifier():
         pass
     def improveSolution(self):
         pass
-    def predict(self,features):
+    def addPredictionSet(self,features,id):
+        self.predSets[id]=features
+    def predict(self,id):
         pass
 
 class CumulativeOnlineClassifier(OnlineClassifier):
@@ -31,6 +34,7 @@ class CumulativeOnlineClassifier(OnlineClassifier):
         self.labels=None
         self.features=None
         self.ids=None
+        OnlineClassifier.__init__(self)
 
     def start(self,features,labels,ids):
         self.features=features
@@ -93,13 +97,17 @@ class OnlineRF(CumulativeOnlineClassifier):
         #TODO: relearn trees
         pass
 
-    def predict(self,features):
-        return self.rf.predictProbabilities(features)
+    def addPredictionSet(self,features,id):
+        self.predSets[id]=vm.RF_OnlinePredictionSet(features,self.tree_count)
+
+    def predict(self,id):
+        return self.rf.predictProbabilities(self.predSets[id])
 
 
 
 class OnlineLaSvm(OnlineClassifier):
     def __init__(self,cacheSize=1000):
+        OnlineClassifier.__init__(self)
         self.cacheSize=cacheSize
         self.svm=None
         #mpl.interactive(True)
@@ -164,10 +172,9 @@ class OnlineLaSvm(OnlineClassifier):
         f.close()
         f_v.close()
 
-    def predict(self,features):
+    def predict(self,id):
         print "Begin predict"
-        pred=self.svm.predictF(features)
-        pred=self.svm.predictFdualCoverTree(features,0.001);
+        pred=self.svm.predictFsingleCoverTree(self.predSets[id],0.01);
         print "End predict"
         pred=(pred>0.0)
         pred=(pred.astype(numpy.int32)*2)-1

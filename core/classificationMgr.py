@@ -311,7 +311,8 @@ class ClassifierOnlineThread(threading.Thread):
                     raise RuntimeError('unknown online classificator selected')
         self.classifier.start(features, labels, ids)
         
-        self.predictionList = predictionList
+        for k in range(len(predictionList)):
+            self.classifier.addPredictionSet(predictionList[k],k)
         self.activeImageIndex = 0
         
         self.predictions = [deque(maxlen=1) for k in range(len(predictionList))]
@@ -341,7 +342,7 @@ class ClassifierOnlineThread(threading.Thread):
                 pass
                 
             if self.commandQueue.empty():
-                result = self.classifier.predict(self.predictionList[self.activeImageIndex])
+                result = self.classifier.predict(self.activeImageIndex)
                 self.predictions[self.activeImageIndex].append(result)
                 self.predictionUpdated()
             
