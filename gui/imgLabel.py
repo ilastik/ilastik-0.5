@@ -12,12 +12,9 @@ import time
 import labelArrayDrawQImage
 
 try:
-    from vigra import vigranumpycmodule as vm, arraytypes as at
+    import vigra
 except ImportError:
-    try:
-        import vigranumpycmodule as vm
-    except ImportError:
-        sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigra module not found!")
 
 #************************
 
@@ -751,11 +748,14 @@ class cloneView(QtGui.QGraphicsView):
             if self.zoomdir["r"]: scalex= 1.0 - delta.x()/oldrect.height()
             m = QtGui.QMatrix( self.origmatrix )
             m.scale(scalex,scaley)
-            self.view_orig.setMatrix(m) 
+            self.view_orig.setMatrix(m)
         if self.dragging:
             #self.view_orig.translate(-delta.x(), -delta.y())
-            mdelta = self.view_orig.mapFromScene(delta)
-            self.view_orig.translate(-mdelta.x(), -mdelta.y())
+            #mdelta = self.view_orig.mapFromScene(delta)
+            #self.view_orig.translate(-mdelta.x(), -mdelta.y())
+            dx = self.view_orig.mapFromScene(-delta.x())
+            dy = self.view_orig.mapFromScene(-delta.y())
+            self.view_orig.translate( dx,dy )
             print mdelta
             print delta
         self.view_orig.requestROIupdate()
@@ -1569,7 +1569,7 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
-            image = at.ScalarImage(rawImage).qimage(normalize = (0.0, 1.0))
+            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize = (0.0, 1.0))
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())
