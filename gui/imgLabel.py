@@ -1094,6 +1094,7 @@ class labelWidget(QtGui.QWidget):
     
     def loadChannelList(self, imageIndex=0):
         self.cmbChannelList.clear()
+        print self.project.dataMgr[imageIndex].channelDescription
         self.cmbChannelList.addItems(self.project.dataMgr[imageIndex].channelDescription)
         self.cmbChannelList.setEnabled(True)
         
@@ -1164,7 +1165,8 @@ class labelWidget(QtGui.QWidget):
             if tmpImg.max() > 0:
                 tmpImg = (tmpImg - tmpImg.min()) / tmpImg.max()
             tmpImg = (tmpImg*255).astype(numpy.uint8)
-            self.img = at.ScalarImage(tmpImg).qimage()
+            self.img = vigra.arraytypes.ScalarImage(tmpImg).qimage()
+
            
             
         pm = QtGui.QPixmap.fromImage(self.img)
@@ -1196,7 +1198,8 @@ class labelWidget(QtGui.QWidget):
             if self.project.dataMgr[newImage].hasLabels and (not isinstance(self.project.dataMgr[newImage].labels, list)):
                 # This second part in or clause is to be backward compatible. we need to init the data.labels with None instead of [] !?!
                 if self.project.dataMgr[newImage].labels is not None:
-                    labels = self.project.dataMgr[newImage].labels
+                    # [TODO] Cast to float64 is just a workarround to avoid crash of repaint
+                    labels = self.project.dataMgr[newImage].labels.astype(numpy.float64)
                     labelManager.labelArray = labels.flatten()
                     drawManager.repaint()
         
@@ -1226,7 +1229,7 @@ class labelWidget(QtGui.QWidget):
         if channelIndex < 0:
             print "Dumb Callbacks"
             return
-        print "Change Channgel to ", channelIndex
+        print "Change Channel to ", channelIndex
         self.activeChannel = channelIndex
         self.changeImage(self.activeImage)
          
@@ -1569,7 +1572,7 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage(rawImage.astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
-            image = at.ScalarImage(rawImage).qimage(normalize = False)
+            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize = False)
             classColor = self.classColors
             for i in range(rawImage.max()+1):
                 classColor = QtGui.QColor(self.classColors[i+1])

@@ -204,7 +204,7 @@ class DataImpex(object):
             data = h5file.root.data.read()
             labels = h5file.root.labels.read()
             data = data.swapaxes(1,0)
-            labels = at.ScalarImage(labels.T)
+            labels = vigra.arraytypes.ScalarImage(labels.T)
             ChannelDescription = h5file.root.featureDescriptor.read()
             ChannelDescription = map(str,ChannelDescription[:,0])
         except Exception as e:

@@ -14,8 +14,24 @@ class Project(object):
         self.trainingFeatureNames = None
     
     def saveToDisk(self, fileName):
+        """ Save the whole project includeing data, feautues, labels and settings to 
+        and hdf5 file with ending ilp """
+        
+        # pickle.dump(self, fileHandle, True)
+        
+        # get project settings
+        
+        # get number of images
+        
+        # get data
+        
+        # get labels
+        
+        # get features
+        
+        
         fileHandle = open(fileName,'wb')
-        pickle.dump(self, fileHandle, True)
+        # Save to hdf5 file
         fileHandle.close()
         print "Project %s saved to %s " % (self.name, fileName)
     
