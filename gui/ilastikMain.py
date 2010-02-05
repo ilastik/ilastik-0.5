@@ -216,7 +216,7 @@ class MainWindow(QtGui.QMainWindow):
             if labelArrays==None:
                 labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
             else:
-                labelmatrix=labelArrays[dataItemNr]
+                labelmatrix = labelArrays[dataItemNr]
             labeled_indices = labelmatrix.nonzero()[0]
             n_labels = labeled_indices.shape[0]
             nFeatures = 0
@@ -412,7 +412,6 @@ class ProjectDlg(QtGui.QDialog):
                     for k in range(labelsAvailable-1):
                         if self.labelCounter <= labelsAvailable:
                             self.on_btnAddLabel_clicked()
-                    
                 else:
                     r.setFlags(r.flags() & flagOFF);
                 self.tableWidget.setItem(0, self.columnPos['Labels'], r)
@@ -627,8 +626,10 @@ class ClassificationTrain(object):
         self.initClassificationProgress(numberOfJobs)
         
         # Get Train Data
-        F = self.parent.project.trainingMatrix
-        L = self.parent.project.trainingLabels
+        #F = self.parent.project.trainingMatrix
+        #L = self.parent.project.trainingLabels
+        self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)
+        F,L = self.parent.project.dataMgr.buildTrainingMatrix()
         featLabelTupel = queue()
         featLabelTupel.put((F, L))
        
@@ -722,7 +723,7 @@ class ClassificationInteractive(object):
         
         self.trainingQueue.append((F, L))
         
-        (predictDataList, dummy) = self.parent.project.dataMgr.buildFeatureMatrix()
+        predictDataList = self.parent.project.dataMgr.buildFeatureMatrix()
         
         
         numberOfClasses = len(self.parent.project.labelNames)
@@ -771,7 +772,7 @@ class ClassificationOnline(object):
         labels = self.parent.project.trainingLabels  
 
         self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
-        predictionList, dummy = self.parent.project.dataMgr.buildFeatureMatrix()
+        predictionList = self.parent.project.dataMgr.buildFeatureMatrix()
         ids = numpy.zeros((len(labels),)).astype(numpy.int32)
 
         self.OnlineThread = classificationMgr.ClassifierOnlineThread(name,features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
@@ -860,12 +861,12 @@ class ClassificationPredict(object):
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         
-        (self.featureQueue, self.featureQueue_dataIndices) = self.parent.project.dataMgr.buildFeatureMatrix()
+        self.featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
         
         numberOfJobs = len(self.featureQueue) * len(self.parent.project.classifierList)
         
         self.initClassificationProgress(numberOfJobs)
-        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, self.featureQueue, self.featureQueue_dataIndices)
+        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, self.featureQueue)
         self.classificationPredict.start()
         self.classificationTimer.start(200) 
 

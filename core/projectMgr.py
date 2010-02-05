@@ -1,5 +1,7 @@
 from core import dataMgr
 import cPickle as pickle
+import h5py
+from core.utilities import irange, debug
 
 class Project(object):
     def __init__(self, name, labeler, description, dataMgr):
@@ -16,21 +18,31 @@ class Project(object):
     def saveToDisk(self, fileName):
         """ Save the whole project includeing data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
-        
+        fileHandle = h5py.File(fileName)
         # pickle.dump(self, fileHandle, True)
         
         # get project settings
+        projectG = fileHandle.create_group('Project') 
+        dataSetG = fileHandle.create_group('DataSets') 
+
+        projectG.create_dataset('Name', data=self.name)
+        projectG.create_dataset('Labeler', data=self.labeler)
+        projectG.create_dataset('Description', data=self.description)
+        projectG.create_dataset('LabelNames', data=self.labelNames)
+        projectG.create_dataset('LabelColors', data=[int(k.rgb()) for k in self.labelColors.values()])
         
         # get number of images
+        n = len(self.dataMgr)
         
-        # get data
+        # create Subgroups
+        for k in range(n):
+            dk = dataSetG.create_group('dataItem%02d' % k)
+            dataIt = dk.create_dataset('rawData', data=self.dataMgr[k].data)
+            dataIt.attrs["dataKind"] = self.dataMgr[k].dataKind
+            dk.attrs["fileName"] = str(self.dataMgr[k].fileName)
+            labelIt = dk.create_dataset('labels', data=self.dataMgr[k].labels)
+        dataSetG.attrs["dataKind"] = self.dataMgr[0].dataKind
         
-        # get labels
-        
-        # get features
-        
-        
-        fileHandle = open(fileName,'wb')
         # Save to hdf5 file
         fileHandle.close()
         print "Project %s saved to %s " % (self.name, fileName)

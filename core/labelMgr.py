@@ -11,7 +11,7 @@ class LabelBrushQueueEntry(object):
         
     def finalize(self):
         self.positions = numpy.array(self.positions).astype(numpy.uint32)
-        self.oldValues = numpy.array(self.oldValues).astype(numpy.uint32)
+        self.oldValues = numpy.array(self.oldValues).astype(numpy.uint8)
         
 
 class label_Base:
@@ -173,6 +173,12 @@ class label_Pixel(label_Grid):
         #self.labelArray = numpy.ndarray(self.getPatchCount())
         self.labelArray = numpy.zeros(self.getPatchCount())
         self.undoLabelArray_lastState = self.labelArray.copy()
+        
+    def getLabelArrayAsImage(self):
+        return self.labelArray.reshape(self.size[1], self.size[0]).T
+    
+    def setLabelArrayFromImage(self, labels):
+        self.labelArray = labels.flatten()
     
     
     # todo: move all undo-stuff one or two levels up to grid or patch

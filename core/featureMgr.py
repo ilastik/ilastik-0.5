@@ -25,7 +25,7 @@ class FeatureMgr():
         
     def prepareCompute(self, dataMgr):
         self.featureProcessList = [[] for i in range(len(dataMgr))]
-        for dataIndex in xrange(0, len(dataMgr)):   
+        for dataIndex in xrange(len(dataMgr)):   
             # data will be loaded, if not there yet
             data = dataMgr[dataIndex]
             print 'Data Item: %s: ' % data.fileName
@@ -97,6 +97,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
     def __init__(self, featureProcessList):
         FeatureParallelBase.__init__(self, featureProcessList)
         threading.Thread.__init__(self)  
+    
     def run(self):          
         for data in self.featureProcessList:
             for channels, features in data:
@@ -145,10 +146,10 @@ class FeatureGroups(object):
         #self.members['Color'].append(identity)
         self.members['Color'].append(gaussianSmooth)
         
-        #self.members['Texture'].append(structureTensor)
+        self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
-        #self.members['Texture'].append(hessianMatrixOfGaussian)
+        self.members['Texture'].append(hessianMatrixOfGaussian)
         #self.members['Texture'].append(laplacianOfGaussian)
         #self.members['Texture'].append(morphologicalOpening)
         #self.members['Texture'].append(morphologicalClosing)
@@ -189,6 +190,14 @@ cannyEdge = lambda x, s: vigra.edgedetection.cannyEdgeImage(x, s, 0, 1), ['Sigma
 
 identity = lambda x: x, []
 identity[0].__name__ = "identity"
+
+from scipy import linalg
+def orientation(x,s):
+    st = vigra.convolution.structureTensor(x,s,s)
+    for x in xrange(st.shape[0]):
+        for y in xrange(st.shape[1]):
+            dummy, ev = linalg.eig(numpy.array([st[x,y,0],st[x,y,1],[st[x,y,1],st[x,y,2]]]))
+                                                                        
 
 ilastikFeatureGroups = FeatureGroups()
 ilastikFeatures = ilastikFeatureGroups.createList()

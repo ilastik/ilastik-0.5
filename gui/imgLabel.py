@@ -37,7 +37,7 @@ class labelingForOneImage:
         
     def addDrawManager(self, dmngr):
         self.DrawManagers.append(dmngr)
-        self.activeDrawManager = self.DrawManagers.__len__()-1
+        self.activeDrawManager = self.DrawManagers.__len__() - 1
         
     def getActiveDrawManager(self):
         return self.DrawManagers[self.activeDrawManager]
@@ -79,7 +79,7 @@ class labelingForOneImage:
         #print self.pickleinfo
         for dm in self.DrawManagers:
             self.pickleinfo_DrawManager_ids.append(dm.classId)
-            self.pickleinfo_LabelManagers.append( dm.labelmngr )
+            self.pickleinfo_LabelManagers.append(dm.labelmngr)
         cdict = self.__dict__.copy()
         del cdict['DrawManagers']
         return cdict
@@ -87,12 +87,12 @@ class labelingForOneImage:
     def __setstate__(self, dict):
         self.__dict__.update(dict)
         self.DrawManagers = []
-        i=0
+        i = 0
         for id in self.pickleinfo_DrawManager_ids:
             dmObject = drawManagerID.drawManagerObject[id]
             lm = self.pickleinfo_LabelManagers[i]
             self.DrawManagers.append(dmObject(lm, labelwidgetInstance.canvas))   # UGLY global
-            i+=1
+            i += 1
         pass
 
 class drawManager:
@@ -106,7 +106,7 @@ class drawManager:
         self.drawLabel = 0
         self.drawSize = 1
         self.drawColor = {}
-        self.activeDrawColor = QtGui.QColor(255,128,66)
+        self.activeDrawColor = QtGui.QColor(255, 128, 66)
         self.drawOpacity = 1;
         
         self.imageIndex = imageIndex 
@@ -117,7 +117,7 @@ class drawManager:
     # drawSettings:
     def setDrawLabel(self, label):
         self.drawLabel = label
-        col = self.drawColor.get(label,None)
+        col = self.drawColor.get(label, None)
         if col:
             self.activeDrawColor = col
             
@@ -217,7 +217,7 @@ class draw_geomObject(drawManager):
         pass
 
     def InitDraw(self, pos):
-        self.topLevelItems.append( TopLevelItem() )
+        self.topLevelItems.append(TopLevelItem())
         self.canvas.addItem(self.topLevelItems[-1])
         self.topLevelItems[-1].setOpacity(self.drawOpacity)
         self.lastPoint = pos
@@ -236,7 +236,7 @@ class draw_Ellipse(draw_geomObject):
         draw_geomObject.__init__(self, labelmngr, canvas)
         self.classId = drawManagerID.IDdraw_Ellipse
         
-    def addObject(self,pos):
+    def addObject(self, pos):
         ell = QtGui.QGraphicsEllipseItem(pos[0], pos[1], self.drawSize, self.drawSize)
         ell.setPen(QtGui.QPen(self.activeDrawColor))
         ell.setBrush(QtGui.QBrush(self.activeDrawColor))
@@ -253,11 +253,11 @@ class draw_Patch(drawManager):
         
         # Init Fully transparent Label OVerlay with correct size
         # Store it in self.image
-        self.image = QtGui.QImage( self.size[0], self.size[1], QtGui.QImage.Format_ARGB32 )
+        self.image = QtGui.QImage(self.size[0], self.size[1], QtGui.QImage.Format_ARGB32)
         self.image.fill(0)
         
         # self.imageItem is just used to display self.image, remember it is the labelOverlay
-        self.imageItem = ImageItem( self.image)
+        self.imageItem = ImageItem(self.image)
         self.imageItem.setOpacity(self.drawOpacity)
         canvas.addItem(self.imageItem)
         self.pixelColor = self.activeDrawColor.rgb()
@@ -316,7 +316,7 @@ class draw_Patch(drawManager):
 	#a=numpy.ones(self.size)
 	#self.image = qimage2ndarray.array2qimage(a)
 	#self.imageItem.update()
-	#return
+	#returnj
 
 	#
 	# c++ drawing:
@@ -324,12 +324,8 @@ class draw_Patch(drawManager):
 	for label, col in self.drawColor.items():
         	pixcol[label] = col.rgb()
 	# todo: pixcol contains more entries than expected...
-	shp = self.labelmngr.labelArray.shape
-	#self.labelmngr.labelArray.shape = self.size
-	self.labelmngr.labelArray.shape = [self.size[1], self.size[0]]
-	#draw.drawImage(self.image, pixcol, self.labelmngr.labelArray.swapaxes(0,1).reshape(self.labelmngr.labelArray.shape))
-	labelArrayDrawQImage.drawImage(self.image, pixcol, self.labelmngr.labelArray)
-	self.labelmngr.labelArray.shape = shp
+
+	labelArrayDrawQImage.drawImage(self.image, pixcol, self.labelmngr.getLabelArrayAsImage().astype(numpy.float64));
 	self.imageItem.update()
 	return
 	
@@ -346,11 +342,11 @@ class draw_Patch(drawManager):
 	print "shape: " + str(shp)
 	self.image.fill(0)
 	for i in xrange(len(xx)):
-		y=xx[i]
-		x=yy[i]
+		y = xx[i]
+		x = yy[i]
 		#print x,y
-		lbl = self.labelmngr.getLabel([x,y])
-		self.image.setPixel(x,y,pixcol[lbl])
+		lbl = self.labelmngr.getLabel([x, y])
+		self.image.setPixel(x, y, pixcol[lbl])
 	self.imageItem.update()
 	return
 
@@ -362,11 +358,11 @@ class draw_Patch(drawManager):
         # todo: pixcol contains more entries than expected...
         for x in xrange(self.size[0]):
             for y in xrange(self.size[1]):
-                lbl = self.labelmngr.getLabel([x,y])
+                lbl = self.labelmngr.getLabel([x, y])
                 if lbl:
-                    self.image.setPixel(x,y,pixcol[lbl])
+                    self.image.setPixel(x, y, pixcol[lbl])
                 else:
-                    self.image.setPixel(x,y,0)
+                    self.image.setPixel(x, y, 0)
         self.imageItem.update()
         
     def canvas_clear(self):
@@ -448,7 +444,7 @@ class labelPatch(labelType):
 class labelGrid(labelPatch):
     def __init__(self, canvas, ImDims, gridDims):
         patchCount = gridDims[0]
-        for i in xrange(len(gridDims)-1):
+        for i in xrange(len(gridDims) - 1):
             patchCount *= gridDims[i]
         labelPatch.__init__(self, canvas, ImDims, patchCount)
 
@@ -513,14 +509,14 @@ class displayLabelClasses:
             self.currentOpacity = 0.25
             
     def addClass(self, name=None, color=None, size=None):
-        if not name: name = "classname_"+str(self.classes)
+        if not name: name = "classname_" + str(self.classes)
         if not color: color = QtGui.QColor(random.random()*255, random.random()*255, random.random()*255)
         if not size: size = random.random()*30
         #self.graphicsItems.append(QtGui.QGraphicsItemGroup())
         self.classNames.append(name)
         self.classColors.append(color)
         self.classSize.append(size)
-        self.classes+=1
+        self.classes += 1
         
 
 class displayLabel:
@@ -544,7 +540,7 @@ class displayLabel:
         self.undolist = undolist
         
     def addClass(self, name=None, color=None, size=None):
-        if not name: name = "classname_"+str(self.classes)
+        if not name: name = "classname_" + str(self.classes)
         if not color: color = QtGui.QColor(random.random()*255, random.random()*255, random.random()*255)
         if not size: size = random.random()*30
         #self.graphicsItems.append(QtGui.QGraphicsItemGroup())
@@ -552,7 +548,7 @@ class displayLabel:
         self.classColors.append(color)
         self.classSize.append(size)
         self.LabelObjects.append([])
-        self.classes+=1            
+        self.classes += 1            
     
     def addLabelObject(self, classnr, item):
         # add topLevelItem to list.
@@ -565,7 +561,7 @@ class displayLabel:
         item.scene().removeItem(item)
         del item
         
-    def changeOpacity(self,  classNr, op):
+    def changeOpacity(self, classNr, op):
         self.currentOpacity = op
         if self.classes:
             for ob in self.LabelObjects[classNr]:
@@ -574,10 +570,10 @@ class displayLabel:
     def getClassNames(self):
         return self.classNames
     
-    def getColor(self,classnr):
+    def getColor(self, classnr):
         return self.classColors[classnr]
     
-    def getSize(self,classnr):
+    def getSize(self, classnr):
         return self.classSize[classnr]
 
 
@@ -616,7 +612,7 @@ class displayImage:
     def __loadImage(self):
         if self.filename:
             try:
-                self.imageData = QtGui.QImage(100,100,QtGui.QImage.Format_ARGB32)
+                self.imageData = QtGui.QImage(100, 100, QtGui.QImage.Format_ARGB32)
                 self.imageData.load(self.filename)
             except Exception, inst:
                 print "displayImage.__loadImage: Fehler beim Laden: ", inst
@@ -650,7 +646,7 @@ class displayImage:
         
 
 class displayImageList:
-    def __init__(self, Image = None):
+    def __init__(self, Image=None):
         self.list = []
         if isinstance(Image, displayImage): 
             self.list.append(Image)
@@ -711,17 +707,17 @@ class cloneView(QtGui.QGraphicsView):
         QtGui.QGraphicsView.mousePressEvent(self, event)
         QtCore.Qt.LeftButton
         rect = self.zoom_box.rect()
-        for k in self.zoomdir: self.zoomdir[k]=False
+        for k in self.zoomdir: self.zoomdir[k] = False
         if event.button() == QtCore.Qt.LeftButton:
             #self.oldrect = self.view_orig.sceneRect()
             self.oldrect = self.view_orig.mapToScene(self.view_orig.rect())
             pos = self.mapToScene(event.pos())
             self.clickpos = pos
             self.zooming = False
-            if abs(rect.top()-pos.y())<=self.clickdist: self.zoomdir["u"]=True; self.zooming = True
-            if abs(rect.right()-pos.x())<=self.clickdist: self.zoomdir["r"]=True; self.zooming = True
-            if abs(rect.bottom()-pos.y())<=self.clickdist: self.zoomdir["d"]=True; self.zooming = True
-            if abs(rect.left()-pos.x())<=self.clickdist: self.zoomdir["l"]=True; self.zooming = True
+            if abs(rect.top() - pos.y()) <= self.clickdist: self.zoomdir["u"] = True; self.zooming = True
+            if abs(rect.right() - pos.x()) <= self.clickdist: self.zoomdir["r"] = True; self.zooming = True
+            if abs(rect.bottom() - pos.y()) <= self.clickdist: self.zoomdir["d"] = True; self.zooming = True
+            if abs(rect.left() - pos.x()) <= self.clickdist: self.zoomdir["l"] = True; self.zooming = True
             if not self.zooming:
                 if pos.y() <= rect.bottom():
                     if pos.y() >= rect.top():
@@ -736,18 +732,18 @@ class cloneView(QtGui.QGraphicsView):
             pos = self.mapToScene(event.pos())
             delta = pos - self.clickpos
         else: return
-        m = QtGui.QMatrix( self.origmatrix )
+        m = QtGui.QMatrix(self.origmatrix)
         if self.zooming:
             oldrect = self.oldrect.boundingRect()
             #for k in self.zoomdir:
             #    if self.zoomdir[k]: print k
             scalex = 1.0
             scaley = 1.0
-            if self.zoomdir["u"]: scaley= 1.0 + delta.y()/oldrect.height(); self.dragging=True; delta.setX(0.0)
-            if self.zoomdir["d"]: scaley= 1.0 - delta.y()/oldrect.height()
-            if self.zoomdir["l"]: scalex= 1.0 + delta.x()/oldrect.width(); self.dragging=True; delta.setY(0.0)
-            if self.zoomdir["r"]: scalex= 1.0 - delta.x()/oldrect.width()
-            m.scale(scalex,scaley)
+            if self.zoomdir["u"]: scaley = 1.0 + delta.y() / oldrect.height(); self.dragging = True; delta.setX(0.0)
+            if self.zoomdir["d"]: scaley = 1.0 - delta.y() / oldrect.height()
+            if self.zoomdir["l"]: scalex = 1.0 + delta.x() / oldrect.width(); self.dragging = True; delta.setY(0.0)
+            if self.zoomdir["r"]: scalex = 1.0 - delta.x() / oldrect.width()
+            m.scale(scalex, scaley)
         if self.dragging:
             m.translate(-delta.x(), -delta.y())
         self.view_orig.setMatrix(m)
@@ -781,8 +777,8 @@ class cloneViewWidget(QtGui.QDockWidget):
     
     def __init__(self, parent=None, labelwidget=None, view_orig=None):
         QtGui.QWidget.__init__(self, parent)
-        self.resize(100,100)
-        self.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea| QtCore.Qt.TopDockWidgetArea| QtCore.Qt.LeftDockWidgetArea)
+        self.resize(100, 100)
+        self.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         self.insidewidget = QtGui.QWidget()
         self.setWidget(self.insidewidget)
 
@@ -792,9 +788,9 @@ class cloneViewWidget(QtGui.QDockWidget):
         self.sceneToDraw = self.labelwidget.view.scene()
         self.sceneitem = SceneItem(self.sceneToDraw)
         self.par = parent
-        self.view_orig=view_orig
+        self.view_orig = view_orig
 
-        self.col = QtGui.QColor(255,0,0)
+        self.col = QtGui.QColor(255, 0, 0)
         #self.roi = QtGui.QGraphicsRectItem()
         self.roi = ZoomBox()
         self.roi.setPen(QtGui.QPen(self.col))
@@ -834,7 +830,7 @@ class cloneViewWidget(QtGui.QDockWidget):
     
     @staticmethod
     def generateObj(storage):
-        ci=storage.constructInfoDict[  storage.idList[storage.index]  ]
+        ci = storage.constructInfoDict[  storage.idList[storage.index]  ]
         par = storage.objectDict[ci[0]]
         lw = storage.objectDict[ci[1]]
         return cloneViewWidget(par, lw)
@@ -861,9 +857,9 @@ class cloneViewWidget(QtGui.QDockWidget):
         QtGui.QDockWidget.resizeEvent(self, event)
         self.fitView()
 
-    def addScene(self,scene):
+    def addScene(self, scene):
         if scene:
-            self.sceneToDraw=scene
+            self.sceneToDraw = scene
             self.view.setScene(self.scene)
             
         
@@ -918,13 +914,13 @@ class labelWidget(QtGui.QWidget):
         
         # Undo Button for Image Change
         self.btnUndo = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Undo) , "Undo")
-        self.connect(self.btnUndo,QtCore.SIGNAL("clicked()"), self.undo)
+        self.connect(self.btnUndo, QtCore.SIGNAL("clicked()"), self.undo)
         
         # Channel Selector Combo Box
         self.cmbChannelList = QtGui.QComboBox()
         self.cmbChannelList.setMinimumWidth(142)
         self.cmbChannelList.setEnabled(False)
-        self.connect(self.cmbChannelList,QtCore.SIGNAL("currentIndexChanged(int)"), self.changeChannel)
+        self.connect(self.cmbChannelList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeChannel)
         
         # Class Selector Combo Box
         self.cmbClassList = QtGui.QComboBox()
@@ -995,7 +991,7 @@ class labelWidget(QtGui.QWidget):
         self.toolBox.setMaximumWidth(160)
         # Adding both Entries
         self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(ilastikIcons.Brush), 'Labeling')
-        self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(ilastikIcons.View),'View')
+        self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(ilastikIcons.View), 'View')
         
         # At the right side of view
         layout = QtGui.QHBoxLayout()
@@ -1059,7 +1055,7 @@ class labelWidget(QtGui.QWidget):
         #self.image.label.changeOpacity(self.labelClass, op/100.0)
         #self.drawManager.setDrawOpacity(op/100.0)
         if self.labelForImage.get(self.activeImage, None):
-            self.labelForImage[self.activeImage].setOpacity(op/100.0)
+            self.labelForImage[self.activeImage].setOpacity(op / 100.0)
         
     def updateProject(self, project):
         self.project = project
@@ -1133,9 +1129,7 @@ class labelWidget(QtGui.QWidget):
         for dataItemIndex, dataItem in irange(dataMgr):
             # Check for Labels
             if self.labelForImage.get(dataItemIndex, False):
-                labelArray = self.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.labelArray
-                # reshape to height x width
-                dataItem.labels = labelArray.reshape(dataItem.shape[1], dataItem.shape[0])
+                dataItem.labels = self.labelForImage[dataItemIndex].DrawManagers[0].labelmngr.getLabelArrayAsImage()
                 dataItem.hasLabels = True
     
     @QtCore.pyqtSignature("int")
@@ -1149,70 +1143,68 @@ class labelWidget(QtGui.QWidget):
         
         if newImage != self.activeImage:
             # Image changed indeed
-            self.loadChannelList(newImage)
-        else:
-            # Juat Channel changed
-            pass   
+            self.loadChannelList(newImage) 
         
-        # Delete old Image Display pixmapitem == rawImage
+        # Delete old Image Display pixmapitem
         if self.pixmapitem:
             self.canvas.removeItem(self.pixmapitem)
-        
-        # Set new Image Display and save it in self.pixmapitem
-        if self.activeChannel < 0:
-            #self.img = qimage2ndarray.array2qimage(self.project.dataMgr[newImage].data)
-            self.img = self.project.dataMgr[newImage].data.qimage()
-        else:
-            tmpImg = self.project.dataMgr[newImage].data[:,:, self.activeChannel]
-            if tmpImg.max() > 0:
-                tmpImg = (tmpImg - tmpImg.min()) / tmpImg.max()
-            tmpImg = (tmpImg*255).astype(numpy.uint8)
-            self.img = vigra.arraytypes.ScalarImage(tmpImg).qimage()
-
-           
-            
-        pm = QtGui.QPixmap.fromImage(self.img)
-        self.pixmapitem = self.canvas.addPixmap(pm)
-        self.pixmapitem.setZValue(-2)
         
         # Delete old Display Labels
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].canvas_clear()  
         
-        # If it is already initialized, just paint it
+        # Set new Image Display and put it in self.pixmapitem
+        if self.activeChannel < 0:
+            self.img = self.project.dataMgr[newImage].data.qimage()
+        else:
+            tmpImg = self.project.dataMgr[newImage].data[:, :, self.activeChannel]
+            self.img = tmpImg.qimage(normalize=True)
+ 
+        pm = QtGui.QPixmap.fromImage(self.img)
+        self.pixmapitem = self.canvas.addPixmap(pm)
+        self.pixmapitem.setZValue(-1)
+        
+        # If the Labels are already initialized, just paint it
         if self.labelForImage.get(newImage, None):
             self.labelForImage[newImage].canvas_paint()
+            # Change To Active Label
             self.labelForImage[newImage].setActiveLabel(self.activeLabel)
             
         # Init Label -> Should be called once per image when changing to it
         else:
+            # Init Label Object labelForImage
             self.labelForImage[newImage] = labelingForOneImage()
             labelManager = labelMgr.label_Pixel([self.pixmapitem.pixmap().width(), self.pixmapitem.pixmap().height()])
             drawManager = draw_Pixel(labelManager, self.canvas, newImage)
+            
             # Init colors
             for label, col in self.project.labelColors.items():
-                drawManager.setDrawColor(label, col )
+                drawManager.setDrawColor(label, col)
             erasecol = QtGui.QColor(0)
             #erasecol.setAlphaF(1.0)
             drawManager.setDrawColor(0, erasecol)
             
-            self.labelForImage[newImage].addDrawManager( drawManager ) 
+            # Give drawManager to labelForImage
+            self.labelForImage[newImage].addDrawManager(drawManager) 
+            
             # Change To Active Label
             self.labelForImage[newImage].setActiveLabel(self.activeLabel)     
             
-            if self.project.dataMgr[newImage].hasLabels and (not isinstance(self.project.dataMgr[newImage].labels, list)):
-                # This second part in or clause is to be backward compatible. we need to init the data.labels with None instead of [] !?!
+            # Maybe we loaded the data and we loaded also labels
+            if self.project.dataMgr[newImage].hasLabels:
+                # Just checking if they are really there
                 if self.project.dataMgr[newImage].labels is not None:
-                    # [TODO] Cast to float64 is just a workarround to avoid crash of repaint
-                    labels = self.project.dataMgr[newImage].labels.astype(numpy.float64)
-                    labelManager.labelArray = labels.flatten()
+                    # Get loaded labels into the labelArray 
+                    labelManager.setLabelArrayFromImage(self.project.dataMgr[newImage].labels)
+                    # Display them
                     drawManager.repaint()
         
         # Set new active Image    
         self.activeImage = newImage
         self.setBrushSize(self.brushSize)
+        
         # Emit imageChanged Signal
-        self.emit( QtCore.SIGNAL("imageChanged"), self.activeImage)
+        self.emit(QtCore.SIGNAL("imageChanged"), self.activeImage)
                     
     def updateClassList(self):
         self.cmbClassList.clear()
@@ -1227,7 +1219,7 @@ class labelWidget(QtGui.QWidget):
         self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
-        self.emit( QtCore.SIGNAL("labelChanged"), nr)
+        self.emit(QtCore.SIGNAL("labelChanged"), nr)
     
     @QtCore.pyqtSignature("int")
     def changeChannel(self, channelIndex):
@@ -1255,7 +1247,7 @@ class labelWidget(QtGui.QWidget):
         self.view.requestROIupdate()
         if par.__class__.__name__ == 'MainWindow':
             #par.addWidgetToDock(cv, QtCore.Qt.BottomDockWidgetArea, "Clone View")
-            dock=par.addDockWidget(QtCore.Qt.BottomDockWidgetArea, cv)
+            dock = par.addDockWidget(QtCore.Qt.BottomDockWidgetArea, cv)
             #dock.setObjectName('cloneView_'+hash(dock))
         else:
             cv.show()
@@ -1264,12 +1256,12 @@ class TopLevelItem(QtGui.QGraphicsItem):
     def __init__(self):
         QtGui.QGraphicsItem.__init__(self)
     def boundingRect(self):
-        return QtCore.QRectF(0,0,0,0)
+        return QtCore.QRectF(0, 0, 0, 0)
     def paint(self, painter, option, widget):
         return
 
 class ImageItem(QtGui.QGraphicsItem):
-    def __init__(self, image = None):
+    def __init__(self, image=None):
         QtGui.QGraphicsItem.__init__(self)
         self.setImage(image)
 
@@ -1277,7 +1269,7 @@ class ImageItem(QtGui.QGraphicsItem):
         if self.image:
             return QtCore.QRectF(self.image.rect())
         else:
-            return QtCore.QRectF(0,0,0,0)
+            return QtCore.QRectF(0, 0, 0, 0)
 
     def setImage(self, image):
         self.image = image
@@ -1292,10 +1284,10 @@ class ImageItem(QtGui.QGraphicsItem):
             #self.scene.drawItems(painter, self.scene.items(), None)
             #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect(), self.scene().sceneRect())
             #self.sceneToDraw.render(painter, self.sceneToDraw.sceneRect())
-            painter.drawImage( self.image.rect(), self.image  )
+            painter.drawImage(self.image.rect(), self.image)
 
 class SceneItem(QtGui.QGraphicsItem):
-    def __init__(self, scene = None):
+    def __init__(self, scene=None):
         QtGui.QGraphicsItem.__init__(self)
         self.addScene(scene)
 
@@ -1303,7 +1295,7 @@ class SceneItem(QtGui.QGraphicsItem):
         if self.sceneToDraw:
             return self.sceneToDraw.sceneRect()
         else:
-            return QtCore.QRectF(0,0,0,0)
+            return QtCore.QRectF(0, 0, 0, 0)
 
     def addScene(self, scene):
         self.sceneToDraw = scene
@@ -1340,16 +1332,16 @@ class panView(QtGui.QGraphicsView):
         self.setTransformationAnchor(QtGui.QGraphicsView.NoAnchor)
         QtGui.QGraphicsView.mousePressEvent(self, event)
         if event.button() == QtCore.Qt.MidButton and not(event.modifiers() & QtCore.Qt.ControlModifier):
-            self.pan_origin = self.mapToScene( event.pos() )
+            self.pan_origin = self.mapToScene(event.pos())
             self.panning = True
         if event.button() == QtCore.Qt.MidButton and (event.modifiers() & QtCore.Qt.ControlModifier):
-            self.zoom_origin = self.mapToScene( event.pos() )
+            self.zoom_origin = self.mapToScene(event.pos())
             self.zoom_origmatrix = QtGui.QMatrix(self.matrix())
             self.zooming = True
     
     def requestROIupdate(self):
         rect = self.mapToScene(self.rect())
-        viewrect = QtCore.QRectF( rect[0], rect[2])
+        viewrect = QtCore.QRectF(rect[0], rect[2])
         self.emit(QtCore.SIGNAL('ROIchanged'), viewrect)
             
     def mouseMoveEvent(self, event):
@@ -1364,10 +1356,10 @@ class panView(QtGui.QGraphicsView):
         if self.zooming:
             pos = self.mapToScene(event.pos())
             delta = pos - self.zoom_origin
-            delta /=500                             # todo: --> unhardcode zoomfactor
-            delta += QtCore.QPointF(1,1)
+            delta /= 500                             # todo: --> unhardcode zoomfactor
+            delta += QtCore.QPointF(1, 1)
             m = QtGui.QMatrix(self.zoom_origmatrix)
-            m.scale((delta.x()+delta.y())/2,(delta.x()+delta.y())/2 )
+            m.scale((delta.x() + delta.y()) / 2, (delta.x() + delta.y()) / 2)
             self.setMatrix(m)
             self.requestROIupdate()                 # todo: inlining, no function?
 
@@ -1379,7 +1371,7 @@ class panView(QtGui.QGraphicsView):
     
     def wheelEvent(self, wheel):
         if wheel.modifiers() & QtCore.Qt.ControlModifier:
-            self.zoom_origin = self.mapToScene( wheel.pos() )
+            self.zoom_origin = self.mapToScene(wheel.pos())
             self.zoom_origmatrix = QtGui.QMatrix(self.matrix())
             sig = numpy.float32(numpy.sign(wheel.delta()))
             delta = 1 + sig * self.zoomFactor                 
@@ -1427,7 +1419,7 @@ class DisplayPanel(QtGui.QGraphicsScene):
             self.labeling = False
             self.parent().newLabelsPending()
             
-    def addSomeStuffToCanvas(self,pos):
+    def addSomeStuffToCanvas(self, pos):
         ell = QtGui.QGraphicsEllipseItem(pos.x(), pos.y(), self.siz, self.siz)
         ell.setPen(QtGui.QPen(self.col))
         ell.setBrush(QtGui.QBrush(self.col))
@@ -1447,8 +1439,8 @@ class contextMenuLabel(QtGui.QMenu):
         
         self.addSeparator()
         for cnt, labelName in irange(labelNames):
-            pixmap = QtGui.QPixmap(16,16)
-            color = QtGui.QColor(labelColors[cnt+1])
+            pixmap = QtGui.QPixmap(16, 16)
+            color = QtGui.QColor(labelColors[cnt + 1])
             pixmap.fill(color)
             icon = QtGui.QIcon(pixmap)
             self.action.append(QtGui.QAction(icon, labelName, self))
@@ -1456,28 +1448,28 @@ class contextMenuLabel(QtGui.QMenu):
             self.connect(self.action[cnt], QtCore.SIGNAL("triggered()"), receiver)
             self.addAction(self.action[cnt])
         self.addSeparator()
-        brushSelector = self.addMenu(QtGui.QIcon(ilastikIcons.Brush),'Brush Size')
-        for rad in range(1,7):
-            rad_ = rad*2-1
+        brushSelector = self.addMenu(QtGui.QIcon(ilastikIcons.Brush), 'Brush Size')
+        for rad in range(1, 7):
+            rad_ = rad * 2 - 1
             icon = QtGui.QIcon(self.createCirclePixmap(rad_))
             action = QtGui.QAction(icon, '', self);
-            receiver = lambda rad=rad: parent.parent().parent().parent().ribbon.tabDict['Label'].itemDict['Brushsize'].setValue(rad)
+            receiver = lambda rad = rad: parent.parent().parent().parent().ribbon.tabDict['Label'].itemDict['Brushsize'].setValue(rad)
             self.connect(action, QtCore.SIGNAL("triggered()"), receiver)
             
             brushSelector.addAction(action)
     
     def createCirclePixmap(self, rad):
-        pixmap = QtGui.QPixmap(32,32)
+        pixmap = QtGui.QPixmap(32, 32)
         pixmap.fill(QtCore.Qt.transparent)
         painter = QtGui.QPainter(pixmap)
-        brush = QtGui.QBrush(QtGui.QColor(0,0,0))
+        brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
         painter.setBrush(brush)
-        painter.drawEllipse(16-rad/2, 16-rad/2, rad*2+1, rad*2+1)
+        painter.drawEllipse(16 - rad / 2, 16 - rad / 2, rad * 2 + 1, rad * 2 + 1)
         return pixmap
 
 class OverlayMgr(object):
     def __init__(self, canvas, classColors, imageShapes, parent):       
-        self.labelWidget  = parent
+        self.labelWidget = parent
         self.classColors = classColors;
         self.imageCount = len(imageShapes)
         self.classCount = len(classColors)
@@ -1521,9 +1513,9 @@ class OverlayMgr(object):
             #if self.classCount>prediction.shape[1]:
             #    raise RuntimeError('I got more classes than prediction pixmaps')
             #TODO: The min (and the outcomented error above) is due to some bug, that has to be removed yet
-            for classNr in range(min(self.classCount,prediction.shape[1])):
-                print "classNr",classNr
-                pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[classNr+1]), 'continious', 0.7)
+            for classNr in range(min(self.classCount, prediction.shape[1])):
+                print "classNr", classNr
+                pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]), QtGui.QColor(self.classColors[classNr + 1]), 'continious', 0.7)
                 self.predictionPixmaps[imageIndex][classNr][0] = pm 
     
     def updateSegmentationPixmaps(self, segmentations):
@@ -1533,7 +1525,7 @@ class OverlayMgr(object):
     
     def updateUncertaintyPixmaps(self, uncertainties):
         for imageIndex, uncertainty in uncertainties.iteritems():
-            pm = self.rawImage2pixmap(uncertainty.reshape(self.imageShapes[imageIndex]),QtGui.QColor(self.classColors[1]), 'continious', 0.7)
+            pm = self.rawImage2pixmap(uncertainty.reshape(self.imageShapes[imageIndex]), QtGui.QColor(self.classColors[1]), 'continious', 0.7)
             self.uncertaintyPixmaps[imageIndex][0] = pm 
     
     def showOverlayPixmapByState(self):
@@ -1549,7 +1541,7 @@ class OverlayMgr(object):
             if self.classIndex == -1:
                 classes = range(self.classCount)        
             else:
-                classes = [classIndex-1]
+                classes = [classIndex - 1]
             
             for classNr in classes:
                 if currentOverlay[classNr][1]:
@@ -1575,7 +1567,7 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
-            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize = (0.0, 1.0))
+            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize=(0.0, 1.0))
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())
@@ -1585,10 +1577,10 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage(rawImage.astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
-            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize = False)
+            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize=False)
             classColor = self.classColors
-            for i in range(rawImage.max()+1):
-                classColor = QtGui.QColor(self.classColors[i+1])
+            for i in range(rawImage.max() + 1):
+                classColor = QtGui.QColor(self.classColors[i + 1])
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), 255 * opasity)
                 image.setColor(i, col.rgba())
         
@@ -1614,6 +1606,6 @@ class OverlayMgr(object):
 if __name__ == "__main__":
     print "Qt Version: ", QtCore.QT_VERSION_STR
     app = QtGui.QApplication(sys.argv)
-    a = labelWidget(None,['rgb1.jpg','rgb2.tif'])
+    a = labelWidget(None, ['rgb1.jpg', 'rgb2.tif'])
     a.show()
     sys.exit(app.exec_())

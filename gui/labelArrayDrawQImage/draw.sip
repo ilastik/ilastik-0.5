@@ -35,7 +35,7 @@ void drawImage(QImage &image, SIP_PYOBJECT colDictp, SIP_PYOBJECT datap);
 	*/
 	for (int xx=0; xx<a0->width(); xx++) for (int yy=0; yy<a0->height(); yy++) {
 		//int label = extract<int>( data[xx][yy] );		// [WA] doesn't work on 64 bit machines...
-		double dlabel = extract<double>( data[yy][xx] );	// [WA] hack...   [yy][xx]: numpy order
+		double dlabel = extract<double>( data[xx][yy] );	
 		long int label = (long int) dlabel;			// [WA] hack
 		double rgb;
 		if (label) {

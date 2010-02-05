@@ -56,7 +56,7 @@ class ClassifierRandomForest(ClassifierBase):
             
         if not labels.dtype == numpy.uint32:
             labels = numpy.array(labels,dtype=numpy.uint32)
-        if not features == numpy.float32:
+        if not features.dtype == numpy.float32:
             features = numpy.array(features,dtype=numpy.float32)
         self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
         
@@ -188,15 +188,14 @@ class ClassifierTrainThread(threading.Thread):
                 self.count += 1
                 
 class ClassifierPredictThread(threading.Thread):
-    def __init__(self, classifierList, featureList, featureList_dataIndices):
+    def __init__(self, classifierList, featureList):
         threading.Thread.__init__(self)
         self.classifierList = classifierList
         self.count = 0
         self.featureList = featureList
-        self.featureList_dataIndices = featureList_dataIndices
         self.stopped = False
         self.predictionList = []
-        self.predictionList_dataIndices = featureList_dataIndices
+
     
     def run(self):
         for feature in self.featureList:

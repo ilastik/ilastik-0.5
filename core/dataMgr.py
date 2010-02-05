@@ -3,6 +3,7 @@ import sys
 from Queue import Queue as queue
 from copy import copy
 import os
+import h5py
 import tables
 from core.utilities import irange, debug
 
@@ -66,6 +67,8 @@ class DataItemImage(DataItemBase):
                 self.dataKind = 'multi'
         elif len(self.data.shape) == 2:
             self.dataKind = 'gray'
+        self.labels = at.ScalarImage(self.shape[0:2],at.uint8)
+        
     
             
     def unLoadData(self):
@@ -97,10 +100,8 @@ class DataMgr():
     def __init__(self, dataItems=[]):
         self.setDataList(dataItems)
         self.dataFeatures = []
-        #self.labels = [None] * len(dataItems)
         self.labels = {}
         self.prediction = [None] * len(dataItems)
-        self.dataFeatures = None
         self.segmentation = [None] * len(dataItems)
         
     def setDataList(self, dataItems):
@@ -125,18 +126,15 @@ class DataMgr():
     def clearDataList(self):
         self.dataItems = []
         self.dataFeatures = []
-        self.labels = [None] * len(self.dataItems)
+        self.labels = {}
     
     def __len__(self):
         return len(self.dataItems)
     
     def buildFeatureMatrix(self):
-        self.featureMatrixList = []
-        self.featureMatrixList_DataItemIndices = []    
-        dataItemNr = 0
+        self.featureMatrixList = [] 
         for dataFeatures in self.dataFeatures:
             fTuple = []
-            nFeatures = 0
             for features in dataFeatures:
                 f = features[0]
                 fSize = f.shape[0] * f.shape[1] 
@@ -145,16 +143,31 @@ class DataMgr():
                 else:
                     f = f.reshape(fSize,f.shape[2])    
                 fTuple.append(f)
-                nFeatures+=1
-            if dataItemNr == 0:
-                nFeatures_forFirstImage = nFeatures
-            if nFeatures == nFeatures_forFirstImage:
-                self.featureMatrixList.append( numpy.concatenate(fTuple,axis=1) )
-                self.featureMatrixList_DataItemIndices.append(dataItemNr)
-            else:
-                print "generate feature matrix: nFeatures don't match for data item nr ", dataItemNr
-            dataItemNr+=1
-        return (self.featureMatrixList, self.featureMatrixList_DataItemIndices)
+            self.featureMatrixList.append( numpy.concatenate(fTuple,axis=1) )
+        return self.featureMatrixList
+    
+    def buildTrainingMatrix(self):  
+        lTuple = [] 
+        fTuple = []
+        for dataInd , dataFeatures in irange(self.dataFeatures):
+            labels = self.dataItems[dataInd].labels 
+            label_inds = numpy.flatnonzero(labels)         
+            fTmpTuple = []
+            for features in dataFeatures:
+                f = features[0]
+                fSize = f.shape[0] * f.shape[1] 
+                if len(f.shape) == 2:
+                    f = f.reshape(fSize,1)
+                else:
+                    f = f.reshape(fSize,f.shape[2])   
+                f = f[label_inds,:]  
+                fTmpTuple.append(f)
+            lTuple.append(labels.ravel()[label_inds])
+            fTuple.append( numpy.concatenate(fTmpTuple,axis=1))
+        F = numpy.concatenate(fTuple,axis=0)
+        L = numpy.concatenate(lTuple,axis=0)
+        
+        return F, L
     
     def export2Hdf5(self, fileName):
         for imageIndex, dataFeatures in irange(self.dataFeatures):
@@ -197,27 +210,38 @@ class DataMgr():
 class DataImpex(object):
     @staticmethod
     def loadMultispectralData(fileName):
-        
-        h5file = tables.openFile(fileName,'r')       
+        h5file = h5py.File(fileName,'r')       
         try:
-            # Data sets below root are asumed to be data, labels and featureDescriptor
-            data = h5file.root.data.read()
-            labels = h5file.root.labels.read()
-            data = data.swapaxes(1,0)
-            labels = vigra.arraytypes.ScalarImage(labels.T)
-            ChannelDescription = h5file.root.featureDescriptor.read()
-            ChannelDescription = map(str,ChannelDescription[:,0])
+            if 'data' in h5file.listnames():
+                data = at.Image(h5file['data'].value, at.float32)
+            else:
+                print 'No "data"-field contained in: %s ' % fileName
+                return -1
+            
+            if 'labels' in h5file.listnames():
+                labels = at.ScalarImage(h5file['labels'].value, at.uint8)
+            else:
+                print 'No "labels"-field contained in: %s ' % fileName
+                labels = at.ScalarImage(data.shape[0:2], at.uint8)
+            
+            if 'channelNames' in h5file.listnames():
+                channelNames = h5file['channelNames'].value
+                channelNames = map(str,channelNames[:,0])
+            else:
+                print 'No "channelNames"-field contained in: %s ' % fileName
+                channelNames = map(str, range(data.shape[2]))
+                               
         except Exception as e:
             print "Error while reading H5 File %s " % fileName
             print e
         finally:
             h5file.close()
-        return (data.astype(numpy.float32), ChannelDescription, labels.astype(numpy.uint32))
+            
+        return (data, channelNames, labels)
     
     @staticmethod
     def loadImageData(fileName):
         data = vigra.impex.readImage(fileName)
-        #data = data.swapaxes(0,1)
         return data
     
     @staticmethod    
@@ -281,13 +305,14 @@ class DataImpex(object):
         fBase, fExt = os.path.splitext(fileName)
         if fExt != '.h5':
             return 0
-        
-        h5file = tables.openFile(fileName,'r')       
+               
+        h5file = h5py.File(fileName,'r')       
         try:
             # Data sets below root are asumed to be data, labels and featureDescriptor
-            if hasattr(h5file.root,'labels'):
-                labels = h5file.root.labels.read()
+            if 'labels' in h5file.listnames():
+                labels = h5file['labels'].value
                 res = len(numpy.unique(labels)) - 1
+                del labels
             else:
                 res = 0
         except Exception as e:
