@@ -394,7 +394,8 @@ class draw_Patch(drawManager):
     def setPixel(self, pos):
         if pos[0] > -1 and pos[1] > -1 and pos[0] < self.size[0] and pos[1] < self.size[1]:
             self.image.setPixel(pos[0], pos[1], self.pixelColor)
-            tmp =  QtGui.QColor(self.pixelColor)
+            
+            #tmp =  QtGui.QColor(self.pixelColor)
             self.imageItem.update()
     
     def DoDraw(self, pos):
@@ -1114,6 +1115,7 @@ class labelWidget(QtGui.QWidget):
         
     def loadLabelList(self):
         self.cmbClassList.clear()
+        self.cmbClassList.addItem("Erase")
         self.cmbClassList.addItems(self.project.labelNames)
         self.contextMenuLabel = contextMenuLabel(self.project.labelNames, self.project.labelColors, self.canvas)
 
@@ -1190,6 +1192,9 @@ class labelWidget(QtGui.QWidget):
             # Init colors
             for label, col in self.project.labelColors.items():
                 drawManager.setDrawColor(label, col )
+            erasecol = QtGui.QColor(0)
+            #erasecol.setAlphaF(1.0)
+            drawManager.setDrawColor(0, erasecol)
             
             self.labelForImage[newImage].addDrawManager( drawManager ) 
             # Change To Active Label
@@ -1218,7 +1223,7 @@ class labelWidget(QtGui.QWidget):
         print "Call to changeClass with Class: ", nr
         if nr < 0:
             return
-        nr += 1  # 0 is unlabeled !!
+        #nr += 1  # 0 is unlabeled !!
         self.activeLabel = nr
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setActiveLabel(nr)
@@ -1433,13 +1438,21 @@ class contextMenuLabel(QtGui.QMenu):
         QtGui.QMenu.__init__(self)
         self.parent = parent
         self.action = []
+        
+        erase_icon = QtGui.QIcon(ilastikIcons.Erase)
+        action_erase = QtGui.QAction(erase_icon, "Erase", self)
+        receiver_erase = lambda : parent.parent().cmbClassList.setCurrentIndex(0)
+        self.connect( action_erase, QtCore.SIGNAL("triggered()"), receiver_erase )
+        self.addAction(action_erase)
+        
+        self.addSeparator()
         for cnt, labelName in irange(labelNames):
             pixmap = QtGui.QPixmap(16,16)
             color = QtGui.QColor(labelColors[cnt+1])
             pixmap.fill(color)
             icon = QtGui.QIcon(pixmap)
             self.action.append(QtGui.QAction(icon, labelName, self))
-            receiver = lambda cnt=cnt: parent.parent().cmbClassList.setCurrentIndex(cnt)
+            receiver = lambda cnt=cnt: parent.parent().cmbClassList.setCurrentIndex(cnt+1)
             self.connect(self.action[cnt], QtCore.SIGNAL("triggered()"), receiver)
             self.addAction(self.action[cnt])
         self.addSeparator()

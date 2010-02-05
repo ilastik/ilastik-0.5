@@ -59,7 +59,7 @@ class label_Base:
         pass
 
     def setLabel(self, pos, label):
-        if self.drawCallback != None:
+        if (self.drawCallback != None):
             self.drawCallback(pos)
     
     def setLabelLine2D(self, pos1, pos2, label):
