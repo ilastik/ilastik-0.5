@@ -1,4 +1,5 @@
 import numpy
+from vigra import arraytypes as at
 
 class LabelBrushQueueEntry(object):
     """Label queue entry to get undo information and for online learning"""
@@ -175,7 +176,7 @@ class label_Pixel(label_Grid):
         self.undoLabelArray_lastState = self.labelArray.copy()
         
     def getLabelArrayAsImage(self):
-        return self.labelArray.reshape(self.size[1], self.size[0]).T
+        return at.ScalarImage(self.labelArray.reshape(self.size[1], self.size[0]).T)
     
     def setLabelArrayFromImage(self, labels):
         self.labelArray = labels.flatten()

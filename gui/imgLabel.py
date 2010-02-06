@@ -260,7 +260,7 @@ class draw_Patch(drawManager):
         self.imageItem = ImageItem(self.image)
         self.imageItem.setOpacity(self.drawOpacity)
         canvas.addItem(self.imageItem)
-        self.pixelColor = self.activeDrawColor.rgb()
+        self.pixelColor = self.activeDrawColor.rgba()
         labelmngr.setDrawCallback(self.setPixel)
         
     def setDrawOpacity(self, opacity):
@@ -269,7 +269,7 @@ class draw_Patch(drawManager):
         
     def setDrawLabel(self, label):
         drawManager.setDrawLabel(self, label)
-        self.pixelColor = self.activeDrawColor.rgb()
+        self.pixelColor = self.activeDrawColor.rgba()
         #TODO: manage qimage-Dict for label.
         
     @staticmethod
@@ -322,7 +322,7 @@ class draw_Patch(drawManager):
 	# c++ drawing:
 	pixcol = {}
 	for label, col in self.drawColor.items():
-        	pixcol[label] = col.rgb()
+        	pixcol[label] = col.rgba()
 	# todo: pixcol contains more entries than expected...
 
 	labelArrayDrawQImage.drawImage(self.image, pixcol, self.labelmngr.getLabelArrayAsImage().astype(numpy.float64));
@@ -333,7 +333,7 @@ class draw_Patch(drawManager):
 	# python drawing 1: use numpy to extract labeled pixels
 	pixcol = {}
 	for label, col in self.drawColor.items():
-        	pixcol[label] = col.rgb()
+        	pixcol[label] = col.rgba()
 	# todo: pixcol contains more entries than expected...
 	shp = self.labelmngr.labelArray.shape
 	self.labelmngr.labelArray.shape = self.size
@@ -354,7 +354,7 @@ class draw_Patch(drawManager):
 	# python drawing 2: draw all pixels in for loop. SLOOOWWW!!!
         pixcol = {}
         for label, col in self.drawColor.items():
-            pixcol[label] = col.rgb()
+            pixcol[label] = col.rgba()
         # todo: pixcol contains more entries than expected...
         for x in xrange(self.size[0]):
             for y in xrange(self.size[1]):
@@ -380,7 +380,7 @@ class draw_Patch(drawManager):
         self.startPos = pos
         self.lastPos = pos
         
-        self.pixelColor = self.activeDrawColor.rgb()
+        self.pixelColor = self.activeDrawColor.rgba()
         self.labelmngr.setLabel(pos, self.drawLabel)
         
         # todo: create/get qimage for given label and add to self.canvas.
@@ -1180,7 +1180,7 @@ class labelWidget(QtGui.QWidget):
             # Init colors
             for label, col in self.project.labelColors.items():
                 drawManager.setDrawColor(label, col)
-            erasecol = QtGui.QColor(0)
+            erasecol = QtGui.QColor(0,0,0,0)
             #erasecol.setAlphaF(1.0)
             drawManager.setDrawColor(0, erasecol)
             

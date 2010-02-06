@@ -30,6 +30,10 @@ if "mingw32" in sys.argv:
 					   os.path.dirname(PyQt4.__file__))
 	qt_libraries = [lib + "4" for lib in qt_libraries]
 
+if 1:
+	qt_lib_dirs.append('C:/Program Files/boost/boost_1_40/lib')
+	boost_python_libraries = ["boost_python-vc90-mt-1_40"]
+	
 
 
 libs = qt_libraries
@@ -41,7 +45,7 @@ libs.extend(boost_python_libraries)
 draw = Extension('labelArrayDrawQImage.draw',
 					   sources = ['draw.sip'],
 					   include_dirs = [numpy.get_include(),
-								   qt_inc_dir,
+								   qt_inc_dir,'C:/Program Files/boost/boost_1_40',
 									   os.path.join(qt_inc_dir, "QtCore"),
 									   os.path.join(qt_inc_dir, "QtGui")],
 					   library_dirs = qt_lib_dirs,

@@ -177,7 +177,6 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.setBrushSize(rad)
 
     def on_classificationTrain(self):
-        self.generateTrainingData()
         self.classificationTrain = ClassificationTrain(self)
         
     def on_classificationPredict(self):
@@ -626,10 +625,22 @@ class ClassificationTrain(object):
         self.initClassificationProgress(numberOfJobs)
         
         # Get Train Data
-        #F = self.parent.project.trainingMatrix
-        #L = self.parent.project.trainingLabels
+        
+        tic = time.clock()
+        self.parent.generateTrainingData()
+        Fc = self.parent.project.trainingMatrix
+        Lc = self.parent.project.trainingLabels
+        print "old time %f " % (time.clock() - tic)
+        
+        
+        
+        
+        
         self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)
-        F,L = self.parent.project.dataMgr.buildTrainingMatrix()
+        tic2 = time.clock()
+        F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
+        print "new time %f " % (time.clock() - tic2)
+        
         featLabelTupel = queue()
         featLabelTupel.put((F, L))
        
@@ -667,8 +678,7 @@ class ClassificationInteractive(object):
         self.parent = parent
         self.stopped = False
         self.trainingQueue = deque(maxlen=1)
-        #self.lock = threading.Lock()
-        
+
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
         self.interactiveTimer = QtCore.QTimer()
         self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      

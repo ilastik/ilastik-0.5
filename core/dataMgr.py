@@ -57,6 +57,7 @@ class DataItemImage(DataItemBase):
             self.data, self.channelDescription, self.labels = DataImpex.loadMultispectralData(self.fileName)
         else:
             self.data = DataImpex.loadImageData(self.fileName)
+            self.labels = at.ScalarImage(self.data.shape[0:2],at.uint8)
         #print "Shape after Loading and width",self.data.shape, self.data.width
         self.dataType = self.data.dtype
         self.shape = self.data.shape
@@ -67,7 +68,6 @@ class DataItemImage(DataItemBase):
                 self.dataKind = 'multi'
         elif len(self.data.shape) == 2:
             self.dataKind = 'gray'
-        self.labels = at.ScalarImage(self.shape[0:2],at.uint8)
         
     
             
@@ -147,27 +147,33 @@ class DataMgr():
         return self.featureMatrixList
     
     def buildTrainingMatrix(self):  
-        lTuple = [] 
-        fTuple = []
+        res_labels = [] 
+        res_names = []
+        res_features = []
         for dataInd , dataFeatures in irange(self.dataFeatures):
-            labels = self.dataItems[dataInd].labels 
-            label_inds = numpy.flatnonzero(labels)         
-            fTmpTuple = []
-            for features in dataFeatures:
-                f = features[0]
-                fSize = f.shape[0] * f.shape[1] 
-                if len(f.shape) == 2:
-                    f = f.reshape(fSize,1)
+            res_features_tmp = []
+            #labels = at.ScalarImage(self.dataItems[dataInd].labels).flatten() 
+            labels = self.dataItems[dataInd].labels.flatten() 
+            label_inds = labels.nonzero()[0]
+            labels = labels[label_inds]      
+            nLabels = label_inds.shape[0]
+
+            for featureImage, featureString, c_ind in dataFeatures:
+                n = 1   # n: number of feature-values per pixel
+                if featureImage.ndim > 2:
+                    n = featureImage.shape[2]
+                if n == 1:
+                    res_features_tmp.append(featureImage.flat[label_inds].reshape(1, nLabels))
+                    res_names.append(featureString)
                 else:
-                    f = f.reshape(fSize,f.shape[2])   
-                f = f[label_inds,:]  
-                fTmpTuple.append(f)
-            lTuple.append(labels.ravel()[label_inds])
-            fTuple.append( numpy.concatenate(fTmpTuple,axis=1))
-        F = numpy.concatenate(fTuple,axis=0)
-        L = numpy.concatenate(lTuple,axis=0)
+                    for featureDim in xrange(n):
+                        res_features_tmp.append(featureImage[:, :, featureDim].flat[label_inds].reshape(1, nLabels))
+                        res_names.append(featureString + "_%i" % (featureDim))
+
+            res_features.append(numpy.concatenate(res_features_tmp).T)
+            res_labels.append(labels)
         
-        return F, L
+        return numpy.concatenate(res_features), numpy.concatenate(res_labels), res_names
     
     def export2Hdf5(self, fileName):
         for imageIndex, dataFeatures in irange(self.dataFeatures):
