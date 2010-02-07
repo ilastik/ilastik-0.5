@@ -75,7 +75,8 @@ class OnlineRF(CumulativeOnlineClassifier):
         self.startRF()
 
     def startRF(self):
-        self.rf=vigra.classification.RandomForest(self.features,self.labels,self.tree_count,prepare_online_learning=True)
+        self.rf=vigra.classification.RandomForest_new(treeCount=self.tree_count,prepare_online_learning=True)
+        self.rf.learnRF(self.features,self.labels);
         self.learnedRange=len(self.labels.flatten())
 
     def addData(self,features,labels,ids):
@@ -98,7 +99,7 @@ class OnlineRF(CumulativeOnlineClassifier):
         pass
 
     def addPredictionSet(self,features,id):
-        self.predSets[id]=vm.RF_OnlinePredictionSet(features,self.tree_count)
+        self.predSets[id]=vigra.classification.RF_OnlinePredictionSet(features,self.tree_count)
 
     def predict(self,id):
         return self.rf.predictProbabilities(self.predSets[id])
