@@ -59,6 +59,9 @@ class DataItemImage(DataItemBase):
             self.data = DataImpex.loadImageData(self.fileName)
             self.labels = at.ScalarImage(self.data.shape[0:2],at.uint8)
         #print "Shape after Loading and width",self.data.shape, self.data.width
+        self.extractDataAttributes()
+    
+    def extractDataAttributes(self):
         self.dataType = self.data.dtype
         self.shape = self.data.shape
         if len(self.data.shape) == 3:
@@ -68,6 +71,12 @@ class DataItemImage(DataItemBase):
                 self.dataKind = 'multi'
         elif len(self.data.shape) == 2:
             self.dataKind = 'gray'
+    @classmethod
+    def initFromArray(cls, dataArray, originalFileName):
+        obj = cls(originalFileName)
+        obj.data = dataArray
+        obj.extractDataAttributes()
+        return obj
         
     
             
@@ -99,7 +108,7 @@ class DataItemVolume(DataItemBase):
 class DataMgr():
     def __init__(self, dataItems=[]):
         self.setDataList(dataItems)
-        self.dataFeatures = []
+        self.dataFeatures = [None] * len(dataItems)
         self.labels = {}
         self.prediction = [None] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
@@ -109,7 +118,8 @@ class DataMgr():
         self.dataItemsLoaded = [False] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
         self.prediction = [None] * len(dataItems)
-        self.segmentation = [None] * len(dataItems)
+        self.uncertainty = [None] * len(dataItems)
+        
     def getDataList(self):
         return self.dataItems
         
@@ -122,6 +132,10 @@ class DataMgr():
             self.dataItems[ind].loadData()
             self.dataItemsLoaded[ind] = True
         return self.dataItems[ind]
+    
+    def __setitem__(self, ind, val):
+        self.dataItems[ind] = val
+        self.dataItemsLoaded[ind] = True
     
     def clearDataList(self):
         self.dataItems = []

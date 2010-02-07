@@ -1,16 +1,18 @@
-from core import dataMgr
+from core import dataMgr as dataMgrModule
 import cPickle as pickle
 import h5py
 from core.utilities import irange, debug
+from vigra import arraytypes as at
+from PyQt4 import QtGui
 
 class Project(object):
-    def __init__(self, name, labeler, description, dataMgr):
+    def __init__(self, name, labeler, description, dataMgr, labelNames=[], labelColors={}):
         self.name = name
         self.labeler = labeler
         self.description = description
         self.dataMgr = dataMgr
-        self.labelNames = []
-        self.labelColors = {}
+        self.labelNames = labelNames
+        self.labelColors = labelColors
         self.trainingMatrix = None
         self.trainingLabels = None
         self.trainingFeatureNames = None
@@ -73,11 +75,54 @@ class Project(object):
     
     @staticmethod
     def loadFromDisk(fileName):
-        fileHandle = open(fileName,'rb')
-        p = pickle.load(fileHandle)
+        fileHandle = h5py.File(fileName,'r')
+        # p = pickle.load(fileHandle)
+        
+        # extract basic project settings
+        projectG = fileHandle['Project']
+        name = projectG['Name']
+        labeler = projectG['Labeler'] 
+        description = projectG['Description']
+        labelNames = projectG['LabelNames'].value.tolist() 
+        labelColors = dict([(k+1,QtGui.QColor(projectG['LabelColors'][k])) for k in range(len(projectG['LabelColors']))])
+        
+        # init dataMgr 
+        n = len(fileHandle['DataSets'])
+        dataMgr = dataMgrModule.DataMgr([None for k in range(n)]);
+                       
+        # add raw data and labels to empty dataMgr                  
+        for ind, dataItemValue in irange(fileHandle['DataSets'].values()):
+            rawData = at.Image(dataItemValue['rawData'].value)
+            labels = at.ScalarImage(dataItemValue['labels'].value)
+            originalFileName = dataItemValue.attrs['fileName']
+            dataMgr[ind] = dataMgrModule.DataItemImage.initFromArray(rawData, originalFileName)
+            dataMgr[ind].labels = labels
+            dataMgr[ind].hasLabels = True
+
+            # extract features if available
+            if 'features' in dataItemValue:
+                dataFeatures = []
+                for featIT in dataItemValue['features'].values():
+                    feature = at.Image(featIT.value)
+                    featureName = featIT.attrs['featureName']
+                    channelIndex = int(featIT.attrs['channelIndex'])
+                    dataFeatures.append((feature, featureName, channelIndex))
+                dataMgr.dataFeatures[ind] = dataFeatures
+ 
+            # extract prediction if available
+            if 'prediction' in dataItemValue:
+                prediction = dataItemValue['prediction'].value
+                dataMgr.prediction[ind] = prediction.reshape((prediction.shape[0] * prediction.shape[1] , -1))
+        
+            # extract segmentaion if available
+            if 'segmentation' in dataItemValue:
+                segmentation = dataItemValue['segmentation'].value
+                dataMgr.segmentation[ind] = segmentation
+        
+        
         fileHandle.close()
-        print "Project %s loaded from %s " % (p.name, fileName)
-        return p
+        # print "Project %s loaded from %s " % (p.name, fileName)
+        return Project( name, labeler, description, dataMgr, labelNames, labelColors)
     
 
         

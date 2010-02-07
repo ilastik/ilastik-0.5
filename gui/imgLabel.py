@@ -1073,13 +1073,13 @@ class labelWidget(QtGui.QWidget):
         
         self.loadImageList()
         self.loadLabelList()
-        #self.changeImage(0)
+        self.changeImage(0)
         self.updateDrawSettings()
-        #self.pixmapitem = None
-        #project.dataMgr.labels = self.labelForImage
 
-        #self.labelForImage = project.dataMgr.labels
         self.OverlayMgr = OverlayMgr(self.canvas, project.labelColors, project.dataMgr.dataItemsShapes(), self)
+        self.OverlayMgr.updatePredictionsPixmaps(dict(irange(project.dataMgr.prediction)))
+        self.OverlayMgr.updateSegmentationPixmaps(dict(irange(project.dataMgr.segmentation)))
+        
         self.connect(self, QtCore.SIGNAL("imageChanged"), self.OverlayMgr.clearAll)
         
     def setBrushSize(self, rad):
@@ -1510,6 +1510,8 @@ class OverlayMgr(object):
 
     def updatePredictionsPixmaps(self, predictions):
         for imageIndex, prediction in predictions.iteritems():
+            if prediction is None:
+                continue
             #if self.classCount>prediction.shape[1]:
             #    raise RuntimeError('I got more classes than prediction pixmaps')
             #TODO: The min (and the outcomented error above) is due to some bug, that has to be removed yet
@@ -1520,6 +1522,8 @@ class OverlayMgr(object):
     
     def updateSegmentationPixmaps(self, segmentations):
         for imageIndex, segmentation in segmentations.iteritems():
+            if segmentation is None:
+                continue
             pm = self.rawImage2pixmap(segmentation, 1, 'discrete', 1)
             self.segmentationPixmaps[imageIndex][0] = pm
     
@@ -1561,7 +1565,6 @@ class OverlayMgr(object):
                     currentOverlay[1].setZValue(-1) 
 
     def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7):
-        
         # Used for rawImages in [0,1]
         if type == 'continious':
             # old version of gray-numpy to qimage using qwt
