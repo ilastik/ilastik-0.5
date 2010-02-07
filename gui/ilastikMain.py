@@ -684,9 +684,8 @@ class ClassificationInteractive(object):
         self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      
         self.temp_cnt = 0
         self.start()
-        self.interactiveTimer.start(500)
-        #self.tmp_count = 0
-        #self.resultLock = threading.Lock()
+        self.interactiveTimer.start(200)
+        self.parent.labelWidget.cmbOverlayList.setCurrentIndex(1)
         
     def updateTrainingQueue(self):
         self.parent.generateTrainingData()
@@ -698,11 +697,7 @@ class ClassificationInteractive(object):
     def updateLabelWidget(self):  
         predictIndex = self.parent.labelWidget.activeImage
         displayClassNr = self.parent.labelWidget.activeLabel  
-#        try:
-#            image = self.classificationInteractive.result[predictIndex].pop()
-#        except IndexError:
-#            time.sleep(0.01)
-#            return
+
         viewPredictions = {}
         for i, predict in irange(self.classificationInteractive.result):
             try:
@@ -711,7 +706,7 @@ class ClassificationInteractive(object):
                 pass
 
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(viewPredictions)
-        self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
+        self.parent.labelWidget.OverlayMgr.setOverlayStateByIndex(self.parent.labelWidget.cmbOverlayList.currentIndex())
 
 
     def initInteractiveProgressBar(self):
@@ -733,8 +728,8 @@ class ClassificationInteractive(object):
         
         self.trainingQueue.append((F, L))
         
-        predictDataList = self.parent.project.dataMgr.buildFeatureMatrix()
-        
+        # [Todo: only do it once]
+        predictDataList = self.parent.project.dataMgr.buildFeatureMatrix()      
         
         numberOfClasses = len(self.parent.project.labelNames)
         numberOfClassifiers = 6

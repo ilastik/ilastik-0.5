@@ -68,6 +68,8 @@ class Project(object):
                 # segmentationIt.attrs['segmentationOperation'] = 'segmentationOperation'
 
         dataSetG.attrs["dataKind"] = self.dataMgr[0].dataKind
+        dataSetG.attrs["channelDescription"] = self.dataMgr[0].channelDescription
+        
         
         # Save to hdf5 file
         fileHandle.close()
@@ -98,6 +100,7 @@ class Project(object):
             dataMgr[ind] = dataMgrModule.DataItemImage.initFromArray(rawData, originalFileName)
             dataMgr[ind].labels = labels
             dataMgr[ind].hasLabels = True
+            dataMgr[ind].channelDescription = fileHandle['DataSets'].attrs["channelDescription"]
 
             # extract features if available
             if 'features' in dataItemValue:

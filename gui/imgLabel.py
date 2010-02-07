@@ -882,7 +882,7 @@ class labelWidget(QtGui.QWidget):
             imageList = displayImageList(dpi)
         
         self.labelForImage = {}
-        self.predictions = {}                # predictions[imageNr]
+        self.predictions = {}     
         self.segmentation = {}
         self.uncertainty = {}
         self.cloneviews = []
@@ -931,6 +931,11 @@ class labelWidget(QtGui.QWidget):
         self.btnCloneView = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.DoubleArrow), "Clone")
         self.connect(self.btnCloneView, QtCore.SIGNAL("clicked()"), self.makeCloneView)
         
+        # Overlay Combobox
+        self.cmbOverlayList = QtGui.QComboBox()
+        self.cmbOverlayList.addItems(['None','Prediction','Uncertainty','Segmentation'])
+        self.connect(self.cmbOverlayList, QtCore.SIGNAL("currentIndexChanged(int)"), self.on_changeOverlay)
+        
         # Slider for Label Opasity
         self.sldOpacity = QtGui.QSlider()
         self.sldOpacity.setMinimum(0)
@@ -952,12 +957,16 @@ class labelWidget(QtGui.QWidget):
         labelingToolBox_lists.addWidget(self.cmbChannelList)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Classes'))
         labelingToolBox_lists.addWidget(self.cmbClassList)
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Overlay'))
+        labelingToolBox_lists.addWidget(self.cmbOverlayList)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Label Opasity'))
         labelingToolBox_lists.addWidget(self.sldOpacity)
         labelingToolBox_lists.addWidget(self.btnUndo)
         labelingToolBox_lists.addWidget(self.btnCloneView)
         labelingToolBox_lists.addStretch()
         self.labelingToolBox.setLayout(labelingToolBox_lists)
+        
+        
         
         # Container Widget for Viewing
         self.btnViewImage = QtGui.QPushButton('Image')
@@ -991,7 +1000,7 @@ class labelWidget(QtGui.QWidget):
         self.toolBox.setMaximumWidth(160)
         # Adding both Entries
         self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(ilastikIcons.Brush), 'Labeling')
-        self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(ilastikIcons.View), 'View')
+        #self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(ilastikIcons.View), 'View')
         
         # At the right side of view
         layout = QtGui.QHBoxLayout()
@@ -1008,6 +1017,16 @@ class labelWidget(QtGui.QWidget):
 #        except AttributeError:
 #            pass
         
+    def on_changeOverlay(self, ind):
+        if ind == 0:
+            self.on_viewImage()
+        elif ind == 1:
+            self.on_viewPrediction()
+        elif ind == 2:
+            self.on_viewUncertainty()
+        elif ind == 3:
+            self.on_viewSegmentation()
+
     def on_viewPrediction(self):
         displayImage = self.activeImage
         self.OverlayMgr.setOverlayState('Prediction')
@@ -1061,6 +1080,7 @@ class labelWidget(QtGui.QWidget):
         self.project = project
         # Check for Multispectral Data and load ChannelList if present
         if self.project.dataMgr[0].dataKind in ['multi']:
+            # activeChannel = 0 means there is now
             self.activeChannel = 0
             self.loadChannelList(0)  
         else:
@@ -1492,17 +1512,25 @@ class OverlayMgr(object):
         for img in range(self.imageCount):
             self.uncertaintyPixmaps[img] = [False, False]
             
+        self.stateNames = ['Image','Prediction','Uncertainty','Segmentation']
         self.stateList = {}
+        self.stateList['Image'] = dict([(k,None) for k in range(self.imageCount)])
         self.stateList['Prediction'] = self.predictionPixmaps
         self.stateList['Uncertainty'] = self.uncertaintyPixmaps
         self.stateList['Segmentation'] = self.segmentationPixmaps
         self.state = 'Prediction'
+        
         
         # self.classIndex = -1 all Classes at the same time, or just a specific nr.
         self.classIndex = -1
         
     def setOverlayState(self, state):
         self.state = state
+        self.showOverlayPixmapByState()
+        
+    def setOverlayStateByIndex(self, index):
+        self.state = self.stateNames[index]
+        print self.state
         self.showOverlayPixmapByState()
     
     def setClassIndex(self, classIndex):
@@ -1533,7 +1561,7 @@ class OverlayMgr(object):
             self.uncertaintyPixmaps[imageIndex][0] = pm 
     
     def showOverlayPixmapByState(self):
-        self.clearAll()
+        
         imageIndex = self.labelWidget.activeImage  
         
         classes = range(self.classCount)
@@ -1547,16 +1575,20 @@ class OverlayMgr(object):
             else:
                 classes = [classIndex - 1]
             
+            self.clearAll()
             for classNr in classes:
                 if currentOverlay[classNr][1]:
                     currentOverlay[classNr][1].setPixmap(currentOverlay[classNr][0])
                 else:
                     if currentOverlay[classNr][0]:
                         currentOverlay[classNr][1] = self.canvas.addPixmap(currentOverlay[classNr][0])
-                        #currentOverlay[classNr][1].setZValue(-1)
+                        currentOverlay[classNr][1].setZValue(-1)
                         print currentOverlay[classNr][1]
         # Some Overlay which does not depend on the current ClassIndex 
+        elif self.state in ['Image']:
+            self.clearAll()           
         else:
+            self.clearAll()
             if currentOverlay[1]:
                 currentOverlay[1].setPixmap(currentOverlay[imageIndex][0])
             else:

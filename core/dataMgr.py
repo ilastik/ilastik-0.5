@@ -67,10 +67,13 @@ class DataItemImage(DataItemBase):
         if len(self.data.shape) == 3:
             if self.data.shape[2] == 3:
                 self.dataKind = 'rgb'
+                self.channelDescription = ['Red','Green','Blue']
             elif self.data.shape[2] > 3:
                 self.dataKind = 'multi'
+                # self.channelDescription have been set by load Method
         elif len(self.data.shape) == 2:
             self.dataKind = 'gray'
+            self.channelDescription = ['Intensities']
     @classmethod
     def initFromArray(cls, dataArray, originalFileName):
         obj = cls(originalFileName)
@@ -341,6 +344,46 @@ class DataImpex(object):
         finally:
             h5file.close()
         return res
+    
+class channelMgr(object):
+    def __init__(self, dataMgr):
+        self.dataMgr = dataMgr
+        self.compoundChannels = {'rgb':{},'gray':{},'multi':{}}
+        
+        self.registerCompoundChannels('rgb', 'TrueColor', self.compoundSelectChannelFunctor, [0,1,2]) 
+        self.registerCompoundChannels('gray', 'Intensities', self.compoundSelectChannelFunctor, [0,1,2])
+        self.registerCompoundChannels('multi', 'Channel:', self.compoundSelectChannelFunctor, 0)
+        
+    def channelConcatenation(self, dataInd, channelList):
+        if self.dataMgr[dataInd].dataKind == 'gray':
+            res = self.dataMgr[dataInd].data
+        else:
+            res = self.dataMgr[dataInd].data[:,:, channelList]
+        return res
+    
+    def getDefaultDisplayImage(self, dataInd):
+        if self.dataMgr[dataInd].dataKind == 'gray':
+            res = channelConcatenation(self, dataInd, channelList)
+        elif self.dataMgr[dataInd].dataKind == 'rgb':
+            res = channelConcatenation(self, dataInd, [0,1,2])
+        elif self.dataMgr[dataInd].dataKind == 'multi':
+            res = channelConcatenation(self, dataInd, [0]) 
+        return res 
+    
+    def registerCompoundChannels(self, dataKind, compoundName, compundFunctor, compundArg):
+        self.compoundChannels[dataKind][compoundName] = lambda x,compundArg=compundArg:compundFunctor(x, compundArg)
+    
+    def compoundSelectChannelFunctor(self, data, selectionList):
+        if data.ndim == 3:
+            return data[:,:,selectionList]
+        else:
+            return data
+        
+        
+        
+        
+    
+    
         
         
         
