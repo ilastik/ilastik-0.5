@@ -23,7 +23,7 @@ from core.utilities import irange, debug
 try:
     import vigra
 except ImportError:
-    sys.exit("vigranumpycmodule not found!")
+    sys.exit("vigra not found!")
 
 
 
@@ -823,6 +823,7 @@ class ClassificationOnline(object):
     
     def updateTrainingData(self):
         active_image=self.parent.labelWidget.activeImage
+        print active_image
         Labels=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].labelmngr.labelArray
         queue=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].BrushQueues['onlineLearning']
 
