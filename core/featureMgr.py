@@ -191,12 +191,13 @@ cannyEdge = lambda x, s: vigra.edgedetection.cannyEdgeImage(x, s, 0, 1), ['Sigma
 identity = lambda x: x, []
 identity[0].__name__ = "identity"
 
-from scipy import linalg
+#from scipy import linalg
 def orientation(x,s):
     st = vigra.convolution.structureTensor(x,s,s)
     for x in xrange(st.shape[0]):
         for y in xrange(st.shape[1]):
-            dummy, ev = linalg.eig(numpy.array([st[x,y,0],st[x,y,1],[st[x,y,1],st[x,y,2]]]))
+            pass
+            # dummy, ev = linalg.eig(numpy.array([st[x,y,0],st[x,y,1],[st[x,y,1],st[x,y,2]]]))
                                                                         
 
 ilastikFeatureGroups = FeatureGroups()
