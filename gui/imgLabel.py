@@ -1134,6 +1134,8 @@ class labelWidget(QtGui.QWidget):
         self.cmbClassList.addItem("Erase")
         self.cmbClassList.addItems(self.project.labelNames)
         self.contextMenuLabel = contextMenuLabel(self.project.labelNames, self.project.labelColors, self.canvas)
+        if len(self.project.labelNames) > 0:
+            self.cmbClassList.setCurrentIndex(1)
 
     def getLabel(self, imageNr, pos):
         lfi = self.labelForImage.get(imageNr, None)
@@ -1201,7 +1203,6 @@ class labelWidget(QtGui.QWidget):
             for label, col in self.project.labelColors.items():
                 drawManager.setDrawColor(label, col)
             erasecol = QtGui.QColor(0,0,0,0)
-            #erasecol.setAlphaF(1.0)
             drawManager.setDrawColor(0, erasecol)
             
             # Give drawManager to labelForImage
