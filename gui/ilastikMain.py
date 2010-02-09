@@ -638,7 +638,9 @@ class ClassificationTrain(object):
         
         self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)
         tic2 = time.clock()
-        F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
+        #Nathan says: Fname is not used anywhere, so we do not need it? It does not work otherwise ...
+        #F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
+        F,L = self.parent.project.dataMgr.buildTrainingMatrix()
         print "new time %f " % (time.clock() - tic2)
         
         featLabelTupel = queue()
