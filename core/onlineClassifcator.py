@@ -1,4 +1,3 @@
-from classificationMgr import *
 import lasvm
 import numpy
 import math
@@ -40,13 +39,9 @@ class CumulativeOnlineClassifier(OnlineClassifier):
         self.features=features
         self.labels=labels
         self.ids=ids
-        print "Start features:",self.features
 
     def addData(self,features,labels,ids):
-        print "Features before:",self.features
-        print "Adding features:",features
         self.features=numpy.append(self.features,features,axis=0)
-        print "Result:",self.features
         self.labels=numpy.append(self.labels,labels)
         self.ids=numpy.append(self.ids,ids)
 
@@ -69,6 +64,8 @@ class OnlineRF(CumulativeOnlineClassifier):
         self.rf=None
         self.tree_count=tree_count
         self.learnedRange=0
+        self.predOnlineSets={}
+        self.relearnId=0;
 
     def start(self,features,labels,ids):
         CumulativeOnlineClassifier.start(self,features,labels.astype(numpy.uint32),ids)
@@ -95,14 +92,20 @@ class OnlineRF(CumulativeOnlineClassifier):
         self.learnedRange=len(self.labels.flatten())
 
     def improveSolution(self):
-        #TODO: relearn trees
+        self.rf.reLearnTree(self.features,self.labels,self.relearnId)
+        for p in self.predOnlineSets.values():
+            p.invalidateTree(self.relearnId)
+        self.relearnId=(self.relearnId +1) % self.tree_count
         pass
 
     def addPredictionSet(self,features,id):
-        self.predSets[id]=vigra.classification.RF_OnlinePredictionSet(features,self.tree_count)
+        OnlineClassifier.addPredictionSet(self,features,id)
+        self.predOnlineSets[id]=vigra.classification.RF_OnlinePredictionSet(features,self.tree_count)
 
     def predict(self,id):
         return self.rf.predictProbabilities(self.predSets[id])
+    def fastPredict(self,id):
+        return self.rf.predictProbabilities(self.predOnlineSets[id])
 
 
 
@@ -116,7 +119,7 @@ class OnlineLaSvm(OnlineClassifier):
 
     def start(self,features,labels,ids):
         # TODO Cast to float64!
-        self.svm=lasvm.createLaSvmMultiPar(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
+        self.svm=lasvm.laSvmMultiParams(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
         self.addData(features,labels,ids)
         self.svm.startGuessParameters()
         print numpy.min(features.flatten())
@@ -157,7 +160,7 @@ class OnlineLaSvm(OnlineClassifier):
         if self.svm==None:
             raise RuntimeError("run \"start\" first")
         print "Begin improving solution"
-        self.svm.optimizeKernelStep(0)
+        self.svm.optimizeKernelStep(0,False)
         print "Done improving solution"
         f=open('g_run.txt','a')
         f_v=open('./var_run.txt','a')
@@ -177,6 +180,15 @@ class OnlineLaSvm(OnlineClassifier):
         print "Begin predict"
         pred=self.svm.predictFsingleCoverTree(self.predSets[id],0.01);
         print "End predict"
+        pred=(pred>0.0)
+        pred=(pred.astype(numpy.int32)*2)-1
+        pred=pred.reshape((pred.shape[0],1))
+        return numpy.append(1.0-(pred+1)/2,(pred+1)/2.0,axis=1)
+
+    def fastPredict(self,id):
+        print "Begin fast predict"
+        pred=self.svm.predictFRangedSingleCoverTree(self.predSets[id],0.5,0.1,True)
+        print "End fast predict"
         pred=(pred>0.0)
         pred=(pred.astype(numpy.int32)*2)-1
         pred=pred.reshape((pred.shape[0],1))

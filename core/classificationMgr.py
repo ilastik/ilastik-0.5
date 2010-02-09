@@ -341,7 +341,7 @@ class ClassifierOnlineThread(threading.Thread):
                 pass
                 
             if self.commandQueue.empty():
-                result = self.classifier.predict(self.activeImageIndex)
+                result = self.classifier.fastPredict(self.activeImageIndex)
                 self.predictions[self.activeImageIndex].append(result)
                 self.predictionUpdated()
             
