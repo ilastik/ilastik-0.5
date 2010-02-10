@@ -140,7 +140,6 @@ class OnlineLaSvm(OnlineClassifier):
         labels=labels*2-3;
         if(self.svm==None):
             raise RuntimeError("run \"start\" before addData")
-        print features.dtype
         self.svm.addData(features,labels,ids)
 
     def removeData(self,ids):
@@ -165,7 +164,10 @@ class OnlineLaSvm(OnlineClassifier):
         f=open('g_run.txt','a')
         f_v=open('./var_run.txt','a')
         for i in xrange(self.numFeatures):
-            f.write(repr(math.log(self.svm.gamma(i))))
+            if(self.svm.gamma(i)>math.exp(-100)):
+                f.write(repr(math.log(self.svm.gamma(i))))
+            else:
+                f.write(repr(-100))
             f_v.write(repr(self.svm.variance(i)))
             if i==self.numFeatures-1:
                 f.write("\n")
@@ -178,7 +180,7 @@ class OnlineLaSvm(OnlineClassifier):
 
     def predict(self,id):
         print "Begin predict"
-        pred=self.svm.predictFsingleCoverTree(self.predSets[id],0.01);
+        pred=self.svm.predictF(self.predSets[id]);
         print "End predict"
         pred=(pred>0.0)
         pred=(pred.astype(numpy.int32)*2)-1
