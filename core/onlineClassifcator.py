@@ -110,7 +110,7 @@ class OnlineRF(CumulativeOnlineClassifier):
 
 
 class OnlineLaSvm(OnlineClassifier):
-    def __init__(self,cacheSize=1000):
+    def __init__(self,cacheSize=2000):
         OnlineClassifier.__init__(self)
         self.cacheSize=cacheSize
         self.svm=None
