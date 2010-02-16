@@ -1112,8 +1112,9 @@ class labelWidget(QtGui.QWidget):
     def loadChannelList(self, imageIndex=0):
         self.cmbChannelList.clear()
         print self.project.dataMgr[imageIndex].channelDescription
-        self.cmbChannelList.addItems(self.project.dataMgr[imageIndex].channelDescription)
-        self.cmbChannelList.setEnabled(True)
+        if self.project.dataMgr[imageIndex].dataKind == 'multi':
+            self.cmbChannelList.addItems(self.project.dataMgr[imageIndex].channelDescription)
+            self.cmbChannelList.setEnabled(True)
         
         
     def clearChannelList(self):

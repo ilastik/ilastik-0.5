@@ -145,6 +145,7 @@ class FeatureGroups(object):
     def createMemberFeatures(self):
         #self.members['Color'].append(identity)
         self.members['Color'].append(gaussianSmooth)
+        #self.members['Color'].append(location)
         
         self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
@@ -187,6 +188,12 @@ morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.u
 eigHessianTensor2d = vigra.filters.eigHessian2d, ['Sigma']
 differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmooth2d(x,s) - vigra.filters.gaussianSmooth2d(x,s/3*2), ['Sigma']
 cannyEdge = lambda x, s: vigra.edgedetection.cannyEdgeImage(x, s, 0, 1), ['Sigma']
+def location_(x,s):
+    X, Y = numpy.meshgrid(range(-x.shape[1]/2, x.shape[1]/2), range(-x.shape[0]/2, x.shape[0]/2))
+    X.shape = X.shape + (1,)
+    Y.shape = Y.shape + (1,)
+    return vigra.Image(numpy.concatenate((X,Y),axis=2),numpy.float32)
+location = (location_,['Sigma'])
 
 identity = lambda x: x, []
 identity[0].__name__ = "identity"
