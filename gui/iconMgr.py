@@ -16,6 +16,7 @@ class ilastikIcons(object):
     Dialog = iconPath + "status/dialog-information.png"
     Select = iconPath + "actions/edit-select-all.png"
     Erase = iconPath + "actions/my_erase.png"
+    Edit2 = iconPath + "actions/edit-find-replace.png"
     
     
     

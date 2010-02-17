@@ -5,7 +5,7 @@ from copy import copy
 import os
 import h5py
 import tables
-from core.utilities import irange, debug
+from core.utilities import irange, debug, irangeIfTrue
 
 try:
     from vigra import arraytypes as at
@@ -30,6 +30,7 @@ class DataItemBase():
         self.thumbnail = None
         self.shape = ()
         self.channelDescription = []
+        self.channelUsed = []
         
     def shape(self):
         if self.dataKind in ['rgb', 'multi', 'gray']:
@@ -42,7 +43,7 @@ class DataItemBase():
         if self.dataKind in ['rgb']:
             return [ self.data[:,:,k] for k in range(0,3) ]
         elif self.dataKind in ['multi']:
-            return [ self.data[:,:,k] for k in range(0, self.data.shape[2]) ]
+            return [ self.data[:,:,k] for k in irangeIfTrue(self.channelUsed)]
         elif self.dataKind in ['gray']:
             return [ self.data ]   
 
@@ -50,11 +51,13 @@ class DataItemImage(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
         self.dataDimensions = 2
+        self.overlayImage = None
        
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)
         if fExt == '.h5':
-            self.data, self.channelDescription, self.labels = DataImpex.loadMultispectralData(self.fileName)
+            self.data, self.channelDescription, self.labels, self.overlayImage = DataImpex.loadMultispectralData(self.fileName)
+            
         else:
             self.data = DataImpex.loadImageData(self.fileName)
             self.labels = at.ScalarImage(self.data.shape[0:2],at.uint8)
@@ -68,8 +71,10 @@ class DataItemImage(DataItemBase):
             if self.data.shape[2] == 3:
                 self.dataKind = 'rgb'
                 self.channelDescription = ['Red','Green','Blue']
+                self.channelUsed = [True] * len(self.channelDescription)
             elif self.data.shape[2] > 3:
                 self.dataKind = 'multi'
+                self.channelUsed = [True] * len(self.channelDescription)
                 # self.channelDescription have been set by load Method
         elif len(self.data.shape) == 2:
             self.dataKind = 'gray'
@@ -109,7 +114,9 @@ class DataItemVolume(DataItemBase):
     
         
 class DataMgr():
-    def __init__(self, dataItems=[]):
+    def __init__(self, dataItems=None):
+        if dataItems is None:
+            dataItems = []            
         self.setDataList(dataItems)
         self.dataFeatures = [None] * len(dataItems)
         self.labels = {}
@@ -253,6 +260,11 @@ class DataImpex(object):
             else:
                 print 'No "channelNames"-field contained in: %s ' % fileName
                 channelNames = map(str, range(data.shape[2]))
+            if 'overlayImage' in h5file.listnames():
+                overlayImage = at.Image(h5file['overlayImage'].value)
+            else:
+                print 'No "overlayImage"-field contained in: %s ' % fileName
+                overlayImage = None
                                
         except Exception as e:
             print "Error while reading H5 File %s " % fileName
@@ -260,7 +272,7 @@ class DataImpex(object):
         finally:
             h5file.close()
             
-        return (data, channelNames, labels)
+        return (data, channelNames, labels, overlayImage)
     
     @staticmethod
     def loadImageData(fileName):

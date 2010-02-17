@@ -150,11 +150,11 @@ class FeatureGroups(object):
         self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
-        self.members['Texture'].append(hessianMatrixOfGaussian)
+        #self.members['Texture'].append(hessianMatrixOfGaussian)
         #self.members['Texture'].append(laplacianOfGaussian)
         #self.members['Texture'].append(morphologicalOpening)
         #self.members['Texture'].append(morphologicalClosing)
-        #self.members['Texture'].append(gaussianGradientMagnitude)
+        self.members['Texture'].append(gaussianGradientMagnitude)
         #self.members['Texture'].append(differenceOfGaussians)
         
         self.members['Edge'].append(gaussianGradientMagnitude)
@@ -188,11 +188,13 @@ morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.u
 eigHessianTensor2d = vigra.filters.eigHessian2d, ['Sigma']
 differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmooth2d(x,s) - vigra.filters.gaussianSmooth2d(x,s/3*2), ['Sigma']
 cannyEdge = lambda x, s: vigra.edgedetection.cannyEdgeImage(x, s, 0, 1), ['Sigma']
+
 def location_(x,s):
     X, Y = numpy.meshgrid(range(-x.shape[1]/2, x.shape[1]/2), range(-x.shape[0]/2, x.shape[0]/2))
     X.shape = X.shape + (1,)
     Y.shape = Y.shape + (1,)
     return vigra.Image(numpy.concatenate((X,Y),axis=2),numpy.float32)
+
 location = (location_,['Sigma'])
 
 identity = lambda x: x, []

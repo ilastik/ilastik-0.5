@@ -6,7 +6,12 @@ from vigra import arraytypes as at
 from PyQt4 import QtGui
 
 class Project(object):
-    def __init__(self, name, labeler, description, dataMgr, labelNames=[], labelColors={}):
+    def __init__(self, name, labeler, description, dataMgr, labelNames=None, labelColors=None):
+        if labelNames is None:
+            labelNames = []
+        if labelColors is None:
+            labelColors = {}     
+            
         self.name = name
         self.labeler = labeler
         self.description = description
@@ -27,10 +32,10 @@ class Project(object):
         projectG = fileHandle.create_group('Project') 
         dataSetG = fileHandle.create_group('DataSets') 
 
-        projectG.create_dataset('Name', data=self.name)
-        projectG.create_dataset('Labeler', data=self.labeler)
-        projectG.create_dataset('Description', data=self.description)
-        projectG.create_dataset('LabelNames', data=self.labelNames)
+        projectG.create_dataset('Name', data=str(self.name))
+        projectG.create_dataset('Labeler', data=str(self.labeler))
+        projectG.create_dataset('Description', data=str(self.description))
+        projectG.create_dataset('LabelNames', data=map(str,self.labelNames))
         projectG.create_dataset('LabelColors', data=[int(k.rgba()) for k in self.labelColors.values()])
         
         # get number of images
@@ -58,17 +63,23 @@ class Project(object):
             # save prediction if available
             if self.dataMgr.prediction[0] is not None:
                 prediction = self.dataMgr.prediction[k]
-                predictionIt = dk.create_dataset('prediction',data=prediction.reshape(self.dataMgr[k].shape[0:2] + (-1,)))
+                predictionIt = dk.create_dataset('prediction', data=prediction.reshape(self.dataMgr[k].shape[0:2] + (-1,)))
                 # predictionIt.attrs['classifier'] = 'classifierName'
             
             # save segmentation if available
             if self.dataMgr.segmentation[0] is not None:
                 segmentation = self.dataMgr.segmentation[k]
-                segmentationIt = dk.create_dataset('segmentation',data=segmentation)
+                segmentationIt = dk.create_dataset('segmentation', data=segmentation)
                 # segmentationIt.attrs['segmentationOperation'] = 'segmentationOperation'
+                
+            # save overlayImage if available
+            if self.dataMgr[k].overlayImage is not None:
+                overlayImage = self.dataMgr[k].overlayImage
+                overlayImageIt = dk.create_dataset('overlayImage', data=overlayImage)
 
         dataSetG.attrs["dataKind"] = self.dataMgr[0].dataKind
         dataSetG.attrs["channelDescription"] = self.dataMgr[0].channelDescription
+        dataSetG.attrs["channelUsed"] = self.dataMgr[0].channelUsed
         
         
         # Save to hdf5 file
@@ -82,9 +93,9 @@ class Project(object):
         
         # extract basic project settings
         projectG = fileHandle['Project']
-        name = projectG['Name']
-        labeler = projectG['Labeler'] 
-        description = projectG['Description']
+        name = projectG['Name'].value
+        labeler = projectG['Labeler'].value 
+        description = projectG['Description'].value
         labelNames = projectG['LabelNames'].value.tolist() 
         labelColors = dict([(k+1,QtGui.QColor(projectG['LabelColors'][k])) for k in range(len(projectG['LabelColors']))])
         
@@ -101,6 +112,7 @@ class Project(object):
             dataMgr[ind].labels = labels
             dataMgr[ind].hasLabels = True
             dataMgr[ind].channelDescription = fileHandle['DataSets'].attrs["channelDescription"]
+            dataMgr[ind].channelUsed = fileHandle['DataSets'].attrs["channelUsed"]
 
             # extract features if available
             if 'features' in dataItemValue:
@@ -121,6 +133,11 @@ class Project(object):
             if 'segmentation' in dataItemValue:
                 segmentation = dataItemValue['segmentation'].value
                 dataMgr.segmentation[ind] = segmentation
+            
+            # load OverlayImage if available
+            if 'overlayImage' in dataItemValue:
+                overlayImage = at.Image(dataItemValue['overlayImage'].value)
+                dataMgr[ind].overlayImage = overlayImage
         
         
         fileHandle.close()

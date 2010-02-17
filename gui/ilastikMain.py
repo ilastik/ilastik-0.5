@@ -107,13 +107,10 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
             self.projectDlg.show()
             return
-        if not hasattr(self, 'project'):
-            self.newProjectDlg()
-            return
-#        print "*"*1000
-#        self.projectDlg = ProjectDlg(self)
-#        self.projectDlg.updateDlg(self.project)
-#        self.projectModified()
+        else:        
+            self.projectDlg = ProjectDlg(self)
+            self.projectDlg.updateDlg(self.project)
+            self.projectModified()
             
         
     def projectModified(self):
@@ -123,6 +120,9 @@ class MainWindow(QtGui.QMainWindow):
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
+        
+    def newEditChannelsDlg(self):
+        self.editChannelsDlg = editChannelsDlg(self)
         
     def initImageWindows(self):
         self.labelDocks = []
@@ -287,6 +287,8 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("int")
     def on_cmbLabelName_currentIndexChanged(self, nr):
+        if nr < 0:
+            return
         nr += 1 # 0 is unlabeled !!
         self.txtLabelName.setText(self.cmbLabelName.currentText())
         #col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
@@ -373,7 +375,8 @@ class ProjectDlg(QtGui.QDialog):
         self.labelColor = project.labelColors
         for name in project.labelNames:
             self.cmbLabelName.addItem(name)
-
+        
+        self.show()
         self.update()
         
     @QtCore.pyqtSignature("")     
@@ -456,14 +459,13 @@ class ProjectDlg(QtGui.QDialog):
         for i in xrange(self.cmbLabelName.count()):
             self.parent.project.labelNames.append(str(self.cmbLabelName.itemText(i)))
             
-        
         rowCount = self.tableWidget.rowCount()
         dataItemList = self.parent.project.dataMgr.getDataList()
         for k in range(0, rowCount):
             # todo: chris, i commented this out because change in filenames can occour even when number of files remains unchanged!
-            #if k < len(dataItemList):
-            #    print "Nothing to do here"
-            #    continue
+            if k < len(dataItemList):
+                print "Nothing to do here"
+                continue
             fileName = self.tableWidget.item(k, self.columnPos['File']).text()
             theDataItem = dataMgr.DataItemImage(fileName)
             dataItemList.append(theDataItem)
@@ -498,6 +500,62 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
         self.close()
+
+class editChannelsDlg(QtGui.QDialog):
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self)
+        self.parent = parent
+        uic.loadUi('dlgChannels.ui', self)
+        self.show()
+        
+        dataMgr = parent.project.dataMgr
+        
+        channelNames = dataMgr[0].channelDescription
+        channelUsed = dataMgr[0].channelUsed
+        self.channelTab.horizontalHeader().resizeSection(1, 54)
+        self.channelTab.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+        
+        checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
+        for k, cName in irange(channelNames): 
+            itName = QtGui.QTableWidgetItem(channelNames[k])
+            self.channelTab.insertRow(k)
+            self.channelTab.setItem(k,0,itName)
+            
+            itUsed = QtGui.QTableWidgetItem()
+            itUsed.data(QtCore.Qt.CheckStateRole)
+            itUsed.setCheckState(checker(channelUsed[k]))
+            self.channelTab.setItem(k,1,itUsed)
+            #self.channelTab.verticalHeader().resizeRowToContents(k)
+    
+    def on_confirmButtons_rejected(self):
+        self.close()
+        
+    def on_confirmButtons_accepted(self):
+        dataMgr = self.parent.project.dataMgr
+        newChannelNames = []
+        newChannelUsed = []
+        # get edits
+        for k in xrange(self.channelTab.rowCount()):
+            self.close()
+            itName = str(self.channelTab.item(k,0).text())
+            itUsed = self.channelTab.item(k,1).checkState()
+            
+            newChannelNames.append(itName)
+            newChannelUsed.append(bool(int(itUsed)))
+        
+        # write them into dataMgr
+        for dataItem in dataMgr:
+            dataItem.channelDescription = newChannelNames
+            dataItem.channelUsed = newChannelUsed
+            
+        # update checkbox
+        self.parent.labelWidget.loadChannelList()
+        self.close()
+            
+            
+        
+        
+        
 
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -626,11 +684,11 @@ class ClassificationTrain(object):
         
         # Get Train Data
         
-        tic = time.clock()
-        self.parent.generateTrainingData()
-        Fc = self.parent.project.trainingMatrix
-        Lc = self.parent.project.trainingLabels
-        print "old time %f " % (time.clock() - tic)
+        #tic = time.clock()
+        #self.parent.generateTrainingData()
+        #Fc = self.parent.project.trainingMatrix
+        #Lc = self.parent.project.trainingLabels
+        #print "old time %f " % (time.clock() - tic)
         
         
         
@@ -648,7 +706,7 @@ class ClassificationTrain(object):
        
         self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
         self.classificationProcess.start()
-        self.classificationTimer.start(200) 
+        self.classificationTimer.start(500) 
 
     def initClassificationProgress(self, numberOfJobs):
         statusBar = self.parent.statusBar()
@@ -709,6 +767,10 @@ class ClassificationInteractive(object):
 
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(viewPredictions)
         self.parent.labelWidget.OverlayMgr.setOverlayStateByIndex(self.parent.labelWidget.cmbOverlayList.currentIndex())
+        
+        # update Data Mgr
+        for k in viewPredictions:
+            self.parent.project.dataMgr.prediction[k] = viewPredictions[k]
 
 
     def initInteractiveProgressBar(self):

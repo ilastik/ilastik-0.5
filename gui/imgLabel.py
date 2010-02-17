@@ -1,5 +1,5 @@
 from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt4 import QtCore, uic
 import sys, random, numpy
 import os
 from collections import deque
@@ -126,6 +126,7 @@ class drawManager:
     
     def setDrawColor(self, label, color):
         self.drawColor[label] = color
+        
     def setDrawOpacity(self, opacity):
         self.drawOpacity = opacity
         
@@ -213,12 +214,13 @@ class draw_geomObject(drawManager):
         for tli in self.topLevelItems:
             self.canvas.addItem(tli)
             
+            
     def repaint(self):
         pass
 
     def InitDraw(self, pos):
         self.topLevelItems.append(TopLevelItem())
-        self.canvas.addItem(self.topLevelItems[-1])
+        self.a = self.canvas.addItem(self.topLevelItems[-1])
         self.topLevelItems[-1].setOpacity(self.drawOpacity)
         self.lastPoint = pos
         self.DoDraw(pos)
@@ -259,6 +261,7 @@ class draw_Patch(drawManager):
         # self.imageItem is just used to display self.image, remember it is the labelOverlay
         self.imageItem = ImageItem(self.image)
         self.imageItem.setOpacity(self.drawOpacity)
+        self.imageItem.setZValue(7)
         canvas.addItem(self.imageItem)
         self.pixelColor = self.activeDrawColor.rgba()
         labelmngr.setDrawCallback(self.setPixel)
@@ -795,7 +798,7 @@ class cloneViewWidget(QtGui.QDockWidget):
         self.roi = ZoomBox()
         self.roi.setPen(QtGui.QPen(self.col))
         #self.roi.setBrush(QtGui.QBrush(self.col))   # make solid for debugging purposes
-        self.roi.setZValue(1)
+        self.roi.setZValue(7)
         self.view.setZoomBox(self.roi)
         
         self.scene = QtGui.QGraphicsScene()
@@ -864,10 +867,11 @@ class cloneViewWidget(QtGui.QDockWidget):
             
         
 class labelWidget(QtGui.QWidget):
-    def __init__(self, parent=None, imageList=None):
-        QtGui.QWidget.__init__(self, parent)
+    def __init__(self, mainWindow=None, imageList=None):
+        QtGui.QWidget.__init__(self, mainWindow)
         global labelwidgetInstance          # TODO: UGLY global
         labelwidgetInstance = self          # TODO: UGLY global
+
         self.project = None
         if isinstance(imageList, str): 
             imageList = [imageList]
@@ -880,7 +884,7 @@ class labelWidget(QtGui.QWidget):
         if not imageList:
             dpi = displayImage('test.tif', self)
             imageList = displayImageList(dpi)
-        
+        self.mainWindow = mainWindow
         self.labelForImage = {}
         self.predictions = {}     
         self.segmentation = {}
@@ -918,9 +922,15 @@ class labelWidget(QtGui.QWidget):
         
         # Channel Selector Combo Box
         self.cmbChannelList = QtGui.QComboBox()
-        self.cmbChannelList.setMinimumWidth(142)
+        self.cmbChannelList.setMinimumWidth(108)
         self.cmbChannelList.setEnabled(False)
         self.connect(self.cmbChannelList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeChannel)
+        
+        # Edit Channels
+        self.btnEditChannels = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Edit2),'')
+        self.btnEditChannels.setMaximumWidth(48)
+        self.btnEditChannels.setEnabled(False)
+        self.connect(self.btnEditChannels, QtCore.SIGNAL("clicked()"), self.editChannels)
         
         # Class Selector Combo Box
         self.cmbClassList = QtGui.QComboBox()
@@ -953,13 +963,16 @@ class labelWidget(QtGui.QWidget):
         labelingToolBox_lists = QtGui.QVBoxLayout()
         labelingToolBox_lists.addWidget(QtGui.QLabel('Data Items'))
         labelingToolBox_lists.addWidget(self.cmbImageList)
-        labelingToolBox_lists.addWidget(QtGui.QLabel('Channel'))
-        labelingToolBox_lists.addWidget(self.cmbChannelList)
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Channels'))
+        channel_lists = QtGui.QHBoxLayout()
+        channel_lists.addWidget(self.cmbChannelList)
+        channel_lists.addWidget(self.btnEditChannels)  
+        labelingToolBox_lists.addLayout(channel_lists)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Classes'))
         labelingToolBox_lists.addWidget(self.cmbClassList)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Overlay'))
         labelingToolBox_lists.addWidget(self.cmbOverlayList)
-        labelingToolBox_lists.addWidget(QtGui.QLabel('Label Opasity'))
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Label Opacity'))
         labelingToolBox_lists.addWidget(self.sldOpacity)
         labelingToolBox_lists.addWidget(self.btnUndo)
         labelingToolBox_lists.addWidget(self.btnCloneView)
@@ -968,39 +981,49 @@ class labelWidget(QtGui.QWidget):
         
         
         
-        # Container Widget for Viewing
-        self.btnViewImage = QtGui.QPushButton('Image')
-        self.btnViewPrediction = QtGui.QPushButton('Prediction')
-        self.btnViewUncertainty = QtGui.QPushButton('Uncertainty')
-        self.btnViewSegmentation = QtGui.QPushButton('Segmentation')
+        # Container Widget for aditional Overlays
+        #self.btnViewImage = QtGui.QPushButton('Image')
+        #self.btnViewPrediction = QtGui.QPushButton('Prediction')
+        #self.btnViewUncertainty = QtGui.QPushButton('Uncertainty')
+        #self.btnViewSegmentation = QtGui.QPushButton('Segmentation')
+        self.sldOverlayOpacity = QtGui.QSlider()
+        self.sldOverlayOpacity.setMinimum(0)
+        self.sldOverlayOpacity.setMaximum(100)
+        self.sldOverlayOpacity.setOrientation(QtCore.Qt.Horizontal)
+        self.sldOverlayOpacity.setValue(100)
+        self.sldOverlayOpacity.setMaximumWidth(100)    
+        self.connect(self.sldOverlayOpacity, QtCore.SIGNAL("valueChanged(int)"), self.changeAddOverlayOpacity)
         
         # Connects
-        self.connect(self.btnViewImage, QtCore.SIGNAL("clicked()"), self.on_viewImage)
-        self.connect(self.btnViewPrediction, QtCore.SIGNAL("clicked()"), self.on_viewPrediction)
-        self.connect(self.btnViewUncertainty, QtCore.SIGNAL("clicked()"), self.on_viewUncertainty)
-        self.connect(self.btnViewSegmentation, QtCore.SIGNAL("clicked()"), self.on_viewSegmentation)
+        #self.connect(self.btnViewImage, QtCore.SIGNAL("clicked()"), self.on_viewImage)
+        #self.connect(self.btnViewPrediction, QtCore.SIGNAL("clicked()"), self.on_viewPrediction)
+        #self.connect(self.btnViewUncertainty, QtCore.SIGNAL("clicked()"), self.on_viewUncertainty)
+        #self.connect(self.btnViewSegmentation, QtCore.SIGNAL("clicked()"), self.on_viewSegmentation)
         
         # ToolBox Entry
-        self.viewingToolBox = QtGui.QWidget()
+        self.additionalOverlayTB = QtGui.QWidget()
         
         # Adding Buttons to Layout
-        viewingToolBox_lists = QtGui.QVBoxLayout()
-        viewingToolBox_lists.addWidget(self.btnViewImage)
-        viewingToolBox_lists.addWidget(self.btnViewPrediction)
-        viewingToolBox_lists.addWidget(self.btnViewUncertainty)
-        viewingToolBox_lists.addWidget(self.btnViewSegmentation)
+        additionalOverlay = QtGui.QVBoxLayout()
+        #viewingToolBox_lists.addWidget(self.btnViewImage)
+        #viewingToolBox_lists.addWidget(self.btnViewPrediction)
+        #viewingToolBox_lists.addWidget(self.btnViewUncertainty)
+        #viewingToolBox_lists.addWidget(self.btnViewSegmentation)
         
-        viewingToolBox_lists.addWidget(self.btnViewSegmentation)
-        viewingToolBox_lists.addStretch()
+        additionalOverlay.addWidget(QtGui.QLabel('Overlay Opacity'))
+        additionalOverlay.addWidget(self.sldOverlayOpacity)
+        
+        #viewingToolBox_lists.addWidget(self.btnViewSegmentation)
+        additionalOverlay.addStretch()
 
-        self.viewingToolBox.setLayout(viewingToolBox_lists)
+        self.additionalOverlayTB.setLayout(additionalOverlay)
          
         # Creating of the QToolBox
         self.toolBox = QtGui.QToolBox()
         self.toolBox.setMaximumWidth(160)
         # Adding both Entries
         self.toolBox.addItem(self.labelingToolBox , QtGui.QIcon(ilastikIcons.Brush), 'Labeling')
-        #self.toolBox.addItem(self.viewingToolBox, QtGui.QIcon(ilastikIcons.View), 'View')
+        self.toolBox.addItem(self.additionalOverlayTB, QtGui.QIcon(ilastikIcons.View), 'Additional Overlay')
         
         # At the right side of view
         layout = QtGui.QHBoxLayout()
@@ -1013,9 +1036,13 @@ class labelWidget(QtGui.QWidget):
         #self.changeImage(0)       
         
 #        try:
-#            self.updateProject( self.parent().project)
+#            self.updateProject( ().project)
 #        except AttributeError:
 #            pass
+
+    def editChannels(self):
+        # Call Dialog from ilstik main
+        self.mainWindow.newEditChannelsDlg()
         
     def on_changeOverlay(self, ind):
         if ind == 0:
@@ -1042,10 +1069,10 @@ class labelWidget(QtGui.QWidget):
         displayImage = self.activeImage
         activeLearner = activeLearning.EnsembleMargin()
 
-        pmap = self.project.dataMgr.prediction[displayImage]    
-        image = activeLearner.compute(pmap)
+        pmaps = self.project.dataMgr.prediction   
+        margins = map(activeLearner.compute, pmaps)
 
-        self.OverlayMgr.updateUncertaintyPixmaps({displayImage:image})
+        self.OverlayMgr.updateUncertaintyPixmaps(dict(irange(margins)))
         self.OverlayMgr.setOverlayState('Uncertainty')
         
     def saveLayout(self, storage):
@@ -1075,12 +1102,22 @@ class labelWidget(QtGui.QWidget):
         #self.drawManager.setDrawOpacity(op/100.0)
         if self.labelForImage.get(self.activeImage, None):
             self.labelForImage[self.activeImage].setOpacity(op / 100.0)
+            
+    def changeAddOverlayOpacity(self, op):
+        if self.labelForImage.get(self.activeImage, None):
+            self.OverlayMgr.setOverlayImageOpasity(op / 100.0)
         
     def updateProject(self, project):
         self.project = project
         # Check for Multispectral Data and load ChannelList if present
+        
+        self.OverlayMgr = OverlayMgr(self.canvas, project.labelColors, project.dataMgr.dataItemsShapes(), [k.overlayImage for k in project.dataMgr], self)
+        self.OverlayMgr.updatePredictionsPixmaps(dict(irange(project.dataMgr.prediction)))
+        self.OverlayMgr.updateSegmentationPixmaps(dict(irange(project.dataMgr.segmentation)))
+        self.OverlayMgr.activateOverlayImage(0)
+        
         if self.project.dataMgr[0].dataKind in ['multi']:
-            # activeChannel = 0 means there is now
+            # activeChannel = 0 means there is no
             self.activeChannel = 0
             self.loadChannelList(0)  
         else:
@@ -1093,12 +1130,10 @@ class labelWidget(QtGui.QWidget):
         
         self.loadImageList()
         self.loadLabelList()
+        
+
         self.changeImage(0)
         self.updateDrawSettings()
-
-        self.OverlayMgr = OverlayMgr(self.canvas, project.labelColors, project.dataMgr.dataItemsShapes(), self)
-        self.OverlayMgr.updatePredictionsPixmaps(dict(irange(project.dataMgr.prediction)))
-        self.OverlayMgr.updateSegmentationPixmaps(dict(irange(project.dataMgr.segmentation)))
         
         self.connect(self, QtCore.SIGNAL("imageChanged"), self.OverlayMgr.clearAll)
         
@@ -1109,12 +1144,20 @@ class labelWidget(QtGui.QWidget):
     def updateDrawSettings(self):
         pass 
     
-    def loadChannelList(self, imageIndex=0):
+    def loadChannelList(self, imageIndex=None):
+        if imageIndex is None:
+            imageIndex = self.activeImage
         self.cmbChannelList.clear()
         print self.project.dataMgr[imageIndex].channelDescription
+        makeUsedString = lambda x: x and ' (+)' or ' (-)'
         if self.project.dataMgr[imageIndex].dataKind == 'multi':
-            self.cmbChannelList.addItems(self.project.dataMgr[imageIndex].channelDescription)
+            self.cmbChannelList.addItems(map(lambda x: x[0] + makeUsedString(x[1]),  zip(self.project.dataMgr[imageIndex].channelDescription, self.project.dataMgr[imageIndex].channelUsed)))
             self.cmbChannelList.setEnabled(True)
+            self.btnEditChannels.setEnabled(True)
+        else:
+            self.cmbChannelList.setEnabled(False)
+            self.btnEditChannels.setEnabled(False)
+            
         
         
     def clearChannelList(self):
@@ -1125,8 +1168,8 @@ class labelWidget(QtGui.QWidget):
         
     def loadImageList(self):
         self.cmbImageList.clear()
-        for item in self.project.dataMgr.dataItems:
-            print item.fileName
+        #for item in self.project.dataMgr.dataItems:
+            #print item.fileName
         imagenames = [os.path.basename(item.fileName) for item in self.project.dataMgr.dataItems]
         self.cmbImageList.addItems(imagenames)
         
@@ -1185,7 +1228,7 @@ class labelWidget(QtGui.QWidget):
  
         pm = QtGui.QPixmap.fromImage(self.img)
         self.pixmapitem = self.canvas.addPixmap(pm)
-        self.pixmapitem.setZValue(-1)
+        self.pixmapitem.setZValue(1)
         
         # If the Labels are already initialized, just paint it
         if self.labelForImage.get(newImage, None):
@@ -1221,9 +1264,11 @@ class labelWidget(QtGui.QWidget):
                     # Display them
                     drawManager.repaint()
         
-        # Set new active Image    
+        # Set new active Image   
+        self.OverlayMgr.activateOverlayImage(newImage) 
         self.activeImage = newImage
         self.setBrushSize(self.brushSize)
+        
         
         # Emit imageChanged Signal
         self.emit(QtCore.SIGNAL("imageChanged"), self.activeImage)
@@ -1490,11 +1535,24 @@ class contextMenuLabel(QtGui.QMenu):
         return pixmap
 
 class OverlayMgr(object):
-    def __init__(self, canvas, classColors, imageShapes, parent):       
+    def __init__(self, canvas, classColors, imageShapes, overlayImages, parent):       
         self.labelWidget = parent
         self.classColors = classColors;
         self.imageCount = len(imageShapes)
         self.classCount = len(classColors)
+        
+        self.overlayImages = overlayImages
+        self.overlayImagePixmap = None
+        
+        self.overlayImageType = [None] * len(overlayImages)
+        for j in range(len(overlayImages)):
+            if self.overlayImages[j] is None:
+                continue
+            if len(self.overlayImages[j].shape) == 3:
+                self.overlayImageType[j] = 'trueColor'
+            elif len(self.overlayImages[j].shape) == 2:
+                self.overlayImageType[j] = 'continious'
+        self.overlayImageOpasity = 0.7
         
         self.canvas = canvas
         self.imageShapes = imageShapes
@@ -1522,9 +1580,36 @@ class OverlayMgr(object):
         self.stateList['Segmentation'] = self.segmentationPixmaps
         self.state = 'Prediction'
         
-        
         # self.classIndex = -1 all Classes at the same time, or just a specific nr.
         self.classIndex = -1
+    
+    def activateOverlayImage(self, ind):
+        if self.overlayImages[ind] is None:
+            if self.overlayImagePixmap is not None:
+                self.canvas.removeItem(self.overlayImagePixmap)
+                self.overlayImagePixmap = None
+            return
+                
+        
+        if self.overlayImagePixmap is None:
+            # create Pixmap first time
+            pm = self.rawImage2pixmap(self.overlayImages[ind], QtGui.QColor(255, 128,0), self.overlayImageType[ind] , opasity=0.7, normRange=(self.overlayImages[ind].min(),self.overlayImages[ind].max()))
+            self.overlayImagePixmap = self.canvas.addPixmap(pm)
+            self.overlayImagePixmap.setZValue(5)
+            self.overlayImagePixmap.setOpacity(self.overlayImageOpasity)
+        else:
+            # update 
+            pass
+            #self.overlayImagePixmap.setPixmap(self.rawImage2pixmap(self.overlayImages[ind], QtGui.QColor(255, 128,0), self.overlayImageType[ind] , opasity=0.7, normRange=(self.overlayImages[ind].min(),self.overlayImages[ind].max())))     
+    
+    def deActivateOverlayImage(self):
+        self.overlayImagePixmap = None
+    
+    def setOverlayImageOpasity(self, opacity):
+        self.overlayImageOpasity = opacity
+        if not self.overlayImagePixmap is None:
+            self.overlayImagePixmap.setOpacity(self.overlayImageOpasity)
+            
         
     def setOverlayState(self, state):
         self.state = state
@@ -1546,7 +1631,7 @@ class OverlayMgr(object):
             #    raise RuntimeError('I got more classes than prediction pixmaps')
             #TODO: The min (and the outcomented error above) is due to some bug, that has to be removed yet
             for classNr in range(min(self.classCount, prediction.shape[1])):
-                print "classNr", classNr
+                # print "classNr", classNr
                 pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]), QtGui.QColor(self.classColors[classNr + 1]), 'continious', 0.7)
                 self.predictionPixmaps[imageIndex][classNr][0] = pm 
     
@@ -1562,30 +1647,31 @@ class OverlayMgr(object):
             pm = self.rawImage2pixmap(uncertainty.reshape(self.imageShapes[imageIndex]), QtGui.QColor(self.classColors[1]), 'continious', 0.7)
             self.uncertaintyPixmaps[imageIndex][0] = pm 
     
+    
     def showOverlayPixmapByState(self):
-        
+        #self.clearAll()
         imageIndex = self.labelWidget.activeImage  
         
         classes = range(self.classCount)
         
         currentOverlay = self.stateList[self.state][imageIndex]
         
-        # Some OVerlays Are For single Classes or all at once, Prediction could be both
+        # Some Overlays Are For single Classes or all at once, Prediction could be both
         if self.state in ['Prediction']:
             if self.classIndex == -1:
                 classes = range(self.classCount)        
             else:
                 classes = [classIndex - 1]
             
-            self.clearAll()
+            
             for classNr in classes:
                 if currentOverlay[classNr][1]:
                     currentOverlay[classNr][1].setPixmap(currentOverlay[classNr][0])
                 else:
                     if currentOverlay[classNr][0]:
                         currentOverlay[classNr][1] = self.canvas.addPixmap(currentOverlay[classNr][0])
-                        currentOverlay[classNr][1].setZValue(-1)
-                        print currentOverlay[classNr][1]
+                        currentOverlay[classNr][1].setZValue(3)
+                        #print currentOverlay[classNr][1]
         # Some Overlay which does not depend on the current ClassIndex 
         elif self.state in ['Image']:
             self.clearAll()           
@@ -1596,15 +1682,15 @@ class OverlayMgr(object):
             else:
                 if currentOverlay[0]:
                     currentOverlay[1] = self.canvas.addPixmap(currentOverlay[0])
-                    currentOverlay[1].setZValue(-1) 
+                    currentOverlay[1].setZValue(3) 
 
-    def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7):
+    def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7, normRange=(0.0, 1.0) ):
         # Used for rawImages in [0,1]
         if type == 'continious':
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
-            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize=(0.0, 1.0))
+            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize=normRange)
             for i in range(256):
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
                 image.setColor(i, col.rgba())
@@ -1620,6 +1706,13 @@ class OverlayMgr(object):
                 classColor = QtGui.QColor(self.classColors[i + 1])
                 col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), 255 * opasity)
                 image.setColor(i, col.rgba())
+                
+        if type == 'trueColor':
+            image = vigra.arraytypes.Image(rawImage).qimage(normalize=normRange)
+            #alpha = QtGui.QImage(image.width(),image.height(),3)
+            #alpha.fill(floor(256*self.overlayImageOpasity))
+            #image.setAlphaChannel(alpha)
+            
         
         return QtGui.QPixmap.fromImage(image)
     
