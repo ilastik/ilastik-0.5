@@ -1,7 +1,7 @@
 import lasvm
 import numpy
 import math
-import matplotlib as mpl
+#import matplotlib as mpl
 
 try:
     import vigra
