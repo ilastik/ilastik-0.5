@@ -1,6 +1,5 @@
 import numpy
 
-
 try:
     import vigra
 except ImportError:

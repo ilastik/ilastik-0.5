@@ -79,6 +79,7 @@ class DataItemImage(DataItemBase):
         elif len(self.data.shape) == 2:
             self.dataKind = 'gray'
             self.channelDescription = ['Intensities']
+			self.channelUsed = [True]
     @classmethod
     def initFromArray(cls, dataArray, originalFileName):
         obj = cls(originalFileName)
@@ -129,6 +130,14 @@ class DataMgr():
         self.segmentation = [None] * len(dataItems)
         self.prediction = [None] * len(dataItems)
         self.uncertainty = [None] * len(dataItems)
+        
+    def append(self, dataItem):
+        self.dataItems.append(dataItem)
+        self.dataItemsLoaded.append(False)
+        self.segmentation.append(None)
+        self.prediction.append(None)
+        self.uncertainty.append(None)
+        
         
     def getDataList(self):
         return self.dataItems
