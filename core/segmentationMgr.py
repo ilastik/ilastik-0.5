@@ -14,6 +14,7 @@ class SegmentationBase(object):
         pass
     
 class LocallyDominantSegmentation2D(SegmentationBase):
+    #3D: either implement the class for 3D data, or make a decision in the class
     def __init__(self, shape, sigma=2.0, smoothing='Gaussian'):
         SegmentationBase.__init__(self)
         self.smoothing = smoothing
@@ -35,7 +36,6 @@ class LocallyDominantSegmentation2D(SegmentationBase):
         else:
             print "Invalid option for smoothing: %s" % self.smoothing
             return None
-        
         self.result = numpy.argmax(res, axis=2)
         #vigra.impex.writeImage(self.result.astype(numpy.uint8),'c:/il_seg.jpg')
 

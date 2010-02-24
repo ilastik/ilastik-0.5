@@ -14,6 +14,10 @@ except ImportError:
     sys.exit("vigra module not found!")
 
 class DataItemBase():
+    """
+    Data Base class, serves as an interface for the specialized data structures, e.g. images, multispectral, volume etc.  
+    """
+    #3D: important
     def __init__(self, fileName):
         self.fileName = str(fileName)
         self.hasLabels = False
@@ -94,6 +98,7 @@ class DataItemImage(DataItemBase):
         self.data = None
         
 class DataItemVolume(DataItemBase):
+    #3D: important
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
        
@@ -115,6 +120,11 @@ class DataItemVolume(DataItemBase):
     
         
 class DataMgr():
+    """
+    Manages Project structure and associated files, e.g. images volumedata
+    """
+    #TODO: does not unload data, maybe implement some sort of reference counting if memory scarceness manifests itself
+    
     def __init__(self, dataItems=None):
         if dataItems is None:
             dataItems = []            
@@ -180,6 +190,8 @@ class DataMgr():
         return self.featureMatrixList
     
     def buildTrainingMatrix(self):  
+        #3D: extremely important, make the dimensionality test of 
+        #returned feature image depend upon the dimensionality of the data
         res_labels = [] 
         res_names = []
         res_features = []
@@ -193,7 +205,8 @@ class DataMgr():
 
             for featureImage, featureString, c_ind in dataFeatures:
                 n = 1   # n: number of feature-values per pixel
-                if featureImage.ndim > 2:
+                if featureImage.ndim > 2: #3D: fails with 3D data !!!
+                                          #this checks the dimensionality of the feature, should be adapted for 3d
                     n = featureImage.shape[2]
                 if n == 1:
                     res_features_tmp.append(featureImage.flat[label_inds].reshape(1, nLabels))
@@ -247,6 +260,9 @@ class DataMgr():
         
 
 class DataImpex(object):
+    """
+    Data Import/Export class 
+    """
     @staticmethod
     def loadMultispectralData(fileName):
         h5file = h5py.File(fileName,'r')       

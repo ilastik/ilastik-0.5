@@ -12,6 +12,9 @@ except ImportError:
     sys.exit("vigranumpycmodule not found!")
     
 class FeatureMgr():
+    """
+    Manages selected features (merkmale) for classificator.
+    """
     def __init__(self, featureItems=[]):
         self.featureItems = featureItems
         self.featuresComputed = [False] * len(self.featureItems)
@@ -58,6 +61,9 @@ class FeatureMgr():
         return {}     
                 
 class FeatureBase(object):
+    """
+    Interface for features (merkmale), at the moment only implemented by LocalFeature
+    """
     def __init__(self):
         self.featureFunktor = None
    
@@ -65,6 +71,11 @@ class FeatureBase(object):
         return None  
     
 class LocalFeature(FeatureBase):
+    """
+    Implements features that are calculated by some functor
+    """
+    #3D: important if using  octree optimization in the future
+    
     def __init__(self, name, args, arg_names, featureFunktor):
         FeatureBase.__init__(self)
         self.name = featureFunktor.__name__
@@ -98,7 +109,8 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
         FeatureParallelBase.__init__(self, featureProcessList)
         threading.Thread.__init__(self)  
     
-    def run(self):          
+    def run(self):
+        #3D: might be important in the future          
         for data in self.featureProcessList:
             for channels, features in data:
                 result = []
@@ -131,6 +143,11 @@ class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
 ###########################################################################
 ###########################################################################
 class FeatureGroups(object):
+    """
+    Groups LocalFeature objects to predefined feature sets, selectable in the gui
+    initializes the LucalFeature objects with vigra functors and needed
+    calculation parameters (for example sigma)
+    """
     def __init__(self):
         self.groupNames = ['Color', 'Texture', 'Edge']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']

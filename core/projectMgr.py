@@ -6,6 +6,9 @@ from vigra import arraytypes as at
 from PyQt4 import QtGui
 
 class Project(object):
+    """
+    Import/Export for the whole project, including any data, settings, lables etc.
+    """
     def __init__(self, name, labeler, description, dataMgr, labelNames=None, labelColors=None):
         if labelNames is None:
             labelNames = []

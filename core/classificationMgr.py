@@ -62,6 +62,7 @@ class ClassifierRandomForest(ClassifierBase):
         
     
     def predict(self, target):
+        #3d: check that only 1D data arrives here
         if self.classifier:
             if not target.dtype == numpy.float32:
                 target = numpy.array(target, dtype=numpy.float32)

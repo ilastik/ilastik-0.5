@@ -16,7 +16,9 @@ class LabelBrushQueueEntry(object):
         
 
 class label_Base:
-    """ label structure
+    """ 
+    abstract label class for interface, inherited by patch, pixdel etc.
+    label structure
     convention for label values: 0 is unlabeled, first label is 1 and so on.
     """
     def __init__(self, size):
@@ -204,6 +206,8 @@ class label_Pixel(label_Grid):
         self.undoLabelArray_lastState = self.labelArray.copy()
         
     def getPatchNrFromPosition(self, pos):
+        #TODO: Severe performance bottleneck, fix it !
+        #3D: should work, but might not ....
         nr = 0
         blocksize = 1
         for i in xrange(self.dims):

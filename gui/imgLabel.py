@@ -22,6 +22,9 @@ labelwidgetInstance = None   # UGLY global
       
 
 class labelingForOneImage:
+    """
+    administrates all drawmanagers for on image
+    """
     def __init__(self):
         self.DrawManagers = []       # different labeling-types (patch, pixel, geom...)
         self.activeLabel = None
@@ -328,6 +331,8 @@ class draw_Patch(drawManager):
         	pixcol[label] = col.rgba()
 	# todo: pixcol contains more entries than expected...
 
+    #3D: get labels . possibly tell lablemngr the slice number ?
+    #make sure the repaint is triggered on slice change
 	labelArrayDrawQImage.drawImage(self.image, pixcol, self.labelmngr.getLabelArrayAsImage().astype(numpy.float64));
 	self.imageItem.update()
 	return
@@ -931,6 +936,13 @@ class labelWidget(QtGui.QWidget):
         self.btnEditChannels.setMaximumWidth(48)
         self.btnEditChannels.setEnabled(False)
         self.connect(self.btnEditChannels, QtCore.SIGNAL("clicked()"), self.editChannels)
+ 
+         # Channel Selector Combo Box
+        self.cmbSliceList = QtGui.QComboBox()
+        self.cmbSliceList.setMinimumWidth(108)
+        self.cmbSliceList.setEnabled(False)
+#        self.connect(self.cmbChannelList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeChannel)
+        
         
         # Class Selector Combo Box
         self.cmbClassList = QtGui.QComboBox()
@@ -970,6 +982,8 @@ class labelWidget(QtGui.QWidget):
         labelingToolBox_lists.addLayout(channel_lists)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Classes'))
         labelingToolBox_lists.addWidget(self.cmbClassList)
+        labelingToolBox_lists.addWidget(QtGui.QLabel('Slices'))
+        labelingToolBox_lists.addWidget(self.cmbSliceList)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Overlay'))
         labelingToolBox_lists.addWidget(self.cmbOverlayList)
         labelingToolBox_lists.addWidget(QtGui.QLabel('Label Opacity'))
