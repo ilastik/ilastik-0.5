@@ -88,7 +88,7 @@ class OnlineRF(CumulativeOnlineClassifier):
         if(self.learnedRange==0):
             self.startRF()
         else:
-            self.rf.onlineLearn(self.features,self.labels,self.learnedRange)
+            self.rf.onlineLearn(self.features,self.labels,self.learnedRange,False)
         self.learnedRange=len(self.labels.flatten())
 
     def improveSolution(self):
@@ -132,6 +132,9 @@ class OnlineLaSvm(OnlineClassifier):
         f.close()
         f_v.close()
         #pylab.figure()
+
+    def addPredictionSet(self,features,id):
+        self.predSets[id]=lasvm.SVM_PredSet(features)
 
     def addData(self,features,labels,ids):
         # TODO Cast to float64!
@@ -191,8 +194,11 @@ class OnlineLaSvm(OnlineClassifier):
         print "Begin fast predict"
         pred=self.svm.predictFRangedSingleCoverTree(self.predSets[id],0.5,0.1,True)
         print "End fast predict"
-        pred=(pred>0.0)
-        pred=(pred.astype(numpy.int32)*2)-1
+        pred[pred>1.0]=1.0
+        pred[pred<-1.0]=-1.0
+        pred=(pred+1.0)/2.0
+        print numpy.min(pred.flatten())
+        print numpy.max(pred.flatten())
         pred=pred.reshape((pred.shape[0],1))
         return numpy.append(1.0-(pred+1)/2,(pred+1)/2.0,axis=1)
 
