@@ -1,6 +1,7 @@
 import lasvm
 import numpy
 import math
+import time
 #import matplotlib as mpl
 
 try:
@@ -119,12 +120,13 @@ class OnlineLaSvm(OnlineClassifier):
 
     def start(self,features,labels,ids):
         # TODO Cast to float64!
+        self.improveRuns=0
+        self.maxPredSVs=200
         self.svm=lasvm.laSvmMultiParams(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
         self.addData(features,labels,ids)
         self.svm.startGuessParameters()
         print numpy.min(features.flatten())
         print numpy.max(features.flatten())
-        self.svm.enableResampleBorder(0.1)
         self.fastLearn()
         self.numFeatures=features.shape[1]
         f=open('./g_run.txt','w')
@@ -159,29 +161,34 @@ class OnlineLaSvm(OnlineClassifier):
         print "End fast learn"
 
     def improveSolution(self):
-        if self.svm==None:
-            raise RuntimeError("run \"start\" first")
-        print "Begin improving solution"
-        self.svm.optimizeKernelStep(0,False)
-        print "Done improving solution"
-        f=open('g_run.txt','a')
-        f_v=open('./var_run.txt','a')
-        for i in xrange(self.numFeatures):
-            if(self.svm.gamma(i)>math.exp(-100)):
-                f.write(repr(math.log(self.svm.gamma(i))))
-            else:
-                f.write(repr(-100))
-            f_v.write(repr(self.svm.variance(i)))
-            if i==self.numFeatures-1:
-                f.write("\n")
-                f_v.write("\n")
-            else:
-                f.write("\t")
-                f_v.write("\t")
-        f.close()
-        f_v.close()
+        t0=time.time()
+        while(time.time()<t0+0.5):
+            self.improveRuns=self.improveRuns+1
+            if self.svm==None:
+                raise RuntimeError("run \"start\" first")
+            print "Begin improving solution"
+            self.svm.optimizeKernelStep(0,False)
+            print "Done improving solution"
+            f=open('g_run.txt','a')
+            f_v=open('./var_run.txt','a')
+            for i in xrange(self.numFeatures):
+                if(self.svm.gamma(i)>math.exp(-100)):
+                    f.write(repr(math.log(self.svm.gamma(i))))
+                else:
+                    f.write(repr(-100))
+                f_v.write(repr(self.svm.variance(i)))
+                if i==self.numFeatures-1:
+                    f.write("\n")
+                    f_v.write("\n")
+                else:
+                    f.write("\t")
+                    f_v.write("\t")
+            f.close()
+            f_v.close()
 
     def predict(self,id):
+        while(self.improveRuns<20):
+            self.improveSolution()
         print "Begin predict"
         pred=self.svm.predictF(self.predSets[id]);
         print "End predict"
@@ -191,16 +198,40 @@ class OnlineLaSvm(OnlineClassifier):
         return numpy.append(1.0-(pred+1)/2,(pred+1)/2.0,axis=1)
 
     def fastPredict(self,id):
+        while(self.improveRuns<20):
+            self.improveSolution()
+        #adjust svs
+        print "*****************************"
+        print "I want no more than",self.maxPredSVs,"support vectors"
+        print "*****************************"
+        thresh=self.svm.GetOptimalLinIndepTreshold(int(self.maxPredSVs))
+        thresh=min(0.9,thresh)
+        self.svm.enableLindepThreshold(thresh)
+        self.svm.ReFindPairs(True)
+
+        t0=time.time()
         print "Begin fast predict"
         pred=self.svm.predictFRangedSingleCoverTree(self.predSets[id],0.5,0.1,True)
         print "End fast predict"
+        needed_time=time.time()-t0
+        print "needed_time",needed_time
+        print "svs",self.svm.getAlphas().shape[0]
+        print needed_time
+        print "Before",self.maxPredSVs
+        self.maxPredSVs=max(1.0/needed_time*self.svm.getAlphas().shape[0],30)
+        print "After",self.maxPredSVs
+
+
         pred[pred>1.0]=1.0
         pred[pred<-1.0]=-1.0
         pred=(pred+1.0)/2.0
         print numpy.min(pred.flatten())
         print numpy.max(pred.flatten())
         pred=pred.reshape((pred.shape[0],1))
+
+
         return numpy.append(1.0-(pred+1)/2,(pred+1)/2.0,axis=1)
+        
 
 
 
