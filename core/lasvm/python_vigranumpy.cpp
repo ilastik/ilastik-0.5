@@ -295,7 +295,7 @@ vigra::NumpyAnyArray getXiAlphaDerived(testSvm<T,Kernel>& svm,double rho,bool in
         res[i]=derives[i];
     return res;
 }
-/*
+
 template<class T,class Kernel>
 vigra::NumpyAnyArray getXiAlphaDerivedExact(testSvm<T,Kernel>& svm,double rho,vigra::NumpyArray<1,T> res)
 {
@@ -307,7 +307,7 @@ vigra::NumpyAnyArray getXiAlphaDerivedExact(testSvm<T,Kernel>& svm,double rho,vi
         res[i]=derives[i];
     return res;
 }
-*/
+
 template<class T>
 T getGamma(testSvm<T,KernelGauss<T> >& svm)
 {
@@ -424,9 +424,9 @@ void defineLASVMs(const char* name_single,const char* name_multi,const char* nam
         .def("getXiAlphaDerived",
              registerConverters(&getXiAlphaDerived<T,KernelGauss<T> >),
              (boost::python::arg("rho"),boost::python::arg("include_db"),boost::python::arg("result")=object()))
-        //.def("getXiAlphaDerivedExact",
-        //     registerConverters(&getXiAlphaDerivedExact<T,KernelGauss<T> >),
-        //     (boost::python::arg("rho"),boost::python::arg("result")=object()))
+        .def("getXiAlphaDerivedExact",
+             registerConverters(&getXiAlphaDerivedExact<T,KernelGauss<T> >),
+             (boost::python::arg("rho"),boost::python::arg("result")=object()))
         .def("reset",
              &testSvm<T,KernelGauss<T> >::reset)
         .def_readwrite("epsilon",
@@ -434,7 +434,11 @@ void defineLASVMs(const char* name_single,const char* name_multi,const char* nam
         .def_readwrite("sig_b",
                        &testSvm<T,KernelGauss<T> >::sig_b)
         .def_readwrite("sig_a",
-                       &testSvm<T,KernelGauss<T> >::sig_a);
+                       &testSvm<T,KernelGauss<T> >::sig_a)
+        .def_readonly("num_dist",
+		      &testSvm<T,KernelGauss<T> >::num_dist)
+        .def_readonly("num_exp",
+		      &testSvm<T,KernelGauss<T> >::num_exp);
 
     class_<testSvm<T,KernelGaussMultiParams<T> > >(name_multi,
                                                                      no_init)
@@ -509,17 +513,27 @@ void defineLASVMs(const char* name_single,const char* name_multi,const char* nam
         .def("getXiAlphaDerived",
              registerConverters(&getXiAlphaDerived<T,KernelGaussMultiParams<T> >),
              (boost::python::arg("rho"),boost::python::arg("include_db"),boost::python::arg("result")=object()))
-        //.def("getXiAlphaDerivedExact",
-        //     registerConverters(&getXiAlphaDerivedExact<T,KernelGaussMultiParams<T> >),
-        //     (boost::python::arg("rho"),boost::python::arg("result")=object()))
+        .def("getXiAlphaDerivedExact",
+             registerConverters(&getXiAlphaDerivedExact<T,KernelGaussMultiParams<T> >),
+             (boost::python::arg("rho"),boost::python::arg("result")=object()))
         .def("reset",
              &testSvm<T,KernelGaussMultiParams<T> >::reset)
+        .def("ReFindPairs",
+	     &testSvm<T,KernelGaussMultiParams<T> >::ReFindPairs)
+        .def("GetOptimalLinIndepTreshold",
+	     &testSvm<T,KernelGaussMultiParams<T> >::GetLinindepThresholdForSVNum)
+        .def("RestartOptimization",
+	     &testSvm<T,KernelGaussMultiParams<T> >::RestartOptimization)
         .def_readwrite("epsilon",
                        &testSvm<T,KernelGaussMultiParams<T> >::epsilon)
         .def_readwrite("sig_b",
                        &testSvm<T,KernelGaussMultiParams<T> >::sig_b)
         .def_readwrite("sig_a",
-                       &testSvm<T,KernelGaussMultiParams<T> >::sig_a);
+                       &testSvm<T,KernelGaussMultiParams<T> >::sig_a)
+        .def_readwrite("num_dist",
+                       &testSvm<T,KernelGaussMultiParams<T> >::num_dist)
+        .def_readwrite("num_exp",
+                       &testSvm<T,KernelGaussMultiParams<T> >::num_exp);
     def(name_multi,&createLaSvmMultiPar<T>,return_value_policy<manage_new_object>());
 }
 

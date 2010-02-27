@@ -1,6 +1,6 @@
-//#include <eigen2/Eigen/Core>
-//#include <eigen2/Eigen/LU>
-//USING_PART_OF_NAMESPACE_EIGEN
+#include <eigen2/Eigen/Core>
+#include <eigen2/Eigen/LU>
+USING_PART_OF_NAMESPACE_EIGEN
 #include "lasvmBase.hxx"
 #include <algorithm>
 
@@ -38,7 +38,7 @@ public:
      * @oaram rho The rho parameter for the Xi Alpha bound.
      */
     void XiAlphaBoundDerivative(std::vector<double>& res,double rho=1.0,bool include_db=true);
-   // void XiAlphaBoundDerivativeExact(std::vector<double>& res,double rho);
+    void XiAlphaBoundDerivativeExact(std::vector<double>& res,double rho);
     enum grad_methode
     {
         GRAD_IND_STEP_SIZE_SIGN_ADAPTION=0,
@@ -48,8 +48,11 @@ public:
         MIXED
     };
     void KernelOptimizationStep(grad_methode methode=GRAD_IND_STEP_SIZE_SIGN_ADAPTION,bool include_db=false);
+    void RestartOptimization();
     virtual void ComputeGradient(const std::vector<T>& row,const int sv_index);
     virtual void UpdateGradients(const std::vector<T>& min_row,const std::vector<T>& max_row,const double step);
+    void ReFindPairs(bool threshold_increased);
+    double GetLinindepThresholdForSVNum(int sv_num);
 public:
     std::vector<double> kernel_opt_step_size;
     //The derivatives of the last optimization step
@@ -63,7 +66,6 @@ public:
 };
 
 
-/*
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivativeExact(std::vector<double>& res,double rho)
 {
@@ -211,7 +213,7 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivativeExact(std::vector<double
     //Restore used svs
     this->used_svs=original_used_svs;
 }
-*/
+
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(std::vector<double>& res,double rho,bool include_db)
 {
@@ -316,11 +318,21 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(std::vector<double>& re
 }
 
 template<class T,class Kernel>
+void laSvmSingleKernel<T,Kernel>::RestartOptimization()
+{
+  for(int i=0;i<this->kernel_opt_step_size.size();++i)
+    {
+      if(this->kernel_opt_step_size[i]<0.5)
+	this->kernel_opt_step_size[i]=0.5;
+    }
+}
+
+template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bool include_db)
 {
-    
+    int i;
     //Make sure online prediction set do not screw up ...
-    for(int i=0;i<this->used_svs.size();++i)
+    for(i=0;i<this->used_svs.size();++i)
         ++SVs[this->used_svs[i]].change_id;
     
     this->kernel.setVariance(this->variance.begin(),this->variance.end());
@@ -352,7 +364,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
     {
     case GRAD_IND_STEP_SIZE_SIGN_ADAPTION:
         //Adapt step sizes based on signes and fill step
-        for(int i=0;i<kernel_opt_step_size.size();++i)
+        for(i=0;i<kernel_opt_step_size.size();++i)
         {
             std::cerr<<"Last der="<<last_derivatives[i]<<", this der="<<der[i]<<std::endl;
             if(der[i]*last_derivatives[i]>0.0)
@@ -371,7 +383,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
             std::cerr<<this->kernel_opt_step_size[i]<<"\t";
         std::cerr<<std::endl;
         //Fill step
-        for(int i=0;i<step.size();++i)
+        for(i=0;i<step.size();++i)
         {
             if(der[i]<0.0)
                 step[i]=kernel_opt_step_size[i];
@@ -381,20 +393,20 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
         break;
     case NORMALIZED_GRAD_DESCENT:
         //normalize step size
-        for(int i=0;i<der.size();++i)
+        for(i=0;i<der.size();++i)
             norm+=der[i]*der[i];
         norm=sqrt(norm);
         if(norm<0.001)
             return;
         //normalize the step size
-        for(int i=0;i<der.size();++i)
+        for(i=0;i<der.size();++i)
         {
             step[i]=-der[i]*kernel_opt_step_size[i]/norm;
         }
         break;
     case INTERVALL_HALVING:
         //Adjust upper or lower bound and make the step
-        for(int i=0;i<der.size();++i)
+        for(i=0;i<der.size();++i)
         {
             if(der[i]<0.0)
                 lower_bounds[i]=0.0;
@@ -406,7 +418,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
         //Limit the steps
         this->kernel.boundSteps(step);
         //Shift the bounds
-        for(int i=0;i<der.size();++i)
+        for(i=0;i<der.size();++i)
         {
             lower_bounds[i]+=step[i]-0.2;
             upper_bounds[i]+=step[i]+0.2;
@@ -414,7 +426,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
         break;
     case MIXED:
         //Set step size according to "close_mode"
-        for(int i=0;i<der.size();++i)
+        for(i=0;i<der.size();++i)
         {
             if(close_mode[i])
             {
@@ -463,7 +475,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
             factor=shrink_factor;
         else
             factor=grow_factor;
-        for(int i=0;i<der.size();++i)
+        for(i=0;i<der.size();++i)
         {
             kernel_opt_step_size[i]*=factor;
         }
@@ -474,26 +486,105 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
     last_derivatives=der;
 }
 
+template<class T,class Kernel>
+double laSvmSingleKernel<T,Kernel>::GetLinindepThresholdForSVNum(int sv_num)
+{
+  if(this->used_svs.size()<=sv_num+sv_num/20)
+    {
+      return this->linindep_threshold;
+    }
+  //A list of the highest common kernel par of SVs
+  std::vector<T> highest_common_k(this->used_svs.size(),0.0);
+  for(unsigned int i=0;i!=this->used_svs.size();++i)
+    {
+      std::vector<T> &row=this->GetKernelRow(this->used_svs[i]);
+      for(unsigned int j=i+1;j!=this->used_svs.size();++j)
+	{
+	  if(this->getSVLabel(this->used_svs[i])!=this->getSVLabel(this->used_svs[j]))
+	    continue;  
+	  if(row[this->used_svs[j]]>highest_common_k[i])
+	    highest_common_k[i]=row[this->used_svs[j]];
+	  if(row[this->used_svs[j]]>highest_common_k[j])
+	    highest_common_k[j]=row[this->used_svs[j]];
+	}
+      this->UnlockKernelRow(this->used_svs[i]);
+    }
+  //Sort the k's
+  std::sort(highest_common_k.begin(),highest_common_k.end());
+  //Find the highest jump around wanted number
+ 
+  int want_index=sv_num-sv_num/20; 
+  for(int i=sv_num-sv_num/20;i<std::min(sv_num+sv_num/20,int(this->used_svs.size()-1));++i)
+    {
+      if((highest_common_k[i]-highest_common_k[i-1])>(highest_common_k[want_index]-highest_common_k[want_index-1]))
+        want_index=i;
+    }
+  //Get the K in question
+  T k=(highest_common_k[want_index]+highest_common_k[want_index-1])/2.0;
+  return 1-k*k;
+}
+
+template<class T,class Kernel>
+void laSvmSingleKernel<T,Kernel>::ReFindPairs(bool threshold_increased)
+{
+  if(threshold_increased)
+    {
+      //Find new pairs
+      std::vector<int> cons_svs=this->used_svs;
+      for(unsigned int i=0;i<cons_svs.size();++i)
+	{
+	  if(cons_svs[i]==INT_MAX)
+	    continue;
+	  std::vector<T> &row=this->GetKernelRow(cons_svs[i]);
+	  for(unsigned int j=i+1;j<cons_svs.size() && cons_svs[i]!=INT_MAX;++j)
+	    {   
+	      if(cons_svs[j]==INT_MAX)
+		continue;
+	      if(this->getSVLabel(cons_svs[i])==this->getSVLabel(cons_svs[j]))
+		{
+		  if(1.0-row[cons_svs[j]]*row[cons_svs[j]]<this->linindep_threshold)
+		    {
+		      //Combine these two
+		      this->UnlockKernelRow(cons_svs[i]);
+		      int new_sv_index=this->CombineSVs(cons_svs[i],cons_svs[j]);
+		      //Set the j to this new guy
+		      cons_svs[j]=new_sv_index;
+		      //And remove the i
+		      cons_svs[i]=INT_MAX;
+		    }
+		}
+	    }
+	  //Did we already unlock the row?
+	  if(cons_svs[i]!=INT_MAX)
+	    this->UnlockKernelRow(cons_svs[i]);
+	}
+    }
+  else
+    {
+      //Split pairs
+      std::vector<int> used_svs_cp=this->used_svs;
+      for(std::vector<int>::iterator i=used_svs_cp.begin();i!=used_svs_cp.end();++i)
+	{
+	  int data_id=SVs[*i].data_id;
+	  if(data_id<0)
+	    {
+	      //A combined sample ...
+	      std::vector<int> removes;
+	      this->combined_samples[-(data_id+1)].testCoherence(this->kernel,this->data,this->VLength,this->linindep_threshold,removes);
+	      //Remove them
+	      if(removes.size()>0)
+                this->SplitSVs(*i,removes,false);
+	    }
+	}
+    }
+}
 
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::RecomputeKernel()
 {
     std::vector<int>::iterator i,j;
     //Search for pairs that have to be separated
-    std::vector<int> used_svs_cp=this->used_svs;
-    for(i=used_svs_cp.begin();i!=used_svs_cp.end();++i)
-    {
-        int data_id=SVs[*i].data_id;
-        if(data_id<0)
-        {
-            //A combined sample ...
-            std::vector<int> removes;
-            this->combined_samples[-(data_id+1)].testCoherence(this->kernel,this->data,this->VLength,this->linindep_threshold,removes);
-            //Remove them
-            if(removes.size()>0)
-                this->SplitSVs(*i,removes,false);
-        }
-    }
+    this->ReFindPairs(false);
     //Invalidate current kernel
     this->InvalidateCache();
     //Things to store for combining vectors
@@ -502,49 +593,14 @@ void laSvmSingleKernel<T,Kernel>::RecomputeKernel()
     for(int ii=0;ii!=this->used_svs.size();++ii)
     {
         std::vector<T> &row=this->GetKernelRow(this->used_svs[ii]);
-        //Check if there is a combination possibility (but only of it has not been combined yet)
-        if(this->linindep_threshold!=0.0)
-            for(int jj=ii+1;jj!=this->used_svs.size();++jj)
-            {
-                if(this->getSVLabel(this->used_svs[ii])==this->getSVLabel(this->used_svs[jj]))
-                {
-                    if(1.0-row[this->used_svs[jj]]*row[this->used_svs[jj]]<this->linindep_threshold)
-                    {
-                        //These can and will be combined
-                        combines.push_back(std::pair<int,int>(this->used_svs[ii],this->used_svs[jj]));
-                    } 
-                }
-            }
         //Compute the gradient and save ...
         ComputeGradient(row,this->used_svs[ii]);
         this->UnlockKernelRow(this->used_svs[ii]);
     }
 
     //Fulfill the combines
-    std::vector<int> combined_translation(SVs.size(),-1);
-    while(!combines.empty())
-    {
-        //Take the first
-        std::pair<int,int> p=combines.front();
-        combines.pop_front();
-        //Test if the index has to be translated
-        int i,j; //The indexes
-        i=p.first;
-        while(i!=combined_translation[i] && combined_translation[i]!=-1)
-            i=combined_translation[i];
-        j=p.first;
-        while(j!=combined_translation[j] && combined_translation[j]!=-1)
-            i=combined_translation[j];
-        //Combine them
-        if(i!=j)
-        {
-            int new_sv_index=this->CombineSVs(i,j);
-            combined_translation[p.first]=new_sv_index;
-            combined_translation[p.second]=new_sv_index;
-            combined_translation[i]=new_sv_index;
-            combined_translation[j]=new_sv_index;
-        }
-    }
+    this->ReFindPairs(true);
+
     this->minmax_dirty=true;
 }
 

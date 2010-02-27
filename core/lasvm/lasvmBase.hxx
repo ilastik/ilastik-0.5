@@ -656,7 +656,7 @@ void laSvmBase<NV,SV,Kernel>::resample(std::vector<int>& inew,int num,int resamp
     //Does resampling make sense?
     if (NVs.size()-inew.size()<num)
         resample_methode=0;
-    int i;
+    int i,a;
     switch (resample_methode)
     {
     case 0:

@@ -88,7 +88,7 @@ double testSvm<T,Kernel>::testALCrit(const array& sample,int id)
         f=std::max(-1.0,std::min(1.0,f));
         f=(f+1.0)/2.0;
         return -pos_sum*f-neg_sum*(1.0-f);
-        //return -std::max(pos_sum,neg_sum);
+        return -std::max(pos_sum,neg_sum);
     }
     if(id==1)
     {
