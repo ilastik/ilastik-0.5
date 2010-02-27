@@ -103,7 +103,7 @@ public:
     double distance(const SV* a,const SV* b) const
     {
         ++num_dist;
-        return svm->kernel.distance(svm->data[a->data_id].features,svm->data[b->data_id].features,svm->VLength);
+        return svm->kernel.distance(svm->getFeatures(a),svm->getFeatures(b),svm->VLength);
     }
     double distance(const int a,const int b) const
     {
@@ -113,7 +113,7 @@ public:
     double distance(const int b,const SV* a) const
     {
         ++num_dist;
-        return svm->kernel.distance(svm->data[a->data_id].features,rowVector(*predict_vectors,b),svm->VLength);
+        return svm->kernel.distance(svm->getFeatures(a),rowVector(*predict_vectors,b),svm->VLength);
     }
     double Kernel(const int b,const SV* a,double dist) const
     {
@@ -124,7 +124,7 @@ public:
     {
         ++num_exp;
 	++num_dist;
-        return svm->kernel.compute(svm->data[a->data_id].features,rowVector(*predict_vectors,b),svm->VLength)*a->alpha;
+        return svm->kernel.compute(svm->getFeatures(a),rowVector(*predict_vectors,b),svm->VLength)*a->alpha;
     }
     void AddKernelSumToPoint(const int a,double sum)
     {

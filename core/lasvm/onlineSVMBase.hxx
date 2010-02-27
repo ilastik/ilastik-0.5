@@ -268,12 +268,16 @@ public:
     /** Get the features of a SV as C array.
      * @param id The index of the SV
      */
+  inline T* getFeatures(const SV* sv)
+  {
+    if(sv->data_id>=0)
+      return data[sv->data_id].features;
+    else
+      return combined_samples[-(sv->data_id+1)].features;
+  }
     inline T* getSVFeatures(int id)
     {
-        if(SVs[id].data_id>=0)
-            return data[SVs[id].data_id].features;
-        else
-            return combined_samples[-(SVs[id].data_id+1)].features;
+      return getFeatures(&SVs[id]);
     }
     /** Get the features of a NV as C array.
      * @param id The index of the NV

@@ -111,7 +111,7 @@ class OnlineRF(CumulativeOnlineClassifier):
 
 
 class OnlineLaSvm(OnlineClassifier):
-    def __init__(self,cacheSize=2000):
+    def __init__(self,cacheSize=3000):
         OnlineClassifier.__init__(self)
         self.cacheSize=cacheSize
         self.svm=None
@@ -120,6 +120,7 @@ class OnlineLaSvm(OnlineClassifier):
 
     def start(self,features,labels,ids):
         # TODO Cast to float64!
+        self.linindepThresh=0.0
         self.improveRuns=0
         self.maxPredSVs=200
         self.svm=lasvm.laSvmMultiParams(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
@@ -204,10 +205,22 @@ class OnlineLaSvm(OnlineClassifier):
         print "*****************************"
         print "I want no more than",self.maxPredSVs,"support vectors"
         print "*****************************"
-        thresh=self.svm.GetOptimalLinIndepTreshold(int(self.maxPredSVs))
-        thresh=min(0.9,thresh)
-        self.svm.enableLindepThreshold(thresh)
-        self.svm.ReFindPairs(True)
+        self.maxPredSVs=int(self.maxPredSVs)
+        if(self.maxPredSVs<self.svm.getAlphas().shape[0]*0.9):
+            print "Decreasing threshold"
+            self.linindepThresh=self.svm.GetOptimalLinIndepTreshold(int(self.maxPredSVs))
+            self.linindepThresh=min(0.9,self.linindepThresh)
+            self.svm.enableLindepThreshold(self.linindepThresh)
+            self.svm.ReFindPairs(True)
+            self.svm.finish(True)
+        if(self.maxPredSVs>self.svm.getAlphas().shape[0]*1.1):
+            print "Increasing threshold"
+            self.linindepThresh=self.linindepThresh+0.05
+            self.svm.enableLindepThreshold(self.linindepThresh)
+            self.svm.ReFindPairs(False)
+            self.svm.finish(True)
+            
+
 
         t0=time.time()
         print "Begin fast predict"
