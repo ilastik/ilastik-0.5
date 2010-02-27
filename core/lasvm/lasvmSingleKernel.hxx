@@ -1,6 +1,6 @@
-#include <eigen2/Eigen/Core>
-#include <eigen2/Eigen/LU>
-USING_PART_OF_NAMESPACE_EIGEN
+//#include <eigen2/Eigen/Core>
+//#include <eigen2/Eigen/LU>
+//USING_PART_OF_NAMESPACE_EIGEN
 #include "lasvmBase.hxx"
 #include <algorithm>
 
@@ -38,7 +38,7 @@ public:
      * @oaram rho The rho parameter for the Xi Alpha bound.
      */
     void XiAlphaBoundDerivative(std::vector<double>& res,double rho=1.0,bool include_db=true);
-    void XiAlphaBoundDerivativeExact(std::vector<double>& res,double rho);
+   // void XiAlphaBoundDerivativeExact(std::vector<double>& res,double rho);
     enum grad_methode
     {
         GRAD_IND_STEP_SIZE_SIGN_ADAPTION=0,
@@ -63,6 +63,7 @@ public:
 };
 
 
+/*
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivativeExact(std::vector<double>& res,double rho)
 {
@@ -210,7 +211,7 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivativeExact(std::vector<double
     //Restore used svs
     this->used_svs=original_used_svs;
 }
-
+*/
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(std::vector<double>& res,double rho,bool include_db)
 {
@@ -317,9 +318,9 @@ void laSvmSingleKernel<T,Kernel>::XiAlphaBoundDerivative(std::vector<double>& re
 template<class T,class Kernel>
 void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bool include_db)
 {
-    int i;
+    
     //Make sure online prediction set do not screw up ...
-    for(i=0;i<this->used_svs.size();++i)
+    for(int i=0;i<this->used_svs.size();++i)
         ++SVs[this->used_svs[i]].change_id;
     
     this->kernel.setVariance(this->variance.begin(),this->variance.end());
@@ -351,7 +352,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
     {
     case GRAD_IND_STEP_SIZE_SIGN_ADAPTION:
         //Adapt step sizes based on signes and fill step
-        for(i=0;i<kernel_opt_step_size.size();++i)
+        for(int i=0;i<kernel_opt_step_size.size();++i)
         {
             std::cerr<<"Last der="<<last_derivatives[i]<<", this der="<<der[i]<<std::endl;
             if(der[i]*last_derivatives[i]>0.0)
@@ -370,7 +371,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
             std::cerr<<this->kernel_opt_step_size[i]<<"\t";
         std::cerr<<std::endl;
         //Fill step
-        for(i=0;i<step.size();++i)
+        for(int i=0;i<step.size();++i)
         {
             if(der[i]<0.0)
                 step[i]=kernel_opt_step_size[i];
@@ -380,20 +381,20 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
         break;
     case NORMALIZED_GRAD_DESCENT:
         //normalize step size
-        for(i=0;i<der.size();++i)
+        for(int i=0;i<der.size();++i)
             norm+=der[i]*der[i];
         norm=sqrt(norm);
         if(norm<0.001)
             return;
         //normalize the step size
-        for(i=0;i<der.size();++i)
+        for(int i=0;i<der.size();++i)
         {
             step[i]=-der[i]*kernel_opt_step_size[i]/norm;
         }
         break;
     case INTERVALL_HALVING:
         //Adjust upper or lower bound and make the step
-        for(i=0;i<der.size();++i)
+        for(int i=0;i<der.size();++i)
         {
             if(der[i]<0.0)
                 lower_bounds[i]=0.0;
@@ -405,7 +406,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
         //Limit the steps
         this->kernel.boundSteps(step);
         //Shift the bounds
-        for(i=0;i<der.size();++i)
+        for(int i=0;i<der.size();++i)
         {
             lower_bounds[i]+=step[i]-0.2;
             upper_bounds[i]+=step[i]+0.2;
@@ -413,7 +414,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
         break;
     case MIXED:
         //Set step size according to "close_mode"
-        for(i=0;i<der.size();++i)
+        for(int i=0;i<der.size();++i)
         {
             if(close_mode[i])
             {
@@ -462,7 +463,7 @@ void laSvmSingleKernel<T,Kernel>::KernelOptimizationStep(grad_methode methode,bo
             factor=shrink_factor;
         else
             factor=grow_factor;
-        for(i=0;i<der.size();++i)
+        for(int i=0;i<der.size();++i)
         {
             kernel_opt_step_size[i]*=factor;
         }

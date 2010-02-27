@@ -295,7 +295,7 @@ vigra::NumpyAnyArray getXiAlphaDerived(testSvm<T,Kernel>& svm,double rho,bool in
         res[i]=derives[i];
     return res;
 }
-
+/*
 template<class T,class Kernel>
 vigra::NumpyAnyArray getXiAlphaDerivedExact(testSvm<T,Kernel>& svm,double rho,vigra::NumpyArray<1,T> res)
 {
@@ -307,7 +307,7 @@ vigra::NumpyAnyArray getXiAlphaDerivedExact(testSvm<T,Kernel>& svm,double rho,vi
         res[i]=derives[i];
     return res;
 }
-
+*/
 template<class T>
 T getGamma(testSvm<T,KernelGauss<T> >& svm)
 {
@@ -424,9 +424,9 @@ void defineLASVMs(const char* name_single,const char* name_multi,const char* nam
         .def("getXiAlphaDerived",
              registerConverters(&getXiAlphaDerived<T,KernelGauss<T> >),
              (boost::python::arg("rho"),boost::python::arg("include_db"),boost::python::arg("result")=object()))
-        .def("getXiAlphaDerivedExact",
-             registerConverters(&getXiAlphaDerivedExact<T,KernelGauss<T> >),
-             (boost::python::arg("rho"),boost::python::arg("result")=object()))
+        //.def("getXiAlphaDerivedExact",
+        //     registerConverters(&getXiAlphaDerivedExact<T,KernelGauss<T> >),
+        //     (boost::python::arg("rho"),boost::python::arg("result")=object()))
         .def("reset",
              &testSvm<T,KernelGauss<T> >::reset)
         .def_readwrite("epsilon",
@@ -509,9 +509,9 @@ void defineLASVMs(const char* name_single,const char* name_multi,const char* nam
         .def("getXiAlphaDerived",
              registerConverters(&getXiAlphaDerived<T,KernelGaussMultiParams<T> >),
              (boost::python::arg("rho"),boost::python::arg("include_db"),boost::python::arg("result")=object()))
-        .def("getXiAlphaDerivedExact",
-             registerConverters(&getXiAlphaDerivedExact<T,KernelGaussMultiParams<T> >),
-             (boost::python::arg("rho"),boost::python::arg("result")=object()))
+        //.def("getXiAlphaDerivedExact",
+        //     registerConverters(&getXiAlphaDerivedExact<T,KernelGaussMultiParams<T> >),
+        //     (boost::python::arg("rho"),boost::python::arg("result")=object()))
         .def("reset",
              &testSvm<T,KernelGaussMultiParams<T> >::reset)
         .def_readwrite("epsilon",

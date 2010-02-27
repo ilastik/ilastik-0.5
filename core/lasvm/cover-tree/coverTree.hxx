@@ -430,7 +430,7 @@ double CoverTree<Node>::split_close_points_with_dist(Point& point,array& points,
             points[split_point].distances.push_back(dist);
         }
         //Check which set to insert
-        if(dist<=split_dist  xor close_to_end)
+        if( (dist<=split_dist) != close_to_end)
         {
             //Put to start
             ++split_point;
