@@ -82,6 +82,8 @@ const std::vector<T>& rowVector(const std::vector<std::vector<T> >& a,int index)
 //- distances between predict datas
 //- kernel between svs and predict data
 //- adding to the sum of predict datas
+int num_exp;
+int num_dist;
 template<class SVM,class SV,class array1,class array2>
 class predictFunctor
 {
@@ -90,6 +92,7 @@ public:
     array2* result;
     SVM* svm;
     bool use_avg_for_error;
+    //debug info
     predictFunctor(SVM* svm,array1* pv,array2* res)
     {
         this->svm=svm;
@@ -99,22 +102,28 @@ public:
     }
     double distance(const SV* a,const SV* b) const
     {
+        ++num_dist;
         return svm->kernel.distance(svm->data[a->data_id].features,svm->data[b->data_id].features,svm->VLength);
     }
     double distance(const int a,const int b) const
     {
+        ++num_dist;
         return svm->kernel.distance(rowVector(*predict_vectors,a),rowVector(*predict_vectors,b),svm->VLength);
     }
     double distance(const int b,const SV* a) const
     {
+        ++num_dist;
         return svm->kernel.distance(svm->data[a->data_id].features,rowVector(*predict_vectors,b),svm->VLength);
     }
     double Kernel(const int b,const SV* a,double dist) const
     {
+        ++num_exp;
         return svm->kernel.compute(dist)*a->alpha;
     }
     double Kernel(const int b,const SV* a) const
     {
+        ++num_exp;
+	++num_dist;
         return svm->kernel.compute(svm->data[a->data_id].features,rowVector(*predict_vectors,b),svm->VLength)*a->alpha;
     }
     void AddKernelSumToPoint(const int a,double sum)
@@ -123,6 +132,7 @@ public:
     }
     double plainKernel(double dist) const
     {
+        ++num_exp; 
         return svm->kernel.compute(dist);
     }
     double KernelError(int point,SvmKernelSumNode<SV>* node,const double dist) const
@@ -157,6 +167,7 @@ public:
         if(turn_point>=center_dist)
         {
             //Concave
+	    ++num_exp;
             return exp(-(center_dist-avg_dist)*(center_dist-avg_dist));
         }
         else
@@ -164,11 +175,13 @@ public:
             if(turn_point<=center_dist-max_dist)
             {
                 //Convex
+      	        ++num_exp;
                 return center_val+avg_dist/max_dist*(exp(-(center_dist-max_dist)*(center_dist-max_dist))-center_val);
             }
             else
             {
                 //Complex :)
+      	        num_exp+=2;
                 double derivative=-2.0*(center_dist-max_dist)*exp(-(center_dist-max_dist)*(center_dist-max_dist));
                 double max_val=exp(-(center_dist-max_dist)*(center_dist-max_dist));
                 double y2=std::max(center_val,max_val+derivative*max_dist);
@@ -183,6 +196,7 @@ public:
         if(turn_point<=center_dist)
         {
             //Convex
+            ++num_exp;
             return exp(-(center_dist+avg_dist)*(center_dist+avg_dist));
         }
         else
@@ -190,11 +204,13 @@ public:
             if(turn_point>=center_dist+max_dist)
             {
                 //Concave!
+	        ++num_exp;
                 return center_val+avg_dist/max_dist*(exp(-(center_dist+max_dist)*(center_dist+max_dist))-center_val);
             }
             else
             {
                 //Complex :)
+                num_exp+=2;
                 double derivative=-2.0*(center_dist+max_dist)*exp(-(center_dist+max_dist)*(center_dist+max_dist));
                 double min_val=exp(-(center_dist+max_dist)*(center_dist+max_dist));
                 double y1=std::min(center_val,min_val-derivative*max_dist);
@@ -244,6 +260,7 @@ public:
             double max_dist=dist+all_max_dist;
             if(min_dist<0)
                 min_dist=0.0;
+	    num_exp+=2;
             double min_kernel=exp(-min_dist*min_dist);
             double max_kernel=exp(-max_dist*max_dist);
 

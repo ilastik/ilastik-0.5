@@ -314,6 +314,9 @@ public:
      */
     void getSVs(std::vector<std::vector<T> >& ret);
 
+  //Debug information for prediction
+  int num_exp;
+  int num_dist;
 };
 
 
@@ -589,12 +592,16 @@ template<class array>
 double OnlineSVMBase<NV,SV,Kernel>::predictF(const array& sample)
 {
     double f=-this->getB();
+    this->num_exp=0;
+    this->num_dist=0;
     std::vector<int>::iterator i;
     for(i=this->used_svs.begin();i!=this->used_svs.end();++i)
     {
         if(SVs[*i].alpha==0.0)
             continue;
         f+=DirectKernel(*i,sample)*SVs[*i].alpha;
+	++this->num_exp;
+	++this->num_dist;
     }
     return f;
 }
@@ -605,6 +612,8 @@ template<class ResultArray>
 void OnlineSVMBase<NV,SV,Kernel>::predictF(SvmPredictionSet<T>& set,ResultArray& out)
 {
     double b=-this->getB();
+    this->num_exp=0;
+    this->num_dist=0;
     for(int i=0;i<out.size();++i)
     {
         out[i]=b;
@@ -618,6 +627,8 @@ void OnlineSVMBase<NV,SV,Kernel>::predictF(SvmPredictionSet<T>& set,ResultArray&
         for(int j=0;j<out.size();++j)
         {
             out[j]+=DirectKernel(*i,set.features[j])*SVs[*i].alpha;
+	    ++this->num_exp;
+	    ++this->num_dist;
         }
     }
 }
@@ -644,8 +655,12 @@ void OnlineSVMBase<NV,SV,Kernel>::singleCoverTreeRangedPredictF(SvmPredictionSet
     CoverTree<SvmKernelSumNode<SV> > ct(ct_svs,pf);
     //Predict all of them
     double bias=-this->getB();
+    ::num_exp=0;
+    ::num_dist=0;
     for(int i=0;i<out.size();++i)
         out[i]=ct.svmMarginKernelSum(i,pf,epsilon,delta,bias);
+    this->num_exp=::num_exp;
+    this->num_dist=::num_dist;
 }
 
 template<class NV,class SV,class Kernel>
@@ -668,8 +683,12 @@ void OnlineSVMBase<NV,SV,Kernel>::singleCoverTreePredictF(SvmPredictionSet<T>& s
     CoverTree<SvmKernelSumNode<SV> > ct(ct_svs,pf);
     //Predict all of them
     double bias=-this->getB();
+    ::num_exp=0;
+    ::num_dist=0;
     for(int i=0;i<out.size();++i)
         out[i]=ct.absoluteErrorKernelSum(i,pf,epsilon,bias);
+    this->num_exp=::num_exp;
+    this->num_dist=::num_dist;
 }
 
 template<class NV,class SV,class Kernel>
@@ -699,7 +718,11 @@ void OnlineSVMBase<NV,SV,Kernel>::dualCoverTreePredictF(SvmPredictionSet<T>& sam
         std::cerr<<"INFO: construction of the prediction cover tree took "<<time<<"s"<<std::endl;
     //Predict all of them
     double bias=-this->getB();
+    ::num_exp=0;
+    ::num_dist=0;
     ct.DualAbsoluteErrorKernelSum(ct_pred,pf,epsilon,bias);
+    this->num_exp=::num_exp;
+    this->num_dist=::num_dist;
 }
 
 template<class NV,class SV,class Kernel>
