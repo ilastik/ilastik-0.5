@@ -243,7 +243,7 @@ class OnlineLaSvm(OnlineClassifier):
         pred=pred.reshape((pred.shape[0],1))
 
 
-        return numpy.append(1.0-(pred+1)/2,(pred+1)/2.0,axis=1)
+        return numpy.concatenate((1.0-pred, pred), axis=1)
         
 
 
