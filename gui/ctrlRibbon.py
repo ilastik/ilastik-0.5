@@ -1,6 +1,6 @@
 from PyQt4 import QtCore, QtGui
 import sys
-sys.path.append('..')
+#sys.path.append('..')
 from gui.iconMgr import ilastikIcons
 
 class Ribbon(QtGui.QTabWidget):
@@ -41,7 +41,7 @@ class RibbonButtonItem(QtGui.QPushButton,RibbonBaseItem):
         self.setIconSize(ribbon_entry.size)
         self.setText(ribbon_entry.name)
 
-class RibbonToggleButtonItem(QtGui.QToolButton,RibbonBaseItem):
+class RibbonToggleButtonItem(QtGui.QToolButton, RibbonBaseItem):
     def __init__(self,  ribbon_entry):
         QtGui.QToolButton.__init__(self)
         RibbonBaseItem.__init__(self,  ribbon_entry)
@@ -146,7 +146,7 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Online", ilastikIcons.Play ,"Online Classifier", type=RibbonToggleButtonItem))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("OnlineClassificator", ilastikIcons.Select, "Select online classificator", type=RibbonListItem))
+    #RibbonGroupObjects["Classification"].append(RibbonEntry("OnlineClassificator", ilastikIcons.Select, "Select online classificator", type=RibbonListItem))
     
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Segment ,"Segmentation"))
     

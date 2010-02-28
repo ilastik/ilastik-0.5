@@ -3,20 +3,14 @@ from PyQt4 import QtCore, uic
 import sys, random, numpy
 import os
 from collections import deque
-sys.path.append("..")
+#sys.path.append("..")
 from core import labelMgr, activeLearning
 from core.utilities import irange, debug
 from gui.iconMgr import ilastikIcons
 import time
-#import qimage2ndarray
 import labelArrayDrawQImage
 
-try:
-    import vigra
-except ImportError:
-    sys.exit("vigra module not found!")
-
-#************************
+import vigra
 
 labelwidgetInstance = None   # UGLY global
       
@@ -1568,6 +1562,13 @@ class OverlayMgr(object):
                 self.overlayImageType[j] = 'continious'
         self.overlayImageOpasity = 0.7
         
+        # Make Color tables for each class
+        self.colorTables = [[] for _ in range(self.classCount)]
+        for j in range(self.classCount):
+            for i in range(256):
+                col = QtGui.QColor(self.classColors[j+1].red(), self.classColors[j+1].green(), self.classColors[j+1].blue(), i * self.overlayImageOpasity)
+                self.colorTables[j].append(col.rgba())
+                        
         self.canvas = canvas
         self.imageShapes = imageShapes
         
@@ -1646,7 +1647,7 @@ class OverlayMgr(object):
             #TODO: The min (and the outcomented error above) is due to some bug, that has to be removed yet
             for classNr in range(min(self.classCount, prediction.shape[1])):
                 # print "classNr", classNr
-                pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]), QtGui.QColor(self.classColors[classNr + 1]), 'continious', 0.7)
+                pm = self.rawImage2pixmap(prediction[:, classNr].reshape(self.imageShapes[imageIndex]), classNr, 'continious', 0.7)
                 self.predictionPixmaps[imageIndex][classNr][0] = pm 
     
     def updateSegmentationPixmaps(self, segmentations):
@@ -1685,6 +1686,7 @@ class OverlayMgr(object):
                     if currentOverlay[classNr][0]:
                         currentOverlay[classNr][1] = self.canvas.addPixmap(currentOverlay[classNr][0])
                         currentOverlay[classNr][1].setZValue(3)
+
                         #print currentOverlay[classNr][1]
         # Some Overlay which does not depend on the current ClassIndex 
         elif self.state in ['Image']:
@@ -1699,15 +1701,19 @@ class OverlayMgr(object):
                     currentOverlay[1].setZValue(3) 
 
     def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7, normRange=(0.0, 1.0) ):
-        # Used for rawImages in [0,1]
+        # default of normRange for rawImages in [0,1]
         if type == 'continious':
-            # old version of gray-numpy to qimage using qwt
-            #image = qwt.toQImage((rawImage*255).astype(numpy.uint8))
-            #image = qimage2ndarray.gray2qimage((rawImage*255).astype(numpy.uint8))
             image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize=normRange)
-            for i in range(256):
-                col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
-                image.setColor(i, col.rgba())
+            if isinstance(classColor, int):
+                # set corresponding color table
+                #print "setColor Table"
+                image.setColorTable(self.colorTables[classColor])
+            else:
+                # Now we have a real QColor
+                for i in range(256):
+                    col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
+                    col.setHsv(col.getHsv()[0],i,255)
+                    image.setColor(i, col.rgba())
                 
         # Used for images with uint8 indices, like segmentations
         if type == 'discrete':

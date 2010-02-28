@@ -1,5 +1,5 @@
 class ilastikIcons(object):
-    iconPath = '../../icons/32x32/'
+    iconPath = 'gui/icons/32x32/'
     Brush = iconPath + 'actions/edit-clear.png'
     Play = iconPath + "actions/media-playback-start.png"
     View = iconPath + 'emotes/face-glasses.png'
@@ -17,6 +17,7 @@ class ilastikIcons(object):
     Select = iconPath + "actions/edit-select-all.png"
     Erase = iconPath + "actions/my_erase.png"
     Edit2 = iconPath + "actions/edit-find-replace.png"
+    Python = iconPath + "../../pyc.ico"
     
     
     

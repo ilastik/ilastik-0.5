@@ -1,38 +1,34 @@
-
 #!/usr/bin/env python
-
 # profile with python -m cProfile ilastikMain.py
 # python -m cProfile -o profiling.prf  ilastikMain.py
 # import pstats
 # p = pstats.Stats('fooprof')
 # p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
-import threading 
+import vigra
+from vigra import arraytypes as at
+
 import sys
+import os
+
+import threading 
 import numpy
-sys.path.append("..")
+import time
 from PyQt4 import QtCore, QtGui, uic
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from gui import ctrlRibbon, imgLabel
 from Queue import Queue as queue
 from collections import deque
-import time
+from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
-
-
-try:
-    import vigra
-except ImportError:
-    sys.exit("vigra not found!")
-
-
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         QtGui.QMainWindow.__init__(self)
-        self.setGeometry(50, 50, 768, 512)
+        self.setGeometry(50, 50, 800, 600)
         self.iconPath = '../../icons/32x32/'
         self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
+        self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
         
         self.createRibbons()
         self.initImageWindows()
@@ -70,10 +66,28 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
-
+        
+        # Make menu for online Classification
+        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
+        btnOnlineToggle.myMenu = QtGui.QMenu();
+        btnOnlineToggle.onlineRfAction = btnOnlineToggle.myMenu.addAction('Online RF')
+        btnOnlineToggle.onlineSVMAction = btnOnlineToggle.myMenu.addAction('Online SVM')
+        btnOnlineToggle.onlineStopAction = btnOnlineToggle.myMenu.addAction('Stop')
+        btnOnlineToggle.onlineStopAction.setEnabled(False)
+        btnOnlineToggle.setMenu(btnOnlineToggle.myMenu)
+        btnOnlineToggle.setPopupMode(2)
+        
+        self.connect(btnOnlineToggle.onlineRfAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online RF'))
+        self.connect(btnOnlineToggle.onlineSVMAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online laSvm'))
+        self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
+        
+        # make LabelTab and View Tab invisible (this tabs are not helpful so far)
+        self.ribbon.removeTab(1)
+        self.ribbon.removeTab(1)
+        
         #add classificator for online
-        self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online laSvm')
-        self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online RF')
+        #self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online laSvm')
+        #self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online RF')
         
         
         self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
@@ -190,13 +204,20 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive.stop()
             
     def on_classificationOnline(self, state):
-        if state:
-            if not self.classificationOnline:
-                self.classificationOnline = ClassificationOnline(self)
-            name=self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].currentItem().text()
-            self.classificationOnline.start(name)
+        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
+        if state in ['online RF', 'online laSvm']:
+            print "create and Start new Online"
+            self.classificationOnline = ClassificationOnline(self)
+            self.classificationOnline.start(state)
+            btnOnlineToggle.onlineRfAction.setEnabled(False)
+            btnOnlineToggle.onlineSVMAction.setEnabled(False)
+            btnOnlineToggle.onlineStopAction.setEnabled(True)
         else:
+            print "Stop Online"
             self.classificationOnline.stop()
+            btnOnlineToggle.onlineRfAction.setEnabled(True)
+            btnOnlineToggle.onlineSVMAction.setEnabled(True)
+            btnOnlineToggle.onlineStopAction.setEnabled(False)
         
     # TODO: This whole function should NOT be here transfer it DataMgr. 
     def generateTrainingData(self,labelArrays=None):
@@ -273,7 +294,7 @@ class ProjectDlg(QtGui.QDialog):
         self.defaultLabelColors = {}
         
     def initDlg(self):
-        uic.loadUi('dlgProject.ui', self) 
+        uic.loadUi('gui/dlgProject.ui', self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setAlternatingRowColors(True)
@@ -453,22 +474,43 @@ class ProjectDlg(QtGui.QDialog):
         projectName = self.projectName
         labeler = self.labeler
         description = self.description
-        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dataMgr.DataMgr())
+        
+        # New project or edited project? if edited, reuse parts of old dataMgr
+        if hasattr(self.parent,'project'):
+            dm = self.parent.project.dataMgr
+        else:
+            dm = dataMgr.DataMgr()
+        
+        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dm)
+        
+        # Set Class Count
+        self.parent.project.classCount = self.cmbLabelName.count()
+        
+        # Set class Colors
         self.parent.project.labelColors = self.labelColor
+        
+        # Delete not used labelColors
+        for i in xrange(1, len(self.labelColor)+1):
+            if i > self.parent.project.classCount:
+                del self.parent.project.labelColors[i]
+                
+        # Set label names
         self.parent.project.labelNames = []
-        for i in xrange(self.cmbLabelName.count()):
+        for i in xrange(self.parent.project.classCount):
             self.parent.project.labelNames.append(str(self.cmbLabelName.itemText(i)))
             
         rowCount = self.tableWidget.rowCount()
         dataItemList = self.parent.project.dataMgr.getDataList()
+        oldDataFileNames = [str(k.fileName) for k in self.parent.project.dataMgr]
         for k in range(0, rowCount):
-            # todo: chris, i commented this out because change in filenames can occour even when number of files remains unchanged!
-            if k < len(dataItemList):
-                print "Nothing to do here"
+                 
+            fileName = str(self.tableWidget.item(k, self.columnPos['File']).text())
+            if fileName in oldDataFileNames:
+                # Old File
                 continue
-            fileName = self.tableWidget.item(k, self.columnPos['File']).text()
+            
             theDataItem = dataMgr.DataItemImage(fileName)
-            dataItemList.append(theDataItem)
+            self.parent.project.dataMgr.append(theDataItem)
             
             groups = []
             for i in xrange(self.tableWidget.cellWidget(k, self.columnPos['Groups']).count()):
@@ -489,7 +531,7 @@ class ProjectDlg(QtGui.QDialog):
                 theDataItem.projects.append(self.parent.project)
         
         dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
-        self.parent.project.dataMgr.setDataList(dataItemList)
+        #self.parent.project.dataMgr.setDataList(dataItemList)
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
@@ -505,7 +547,7 @@ class editChannelsDlg(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self)
         self.parent = parent
-        uic.loadUi('dlgChannels.ui', self)
+        uic.loadUi('gui/dlgChannels.ui', self)
         self.show()
         
         dataMgr = parent.project.dataMgr
@@ -564,7 +606,7 @@ class FeatureDlg(QtGui.QDialog):
         self.initDlg()
         
     def initDlg(self):
-        uic.loadUi('dlgFeature.ui', self) 
+        uic.loadUi('gui/dlgFeature.ui', self) 
         for featureItem in self.parent.featureList:
             self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
         
@@ -591,7 +633,7 @@ class FeatureDlg(QtGui.QDialog):
             for c in range(self.featureTable.columnCount()):
                 item = QtGui.QTableWidgetItem()
                 if featureMgr.ilastikFeatureGroups.selection[r][c]:
-                    item.setIcon(QtGui.QIcon(self.parent.iconPath + "categories/preferences-system.png"))
+                    item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
                 self.featureTable.setItem(r, c, item)
         self.setStyleSheet("selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0.5, y2: 0.5, stop: 0 #BBBBDD, stop: 1 white)")
         self.show()
@@ -605,7 +647,7 @@ class FeatureDlg(QtGui.QDialog):
         
         if sel_flag:
             for i in sel:
-                icon = QtGui.QIcon(self.parent.iconPath + "categories/preferences-system.png")
+                icon = QtGui.QIcon(ilastikIcons.Preferences)
                 i.setIcon(icon)
                 featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = True  
                            
@@ -765,9 +807,10 @@ class ClassificationInteractive(object):
             except IndexError:
                 pass
 
+        print "+++clock+++("
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(viewPredictions)
         self.parent.labelWidget.OverlayMgr.setOverlayStateByIndex(self.parent.labelWidget.cmbOverlayList.currentIndex())
-        
+        print "+++clock+++)"
         # update Data Mgr
         for k in viewPredictions:
             self.parent.project.dataMgr.prediction[k] = viewPredictions[k]
@@ -814,10 +857,10 @@ class ClassificationInteractive(object):
     def finalize(self):
         self.parent.project.classifierList = list(self.classificationInteractive.classifierList)
         
-        # TODO[CSo] Here we need another Thread, would be nice to reuse ClassificationPredict
-        # self.classificationInteractive.finishPredictions()
+        self.classificationInteractive.finishPredictions()
         
-        self.parent.project.dataMgr.prediction = map(lambda x:x.pop(), self.classificationInteractive.resultList)
+        self.parent.project.dataMgr.prediction = map(lambda x:x.pop(), self.classificationInteractive.result)
+        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(dict(irange(self.parent.project.dataMgr.prediction)))
         
 class ClassificationOnline(object):
     def __init__(self, parent):
@@ -844,7 +887,7 @@ class ClassificationOnline(object):
         predictionList = self.parent.project.dataMgr.buildFeatureMatrix()
         ids = numpy.zeros((len(labels),)).astype(numpy.int32)
 
-        self.OnlineThread = classificationMgr.ClassifierOnlineThread(name,features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
+        self.OnlineThread = classificationMgr.ClassifierOnlineThread(name, features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
         self.OnlineThread.start()
         
     def stop(self):
@@ -862,6 +905,7 @@ class ClassificationOnline(object):
 
     def updatePredictionData(self):
         print "Updating prediction data"
+        tic = time.time()
         if self.OnlineThread == None:
             return
         new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
@@ -869,6 +913,7 @@ class ClassificationOnline(object):
         #for i in xrange(len(new_pred)):
         #    self.preds[i,0]=1.0-new_pred[i]
         #    self.preds[i,1]=new_pred[i]
+        print new_pred.shape
 
         tmp = {}
         print new_pred.shape
@@ -876,7 +921,8 @@ class ClassificationOnline(object):
         self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
         self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
         
-        print "Done updating prediction data"
+        
+        print "Done updating prediction data: %f secs" % (time.time() - tic)
         #self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
         
     
@@ -976,4 +1022,4 @@ if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow()  
     mainwindow.show() 
-    sys.exit(app.exec_())
+    app.exec_()
