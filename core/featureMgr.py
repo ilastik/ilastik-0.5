@@ -3,13 +3,12 @@ import threading
 import multiprocessing
 import time
 import sys
-sys.path.append("..")
+#sys.path.append("..")
 from core.utilities import irange
 
-try:
-    import vigra
-except ImportError:
-    sys.exit("vigranumpycmodule not found!")
+import vigra
+at = vigra.arraytypes
+
     
 class FeatureMgr():
     """
@@ -85,7 +84,9 @@ class LocalFeature(FeatureBase):
     
     def compute(self, channel):
         print channel.shape
-        return self.featureFunktor(channel, * self.args)
+        # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
+        # the result of featureFunktor is numpy.ndarray and NOT a vigra type!? I don't know why... (see dateMgr loadData)
+        return at.Image(self.featureFunktor(channel, * self.args))
 
     def __str__(self):
         return '%s: %s' % (self.name , ', '.join(["%s = %f" % (x[0], x[1]) for x in zip(self.arg_names, self.args)]))

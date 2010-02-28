@@ -2,6 +2,7 @@ from core import dataMgr as dataMgrModule
 import cPickle as pickle
 import h5py
 from core.utilities import irange, debug
+
 from vigra import arraytypes as at
 from PyQt4 import QtGui
 

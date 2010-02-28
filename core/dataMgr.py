@@ -7,11 +7,9 @@ import h5py
 import tables
 from core.utilities import irange, debug, irangeIfTrue
 
-try:
-    from vigra import arraytypes as at
-    import vigra
-except ImportError:
-    sys.exit("vigra module not found!")
+import vigra
+at = vigra.arraytypes
+    
 
 class DataItemBase():
     """
@@ -84,6 +82,7 @@ class DataItemImage(DataItemBase):
             self.dataKind = 'gray'
             self.channelDescription = ['Intensities']
             self.channelUsed = [True]
+    
     @classmethod
     def initFromArray(cls, dataArray, originalFileName):
         obj = cls(originalFileName)
@@ -301,7 +300,9 @@ class DataImpex(object):
     
     @staticmethod
     def loadImageData(fileName):
-        data = vigra.impex.readImage(fileName)
+        # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
+        # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
+        data = at.Image(vigra.impex.readImage(fileName))
         return data
     
     @staticmethod    

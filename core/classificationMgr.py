@@ -8,7 +8,6 @@ from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
 from collections import deque
 from PyQt4 import QtCore
-sys.path.append('..')
 from core.utilities import irange
 from core import onlineClassifcator
 
@@ -16,7 +15,7 @@ import numpy
 
 def interactiveMessagePrint(* args):
     #pass
-    print "Thread: ", args
+    print "Thread: ", args[0]
 
 try:
     import vigra
@@ -59,6 +58,8 @@ class ClassifierRandomForest(ClassifierBase):
         if not features.dtype == numpy.float32:
             features = numpy.array(features,dtype=numpy.float32)
         self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
+        #self.classifier.learnRF(features, labels)
+        print "tree Count", self.treeCount
         
     
     def predict(self, target):
@@ -174,7 +175,7 @@ class ClassificationImpex(object):
 class ClassifierTrainThread(threading.Thread):
     def __init__(self, queueSize, featLabelTupel):
         threading.Thread.__init__(self)
-        self.queueSize = 1
+        self.queueSize = queueSize
         self.featLabelTupel = featLabelTupel
         self.count = 0
         self.classifierList = deque(maxlen=self.queueSize)
@@ -217,16 +218,40 @@ class ClassifierInteractiveThread(threading.Thread):
     def __init__(self, trainingQueue, predictDataList, labelWidget, numberOfClasses, numberOfClassifiers=10, treeCount=10):
         threading.Thread.__init__(self)
         self.stopped = False
+        
+        # This is the Queue of Training Data, each brush storke
+        # pushs an entry of full training Information
         self.trainingQueue = trainingQueue
+        
+        # the list of deques for the last 10 predictions
         self.resultList = [deque(maxlen=10) for k in range(0,len(predictDataList))]
+        
+        # The data to predict, list (for images)
         self.predictDataList = predictDataList
+        
+        # How many classifiers
         self.numberOfClassifiers = numberOfClassifiers
+        
+        # Each with how many trees
         self.treeCount = treeCount
+        
+        # Deque for classifiers
         self.classifierList = deque(maxlen=numberOfClassifiers)
+        
+        # The labelWidget is needed to check for image changes
         self.labelWidget = labelWidget
+        
+        # A lock object needed for updateing the prediction outside of this
+        # function
         self.resultLock = threading.Lock() 
+        
+        # Number of Classes
         self.numberOfClasses = numberOfClasses
+        
+        # The finel reult, holds the averaged predictions of resultList
         self.result = [deque(maxlen=1) for k in range(len(self.predictDataList))]
+        
+        # Init self.result with zeros
         for ind, pred in irange(self.result):
             initPred = numpy.zeros(( self.predictDataList[ind].shape[0], self.numberOfClasses), dtype=numpy.float32 )
             pred.append(initPred)
@@ -235,70 +260,87 @@ class ClassifierInteractiveThread(threading.Thread):
         return self.numberOfClassifiers == len(self.classifierList)
     
     def finishPredictions(self):
-        predictItemIndices = range(0,len(self.predictDataList))
+        # Make sure that at last on classifier is used for each image
+        predictItemIndices = xrange(len(self.predictDataList))
         for k in predictItemIndices:
-            for classifier in self.classifierList:
+            for classifier in [self.classifierList[-1]]:
                 if not k in classifier.usedForPrediction:
                     predictItemIdle = self.predictDataList[k]
                     predictionIdle = classifier.predict(predictItemIdle)      
                     classifier.usedForPrediction.add(k)
                     self.resultList[k].append(predictionIdle) 
-        for k in self.resultList:
-            k = list(k)
+        
+            
+            # Average Results and write it self.result
+            image = reduce(numpy.ndarray.__add__, self.resultList[k]) / len(self.resultList[k])
+            self.result[k].append(image)
                     
     def run(self):
         while not self.stopped:
+            interactiveMessagePrint("*"*30)
+            interactiveMessagePrint("*"*30)
+            interactiveMessagePrint("*"*30)
             try:
+                # Try to get new Training Information
+                interactiveMessagePrint("1>> Pop training Data")
                 features, labels = self.trainingQueue.pop()    
                 newTrainingPending = self.numberOfClassifiers
             except IndexError:
+                interactiveMessagePrint("1>> No training Data")
                 newTrainingPending -= 1
             
+            # if not enough labels are given then continue
             if numpy.unique(labels).size < self.numberOfClasses:
+                interactiveMessagePrint("1>> Cannot Learn")
                 continue
             
             # Learn Classifier new with newest Data
-            if newTrainingPending > 1:
-                interactiveMessagePrint("New Training Data used %3.1f %% " % (100 - 100*(float(newTrainingPending)/self.numberOfClassifiers)) )
+            if newTrainingPending > 0:
+                interactiveMessagePrint("2>> Learn Classifier %d/%d" % (self.numberOfClassifiers-newTrainingPending,self.numberOfClassifiers) )
                 self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
             else:
-                interactiveMessagePrint("All Classifiers learned" )
+                interactiveMessagePrint("2>> Nothing to learn" )
+            
             
             predictIndex = self.labelWidget.activeImage
             predictItem = self.predictDataList[predictIndex]
             
             newPredictionsMade = 0
             for classifier in self.classifierList:
+                interactiveMessagePrint("3>> Check classifier" )
                 if predictIndex in classifier.usedForPrediction:
+                    interactiveMessagePrint("3>> used" )
                     continue
+                interactiveMessagePrint("3>> not used, => predict" )
                 newPredictionsMade += 1
                 prediction = classifier.predict(predictItem)      
                 classifier.usedForPrediction.add(predictIndex)
                 self.resultList[predictIndex].append(prediction)   
-            
+             
             if newPredictionsMade < 1 and len(self.predictDataList) > 1:
                 # Predict the others while idle
                 restList = range(0,len(self.predictDataList))
                 restList.remove(predictIndex)
                 for k in restList:
-                    for classifier in self.classifierList:
+                    for classifier in [self.classifierList[-1]]:
                         if not k in classifier.usedForPrediction:
-                            print ".",
+                            interactiveMessagePrint("3+>> Predict other images with last classifier" )
                             predictItemIdle = self.predictDataList[k]
                             predictionIdle = classifier.predict(predictItemIdle)      
                             classifier.usedForPrediction.add(k)
                             self.resultList[k].append(predictionIdle) 
                             break
-
+            
+            interactiveMessagePrint("4>> average predictions made so far" )            
             image = reduce(numpy.ndarray.__add__, self.resultList[predictIndex]) / len(self.resultList[predictIndex])
             
             self.resultLock.acquire()
             self.result[predictIndex].append(image)
-            interactiveMessagePrint("appending new prediction of image %d" % predictIndex)
+            interactiveMessagePrint("5>> write results out")
             self.resultLock.release()
 
 class ClassifierOnlineThread(threading.Thread):
-    def __init__(self, name,features, labels, ids, predictionList, predictionUpdated):
+    def __init__(self, name, features, labels, ids, predictionList, predictionUpdated):
         threading.Thread.__init__(self)
         self.commandQueue = queue()
         self.stopped = False
