@@ -129,9 +129,9 @@ class DataMgr():
             dataItems = []            
         self.setDataList(dataItems)
         self.dataFeatures = [None] * len(dataItems)
-        self.labels = {}
         self.prediction = [None] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
+        self.labels = {}
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
@@ -164,6 +164,19 @@ class DataMgr():
     def __setitem__(self, ind, val):
         self.dataItems[ind] = val
         self.dataItemsLoaded[ind] = True
+    
+    def getIndexFromFileName(self, fileName):
+        for k, dataItem in irange(self.dataItems):
+            if fileName == dataItem.fileName:
+                return k
+        return False
+    
+    def remove(self, dataItemIndex):
+        del self.dataItems[dataItemIndex]
+        del self.dataItemsLoaded[dataItemIndex]
+        del self.segmentation[dataItemIndex]
+        del self.prediction[dataItemIndex]
+        del self.uncertainty[dataItemIndex]
     
     def clearDataList(self):
         self.dataItems = []

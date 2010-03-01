@@ -29,7 +29,7 @@ class Project(object):
     def saveToDisk(self, fileName):
         """ Save the whole project includeing data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
-        fileHandle = h5py.File(fileName)
+        fileHandle = h5py.File(fileName,'w')
         # pickle.dump(self, fileHandle, True)
         
         # get project settings
@@ -57,7 +57,7 @@ class Project(object):
             labelIt = dk.create_dataset('labels', data=self.dataMgr[k].labels)
         
             # save features if available
-            if self.dataMgr.dataFeatures:
+            if not None in self.dataMgr.dataFeatures:
                 feaureG = dk.create_group('features')
                 for fCnt, (feature, featureName, channelIndex) in irange(self.dataMgr.dataFeatures[k]):
                     featureIT = feaureG.create_dataset('feature%03d' % fCnt,data=feature)

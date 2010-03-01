@@ -786,7 +786,7 @@ class cloneViewWidget(QtGui.QDockWidget):
 
         #self.view = panView()
         self.labelwidget = labelwidget
-        self.view = cloneView(view_orig)
+        #self.view = cloneView(view_orig)
         self.sceneToDraw = self.labelwidget.view.scene()
         self.sceneitem = SceneItem(self.sceneToDraw)
         self.par = parent

@@ -52,7 +52,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbonToolbar.addWidget(self.ribbon)
         
         # Wee, this is really ugly... anybody have better ideas for connecting 
-        # the signals. This way has no future and is just a worka    round
+        # the signals. This way has no future and is just a workaround
         
         self.connect(self.ribbon.tabDict['Projects'].itemDict['New'], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Save'], QtCore.SIGNAL('clicked()'), self.saveProjectDlg)
@@ -75,20 +75,16 @@ class MainWindow(QtGui.QMainWindow):
         btnOnlineToggle.onlineStopAction = btnOnlineToggle.myMenu.addAction('Stop')
         btnOnlineToggle.onlineStopAction.setEnabled(False)
         btnOnlineToggle.setMenu(btnOnlineToggle.myMenu)
-        btnOnlineToggle.setPopupMode(2)
         
+        # Connect online classification Actions to slots
         self.connect(btnOnlineToggle.onlineRfAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online RF'))
         self.connect(btnOnlineToggle.onlineSVMAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online laSvm'))
         self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
         
-        # make LabelTab and View Tab invisible (this tabs are not helpful so far)
+        # make Label and View Tab invisible (this tabs are not helpful so far)
         self.ribbon.removeTab(1)
         self.ribbon.removeTab(1)
-        
-        #add classificator for online
-        #self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online laSvm')
-        #self.ribbon.tabDict['Classification'].itemDict['OnlineClassificator'].addItem('online RF')
-        
+              
         
         self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
         
@@ -114,15 +110,19 @@ class MainWindow(QtGui.QMainWindow):
         self.project = projectMgr.Project.loadFromDisk(str(fileName))
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        if hasattr(self, 'projectDlg'):
+            del self.projectDlg 
+            
         self.projectModified() 
         
     def editProjectDlg(self):
         if hasattr(self, 'projectDlg'):
             self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
+            self.projectDlg.newProject = False
             self.projectDlg.show()
-            return
         else:        
             self.projectDlg = ProjectDlg(self)
+            self.projectDlg.newProject = False
             self.projectDlg.updateDlg(self.project)
             self.projectModified()
             
@@ -279,7 +279,7 @@ class MainWindow(QtGui.QMainWindow):
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self)
-        # this enables   self.columnPos['File']:
+
         self.labelCounter = 2
         self.columnPos = {}
         self.labelColor = { 1:QtGui.QColor(QtCore.Qt.red), 2:QtGui.QColor(QtCore.Qt.green), 3:QtGui.QColor(QtCore.Qt.yellow), 4:QtGui.QColor(QtCore.Qt.blue), 5:QtGui.QColor(QtCore.Qt.magenta) , 6:QtGui.QColor(QtCore.Qt.darkYellow), 7:QtGui.QColor(QtCore.Qt.lightGray) }
@@ -292,6 +292,7 @@ class ProjectDlg(QtGui.QDialog):
         for i in xrange(self.tableWidget.columnCount()):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         self.defaultLabelColors = {}
+        self.newProject = True
         
     def initDlg(self):
         uic.loadUi('gui/dlgProject.ui', self) 
@@ -358,15 +359,15 @@ class ProjectDlg(QtGui.QDialog):
             
         for d in project.dataMgr.dataItems:
             rowCount = self.tableWidget.rowCount()
-            self.tableWidget.insertRow(0)
+            self.tableWidget.insertRow(rowCount)
             
             # File Name
             r = QtGui.QTableWidgetItem(d.fileName)
-            self.tableWidget.setItem(0, self.columnPos['File'], r)
+            self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             
             r = QtGui.QComboBox()
             r.setEditable(True)
-            self.tableWidget.setCellWidget(0, self.columnPos['Groups'], r)
+            self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
             
             # Here comes the cool python "checker" use it for if_than_else in lambdas
             checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
@@ -376,21 +377,21 @@ class ProjectDlg(QtGui.QDialog):
             r.data(QtCore.Qt.CheckStateRole)
             r.setCheckState(checker(d.hasLabels))
             r.setFlags(r.flags() & flagOFF);
-            self.tableWidget.setItem(0, self.columnPos['Labels'], r)
+            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
             # train
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
             r.setCheckState(checker(d.isTraining))
             r.setFlags(r.flags() & flagON);
-            self.tableWidget.setItem(0, self.columnPos['Train'], r)
+            self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
             
             # test
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
             r.setCheckState(checker(d.isTesting))
             r.setFlags(r.flags() & flagON);
-            self.tableWidget.setItem(0, self.columnPos['Test'], r)                  
+            self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)                  
         
         self.cmbLabelName.clear()
         self.labelColor = project.labelColors
@@ -404,11 +405,12 @@ class ProjectDlg(QtGui.QDialog):
     def on_addFile_clicked(self):
         
         fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif);;Multi Spectral Data (*.h5)")
+        fileNames.sort()
         if fileNames:
             for file_name in fileNames:
                 self.fileList.append(file_name)
                 rowCount = self.tableWidget.rowCount()
-                self.tableWidget.insertRow(0)
+                self.tableWidget.insertRow(rowCount)
                 
                 theFlag = QtCore.Qt.ItemIsEnabled
                 flagON = ~theFlag | theFlag 
@@ -416,12 +418,12 @@ class ProjectDlg(QtGui.QDialog):
                 
                 # file name
                 r = QtGui.QTableWidgetItem(file_name)
-                self.tableWidget.setItem(0, self.columnPos['File'], r)
+                self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                 
                 # group
                 r = QtGui.QComboBox()
                 r.setEditable(True)
-                self.tableWidget.setCellWidget(0, self.columnPos['Groups'], r)
+                self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
                 
                 # labels
                 r = QtGui.QTableWidgetItem()
@@ -437,37 +439,60 @@ class ProjectDlg(QtGui.QDialog):
                             self.on_btnAddLabel_clicked()
                 else:
                     r.setFlags(r.flags() & flagOFF);
-                self.tableWidget.setItem(0, self.columnPos['Labels'], r)
+                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
                 
                 # train
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Checked)
                 r.setFlags(r.flags() & flagON);
-                self.tableWidget.setItem(0, self.columnPos['Train'], r)
+                self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
                 
                 # test
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Checked)
                 r.setFlags(r.flags() & flagON);
-                self.tableWidget.setItem(0, self.columnPos['Test'], r)
+                self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
                 
                 self.initThumbnail(file_name)
                 self.tableWidget.setCurrentCell(0, 0)
     
+    @QtCore.pyqtSignature("")   
     def on_removeFile_clicked(self):
+        # Get row and fileName to remove
         row = self.tableWidget.currentRow()
+        fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
+        print "remvoe Filename in row: ", fileName, " -- ", row
+        # Check if this file was already loaded before
+        if hasattr(self.parent,'project'):
+            if fileName in [str(k.fileName) for k in self.parent.project.dataMgr]:
+                # delete it from dataMgr
+                removeIndex = self.parent.project.dataMgr.getIndexFromFileName(fileName) 
+                self.parent.project.dataMgr.remove(removeIndex)
+                print "Remove loaded File"
+
+        # Remove Row from display Table
+        
+        self.tableWidget.removeRow(row)
+        try:
+            del self.thumbList[row]
+        except IndexError:
+            pass
+        
         
         
     def initThumbnail(self, file_name):
         thumb = QtGui.QPixmap(str(file_name))
         thumb = thumb.scaledToWidth(128)
         self.thumbList.append(thumb)
-        self.thumbnailImage.setPixmap(self.thumbList[-1])
+        self.thumbnailImage.setPixmap(self.thumbList[0])
                     
     def updateThumbnail(self, row=0, col=0):
-        self.thumbnailImage.setPixmap(self.thumbList[-row - 1]) 
+        try:
+            self.thumbnailImage.setPixmap(self.thumbList[row]) 
+        except IndexError:
+            pass
     
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):
@@ -476,10 +501,12 @@ class ProjectDlg(QtGui.QDialog):
         description = self.description
         
         # New project or edited project? if edited, reuse parts of old dataMgr
-        if hasattr(self.parent,'project'):
+        if hasattr(self.parent,'project') and (not self.newProject):
             dm = self.parent.project.dataMgr
+            print "edit Project"
         else:
             dm = dataMgr.DataMgr()
+            print "new Project"
         
         self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dm)
         
@@ -499,9 +526,13 @@ class ProjectDlg(QtGui.QDialog):
         for i in xrange(self.parent.project.classCount):
             self.parent.project.labelNames.append(str(self.cmbLabelName.itemText(i)))
             
+        # Go through the rows of the table and add files if needed
         rowCount = self.tableWidget.rowCount()
-        dataItemList = self.parent.project.dataMgr.getDataList()
+        
+        # Get added dataItems so far to check if new ones were added
+        # dataItemList = self.parent.project.dataMgr.getDataList()
         oldDataFileNames = [str(k.fileName) for k in self.parent.project.dataMgr]
+        
         for k in range(0, rowCount):
                  
             fileName = str(self.tableWidget.item(k, self.columnPos['File']).text())
@@ -530,7 +561,7 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem.projects.append(self.parent.project)
         
-        dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
+        # dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
         #self.parent.project.dataMgr.setDataList(dataItemList)
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
@@ -839,8 +870,8 @@ class ClassificationInteractive(object):
         predictDataList = self.parent.project.dataMgr.buildFeatureMatrix()      
         
         numberOfClasses = len(self.parent.project.labelNames)
-        numberOfClassifiers = 6
-        treeCount = 6
+        numberOfClassifiers = 4
+        treeCount = 10
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount)
         self.initInteractiveProgressBar()
                
