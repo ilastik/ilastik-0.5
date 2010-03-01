@@ -132,8 +132,10 @@ class OnlineLaSvm(OnlineClassifier):
         self.numFeatures=features.shape[1]
         f=open('./g_run.txt','w')
         f_v=open('./var_run.txt','w')
+        f_n=open('./num_sv_run.txt','w')
         f.close()
         f_v.close()
+        f_n.close()
         #pylab.figure()
 
     def addPredictionSet(self,features,id):
@@ -172,6 +174,9 @@ class OnlineLaSvm(OnlineClassifier):
             print "Done improving solution"
             f=open('g_run.txt','a')
             f_v=open('./var_run.txt','a')
+            f_n=open('./sv_num_run.txt','a')
+            f_n.write(repr(self.maxPredSVs)+"\n")
+            
             for i in xrange(self.numFeatures):
                 if(self.svm.gamma(i)>math.exp(-100)):
                     f.write(repr(math.log(self.svm.gamma(i))))
@@ -186,6 +191,7 @@ class OnlineLaSvm(OnlineClassifier):
                     f_v.write("\t")
             f.close()
             f_v.close()
+            f_n.close()
 
     def predict(self,id):
         while(self.improveRuns<20):
