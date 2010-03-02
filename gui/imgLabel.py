@@ -3,7 +3,6 @@ from PyQt4 import QtCore, uic
 import sys, random, numpy
 import os
 from collections import deque
-#sys.path.append("..")
 from core import labelMgr, activeLearning
 from core.utilities import irange, debug
 from gui.iconMgr import ilastikIcons
@@ -756,6 +755,8 @@ class cloneView(QtGui.QGraphicsView):
         if event.button() == QtCore.Qt.LeftButton:
             self.dragging = False
             self.zooming = False
+    def render(self):
+        print "bla"
         
 class ZoomBox (QtGui.QGraphicsRectItem):
     def __init__(self):
@@ -786,7 +787,7 @@ class cloneViewWidget(QtGui.QDockWidget):
 
         #self.view = panView()
         self.labelwidget = labelwidget
-        #self.view = cloneView(view_orig)
+        self.view = cloneView(view_orig)
         self.sceneToDraw = self.labelwidget.view.scene()
         self.sceneitem = SceneItem(self.sceneToDraw)
         self.par = parent
