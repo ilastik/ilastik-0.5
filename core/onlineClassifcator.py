@@ -89,7 +89,7 @@ class OnlineRF(CumulativeOnlineClassifier):
         if(self.learnedRange==0):
             self.startRF()
         else:
-            self.rf.onlineLearn(self.features,self.labels,self.learnedRange,False)
+            self.rf.onlineLearn(self.features,self.labels,self.learnedRange)
         self.learnedRange=len(self.labels.flatten())
 
     def improveSolution(self):
@@ -165,12 +165,17 @@ class OnlineLaSvm(OnlineClassifier):
 
     def improveSolution(self):
         t0=time.time()
-        while(time.time()<t0+0.5):
+        self.svm.sig_a=1.5
+        self.svm.sig_b=-1.5
+        self.svm.enableLindepThreshold(0.0)
+        self.svm.ReFindPairs(False)
+        self.svm.finish(True)
+        while(time.time()<t0+0.25):
             self.improveRuns=self.improveRuns+1
             if self.svm==None:
                 raise RuntimeError("run \"start\" first")
             print "Begin improving solution"
-            self.svm.optimizeKernelStep(0,False)
+            self.svm.optimizeKernelStep(0,False,True)
             print "Done improving solution"
             f=open('g_run.txt','a')
             f_v=open('./var_run.txt','a')
@@ -192,6 +197,9 @@ class OnlineLaSvm(OnlineClassifier):
             f.close()
             f_v.close()
             f_n.close()
+        self.svm.enableLindepThreshold(0.01)
+        self.svm.ReFindPairs(True)
+        self.svm.finish(True)
 
     def predict(self,id):
         while(self.improveRuns<20):
@@ -216,21 +224,22 @@ class OnlineLaSvm(OnlineClassifier):
             print "Decreasing threshold"
             self.linindepThresh=self.svm.GetOptimalLinIndepTreshold(int(self.maxPredSVs))
             self.linindepThresh=min(0.9,self.linindepThresh)
-            self.svm.enableLindepThreshold(self.linindepThresh)
-            self.svm.ReFindPairs(True)
+            #self.svm.enableLindepThreshold(self.linindepThresh)
+            #self.svm.ReFindPairs(True)
             self.svm.finish(True)
         if(self.maxPredSVs>self.svm.getAlphas().shape[0]*1.1):
             print "Increasing threshold"
             self.linindepThresh=self.linindepThresh+0.05
-            self.svm.enableLindepThreshold(self.linindepThresh)
-            self.svm.ReFindPairs(False)
+            #self.svm.enableLindepThreshold(self.linindepThresh)
+            #self.svm.ReFindPairs(False)
             self.svm.finish(True)
             
 
 
         t0=time.time()
         print "Begin fast predict"
-        pred=self.svm.predictFRangedSingleCoverTree(self.predSets[id],0.5,0.1,True)
+        #pred=self.svm.predictFRangedSingleCoverTree(self.predSets[id],0.5,0.1,True)
+        pred=self.svm.predictF(self.predSets[id])
         print "End fast predict"
         needed_time=time.time()-t0
         print "needed_time",needed_time
@@ -249,6 +258,8 @@ class OnlineLaSvm(OnlineClassifier):
         pred=pred.reshape((pred.shape[0],1))
 
 
+        #self.svm.enableLindepThreshold(0.01)
+        #self.svm.ReFindPairs(False)
         return numpy.concatenate((1.0-pred, pred), axis=1)
         
 

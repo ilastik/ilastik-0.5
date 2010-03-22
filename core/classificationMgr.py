@@ -57,6 +57,7 @@ class ClassifierRandomForest(ClassifierBase):
             labels = numpy.array(labels,dtype=numpy.uint32)
         if not features.dtype == numpy.float32:
             features = numpy.array(features,dtype=numpy.float32)
+        print "Create RF with ",self.treeCount," trees"
         self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
         #self.classifier.learnRF(features, labels)
         print "tree Count", self.treeCount
@@ -359,6 +360,7 @@ class ClassifierOnlineThread(threading.Thread):
         
         self.predictions = [deque(maxlen=1) for k in range(len(predictionList))]
         self.predictionUpdated = predictionUpdated
+        self.commandQueue.put(([],[],[],"noop"))
     
     def run(self):
         while not self.stopped:
@@ -377,13 +379,16 @@ class ClassifierOnlineThread(threading.Thread):
                 print "*************************************"
                 self.classifier.addData(features, labels, ids)
                 self.classifier.fastLearn()
+                print "Done learning"
             elif action == 'improve':
                 # get an segfault here
                 self.classifier.improveSolution()
+                continue
             elif action == 'noop':
                 pass
                 
             if self.commandQueue.empty():
+                print "Will predict"
                 result = self.classifier.fastPredict(self.activeImageIndex)
                 self.predictions[self.activeImageIndex].append(result)
                 self.predictionUpdated()
