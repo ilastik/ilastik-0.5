@@ -7,6 +7,7 @@ import sys
 from core.utilities import irange
 
 import vigra
+import vigra.convolution
 at = vigra.arraytypes
 
     
@@ -196,14 +197,14 @@ class FeatureGroups(object):
         return resList
 
 gaussianGradientMagnitude = vigra.convolution.gaussianGradientMagnitude, ['Sigma' ]
-gaussianSmooth = vigra.filters.gaussianSmooth2d, ['Sigma']
+gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
 structureTensor = vigra.convolution.structureTensor, ['Sigma']
 hessianMatrixOfGaussian = vigra.convolution.hessianMatrixOfGaussian, ['Sigma']
-eigStructureTensor2d = vigra.filters.eigStructureTensor2d, ['InnerScale', 'OuterScale']
+eigStructureTensor2d = vigra.filters.structureTensorEigenvalues, ['InnerScale', 'OuterScale']
 laplacianOfGaussian = vigra.convolution.laplacianOfGaussian, ['Sigma']
 morphologicalOpening = lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
 morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
-eigHessianTensor2d = vigra.filters.eigHessian2d, ['Sigma']
+eigHessianTensor2d = vigra.filters.hessianOfGaussianEigenvalues, ['Sigma']
 differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmooth2d(x,s) - vigra.filters.gaussianSmooth2d(x,s/3*2), ['Sigma']
 cannyEdge = lambda x, s: vigra.edgedetection.cannyEdgeImage(x, s, 0, 1), ['Sigma']
 

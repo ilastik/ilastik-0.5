@@ -1,4 +1,4 @@
-import lasvm
+import vigra.lasvm as lasvm
 import numpy
 import math
 import time

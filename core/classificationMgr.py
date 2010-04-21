@@ -19,6 +19,7 @@ def interactiveMessagePrint(* args):
 
 try:
     import vigra
+    import vigra.classification
 except ImportError:
     sys.exit("vigra module not found!")
 
