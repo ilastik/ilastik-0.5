@@ -660,10 +660,14 @@ class ImageScene( QtGui.QGraphicsView):
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
 
         #cross chair
-        pen = QtGui.QPen(QtCore.Qt.red, 1, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        pen = QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        
+        # Fixed pen width
+        pen.setCosmetic(True)
         self.linex = QtGui.QGraphicsLineItem(0,0,0,imShape[1])
         self.liney = QtGui.QGraphicsLineItem(0,0,imShape[0],1)
         self.linex.setZValue(100)
+
         self.linex.setPen(pen)
         self.liney.setPen(pen)
         self.liney.setZValue(100)
@@ -1106,7 +1110,7 @@ def test():
     from spyderlib.utils.qthelpers import qapplication
     app = qapplication()
 
-    im = numpy.zeros((128,64,32),'uint8' )
+    im = (numpy.random.rand(128,64,32)*255).astype(numpy.uint8)
     im[0:10,0:10,0:10] = 255
 
     dialog = VolumeEditor(im)
