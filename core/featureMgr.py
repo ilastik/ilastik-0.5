@@ -205,8 +205,8 @@ laplacianOfGaussian = vigra.convolution.laplacianOfGaussian, ['Sigma']
 morphologicalOpening = lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
 morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
 eigHessianTensor2d = vigra.filters.hessianOfGaussianEigenvalues, ['Sigma']
-differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmooth2d(x,s) - vigra.filters.gaussianSmooth2d(x,s/3*2), ['Sigma']
-cannyEdge = lambda x, s: vigra.edgedetection.cannyEdgeImage(x, s, 0, 1), ['Sigma']
+differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2), ['Sigma']
+cannyEdge = lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1), ['Sigma']
 
 def location_(x,s):
     X, Y = numpy.meshgrid(range(-x.shape[1]/2, x.shape[1]/2), range(-x.shape[0]/2, x.shape[0]/2))

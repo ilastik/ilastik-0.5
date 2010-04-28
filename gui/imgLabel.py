@@ -1704,7 +1704,7 @@ class OverlayMgr(object):
     def rawImage2pixmap(self, rawImage, classColor, type, opasity=0.7, normRange=(0.0, 1.0) ):
         # default of normRange for rawImages in [0,1]
         if type == 'continious':
-            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize=normRange)
+            image = vigra.arraytypes.ScalarImage(rawImage).T.qimage(normalize=normRange)
             if isinstance(classColor, int):
                 # set corresponding color table
                 #print "setColor Table"
@@ -1721,7 +1721,7 @@ class OverlayMgr(object):
             # old version of gray-numpy to qimage using qwt
             #image = qwt.toQImage(rawImage.astype(numpy.uint8))
             #image = qimage2ndarray.gray2qimage((rawImage).astype(numpy.uint8))
-            image = vigra.arraytypes.ScalarImage(rawImage).qimage(normalize=False)
+            image = vigra.arraytypes.ScalarImage(rawImage).T.qimage(normalize=False)
             classColor = self.classColors
             for i in range(rawImage.max() + 1):
                 classColor = QtGui.QColor(self.classColors[i + 1])
