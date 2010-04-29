@@ -362,15 +362,14 @@ class VolumeEditor(QtGui.QWidget):
         self.grid.addWidget(self.imageScenes[2], 0, 0)
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
-
-        #enable opengl acceleration
-        for index, item in enumerate(self.imageScenes):
-            #item.setViewport(QtOpenGL.QGLWidget())
-            pass
-
-
+        
         self.overview = OverviewScene(self, self.image.shape[1:4])
         self.grid.addWidget(self.overview, 1, 1)
+
+        if self.image.shape[1] == 1:
+            self.imageScenes[1].setVisible(False)
+            self.imageScenes[2].setVisible(False)
+            self.overview.setVisible(False)
 
         self.gridWidget = QtGui.QWidget()
         self.gridWidget.setLayout(self.grid)
@@ -661,10 +660,11 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene = QtGui.QGraphicsScene(self.view)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setScene(self.scene)
+        self.setBackgroundBrush(QtGui.QBrush(QtCore.Qt.black))
 
         #enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
         self.openglWidget = QtOpenGL.QGLWidget()
-        #self.setViewport(self.openglWidget)
+        self.setViewport(self.openglWidget)
         
         # self.setViewport(QtOpenGL.QGLWidget())
         
@@ -1176,9 +1176,12 @@ def test():
     from spyderlib.utils.qthelpers import qapplication
     app = qapplication()
 
-    im = (numpy.random.rand(128,64,32)*255).astype(numpy.uint8)
-    im[0:10,0:10,0:10] = 255
+    #im = (numpy.random.rand(128,64,32)*255).astype(numpy.uint8)
+    #im[0:10,0:10,0:10] = 255
 
+    im = (numpy.random.rand(1024,1024)*255).astype(numpy.uint8)
+    im[0:10,0:10] = 255
+    
     dialog = VolumeEditor(im)
     dialog.show()
     app.exec_()
