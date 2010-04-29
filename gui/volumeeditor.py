@@ -89,6 +89,10 @@ class DataAccessor():
             etc.
         """
 
+        if issubclass(data.__class__, DataAccessor):
+            data = data.data
+            channels = True
+        
         rgb = 1
         if data.shape[-1] == 3 or channels:
             rgb = 0
@@ -129,44 +133,47 @@ class DataAccessor():
 
     def getSlice(self, num, axis, time = 0, channel = 0):
         if axis == 0:
-            return self[time, num, :,: , channel]
+            return self.data[time, num, :,: , channel]
         elif axis == 1:
-            return self[time, :,num,: , channel]
+            return self.data[time, :,num,: , channel]
         elif axis ==2:
-            return self[time, :,: ,num,  channel]
+            return self.data[time, :,: ,num,  channel]
 
     def setSlice(self, data, num, axis, time = 0, channel = 0):
         if axis == 0:
-            self[time, num, :,: , channel] = data
+            self.data[time, num, :,: , channel] = data
         elif axis == 1:
-            self[time, :,num,: , channel] = data
+            self.data[time, :,num,: , channel] = data
         elif axis ==2:
-            self[time, :,: ,num,  channel] = data
+            self.data[time, :,: ,num,  channel] = data
     
 
-#class OverlaySlice():
-    #def __init__(self, data, color, alpha):
-        #self.color = color
-        #self.alpha = alpha
+class OverlaySlice():
+    def __init__(self, data, color, alpha):
+        self.color = color
+        self.alpha = alpha
 
-        #self.alphaChannel = data
+        self.alphaChannel = data
 
-        #shape = data.shape
-        #shape +=(3,)
+        shape = data.shape
+        shape +=(3,)
 
-        #self.data = numpy.zeros(shape, 'uint8')
-        #self.data[:,:,color] = data[:,:]
+        self.data = numpy.zeros(shape, 'uint8')
+        self.data[:,:,color] = data[:,:]
 
 
 class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
     def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4):
-        QtGui.QListWidgetItem.__init__(name)
-        DataAccessor.__init__(data)
+        QtGui.QListWidgetItem.__init__(self,name)
+        DataAccessor.__init__(self,data)
         self.setTooltip = name
         self.color = color
         self.alpha = alpha
         self.name = name
         self.visible = True
+
+    def getOverlaySlice(self, num, axis, time = 0, channel = 0):
+        return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha)
 
 class OverlayListView(QtGui.QListWidget):
     def __init__(self,parent = None):
@@ -261,7 +268,7 @@ class LabelListView(QtGui.QListWidget):
 
 
     def addLabel(self, labelName, labelNumber, color):
-        description = VolumeLabelDescription(labelName, labelNumber, color)        
+        description = VolumeLabelDescription(labelName, labelNumber, color.rgb())
         self.volumeLabel.descriptions.append(description)
         
         label =  LabelListItem(labelName, labelNumber, color)
@@ -512,7 +519,7 @@ class VolumeEditor(QtGui.QWidget):
         self.sliceSelectors[axis].setValue(num)
 
         for index, item in enumerate(self.overlayView.overlays):
-            tempoverlays.append(item.getSlice(num,axis, self.selectedTime, self.selectedChannel))
+            tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, self.selectedChannel)) 
 
         tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         if self.labels.data is not None:
@@ -654,8 +661,10 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene = QtGui.QGraphicsScene(self.view)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setScene(self.scene)
-        
-        self.setViewport(QtOpenGL.QGLWidget())
+
+        #enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
+        self.openglWidget = QtOpenGL.QGLWidget()
+        #self.setViewport(self.openglWidget)
         
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
