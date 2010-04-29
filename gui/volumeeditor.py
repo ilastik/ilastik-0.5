@@ -664,8 +664,8 @@ class ImageScene( QtGui.QGraphicsView):
         
         # Fixed pen width
         pen.setCosmetic(True)
-        self.linex = QtGui.QGraphicsLineItem(0,0,0,imShape[1])
-        self.liney = QtGui.QGraphicsLineItem(0,0,imShape[0],1)
+        self.linex = QtGui.QGraphicsLineItem()
+        self.liney = QtGui.QGraphicsLineItem()
         self.linex.setZValue(100)
 
         self.linex.setPen(pen)
@@ -802,8 +802,6 @@ class ImageScene( QtGui.QGraphicsView):
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
             self.linex.setLine(0,y,self.image.width(),y)
             self.liney.setLine(x,0,x,self.image.height())
-            
-        
         
         if event.buttons() == QtCore.Qt.LeftButton and self.drawing == True:
             line = self.drawManager.moveTo(mousePos)
