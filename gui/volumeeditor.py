@@ -776,6 +776,19 @@ class ImageScene( QtGui.QGraphicsView):
         k_alt = (keys == QtCore.Qt.AltModifier)
         k_ctrl = (keys == QtCore.Qt.ControlModifier)
 
+        if self.drawing == True:
+            mousePos = self.mapToScene(event.pos())
+            image = self.drawManager.endDraw(mousePos)
+            ndarr = qimage2ndarray.rgb_view(image)
+            labels = ndarr[:,:,0]
+            labels = labels.swapaxes(0,1)
+            number = self.volumeEditor.labelView.currentItem().number
+            labels = numpy.where(labels > 0, number, 0)
+            self.volumeEditor.setLabels(self.axis, labels, self.drawManager.erasing)
+            self.drawManager.beginDraw(mousePos)
+
+
+
         if event.delta() > 0:
             if k_alt is True:
                 self.volumeEditor.sliceSelectors[self.axis].stepBy(10)
