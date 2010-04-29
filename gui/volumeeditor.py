@@ -884,12 +884,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
         ratio0h = 1.0 * pix0.height() / maxi
         ratio1h = 1.0 * pix1.height() / maxi
         ratio2h = 1.0 * pix2.height() / maxi
-        
-        
-        print "X: ", pix0.width(), pix0.height()
-        print "Y: ",pix1.width(), pix1.height()
-        print "Z: ",pix2.width(), pix2.height()
-        
+       
         glMatrixMode(GL_MODELVIEW)
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
