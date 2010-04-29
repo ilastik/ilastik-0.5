@@ -74,10 +74,24 @@ VolumeEditorList.editors = VolumeEditorList()
 
 
 class DataAccessor():
-    def __init__(self, data, channels = 0):
-        rgb = 0
+    """
+    This class gives consistent access to data volumes, images channels etc.
+    access is always of the form [time, x, y, z, channel]
+    """
+    
+    def __init__(self, data, channels = False):
+        """
+        data should be a numpy/vigra array that transformed to the [time, x, y, z, channel] access like this:
+            (a,b), b != 3 and channels = False  (0,0,a,b,0)
+            (a,b), b == 3 or channels = True:  (0,0,0,a,b)
+            (a,b,c), c != 3 and channels = False:  (0,a,b,c,0)
+            (a,b,c), c == 3 or channels = True:  (0,0,a,b,c)
+            etc.
+        """
+
+        rgb = 1
         if data.shape[-1] == 3 or channels:
-            rgb = 1
+            rgb = 0
 
         tempShape = data.shape
 
@@ -91,9 +105,10 @@ class DataAccessor():
             #self.data.reshape(tempShape)
 
 
-        for i in range(5 - (len(data.shape) - rgb)):
+        for i in range(5 - (len(data.shape) + rgb)):
             tempShape = (1,) + tempShape
-        if not rgb:
+            
+        if rgb:
             tempShape = tempShape + (1,)
 
         self.data = self.data.reshape(tempShape)
@@ -103,54 +118,62 @@ class DataAccessor():
         if data.shape[-1] == 3:
             self.rgb = True
 
+        self.shape = self.data.shape
 
 
+    def __getitem__(self, key):
+        return self.data[tuple(key)]
+    
+    def __setitem__(self, key, data):
+        self.data[tuple(key)] = data
 
-class OverlaySlice():
-    def __init__(self, data, color, alpha):
-        self.color = color
-        self.alpha = alpha
+    def getSlice(self, num, axis, time = 0, channel = 0):
+        if axis == 0:
+            return self[time, num, :,: , channel]
+        elif axis == 1:
+            return self[time, :,num,: , channel]
+        elif axis ==2:
+            return self[time, :,: ,num,  channel]
 
-        self.alphaChannel = data
+    def setSlice(self, data, num, axis, time = 0, channel = 0):
+        if axis == 0:
+            self[time, num, :,: , channel] = data
+        elif axis == 1:
+            self[time, :,num,: , channel] = data
+        elif axis ==2:
+            self[time, :,: ,num,  channel] = data
+    
 
-        shape = data.shape
-        shape +=(3,)
+#class OverlaySlice():
+    #def __init__(self, data, color, alpha):
+        #self.color = color
+        #self.alpha = alpha
 
-        self.data = numpy.zeros(shape, 'uint8')
-        self.data[:,:,color] = data[:,:]
+        #self.alphaChannel = data
+
+        #shape = data.shape
+        #shape +=(3,)
+
+        #self.data = numpy.zeros(shape, 'uint8')
+        #self.data[:,:,color] = data[:,:]
 
 
-class VolumeOverlay(QtGui.QListWidgetItem):
+class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
     def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4):
-        super(VolumeOverlay, self).__init__(name)
+        QtGui.QListWidgetItem.__init__(name)
+        DataAccessor.__init__(data)
         self.setTooltip = name
-        self.data = data
         self.color = color
         self.alpha = alpha
         self.name = name
         self.visible = True
-
-    def getSlice(self, num, axis):
-        shape = ()
-        for index, item in enumerate(self.data.shape):
-            if index != axis:
-                shape += (item,)
-
-        data = None
-        if axis is 0:
-            data = self.data[num,:,:]
-        elif axis is 1:
-            data = self.data[:,num,:]
-        elif axis is 2:
-            data = self.data[:,:,num]
-        return OverlaySlice(data, self.color, self.alpha)
 
 class OverlayListView(QtGui.QListWidget):
     def __init__(self,parent = None):
         super(OverlayListView, self).__init__(parent)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
-        self.overlays = []
+        self.overlays = [] #array of VolumeOverlays
 
     def addOverlay(self, overlay):
         self.overlays.append(overlay)
@@ -190,7 +213,11 @@ class VolumeLabelDescription():
 
 class VolumeLabels():
     def __init__(self, data = None):
-        self.data = data
+        if issubclass(data.__class__, DataAccessor):
+            self.data = data
+        else:
+            self.data = DataAccessor(data, channels = False)
+
         self.descriptions = [] #array of VolumeLabelDescriptions
 
 class LabelListItem(QtGui.QListWidgetItem):
@@ -292,21 +319,26 @@ class VolumeEditor(QtGui.QWidget):
         self.name = name
         title = name
 
+        if issubclass(image.__class__, DataAccessor):
+            self.image = image
+        else:
+            self.image = DataAccessor(image)
+
+
         if hasattr(image, '_labels'):
             self.labels = image._labels
         elif labels is not None:
             self.labels = labels
         else:
-            self.labels = VolumeLabels()
+            tempData = DataAccessor(numpy.zeros(self.image.shape[1:4],'uint8'))
+            self.labels = VolumeLabels(tempData)
 
         self.editor_list = VolumeEditorList.editors
 
         self.linkedTo = None
 
-        self.selAxis = 0
-        self.selSlice = 0
-
-        self.image = image
+        self.selectedTime = 0
+        self.selectedChannel = 0
 
         self.ownIndex = self.editor_list.editors.__len__()
         #self.setAccessibleName(self.name)
@@ -317,9 +349,9 @@ class VolumeEditor(QtGui.QWidget):
         self.grid = QtGui.QGridLayout()
 
         self.imageScenes = []
-        self.imageScenes.append(ImageScene(self, image.shape[1:3], 0))
-        self.imageScenes.append(ImageScene( self, (image.shape[0], image.shape[2]) , 1))
-        self.imageScenes.append(ImageScene(self, image.shape[0:2], 2))
+        self.imageScenes.append(ImageScene(self, self.image.shape[2:4], axis = 0))
+        self.imageScenes.append(ImageScene( self, (self.image.shape[1], self.image.shape[3]) , axis = 1))
+        self.imageScenes.append(ImageScene(self, self.image.shape[1:3], axis = 2))
         self.grid.addWidget(self.imageScenes[2], 0, 0)
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
@@ -330,7 +362,7 @@ class VolumeEditor(QtGui.QWidget):
             pass
 
 
-        self.overview = OverviewScene(self)
+        self.overview = OverviewScene(self, self.image.shape[1:4])
         self.grid.addWidget(self.overview, 1, 1)
 
         self.gridWidget = QtGui.QWidget()
@@ -365,7 +397,7 @@ class VolumeEditor(QtGui.QWidget):
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceX)
         self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 0:"))
         self.toolBoxLayout.addWidget(sliceSpin)
-        sliceSpin.setRange(0,self.image.shape[0] - 1)
+        sliceSpin.setRange(0,self.image.shape[1] - 1)
         self.sliceSelectors.append(sliceSpin)
 
         sliceSpin = QtGui.QSpinBox()
@@ -373,7 +405,7 @@ class VolumeEditor(QtGui.QWidget):
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceY)
         self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 1:"))
         self.toolBoxLayout.addWidget(sliceSpin)
-        sliceSpin.setRange(0,self.image.shape[1] - 1)
+        sliceSpin.setRange(0,self.image.shape[2] - 1)
         self.sliceSelectors.append(sliceSpin)
 
         sliceSpin = QtGui.QSpinBox()
@@ -381,17 +413,8 @@ class VolumeEditor(QtGui.QWidget):
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceZ)
         self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 2:"))
         self.toolBoxLayout.addWidget(sliceSpin)
-        sliceSpin.setRange(0,self.image.shape[2] - 1)
+        sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
-
-
-        maxShape = max(image.shape[0], image.shape[1])
-        maxShape = max(maxShape, image.shape[2])
-
-        self.maxSlices = []
-        self.maxSlices.append((self.image.shape[0] - 1))
-        self.maxSlices.append((self.image.shape[1] - 1))
-        self.maxSlices.append((self.image.shape[2] - 1))
 
         self.selSlices = []
         self.selSlices.append(0)
@@ -471,6 +494,17 @@ class VolumeEditor(QtGui.QWidget):
     def changeSliceZ(self, num):
         self.changeSlice(num, 2)
 
+    def setChannel(self, channel):
+        self.selectedChannel = channel
+        for i in range(3):
+            self.changeSlice(self.selSlices[i], i)
+
+    def setTime(self, time):
+        self.selectedTime = time
+        for i in range(3):
+            self.changeSlice(self.selSlices[i], i)
+
+
     def changeSlice(self, num, axis):
         tempImage = None
         tempLabels = None
@@ -478,20 +512,11 @@ class VolumeEditor(QtGui.QWidget):
         self.sliceSelectors[axis].setValue(num)
 
         for index, item in enumerate(self.overlayView.overlays):
-            tempoverlays.append(item.getSlice(num,axis))
+            tempoverlays.append(item.getSlice(num,axis, self.selectedTime, self.selectedChannel))
 
-        if axis is 0:
-            tempImage = self.image[num,:,:]
-            if self.labels.data is not None:
-                tempLabels = self.labels.data[num,:,:]
-        elif axis is 1:
-            tempImage = self.image[:,num,:]
-            if self.labels.data is not None:
-                tempLabels = self.labels.data[:,num,:]
-        elif axis is 2:
-            tempImage = self.image[:,:,num]
-            if self.labels.data is not None:
-                tempLabels = self.labels.data[:,:,num]
+        tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+        if self.labels.data is not None:
+            tempLabels = self.labels.data.getSlice(num,axis, self.selectedTime, self.selectedChannel)
 
         self.selSlices[axis] = num
         self.imageScenes[axis].display(tempImage, tempoverlays, tempLabels)
@@ -547,29 +572,16 @@ class VolumeEditor(QtGui.QWidget):
     def setLabels(self, axis, labels, erase):
         num = self.sliceSelectors[axis].value()
 
-        if self.labels.data is None:
-            self.labels.data = numpy.zeros(self.image.shape[0:3],'uint8')
-
         tempLabels = None
         
-        if axis is 0:
-            tempLabels = self.labels.data[num,:,:]
-        elif axis is 1:
-            tempLabels = self.labels.data[:,num,:]
-        elif axis is 2:
-            tempLabels = self.labels.data[:,:,num]
+        tempLabels = self.labels.data.getSlice(num, axis, self.selectedTime, 0)
 
         if erase == True:
             tempLabels = numpy.where(labels > 0, 0, tempLabels)
         else:
             tempLabels = numpy.where(labels > 0, labels, tempLabels)
 
-        if axis is 0:
-            self.labels.data[num,:,:] = tempLabels[:,:]
-        elif axis is 1:
-            self.labels.data[:,num,:] = tempLabels[:,:]
-        elif axis is 2:
-            self.labels.data[:,:,num] = tempLabels[:,:]
+        self.labels.data.setSlice(tempLabels[:,:], num, axis, self.selectedTime, 0)
 
     def show(self):
         super(VolumeEditor, self).show()
@@ -642,7 +654,9 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene = QtGui.QGraphicsScene(self.view)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setScene(self.scene)
-        #self.setViewport(QtOpenGL.QGLWidget())
+        
+        self.setViewport(QtOpenGL.QGLWidget())
+        
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
         self.imageItem = None
@@ -794,6 +808,7 @@ class ImageScene( QtGui.QGraphicsView):
             labels = numpy.where(labels > 0, number, 0)
             self.volumeEditor.setLabels(self.axis, labels, self.drawManager.erasing)
             self.drawing = False
+            self.volumeEditor.changeSlice(self.volumeEditor.selSlices[self.axis], self.axis)
 
     def mouseMoveEvent(self,event):
         mousePos = self.mapToScene(event.pos())
@@ -887,8 +902,9 @@ class OverviewScene(QtOpenGL.QGLWidget):
     Widget for drawing two spirals.
     '''
 
-    def __init__(self, parent):
+    def __init__(self, parent, shape):
         QtOpenGL.QGLWidget.__init__(self)
+        self.sceneShape = shape
         self.parent = parent
         self.images = parent.imageScenes
         self.sceneItems = []
@@ -980,7 +996,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
         glEnd()                # Done Drawing The Quad
 
 
-        curCenter = -(( 1.0 * self.parent.selSlices[2] / self.parent.maxSlices[2] ) - 0.5 )*2.0*ratio1h
+        curCenter = -(( 1.0 * self.parent.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
         if axis is 2 or self.tex[2] is 0:
             self.tex[2] = self.bindTexture(self.images[2].image, GL_TEXTURE_2D, GL_RGB)
         else:
@@ -1019,7 +1035,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
 
 
-        curCenter = (( (1.0 * self.parent.selSlices[0]) / self.parent.maxSlices[0] ) - 0.5 )*2.0*ratio2w
+        curCenter = (( (1.0 * self.parent.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
 
         if axis is 0 or self.tex[0] is 0:
             self.tex[0] = self.bindTexture(self.images[0].image, GL_TEXTURE_2D, GL_RGB)
@@ -1055,7 +1071,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
         glEnd()
 
 
-        curCenter = (( 1.0 * self.parent.selSlices[1] / self.parent.maxSlices[1] ) - 0.5 )*2.0*ratio2h
+        curCenter = (( 1.0 * self.parent.selSlices[1] / self.sceneShape[1] ) - 0.5 )*2.0*ratio2h
 
 
         if axis is 1 or self.tex[1] is 0:
