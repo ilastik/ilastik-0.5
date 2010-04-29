@@ -666,6 +666,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.openglWidget = QtOpenGL.QGLWidget()
         #self.setViewport(self.openglWidget)
         
+        # self.setViewport(QtOpenGL.QGLWidget())
+        
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
         self.imageItem = None
