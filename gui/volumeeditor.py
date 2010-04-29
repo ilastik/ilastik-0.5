@@ -839,6 +839,22 @@ class ImageScene( QtGui.QGraphicsView):
             self.scene.addItem(line)
 
 
+    def mouseDoubleClickEvent(self, event):
+        mousePos = self.mapToScene(event.pos())
+        x = mousePos.x()
+        y = mousePos.y()
+        
+          
+        if self.axis == 0:
+            self.volumeEditor.changeSlice(x, 1)
+            self.volumeEditor.changeSlice(y, 2)
+        elif self.axis == 1:
+            self.volumeEditor.changeSlice(x, 0)
+            self.volumeEditor.changeSlice(y, 2)
+        elif self.axis ==2:
+            self.volumeEditor.changeSlice(x, 0)
+            self.volumeEditor.changeSlice(y, 1)
+
     def onContext(self, pos):
         menu = QtGui.QMenu(self)
         labeling = menu.addMenu("Labeling")
