@@ -803,6 +803,7 @@ class ImageScene( QtGui.QGraphicsView):
                 mousePos = self.mapToScene(event.pos())
 #                self.drawManager.setColor(self.volumeEditor.labelView.currentItem().curColor)
                 line = self.drawManager.beginDraw(mousePos)
+                line.setZValue(99)
                 self.tempImageItems.append(line)
                 self.scene.addItem(line)
         elif event.buttons() == QtCore.Qt.RightButton:
@@ -861,6 +862,7 @@ class ImageScene( QtGui.QGraphicsView):
         
         if event.buttons() == QtCore.Qt.LeftButton and self.drawing == True:
             line = self.drawManager.moveTo(mousePos)
+            line.setZValue(99)
             self.tempImageItems.append(line)
             self.scene.addItem(line)
 
@@ -1186,7 +1188,7 @@ def test():
 
     app = qapplication()
 
-    im = (numpy.random.rand(512,512,512)*255).astype(numpy.uint8)
+    im = (numpy.random.rand(256,256,256)*255).astype(numpy.uint8)
     im[0:10,0:10,0:10] = 255
 
     dialog = VolumeEditor(im)
