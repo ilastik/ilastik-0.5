@@ -1176,15 +1176,23 @@ def test():
     from spyderlib.utils.qthelpers import qapplication
     app = qapplication()
 
-    #im = (numpy.random.rand(128,64,32)*255).astype(numpy.uint8)
-    #im[0:10,0:10,0:10] = 255
-
     im = (numpy.random.rand(1024,1024)*255).astype(numpy.uint8)
     im[0:10,0:10] = 255
     
     dialog = VolumeEditor(im)
     dialog.show()
     app.exec_()
+
+
+    app = qapplication()
+
+    im = (numpy.random.rand(512,512,512)*255).astype(numpy.uint8)
+    im[0:10,0:10,0:10] = 255
+
+    dialog = VolumeEditor(im)
+    dialog.show()
+    app.exec_()
+
 
 if __name__ == "__main__":
     test()
