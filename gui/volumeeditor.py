@@ -801,8 +801,37 @@ class ImageScene( QtGui.QGraphicsView):
         y = mousePos.y()
 
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
+            self.linex.setZValue(100)
+            self.liney.setZValue(100)
+            
             self.linex.setLine(0,y,self.image.width(),y)
             self.liney.setLine(x,0,x,self.image.height())
+            if self.axis == 0:
+                scene1 = self.volumeEditor.imageScenes[1]
+                scene2 = self.volumeEditor.imageScenes[2]
+                scene1.linex.setZValue(-100)
+                scene1.liney.setZValue(-100)
+                scene2.liney.setZValue(-100)
+                scene2.linex.setZValue(100)
+                scene2.linex.setLine(0,x,scene2.image.width(),x)
+            elif self.axis == 1:
+                scene0 = self.volumeEditor.imageScenes[0]
+                scene2 = self.volumeEditor.imageScenes[2]
+                scene0.linex.setZValue(-100)
+                scene0.liney.setZValue(-100)
+                scene2.linex.setZValue(-100)
+                scene2.liney.setZValue(100)
+                scene2.liney.setLine(x,0,x,scene2.image.height())
+            elif self.axis == 2:
+                scene0 = self.volumeEditor.imageScenes[0]
+                scene1 = self.volumeEditor.imageScenes[1]
+                scene0.liney.setZValue(-100)
+                scene0.linex.setZValue(100)
+                scene0.linex.setLine(y,0,y,scene0.image.height())
+                scene1.linex.setZValue(-100)
+                scene1.liney.setZValue(100)
+                scene1.liney.setLine(x,0,x,scene1.image.height())
+                
         
         if event.buttons() == QtCore.Qt.LeftButton and self.drawing == True:
             line = self.drawManager.moveTo(mousePos)
