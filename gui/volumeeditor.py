@@ -661,6 +661,7 @@ class ImageScene( QtGui.QGraphicsView):
 
         #cross chair
         pen = QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.setMouseTracking(True)
         
         # Fixed pen width
         pen.setCosmetic(True)
@@ -798,7 +799,7 @@ class ImageScene( QtGui.QGraphicsView):
         mousePos = self.mapToScene(event.pos())
         x = mousePos.x()
         y = mousePos.y()
-        
+
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
             self.linex.setLine(0,y,self.image.width(),y)
             self.liney.setLine(x,0,x,self.image.height())
