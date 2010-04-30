@@ -146,7 +146,32 @@ class DataAccessor():
             self.data[time, :,num,: , channel] = data
         elif axis ==2:
             self.data[time, :,: ,num,  channel] = data
-    
+
+    def getSubSlice(self, offsets, sizes, num, axis, time = 0, channel = 0):
+        ax0l = offsets[0]
+        ax0r = offsets[0]+sizes[0]
+        ax1l = offsets[1]
+        ax1r = offsets[1]+sizes[1]
+
+        if axis == 0:
+            return self.data[time, num, ax0l:ax0r,ax1l:ax1r , channel]
+        elif axis == 1:
+            return self.data[time, ax0l:ax0r, num,ax1l:ax1r , channel]
+        elif axis ==2:
+            return self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel]
+
+    def setSubSlice(self, offsets, data, num, axis, time = 0, channel = 0):
+        ax0l = offsets[0]
+        ax0r = offsets[0]+data.shape[0]
+        ax1l = offsets[1]
+        ax1r = offsets[1]+data.shape[1]
+
+        if axis == 0:
+            self.data[time, num,  ax0l:ax0r, ax1l:ax1r , channel] = data
+        elif axis == 1:
+            self.data[time, ax0l:ax0r,num, ax1l:ax1r , channel] = data
+        elif axis ==2:
+            self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel] = data
 
 class OverlaySlice():
     def __init__(self, data, color, alpha):
@@ -575,19 +600,23 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes[1].doScale(scaleFactor)
         self.imageScenes[2].doScale(scaleFactor)
 
-    def setLabels(self, axis, labels, erase):
+    def setLabels(self, offsets, axis, labels, erase):
         num = self.sliceSelectors[axis].value()
 
         tempLabels = None
-        
-        tempLabels = self.labels.data.getSlice(num, axis, self.selectedTime, 0)
+        print offsets
+        print labels.shape
+        tempLabels = self.labels.data.getSubSlice(offsets, labels.shape, num, axis, self.selectedTime, 0)
+
+        print labels.shape
+        print tempLabels.shape
 
         if erase == True:
             tempLabels = numpy.where(labels > 0, 0, tempLabels)
         else:
             tempLabels = numpy.where(labels > 0, labels, tempLabels)
 
-        self.labels.data.setSlice(tempLabels[:,:], num, axis, self.selectedTime, 0)
+        self.labels.data.setSubSlice(offsets, tempLabels, num, axis, self.selectedTime, 0)
 
     def show(self):
         super(VolumeEditor, self).show()
@@ -600,12 +629,26 @@ class DrawManager(QtCore.QObject):
         self.parent = parent
         self.shape = shape
         self.brushSize = 3
+        self.initBoundingBox()
         self.penVis = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.penDraw = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.penDraw.setColor(QtCore.Qt.white)
         self.createNewImage()
         self.pos = None
         self.erasing = False
+
+
+    def initBoundingBox(self):
+        self.leftMost = self.shape[0]
+        self.rightMost = 0
+        self.topMost = self.shape[1]
+        self.bottomMost = 0
+
+    def growBoundingBox(self):
+        self.leftMost = max(0,self.leftMost - 10)
+        self.topMost = max(0,self.topMost - 10)
+        self.rightMost = min(self.shape[0],self.rightMost + 10)
+        self.bottomMost = min(self.shape[1],self.bottomMost + 10)
 
     def createNewImage(self):
         self.image = QtGui.QImage(self.shape[0], self.shape[1],QtGui.QImage.Format_ARGB32_Premultiplied) #TODO: format
@@ -635,15 +678,30 @@ class DrawManager(QtCore.QObject):
     def endDraw(self, pos):
         self.moveTo(pos)
         self.painter.end()
-        tempi = self.image
+        self.growBoundingBox()
+        tempi = self.image.copy(self.leftMost, self.topMost, self.rightMost - self.leftMost, self.bottomMost - self.topMost)
+        oldLeft = self.leftMost
+        oldTop = self.topMost
         self.createNewImage()
-        return tempi
+        self.initBoundingBox()
+        return (oldLeft, oldTop, tempi) #TODO: hackish, probably return a class ??
 
     def moveTo(self, pos):
         self.painter.drawLine(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         line = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         line.setPen(self.penVis)
         self.pos = pos
+        x = pos.x()
+        y = pos.y()
+        #update bounding Box :
+        if x > self.rightMost:
+            self.rightMost = x
+        elif x < self.leftMost:
+            self.leftMost = x
+        if y > self.bottomMost:
+            self.bottomMost = y
+        elif y < self.topMost:
+            self.topMost = y
         return line
 
 
@@ -660,6 +718,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene = QtGui.QGraphicsScene(self.view)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setScene(self.scene)
+        self.view.setSceneRect(0,0, imShape[0],imShape[1])
         self.setBackgroundBrush(QtGui.QBrush(QtCore.Qt.black))
 
         #enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
@@ -778,13 +837,14 @@ class ImageScene( QtGui.QGraphicsView):
 
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
-            image = self.drawManager.endDraw(mousePos)
+            results = self.drawManager.endDraw(mousePos)
+            image = results[2]
             ndarr = qimage2ndarray.rgb_view(image)
             labels = ndarr[:,:,0]
             labels = labels.swapaxes(0,1)
             number = self.volumeEditor.labelView.currentItem().number
             labels = numpy.where(labels > 0, number, 0)
-            self.volumeEditor.setLabels(self.axis, labels, self.drawManager.erasing)
+            self.volumeEditor.setLabels(results[0:2],self.axis, labels, self.drawManager.erasing)
             self.drawManager.beginDraw(mousePos)
 
 
@@ -825,13 +885,15 @@ class ImageScene( QtGui.QGraphicsView):
     def mouseReleaseEvent(self, event):
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
-            image = self.drawManager.endDraw(mousePos)
+            result = self.drawManager.endDraw(mousePos)
+            print result
+            image = result[2]
             ndarr = qimage2ndarray.rgb_view(image)
             labels = ndarr[:,:,0]
             labels = labels.swapaxes(0,1)
             number = self.volumeEditor.labelView.currentItem().number
             labels = numpy.where(labels > 0, number, 0)
-            self.volumeEditor.setLabels(self.axis, labels, self.drawManager.erasing)
+            self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)
             self.drawing = False
             self.volumeEditor.changeSlice(self.volumeEditor.selSlices[self.axis], self.axis)
 
