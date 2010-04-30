@@ -338,9 +338,58 @@ class LabelListView(QtGui.QListWidget):
 
         self.buildColorTab()
 
+#abstract base class for undo redo stuff
+class State():
+    def __init__(self):
+        pass
+
+    def restore(self):
+        pass
+
+
+class LabelState(State):
+    def __init__(self, title, axis, num, offsets, data, time):
+        self.title = title
+        self.time = time
+        self.num = num
+        self.offsets = offsets
+        self.axis = axis
+        self.data = data
+
+    def restore(self, volumeEditor):
+        temp = self.data.copy()
+        self.data = volumeEditor.labels.data.getSubSlice(self.offsets, temp.shape, self.num, self.axis, self.time, 0).copy()
+        volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
+        volumeEditor.changeSlice(self.num, self.axis)
 
 
 
+class HistoryManager(QtCore.QObject):
+    def __init__(self, parent, maxSize = 30):
+        self.volumeEditor = parent
+        self.maxSize = maxSize
+        self.history = []
+        self.current = 0
+
+    def append(self, state):
+        if self.current + 1 < len(self.history):
+            self.history = self.history[0:self.current+1]
+        self.history.append(state)
+
+        if len(self.history) > self.maxSize:
+            self.history = self.history[len(self.history)-self.maxSize:len(self.history)]
+        
+        self.current = len(self.history) - 1
+
+    def undo(self):
+        if self.current > 0:
+            self.history[self.current].restore(self.volumeEditor)
+            self.current -= 1
+
+    def redo(self):
+        if self.current < len(self.history) - 1:
+            self.history[self.current + 1].restore(self.volumeEditor)
+            self.current += 1
 
 
 class VolumeEditor(QtGui.QWidget):
@@ -374,6 +423,9 @@ class VolumeEditor(QtGui.QWidget):
 
         self.ownIndex = self.editor_list.editors.__len__()
         #self.setAccessibleName(self.name)
+
+
+        self.history = HistoryManager(self)
 
         self.layout = QtGui.QHBoxLayout()
         self.setLayout(self.layout)
@@ -489,6 +541,18 @@ class VolumeEditor(QtGui.QWidget):
         self.changeSliceY(numpy.floor((self.image.shape[1] - 1) / 2))
         self.changeSliceZ(numpy.floor((self.image.shape[2] - 1) / 2))
 
+
+        #undo/redo
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo )
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo )
+
+
+    def historyUndo(self):
+        self.history.undo()
+
+    def historyRedo(self):
+        self.history.redo()
+
     def addOverlay(self):
         overlays = []
         for index, item in enumerate(self.editor_list.editors):
@@ -546,6 +610,8 @@ class VolumeEditor(QtGui.QWidget):
             tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, self.selectedChannel)) 
 
         tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+
+
         if self.labels.data is not None:
             tempLabels = self.labels.data.getSlice(num,axis, self.selectedTime, self.selectedChannel)
 
@@ -603,14 +669,13 @@ class VolumeEditor(QtGui.QWidget):
     def setLabels(self, offsets, axis, labels, erase):
         num = self.sliceSelectors[axis].value()
 
-        tempLabels = None
-        print offsets
-        print labels.shape
         tempLabels = self.labels.data.getSubSlice(offsets, labels.shape, num, axis, self.selectedTime, 0)
 
-        print labels.shape
-        print tempLabels.shape
 
+        state = LabelState("undo labeling", axis, num, offsets, tempLabels.copy(), self.selectedTime)
+        self.history.append(state)
+
+        tempLabels2 = None
         if erase == True:
             tempLabels = numpy.where(labels > 0, 0, tempLabels)
         else:
@@ -633,10 +698,10 @@ class DrawManager(QtCore.QObject):
         self.penVis = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.penDraw = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.penDraw.setColor(QtCore.Qt.white)
-        self.createNewImage()
         self.pos = None
         self.erasing = False
-
+        self.lines = []
+        self.scene = QtGui.QGraphicsScene()
 
     def initBoundingBox(self):
         self.leftMost = self.shape[0]
@@ -650,10 +715,6 @@ class DrawManager(QtCore.QObject):
         self.rightMost = min(self.shape[0],self.rightMost + 10)
         self.bottomMost = min(self.shape[1],self.bottomMost + 10)
 
-    def createNewImage(self):
-        self.image = QtGui.QImage(self.shape[0], self.shape[1],QtGui.QImage.Format_ARGB32_Premultiplied) #TODO: format
-        self.image.fill(0)
-
     def toggleErase(self):
         self.erasing = not(self.erasing)
 
@@ -663,46 +724,52 @@ class DrawManager(QtCore.QObject):
         self.penDraw.setWidth(size)
 
     def beginDraw(self, pos):
+        self.scene.clear()
         if self.erasing == True:
             self.penVis.setColor(QtCore.Qt.black)
         else:
             self.penVis.setColor(self.parent.labelView.currentItem().color)
-        self.painter = QtGui.QPainter(self.image)
-        self.painter.setClipRegion(QtGui.QRegion(0,0,self.shape[0],self.shape[1]))
-        self.painter.setClipping(True)
-        self.painter.setPen(self.penDraw)
         self.pos = pos
         line = self.moveTo(pos)
         return line
 
     def endDraw(self, pos):
         self.moveTo(pos)
-        self.painter.end()
         self.growBoundingBox()
-        tempi = self.image.copy(self.leftMost, self.topMost, self.rightMost - self.leftMost, self.bottomMost - self.topMost)
+
+        tempi = QtGui.QImage(self.rightMost - self.leftMost, self.bottomMost - self.topMost, QtGui.QImage.Format_ARGB32_Premultiplied) #TODO: format
+        tempi.fill(0)
+        painter = QtGui.QPainter(tempi)
+        
+        self.scene.render(painter, target = QtCore.QRectF(0,0, self.rightMost - self.leftMost, self.bottomMost - self.topMost),
+            source = QtCore.QRectF(self.leftMost, self.topMost, self.rightMost - self.leftMost, self.bottomMost - self.topMost))
+        
         oldLeft = self.leftMost
         oldTop = self.topMost
-        self.createNewImage()
         self.initBoundingBox()
         return (oldLeft, oldTop, tempi) #TODO: hackish, probably return a class ??
 
-    def moveTo(self, pos):
-        self.painter.drawLine(self.pos.x(), self.pos.y(),pos.x(), pos.y())
+    def moveTo(self, pos):      
+        lineVis = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
+        lineVis.setPen(self.penVis)
+        
         line = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
-        line.setPen(self.penVis)
+        line.setPen(self.penDraw)
+        self.scene.addItem(line)
+
         self.pos = pos
         x = pos.x()
         y = pos.y()
         #update bounding Box :
         if x > self.rightMost:
             self.rightMost = x
-        elif x < self.leftMost:
+        if x < self.leftMost:
             self.leftMost = x
         if y > self.bottomMost:
             self.bottomMost = y
-        elif y < self.topMost:
+        if y < self.topMost:
             self.topMost = y
-        return line
+        return lineVis
 
 
 
@@ -886,7 +953,6 @@ class ImageScene( QtGui.QGraphicsView):
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
             result = self.drawManager.endDraw(mousePos)
-            print result
             image = result[2]
             ndarr = qimage2ndarray.rgb_view(image)
             labels = ndarr[:,:,0]
@@ -1263,7 +1329,7 @@ def test():
 
     app = qapplication()
 
-    im = (numpy.random.rand(256,256,256)*255).astype(numpy.uint8)
+    im = (numpy.random.rand(384,384,384)*255).astype(numpy.uint8)
     im[0:10,0:10,0:10] = 255
 
     dialog = VolumeEditor(im)
