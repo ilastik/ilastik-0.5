@@ -272,9 +272,20 @@ class MainWindow(QtGui.QMainWindow):
         debug(self.project.trainingLabels.shape)
     
     def export2Hdf5(self):
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Features, Labels and Prediction", ".", "HDF5 FIles (*.h5)")
-        self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
-        self.project.dataMgr.export2Hdf5(str(fileName))
+        if not hasattr(self.project,'classifierList'):
+            return
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ".", "HDF5 FIles (*.h5)")
+        print fileName
+        #self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
+        #self.project.dataMgr.export2Hdf5(str(fileName))
+        
+        rfs = self.project.classifierList
+        
+        for i,rf in enumerate(rfs):
+            tmp = rf.classifier.writeHDF5(str(fileName), "rf_%03d" % i, True)
+            print "Write Random Forest # %03d -> %d" % (i,tmp)
+        print "Done"
+            
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -821,9 +832,11 @@ class ClassificationInteractive(object):
         self.parent.labelWidget.cmbOverlayList.setCurrentIndex(1)
         
     def updateTrainingQueue(self):
-        self.parent.generateTrainingData()
-        F = self.parent.project.trainingMatrix
-        L = self.parent.project.trainingLabels   
+        #self.parent.generateTrainingData()
+        #F = self.parent.project.trainingMatrix
+        #L = self.parent.project.trainingLabels
+        self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)   
+        F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
 
         self.trainingQueue.append((F, L))
 
@@ -861,9 +874,8 @@ class ClassificationInteractive(object):
         
     def start(self):
         
-        F = self.parent.project.trainingMatrix
-        L = self.parent.project.trainingLabels
-        
+        self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)
+        F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
         self.trainingQueue.append((F, L))
         
         # [Todo: only do it once]
@@ -909,7 +921,7 @@ class ClassificationOnline(object):
     def start(self,name):
         print "Online Classification starting"
 
-        self.parent.generateTrainingData()
+        #self.parent.generateTrainingData()
         
         features = self.parent.project.trainingMatrix
         labels = self.parent.project.trainingLabels  
@@ -988,7 +1000,7 @@ class ClassificationOnline(object):
                     add_indexes.append(step.positions[i])
                     labelArrays[active_image][step.positions[i]]=Labels[step.positions[i]]
             #create the new features
-            self.parent.generateTrainingData(labelArrays)
+            #self.parent.generateTrainingData(labelArrays)
             add_indexes=numpy.array(add_indexes)
 
             print "*************************************"

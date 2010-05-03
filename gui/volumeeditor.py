@@ -1329,7 +1329,7 @@ def test():
 
     app = qapplication()
 
-    im = (numpy.random.rand(384,384,384)*255).astype(numpy.uint8)
+    im = (numpy.random.rand(128,128,128)*255).astype(numpy.uint8)
     im[0:10,0:10,0:10] = 255
 
     dialog = VolumeEditor(im)

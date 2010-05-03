@@ -19,7 +19,7 @@ def interactiveMessagePrint(* args):
 
 try:
     import vigra
-    import vigra.classification
+    import vigra.learning
 except ImportError:
     sys.exit("vigra module not found!")
 
@@ -42,11 +42,11 @@ class ClassifierBase(object):
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None, treeCount=10):
         ClassifierBase.__init__(self)
-        self.classifier = None
+        self.classifier = vigra.learning.RandomForest_new(treeCount=treeCount,mtry=2)
         self.treeCount = treeCount
-#        if features and labels:
-    #            self.train(features, labels)
-        self.train(features, labels)
+        if features is not None and labels is not None:
+            self.train(features, labels)
+        #self.train(features, labels)
         self.usedForPrediction = set()
     
     def train(self, features, labels):
@@ -55,12 +55,16 @@ class ClassifierRandomForest(ClassifierBase):
             interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
             
         if not labels.dtype == numpy.uint32:
-            labels = numpy.array(labels,dtype=numpy.uint32)
+            labels = labels.astype(numpy.uint32)
         if not features.dtype == numpy.float32:
-            features = numpy.array(features,dtype=numpy.float32)
-        print "Create RF with ",self.treeCount," trees"
-        self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
-        #self.classifier.learnRF(features, labels)
+            features = features.astype(numpy.float32)
+        # print "Create RF with ",self.treeCount," trees"
+        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
+        if labels.ndim == 1:
+            labels.shape = labels.shape + (1,)
+        labels = labels - 1
+        
+        self.classifier.learnRF(features, labels)
         print "tree Count", self.treeCount
         
     

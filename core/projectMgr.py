@@ -109,8 +109,8 @@ class Project(object):
                        
         # add raw data and labels to empty dataMgr                  
         for ind, dataItemValue in irange(fileHandle['DataSets'].values()):
-            rawData = at.Image(dataItemValue['rawData'].value)
-            labels = at.ScalarImage(dataItemValue['labels'].value)
+            rawData = dataItemValue['rawData'].value.view(at.Image)
+            labels = dataItemValue['labels'].value.view(at.ScalarImage)
             originalFileName = dataItemValue.attrs['fileName']
             dataMgr[ind] = dataMgrModule.DataItemImage.initFromArray(rawData, originalFileName)
             dataMgr[ind].labels = labels
@@ -122,7 +122,7 @@ class Project(object):
             if 'features' in dataItemValue:
                 dataFeatures = []
                 for featIT in dataItemValue['features'].values():
-                    feature = at.Image(featIT.value)
+                    feature = featIT.value.view(at.Image)
                     featureName = featIT.attrs['featureName']
                     channelIndex = int(featIT.attrs['channelIndex'])
                     dataFeatures.append((feature, featureName, channelIndex))
