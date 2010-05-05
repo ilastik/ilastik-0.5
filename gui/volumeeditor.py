@@ -741,8 +741,8 @@ class DrawManager(QtCore.QObject):
         tempi.fill(0)
         painter = QtGui.QPainter(tempi)
         
-        self.scene.render(painter, target = QtCore.QRectF(0,0, self.rightMost - self.leftMost, self.bottomMost - self.topMost),
-            source = QtCore.QRectF(self.leftMost, self.topMost, self.rightMost - self.leftMost, self.bottomMost - self.topMost))
+        self.scene.render(painter, QtCore.QRectF(0,0, self.rightMost - self.leftMost, self.bottomMost - self.topMost),
+            QtCore.QRectF(self.leftMost, self.topMost, self.rightMost - self.leftMost, self.bottomMost - self.topMost))
         
         oldLeft = self.leftMost
         oldTop = self.topMost

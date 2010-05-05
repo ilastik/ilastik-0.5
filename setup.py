@@ -26,7 +26,7 @@ setup(
     windows = [ilastikGUI],
     data_files = [('gui', ['./gui/pyc.ico', "./gui/dlgChannels.ui", "./gui/dlgFeature.ui", "./gui/dlgProject.ui"]), msvs_redist],
     zipfile = "shared.lib",
-    options = {"py2exe": {"compressed": 0, "optimize": 0, "includes":["sip", "core", "tables", "tables._comp_bzip2", "h5py", "h5py._stub","h5py.utils", "PyQt4.QtSvg", "labelArrayDrawQImage"], "dll_excludes": ["MSVCP90.dll", "MSVCR80.dll"]}},
+    options = {"py2exe": {"compressed": 0, "optimize": 0, "includes":["sip", "core", "h5py", "h5py._stub", "numpy.matrixlib.defmatrix", "h5py.utils", "PyQt4.QtSvg", "labelArrayDrawQImage"], "dll_excludes": ["MSVCP90.dll", "MSVCR80.dll"]}},
 )
 
 print "*********************\n>>copy vigra numpy core"

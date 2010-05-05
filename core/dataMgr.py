@@ -4,7 +4,7 @@ from Queue import Queue as queue
 from copy import copy
 import os
 import h5py
-import tables
+import h5py as tables # TODO: exchange tables with h5py
 from core.utilities import irange, debug, irangeIfTrue
 
 import vigra

@@ -7,7 +7,6 @@ import sys
 from core.utilities import irange
 
 import vigra
-import vigra.convolution
 at = vigra.arraytypes
 
     
@@ -196,12 +195,12 @@ class FeatureGroups(object):
                         print featFunc.__name__, scaleValue    
         return resList
 
-gaussianGradientMagnitude = vigra.convolution.gaussianGradientMagnitude, ['Sigma' ]
+gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
 gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
-structureTensor = vigra.convolution.structureTensor, ['Sigma']
-hessianMatrixOfGaussian = vigra.convolution.hessianMatrixOfGaussian, ['Sigma']
+structureTensor = vigra.filters.structureTensor, ['Sigma']
+hessianMatrixOfGaussian = vigra.filters.hessianOfGaussian, ['Sigma']
 eigStructureTensor2d = vigra.filters.structureTensorEigenvalues, ['InnerScale', 'OuterScale']
-laplacianOfGaussian = vigra.convolution.laplacianOfGaussian, ['Sigma']
+laplacianOfGaussian = vigra.filters.laplacianOfGaussian, ['Sigma']
 morphologicalOpening = lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
 morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
 eigHessianTensor2d = vigra.filters.hessianOfGaussianEigenvalues, ['Sigma']
