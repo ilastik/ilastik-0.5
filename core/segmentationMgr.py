@@ -13,31 +13,22 @@ class SegmentationBase(object):
     def segment(self):
         pass
     
-class LocallyDominantSegmentation2D(SegmentationBase):
-    #3D: either implement the class for 3D data, or make a decision in the class
-    def __init__(self, shape, sigma=2.0, smoothing='Gaussian'):
-        SegmentationBase.__init__(self)
-        self.smoothing = smoothing
-        self.sigma = sigma
-        self.shape = list(shape[0:2])
-        self.shape.append(-1)
-        self.result = None
-    
-    def segment(self, propmap):
-        if not propmap.dtype == numpy.float32:
-            propmap = propmap.astype(numpy.float32)
 
-        propmap_ = propmap.reshape(self.shape)
-        print propmap_.shape
-        if self.smoothing in ['Gaussian']:
-            res = numpy.zeros( propmap_.shape, dtype=numpy.float32)
-            for k in range(0, propmap_.shape[2]):
-                res[:,:,k] = vigra.filters.gaussianSmoothing(propmap_[:,:,k], self.sigma)
+   
+def LocallyDominantSegmentation(propmap, sigma = 2.0):
+    if not propmap.dtype == numpy.float32:
+        propmap = propmap.astype(numpy.float32)
+
+    res = numpy.zeros( propmap.shape, dtype=numpy.float32)
+    for k in range(propmap.shape[-1]):
+        #TODO: time !!!
+        if propmap.shape[1] == 1:
+            res[0,0,:,:,k] = vigra.filters.gaussianSmoothing(propmap[0,0,:,:,k], sigma)
         else:
-            print "Invalid option for smoothing: %s" % self.smoothing
-            return None
-        self.result = numpy.argmax(res, axis=2)
-        #vigra.impex.writeImage(self.result.astype(numpy.uint8),'c:/il_seg.jpg')
+            res[0,:,:,:,k] = vigra.filters.gaussianSmoothing(propmap[0,:,:,:,k], sigma)
+
+    return  numpy.argmax(res, axis=len(propmap.shape)-1)
+    #vigra.impex.writeImage(self.result.astype(numpy.uint8),'c:/il_seg.jpg')
 
 if __name__ == "__main__":
     a = numpy.random.rand(256,256,4)

@@ -1142,7 +1142,7 @@ class labelWidget(QtGui.QWidget):
         
 
         self.changeImage(0)
-        self.updateDrawSettings()
+        # self.updateDrawSettings()
         
         self.connect(self, QtCore.SIGNAL("imageChanged"), self.OverlayMgr.clearAll)
         
@@ -1150,8 +1150,6 @@ class labelWidget(QtGui.QWidget):
         self.brushSize = rad
         self.labelForImage[self.activeImage].setBrushSize(rad)
         
-    def updateDrawSettings(self):
-        pass 
     
     def loadChannelList(self, imageIndex=None):
         if imageIndex is None:

@@ -19,7 +19,6 @@ class FeatureMgr():
         self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
         self.child_conn = None
-        self.parallelType = ['Process', 'Thread'][1]
         self.featureProcessList = []
         
     def setFeatureItems(self, featureItems):
@@ -27,32 +26,19 @@ class FeatureMgr():
         
     def prepareCompute(self, dataMgr):
         self.featureProcessList = [[] for i in range(len(dataMgr))]
-        for dataIndex in xrange(len(dataMgr)):   
-            # data will be loaded, if not there yet
-            data = dataMgr[dataIndex]
-            print 'Data Item: %s: ' % data.fileName
-            channelsList = data.unpackChannels()          
-            self.featureProcessList[dataIndex].append((channelsList, self.featureItems))
         
-        if self.parallelType == 'Process':
-            self.parent_conn, self.child_conn = multiprocessing.Pipe()
-            self.featureProcess = FeatureProcess(self.featureProcessList, self.child_conn)
-        else:
-            self.featureProcess = FeatureThread(self.featureProcessList)
+        self.featureProcess = FeatureThread(self.featureItems, dataMgr)
+
         return self.featureProcess.jobs
     
     def triggerCompute(self):
         self.featureProcess.start()
     
     def getCount(self):
-        if self.parallelType == 'Process':
-            return self.parent_conn.recv()
-        else:
-            return self.featureProcess.count
+        return self.featureProcess.count
           
     def joinCompute(self, dataMgr):
         self.featureProcess.join()  
-        dataMgr.dataFeatures = self.featureProcess.result; 
         self.featureProcess = None  
     
     def __getstate__(self): 
@@ -86,60 +72,54 @@ class LocalFeature(FeatureBase):
         print channel.shape
         # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
         # the result of featureFunktor is numpy.ndarray and NOT a vigra type!? I don't know why... (see dateMgr loadData)
-        return at.Image(self.featureFunktor(channel, * self.args))
+        result = []
+        for i in range(channel.shape[0]):
+            if channel.shape[1] > 1:
+                temp = self.featureFunktor(channel[i,:,:,:].astype(numpy.float32), * self.args)
+                if len(temp.shape) == 3:
+                    result.append( temp.reshape( temp.shape + (1,)) )
+                else:
+                    result.append( temp )
+            else:
+                temp = self.featureFunktor(channel[i,0,:,:].astype(numpy.float32), * self.args)
+                if len(temp.shape) == 2:
+                    result.append(temp.reshape((1,) + temp.shape + (1,)))
+                else: #more dimensional filter, we only need to add the 3D dimension
+                    result.append(temp.reshape((1,) + temp.shape))
+        return result
 
     def __str__(self):
         return '%s: %s' % (self.name , ', '.join(["%s = %f" % (x[0], x[1]) for x in zip(self.arg_names, self.args)]))
 
 
 class FeatureParallelBase(object):
-    def __init__(self, featureProcessList):
+    def __init__(self, featureItems, dataMgr):
         self.count = 0
         self.jobs = 0
-        self.result = []
-        self.featureProcessList = featureProcessList
+        self.featureItems = featureItems
+        self.dataMgr = dataMgr
         self.computeNumberOfJobs()
     
     def computeNumberOfJobs(self):
-        for data in self.featureProcessList:
-            for channels, features in data:
-                    self.jobs += len(channels) * len(features)
+        for image in self.dataMgr:
+            self.jobs += image.dataVol.data.shape[-1] * len(self.featureItems)
 
 class FeatureThread(threading.Thread, FeatureParallelBase):
-    def __init__(self, featureProcessList):
-        FeatureParallelBase.__init__(self, featureProcessList)
+    def __init__(self, featureItems, datMgr):
+        FeatureParallelBase.__init__(self, featureItems, datMgr)
         threading.Thread.__init__(self)  
     
-    def run(self):
-        #3D: might be important in the future          
-        for data in self.featureProcessList:
-            for channels, features in data:
+    def run(self):       
+        for image in self.dataMgr:
+            resultImage = []
+            for feature in self.featureItems:
                 result = []
-                for c_ind, c in irange(channels):
-                    for fi in features:
-                        print c.shape, str(fi)
-                        result.append((fi.compute(c), str(fi), c_ind))
-                        self.count += 1
-                self.result.append(result)
-
-class FeatureProcess(multiprocessing.Process, FeatureParallelBase):
-    def __init__(self, featureProcessList, conn):
-        FeatureParallelBase.__init__(self, featureProcessList)
-        multiprocessing.Process.__init__(self)  
-        self.conn = conn
-        
-    def run(self):          
-        for data in self.featureProcessList:
-            for channels, features in data:
-                result = []
-                for c_ind, c in irange(channels):
-                    for fi in features:
-                        print c.shape, str(fi)
-                        result.append(( fi.compute(c), str(fi), c_ind) )
-                        self.count += 1
-                        self.conn.send(self.count)
-                self.result.append(result)
-        self.conn.close()     
+                for c_ind in range(image.dataVol.data.shape[-1]):
+                    print image.dataVol.data.shape[0:5], str(feature)
+                    result.append(feature.compute(image.dataVol.data[:,:,:,:,c_ind]))
+                    self.count += 1
+                resultImage.append(result)
+            image.features = resultImage
 
 ###########################################################################
 ###########################################################################

@@ -179,46 +179,55 @@ class ClassificationImpex(object):
      
     
 class ClassifierTrainThread(threading.Thread):
-    def __init__(self, queueSize, featLabelTupel):
+    def __init__(self, queueSize, dataMgr):
         threading.Thread.__init__(self)
-        self.queueSize = queueSize
-        self.featLabelTupel = featLabelTupel
+        self.numClassifiers = queueSize
+        self.dataMgr = dataMgr
         self.count = 0
-        self.classifierList = deque(maxlen=self.queueSize)
+        self.classifierList = []
         self.stopped = False
         self.classifier = ClassifierRandomForest
     
     def run(self):
-        while not self.featLabelTupel.empty():
-            (features, labels) = self.featLabelTupel.get()
-            while self.count != self.queueSize:
-                self.classifierList.append( self.classifier(features, labels) )
-                self.count += 1
+        trainingF = []
+        trainingL = []
+        for item in self.dataMgr:
+            tm = item.getTrainingMatrix()
+            trainingL.append(tm[0])
+            trainingF.append(tm[1])
+        trainingF = numpy.vstack(trainingF)
+        trainingL = numpy.vstack(trainingL).T
+        
+        classifiers = []
+        for i in range(self.numClassifiers):
+            classifiers.append( self.classifier(trainingF, trainingL))
+            self.count += 1
+        self.dataMgr.classifiers = classifiers
                 
 class ClassifierPredictThread(threading.Thread):
-    def __init__(self, classifierList, featureList):
+    def __init__(self, dataMgr):
         threading.Thread.__init__(self)
-        self.classifierList = classifierList
         self.count = 0
-        self.featureList = featureList
+        self.dataMgr = dataMgr
         self.stopped = False
-        self.predictionList = []
 
     
     def run(self):
-        for feature in self.featureList:
+        for item in self.dataMgr:
             cnt = 0
             interactiveMessagePrint( "Feature Item" )
-            for classifier in self.classifierList:
+            for classifier in self.dataMgr.classifiers:
                 if cnt == 0:
                     interactiveMessagePrint ( "Classifier %d prediction" % cnt )
-                    prediction = classifier.predict(feature)      
+                    prediction = classifier.predict(item.getFeatureMatrix())     
                 else:
                     interactiveMessagePrint( "Classifier %d prediction" % cnt )
-                    prediction += classifier.predict(feature)
+                    prediction += classifier.predict(item.getFeatureMatrix())
                 cnt += 1
                 self.count += 1
-            self.predictionList.append(prediction / cnt)
+            prediction = prediction / cnt
+            #TODO: Time ! synchronize with featureMgr...
+            item.prediction = prediction.reshape(item.dataVol.labels.data.shape[0:-1] + (prediction.shape[-1],))
 
 class ClassifierInteractiveThread(threading.Thread):
     def __init__(self, trainingQueue, predictDataList, labelWidget, numberOfClasses, numberOfClassifiers=10, treeCount=10):

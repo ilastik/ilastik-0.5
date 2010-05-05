@@ -15,6 +15,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 
 import vigra, numpy
 import qimage2ndarray
+import h5py
 
 # Local import
 from spyderlib.config import get_icon, get_font
@@ -132,20 +133,37 @@ class DataAccessor():
         self.data[tuple(key)] = data
 
     def getSlice(self, num, axis, time = 0, channel = 0):
-        if axis == 0:
-            return self.data[time, num, :,: , channel]
-        elif axis == 1:
-            return self.data[time, :,num,: , channel]
-        elif axis ==2:
-            return self.data[time, :,: ,num,  channel]
+        if self.rgb is True:
+            if axis == 0:
+                return self.data[time, num, :,: , :]
+            elif axis == 1:
+                return self.data[time, :,num,: , :]
+            elif axis ==2:
+                return self.data[time, :,: ,num,  :]
+        else:
+            if axis == 0:
+                return self.data[time, num, :,: , channel]
+            elif axis == 1:
+                return self.data[time, :,num,: , channel]
+            elif axis ==2:
+                return self.data[time, :,: ,num,  channel]
+            
 
     def setSlice(self, data, num, axis, time = 0, channel = 0):
-        if axis == 0:
-            self.data[time, num, :,: , channel] = data
-        elif axis == 1:
-            self.data[time, :,num,: , channel] = data
-        elif axis ==2:
-            self.data[time, :,: ,num,  channel] = data
+        if self.rgb is True:
+            if axis == 0:
+                self.data[time, num, :,: , :] = data
+            elif axis == 1:
+                self.data[time, :,num,: , :] = data
+            elif axis ==2:
+                self.data[time, :,: ,num,  :] = data
+        else:        
+            if axis == 0:
+                self.data[time, num, :,: , channel] = data
+            elif axis == 1:
+                self.data[time, :,num,: , channel] = data
+            elif axis ==2:
+                self.data[time, :,: ,num,  channel] = data
 
     def getSubSlice(self, offsets, sizes, num, axis, time = 0, channel = 0):
         ax0l = offsets[0]
@@ -153,12 +171,21 @@ class DataAccessor():
         ax1l = offsets[1]
         ax1r = offsets[1]+sizes[1]
 
-        if axis == 0:
-            return self.data[time, num, ax0l:ax0r,ax1l:ax1r , channel]
-        elif axis == 1:
-            return self.data[time, ax0l:ax0r, num,ax1l:ax1r , channel]
-        elif axis ==2:
-            return self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel]
+        if self.rgb is True:
+            if axis == 0:
+                return self.data[time, num, ax0l:ax0r,ax1l:ax1r , :]
+            elif axis == 1:
+                return self.data[time, ax0l:ax0r, num,ax1l:ax1r , :]
+            elif axis ==2:
+                return self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  :]
+        else:
+            if axis == 0:
+                return self.data[time, num, ax0l:ax0r,ax1l:ax1r , channel]
+            elif axis == 1:
+                return self.data[time, ax0l:ax0r, num,ax1l:ax1r , channel]
+            elif axis ==2:
+                return self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel]
+            
 
     def setSubSlice(self, offsets, data, num, axis, time = 0, channel = 0):
         ax0l = offsets[0]
@@ -166,31 +193,55 @@ class DataAccessor():
         ax1l = offsets[1]
         ax1r = offsets[1]+data.shape[1]
 
-        if axis == 0:
-            self.data[time, num,  ax0l:ax0r, ax1l:ax1r , channel] = data
-        elif axis == 1:
-            self.data[time, ax0l:ax0r,num, ax1l:ax1r , channel] = data
-        elif axis ==2:
-            self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel] = data
+        if self.rgb is True:
+            if axis == 0:
+                self.data[time, num,  ax0l:ax0r, ax1l:ax1r , :] = data
+            elif axis == 1:
+                self.data[time, ax0l:ax0r,num, ax1l:ax1r , :] = data
+            elif axis ==2:
+                self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  :] = data
+        else:
+            if axis == 0:
+                self.data[time, num,  ax0l:ax0r, ax1l:ax1r , channel] = data
+            elif axis == 1:
+                self.data[time, ax0l:ax0r,num, ax1l:ax1r , channel] = data
+            elif axis ==2:
+                self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel] = data
+     
+    def serialize(self, h5G, name='data'):
+        h5G.create_dataset(h5G,name,data = self.data)
+         
+    @staticmethod
+    def deserialize(h5G, name = 'data'):
+        data = h5G[name].value
+        return DataAccessor(data, channels = True)
+        
 
 class OverlaySlice():
-    def __init__(self, data, color, alpha):
+    def __init__(self, data, color, alpha, colorTable):
+        self.colorTable = colorTable
         self.color = color
         self.alpha = alpha
 
-        self.alphaChannel = data
-
-        shape = data.shape
-        shape +=(3,)
-
-        self.data = numpy.zeros(shape, 'uint8')
-        self.data[:,:,color] = data[:,:]
-
+        if data.shape[-1] != 3 and colorTable == None:
+            self.alphaChannel = data
+    
+            shape = data.shape
+            shape +=(3,)
+    
+            self.data = numpy.zeros(shape, 'uint8')
+            self.data[:,:,0] = data[:,:]*(self.color.red()/255.0)
+            self.data[:,:,1] = data[:,:]*(self.color.green()/255.0)
+            self.data[:,:,2] = data[:,:]*(self.color.blue()/255.0)
+        else:
+            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')*255
+            self.data = data
 
 class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
-    def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4):
+    def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None):
         QtGui.QListWidgetItem.__init__(self,name)
         DataAccessor.__init__(self,data)
+        self.colorTable = colorTable
         self.setTooltip = name
         self.color = color
         self.alpha = alpha
@@ -198,14 +249,19 @@ class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
         self.visible = True
 
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha)
+        return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)
 
 class OverlayListView(QtGui.QListWidget):
-    def __init__(self,parent = None):
+    def __init__(self,parent):
+        self.volumeEditor = parent
         super(OverlayListView, self).__init__(parent)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.overlays = [] #array of VolumeOverlays
+
+    def clearOverlays(self):
+        self.clear()
+        self.overlays = []
 
     def addOverlay(self, overlay):
         self.overlays.append(overlay)
@@ -235,6 +291,8 @@ class OverlayListView(QtGui.QListWidget):
             del it
         elif action == toggleHideAction:
             item.visible = not(item.visible)
+            self.volumeEditor.repaint()
+            
 
 
 class VolumeLabelDescription():
@@ -242,7 +300,7 @@ class VolumeLabelDescription():
         self.number = number
         self.name = name
         self.color = color
-
+    
 class VolumeLabels():
     def __init__(self, data = None):
         if issubclass(data.__class__, DataAccessor):
@@ -251,26 +309,74 @@ class VolumeLabels():
             self.data = DataAccessor(data, channels = False)
 
         self.descriptions = [] #array of VolumeLabelDescriptions
+        
+    def serialize(self, h5G, name = "labels"):
+        self.data.serialize(h5G, name)
+        h5G[name].attrs['color'] = [] 
+        h5G[name].attrs['name'] = []
+        h5G[name].attrs['number'] = []
+        for index, item in enumerate(self.descriptions):
+            h5G[name].attrs['color'] +=  item.color
+            h5G[name].attrs['name'] += item.name
+            h5G[name].attrs['number'] += item.number
+    
+    @staticmethod    
+    def deserialize(h5G, name ="labels"):
+        if name in h5G.keys():
+            data = DataAccessor.deserialize(h5G, name)
+            colors = h5G[name].attrs['color']
+            names = h5G[name].attrs['name']
+            numbers = h5G[name].attrs['number']
+            descriptions = []
+            for index, item in enumerate(colors):
+                descriptions.append(VolumeLabelDescription(names[index], numbers[index], colors[index]))
+    
+            vl =  VolumeLabels(data)
+            vl.descriptions = desctiptions
+            return vl
+        else:
+            return None
+        
+class Volume():
+    def __init__(self):
+        self.data = None
+        self.labels = None
+    
+    def serialize(self, h5G):
+        self.data.serialize(h5G, "data")
+        self.labels.serialize(h5G, "labels")
+        
+    @staticmethod
+    def deserialize(h5G):
+        #TODO: make nicer
+        data = DataAccessor.deserialize(h5G)
+        labels = VolumeLabels.deserialize(h5G)
+        v =  Volume()
+        v.data = data
+        v.labels = labels
+        return v
+
+
 
 class LabelListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
         super(LabelListItem, self).__init__(name)
         self.number = number
-        self.color = color
-        self.curColor = self.color
         self.visible = True
+        self.setColor(color)
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
+
+        
 
     def toggleVisible(self):
         self.visible = not(self.visible)
-        if self.visible == True:
-            self.curColor = self.color
-        else:
-            self.curColor = QtGui.QColor.fromRgb(0,0,0)
 
     def setColor(self, color):
         self.color = color
-        self.toggleVisible()
-        self.toggleVisible()
+        pixmap = QtGui.QPixmap(16, 16)
+        pixmap.fill(color)
+        icon = QtGui.QIcon(pixmap)
+        self.setIcon(icon)      
 
 
 class LabelListView(QtGui.QListWidget):
@@ -282,7 +388,10 @@ class LabelListView(QtGui.QListWidget):
         self.items = []
         self.volumeEditor = parent
         self.initFromMgr(parent.labels)
+        self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
+        self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
 
+    
     def initFromMgr(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):
@@ -292,6 +401,19 @@ class LabelListView(QtGui.QListWidget):
         self.buildColorTab()
 
 
+    def changeText(self, text):
+        self.volumeLabel.descriptions[self.currentRow()].name = text
+        
+    def createLabel(self):
+        name = "Label " + len(self.items).__str__()
+        number = len(self.items)
+        if number > len(self.labelColorTable):
+            color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
+        else:
+            color = self.labelColorTable[number]
+        number +=1
+        self.addLabel(name, number, color)
+        
     def addLabel(self, labelName, labelNumber, color):
         description = VolumeLabelDescription(labelName, labelNumber, color.rgb())
         self.volumeLabel.descriptions.append(description)
@@ -307,7 +429,7 @@ class LabelListView(QtGui.QListWidget):
             self.colorTab.append(QtGui.QColor.fromRgb(0,0,0).rgb())
 
         for index,item in enumerate(self.items):
-            self.colorTab[item.number] = item.curColor.rgb()
+            self.colorTab[item.number] = item.color.rgb()
 
 
     def onContext(self, pos):
@@ -322,6 +444,7 @@ class LabelListView(QtGui.QListWidget):
         menu = QtGui.QMenu(self)
 
         removeAction = menu.addAction("Remove")
+        colorAction = menu.addAction("Change Color")
         if item.visible is True:
             toggleHideAction = menu.addAction("Hide")
         else:
@@ -329,12 +452,16 @@ class LabelListView(QtGui.QListWidget):
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
-            self.volumeLabel.description.delitem(index.row())
+            self.volumeLabel.descriptions.__delitem__(index.row())
             self.labels.remove(item)
             it = self.takeItem(index.row())
             del it
         elif action == toggleHideAction:
             item.toggleVisible()
+        elif action == colorAction:
+            color = QtGui.QColorDialog().getColor()
+            item.setColor(color)
+            self.volumeLabel.descriptions[index.row()].color = color.rgb()
 
         self.buildColorTab()
 
@@ -402,6 +529,9 @@ class VolumeEditor(QtGui.QWidget):
 
         if issubclass(image.__class__, DataAccessor):
             self.image = image
+        elif issubclass(image.__class__, Volume):
+            self.image = image.data
+            labels = image.labels
         else:
             self.image = DataAccessor(image)
 
@@ -414,6 +544,9 @@ class VolumeEditor(QtGui.QWidget):
             tempData = DataAccessor(numpy.zeros(self.image.shape[1:4],'uint8'))
             self.labels = VolumeLabels(tempData)
 
+        if issubclass(image.__class__, Volume):
+            image.labels = self.labels
+            
         self.editor_list = VolumeEditorList.editors
 
         self.linkedTo = None
@@ -507,14 +640,14 @@ class VolumeEditor(QtGui.QWidget):
 
         #Overlay selector
         self.addOverlayButton = QtGui.QPushButton("Add Overlay")
-        self.connect(self.addOverlayButton, QtCore.SIGNAL("pressed()"), self.addOverlay)
+        self.connect(self.addOverlayButton, QtCore.SIGNAL("pressed()"), self.addOverlayDialog)
         self.toolBoxLayout.addWidget(self.addOverlayButton)
 
-        self.overlayView = OverlayListView()
+        self.overlayView = OverlayListView(self)
         self.toolBoxLayout.addWidget( self.overlayView)
 
         #Label selector
-        self.addLabelButton = QtGui.QPushButton("Add Label")
+        self.addLabelButton = QtGui.QPushButton("Create Label Class")
         self.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.addLabel)
         self.toolBoxLayout.addWidget(self.addLabelButton)
 
@@ -553,12 +686,19 @@ class VolumeEditor(QtGui.QWidget):
     def historyRedo(self):
         self.history.redo()
 
-    def addOverlay(self):
+    def clearOverlays(self):
+        self.overlayView.clearOverlays()
+
+    def addOverlay(self, visible, data, name, color, alpha, colorTab = None):
+        ov = VolumeOverlay(data,name, color, alpha, colorTab)
+        ov.visible = visible
+        self.overlayView.addOverlay(ov)
+
+    def addOverlayDialog(self):
         overlays = []
         for index, item in enumerate(self.editor_list.editors):
             overlays.append(item.name)
         itemName, ok  = QtGui.QInputDialog.getItem(self,"Add Overlay", "Overlay:", overlays, 0, False)
-        itemIndex = -1
         if ok is True:
             for index, item in enumerate(self.editor_list.editors):
                 if item.name == itemName:
@@ -566,14 +706,26 @@ class VolumeEditor(QtGui.QWidget):
                     self.overlayView.addOverlay(ov)
         self.repaint()
 
+    def repaint(self):
+        for i in range(3):
+            tempImage = None
+            tempLabels = None
+            tempoverlays = []   
+            for index, item in enumerate(self.overlayView.overlays):
+                if item.visible:
+                    tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, self.selectedChannel)) 
+    
+            tempImage = self.image.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
+    
+            if self.labels.data is not None:
+                tempLabels = self.labels.data.getSlice(self.selSlices[i],i, self.selectedTime, self.selectedChannel)
+    
+            self.imageScenes[i].display(tempImage, tempoverlays, tempLabels)
+        self.overview.redisplay()        
+
 
     def addLabel(self):
-        name, ok = QtGui.QInputDialog.getText(self, 'Add Label', 'Enter Label name:')
-        if ok:
-            number, ok = QtGui.QInputDialog.getInteger(self, 'Add Label', 'Enter label number:')
-            if ok and number != 0:
-                color = QtGui.QColorDialog.getColor()
-                self.labelView.addLabel(name, number, color)
+        self.labelView.createLabel()
 
 
     def get_copy(self):
@@ -607,7 +759,8 @@ class VolumeEditor(QtGui.QWidget):
         self.sliceSelectors[axis].setValue(num)
 
         for index, item in enumerate(self.overlayView.overlays):
-            tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, self.selectedChannel)) 
+            if item.visible:
+                tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, self.selectedChannel)) 
 
         tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
 
@@ -772,7 +925,6 @@ class DrawManager(QtCore.QObject):
         return lineVis
 
 
-
 class ImageScene( QtGui.QGraphicsView):
     def __init__(self, parent, imShape, axis):
         QtGui.QGraphicsView.__init__(self)
@@ -842,7 +994,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.tempImageItems = []
 
 
-
+        if image.dtype == 'uint16':
+            image = (image / 255).astype(numpy.uint8)
         self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=False)
 
         self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
@@ -850,25 +1003,17 @@ class ImageScene( QtGui.QGraphicsView):
         #add overlays
         for index, item in enumerate(overlays):
             p = QtGui.QPainter(self.image)
-            #p.begin(self.pixmap)
-            #p.setBrush(QtGui.QColor(255, 255, 255, 255))
             p.setOpacity(item.alpha)
 
             imageO = qimage2ndarray.array2qimage(item.data.swapaxes(0,1), normalize=False)
             alphaChan = item.alphaChannel
-
-            #image = image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
-            mask = imageO.createMaskFromColor(QtGui.QColor(0,0,0).rgb(),QtCore.Qt.MaskOutColor) #QtGui.QBitmap.fromImage(
-            imageO.setAlphaChannel(qimage2ndarray.gray2qimage(alphaChan.swapaxes(0,1), False))
-            #pixmapi = QtGui.QPixmap.fromImage(imageO)
-            #pixmapi.setMask(mask)
-#            pixmap.fill(QtCore.Qt.transparent)
-##            p.fillRect(0,0, pixmapi.width(), pixmapi.height(),QtGui.QBrush(QtGui.QColor(0, 0, 0, 255)))
+            
+            if item.colorTable != None:
+                imageO.setColorTable(item.colorTable)
+            else:
+                imageO.setAlphaChannel(qimage2ndarray.gray2qimage(alphaChan.swapaxes(0,1), False))
 
             p.drawImage(imageO.rect(), imageO)
-            #p.drawPixmap(pixmapi.rect(),pixmapi)
-
-            ##p.drawRect(0, 0, pixmap.width(), pixmap.height())
             p.end()
             del p
 
@@ -1076,6 +1221,15 @@ class OverviewScene(QtOpenGL.QGLWidget):
                 self.deleteTexture(self.tex[axis])
             self.paintGL(axis)
             self.swapBuffers()
+            
+    def redisplay(self):
+        if self.initialized is True:
+            for i in range(3):
+                self.makeCurrent()
+                if self.tex[i] is not 0:
+                    self.deleteTexture(self.tex[i])
+                self.paintGL(i)
+            self.swapBuffers()        
 
     def paintGL(self, axis = None):
         '''

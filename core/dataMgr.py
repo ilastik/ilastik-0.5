@@ -7,6 +7,9 @@ import h5py
 import h5py as tables # TODO: exchange tables with h5py
 from core.utilities import irange, debug, irangeIfTrue
 
+from gui.volumeeditor import DataAccessor as DataAccessor
+from gui.volumeeditor import Volume as Volume
+
 import vigra
 at = vigra.arraytypes
     
@@ -54,35 +57,28 @@ class DataItemImage(DataItemBase):
         DataItemBase.__init__(self, fileName) 
         self.dataDimensions = 2
         self.overlayImage = None
-       
+        self.dataVol = None
+        self.prediction = None
+        self.features = [] #features is an array of arrays of arrays etc. like this
+                           #feature, channel, time
+        
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)
-        if fExt == '.h5':
+        if fExt == '.oldh5':
             self.data, self.channelDescription, self.labels, self.overlayImage = DataImpex.loadMultispectralData(self.fileName)
-            
+        elif fExt == '.h5':
+            self.dataVol = DataImpex.loadVolume(self.fileName)  
         else:
             self.data = DataImpex.loadImageData(self.fileName)
-            self.labels = at.ScalarImage(self.data.shape[0:2],at.uint8)
+            self.labels = None
         #print "Shape after Loading and width",self.data.shape, self.data.width
-        self.extractDataAttributes()
-    
-    def extractDataAttributes(self):
-        self.dataType = self.data.dtype
-        self.shape = self.data.shape
-        if len(self.data.shape) == 3:
-            if self.data.shape[2] == 3:
-                self.dataKind = 'rgb'
-                self.channelDescription = ['Red','Green','Blue']
-                self.channelUsed = [True] * len(self.channelDescription)
-            elif self.data.shape[2] > 3:
-                self.dataKind = 'multi'
-                self.channelUsed = [True] * len(self.channelDescription)
-                # self.channelDescription have been set by load Method
-        elif len(self.data.shape) == 2:
-            self.dataKind = 'gray'
-            self.channelDescription = ['Intensities']
-            self.channelUsed = [True]
-    
+        if self.dataVol is None:
+            dataAcc = DataAccessor(self.data)
+            self.dataVol = Volume()
+            self.dataVol.data = dataAcc
+            self.dataVol.labels = self.labels
+        
+   
     @classmethod
     def initFromArray(cls, dataArray, originalFileName):
         obj = cls(originalFileName)
@@ -90,34 +86,40 @@ class DataItemImage(DataItemBase):
         obj.extractDataAttributes()
         return obj
         
-    
+    def getTrainingMatrix(self):
+        #TODO: time behaviour should be discussed !
+        #also adapt feature computation when doing this(4D??)!
+        tempF = []
+        tempL = []
+
+        tempd =  self.dataVol.labels.data[0, :, :, :, 0].flatten()
+        indices = numpy.nonzero(tempd)[0]
+        tempL = self.dataVol.labels.data[0,:,:,:,0].flatten()[indices]
+                    
+        for i_f, it_f in enumerate(self.features): #features
+            for i_c, it_c in enumerate(it_f): #channels
+                for i_t, it_t in enumerate(it_c): #time
+                    t = it_t.reshape((numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
+                    tempF.append(t[indices, :])
+                    
+        return (tempL, numpy.hstack(tempF))          
             
+            
+    def getFeatureMatrix(self):
+        tempM = []
+        for i_f, it_f in enumerate(self.features): #features
+           for i_c, it_c in enumerate(it_f): #channels
+               for i_t, it_t in enumerate(it_c): #time
+                   tempM.append(it_t.reshape(numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
+        return numpy.hstack(tempM)      
+        
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
         self.data = None
         
-class DataItemVolume(DataItemBase):
-    #3D: important
-    def __init__(self, fileName):
-        DataItemBase.__init__(self, fileName) 
-       
-    def loadData(self):
-        self.data = vigra.impex.readVolume(self.fileName)
-        self.dataDimensions = 3
-        self.dataType = self.data.dtype
-        if len(self.data.shape) == 4:
-            if self.data.shape[3] == 3:
-                self.dataKind = 'rgb'
-            elif self.data.shape[3] > 3:
-                self.dataKind = 'multi'
-        elif len(self.data.shape) == 3:
-            self.dataKind = 'gray'
-            
-    def unLoadData(self):
-        # TODO: delete permanently here for better garbage collection
-        self.data = None
-    
-        
+     
+    def serialize(self, h5G):
+        self.dataVol.serialize(h5G)
 class DataMgr():
     """
     Manages Project structure and associated files, e.g. images volumedata
@@ -132,6 +134,7 @@ class DataMgr():
         self.prediction = [None] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
         self.labels = {}
+        self.classifiers = []
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
@@ -186,53 +189,6 @@ class DataMgr():
     def __len__(self):
         return len(self.dataItems)
     
-    def buildFeatureMatrix(self):
-        self.featureMatrixList = [] 
-        for dataFeatures in self.dataFeatures:
-            fTuple = []
-            for features in dataFeatures:
-                f = features[0]
-                fSize = f.shape[0] * f.shape[1] 
-                if len(f.shape) == 2:
-                    f = f.reshape(fSize,1)
-                else:
-                    f = f.reshape(fSize,f.shape[2])    
-                fTuple.append(f)
-            self.featureMatrixList.append( numpy.concatenate(fTuple,axis=1) )
-        return self.featureMatrixList
-    
-    def buildTrainingMatrix(self):  
-        #3D: extremely important, make the dimensionality test of 
-        #returned feature image depend upon the dimensionality of the data
-        res_labels = [] 
-        res_names = []
-        res_features = []
-        for dataInd , dataFeatures in irange(self.dataFeatures):
-            res_features_tmp = []
-            #labels = at.ScalarImage(self.dataItems[dataInd].labels).flatten() 
-            labels = self.dataItems[dataInd].labels.flatten() 
-            label_inds = labels.nonzero()[0]
-            labels = labels[label_inds]      
-            nLabels = label_inds.shape[0]
-
-            for featureImage, featureString, c_ind in dataFeatures:
-                n = 1   # n: number of feature-values per pixel
-                if featureImage.ndim > 2: #3D: fails with 3D data !!!
-                                          #this checks the dimensionality of the feature, should be adapted for 3d
-                    n = featureImage.shape[2]
-                if n == 1:
-                    res_features_tmp.append(featureImage.flat[label_inds].reshape(1, nLabels))
-                    res_names.append(featureString)
-                else:
-                    for featureDim in xrange(n):
-                        res_features_tmp.append(featureImage[:, :, featureDim].flat[label_inds].reshape(1, nLabels))
-                        res_names.append(featureString + "_%i" % (featureDim))
-
-            res_features.append(numpy.concatenate(res_features_tmp).T)
-            res_labels.append(labels)
-        
-        return numpy.concatenate(res_features), numpy.concatenate(res_labels), res_names
-    
     def export2Hdf5(self, fileName):
         for imageIndex, dataFeatures in irange(self.dataFeatures):
             groupName = os.path.split(self[imageIndex].fileName)[-1]
@@ -275,6 +231,14 @@ class DataImpex(object):
     """
     Data Import/Export class 
     """
+    
+    @staticmethod
+    def loadVolume(fileName):
+        h5file = h5py.File(fileName, 'r')
+        grp = h5file['volume']
+        return Volume.deserialize(grp)
+        
+    
     @staticmethod
     def loadMultispectralData(fileName):
         h5file = h5py.File(fileName,'r')       

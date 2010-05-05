@@ -22,6 +22,8 @@ from collections import deque
 from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
 
+from gui import volumeeditor as ve
+
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         QtGui.QMainWindow.__init__(self)
@@ -30,27 +32,53 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
         
+        self.labelWidget = None
+        self.activeImage = 0
+        
         self.createRibbons()
         self.initImageWindows()
-        self.createImageWindows()
+        # self.createImageWindows()
         self.createFeatures()
-        
-        #self.labelDocks=[]
-        #self.labelWidget = None
-        
+               
         self.classificationProcess = None
         self.classificationOnline = None
                 
+    def updateFileSelector(self):
+        self.fileSelectorList.clear()
+        for index, item in enumerate(self.project.dataMgr):
+            self.fileSelectorList.addItem(QtGui.QListWidgetItem(item.fileName))
+            if index == self.activeImage:
+                self.fileSelectorList.setCurrentRow(index)
+    
+    def changeImage(self, number):
+        self.activeImage = number
+        self.destroyImageWindows()
+        self.createImageWindows( self.project.dataMgr[number].dataVol)
+    
     def createRibbons(self):                     
       
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
+        self.fileSelector = self.addToolBar("ImageSelector")
         
         self.ribbon = ctrlRibbon.Ribbon(self.ribbonToolbar)
         for ribbon_name, ribbon_group in ctrlRibbon.createRibbons().items():
             tabs = ribbon_group.makeTab()   
-            self.ribbon.addTab(tabs, ribbon_group.name)  
+            self.ribbon.addTab(tabs, ribbon_group.name)
         self.ribbonToolbar.addWidget(self.ribbon)
         
+        
+        
+        self.fileSelectorList = QtGui.QListWidget()
+        widget = QtGui.QWidget()
+        self.fileSelectorList.setMaximumWidth(160)
+        self.fileSelectorList.setMaximumHeight(64)
+        layout = QtGui.QVBoxLayout()
+        layout.addWidget(QtGui.QLabel("Select Image:"))
+        layout.addWidget(self.fileSelectorList)
+        widget.setLayout(layout)
+        self.fileSelector.addWidget(widget)
+        self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentRowChanged(int)"), self.changeImage)
+                
         # Wee, this is really ugly... anybody have better ideas for connecting 
         # the signals. This way has no future and is just a workaround
         
@@ -128,9 +156,8 @@ class MainWindow(QtGui.QMainWindow):
             
         
     def projectModified(self):
-        self.destroyImageWindows()
-        self.createImageWindows()
-        self.labelWidget.updateProject(self.project)
+        self.updateFileSelector()        
+        self.changeImage(0)
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
@@ -145,20 +172,22 @@ class MainWindow(QtGui.QMainWindow):
         for dock in self.labelDocks:
             self.removeDockWidget(dock)
         self.labelDocks = []
-        self.labelWidget = None
+        if self.labelWidget is not None:
+            self.labelWidget.close()
+            self.labelWidget = None
                 
-    def createImageWindows(self):
-        label_w = imgLabel.labelWidget(self, ['rgb1.jpg', 'rgb2.tif'])
+    def createImageWindows(self, dataVol):
+        self.labelWidget = ve.VolumeEditor(dataVol)
         
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
-        dock.setWidget(label_w)
-        self.labelWidget = label_w  # todo: user defined list of labelwidgets
+        dock.setWidget(self.labelWidget)
+
         
         area = QtCore.Qt.BottomDockWidgetArea
-        
         self.addDockWidget(area, dock)
         self.labelDocks.append(dock)
+        
     def createFeatures(self):
         self.featureList = featureMgr.ilastikFeatures
         
@@ -766,29 +795,7 @@ class ClassificationTrain(object):
         numberOfJobs = 10                 
         self.initClassificationProgress(numberOfJobs)
         
-        # Get Train Data
-        
-        #tic = time.clock()
-        #self.parent.generateTrainingData()
-        #Fc = self.parent.project.trainingMatrix
-        #Lc = self.parent.project.trainingLabels
-        #print "old time %f " % (time.clock() - tic)
-        
-        
-        
-        
-        
-        self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)
-        tic2 = time.clock()
-        #Nathan says: Fname is not used anywhere, so we do not need it? It does not work otherwise ...
-        F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
-        #F,L = self.parent.project.dataMgr.buildTrainingMatrix()
-        print "new time %f " % (time.clock() - tic2)
-        
-        featLabelTupel = queue()
-        featLabelTupel.put((F, L))
-       
-        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, featLabelTupel)
+        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, self.parent.project.dataMgr)
         self.classificationProcess.start()
         self.classificationTimer.start(500) 
 
@@ -1019,13 +1026,11 @@ class ClassificationPredict(object):
     def start(self):               
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-        
-        self.featureQueue = self.parent.project.dataMgr.buildFeatureMatrix()
-        
-        numberOfJobs = len(self.featureQueue) * len(self.parent.project.classifierList)
+              
+        numberOfJobs = len(self.parent.project.dataMgr) * len(self.parent.project.classifierList)
         
         self.initClassificationProgress(numberOfJobs)
-        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.classifierList, self.featureQueue)
+        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.dataMgr)
         self.classificationPredict.start()
         self.classificationTimer.start(200) 
 
@@ -1048,13 +1053,23 @@ class ClassificationPredict(object):
             self.finalize()           
             self.terminateClassificationProgressBar()
 
-            displayImage = self.parent.labelWidget.activeImage
-            predictions = dict(irange(self.classificationPredict.predictionList))
-            self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(predictions)
-            self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
             
     def finalize(self):
-        self.parent.project.dataMgr.prediction = self.classificationPredict.predictionList
+        activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+        self.parent.labelWidget.clearOverlays()
+        for p_i in range(activeItem.prediction.shape[-1]):
+            data = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            name = activeItem.dataVol.labels.descriptions[p_i].name
+            color = QtGui.QColor.fromRgb(activeItem.dataVol.labels.descriptions[p_i].color)
+            self.parent.labelWidget.addOverlay(True, data, name, color, 0.4)
+        
+        uncertainty = activeLearning.computeEnsembleMargin(activeItem.prediction)*255.0
+        self.parent.labelWidget.addOverlay(False, uncertainty, "Uncertainty", QtGui.QColor(255,0,0), 0.4)
+        
+        segmentation = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction, 1.0)
+        self.parent.labelWidget.addOverlay(False, segmentation, "Segmentation", QtGui.QColor(255,126,255), 1.0, self.parent.labelWidget.labelView.colorTab)
+                
+        self.parent.labelWidget.repaint()
         
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
