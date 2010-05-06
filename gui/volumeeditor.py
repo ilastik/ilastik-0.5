@@ -278,18 +278,18 @@ class OverlayListView(QtGui.QListWidget):
 
         menu = QtGui.QMenu(self)
 
-        removeAction = menu.addAction("Remove")
+        #removeAction = menu.addAction("Remove")
         if item.visible is True:
             toggleHideAction = menu.addAction("Hide")
         else:
             toggleHideAction = menu.addAction("Show")
 
         action = menu.exec_(QtGui.QCursor.pos())
-        if action == removeAction:
-            self.overlays.remove(item)
-            it = self.takeItem(index.row())
-            del it
-        elif action == toggleHideAction:
+#        if action == removeAction:
+#            self.overlays.remove(item)
+#            it = self.takeItem(index.row())
+#            del it
+        if action == toggleHideAction:
             item.visible = not(item.visible)
             self.volumeEditor.repaint()
             
@@ -300,6 +300,7 @@ class VolumeLabelDescription():
         self.number = number
         self.name = name
         self.color = color
+        self.prediction = None
     
 class VolumeLabels():
     def __init__(self, data = None):
@@ -341,6 +342,8 @@ class Volume():
     def __init__(self):
         self.data = None
         self.labels = None
+        self.uncertainty = None
+        self.segmentation = None
     
     def serialize(self, h5G):
         self.data.serialize(h5G, "data")
@@ -422,6 +425,7 @@ class LabelListView(QtGui.QListWidget):
         self.items.append(label)
         self.addItem(label)
         self.buildColorTab()
+        self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
 
     def buildColorTab(self):
         self.colorTab = []
@@ -453,15 +457,17 @@ class LabelListView(QtGui.QListWidget):
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
             self.volumeLabel.descriptions.__delitem__(index.row())
-            self.labels.remove(item)
+            self.items.remove(item)
             it = self.takeItem(index.row())
             del it
+            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
         elif action == toggleHideAction:
             item.toggleVisible()
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
             self.volumeLabel.descriptions[index.row()].color = color.rgb()
+            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
 
         self.buildColorTab()
 
@@ -518,6 +524,27 @@ class HistoryManager(QtCore.QObject):
             self.history[self.current + 1].restore(self.volumeEditor)
             self.current += 1
 
+class VolumeUpdate():
+    def __init__(self, data, offsets, sizes, erasing):
+        self.offsets = offsets
+        self.data = data
+        self.sizes = sizes
+        self.erasing = erasing
+    
+    def applyTo(self, dataAcc):
+        offsets = self.offsets
+        sizes = self.sizes
+        #TODO: move part of function into DataAccessor class !! e.g. setSubVolume or somethign
+        tempData = dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]] 
+
+        if self.erasing == True:
+            tempData = numpy.where(self.data > 0, 0, tempData)
+        else:
+            tempData = numpy.where(self.data > 0, self.data, tempData)
+        
+        dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]] = tempData  
+
+
 
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
@@ -553,6 +580,8 @@ class VolumeEditor(QtGui.QWidget):
 
         self.selectedTime = 0
         self.selectedChannel = 0
+
+        self.pendingLabels = []
 
         self.ownIndex = self.editor_list.editors.__len__()
         #self.setAccessibleName(self.name)
@@ -679,6 +708,10 @@ class VolumeEditor(QtGui.QWidget):
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo )
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo )
 
+    def getPendingLabels(self):
+        temp = self.pendingLabels
+        self.pendingLabels = []
+        return temp
 
     def historyUndo(self):
         self.history.undo()
@@ -772,6 +805,7 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes[axis].display(tempImage, tempoverlays, tempLabels)
         self.overview.display(axis)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
+        self.emit(QtCore.SIGNAL('newLabelsPending()'))
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
 #            image.setColor(i, col.rgba())
@@ -821,20 +855,27 @@ class VolumeEditor(QtGui.QWidget):
 
     def setLabels(self, offsets, axis, labels, erase):
         num = self.sliceSelectors[axis].value()
-
-        tempLabels = self.labels.data.getSubSlice(offsets, labels.shape, num, axis, self.selectedTime, 0)
-
-
-        state = LabelState("undo labeling", axis, num, offsets, tempLabels.copy(), self.selectedTime)
-        self.history.append(state)
-
-        tempLabels2 = None
-        if erase == True:
-            tempLabels = numpy.where(labels > 0, 0, tempLabels)
+        if axis == 0:
+            offsets5 = (self.selectedTime,num,offsets[0],offsets[1],0)
+            sizes5 = (1,1,labels.shape[0], labels.shape[1],1)
+        elif axis == 1:
+            offsets5 = (self.selectedTime,offsets[0],num,offsets[1],0)
+            sizes5 = (1,labels.shape[0],1, labels.shape[1],1)
         else:
-            tempLabels = numpy.where(labels > 0, labels, tempLabels)
+            offsets5 = (self.selectedTime,offsets[0],offsets[1],num,0)
+            sizes5 = (1,labels.shape[0], labels.shape[1],1,1)
+        
+        vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
+        self.pendingLabels.append(vu)
+        vu.applyTo(self.labels.data)
+        self.emit(QtCore.SIGNAL('newLabelsPending()'))
+            
+    def getVisibleState(self):
+        #TODO: ugly, make nicer
+        vs = [self.selectedTime, self.sliceSelectors[0].value(), self.sliceSelectors[1].value(), self.sliceSelectors[2].value(), self.selectedChannel]
+        return vs
 
-        self.labels.data.setSubSlice(offsets, tempLabels, num, axis, self.selectedTime, 0)
+
 
     def show(self):
         super(VolumeEditor, self).show()
