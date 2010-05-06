@@ -938,7 +938,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setScene(self.scene)
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
-        self.setBackgroundBrush(QtGui.QBrush(QtCore.Qt.black))
+        brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
+        self.setBackgroundBrush(brushImage)
 
         #enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
         self.openglWidget = QtOpenGL.QGLWidget()
