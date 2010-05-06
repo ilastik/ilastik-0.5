@@ -46,7 +46,7 @@ class MainWindow(QtGui.QMainWindow):
     def updateFileSelector(self):
         self.fileSelectorList.clear()
         for index, item in enumerate(self.project.dataMgr):
-            self.fileSelectorList.addItem(QtGui.QListWidgetItem(item.fileName))
+            self.fileSelectorList.addItem(QtGui.QListWidgetItem(item.Name))
             if index == self.activeImage:
                 self.fileSelectorList.setCurrentRow(index)
     
@@ -54,6 +54,9 @@ class MainWindow(QtGui.QMainWindow):
         self.activeImage = number
         self.destroyImageWindows()
         self.createImageWindows( self.project.dataMgr[number].dataVol)
+        self.updateLabelWidgetOverlays()
+        if hasattr(self, "classificationInteractive"):
+            self.classificationInteractive.updateThreadQueues()
     
     def createRibbons(self):                     
       
@@ -156,8 +159,43 @@ class MainWindow(QtGui.QMainWindow):
             
         
     def projectModified(self):
-        self.updateFileSelector()        
+        self.updateFileSelector()
+                      
         self.changeImage(0)
+        
+    def updateLabelWidgetOverlays(self):
+        activeItem = self.project.dataMgr[self.activeImage]
+        self.labelWidget.overlayView.clearOverlays()
+
+        for imageIndex, imageItem in  enumerate(self.project.dataMgr):            
+            if imageIndex != self.activeImage:
+                if imageItem.dataVol.labels is None:
+                    imageItem.dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((imageItem.dataVol.data.shape[1:4]),'uint8')))
+                else:
+                    pass
+                    # TODO. We cannot reference the full description, cause predictions are in there!!
+                    # imageItem.dataVol.labels.descriptions = activeItem.dataVol.labels.descriptions              
+        
+        for imageIndex, imageItem in  enumerate(self.project.dataMgr):            
+            for p_i, item in enumerate(imageItem.dataVol.labels.descriptions):
+                if item.prediction is None:
+                   item.prediction = numpy.zeros(self.project.dataMgr[imageIndex].dataVol.data.shape[0:-1],'uint8')
+                color = QtGui.QColor.fromRgb(item.color)
+                if imageIndex == self.activeImage:
+                    self.labelWidget.addOverlay(True, item.prediction, item.name, color, 0.4)
+            
+            if imageItem.dataVol.uncertainty is None:
+                imageItem.dataVol.uncertainty = numpy.zeros(self.project.dataMgr[self.activeImage].dataVol.data.shape[0:-1] ,'uint8')
+
+            if imageIndex == self.activeImage: 
+                self.labelWidget.addOverlay(False, activeItem.dataVol.uncertainty, "Uncertainty", QtGui.QColor(255,0,0), 0.9)
+            
+            if imageItem.dataVol.segmentation is None:
+                imageItem.dataVol.segmentation = numpy.zeros(self.project.dataMgr[self.activeImage].dataVol.data.shape[0:-1],'uint8')
+
+            if imageIndex == self.activeImage:
+                self.labelWidget.addOverlay(False, activeItem.dataVol.segmentation, "Segmentation", QtGui.QColor(255,126,255), 1.0, self.labelWidget.labelView.colorTab)
+       
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
@@ -178,7 +216,8 @@ class MainWindow(QtGui.QMainWindow):
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol)
-        
+        self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
+                
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
@@ -227,7 +266,6 @@ class MainWindow(QtGui.QMainWindow):
     
     def on_classificationInteractive(self, state):
         if state:
-            self.generateTrainingData()
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
@@ -829,42 +867,57 @@ class ClassificationInteractive(object):
         self.parent = parent
         self.stopped = False
         self.trainingQueue = deque(maxlen=1)
+        self.predictionQueue = deque(maxlen=1)
+        self.resultQueue = deque(maxlen=3)
 
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingQueue)
+        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
         self.interactiveTimer = QtCore.QTimer()
         self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      
         self.temp_cnt = 0
         self.start()
-        self.interactiveTimer.start(200)
-        self.parent.labelWidget.cmbOverlayList.setCurrentIndex(1)
+        self.interactiveTimer.start(150)
+    
+    def updateThreadQueues(self):
+        self.updateTrainingQueue()
+        self.updatePredictionQueue()
         
     def updateTrainingQueue(self):
-        #self.parent.generateTrainingData()
-        #F = self.parent.project.trainingMatrix
-        #L = self.parent.project.trainingLabels
-        self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)   
-        F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
+        newLabels = self.parent.labelWidget.getPendingLabels()   
+        F,L = self.parent.project.dataMgr.updateTrainingMatrix(self.parent.activeImage, newLabels)
 
         self.trainingQueue.append((F, L))
 
-    def updateLabelWidget(self):  
-        predictIndex = self.parent.labelWidget.activeImage
-        displayClassNr = self.parent.labelWidget.activeLabel  
+    def updatePredictionQueue(self):
+        vs = self.parent.labelWidget.getVisibleState()
+        cf = self.parent.project.dataMgr[self.parent.activeImage].getFeatureMatrixForViewState(vs)
+        vs.append(self.parent.activeImage)
+        self.predictionQueue.append((vs,cf))
 
-        viewPredictions = {}
-        for i, predict in irange(self.classificationInteractive.result):
-            try:
-                viewPredictions[i] = predict.pop()
-            except IndexError:
-                pass
+    def updateLabelWidget(self):
+        try:
+            predictions, vs = self.resultQueue.pop()
+            shape = self.parent.project.dataMgr[vs[-1]].dataVol.data.shape
+            index0 = 0
+            count0 = numpy.prod(shape[2:4])
+            count1 = numpy.prod((shape[1],shape[3]))
+            count2 = numpy.prod(shape[1:3])
+            ax0 = predictions[0:count0,:]
+            ax1 = predictions[count0:count0+count1,:]
+            ax2 = predictions[count0+count1:count0+count1+count2,:]
 
-        print "+++clock+++("
-        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(viewPredictions)
-        self.parent.labelWidget.OverlayMgr.setOverlayStateByIndex(self.parent.labelWidget.cmbOverlayList.currentIndex())
-        print "+++clock+++)"
-        # update Data Mgr
-        for k in viewPredictions:
-            self.parent.project.dataMgr.prediction[k] = viewPredictions[k]
+            for p_i in range(ax0.shape[1]):
+                tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
+                tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
+                tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
+                item = self.parent.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
+                item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
+                item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
+                item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
+            
+            self.parent.labelWidget.repaint()                    
+        except IndexError:
+            pass
+                
 
 
     def initInteractiveProgressBar(self):
@@ -881,20 +934,15 @@ class ClassificationInteractive(object):
         
     def start(self):
         
-        self.parent.labelWidget.updateLabelsOfDataItems(self.parent.project.dataMgr)
-        F,L,Fname = self.parent.project.dataMgr.buildTrainingMatrix()
+        F, L = self.parent.project.dataMgr.getTrainingMatrix()
         self.trainingQueue.append((F, L))
         
-        # [Todo: only do it once]
-        predictDataList = self.parent.project.dataMgr.buildFeatureMatrix()      
-        
-        numberOfClasses = len(self.parent.project.labelNames)
-        numberOfClassifiers = 4
-        treeCount = 10
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, predictDataList, self.parent.labelWidget, numberOfClasses, numberOfClassifiers, treeCount)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, self.predictionQueue, self.resultQueue)
         self.initInteractiveProgressBar()
                
         self.classificationInteractive.start()
+        self.updateThreadQueues()
+        
     def stop(self):
         self.interactiveTimer.stop()
         self.classificationInteractive.stopped = True
@@ -909,8 +957,6 @@ class ClassificationInteractive(object):
         
         self.classificationInteractive.finishPredictions()
         
-        self.parent.project.dataMgr.prediction = map(lambda x:x.pop(), self.classificationInteractive.result)
-        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(dict(irange(self.parent.project.dataMgr.prediction)))
         
 class ClassificationOnline(object):
     def __init__(self, parent):
@@ -1053,21 +1099,14 @@ class ClassificationPredict(object):
             self.finalize()           
             self.terminateClassificationProgressBar()
 
-            
     def finalize(self):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
-        self.parent.labelWidget.clearOverlays()
-        for p_i in range(activeItem.prediction.shape[-1]):
-            data = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-            name = activeItem.dataVol.labels.descriptions[p_i].name
-            color = QtGui.QColor.fromRgb(activeItem.dataVol.labels.descriptions[p_i].color)
-            self.parent.labelWidget.addOverlay(True, data, name, color, 0.4)
         
-        uncertainty = activeLearning.computeEnsembleMargin(activeItem.prediction)*255.0
-        self.parent.labelWidget.addOverlay(False, uncertainty, "Uncertainty", QtGui.QColor(255,0,0), 0.4)
+        for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
+            item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)           
         
-        segmentation = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction, 1.0)
-        self.parent.labelWidget.addOverlay(False, segmentation, "Segmentation", QtGui.QColor(255,126,255), 1.0, self.parent.labelWidget.labelView.colorTab)
+        activeItem.dataVol.uncertainty[:,:,:,:] = activeLearning.computeEnsembleMargin(activeItem.prediction)*255.0       
+        activeItem.dataVol.segmentation[:,:,:,:] = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction, 1.0)
                 
         self.parent.labelWidget.repaint()
         

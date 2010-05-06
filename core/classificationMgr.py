@@ -14,8 +14,8 @@ from core import onlineClassifcator
 import numpy
 
 def interactiveMessagePrint(* args):
-    #pass
-    print "Thread: ", args[0]
+    pass
+    #print "Thread: ", args[0]
 
 try:
     import vigra
@@ -42,10 +42,18 @@ class ClassifierBase(object):
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None, treeCount=10):
         ClassifierBase.__init__(self)
-        self.classifier = vigra.learning.RandomForest_new(treeCount=treeCount,mtry=2)
+        if not labels.dtype == numpy.uint32:
+            labels = labels.astype(numpy.uint32)
+        if not features.dtype == numpy.float32:
+            features = features.astype(numpy.float32)
+        
+        print "Building trees"
+        self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
+        
         self.treeCount = treeCount
         if features is not None and labels is not None:
-            self.train(features, labels)
+            pass
+            #self.train(features, labels)
         #self.train(features, labels)
         self.usedForPrediction = set()
     
@@ -189,18 +197,11 @@ class ClassifierTrainThread(threading.Thread):
         self.classifier = ClassifierRandomForest
     
     def run(self):
-        trainingF = []
-        trainingL = []
-        for item in self.dataMgr:
-            tm = item.getTrainingMatrix()
-            trainingL.append(tm[0])
-            trainingF.append(tm[1])
-        trainingF = numpy.vstack(trainingF)
-        trainingL = numpy.vstack(trainingL).T
-        
+        F, L = self.dataMgr.getTrainingMatrix()
+
         classifiers = []
         for i in range(self.numClassifiers):
-            classifiers.append( self.classifier(trainingF, trainingL))
+            classifiers.append( self.classifier(F, L))
             self.count += 1
         self.dataMgr.classifiers = classifiers
                 
@@ -230,129 +231,58 @@ class ClassifierPredictThread(threading.Thread):
             item.prediction = prediction.reshape(item.dataVol.labels.data.shape[0:-1] + (prediction.shape[-1],))
 
 class ClassifierInteractiveThread(threading.Thread):
-    def __init__(self, trainingQueue, predictDataList, labelWidget, numberOfClasses, numberOfClassifiers=10, treeCount=10):
+    def __init__(self, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
         threading.Thread.__init__(self)
         self.stopped = False
         
-        # This is the Queue of Training Data, each brush storke
-        # pushs an entry of full training Information
+        
         self.trainingQueue = trainingQueue
+        self.predictionQueue = predictQueue
+        self.resultQueue = resultQueue
         
-        # the list of deques for the last 10 predictions
-        self.resultList = [deque(maxlen=10) for k in range(0,len(predictDataList))]
-        
-        # The data to predict, list (for images)
-        self.predictDataList = predictDataList
-        
-        # How many classifiers
-        self.numberOfClassifiers = numberOfClassifiers
-        
-        # Each with how many trees
+        self.resultList = deque(maxlen=10)
+               
+        self.numberOfClassifiers = numberOfClassifiers    
+
         self.treeCount = treeCount
         
-        # Deque for classifiers
         self.classifierList = deque(maxlen=numberOfClassifiers)
         
-        # The labelWidget is needed to check for image changes
-        self.labelWidget = labelWidget
+        self.result = deque(maxlen=1) 
         
-        # A lock object needed for updateing the prediction outside of this
-        # function
-        self.resultLock = threading.Lock() 
-        
-        # Number of Classes
-        self.numberOfClasses = numberOfClasses
-        
-        # The finel reult, holds the averaged predictions of resultList
-        self.result = [deque(maxlen=1) for k in range(len(self.predictDataList))]
-        
-        # Init self.result with zeros
-        for ind, pred in irange(self.result):
-            initPred = numpy.zeros(( self.predictDataList[ind].shape[0], self.numberOfClasses), dtype=numpy.float32 )
-            pred.append(initPred)
         
     def classifierListFull(self):
         return self.numberOfClassifiers == len(self.classifierList)
     
     def finishPredictions(self):
         # Make sure that at last on classifier is used for each image
-        predictItemIndices = xrange(len(self.predictDataList))
-        for k in predictItemIndices:
-            for classifier in [self.classifierList[-1]]:
-                if not k in classifier.usedForPrediction:
-                    predictItemIdle = self.predictDataList[k]
-                    predictionIdle = classifier.predict(predictItemIdle)      
-                    classifier.usedForPrediction.add(k)
-                    self.resultList[k].append(predictionIdle) 
-        
-            
-            # Average Results and write it self.result
-            image = reduce(numpy.ndarray.__add__, self.resultList[k]) / len(self.resultList[k])
-            self.result[k].append(image)
+        pass
                     
     def run(self):
         while not self.stopped:
-            interactiveMessagePrint("*"*30)
-            interactiveMessagePrint("*"*30)
-            interactiveMessagePrint("*"*30)
             try:
-                # Try to get new Training Information
-                interactiveMessagePrint("1>> Pop training Data")
                 features, labels = self.trainingQueue.pop()    
-                newTrainingPending = self.numberOfClassifiers
+                interactiveMessagePrint("1>> Pop training Data")
+                for i in range(self.numberOfClassifiers):
+                    self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
             except IndexError:
                 interactiveMessagePrint("1>> No training Data")
-                newTrainingPending -= 1
+               
+            try:
+                pq = self.predictionQueue.pop()
+                vs = pq[0]
+                features = pq[1]
+                interactiveMessagePrint("1>> Pop prediction Data")
+                prediction = self.classifierList[0].predict(features)
+                size = 1
+                for iii in range(len(self.classifierList) - 1):
+                    classifier = self.classifierList[iii + 1]
+                    prediction += classifier.predict(features)
+                    size += 1
+                self.resultQueue.append((prediction / size, vs))  
+            except IndexError:
+                interactiveMessagePrint("1>> No prediction Data")
             
-            # if not enough labels are given then continue
-            if numpy.unique(labels).size < self.numberOfClasses:
-                interactiveMessagePrint("1>> Cannot Learn")
-                continue
-            
-            # Learn Classifier new with newest Data
-            if newTrainingPending > 0:
-                interactiveMessagePrint("2>> Learn Classifier %d/%d" % (self.numberOfClassifiers-newTrainingPending,self.numberOfClassifiers) )
-                self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
-            else:
-                interactiveMessagePrint("2>> Nothing to learn" )
-            
-            
-            predictIndex = self.labelWidget.activeImage
-            predictItem = self.predictDataList[predictIndex]
-            
-            newPredictionsMade = 0
-            for classifier in self.classifierList:
-                interactiveMessagePrint("3>> Check classifier" )
-                if predictIndex in classifier.usedForPrediction:
-                    interactiveMessagePrint("3>> used" )
-                    continue
-                interactiveMessagePrint("3>> not used, => predict" )
-                newPredictionsMade += 1
-                prediction = classifier.predict(predictItem)      
-                classifier.usedForPrediction.add(predictIndex)
-                self.resultList[predictIndex].append(prediction)   
-             
-            if newPredictionsMade < 1 and len(self.predictDataList) > 1:
-                # Predict the others while idle
-                restList = range(0,len(self.predictDataList))
-                restList.remove(predictIndex)
-                for k in restList:
-                    for classifier in [self.classifierList[-1]]:
-                        if not k in classifier.usedForPrediction:
-                            interactiveMessagePrint("3+>> Predict other images with last classifier" )
-                            predictItemIdle = self.predictDataList[k]
-                            predictionIdle = classifier.predict(predictItemIdle)      
-                            classifier.usedForPrediction.add(k)
-                            self.resultList[k].append(predictionIdle) 
-                            break
-            
-            interactiveMessagePrint("4>> average predictions made so far" )            
-            image = reduce(numpy.ndarray.__add__, self.resultList[predictIndex]) / len(self.resultList[predictIndex])
-            
-            self.resultLock.acquire()
-            self.result[predictIndex].append(image)
-            interactiveMessagePrint("5>> write results out")
-            self.resultLock.release()
 
 class ClassifierOnlineThread(threading.Thread):
     def __init__(self, name, features, labels, ids, predictionList, predictionUpdated):

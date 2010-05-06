@@ -21,6 +21,7 @@ class DataItemBase():
     #3D: important
     def __init__(self, fileName):
         self.fileName = str(fileName)
+        self.Name = os.path.split(self.fileName)[1]
         self.hasLabels = False
         self.isTraining = True
         self.isTesting = False
@@ -59,6 +60,7 @@ class DataItemImage(DataItemBase):
         self.overlayImage = None
         self.dataVol = None
         self.prediction = None
+        self.featureM = None
         self.features = [] #features is an array of arrays of arrays etc. like this
                            #feature, channel, time
         
@@ -92,27 +94,80 @@ class DataItemImage(DataItemBase):
         tempF = []
         tempL = []
 
-        tempd =  self.dataVol.labels.data[0, :, :, :, 0].flatten()
+        tempd =  self.dataVol.labels.data[0, :, :, :, 0].ravel()
         indices = numpy.nonzero(tempd)[0]
-        tempL = self.dataVol.labels.data[0,:,:,:,0].flatten()[indices]
+        tempL = self.dataVol.labels.data[0,:,:,:,0].ravel()[indices]
+        tempL.shape += (1,)
                     
         for i_f, it_f in enumerate(self.features): #features
             for i_c, it_c in enumerate(it_f): #channels
                 for i_t, it_t in enumerate(it_c): #time
                     t = it_t.reshape((numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
                     tempF.append(t[indices, :])
-                    
-        return (tempL, numpy.hstack(tempF))          
+        
+        self.trainingIndices = indices
+        self.trainingL = tempL
+        self.trainingF = numpy.hstack(tempF) 
+        return (tempL, self.trainingF, indices)          
             
+    def updateTrainingMatrix(self, newLabels):
+        for nl in newLabels:
+            indic =  list(numpy.nonzero(nl.data))
+            indic[0] = indic[0] + nl.offsets[0]
+            indic[1] += nl.offsets[1]
+            indic[2] += nl.offsets[2]
+            indic[3] += nl.offsets[3]
+            indic[4] += nl.offsets[4]
+            
+            loopc = 2
+            count = 1
+            indices = indic[-loopc]*count
+            templ = list(self.dataVol.data.shape[1:-1])
+            templ.reverse()
+            for s in templ:
+                loopc += 1
+                count *= s
+                indices += indic[-loopc]*count
+            
+            mask = numpy.in1d(self.trainingIndices,indices)
+            nonzero = numpy.nonzero(mask)[0]
+            self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices)) 
+            tempI = numpy.nonzero(nl.data)
+            tempL = nl.data[tempI]
+            self.trainingL = numpy.concatenate((numpy.delete(self.trainingL,nonzero),tempL))
+            fm = self.getFeatureMatrix()
+            self.trainingF = numpy.concatenate((numpy.delete(self.trainingF,nonzero, axis = 0),fm[indices,:]),axis=0)
+           
+
             
     def getFeatureMatrix(self):
+        if self.featureM is None:
+            tempM = []
+            for i_f, it_f in enumerate(self.features): #features
+               for i_c, it_c in enumerate(it_f): #channels
+                   for i_t, it_t in enumerate(it_c): #time
+                       tempM.append(it_t.reshape(numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
+            
+            self.featureM = numpy.hstack(tempM)            
+        return self.featureM      
+        
+        
+    def getFeatureMatrixForViewState(self, vs):
         tempM = []
         for i_f, it_f in enumerate(self.features): #features
            for i_c, it_c in enumerate(it_f): #channels
                for i_t, it_t in enumerate(it_c): #time
-                   tempM.append(it_t.reshape(numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
-        return numpy.hstack(tempM)      
-        
+                   ttt = []
+                   ttt.append(it_t[vs[1],:,:,:].reshape(numpy.prod(it_t.shape[1:3]),it_t.shape[3]))
+                   ttt.append(it_t[:,vs[2],:,:].reshape(numpy.prod((it_t.shape[0],it_t.shape[2])),it_t.shape[3]))
+                   ttt.append(it_t[:,:,vs[3],:].reshape(numpy.prod(it_t.shape[0:2]),it_t.shape[3]))
+                   tempM.append(numpy.vstack(ttt))   
+
+                       
+                               
+        featureM = numpy.hstack(tempM)            
+        return featureM              
+            
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
         self.data = None
@@ -150,7 +205,46 @@ class DataMgr():
         self.prediction.append(None)
         self.uncertainty.append(None)
         
+       
+    def getTrainingMatrix(self):
+        trainingF = []
+        trainingL = []
+        indices = []
+        for item in self:
+            trainingLabels, trainingFeatures, indic = item.getTrainingMatrix()
+            indices.append(indic)
+            trainingL.append(trainingLabels)
+            trainingF.append(trainingFeatures)
+            
+        self.trainingL = trainingL
+        self.trainingF = trainingF
+        self.trainingIndices = indices
         
+        trainingF = numpy.vstack(trainingF)
+        trainingL = numpy.vstack(trainingL)
+        trainingM = (trainingF, trainingL)
+        
+        return trainingM
+    
+    def updateTrainingMatrix(self, num, newLabels):
+        if self.trainingF is None:
+            self.getTrainingMatrix()
+        
+        self[num].updateTrainingMatrix(newLabels)
+        
+        trainingF = []
+        trainingL = []
+        for index, item in enumerate(self):
+            trainingL.append(item.trainingL)
+            trainingF.append(item.trainingF)
+        
+        self.trainingF = trainingF
+        self.trainingL = trainingL
+                  
+        return numpy.vstack(self.trainingF), numpy.vstack(self.trainingL)
+
+            
+    
     def getDataList(self):
         return self.dataItems
         
