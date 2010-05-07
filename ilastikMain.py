@@ -62,25 +62,25 @@ class MainWindow(QtGui.QMainWindow):
     def createRibbons(self):                     
       
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
-        self.fileSelector = self.addToolBar("ImageSelector")
         
         self.ribbon = ctrlRibbon.Ribbon(self.ribbonToolbar)
         for ribbon_name, ribbon_group in ctrlRibbon.createRibbons().items():
             tabs = ribbon_group.makeTab()   
             self.ribbon.addTab(tabs, ribbon_group.name)
         self.ribbonToolbar.addWidget(self.ribbon)
-        
+        self.ribbon.setMaximumHeight(80)
         
         
         self.fileSelectorList = QtGui.QListWidget()
         widget = QtGui.QWidget()
         self.fileSelectorList.setMaximumWidth(160)
-        self.fileSelectorList.setMaximumHeight(64)
         layout = QtGui.QVBoxLayout()
         layout.addWidget(QtGui.QLabel("Select Image:"))
         layout.addWidget(self.fileSelectorList)
         widget.setLayout(layout)
-        self.fileSelector.addWidget(widget)
+        widget.setMaximumWidth(160)
+        widget.setMaximumHeight(80)
+        self.ribbonToolbar.addWidget(widget)
         self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentRowChanged(int)"), self.changeImage)
                 
         # Wee, this is really ugly... anybody have better ideas for connecting 
@@ -168,7 +168,7 @@ class MainWindow(QtGui.QMainWindow):
         activeItem = self.project.dataMgr[self.activeImage]
         self.labelWidget.overlayView.clearOverlays()
 
-        for imageIndex, imageItem in  enumerate(self.project.dataMgr):            
+        for imageIndex, imageItem in  enumerate(self.project.dataMgr):           
             if imageIndex != self.activeImage:
                 if imageItem.dataVol.labels is None:
                     imageItem.dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((imageItem.dataVol.data.shape[1:4]),'uint8')))
@@ -181,6 +181,9 @@ class MainWindow(QtGui.QMainWindow):
                         else:
                             imageItem.dataVol.labels.descriptions.append(copy.deepcopy(itemii))
                             imageItem.dataVol.labels.descriptions[ii].prediction = None
+            else:
+                if imageItem.dataVol.labels.data is None:
+                    imageItem.dataVol.labels.data = ve.DataAccessor(numpy.zeros((imageItem.dataVol.data.shape[1:4]),'uint8'))
                             
 
         for imageIndex, imageItem in  enumerate(self.project.dataMgr):            
@@ -373,8 +376,6 @@ class ProjectDlg(QtGui.QDialog):
         self.fileList = []
         self.thumbList = []        
         self.initDlg()
-        self.on_cmbLabelName_currentIndexChanged(0)
-        self.setLabelColorButtonColor(QtGui.QColor(QtCore.Qt.red))
         for i in xrange(self.tableWidget.columnCount()):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         self.defaultLabelColors = {}
@@ -393,45 +394,7 @@ class ProjectDlg(QtGui.QDialog):
         self.show()
         
 
-    @QtCore.pyqtSignature("int")
-    def on_cmbLabelName_currentIndexChanged(self, nr):
-        if nr < 0:
-            return
-        nr += 1 # 0 is unlabeled !!
-        self.txtLabelName.setText(self.cmbLabelName.currentText())
-        #col = QtGui.QColor.fromRgb(self.labelColor.get(nr, QtGui.QColor(QtCore.Qt.red).rgb()))
-        if not self.labelColor.get(nr, None):
-            if nr > len(self.labelColor):
-                self.labelColor[nr] = QtGui.QColor(numpy.random.randint(255), numpy.random.randint(255), numpy.random.randint(255))  # default: red
-        col = self.labelColor[nr]
-        self.setLabelColorButtonColor(col)
 
-    @QtCore.pyqtSignature("")
-    def on_btnAddLabel_clicked(self):
-        self.cmbLabelName.addItem("Class %d" % self.labelCounter)
-        self.cmbLabelName.setCurrentIndex(self.cmbLabelName.count() - 1)
-        self.labelCounter += 1
-        #self.on_cmbLabelName_currentIndexChanged( self.cmbLabelName.count()-1 )
-        
-    def setLabelColorButtonColor(self, col):
-        self.btnLabelColor.setAutoFillBackground(True)
-        fgcol = QtGui.QColor()
-        fgcol.setRed(255 - col.red())
-        fgcol.setGreen(255 - col.green())
-        fgcol.setBlue(255 - col.blue())
-        self.btnLabelColor.setStyleSheet("background-color: %s; color: %s" % (col.name(), fgcol.name()))
-
-    @QtCore.pyqtSignature("") 
-    def on_btnLabelColor_clicked(self):
-        colordlg = QtGui.QColorDialog()
-        col = colordlg.getColor()
-        labelnr = self.cmbLabelName.currentIndex() + 1
-        self.labelColor[labelnr] = col
-        self.setLabelColorButtonColor(col)
-        
-    @QtCore.pyqtSignature("QString")
-    def on_txtLabelName_textChanged(self, text):
-        self.cmbLabelName.setItemText(self.cmbLabelName.currentIndex(), text)
 
     @QtCore.pyqtSignature("")
     def updateDlg(self, project):
@@ -595,22 +558,7 @@ class ProjectDlg(QtGui.QDialog):
             print "new Project"
         
         self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dm)
-        
-        # Set Class Count
-        self.parent.project.classCount = self.cmbLabelName.count()
-        
-        # Set class Colors
-        self.parent.project.labelColors = self.labelColor
-        
-        # Delete not used labelColors
-        for i in xrange(1, len(self.labelColor)+1):
-            if i > self.parent.project.classCount:
-                del self.parent.project.labelColors[i]
-                
-        # Set label names
-        self.parent.project.labelNames = []
-        for i in xrange(self.parent.project.classCount):
-            self.parent.project.labelNames.append(str(self.cmbLabelName.itemText(i)))
+
             
         # Go through the rows of the table and add files if needed
         rowCount = self.tableWidget.rowCount()
@@ -797,6 +745,7 @@ class FeatureComputation(object):
         self.parent = parent
         self.featureCompute()
         
+        
     
     def featureCompute(self):
         self.myTimer = QtCore.QTimer()
@@ -824,7 +773,10 @@ class FeatureComputation(object):
             self.terminateFeatureProgressBar()
             self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
             
+            
     def terminateFeatureProgressBar(self):
+        ##should we do this here ?
+        #self.parent.project.dataMgr.getTrainingMatrix()
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
         

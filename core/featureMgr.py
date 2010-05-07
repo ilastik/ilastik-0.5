@@ -1,5 +1,6 @@
 import numpy
-import threading 
+import dummy_threading as threading
+#import threading
 import multiprocessing
 import time
 import sys
@@ -120,7 +121,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                     self.count += 1
                 resultImage.append(result)
             image.features = resultImage
-        self.dataMgr.getTrainingMatrix()
+        
 
 ###########################################################################
 ###########################################################################
@@ -149,7 +150,7 @@ class FeatureGroups(object):
         self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
-        #self.members['Texture'].append(hessianMatrixOfGaussian)
+        self.members['Texture'].append(hessianMatrixOfGaussian)
         #self.members['Texture'].append(laplacianOfGaussian)
         #self.members['Texture'].append(morphologicalOpening)
         #self.members['Texture'].append(morphologicalClosing)

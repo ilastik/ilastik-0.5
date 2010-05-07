@@ -110,7 +110,7 @@ class DataItemImage(DataItemBase):
             self.trainingIndices = indices
             self.trainingL = tempL
             self.trainingF = numpy.hstack(tempF) 
-        return (self.trainingL, self.trainingF, indices)          
+        return (self.trainingL, self.trainingF, self.trainingIndices)          
             
     def updateTrainingMatrix(self, newLabels):
         for nl in newLabels:
@@ -134,16 +134,33 @@ class DataItemImage(DataItemBase):
             
             mask = numpy.in1d(self.trainingIndices,indices)
             nonzero = numpy.nonzero(mask)[0]
-            self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices)) 
-            tempI = numpy.nonzero(nl.data)
-            tempL = nl.data[tempI]
-            tempL.shape += (1,)
-            temp2 = numpy.delete(self.trainingL,nonzero)
-            temp2.shape += (1,)
-            self.trainingL = numpy.vstack((temp2,tempL))
-            fm = self.getFeatureMatrix()
-            self.trainingF = numpy.vstack((numpy.delete(self.trainingF,nonzero, axis = 0),fm[indices,:]))
-           
+            if len(nonzero) > 0:
+                self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices)) 
+                tempI = numpy.nonzero(nl.data)
+                tempL = nl.data[tempI]
+                tempL.shape += (1,)
+                temp2 = numpy.delete(self.trainingL,nonzero)
+                temp2.shape += (1,)
+                self.trainingL = numpy.vstack((temp2,tempL))
+                fm = self.getFeatureMatrix()
+                temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
+                if len(temp2.shape) == 1:
+                    temp2.shape += (1,)
+                    fm.shape += (1,)
+                self.trainingF = numpy.vstack((temp2,fm[indices,:]))
+            else: #no intersection, just add everything...
+                self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
+                tempI = numpy.nonzero(nl.data)
+                tempL = nl.data[tempI]
+                tempL.shape += (1,)
+                temp2 = self.trainingL
+                self.trainingL = numpy.vstack((temp2,tempL))
+                fm = self.getFeatureMatrix()
+                temp2 = self.trainingF
+                if len(temp2.shape) == 1:
+                    temp2.shape += (1,)
+                    fm.shape += (1,)
+                self.trainingF = numpy.vstack((temp2,fm[indices,:]))           
 
             
     def getFeatureMatrix(self):
@@ -391,7 +408,7 @@ class DataImpex(object):
     def loadImageData(fileName):
         # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
         # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
-        data = at.Image(vigra.impex.readImage(fileName))
+        data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
         return data
     
     @staticmethod    

@@ -1,22 +1,23 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>NewProject</class>
- <widget class="QDialog" name="NewProject" >
-  <property name="windowModality" >
+ <widget class="QDialog" name="NewProject">
+  <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
-  <property name="geometry" >
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>735</width>
-    <height>584</height>
+    <height>514</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QGroupBox" name="groupBox_5" >
-   <property name="geometry" >
+  <widget class="QGroupBox" name="groupBox_5">
+   <property name="geometry">
     <rect>
      <x>5</x>
      <y>205</y>
@@ -24,11 +25,11 @@
      <height>276</height>
     </rect>
    </property>
-   <property name="title" >
+   <property name="title">
     <string>Data</string>
    </property>
-   <widget class="QWidget" name="horizontalLayoutWidget" >
-    <property name="geometry" >
+   <widget class="QWidget" name="horizontalLayoutWidget">
+    <property name="geometry">
      <rect>
       <x>0</x>
       <y>15</y>
@@ -36,45 +37,45 @@
       <height>251</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2" >
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <layout class="QVBoxLayout" name="verticalLayout_5" >
+      <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
-        <widget class="QPushButton" name="addFile" >
-         <property name="text" >
-          <string>Add >></string>
+        <widget class="QPushButton" name="addFile">
+         <property name="text">
+          <string>Add &gt;&gt;</string>
          </property>
-         <property name="default" >
+         <property name="default">
           <bool>true</bool>
          </property>
-         <property name="flat" >
+         <property name="flat">
           <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="removeFile" >
-         <property name="text" >
+        <widget class="QPushButton" name="removeFile">
+         <property name="text">
           <string>Remove &lt;&lt;</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QLabel" name="thumbnailImage" >
-         <property name="text" >
+        <widget class="QLabel" name="thumbnailImage">
+         <property name="text">
           <string/>
          </property>
-         <property name="pixmap" >
+         <property name="pixmap">
           <pixmap>gui/placeholder.png</pixmap>
          </property>
         </widget>
        </item>
        <item>
-        <spacer name="verticalSpacer" >
-         <property name="orientation" >
+        <spacer name="verticalSpacer">
+         <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
-         <property name="sizeHint" stdset="0" >
+         <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
            <height>40</height>
@@ -85,38 +86,38 @@
       </layout>
      </item>
      <item>
-      <widget class="QTableWidget" name="tableWidget" >
-       <property name="sizePolicy" >
-        <sizepolicy vsizetype="Minimum" hsizetype="MinimumExpanding" >
+      <widget class="QTableWidget" name="tableWidget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="styleSheet" >
-        <string notr="true" />
+       <property name="styleSheet">
+        <string notr="true"/>
        </property>
        <column>
-        <property name="text" >
+        <property name="text">
          <string>File</string>
         </property>
        </column>
        <column>
-        <property name="text" >
+        <property name="text">
          <string>Groups</string>
         </property>
        </column>
        <column>
-        <property name="text" >
+        <property name="text">
          <string>Labels</string>
         </property>
        </column>
        <column>
-        <property name="text" >
+        <property name="text">
          <string>Train</string>
         </property>
        </column>
        <column>
-        <property name="text" >
+        <property name="text">
          <string>Test</string>
         </property>
        </column>
@@ -125,11 +126,11 @@
     </layout>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="groupBox_2" >
-   <property name="enabled" >
+  <widget class="QGroupBox" name="groupBox_2">
+   <property name="enabled">
     <bool>true</bool>
    </property>
-   <property name="geometry" >
+   <property name="geometry">
     <rect>
      <x>5</x>
      <y>0</y>
@@ -137,17 +138,17 @@
      <height>51</height>
     </rect>
    </property>
-   <property name="sizePolicy" >
-    <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <property name="title" >
+   <property name="title">
     <string>Project</string>
    </property>
-   <widget class="QLineEdit" name="projectName" >
-    <property name="geometry" >
+   <widget class="QLineEdit" name="projectName">
+    <property name="geometry">
      <rect>
       <x>5</x>
       <y>20</y>
@@ -155,13 +156,13 @@
       <height>20</height>
      </rect>
     </property>
-    <property name="text" >
+    <property name="text">
      <string>mySurvey</string>
     </property>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="groupBox" >
-   <property name="geometry" >
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
     <rect>
      <x>5</x>
      <y>55</y>
@@ -169,29 +170,29 @@
      <height>51</height>
     </rect>
    </property>
-   <property name="sizePolicy" >
-    <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
-   <property name="minimumSize" >
+   <property name="minimumSize">
     <size>
      <width>10</width>
      <height>0</height>
     </size>
    </property>
-   <property name="maximumSize" >
+   <property name="maximumSize">
     <size>
      <width>10000</width>
      <height>10000</height>
     </size>
    </property>
-   <property name="title" >
+   <property name="title">
     <string>Labeler</string>
    </property>
-   <widget class="QLineEdit" name="labeler" >
-    <property name="geometry" >
+   <widget class="QLineEdit" name="labeler">
+    <property name="geometry">
      <rect>
       <x>5</x>
       <y>20</y>
@@ -199,19 +200,19 @@
       <height>21</height>
      </rect>
     </property>
-    <property name="sizePolicy" >
-     <sizepolicy vsizetype="MinimumExpanding" hsizetype="MinimumExpanding" >
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
       <horstretch>0</horstretch>
       <verstretch>0</verstretch>
      </sizepolicy>
     </property>
-    <property name="text" >
+    <property name="text">
      <string>Christoph Sommer</string>
     </property>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="groupBox_3" >
-   <property name="geometry" >
+  <widget class="QGroupBox" name="groupBox_3">
+   <property name="geometry">
     <rect>
      <x>5</x>
      <y>110</y>
@@ -219,11 +220,11 @@
      <height>91</height>
     </rect>
    </property>
-   <property name="title" >
+   <property name="title">
     <string>Description</string>
    </property>
-   <widget class="QTextEdit" name="description" >
-    <property name="geometry" >
+   <widget class="QTextEdit" name="description">
+    <property name="geometry">
      <rect>
       <x>5</x>
       <y>25</y>
@@ -231,82 +232,37 @@
       <height>57</height>
      </rect>
     </property>
-    <property name="sizePolicy" >
-     <sizepolicy vsizetype="Preferred" hsizetype="Preferred" >
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
       <horstretch>0</horstretch>
       <verstretch>0</verstretch>
      </sizepolicy>
     </property>
-    <property name="maximumSize" >
+    <property name="maximumSize">
      <size>
       <width>16777215</width>
       <height>1623452</height>
      </size>
     </property>
-    <property name="html" >
-     <string>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
-&lt;html>&lt;head>&lt;meta name="qrichtext" content="1" />&lt;style type="text/css">
+    <property name="html">
+     <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style>&lt;/head>&lt;body style=" font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;">
-&lt;p style=" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans Serif'; font-size:9pt;">&lt;span style=" font-family:'MS Shell Dlg 2'; font-size:8pt;">Project Description&lt;/span>&lt;/p>&lt;/body>&lt;/html></string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Project Description&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
     </property>
    </widget>
   </widget>
-  <widget class="QGroupBox" name="groupBox_4" >
-   <property name="geometry" >
+  <widget class="QDialogButtonBox" name="confirmButtons">
+   <property name="geometry">
     <rect>
-     <x>5</x>
-     <y>485</y>
-     <width>726</width>
-     <height>59</height>
-    </rect>
-   </property>
-   <property name="title" >
-    <string>Classes</string>
-   </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_3" >
-    <item>
-     <widget class="QComboBox" name="cmbLabelName" >
-      <item>
-       <property name="text" >
-        <string>Class 1</string>
-       </property>
-      </item>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="txtLabelName" >
-      <property name="text" >
-       <string>Class 1</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="btnAddLabel" >
-      <property name="text" >
-       <string>Create Class</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QPushButton" name="btnLabelColor" >
-      <property name="text" >
-       <string>Choose Color</string>
-      </property>
-     </widget>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QDialogButtonBox" name="confirmButtons" >
-   <property name="geometry" >
-    <rect>
-     <x>300</x>
-     <y>545</y>
+     <x>550</x>
+     <y>480</y>
      <width>171</width>
      <height>36</height>
     </rect>
    </property>
-   <property name="standardButtons" >
+   <property name="standardButtons">
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>

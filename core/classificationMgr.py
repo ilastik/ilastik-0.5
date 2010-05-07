@@ -47,41 +47,42 @@ class ClassifierRandomForest(ClassifierBase):
         if not features.dtype == numpy.float32:
             features = features.astype(numpy.float32)
         
-        print "Building trees"
-        self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
-        
-        self.treeCount = treeCount
-        if features is not None and labels is not None:
-            pass
-            #self.train(features, labels)
-        #self.train(features, labels)
-        self.usedForPrediction = set()
-    
-    def train(self, features, labels):
-        
-        if features.shape[0] != labels.shape[0]:
-            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
+        interactiveMessagePrint("Building trees..")
+        if len(numpy.unique(labels)) > 1:
+            self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
+        else:
+            self.classifier = None
             
-        if not labels.dtype == numpy.uint32:
-            labels = labels.astype(numpy.uint32)
-        if not features.dtype == numpy.float32:
-            features = features.astype(numpy.float32)
-        # print "Create RF with ",self.treeCount," trees"
-        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
-        if labels.ndim == 1:
-            labels.shape = labels.shape + (1,)
-        labels = labels - 1
-        
-        self.classifier.learnRF(features, labels)
-        print "tree Count", self.treeCount
+        self.treeCount = treeCount
+
+    
+#    def train(self, features, labels):
+#
+#        if features.shape[0] != labels.shape[0]:
+#            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
+#            
+#        if not labels.dtype == numpy.uint32:
+#            labels = labels.astype(numpy.uint32)
+#        if not features.dtype == numpy.float32:
+#            features = features.astype(numpy.float32)
+#        # print "Create RF with ",self.treeCount," trees"
+#        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
+#        if labels.ndim == 1:
+#            labels.shape = labels.shape + (1,)
+#        labels = labels - 1
+#        
+#        self.classifier.learnRF(features, labels)
+#        print "tree Count", self.treeCount
         
     
     def predict(self, target):
         #3d: check that only 1D data arrives here
-        if self.classifier:
+        if self.classifier is not None:
             if not target.dtype == numpy.float32:
                 target = numpy.array(target, dtype=numpy.float32)
-            return self.classifier.predictProbabilities(target)    
+            return self.classifier.predictProbabilities(target)
+        else:            
+            return None
     def __getstate__(self): 
         # Delete This Instance for pickleling
         return {}    
@@ -273,13 +274,14 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                 features = pq[1]
                 interactiveMessagePrint("1>> Pop prediction Data")
                 prediction = self.classifierList[0].predict(features)
-                size = 1
-                for iii in range(len(self.classifierList) - 1):
-                    classifier = self.classifierList[iii + 1]
-                    prediction += classifier.predict(features)
-                    size += 1
-                self.resultQueue.append((prediction / size, vs))
-                self.emit(QtCore.SIGNAL("resultsPending()"))  
+                if prediction is not None:
+                    size = 1
+                    for iii in range(len(self.classifierList) - 1):
+                        classifier = self.classifierList[iii + 1]
+                        prediction += classifier.predict(features)
+                        size += 1
+                    self.resultQueue.append((prediction / size, vs))
+                    self.emit(QtCore.SIGNAL("resultsPending()"))  
             except IndexError:
                 interactiveMessagePrint("1>> No prediction Data")
             

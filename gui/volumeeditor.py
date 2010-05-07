@@ -467,6 +467,9 @@ class LabelListView(QtGui.QListWidget):
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
             self.volumeLabel.descriptions.__delitem__(index.row())
+            #TODO make nicer !
+            temp = numpy.where(self.volumeLabel.data[:,:,:,:,:] == item.number, 0, self.volumeLabel.data[:,:,:,:,:])
+            self.volumeLabel.data[:,:,:,:,:] = temp[:,:,:,:,:]
             self.items.remove(item)
             it = self.takeItem(index.row())
             del it
@@ -992,9 +995,9 @@ class ImageScene( QtGui.QGraphicsView):
         brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
         self.setBackgroundBrush(brushImage)
 
-        #enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
-        self.openglWidget = QtOpenGL.QGLWidget()
-        self.setViewport(self.openglWidget)
+        ##enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
+        #self.openglWidget = QtOpenGL.QGLWidget()
+        #self.setViewport(self.openglWidget)
         
         # self.setViewport(QtOpenGL.QGLWidget())
         
@@ -1266,6 +1269,9 @@ class OverviewScene(QtOpenGL.QGLWidget):
         self.tex.append(0)
 
     def display(self, axis):
+        #disable for FRED opengl
+        #self.initialized = False
+        
         if self.initialized is True:
             #self.initializeGL()
             self.makeCurrent()
