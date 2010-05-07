@@ -230,9 +230,11 @@ class ClassifierPredictThread(threading.Thread):
             #TODO: Time ! synchronize with featureMgr...
             item.prediction = prediction.reshape(item.dataVol.labels.data.shape[0:-1] + (prediction.shape[-1],))
 
-class ClassifierInteractiveThread(threading.Thread):
+class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
     def __init__(self, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
         threading.Thread.__init__(self)
+        QtCore.QObject.__init__(self)
+        
         self.stopped = False
         
         
@@ -254,9 +256,6 @@ class ClassifierInteractiveThread(threading.Thread):
     def classifierListFull(self):
         return self.numberOfClassifiers == len(self.classifierList)
     
-    def finishPredictions(self):
-        # Make sure that at last on classifier is used for each image
-        pass
                     
     def run(self):
         while not self.stopped:
@@ -279,7 +278,8 @@ class ClassifierInteractiveThread(threading.Thread):
                     classifier = self.classifierList[iii + 1]
                     prediction += classifier.predict(features)
                     size += 1
-                self.resultQueue.append((prediction / size, vs))  
+                self.resultQueue.append((prediction / size, vs))
+                self.emit(QtCore.SIGNAL("resultsPending()"))  
             except IndexError:
                 interactiveMessagePrint("1>> No prediction Data")
             

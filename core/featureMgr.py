@@ -74,14 +74,14 @@ class LocalFeature(FeatureBase):
         # the result of featureFunktor is numpy.ndarray and NOT a vigra type!? I don't know why... (see dateMgr loadData)
         result = []
         for i in range(channel.shape[0]):
-            if channel.shape[1] > 1:
-                temp = self.featureFunktor(channel[i,:,:,:].astype(numpy.float32), * self.args)
+            if channel.shape[1] > 1: #3D Case
+                temp = self.featureFunktor(channel[i,:,:,:].astype(numpy.float32).view(vigra.Volume), * self.args)
                 if len(temp.shape) == 3:
                     result.append( temp.reshape( temp.shape + (1,)) )
                 else:
                     result.append( temp )
-            else:
-                temp = self.featureFunktor(channel[i,0,:,:].astype(numpy.float32), * self.args)
+            else: #2D
+                temp = self.featureFunktor(channel[i,0,:,:].astype(numpy.float32).view(vigra.Image), * self.args)
                 if len(temp.shape) == 2:
                     result.append(temp.reshape((1,) + temp.shape + (1,)))
                 else: #more dimensional filter, we only need to add the 3D dimension
@@ -120,6 +120,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                     self.count += 1
                 resultImage.append(result)
             image.features = resultImage
+        self.dataMgr.getTrainingMatrix()
 
 ###########################################################################
 ###########################################################################
@@ -156,11 +157,11 @@ class FeatureGroups(object):
         #self.members['Texture'].append(differenceOfGaussians)
         
         self.members['Edge'].append(gaussianGradientMagnitude)
-        self.members['Edge'].append(eigStructureTensor2d)
+        #self.members['Edge'].append(eigStructureTensor2d)
         #self.members['Edge'].append(eigHessianTensor2d)
         self.members['Edge'].append(laplacianOfGaussian)
         self.members['Edge'].append(differenceOfGaussians)
-        self.members['Edge'].append(cannyEdge)
+        #self.members['Edge'].append(cannyEdge)
         
     def createList(self):
         resList = []
@@ -177,7 +178,7 @@ class FeatureGroups(object):
 
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
 gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
-structureTensor = vigra.filters.structureTensor, ['Sigma']
+structureTensor = vigra.filters.structureTensor, ['InnerScale', 'OuterScale']
 hessianMatrixOfGaussian = vigra.filters.hessianOfGaussian, ['Sigma']
 eigStructureTensor2d = vigra.filters.structureTensorEigenvalues, ['InnerScale', 'OuterScale']
 laplacianOfGaussian = vigra.filters.laplacianOfGaussian, ['Sigma']

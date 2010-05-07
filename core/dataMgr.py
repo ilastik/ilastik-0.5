@@ -60,6 +60,7 @@ class DataItemImage(DataItemBase):
         self.overlayImage = None
         self.dataVol = None
         self.prediction = None
+        self.trainingF = None        
         self.featureM = None
         self.features = [] #features is an array of arrays of arrays etc. like this
                            #feature, channel, time
@@ -91,27 +92,29 @@ class DataItemImage(DataItemBase):
     def getTrainingMatrix(self):
         #TODO: time behaviour should be discussed !
         #also adapt feature computation when doing this(4D??)!
-        tempF = []
-        tempL = []
-
-        tempd =  self.dataVol.labels.data[0, :, :, :, 0].ravel()
-        indices = numpy.nonzero(tempd)[0]
-        tempL = self.dataVol.labels.data[0,:,:,:,0].ravel()[indices]
-        tempL.shape += (1,)
-                    
-        for i_f, it_f in enumerate(self.features): #features
-            for i_c, it_c in enumerate(it_f): #channels
-                for i_t, it_t in enumerate(it_c): #time
-                    t = it_t.reshape((numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
-                    tempF.append(t[indices, :])
-        
-        self.trainingIndices = indices
-        self.trainingL = tempL
-        self.trainingF = numpy.hstack(tempF) 
-        return (tempL, self.trainingF, indices)          
+        if self.trainingF is None:
+            tempF = []
+            tempL = []
+    
+            tempd =  self.dataVol.labels.data[0, :, :, :, 0].ravel()
+            indices = numpy.nonzero(tempd)[0]
+            tempL = self.dataVol.labels.data[0,:,:,:,0].ravel()[indices]
+            tempL.shape += (1,)
+                        
+            for i_f, it_f in enumerate(self.features): #features
+                for i_c, it_c in enumerate(it_f): #channels
+                    for i_t, it_t in enumerate(it_c): #time
+                        t = it_t.reshape((numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
+                        tempF.append(t[indices, :])
+            
+            self.trainingIndices = indices
+            self.trainingL = tempL
+            self.trainingF = numpy.hstack(tempF) 
+        return (self.trainingL, self.trainingF, indices)          
             
     def updateTrainingMatrix(self, newLabels):
         for nl in newLabels:
+            #TODO: Why is nl.data empty?? IMPORTANT
             indic =  list(numpy.nonzero(nl.data))
             indic[0] = indic[0] + nl.offsets[0]
             indic[1] += nl.offsets[1]
@@ -134,9 +137,12 @@ class DataItemImage(DataItemBase):
             self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices)) 
             tempI = numpy.nonzero(nl.data)
             tempL = nl.data[tempI]
-            self.trainingL = numpy.concatenate((numpy.delete(self.trainingL,nonzero),tempL))
+            tempL.shape += (1,)
+            temp2 = numpy.delete(self.trainingL,nonzero)
+            temp2.shape += (1,)
+            self.trainingL = numpy.vstack((temp2,tempL))
             fm = self.getFeatureMatrix()
-            self.trainingF = numpy.concatenate((numpy.delete(self.trainingF,nonzero, axis = 0),fm[indices,:]),axis=0)
+            self.trainingF = numpy.vstack((numpy.delete(self.trainingF,nonzero, axis = 0),fm[indices,:]))
            
 
             
@@ -151,7 +157,12 @@ class DataItemImage(DataItemBase):
             self.featureM = numpy.hstack(tempM)            
         return self.featureM      
         
-        
+    def clearFeaturesAndTraining(self):
+        self.trainingF = None
+        self.trainingL = None
+        self.featureM = None
+        self.trainingIndices = None
+                
     def getFeatureMatrixForViewState(self, vs):
         tempM = []
         for i_f, it_f in enumerate(self.features): #features
@@ -243,7 +254,14 @@ class DataMgr():
                   
         return numpy.vstack(self.trainingF), numpy.vstack(self.trainingL)
 
-            
+    
+    def clearFeaturesAndTraining(self):
+        self.trainingF = None
+        self.trainingL = None
+        self.trainingIndices = None
+        
+        for index, item in enumerate(self):
+            item.clearFeaturesAndTraining()
     
     def getDataList(self):
         return self.dataItems

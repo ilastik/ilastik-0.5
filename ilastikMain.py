@@ -21,6 +21,7 @@ from Queue import Queue as queue
 from collections import deque
 from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
+import copy
 
 from gui import volumeeditor as ve
 
@@ -172,10 +173,16 @@ class MainWindow(QtGui.QMainWindow):
                 if imageItem.dataVol.labels is None:
                     imageItem.dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((imageItem.dataVol.data.shape[1:4]),'uint8')))
                 else:
-                    pass
-                    # TODO. We cannot reference the full description, cause predictions are in there!!
-                    # imageItem.dataVol.labels.descriptions = activeItem.dataVol.labels.descriptions              
-        
+                    for ii, itemii in enumerate(activeItem.dataVol.labels.descriptions):
+                        if ii < len(imageItem.dataVol.labels.descriptions):
+                            if imageItem.dataVol.labels.descriptions[ii] ==  itemii:
+                                imageItem.dataVol.labels.descriptions[ii] = copy.deepcopy(itemii)
+                                imageItem.dataVol.labels.descriptions[ii].prediction = None
+                        else:
+                            imageItem.dataVol.labels.descriptions.append(copy.deepcopy(itemii))
+                            imageItem.dataVol.labels.descriptions[ii].prediction = None
+                            
+
         for imageIndex, imageItem in  enumerate(self.project.dataMgr):            
             for p_i, item in enumerate(imageItem.dataVol.labels.descriptions):
                 if item.prediction is None:
@@ -231,6 +238,7 @@ class MainWindow(QtGui.QMainWindow):
         self.featureList = featureMgr.ilastikFeatures
         
     def featureCompute(self):
+        self.project.dataMgr.clearFeaturesAndTraining()
         self.featureComputation = FeatureComputation(self)
     
     def on_segmentation(self):
@@ -788,12 +796,13 @@ class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
         self.featureCompute()
+        
     
     def featureCompute(self):
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
         
-        numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)  
+        numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)   
         self.initFeatureProgress(numberOfJobs)
         self.parent.project.featureMgr.triggerCompute()
         self.myTimer.start(200) 
@@ -871,11 +880,8 @@ class ClassificationInteractive(object):
         self.resultQueue = deque(maxlen=3)
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
-        self.interactiveTimer = QtCore.QTimer()
-        self.parent.connect(self.interactiveTimer, QtCore.SIGNAL("timeout()"), self.updateLabelWidget)      
         self.temp_cnt = 0
         self.start()
-        self.interactiveTimer.start(150)
     
     def updateThreadQueues(self):
         self.updateTrainingQueue()
@@ -939,12 +945,15 @@ class ClassificationInteractive(object):
         
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, self.predictionQueue, self.resultQueue)
         self.initInteractiveProgressBar()
+
+        self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
+    
                
         self.classificationInteractive.start()
         self.updateThreadQueues()
         
+        
     def stop(self):
-        self.interactiveTimer.stop()
         self.classificationInteractive.stopped = True
         
         self.classificationInteractive.join()
@@ -954,8 +963,6 @@ class ClassificationInteractive(object):
     
     def finalize(self):
         self.parent.project.classifierList = list(self.classificationInteractive.classifierList)
-        
-        self.classificationInteractive.finishPredictions()
         
         
 class ClassificationOnline(object):

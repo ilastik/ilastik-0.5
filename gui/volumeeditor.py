@@ -301,6 +301,16 @@ class VolumeLabelDescription():
         self.name = name
         self.color = color
         self.prediction = None
+        
+    def __eq__(self, other):
+        answer = True
+        if self.number != other.number:
+            answer = False
+        if self.name != other.name:
+            answer = False
+        if self.color != other.color:
+            answer = False
+        return answer
     
 class VolumeLabels():
     def __init__(self, data = None):

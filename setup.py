@@ -23,7 +23,7 @@ ilastikGUI = Target(
 )
 
 setup(
-    windows = [ilastikGUI],
+    console = [ilastikGUI],
     data_files = [('gui', ['./gui/pyc.ico', "./gui/dlgChannels.ui", "./gui/dlgFeature.ui", "./gui/dlgProject.ui"]), msvs_redist],
     zipfile = "shared.lib",
     options = {"py2exe": {"compressed": 0, "optimize": 0, "includes":["sip", "core", "h5py", "h5py._stub", "numpy.matrixlib.defmatrix", "h5py.utils", "PyQt4.QtSvg", "labelArrayDrawQImage"], "dll_excludes": ["MSVCP90.dll", "MSVCR80.dll"]}},
@@ -32,4 +32,4 @@ setup(
 print "*********************\n>>copy vigra numpy core"
 import os
 os.chdir('dist')
-os.system('copy vigra.vigranumpycore.pyd vigranumpycore.pyd' )
+# os.system('copy vigra.vigranumpycore.pyd vigranumpycore.pyd' )
