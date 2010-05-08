@@ -897,8 +897,8 @@ class VolumeEditor(QtGui.QWidget):
             sizes5 = (1,labels.shape[0], labels.shape[1],1,1)
         
         vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
-        self.pendingLabels.append(vu)
         vu.applyTo(self.labels.data)
+        self.pendingLabels.append(vu)
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
             
     def getVisibleState(self):

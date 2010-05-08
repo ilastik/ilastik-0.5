@@ -117,6 +117,7 @@ class DataItemImage(DataItemBase):
         return self.trainingL, self.trainingF, self.trainingIndices
             
     def updateTrainingMatrix(self, newLabels):
+        #TODO: hmmmmm, sometimes this function mixes up the updates, needs investigation
         for nl in newLabels:
             #TODO: Why is nl.data empty?? IMPORTANT
             if nl.erasing == False:
@@ -190,19 +191,11 @@ class DataItemImage(DataItemBase):
                 mask = numpy.in1d(self.trainingIndices,indices) #get intersection
                 nonzero = numpy.nonzero(mask)[0]
                 if len(nonzero) > 0:
-                    self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices))
-                    temp2 = numpy.delete(self.trainingL,nonzero)
-                    temp2.shape += (1,)
-                    self.trainingL = temp2
+                    self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
+                    self.trainingL  = numpy.delete(self.trainingL,nonzero)
+                    #temp2.shape += (1,)
                     fm = self.getFeatureMatrix()
-                    temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
-                    if len(temp2.shape) == 1:
-                        temp2.shape += (1,)
-                        fm.shape += (1,)
-                    if len(fm) > 0:
-                        self.trainingF = temp2
-                    else:
-                        self.trainingF = numpy.zeros((0,0)) #TODO: not right
+                    self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
                 else: #no intersectoin, in erase mode just pass
                     pass             
 

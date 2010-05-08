@@ -266,6 +266,8 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
     
                     
     def run(self):
+        self.ilastik.project.dataMgr.getTrainingMatrix()
+        self.dataPending.set()
         while not self.stopped:
             self.dataPending.wait()
             self.dataPending.clear()

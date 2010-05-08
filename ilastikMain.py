@@ -116,9 +116,9 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
-        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-        self.connect(self.ribbon.tabDict['Label'].itemDict['Brushsize'], QtCore.SIGNAL('valueChanged(int)'), self.on_changeBrushSize)
+        #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
+        #TODO: reenable segmentation
+        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         
         # Make menu for online Classification
         btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
@@ -264,31 +264,31 @@ class MainWindow(QtGui.QMainWindow):
         self.project.dataMgr.clearFeaturesAndTraining()
         self.featureComputation = FeatureComputation(self)
     
-    def on_segmentation(self):
-
-        segThreads = []
-        seg = []
-        for shape, propmap in zip(self.project.dataMgr.dataItemsShapes(), self.project.dataMgr.prediction):
-            s = segmentationMgr.LocallyDominantSegmentation2D(shape)
-            seg.append(s)
-            
-            t = threading.Thread(target=s.segment, args=(propmap,))
-            segThreads.append(t)
-            t.start()         
-        
-        for cnt, t in irange(segThreads):
-            t.join()
-            self.project.dataMgr.segmentation[cnt] = seg[cnt].result
-        
-        self.labelWidget.OverlayMgr.updateSegmentationPixmaps(dict(irange(self.project.dataMgr.segmentation)))
-        self.labelWidget.OverlayMgr.setOverlayState('Segmentation')
-        
-    def on_changeBrushSize(self, rad):
-        #if rad / 2 != 0:
-        #    rad + 1 
-            
-        self.labelWidget.setBrushSize(rad)
-
+#    def on_segmentation(self):
+#
+#        segThreads = []
+#        seg = []
+#        for shape, propmap in zip(self.project.dataMgr.dataItemsShapes(), self.project.dataMgr.prediction):
+#            s = segmentationMgr.LocallyDominantSegmentation2D(shape)
+#            seg.append(s)
+#            
+#            t = threading.Thread(target=s.segment, args=(propmap,))
+#            segThreads.append(t)
+#            t.start()         
+#        
+#        for cnt, t in irange(segThreads):
+#            t.join()
+#            self.project.dataMgr.segmentation[cnt] = seg[cnt].result
+#        
+#        self.labelWidget.OverlayMgr.updateSegmentationPixmaps(dict(irange(self.project.dataMgr.segmentation)))
+#        self.labelWidget.OverlayMgr.setOverlayState('Segmentation')
+#        
+#    def on_changeBrushSize(self, rad):
+#        #if rad / 2 != 0:
+#        #    rad + 1 
+#            
+#        self.labelWidget.setBrushSize(rad)
+#
     def on_classificationTrain(self):
         self.classificationTrain = ClassificationTrain(self)
         
@@ -300,74 +300,74 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
-            
-    def on_classificationOnline(self, state):
-        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
-        if state in ['online RF', 'online laSvm']:
-            print "create and Start new Online"
-            self.classificationOnline = ClassificationOnline(self)
-            self.classificationOnline.start(state)
-            btnOnlineToggle.onlineRfAction.setEnabled(False)
-            btnOnlineToggle.onlineSVMAction.setEnabled(False)
-            btnOnlineToggle.onlineStopAction.setEnabled(True)
-        else:
-            print "Stop Online"
-            self.classificationOnline.stop()
-            btnOnlineToggle.onlineRfAction.setEnabled(True)
-            btnOnlineToggle.onlineSVMAction.setEnabled(True)
-            btnOnlineToggle.onlineStopAction.setEnabled(False)
+#            
+#    def on_classificationOnline(self, state):
+#        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
+#        if state in ['online RF', 'online laSvm']:
+#            print "create and Start new Online"
+#            self.classificationOnline = ClassificationOnline(self)
+#            self.classificationOnline.start(state)
+#            btnOnlineToggle.onlineRfAction.setEnabled(False)
+#            btnOnlineToggle.onlineSVMAction.setEnabled(False)
+#            btnOnlineToggle.onlineStopAction.setEnabled(True)
+#        else:
+#            print "Stop Online"
+#            self.classificationOnline.stop()
+#            btnOnlineToggle.onlineRfAction.setEnabled(True)
+#            btnOnlineToggle.onlineSVMAction.setEnabled(True)
+#            btnOnlineToggle.onlineStopAction.setEnabled(False)
         
-    # TODO: This whole function should NOT be here transfer it DataMgr. 
-    def generateTrainingData(self,labelArrays=None):
-        trainingMatrices_perDataItem = []
-        res_labels = []
-        res_names = []
-        dataItemNr = 0
-        for dataItem in self.project.dataMgr.dataFeatures:
-            res_labeledFeatures = []
-
-            if not self.labelWidget.labelForImage.get(dataItemNr, None):
-                # No Labels available for that image
-                continue
-            
-            # Extract labelMatrix
-            if labelArrays==None:
-                labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
-            else:
-                labelmatrix = labelArrays[dataItemNr]
-            labeled_indices = labelmatrix.nonzero()[0]
-            n_labels = labeled_indices.shape[0]
-            nFeatures = 0
-            for featureImage, featureString, c_ind in dataItem:
-                # todo: fix hardcoded 2D:
-                n = 1   # n: number of feature-values per pixel
-                if featureImage.shape.__len__() > 2:
-                    n = featureImage.shape[2]
-                if n <= 1:
-                    res_labeledFeatures.append(featureImage.flat[labeled_indices].reshape(1, n_labels))
-                    if dataItemNr == 0:
-                        res_names.append(featureString)
-                else:
-                    for featureDim in xrange(n):
-                        res_labeledFeatures.append(featureImage[:, :, featureDim].flat[labeled_indices].reshape(1, n_labels))
-                        if dataItemNr == 0:
-                            res_names.append(featureString + "_%i" % (featureDim))
-                nFeatures += 1
-            if (dataItemNr == 0):
-                nFeatures_ofFirstImage = nFeatures
-            if nFeatures == nFeatures_ofFirstImage:
-                trainingMatrices_perDataItem.append(numpy.concatenate(res_labeledFeatures).T)
-                res_labels.append(labelmatrix[labeled_indices])
-            else:
-                print "feature dimensions don't match (maybe #channels differ?). Skipping image."
-            dataItemNr += 1
-        trainingMatrix = numpy.concatenate(trainingMatrices_perDataItem)
-        self.project.trainingMatrix = trainingMatrix
-        self.project.trainingLabels = numpy.concatenate(res_labels)
-        self.project.trainingFeatureNames = res_names
-        
-        debug(trainingMatrix.shape)
-        debug(self.project.trainingLabels.shape)
+#    # TODO: This whole function should NOT be here transfer it DataMgr. 
+#    def generateTrainingData(self,labelArrays=None):
+#        trainingMatrices_perDataItem = []
+#        res_labels = []
+#        res_names = []
+#        dataItemNr = 0
+#        for dataItem in self.project.dataMgr.dataFeatures:
+#            res_labeledFeatures = []
+#
+#            if not self.labelWidget.labelForImage.get(dataItemNr, None):
+#                # No Labels available for that image
+#                continue
+#            
+#            # Extract labelMatrix
+#            if labelArrays==None:
+#                labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
+#            else:
+#                labelmatrix = labelArrays[dataItemNr]
+#            labeled_indices = labelmatrix.nonzero()[0]
+#            n_labels = labeled_indices.shape[0]
+#            nFeatures = 0
+#            for featureImage, featureString, c_ind in dataItem:
+#                # todo: fix hardcoded 2D:
+#                n = 1   # n: number of feature-values per pixel
+#                if featureImage.shape.__len__() > 2:
+#                    n = featureImage.shape[2]
+#                if n <= 1:
+#                    res_labeledFeatures.append(featureImage.flat[labeled_indices].reshape(1, n_labels))
+#                    if dataItemNr == 0:
+#                        res_names.append(featureString)
+#                else:
+#                    for featureDim in xrange(n):
+#                        res_labeledFeatures.append(featureImage[:, :, featureDim].flat[labeled_indices].reshape(1, n_labels))
+#                        if dataItemNr == 0:
+#                            res_names.append(featureString + "_%i" % (featureDim))
+#                nFeatures += 1
+#            if (dataItemNr == 0):
+#                nFeatures_ofFirstImage = nFeatures
+#            if nFeatures == nFeatures_ofFirstImage:
+#                trainingMatrices_perDataItem.append(numpy.concatenate(res_labeledFeatures).T)
+#                res_labels.append(labelmatrix[labeled_indices])
+#            else:
+#                print "feature dimensions don't match (maybe #channels differ?). Skipping image."
+#            dataItemNr += 1
+#        trainingMatrix = numpy.concatenate(trainingMatrices_perDataItem)
+#        self.project.trainingMatrix = trainingMatrix
+#        self.project.trainingLabels = numpy.concatenate(res_labels)
+#        self.project.trainingFeatureNames = res_names
+#        
+#        debug(trainingMatrix.shape)
+#        debug(self.project.trainingLabels.shape)
     
     def export2Hdf5(self):
         if not hasattr(self.project,'classifierList'):
@@ -811,7 +811,8 @@ class ClassificationTrain(object):
     def start(self):
         #process all unaccounted label changes
         newLabels = self.parent.labelWidget.getPendingLabels()
-        self.parent.project.dataMgr.updateTrainingMatrix(self.parent.activeImage, newLabels)
+        if len(newLabels) > 0:
+            self.parent.project.dataMgr.updateTrainingMatrix(self.parent.activeImage, newLabels)
         
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
@@ -903,10 +904,7 @@ class ClassificationInteractive(object):
         self.parent.statusBar().hide()
         
     def start(self):
-        
-        F, L = self.parent.project.dataMgr.getTrainingMatrix()
-        self.trainingQueue.append(1)#((F, L))
-        
+               
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.trainingQueue, self.predictionQueue, self.resultQueue)
         self.initInteractiveProgressBar()
 
