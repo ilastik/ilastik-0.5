@@ -223,6 +223,7 @@ class ClassifierPredictThread(threading.Thread):
             prediction = self.dataMgr.classifiers[0].predict(item.getFeatureMatrix())
             cnt = 1
             if prediction is not None:
+                
                 for ii in range(len(self.dataMgr.classifiers) - 1) :
                     interactiveMessagePrint( "Classifier %d prediction" % cnt )
                     prediction += self.dataMgr.classifiers[ii+1].predict(item.getFeatureMatrix())
@@ -230,7 +231,7 @@ class ClassifierPredictThread(threading.Thread):
                     self.count += 1
                 prediction = prediction / cnt
                 #TODO: Time ! synchronize with featureMgr...
-                item.prediction = prediction.reshape(item.dataVol.labels.data.shape[0:-1] + (prediction.shape[-1],))
+                item.prediction = prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],))
 
 class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
     def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
@@ -254,7 +255,10 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
         
         self.classifierList = deque(maxlen=numberOfClassifiers)
         
-        self.result = deque(maxlen=1) 
+        self.result = deque(maxlen=1)
+
+        self.dataPending = threading.Event()
+        self.dataPending.clear()
         
         
     def classifierListFull(self):
@@ -263,38 +267,56 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                     
     def run(self):
         while not self.stopped:
-            try:
-                self.trainingQueue.pop()
+            self.dataPending.wait()
+            self.dataPending.clear()
+            if not self.stopped: #no needed, but speeds up the final thread.join()
+                self.ilastik.activeImageLock.acquire()
                 newLabels = self.ilastik.labelWidget.getPendingLabels()
-                features,labels = self.ilastik.project.dataMgr.updateTrainingMatrix(self.ilastik.activeImage, newLabels)
-                
-                interactiveMessagePrint("1>> Pop training Data")
-                for i in range(self.numberOfClassifiers):
-                    self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
-            except IndexError:
-                interactiveMessagePrint("1>> No training Data")
-               
-            try:
-                self.predictionQueue.pop()
+                if len(newLabels) > 0:
+                    features,labels = self.ilastik.project.dataMgr.updateTrainingMatrix(self.ilastik.activeImage, newLabels)
 
+                    interactiveMessagePrint("1>> Pop training Data")
+                    for i in range(self.numberOfClassifiers):
+                        self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
+                
                 vs = self.ilastik.labelWidget.getVisibleState()
                 features = self.ilastik.project.dataMgr[self.ilastik.activeImage].getFeatureMatrixForViewState(vs)
                 vs.append(self.ilastik.activeImage)
 
                 interactiveMessagePrint("1>> Pop prediction Data")
-                prediction = self.classifierList[0].predict(features)
-                if prediction is not None:
-                    size = 1
-                    for iii in range(len(self.classifierList) - 1):
-                        classifier = self.classifierList[iii + 1]
-                        prediction += classifier.predict(features)
-                        size += 1
-                    self.resultQueue.append((prediction / size, vs))
-                    self.emit(QtCore.SIGNAL("resultsPending()"))  
-            except IndexError:
-                interactiveMessagePrint("1>> No prediction Data")
-            time.sleep(0.05)
-            
+                if len(self.classifierList) > 0:
+                    prediction = self.classifierList[0].predict(features)
+                    if prediction is not None:
+                        size = 1
+                        for iii in range(len(self.classifierList) - 1):
+                            classifier = self.classifierList[iii + 1]
+                            prediction += classifier.predict(features)
+                            size += 1
+                            
+                        #self.resultQueue.append((prediction / size, vs))
+                        
+                        predictions = prediction / size
+                        shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
+                        index0 = 0
+                        count0 = numpy.prod(shape[2:4])
+                        count1 = numpy.prod((shape[1],shape[3]))
+                        count2 = numpy.prod(shape[1:3])
+                        ax0 = predictions[0:count0,:]
+                        ax1 = predictions[count0:count0+count1,:]
+                        ax2 = predictions[count0+count1:count0+count1+count2,:]
+
+                        for p_i in range(ax0.shape[1]):
+                            tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
+                            tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
+                            tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
+                            item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
+                            item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
+                            item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
+                            item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
+                        
+                        self.emit(QtCore.SIGNAL("resultsPending()"))
+                self.ilastik.activeImageLock.release()
+
 
 class ClassifierOnlineThread(threading.Thread):
     def __init__(self, name, features, labels, ids, predictionList, predictionUpdated):

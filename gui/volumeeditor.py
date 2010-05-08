@@ -312,6 +312,13 @@ class VolumeLabelDescription():
         if self.color != other.color:
             answer = False
         return answer
+
+    def __ne__(self, other):
+        return not(self.__eq__(other))
+
+    def clone(self):
+        t = VolumeLabelDescription( self.name, self.number, self.color)
+        return t
     
 class VolumeLabels():
     def __init__(self, data = None):
@@ -1124,7 +1131,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.tempImageItems.append(line)
         self.scene.addItem(line)
         
-        self.drawTimer.start(200) #update labels every some ms
+        self.drawTimer.start(50) #update labels every some ms
         self.drawManagerCopy.beginDraw(pos, self.imShape)
         
     def endDraw(self, pos):
@@ -1294,8 +1301,8 @@ class OverviewScene(QtOpenGL.QGLWidget):
         self.tex.append(0)
 
     def display(self, axis):
-        #disable for FRED opengl
-        self.initialized = False
+        ##disable for FRED opengl
+        #self.initialized = False
         
         if self.initialized is True:
             #self.initializeGL()
