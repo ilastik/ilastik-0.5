@@ -607,10 +607,12 @@ class VolumeEditor(QtGui.QWidget):
 
         self.grid = QtGui.QGridLayout()
 
+        self.drawManager = DrawManager(self)
+
         self.imageScenes = []
-        self.imageScenes.append(ImageScene(self, self.image.shape[2:4], axis = 0))
-        self.imageScenes.append(ImageScene( self, (self.image.shape[1], self.image.shape[3]) , axis = 1))
-        self.imageScenes.append(ImageScene(self, self.image.shape[1:3], axis = 2))
+        self.imageScenes.append(ImageScene(self, self.image.shape[2:4], 0,self.drawManager))
+        self.imageScenes.append(ImageScene( self, (self.image.shape[1], self.image.shape[3]) ,  1,self.drawManager))
+        self.imageScenes.append(ImageScene(self, self.image.shape[1:3], 2,self.drawManager))
         self.grid.addWidget(self.imageScenes[2], 0, 0)
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
@@ -897,11 +899,11 @@ class VolumeEditor(QtGui.QWidget):
 
 
 class DrawManager(QtCore.QObject):
-    def __init__(self, parent, shape):
-        self.parent = parent
-        self.shape = shape
+    def __init__(self, parent):
+        self.volumeEditor = parent
+        self.shape = None
         self.brushSize = 3
-        self.initBoundingBox()
+        #self.initBoundingBox()
         self.penVis = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.penDraw = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.penDraw.setColor(QtCore.Qt.white)
@@ -930,12 +932,14 @@ class DrawManager(QtCore.QObject):
         self.penVis.setWidth(size)
         self.penDraw.setWidth(size)
 
-    def beginDraw(self, pos):
+    def beginDraw(self, pos, shape):
+        self.shape = shape
+        self.initBoundingBox()
         self.scene.clear()
         if self.erasing == True:
             self.penVis.setColor(QtCore.Qt.black)
         else:
-            self.penVis.setColor(self.parent.labelView.currentItem().color)
+            self.penVis.setColor(self.volumeEditor.labelView.currentItem().color)
         self.pos = pos
         line = self.moveTo(pos)
         return line
@@ -953,7 +957,6 @@ class DrawManager(QtCore.QObject):
         
         oldLeft = self.leftMost
         oldTop = self.topMost
-        self.initBoundingBox()
         return (oldLeft, oldTop, tempi) #TODO: hackish, probably return a class ??
 
     def moveTo(self, pos):      
@@ -980,9 +983,10 @@ class DrawManager(QtCore.QObject):
 
 
 class ImageScene( QtGui.QGraphicsView):
-    def __init__(self, parent, imShape, axis):
+    def __init__(self, parent, imShape, axis, drawManager):
         QtGui.QGraphicsView.__init__(self)
-        self.drawManager = DrawManager(parent, imShape)
+        self.imShape = imShape
+        self.drawManager = drawManager
         self.tempImageItems = []
         self.volumeEditor = parent
         self.axis = axis
@@ -1112,7 +1116,7 @@ class ImageScene( QtGui.QGraphicsView):
             number = self.volumeEditor.labelView.currentItem().number
             labels = numpy.where(labels > 0, number, 0)
             self.volumeEditor.setLabels(results[0:2],self.axis, labels, self.drawManager.erasing)
-            self.drawManager.beginDraw(mousePos)
+            self.drawManager.beginDraw(mousePos, self.imShape)
 
 
 
@@ -1142,7 +1146,7 @@ class ImageScene( QtGui.QGraphicsView):
                 self.drawing  = True
                 mousePos = self.mapToScene(event.pos())
 #                self.drawManager.setColor(self.volumeEditor.labelView.currentItem().curColor)
-                line = self.drawManager.beginDraw(mousePos)
+                line = self.drawManager.beginDraw(mousePos, self.imShape)
                 line.setZValue(99)
                 self.tempImageItems.append(line)
                 self.scene.addItem(line)
