@@ -16,6 +16,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import vigra, numpy
 import qimage2ndarray
 import h5py
+import copy
 
 # Local import
 from spyderlib.config import get_icon, get_font
@@ -999,10 +1000,9 @@ class ImageScene( QtGui.QGraphicsView):
         self.setBackgroundBrush(brushImage)
 
         ##enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
-        #self.openglWidget = QtOpenGL.QGLWidget()
-        #self.setViewport(self.openglWidget)
-        
-        # self.setViewport(QtOpenGL.QGLWidget())
+        #FRED opengl
+        self.openglWidget = QtOpenGL.QGLWidget()
+        self.setViewport(self.openglWidget)
         
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
@@ -1019,7 +1019,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.setStyleSheet("QWidget { border: 2px solid blue; border-radius: 4px; }")
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
-
+        #############################
         #cross chair
         pen = QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
         self.setMouseTracking(True)
@@ -1035,7 +1035,11 @@ class ImageScene( QtGui.QGraphicsView):
         self.liney.setZValue(100)
         self.scene.addItem(self.linex)
         self.scene.addItem(self.liney)
+        ##############################
 
+        #label updates while drawing, needed for interactive segmentation
+        self.drawTimer = QtCore.QTimer()
+        self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.updateLabels)
 
 
     def display(self, image, overlays = [], labels = None):
@@ -1097,7 +1101,43 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene.addItem(self.imageItem)
         
         self.view.repaint()        
+
+
+    def updateLabels(self):
+        result = self.drawManagerCopy.endDraw(self.mousePos)
+        image = result[2]
+        ndarr = qimage2ndarray.rgb_view(image)
+        labels = ndarr[:,:,0]
+        labels = labels.swapaxes(0,1)
+        number = self.volumeEditor.labelView.currentItem().number
+        labels = numpy.where(labels > 0, number, 0)
+        self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)        
+        self.drawManagerCopy.beginDraw(self.mousePos, self.imShape)
+
+    
+    def beginDraw(self, pos):
+        self.mousePos = pos
+        self.drawManagerCopy = copy.copy(self.drawManager)
+        self.drawing  = True
+        line = self.drawManager.beginDraw(pos, self.imShape)
+        line.setZValue(99)
+        self.tempImageItems.append(line)
+        self.scene.addItem(line)
         
+        self.drawTimer.start(200) #update labels every some ms
+        self.drawManagerCopy.beginDraw(pos, self.imShape)
+        
+    def endDraw(self, pos):
+        self.drawTimer.stop()
+        result = self.drawManager.endDraw(pos)
+        image = result[2]
+        ndarr = qimage2ndarray.rgb_view(image)
+        labels = ndarr[:,:,0]
+        labels = labels.swapaxes(0,1)
+        number = self.volumeEditor.labelView.currentItem().number
+        labels = numpy.where(labels > 0, number, 0)
+        self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)
+        self.drawing = False
 
 
     def wheelEvent(self, event):
@@ -1107,14 +1147,8 @@ class ImageScene( QtGui.QGraphicsView):
 
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
-            results = self.drawManager.endDraw(mousePos)
-            image = results[2]
-            ndarr = qimage2ndarray.rgb_view(image)
-            labels = ndarr[:,:,0]
-            labels = labels.swapaxes(0,1)
-            number = self.volumeEditor.labelView.currentItem().number
-            labels = numpy.where(labels > 0, number, 0)
-            self.volumeEditor.setLabels(results[0:2],self.axis, labels, self.drawManager.erasing)
+            self.endDraw(mousePos)
+            self.drawing = True
             self.drawManager.beginDraw(mousePos, self.imShape)
 
 
@@ -1142,32 +1176,19 @@ class ImageScene( QtGui.QGraphicsView):
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
             if self.volumeEditor.labelView.currentItem() is not None:
-                self.drawing  = True
                 mousePos = self.mapToScene(event.pos())
-#                self.drawManager.setColor(self.volumeEditor.labelView.currentItem().curColor)
-                line = self.drawManager.beginDraw(mousePos, self.imShape)
-                line.setZValue(99)
-                self.tempImageItems.append(line)
-                self.scene.addItem(line)
+                self.beginDraw(mousePos)
         elif event.buttons() == QtCore.Qt.RightButton:
             self.onContext(event.pos())
 
     def mouseReleaseEvent(self, event):
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
-            result = self.drawManager.endDraw(mousePos)
-            image = result[2]
-            ndarr = qimage2ndarray.rgb_view(image)
-            labels = ndarr[:,:,0]
-            labels = labels.swapaxes(0,1)
-            number = self.volumeEditor.labelView.currentItem().number
-            labels = numpy.where(labels > 0, number, 0)
-            self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)
-            self.drawing = False
+            self.endDraw(mousePos)
             self.volumeEditor.changeSlice(self.volumeEditor.selSlices[self.axis], self.axis)
 
     def mouseMoveEvent(self,event):
-        mousePos = self.mapToScene(event.pos())
+        mousePos = self.mousePos = self.mapToScene(event.pos())
         x = mousePos.x()
         y = mousePos.y()
 
@@ -1205,6 +1226,7 @@ class ImageScene( QtGui.QGraphicsView):
                 
         
         if event.buttons() == QtCore.Qt.LeftButton and self.drawing == True:
+            self.drawManagerCopy.moveTo(mousePos)
             line = self.drawManager.moveTo(mousePos)
             line.setZValue(99)
             self.tempImageItems.append(line)
@@ -1273,7 +1295,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
     def display(self, axis):
         #disable for FRED opengl
-        #self.initialized = False
+        self.initialized = False
         
         if self.initialized is True:
             #self.initializeGL()

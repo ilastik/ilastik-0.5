@@ -139,7 +139,7 @@ class DataItemImage(DataItemBase):
             mask = numpy.in1d(self.trainingIndices,indices)
             nonzero = numpy.nonzero(mask)[0]
             if len(nonzero) > 0:
-                self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices)) 
+                self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices))
                 tempI = numpy.nonzero(nl.data)
                 tempL = nl.data[tempI]
                 tempL.shape += (1,)
@@ -151,7 +151,10 @@ class DataItemImage(DataItemBase):
                 if len(temp2.shape) == 1:
                     temp2.shape += (1,)
                     fm.shape += (1,)
-                self.trainingF = numpy.vstack((temp2,fm[indices,:]))
+                if len(fm) > 0:
+                    self.trainingF = numpy.vstack((temp2,fm[indices,:]))
+                else:
+                    self.trainingF = numpy.zeros((0,0))
             else: #no intersection, just add everything...
                 self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
                 tempI = numpy.nonzero(nl.data)
@@ -178,7 +181,7 @@ class DataItemImage(DataItemBase):
             if len(tempM) > 0:
                 self.featureM = numpy.hstack(tempM)
             else:
-                self.featureM = []
+                self.featureM = numpy.zeros((0,0))
         return self.featureM      
         
     def clearFeaturesAndTraining(self):
@@ -199,8 +202,10 @@ class DataItemImage(DataItemBase):
                    tempM.append(numpy.vstack(ttt))   
 
                        
-                               
-        featureM = numpy.hstack(tempM)            
+        if len(tempM) > 0:
+            featureM = numpy.hstack(tempM)
+        else:
+            featureM = None
         return featureM              
             
     def unLoadData(self):
