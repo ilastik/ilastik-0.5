@@ -1,4 +1,5 @@
-import vigra.lasvm as lasvm
+# -*- coding: utf-8 -*-
+#import vigra.lasvm as lasvm
 import numpy
 import math
 import time
@@ -123,7 +124,7 @@ class OnlineLaSvm(OnlineClassifier):
         self.linindepThresh=0.0
         self.improveRuns=0
         self.maxPredSVs=200
-        self.svm=lasvm.laSvmMultiParams(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
+        #self.svm=lasvm.laSvmMultiParams(1.0,features.shape[1],1.0,0.001,self.cacheSize,True)
         self.addData(features,labels,ids)
         self.svm.startGuessParameters()
         print numpy.min(features.flatten())

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # profile with python -m cProfile ilastikMain.py
 # python -m cProfile -o profiling.prf  ilastikMain.py
 # import pstats
@@ -58,6 +59,7 @@ class MainWindow(QtGui.QMainWindow):
         self.updateLabelWidgetOverlays()
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
+
     
     def createRibbons(self):                     
       
@@ -776,7 +778,7 @@ class FeatureComputation(object):
             
     def terminateFeatureProgressBar(self):
         ##should we do this here ?
-        #self.parent.project.dataMgr.getTrainingMatrix()
+        self.parent.project.dataMgr.getTrainingMatrix()
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
         
@@ -788,7 +790,11 @@ class ClassificationTrain(object):
         self.parent = parent
         self.start()
         
-    def start(self):               
+    def start(self):
+        #process all unaccounted label changes
+        newLabels = self.parent.labelWidget.getPendingLabels()
+        self.parent.project.dataMgr.updateTrainingMatrix(self.parent.activeImage, newLabels)
+        
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         numberOfJobs = 10                 
@@ -1060,14 +1066,14 @@ class ClassificationPredict(object):
 
     def finalize(self):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
-        
-        for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
-            item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)           
-        
-        activeItem.dataVol.uncertainty[:,:,:,:] = activeLearning.computeEnsembleMargin(activeItem.prediction)*255.0       
-        activeItem.dataVol.segmentation[:,:,:,:] = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction, 1.0)
-                
-        self.parent.labelWidget.repaint()
+        if activeItem.prediction is not None:
+            for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
+                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+
+            activeItem.dataVol.uncertainty[:,:,:,:] = activeLearning.computeEnsembleMargin(activeItem.prediction)*255.0
+            activeItem.dataVol.segmentation[:,:,:,:] = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction, 1.0)
+
+            self.parent.labelWidget.repaint()
         
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy
 import sys
 from Queue import Queue as queue
@@ -109,8 +110,11 @@ class DataItemImage(DataItemBase):
             
             self.trainingIndices = indices
             self.trainingL = tempL
-            self.trainingF = numpy.hstack(tempF) 
-        return (self.trainingL, self.trainingF, self.trainingIndices)          
+            if len(tempF) > 0:
+                self.trainingF = numpy.hstack(tempF)
+            else:
+                self.trainingF = []
+        return self.trainingL, self.trainingF, self.trainingIndices
             
     def updateTrainingMatrix(self, newLabels):
         for nl in newLabels:
@@ -170,8 +174,11 @@ class DataItemImage(DataItemBase):
                for i_c, it_c in enumerate(it_f): #channels
                    for i_t, it_t in enumerate(it_c): #time
                        tempM.append(it_t.reshape(numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
-            
-            self.featureM = numpy.hstack(tempM)            
+
+            if len(tempM) > 0:
+                self.featureM = numpy.hstack(tempM)
+            else:
+                self.featureM = []
         return self.featureM      
         
     def clearFeaturesAndTraining(self):
@@ -238,6 +245,7 @@ class DataMgr():
         trainingF = []
         trainingL = []
         indices = []
+        
         for item in self:
             trainingLabels, trainingFeatures, indic = item.getTrainingMatrix()
             indices.append(indic)
@@ -250,9 +258,10 @@ class DataMgr():
         
         trainingF = numpy.vstack(trainingF)
         trainingL = numpy.vstack(trainingL)
-        trainingM = (trainingF, trainingL)
         
-        return trainingM
+        return trainingF, trainingL
+
+        
     
     def updateTrainingMatrix(self, num, newLabels):
         if self.trainingF is None:
