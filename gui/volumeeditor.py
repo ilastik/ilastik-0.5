@@ -718,7 +718,6 @@ class VolumeEditor(QtGui.QWidget):
         self.changeSliceY(numpy.floor((self.image.shape[1] - 1) / 2))
         self.changeSliceZ(numpy.floor((self.image.shape[2] - 1) / 2))
 
-
         #undo/redo
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo )
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo )

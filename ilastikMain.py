@@ -41,6 +41,11 @@ class MainWindow(QtGui.QMainWindow):
         self.initImageWindows()
         # self.createImageWindows()
         self.createFeatures()
+
+        #TODO: why the fuck does this not work ???
+        #undo/redo
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo)
+        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo)
                
         self.classificationProcess = None
         self.classificationOnline = None
@@ -56,10 +61,18 @@ class MainWindow(QtGui.QMainWindow):
         self.activeImage = number
         self.destroyImageWindows()
         self.createImageWindows( self.project.dataMgr[number].dataVol)
+        
         self.updateLabelWidgetOverlays()
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
 
+    def historyUndo(self):
+        if self.labelWidget is not None:
+            self.labelWidget.historyUndo
+        
+    def historyRedo(self):
+        if self.labelWidget is not None:
+            self.labelWidget.historyRedo
     
     def createRibbons(self):                     
       
