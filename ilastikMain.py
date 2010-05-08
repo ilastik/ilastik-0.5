@@ -859,16 +859,10 @@ class ClassificationInteractive(object):
         self.updatePredictionQueue()
         
     def updateTrainingQueue(self):
-        newLabels = self.parent.labelWidget.getPendingLabels()   
-        F,L = self.parent.project.dataMgr.updateTrainingMatrix(self.parent.activeImage, newLabels)
-
-        self.trainingQueue.append((F, L))
+        self.trainingQueue.append(1)
 
     def updatePredictionQueue(self):
-        vs = self.parent.labelWidget.getVisibleState()
-        cf = self.parent.project.dataMgr[self.parent.activeImage].getFeatureMatrixForViewState(vs)
-        vs.append(self.parent.activeImage)
-        self.predictionQueue.append((vs,cf))
+        self.predictionQueue.append(1)
 
     def updateLabelWidget(self):
         try:
@@ -912,9 +906,9 @@ class ClassificationInteractive(object):
     def start(self):
         
         F, L = self.parent.project.dataMgr.getTrainingMatrix()
-        self.trainingQueue.append((F, L))
+        self.trainingQueue.append(1)#((F, L))
         
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.trainingQueue, self.predictionQueue, self.resultQueue)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.trainingQueue, self.predictionQueue, self.resultQueue)
         self.initInteractiveProgressBar()
 
         self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      

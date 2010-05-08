@@ -233,9 +233,11 @@ class ClassifierPredictThread(threading.Thread):
                 item.prediction = prediction.reshape(item.dataVol.labels.data.shape[0:-1] + (prediction.shape[-1],))
 
 class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
-    def __init__(self, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
+    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
         threading.Thread.__init__(self)
         QtCore.QObject.__init__(self)
+
+        self.ilastik = parent
         
         self.stopped = False
         
@@ -262,7 +264,10 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
     def run(self):
         while not self.stopped:
             try:
-                features, labels = self.trainingQueue.pop()    
+                self.trainingQueue.pop()
+                newLabels = self.ilastik.labelWidget.getPendingLabels()
+                features,labels = self.ilastik.project.dataMgr.updateTrainingMatrix(self.ilastik.activeImage, newLabels)
+                
                 interactiveMessagePrint("1>> Pop training Data")
                 for i in range(self.numberOfClassifiers):
                     self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
@@ -270,9 +275,12 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                 interactiveMessagePrint("1>> No training Data")
                
             try:
-                pq = self.predictionQueue.pop()
-                vs = pq[0]
-                features = pq[1]
+                self.predictionQueue.pop()
+
+                vs = self.ilastik.labelWidget.getVisibleState()
+                features = self.ilastik.project.dataMgr[self.ilastik.activeImage].getFeatureMatrixForViewState(vs)
+                vs.append(self.ilastik.activeImage)
+
                 interactiveMessagePrint("1>> Pop prediction Data")
                 prediction = self.classifierList[0].predict(features)
                 if prediction is not None:

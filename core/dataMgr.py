@@ -113,7 +113,7 @@ class DataItemImage(DataItemBase):
             if len(tempF) > 0:
                 self.trainingF = numpy.hstack(tempF)
             else:
-                self.trainingF = []
+                self.trainingF = numpy.zeros((0,0)) #TODO: not right
         return self.trainingL, self.trainingF, self.trainingIndices
             
     def updateTrainingMatrix(self, newLabels):
@@ -154,7 +154,7 @@ class DataItemImage(DataItemBase):
                 if len(fm) > 0:
                     self.trainingF = numpy.vstack((temp2,fm[indices,:]))
                 else:
-                    self.trainingF = numpy.zeros((0,0))
+                    self.trainingF = numpy.zeros((0,0)) #TODO: not right
             else: #no intersection, just add everything...
                 self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
                 tempI = numpy.nonzero(nl.data)
