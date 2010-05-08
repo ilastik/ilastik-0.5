@@ -570,11 +570,13 @@ class VolumeUpdate():
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
     def __init__(self, image, name="", font=None,
-                 readonly=False, size=(400, 300), labels = None ):
+                 readonly=False, size=(400, 300), labels = None , embedded = False):
         super(VolumeEditor, self).__init__()
         self.name = name
         title = name
-
+        
+        self.embedded = embedded
+        
         if issubclass(image.__class__, DataAccessor):
             self.image = image
         elif issubclass(image.__class__, Volume):
@@ -641,46 +643,51 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
         self.toolBox.setLayout(self.toolBoxLayout)
-        self.toolBox.setMaximumWidth(100)
-        self.toolBox.setMinimumWidth(100)
+        self.toolBox.setMaximumWidth(150)
+        self.toolBox.setMinimumWidth(150)
 
-        #Link to ComboBox
-        self.editor_list.append(self)
-        self.connect(self.editor_list, QtCore.SIGNAL("appended(int)"), self.linkComboAppend)
-        self.connect(self.editor_list, QtCore.SIGNAL("removed(int)"), self.linkComboRemove)
+        if self.embedded == False:
+            #Link to ComboBox
+            self.editor_list.append(self)
+            self.connect(self.editor_list, QtCore.SIGNAL("appended(int)"), self.linkComboAppend)
+            self.connect(self.editor_list, QtCore.SIGNAL("removed(int)"), self.linkComboRemove)
+    
+            self.linkCombo = QtGui.QComboBox()
+            self.linkCombo.setEnabled(True)
+            self.linkCombo.addItem("None")
+            for index, item in enumerate(self.editor_list.editors):
+                self.linkCombo.addItem(item.name)
+            self.connect(self.linkCombo, QtCore.SIGNAL("currentIndexChanged(int)"), self.linkToOther)
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Link to:"))
+            self.toolBoxLayout.addWidget(self.linkCombo)
 
-        self.linkCombo = QtGui.QComboBox()
-        self.linkCombo.setEnabled(True)
-        self.linkCombo.addItem("None")
-        for index, item in enumerate(self.editor_list.editors):
-            self.linkCombo.addItem(item.name)
-        self.connect(self.linkCombo, QtCore.SIGNAL("currentIndexChanged(int)"), self.linkToOther)
-        self.toolBoxLayout.addWidget(QtGui.QLabel("Link to:"))
-        self.toolBoxLayout.addWidget(self.linkCombo)
-
+        
         #Slice Selector Combo Box in right side toolbox
         self.sliceSelectors = []
         sliceSpin = QtGui.QSpinBox()
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceX)
-        self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 0:"))
-        self.toolBoxLayout.addWidget(sliceSpin)
+        if self.image.shape[2] > 1 and self.image.shape[3] > 1: #only show when needed
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 0:"))
+            self.toolBoxLayout.addWidget(sliceSpin)
         sliceSpin.setRange(0,self.image.shape[1] - 1)
         self.sliceSelectors.append(sliceSpin)
 
         sliceSpin = QtGui.QSpinBox()
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceY)
-        self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 1:"))
-        self.toolBoxLayout.addWidget(sliceSpin)
+        if self.image.shape[1] > 1 and self.image.shape[3] > 1: #only show when needed
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 1:"))
+            self.toolBoxLayout.addWidget(sliceSpin)
         sliceSpin.setRange(0,self.image.shape[2] - 1)
         self.sliceSelectors.append(sliceSpin)
 
         sliceSpin = QtGui.QSpinBox()
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceZ)
-        self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 2:"))
-        self.toolBoxLayout.addWidget(sliceSpin)
+        if self.image.shape[1] > 1 and self.image.shape[2] > 1 : #only show when needed
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 2:"))
+            self.toolBoxLayout.addWidget(sliceSpin)
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
 
@@ -689,12 +696,14 @@ class VolumeEditor(QtGui.QWidget):
         self.selSlices.append(0)
         self.selSlices.append(0)
 
+        if self.embedded == False:
+            self.addOverlayButton = QtGui.QPushButton("Add Overlay")
+            self.connect(self.addOverlayButton, QtCore.SIGNAL("pressed()"), self.addOverlayDialog)
+            self.toolBoxLayout.addWidget(self.addOverlayButton)
+        else:
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Overlays:"))
 
         #Overlay selector
-        self.addOverlayButton = QtGui.QPushButton("Add Overlay")
-        self.connect(self.addOverlayButton, QtCore.SIGNAL("pressed()"), self.addOverlayDialog)
-        self.toolBoxLayout.addWidget(self.addOverlayButton)
-
         self.overlayView = OverlayListView(self)
         self.toolBoxLayout.addWidget( self.overlayView)
 
