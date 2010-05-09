@@ -27,7 +27,7 @@ def LocallyDominantSegmentation(propmap, sigma = 2.0):
         else:
             res[0,:,:,:,k] = vigra.filters.gaussianSmoothing(propmap[0,:,:,:,k], sigma)
 
-    return  numpy.argmax(res, axis=len(propmap.shape)-1)
+    return  numpy.argmax(res, axis=len(propmap.shape)-1) + 1
 
 
 def LocallyDominantSegmentation2D(propmap, sigma = 2.0):

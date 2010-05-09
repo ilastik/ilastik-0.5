@@ -234,8 +234,11 @@ class OverlaySlice():
             self.data[:,:,0] = data[:,:]*(self.color.red()/255.0)
             self.data[:,:,1] = data[:,:]*(self.color.green()/255.0)
             self.data[:,:,2] = data[:,:]*(self.color.blue()/255.0)
-        else:
+        elif colorTable == None:
             self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')*255
+            self.data = data
+        else:
+            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')
             self.data = data
 
 class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
@@ -434,6 +437,7 @@ class LabelListView(QtGui.QListWidget):
             color = self.labelColorTable[number]
         number +=1
         self.addLabel(name, number, color)
+        self.buildColorTab()
         
     def addLabel(self, labelName, labelNumber, color):
         description = VolumeLabelDescription(labelName, labelNumber, color.rgb())
@@ -481,6 +485,7 @@ class LabelListView(QtGui.QListWidget):
             self.items.remove(item)
             it = self.takeItem(index.row())
             del it
+            self.buildColorTab()
             self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
         elif action == toggleHideAction:
             item.toggleVisible()
@@ -488,6 +493,7 @@ class LabelListView(QtGui.QListWidget):
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
             self.volumeLabel.descriptions[index.row()].color = color.rgb()
+            
             self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
 
         self.buildColorTab()
@@ -1101,13 +1107,14 @@ class ImageScene( QtGui.QGraphicsView):
         for index, item in enumerate(overlays):
             p = QtGui.QPainter(self.image)
             p.setOpacity(item.alpha)
-
-            imageO = qimage2ndarray.array2qimage(item.data.swapaxes(0,1), normalize=False)
-            alphaChan = item.alphaChannel
-            
+           
             if item.colorTable != None:
+                imageO = qimage2ndarray.gray2qimage(item.data.swapaxes(0,1), normalize=False)
+                alphaChan = item.alphaChannel
                 imageO.setColorTable(item.colorTable)
             else:
+                imageO = qimage2ndarray.array2qimage(item.data.swapaxes(0,1), normalize=False)
+                alphaChan = item.alphaChannel
                 imageO.setAlphaChannel(qimage2ndarray.gray2qimage(alphaChan.swapaxes(0,1), False))
 
             p.drawImage(imageO.rect(), imageO)
