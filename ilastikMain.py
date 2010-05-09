@@ -53,7 +53,7 @@ class MainWindow(QtGui.QMainWindow):
         self.classificationProcess = None
         self.classificationOnline = None
         
-        dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], False)
+        dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], 0, False)
         self.opengl = False
         self.openglOverview = False
         if dl[0] == "OpenGL + OpenGL Overview":
@@ -194,6 +194,7 @@ class MainWindow(QtGui.QMainWindow):
         
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
+        self.changeImage(self.activeImage)
         
     def updateLabelWidgetOverlays(self):
         #TODO: this whole method is so ugly, it should be forbidden !
