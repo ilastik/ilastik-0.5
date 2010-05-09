@@ -31,6 +31,7 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.setGeometry(50, 50, 800, 600)
         self.iconPath = '../../icons/32x32/'
+        
         self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
 
@@ -41,7 +42,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.createRibbons()
         self.initImageWindows()
-        # self.createImageWindows()
+
         self.createFeatures()
 
         #TODO: why the fuck does this not work ???
@@ -51,6 +52,12 @@ class MainWindow(QtGui.QMainWindow):
                
         self.classificationProcess = None
         self.classificationOnline = None
+        
+        dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL', 'Software (slow)'], False)
+        self.opengl = False
+        if dl[0] == "OpenGL":
+            self.opengl = True
+        
                 
     def updateFileSelector(self):
         self.fileSelectorList.clear()
@@ -245,7 +252,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget = None
                 
     def createImageWindows(self, dataVol):
-        self.labelWidget = ve.VolumeEditor(dataVol, embedded = True)
+        self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
                 
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)

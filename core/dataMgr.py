@@ -279,12 +279,12 @@ class DataMgr():
         trainingF = []
         trainingL = []
         indices = []
-        
         for item in self:
             trainingLabels, trainingFeatures, indic = item.getTrainingMatrix()
-            indices.append(indic)
-            trainingL.append(trainingLabels)
-            trainingF.append(trainingFeatures)
+            if len(trainingLabels) > 0:
+                indices.append(indic)
+                trainingL.append(trainingLabels)
+                trainingF.append(trainingFeatures)
             
         self.trainingL = trainingL
         self.trainingF = trainingF

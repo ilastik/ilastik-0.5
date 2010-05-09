@@ -276,7 +276,7 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                 newLabels = self.ilastik.labelWidget.getPendingLabels()
                 if len(newLabels) > 0:
                     features,labels = self.ilastik.project.dataMgr.updateTrainingMatrix(self.ilastik.activeImage, newLabels)
-
+                    print features.shape
                     interactiveMessagePrint("1>> Pop training Data")
                     for i in range(self.numberOfClassifiers):
                         self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
@@ -294,9 +294,7 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                             classifier = self.classifierList[iii + 1]
                             prediction += classifier.predict(features)
                             size += 1
-                            
-                        #self.resultQueue.append((prediction / size, vs))
-                        
+                                                
                         predictions = prediction / size
                         shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
                         index0 = 0

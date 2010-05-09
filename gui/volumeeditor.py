@@ -570,11 +570,17 @@ class VolumeUpdate():
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
     def __init__(self, image, name="", font=None,
-                 readonly=False, size=(400, 300), labels = None , embedded = False):
+                 readonly=False, size=(400, 300), labels = None , opengl = True, embedded = False):
         super(VolumeEditor, self).__init__()
         self.name = name
         title = name
         
+        self.opengl = opengl
+        if self.opengl is True:
+            print "Using OpenGL acceleration"
+        else:
+            print "Using Software rendering"
+            
         self.embedded = embedded
         
         if issubclass(image.__class__, DataAccessor):
@@ -1025,10 +1031,10 @@ class ImageScene( QtGui.QGraphicsView):
         brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
         self.setBackgroundBrush(brushImage)
 
-        ##enable OpenGL acceleratino, flickers on Linux (background not redrawn ? -> investigate)
-        #FRED opengl
-        self.openglWidget = QtOpenGL.QGLWidget()
-        self.setViewport(self.openglWidget)
+        ##enable OpenGL acceleratino
+        if self.volumeEditor.opengl is True:
+            self.openglWidget = QtOpenGL.QGLWidget()
+            self.setViewport(self.openglWidget)
         
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
@@ -1303,14 +1309,10 @@ class ImageScene( QtGui.QGraphicsView):
 
 
 class OverviewScene(QtOpenGL.QGLWidget):
-    '''
-    Widget for drawing two spirals.
-    '''
-
     def __init__(self, parent, shape):
         QtOpenGL.QGLWidget.__init__(self)
         self.sceneShape = shape
-        self.parent = parent
+        self.volumeEditor = parent
         self.images = parent.imageScenes
         self.sceneItems = []
         self.initialized = False
@@ -1318,211 +1320,213 @@ class OverviewScene(QtOpenGL.QGLWidget):
         self.tex.append(0)
         self.tex.append(0)
         self.tex.append(0)
+        if self.volumeEditor.opengl is False:
+            self.setVisible(False)
 
     def display(self, axis):
-        ##disable for FRED opengl
-        #self.initialized = False
-        
-        if self.initialized is True:
-            #self.initializeGL()
-            self.makeCurrent()
-            if self.tex[axis] is not 0:
-                self.deleteTexture(self.tex[axis])
-            self.paintGL(axis)
-            self.swapBuffers()
+        if self.volumeEditor.opengl is True:  
+            if self.initialized is True:
+                #self.initializeGL()
+                self.makeCurrent()
+                if self.tex[axis] is not 0:
+                    self.deleteTexture(self.tex[axis])
+                self.paintGL(axis)
+                self.swapBuffers()
             
     def redisplay(self):
-        if self.initialized is True:
-            for i in range(3):
-                self.makeCurrent()
-                if self.tex[i] is not 0:
-                    self.deleteTexture(self.tex[i])
-                self.paintGL(i)
-            self.swapBuffers()        
+        if self.volumeEditor.opengl is True:
+            if self.initialized is True:
+                for i in range(3):
+                    self.makeCurrent()
+                    if self.tex[i] is not 0:
+                        self.deleteTexture(self.tex[i])
+                    self.paintGL(i)
+                self.swapBuffers()        
 
     def paintGL(self, axis = None):
-        '''
-        Drawing routine
-        '''
-        pix0 = self.images[0].pixmap
-        pix1 = self.images[1].pixmap
-        pix2 = self.images[2].pixmap
-
-        maxi = max(pix0.width(),pix1.width())
-        maxi = max(maxi, pix2.width())
-        maxi = max(maxi, pix0.height())
-        maxi = max(maxi, pix1.height())
-        maxi = max(maxi, pix2.height())
-
-        ratio0w = 1.0 * pix0.width() / maxi
-        ratio1w = 1.0 * pix1.width() / maxi
-        ratio2w = 1.0 * pix2.width() / maxi
-
-        ratio0h = 1.0 * pix0.height() / maxi
-        ratio1h = 1.0 * pix1.height() / maxi
-        ratio2h = 1.0 * pix2.height() / maxi
-       
-        glMatrixMode(GL_MODELVIEW)
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glLoadIdentity()
-
-        glRotatef(30,1.0,0.0,0.0)
-
-        glTranslatef(0,-3,-5)        # Move Into The Screen
-
-        glRotatef(-30,0.0,1.0,0.0)        # Rotate The Cube On X, Y & Z
-
-        #glRotatef(180,1.0,0.0,1.0)        # Rotate The Cube On X, Y & Z
-
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
-
-        glBegin(GL_QUADS)            # Start Drawing The Cube
-
-        glColor3f(1.0,0.0,1.0)            # Set The Color To Violet
-        
-        glVertex3f( ratio2w, ratio1h,-ratio2h)        # Top Right Of The Quad (Top)
-        glVertex3f(-ratio2w, ratio1h,-ratio2h)        # Top Left Of The Quad (Top)
-        glVertex3f(-ratio2w, ratio1h, ratio2h)        # Bottom Left Of The Quad (Top)
-        glVertex3f( ratio2w, ratio1h, ratio2h)        # Bottom Right Of The Quad (Top)
-
-        glVertex3f( ratio2w,-ratio1h, ratio2h)        # Top Right Of The Quad (Bottom)
-        glVertex3f(-ratio2w,-ratio1h, ratio2h)        # Top Left Of The Quad (Bottom)
-        glVertex3f(-ratio2w,-ratio1h,-ratio2h)        # Bottom Left Of The Quad (Bottom)
-        glVertex3f( ratio2w,-ratio1h,-ratio2h)        # Bottom Right Of The Quad (Bottom)
-
-        glVertex3f( ratio2w, ratio1h, ratio2h)        # Top Right Of The Quad (Front)
-        glVertex3f(-ratio2w, ratio1h, ratio2h)        # Top from PyQt4 import QtCore, QtGui, QtOpenGLLeft Of The Quad (Front)
-        glVertex3f(-ratio2w,-ratio1h, ratio2h)        # Bottom Left Of The Quad (Front)
-        glVertex3f( ratio2w,-ratio1h, ratio2h)        # Bottom Right Of The Quad (Front)
-
-        glVertex3f( ratio2w,-ratio1h,-ratio2h)        # Bottom Left Of The Quad (Back)
-        glVertex3f(-ratio2w,-ratio1h,-ratio2h)        # Bottom Right Of The Quad (Back)
-        glVertex3f(-ratio2w, ratio1h,-ratio2h)        # Top Right Of The Quad (Back)
-        glVertex3f( ratio2w, ratio1h,-ratio2h)        # Top Left Of The Quad (Back)
-
-        glVertex3f(-ratio2w, ratio1h, ratio2h)        # Top Right Of The Quad (Left)
-        glVertex3f(-ratio2w, ratio1h,-ratio2h)        # Top Left Of The Quad (Left)
-        glVertex3f(-ratio2w,-ratio1h,-ratio2h)        # Bottom Left Of The Quad (Left)
-        glVertex3f(-ratio2w,-ratio1h, ratio2h)        # Bottom Right Of The Quad (Left)
-
-        glVertex3f( ratio2w, ratio1h,-ratio2h)        # Top Right Of The Quad (Right)
-        glVertex3f( ratio2w, ratio1h, ratio2h)        # Top Left Of The Quad (Right)
-        glVertex3f( ratio2w,-ratio1h, ratio2h)        # Bottom Left Of The Quad (Right)
-        glVertex3f( ratio2w,-ratio1h,-ratio2h)        # Bottom Right Of The Quad (Right)
-        glEnd()                # Done Drawing The Quad
-
-
-        curCenter = -(( 1.0 * self.parent.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
-        if axis is 2 or self.tex[2] is 0:
-            self.tex[2] = self.bindTexture(self.images[2].image, GL_TEXTURE_2D, GL_RGB)
-        else:
-            glBindTexture(GL_TEXTURE_2D,self.tex[2])
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
-
-        glBegin(GL_QUADS) #horizontal quad (e.g. first axis)
-        glColor3f(1.0,1.0,1.0)            # Set The Color To White
-        glTexCoord2d(0.0, 1.0)
-        glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
-        glTexCoord2d(1.0, 1.0)
-        glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
-        glTexCoord2d(1.0, 0.0)
-        glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
-        glTexCoord2d(0.0, 0.0)
-        glVertex3f( -ratio2w,curCenter, + ratio2h)        # Bottom Right Of The Quad
-        glEnd()
-
-
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
-        glBindTexture(GL_TEXTURE_2D,0) #unbind texture
-
-        glBegin(GL_QUADS)
-        glColor3f(0.0,0.0,1.0)            # Set The Color To Blue, Z Axis
-        glVertex3f( ratio2w,curCenter, ratio2h)        # Top Right Of The Quad (Bottom)
-        glVertex3f(- ratio2w,curCenter, ratio2h)        # Top Left Of The Quad (Bottom)
-        glVertex3f(- ratio2w,curCenter,- ratio2h)        # Bottom Left Of The Quad (Bottom)
-        glVertex3f( ratio2w,curCenter,- ratio2h)        # Bottom Right Of The Quad (Bottom)
-        glEnd()
-
-
-
-
-
-
-
-        curCenter = (( (1.0 * self.parent.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
-
-        if axis is 0 or self.tex[0] is 0:
-            self.tex[0] = self.bindTexture(self.images[0].image, GL_TEXTURE_2D, GL_RGB)
-        else:
-            glBindTexture(GL_TEXTURE_2D,self.tex[0])
-
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
-
-        glBegin(GL_QUADS)
-        glColor3f(0.8,0.8,0.8)            # Set The Color To White
-        glTexCoord2d(1.0, 1.0)
-        glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
-        glTexCoord2d(0.0, 1.0)
-        glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
-        glTexCoord2d(0.0, 0.0)
-        glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
-        glTexCoord2d(1.0, 0.0)
-        glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
-        glEnd()
-
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
-        glBindTexture(GL_TEXTURE_2D,0) #unbind texture
-
-        glBegin(GL_QUADS)
-        glColor3f(1.0,0.0,0.0)            # Set The Color To Red, 
-        glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
-        glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
-        glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
-        glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
-        glEnd()
-
-
-        curCenter = (( 1.0 * self.parent.selSlices[1] / self.sceneShape[1] ) - 0.5 )*2.0*ratio2h
-
-
-        if axis is 1 or self.tex[1] is 0:
-            self.tex[1] = self.bindTexture(self.images[1].image, GL_TEXTURE_2D, GL_RGB)
-        else:
-            glBindTexture(GL_TEXTURE_2D,self.tex[1])
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
-
-        glBegin(GL_QUADS)
-        glColor3f(0.6,0.6,0.6)            # Set The Color To White
-        glTexCoord2d(1.0, 1.0)
-        glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
-        glTexCoord2d(0.0, 1.0)
-        glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
-        glTexCoord2d(0.0, 0.0)
-        glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
-        glTexCoord2d(1.0, 0.0)
-        glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
-        glEnd()
-
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
-        glBindTexture(GL_TEXTURE_2D,0) #unbind texture
-        glBegin(GL_QUADS)
-        glColor3f(0.0,1.0,0.0)            # Set The Color To Green
-        glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
-        glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
-        glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
-        glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
-        glEnd()
-
-        glFlush()
+        if self.volumeEditor.opengl is True:
+            '''
+            Drawing routine
+            '''
+            pix0 = self.images[0].pixmap
+            pix1 = self.images[1].pixmap
+            pix2 = self.images[2].pixmap
+    
+            maxi = max(pix0.width(),pix1.width())
+            maxi = max(maxi, pix2.width())
+            maxi = max(maxi, pix0.height())
+            maxi = max(maxi, pix1.height())
+            maxi = max(maxi, pix2.height())
+    
+            ratio0w = 1.0 * pix0.width() / maxi
+            ratio1w = 1.0 * pix1.width() / maxi
+            ratio2w = 1.0 * pix2.width() / maxi
+    
+            ratio0h = 1.0 * pix0.height() / maxi
+            ratio1h = 1.0 * pix1.height() / maxi
+            ratio2h = 1.0 * pix2.height() / maxi
+           
+            glMatrixMode(GL_MODELVIEW)
+    
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glLoadIdentity()
+    
+            glRotatef(30,1.0,0.0,0.0)
+    
+            glTranslatef(0,-3,-5)        # Move Into The Screen
+    
+            glRotatef(-30,0.0,1.0,0.0)        # Rotate The Cube On X, Y & Z
+    
+            #glRotatef(180,1.0,0.0,1.0)        # Rotate The Cube On X, Y & Z
+    
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
+    
+            glBegin(GL_QUADS)            # Start Drawing The Cube
+    
+            glColor3f(1.0,0.0,1.0)            # Set The Color To Violet
+            
+            glVertex3f( ratio2w, ratio1h,-ratio2h)        # Top Right Of The Quad (Top)
+            glVertex3f(-ratio2w, ratio1h,-ratio2h)        # Top Left Of The Quad (Top)
+            glVertex3f(-ratio2w, ratio1h, ratio2h)        # Bottom Left Of The Quad (Top)
+            glVertex3f( ratio2w, ratio1h, ratio2h)        # Bottom Right Of The Quad (Top)
+    
+            glVertex3f( ratio2w,-ratio1h, ratio2h)        # Top Right Of The Quad (Bottom)
+            glVertex3f(-ratio2w,-ratio1h, ratio2h)        # Top Left Of The Quad (Bottom)
+            glVertex3f(-ratio2w,-ratio1h,-ratio2h)        # Bottom Left Of The Quad (Bottom)
+            glVertex3f( ratio2w,-ratio1h,-ratio2h)        # Bottom Right Of The Quad (Bottom)
+    
+            glVertex3f( ratio2w, ratio1h, ratio2h)        # Top Right Of The Quad (Front)
+            glVertex3f(-ratio2w, ratio1h, ratio2h)        # Top from PyQt4 import QtCore, QtGui, QtOpenGLLeft Of The Quad (Front)
+            glVertex3f(-ratio2w,-ratio1h, ratio2h)        # Bottom Left Of The Quad (Front)
+            glVertex3f( ratio2w,-ratio1h, ratio2h)        # Bottom Right Of The Quad (Front)
+    
+            glVertex3f( ratio2w,-ratio1h,-ratio2h)        # Bottom Left Of The Quad (Back)
+            glVertex3f(-ratio2w,-ratio1h,-ratio2h)        # Bottom Right Of The Quad (Back)
+            glVertex3f(-ratio2w, ratio1h,-ratio2h)        # Top Right Of The Quad (Back)
+            glVertex3f( ratio2w, ratio1h,-ratio2h)        # Top Left Of The Quad (Back)
+    
+            glVertex3f(-ratio2w, ratio1h, ratio2h)        # Top Right Of The Quad (Left)
+            glVertex3f(-ratio2w, ratio1h,-ratio2h)        # Top Left Of The Quad (Left)
+            glVertex3f(-ratio2w,-ratio1h,-ratio2h)        # Bottom Left Of The Quad (Left)
+            glVertex3f(-ratio2w,-ratio1h, ratio2h)        # Bottom Right Of The Quad (Left)
+    
+            glVertex3f( ratio2w, ratio1h,-ratio2h)        # Top Right Of The Quad (Right)
+            glVertex3f( ratio2w, ratio1h, ratio2h)        # Top Left Of The Quad (Right)
+            glVertex3f( ratio2w,-ratio1h, ratio2h)        # Bottom Left Of The Quad (Right)
+            glVertex3f( ratio2w,-ratio1h,-ratio2h)        # Bottom Right Of The Quad (Right)
+            glEnd()                # Done Drawing The Quad
+    
+    
+            curCenter = -(( 1.0 * self.volumeEditor.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
+            if axis is 2 or self.tex[2] is 0:
+                self.tex[2] = self.bindTexture(self.images[2].image, GL_TEXTURE_2D, GL_RGB)
+            else:
+                glBindTexture(GL_TEXTURE_2D,self.tex[2])
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
+    
+            glBegin(GL_QUADS) #horizontal quad (e.g. first axis)
+            glColor3f(1.0,1.0,1.0)            # Set The Color To White
+            glTexCoord2d(0.0, 1.0)
+            glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
+            glTexCoord2d(1.0, 1.0)
+            glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
+            glTexCoord2d(1.0, 0.0)
+            glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
+            glTexCoord2d(0.0, 0.0)
+            glVertex3f( -ratio2w,curCenter, + ratio2h)        # Bottom Right Of The Quad
+            glEnd()
+    
+    
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
+            glBindTexture(GL_TEXTURE_2D,0) #unbind texture
+    
+            glBegin(GL_QUADS)
+            glColor3f(0.0,0.0,1.0)            # Set The Color To Blue, Z Axis
+            glVertex3f( ratio2w,curCenter, ratio2h)        # Top Right Of The Quad (Bottom)
+            glVertex3f(- ratio2w,curCenter, ratio2h)        # Top Left Of The Quad (Bottom)
+            glVertex3f(- ratio2w,curCenter,- ratio2h)        # Bottom Left Of The Quad (Bottom)
+            glVertex3f( ratio2w,curCenter,- ratio2h)        # Bottom Right Of The Quad (Bottom)
+            glEnd()
+    
+    
+    
+    
+    
+    
+    
+            curCenter = (( (1.0 * self.volumeEditor.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
+    
+            if axis is 0 or self.tex[0] is 0:
+                self.tex[0] = self.bindTexture(self.images[0].image, GL_TEXTURE_2D, GL_RGB)
+            else:
+                glBindTexture(GL_TEXTURE_2D,self.tex[0])
+    
+    
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
+    
+            glBegin(GL_QUADS)
+            glColor3f(0.8,0.8,0.8)            # Set The Color To White
+            glTexCoord2d(1.0, 1.0)
+            glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
+            glTexCoord2d(0.0, 1.0)
+            glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
+            glTexCoord2d(0.0, 0.0)
+            glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
+            glTexCoord2d(1.0, 0.0)
+            glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
+            glEnd()
+    
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
+            glBindTexture(GL_TEXTURE_2D,0) #unbind texture
+    
+            glBegin(GL_QUADS)
+            glColor3f(1.0,0.0,0.0)            # Set The Color To Red, 
+            glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
+            glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
+            glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
+            glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
+            glEnd()
+    
+    
+            curCenter = (( 1.0 * self.volumeEditor.selSlices[1] / self.sceneShape[1] ) - 0.5 )*2.0*ratio2h
+    
+    
+            if axis is 1 or self.tex[1] is 0:
+                self.tex[1] = self.bindTexture(self.images[1].image, GL_TEXTURE_2D, GL_RGB)
+            else:
+                glBindTexture(GL_TEXTURE_2D,self.tex[1])
+    
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
+    
+            glBegin(GL_QUADS)
+            glColor3f(0.6,0.6,0.6)            # Set The Color To White
+            glTexCoord2d(1.0, 1.0)
+            glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
+            glTexCoord2d(0.0, 1.0)
+            glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
+            glTexCoord2d(0.0, 0.0)
+            glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
+            glTexCoord2d(1.0, 0.0)
+            glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
+            glEnd()
+    
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
+            glBindTexture(GL_TEXTURE_2D,0) #unbind texture
+            glBegin(GL_QUADS)
+            glColor3f(0.0,1.0,0.0)            # Set The Color To Green
+            glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
+            glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
+            glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
+            glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
+            glEnd()
+    
+            glFlush()
 
     def resizeGL(self, w, h):
         '''
@@ -1552,7 +1556,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         gluPerspective(40.0, 1.0, 1.0, 30.0)
-
+        
         self.initialized = True
 
 class OverviewScene2(QtGui.QGraphicsView):
