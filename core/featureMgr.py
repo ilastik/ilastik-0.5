@@ -27,8 +27,10 @@ class FeatureMgr():
         self.featureItems = featureItems
         
     def prepareCompute(self, dataMgr):
+        self.dataMgr = dataMgr
+
         self.featureProcessList = [[] for i in range(len(dataMgr))]
-        
+
         self.featureProcess = FeatureThread(self.featureItems, dataMgr)
 
         return self.featureProcess.jobs
@@ -41,8 +43,9 @@ class FeatureMgr():
           
     def joinCompute(self, dataMgr):
         self.featureProcess.join()  
-        self.featureProcess = None  
-    
+        self.featureProcess = None
+  
+
     def __getstate__(self): 
         # Delete This Instance for pickleling
         return {}     
@@ -71,7 +74,6 @@ class LocalFeature(FeatureBase):
         self.featureFunktor = featureFunktor
     
     def compute(self, channel):
-        print channel.shape
         # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
         # the result of featureFunktor is numpy.ndarray and NOT a vigra type!? I don't know why... (see dateMgr loadData)
         result = []
@@ -111,7 +113,8 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
         FeatureParallelBase.__init__(self, featureItems, datMgr)
         threading.Thread.__init__(self)  
     
-    def run(self):       
+    def run(self):
+        imageFeatures = []
         for image in self.dataMgr:
             resultImage = []
             for feature in self.featureItems:
@@ -121,8 +124,11 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                     result.append(feature.compute(image.dataVol.data[:,:,:,:,c_ind]))
                     self.count += 1
                 resultImage.append(result)
-            image.features = resultImage
-        
+            imageFeatures.append(resultImage)
+            
+        for index, feat in enumerate(imageFeatures):
+            self.dataMgr[index].features = feat
+    
 
 ###########################################################################
 ###########################################################################

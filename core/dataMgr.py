@@ -4,6 +4,7 @@ import sys
 from Queue import Queue as queue
 from copy import copy
 import os
+import threading
 import h5py
 import h5py as tables # TODO: exchange tables with h5py
 from core.utilities import irange, debug, irangeIfTrue
@@ -90,7 +91,7 @@ class DataItemImage(DataItemBase):
         obj.extractDataAttributes()
         return obj
         
-    def getTrainingMatrix(self):
+    def getTrainingMatrixRef(self):
         #TODO: time behaviour should be discussed !
         #also adapt feature computation when doing this(4D??)!
         if self.trainingF is None:
@@ -115,11 +116,17 @@ class DataItemImage(DataItemBase):
             else:
                 self.trainingF = None
         return self.trainingL, self.trainingF, self.trainingIndices
+    
+    def getTrainingMatrix(self):
+        self.getTrainingMatrixRef()
+        if self.trainingF is not None:
+            return self.trainingL, self.trainingF, self.trainingIndices
+        else:
+            return None, None, None
             
     def updateTrainingMatrix(self, newLabels):
-        #TODO: hmmmmm, sometimes this function mixes up the updates, needs investigation
+        #TODO: this method is crazy, make it less crazy
         for nl in newLabels:
-            #TODO: Why is nl.data empty?? IMPORTANT
             if nl.erasing == False:
                 indic =  list(numpy.nonzero(nl.data))
                 indic[0] = indic[0] + nl.offsets[0]
@@ -149,11 +156,11 @@ class DataItemImage(DataItemBase):
                     temp2.shape += (1,)
                     self.trainingL = numpy.vstack((temp2,tempL))
                     fm = self.getFeatureMatrix()
-                    temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
-                    if len(temp2.shape) == 1:
-                        temp2.shape += (1,)
-                        fm.shape += (1,)
-                    if len(fm) > 0:
+                    if fm is not None:
+                        temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
+                        if len(temp2.shape) == 1:
+                            temp2.shape += (1,)
+                            fm.shape += (1,)
                         self.trainingF = numpy.vstack((temp2,fm[indices,:]))
                 else: #no intersection, just add everything...
                     self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
@@ -163,11 +170,11 @@ class DataItemImage(DataItemBase):
                     temp2 = self.trainingL
                     self.trainingL = numpy.vstack((temp2,tempL))
                     fm = self.getFeatureMatrix()
-                    temp2 = self.trainingF
-                    if len(temp2.shape) == 1:
-                        temp2.shape += (1,)
-                        fm.shape += (1,)
-                    if len(fm) > 0:
+                    if fm is not None:
+                        temp2 = self.trainingF
+                        if len(temp2.shape) == 1:
+                            temp2.shape += (1,)
+                            fm.shape += (1,)
                         self.trainingF = numpy.vstack((temp2,fm[indices,:]))
             else: #erasing == True
                 indic =  list(numpy.nonzero(nl.data))
@@ -193,13 +200,12 @@ class DataItemImage(DataItemBase):
                     self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
                     self.trainingL  = numpy.delete(self.trainingL,nonzero)
                     self.trainingL.shape += (1,) #needed because numpy.delete is stupid
-                    fm = self.getFeatureMatrix()
                     self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
                 else: #no intersectoin, in erase mode just pass
                     pass             
 
             
-    def getFeatureMatrix(self):
+    def getFeatureMatrixRef(self):
         if self.featureM is None:
             tempM = []
             for i_f, it_f in enumerate(self.features): #features
@@ -210,8 +216,15 @@ class DataItemImage(DataItemBase):
             if len(tempM) > 0:
                 self.featureM = numpy.hstack(tempM)
             else:
-                self.featureM = numpy.zeros((0,0))
+                self.featureM = None
         return self.featureM      
+    
+    def getFeatureMatrix(self):
+        self.getFeatureMatrixRef()
+        if self.featureM is not None:
+            return self.featureM
+        else:
+            return None
         
     def clearFeaturesAndTraining(self):
         self.trainingF = None
@@ -259,6 +272,7 @@ class DataMgr():
         self.segmentation = [None] * len(dataItems)
         self.labels = {}
         self.classifiers = []
+        self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
@@ -274,25 +288,28 @@ class DataMgr():
         self.prediction.append(None)
         self.uncertainty.append(None)
         
-       
-    def getTrainingMatrix(self):
+    
+    def buildTrainingMatrix(self):
         trainingF = []
         trainingL = []
         indices = []
         for item in self:
-            trainingLabels, trainingFeatures, indic = item.getTrainingMatrix()
-            if len(trainingLabels) > 0:
+            trainingLabels, trainingFeatures, indic = item.getTrainingMatrixRef()
+            if trainingFeatures is not None:
                 indices.append(indic)
                 trainingL.append(trainingLabels)
                 trainingF.append(trainingFeatures)
             
         self.trainingL = trainingL
         self.trainingF = trainingF
-        self.trainingIndices = indices
+        self.trainingIndices = indices     
+    
+    def getTrainingMatrix(self):
+        self.buildTrainingMatrix()
         
-        if len(trainingF) > 0:
-            trainingF = numpy.vstack(trainingF)
-            trainingL = numpy.vstack(trainingL)
+        if len(self.trainingF) > 0:
+            trainingF = numpy.vstack(self.trainingF)
+            trainingL = numpy.vstack(self.trainingL)
         
             return trainingF, trainingL
         else:
@@ -302,11 +319,9 @@ class DataMgr():
     
     def updateTrainingMatrix(self, num, newLabels):
         if self.trainingF is None:
-            self.getTrainingMatrix()
-        
+            self.buildTrainingMatrix()        
         self[num].updateTrainingMatrix(newLabels)
-        
-        return self.getTrainingMatrix()
+
 
 
     def buildFeatureMatrix(self):

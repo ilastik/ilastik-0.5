@@ -132,19 +132,21 @@ class MainWindow(QtGui.QMainWindow):
         #TODO: reenable segmentation
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         
-        # Make menu for online Classification
-        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
-        btnOnlineToggle.myMenu = QtGui.QMenu();
-        btnOnlineToggle.onlineRfAction = btnOnlineToggle.myMenu.addAction('Online RF')
-        btnOnlineToggle.onlineSVMAction = btnOnlineToggle.myMenu.addAction('Online SVM')
-        btnOnlineToggle.onlineStopAction = btnOnlineToggle.myMenu.addAction('Stop')
-        btnOnlineToggle.onlineStopAction.setEnabled(False)
-        btnOnlineToggle.setMenu(btnOnlineToggle.myMenu)
         
-        # Connect online classification Actions to slots
-        self.connect(btnOnlineToggle.onlineRfAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online RF'))
-        self.connect(btnOnlineToggle.onlineSVMAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online laSvm'))
-        self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
+        #TODO: reenable online classification sometime 
+#        # Make menu for online Classification
+#        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
+#        btnOnlineToggle.myMenu = QtGui.QMenu();
+#        btnOnlineToggle.onlineRfAction = btnOnlineToggle.myMenu.addAction('Online RF')
+#        btnOnlineToggle.onlineSVMAction = btnOnlineToggle.myMenu.addAction('Online SVM')
+#        btnOnlineToggle.onlineStopAction = btnOnlineToggle.myMenu.addAction('Stop')
+#        btnOnlineToggle.onlineStopAction.setEnabled(False)
+#        btnOnlineToggle.setMenu(btnOnlineToggle.myMenu)
+        
+#        # Connect online classification Actions to slots
+#        self.connect(btnOnlineToggle.onlineRfAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online RF'))
+#        self.connect(btnOnlineToggle.onlineSVMAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online laSvm'))
+#        self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
         
         # make Label and View Tab invisible (this tabs are not helpful so far)
         self.ribbon.removeTab(1)
@@ -274,7 +276,6 @@ class MainWindow(QtGui.QMainWindow):
         self.featureList = featureMgr.ilastikFeatures
         
     def featureCompute(self):
-        self.project.dataMgr.clearFeaturesAndTraining()
         self.featureComputation = FeatureComputation(self)
     
 #    def on_segmentation(self):
@@ -783,11 +784,12 @@ class FeatureComputation(object):
     def featureCompute(self):
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
-        
+        self.parent.project.dataMgr.featureLock.acquire()
+        self.parent.project.dataMgr.clearFeaturesAndTraining()
         numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)   
         self.initFeatureProgress(numberOfJobs)
         self.parent.project.featureMgr.triggerCompute()
-        self.myTimer.start(200) 
+        self.myTimer.start(200)
         
     def initFeatureProgress(self, numberOfJobs):
         statusBar = self.parent.statusBar()
@@ -812,6 +814,10 @@ class FeatureComputation(object):
         self.parent.project.dataMgr.buildFeatureMatrix()
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
+        if hasattr(self.parent, "classificationInteractive"):
+            self.parent.classificationInteractive.updateThreadQueues()
+        self.parent.project.dataMgr.buildTrainingMatrix()
+        self.parent.project.dataMgr.featureLock.release()
         
     def featureShow(self, item):
         pass

@@ -130,7 +130,7 @@ def createRibbons():
     RibbonGroupObjects["View"] = RibbonEntryGroup("View", 1)     
     RibbonGroupObjects["Features"] = RibbonEntryGroup("Features",0)   
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 1)   
-    RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)
+    #RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)
     RibbonGroupObjects["Label"] = RibbonEntryGroup("Label", 0)
     RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 4)   
     
@@ -145,10 +145,13 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train", ilastikIcons.System ,"Train Classifier"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Online", ilastikIcons.Play ,"Online Classifier", type=RibbonToggleButtonItem))
+
+    #TODO: reenable online classification !
+    
+#    RibbonGroupObjects["Classification"].append(RibbonEntry("Online", ilastikIcons.Play ,"Online Classifier", type=RibbonToggleButtonItem))
     #RibbonGroupObjects["Classification"].append(RibbonEntry("OnlineClassificator", ilastikIcons.Select, "Select online classificator", type=RibbonListItem))
     
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Segment ,"Segmentation"))
+    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Segment ,"Segmentation"))
     
 #    RibbonGroupObjects["View"].append(RibbonEntry("Image", "categories/preferences-system.png" ,"View Probability map"))
 #    RibbonGroupObjects["View"].append(RibbonEntry("Probabilities", "categories/preferences-system.png" ,"View Probability map"))
