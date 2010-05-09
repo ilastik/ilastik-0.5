@@ -258,6 +258,17 @@ class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
 
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
         return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)
+         
+
+class QSliderDialog(QtGui.QDialog):
+    def __init__(self, min, max, value):
+        QtGui.QDialog.__init__(self)
+        self.setWindowTitle('Change Alpha')
+        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        self.slider.setGeometry(20, 30, 140, 20)
+        self.slider.setRange(min,max)
+        self.slider.setValue(value)
+        
 
 class OverlayListView(QtGui.QListWidget):
     def __init__(self,parent):
@@ -266,7 +277,9 @@ class OverlayListView(QtGui.QListWidget):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.connect(self, QtCore.SIGNAL("clicked(QModelIndex)"), self.onItemClick)
+        self.connect(self, QtCore.SIGNAL("doubleClicked(QModelIndex)"), self.onItemDoubleClick)
         self.overlays = [] #array of VolumeOverlays
+        self.currentItem = None
 
     def onItemClick(self, itemIndex):
         item = self.itemFromIndex(itemIndex)
@@ -274,7 +287,18 @@ class OverlayListView(QtGui.QListWidget):
             item.visible = not(item.visible)
             item.setCheckState(item.visible * 2)
             self.volumeEditor.repaint()
-
+            
+    def onItemDoubleClick(self, itemIndex):
+        self.currentItem = item = self.itemFromIndex(itemIndex)
+        dialog = QSliderDialog(1, 20, round(item.alpha*20))
+        dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
+        dialog.exec_()
+            
+            
+    def setCurrentItemAlpha(self, num):
+        self.currentItem.alpha = 1.0 * num / 20.0
+        self.volumeEditor.repaint()
+        
     def clearOverlays(self):
         self.clear()
         self.overlays = []
