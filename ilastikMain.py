@@ -211,7 +211,7 @@ class MainWindow(QtGui.QMainWindow):
                 if item.prediction is None:
                    item.prediction = numpy.zeros(imageItem.dataVol.data.shape[0:-1],'uint8')
                 if imageIndex == self.activeImage:
-                    color = QtGui.QColor.fromRgb(item.color)
+                    color = QtGui.QColor.fromRgb(long(item.color))
                     self.labelWidget.addOverlay(True, item.prediction, item.name, color, 0.4)
             
             if imageItem.dataVol.uncertainty is None:

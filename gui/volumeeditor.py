@@ -351,7 +351,7 @@ class VolumeLabels():
                 descriptions.append(VolumeLabelDescription(names[index], numbers[index], colors[index]))
     
             vl =  VolumeLabels(data)
-            vl.descriptions = desctiptions
+            vl.descriptions = descriptions
             return vl
         else:
             return None
@@ -416,7 +416,7 @@ class LabelListView(QtGui.QListWidget):
     def initFromMgr(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):
-            li = LabelListItem(item.name,item.number, QtGui.QColor.fromRgb(item.color))
+            li = LabelListItem(item.name,item.number, QtGui.QColor.fromRgb(long(item.color)))
             self.addItem(li)
             self.items.append(li)
         self.buildColorTab()
@@ -672,6 +672,7 @@ class VolumeEditor(QtGui.QWidget):
             self.toolBoxLayout.addWidget(sliceSpin)
         sliceSpin.setRange(0,self.image.shape[1] - 1)
         self.sliceSelectors.append(sliceSpin)
+        
 
         sliceSpin = QtGui.QSpinBox()
         sliceSpin.setEnabled(True)
@@ -695,6 +696,15 @@ class VolumeEditor(QtGui.QWidget):
         self.selSlices.append(0)
         self.selSlices.append(0)
         self.selSlices.append(0)
+        
+        #Channel Selector Combo Box in right side toolbox
+        channelSpin = QtGui.QSpinBox()
+        channelSpin.setEnabled(True)
+        self.connect(channelSpin, QtCore.SIGNAL("valueChanged(int)"), self.setChannel)
+        if self.image.shape[-1] > 3: #only show when needed
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Channel:"))
+            self.toolBoxLayout.addWidget(channelSpin)
+        channelSpin.setRange(0,self.image.shape[-1] - 1)
 
         if self.embedded == False:
             self.addOverlayButton = QtGui.QPushButton("Add Overlay")
@@ -777,12 +787,12 @@ class VolumeEditor(QtGui.QWidget):
             tempoverlays = []   
             for index, item in enumerate(self.overlayView.overlays):
                 if item.visible:
-                    tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, self.selectedChannel)) 
+                    tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
     
             tempImage = self.image.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
     
             if self.labels.data is not None:
-                tempLabels = self.labels.data.getSlice(self.selSlices[i],i, self.selectedTime, self.selectedChannel)
+                tempLabels = self.labels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
     
             self.imageScenes[i].display(tempImage, tempoverlays, tempLabels)
         self.overview.redisplay()        
@@ -824,13 +834,13 @@ class VolumeEditor(QtGui.QWidget):
 
         for index, item in enumerate(self.overlayView.overlays):
             if item.visible:
-                tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, self.selectedChannel)) 
+                tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
 
         tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
 
 
         if self.labels.data is not None:
-            tempLabels = self.labels.data.getSlice(num,axis, self.selectedTime, self.selectedChannel)
+            tempLabels = self.labels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
         self.imageScenes[axis].display(tempImage, tempoverlays, tempLabels)
