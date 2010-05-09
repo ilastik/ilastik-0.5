@@ -309,7 +309,10 @@ class DataMgr():
         return self.getTrainingMatrix()
 
 
-    
+    def buildFeatureMatrix(self):
+        for item in self:
+            item.getFeatureMatrix()
+                    
     def clearFeaturesAndTraining(self):
         self.trainingF = None
         self.trainingL = None

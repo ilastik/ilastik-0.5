@@ -808,7 +808,7 @@ class FeatureComputation(object):
             
     def terminateFeatureProgressBar(self):
         ##should we do this here ?
-        self.parent.project.dataMgr.getTrainingMatrix()
+        self.parent.project.dataMgr.buildFeatureMatrix()
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
         
