@@ -1050,7 +1050,7 @@ class ClassificationPredict(object):
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
               
-        numberOfJobs = len(self.parent.project.dataMgr) * len(self.parent.project.classifierList)
+        numberOfJobs = len(self.parent.project.dataMgr) * len(self.parent.project.dataMgr.classifiers)
         
         self.initClassificationProgress(numberOfJobs)
         self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.dataMgr)
