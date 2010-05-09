@@ -53,10 +53,15 @@ class MainWindow(QtGui.QMainWindow):
         self.classificationProcess = None
         self.classificationOnline = None
         
-        dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL', 'Software (slow)'], False)
+        dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], False)
         self.opengl = False
-        if dl[0] == "OpenGL":
+        self.openglOverview = False
+        if dl[0] == "OpenGL + OpenGL Overview":
             self.opengl = True
+            self.openglOverview = True
+        elif dl[0] == "Software + OpenGL Overview":
+            self.opengl = False
+            self.openglOverview = True
         
                 
     def updateFileSelector(self):
@@ -252,7 +257,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget = None
                 
     def createImageWindows(self, dataVol):
-        self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl)
+        self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
                 
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)

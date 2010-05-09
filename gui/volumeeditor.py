@@ -570,16 +570,19 @@ class VolumeUpdate():
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
     def __init__(self, image, name="", font=None,
-                 readonly=False, size=(400, 300), labels = None , opengl = True, embedded = False):
+                 readonly=False, size=(400, 300), labels = None , opengl = True, openglOverview = True, embedded = False):
         super(VolumeEditor, self).__init__()
         self.name = name
         title = name
         
         self.opengl = opengl
+        self.openglOverview = openglOverview
         if self.opengl is True:
-            print "Using OpenGL acceleration"
+            print "Using OpenGL Slice rendering"
         else:
-            print "Using Software rendering"
+            print "Using Software Slice rendering"
+        if self.openglOverview is True:
+            print "Enabling OpenGL Overview rendering"
             
         self.embedded = embedded
         
@@ -1320,11 +1323,11 @@ class OverviewScene(QtOpenGL.QGLWidget):
         self.tex.append(0)
         self.tex.append(0)
         self.tex.append(0)
-        if self.volumeEditor.opengl is False:
+        if self.volumeEditor.openglOverview is False:
             self.setVisible(False)
 
     def display(self, axis):
-        if self.volumeEditor.opengl is True:  
+        if self.volumeEditor.openglOverview is True:  
             if self.initialized is True:
                 #self.initializeGL()
                 self.makeCurrent()
@@ -1334,7 +1337,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
                 self.swapBuffers()
             
     def redisplay(self):
-        if self.volumeEditor.opengl is True:
+        if self.volumeEditor.openglOverview is True:
             if self.initialized is True:
                 for i in range(3):
                     self.makeCurrent()
@@ -1344,7 +1347,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
                 self.swapBuffers()        
 
     def paintGL(self, axis = None):
-        if self.volumeEditor.opengl is True:
+        if self.volumeEditor.openglOverview is True:
             '''
             Drawing routine
             '''
