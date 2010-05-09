@@ -33,8 +33,8 @@ def LocallyDominantSegmentation(propmap, sigma = 2.0):
 def LocallyDominantSegmentation2D(propmap, sigma = 2.0):
     if not propmap.dtype == numpy.float32:
         propmap = propmap.astype(numpy.float32)
-
-    return  numpy.argmax(propmap, axis=len(propmap.shape)-1)
+        
+    return  numpy.argmax(propmap, axis=len(propmap.shape)-1) + 1
 
 if __name__ == "__main__":
     a = numpy.random.rand(256,256,4)

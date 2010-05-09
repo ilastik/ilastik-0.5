@@ -1166,7 +1166,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.tempImageItems.append(line)
         self.scene.addItem(line)
         
-        self.drawTimer.start(50) #update labels every some ms
+        self.drawTimer.start(100) #update labels every some ms
         self.drawManagerCopy.beginDraw(pos, self.imShape)
         
     def endDraw(self, pos):
