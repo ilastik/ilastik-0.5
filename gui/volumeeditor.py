@@ -242,7 +242,7 @@ class OverlaySlice():
             self.data = data
 
 class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
-    def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None):
+    def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None, visible = True):
         QtGui.QListWidgetItem.__init__(self,name)
         DataAccessor.__init__(self,data)
         self.colorTable = colorTable
@@ -250,7 +250,11 @@ class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
         self.color = color
         self.alpha = alpha
         self.name = name
-        self.visible = True
+        self.visible = visible
+        self.setCheckState(self.visible * 2)
+        self.oldCheckState = self.visible
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
+
 
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
         return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)
@@ -261,7 +265,15 @@ class OverlayListView(QtGui.QListWidget):
         super(OverlayListView, self).__init__(parent)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
+        self.connect(self, QtCore.SIGNAL("clicked(QModelIndex)"), self.onItemClick)
         self.overlays = [] #array of VolumeOverlays
+
+    def onItemClick(self, itemIndex):
+        item = self.itemFromIndex(itemIndex)
+        if item.checkState() != item.visible * 2:
+            item.visible = not(item.visible)
+            item.setCheckState(item.visible * 2)
+            self.volumeEditor.repaint()
 
     def clearOverlays(self):
         self.clear()
@@ -274,28 +286,28 @@ class OverlayListView(QtGui.QListWidget):
     def onContext(self, pos):
         index = self.indexAt(pos)
 
-        if not index.isValid():
-           return
-
-        item = self.itemAt(pos)
-        name = item.text()
-
-        menu = QtGui.QMenu(self)
-
-        #removeAction = menu.addAction("Remove")
-        if item.visible is True:
-            toggleHideAction = menu.addAction("Hide")
-        else:
-            toggleHideAction = menu.addAction("Show")
-
-        action = menu.exec_(QtGui.QCursor.pos())
-#        if action == removeAction:
-#            self.overlays.remove(item)
-#            it = self.takeItem(index.row())
-#            del it
-        if action == toggleHideAction:
-            item.visible = not(item.visible)
-            self.volumeEditor.repaint()
+#        if not index.isValid():
+#           return
+#
+#        item = self.itemAt(pos)
+#        name = item.text()
+#
+#        menu = QtGui.QMenu(self)
+#
+#        #removeAction = menu.addAction("Remove")
+#        if item.visible is True:
+#            toggleHideAction = menu.addAction("Hide")
+#        else:
+#            toggleHideAction = menu.addAction("Show")
+#
+#        action = menu.exec_(QtGui.QCursor.pos())
+##        if action == removeAction:
+##            self.overlays.remove(item)
+##            it = self.takeItem(index.row())
+##            del it
+#        if action == toggleHideAction:
+#            item.visible = not(item.visible)
+#            self.volumeEditor.repaint()
             
 
 
@@ -779,8 +791,7 @@ class VolumeEditor(QtGui.QWidget):
         self.overlayView.clearOverlays()
 
     def addOverlay(self, visible, data, name, color, alpha, colorTab = None):
-        ov = VolumeOverlay(data,name, color, alpha, colorTab)
-        ov.visible = visible
+        ov = VolumeOverlay(data,name, color, alpha, colorTab, visible)
         self.overlayView.addOverlay(ov)
 
     def addOverlayDialog(self):
