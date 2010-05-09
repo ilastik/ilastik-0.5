@@ -11,6 +11,7 @@ from collections import deque
 from PyQt4 import QtCore
 from core.utilities import irange
 from core import onlineClassifcator
+from core import activeLearning
 
 import numpy
 
@@ -305,10 +306,19 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                         ax1 = predictions[count0:count0+count1,:]
                         ax2 = predictions[count0+count1:count0+count1+count2,:]
 
+                        tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
+                        tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
+                        tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
+
+                        margin0 = activeLearning.computeEnsembleMargin2D(tp0)*255.0
+                        margin1 = activeLearning.computeEnsembleMargin2D(tp1)*255.0
+                        margin2 = activeLearning.computeEnsembleMargin2D(tp2)*255.0
+                                               
+                        self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], :, :] = margin0[:,:]
+                        self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, vs[2], :] = margin1[:,:]
+                        self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, :, vs[3]] = margin2[:,:]
+                        
                         for p_i in range(ax0.shape[1]):
-                            tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
-                            tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
-                            tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
                             item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
                             item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
                             item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
