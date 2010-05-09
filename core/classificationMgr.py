@@ -11,7 +11,7 @@ from collections import deque
 from PyQt4 import QtCore
 from core.utilities import irange
 from core import onlineClassifcator
-from core import activeLearning
+from core import activeLearning, segmentationMgr
 
 import numpy
 
@@ -313,10 +313,19 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                         margin0 = activeLearning.computeEnsembleMargin2D(tp0)*255.0
                         margin1 = activeLearning.computeEnsembleMargin2D(tp1)*255.0
                         margin2 = activeLearning.computeEnsembleMargin2D(tp2)*255.0
+                        
+                        seg0 = segmentationMgr.LocallyDominantSegmentation2D(tp0, 1.0)
+                        seg1 = segmentationMgr.LocallyDominantSegmentation2D(tp1, 1.0)
+                        seg2 = segmentationMgr.LocallyDominantSegmentation2D(tp2, 1.0)
                                                
                         self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], :, :] = margin0[:,:]
                         self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, vs[2], :] = margin1[:,:]
                         self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, :, vs[3]] = margin2[:,:]
+
+                        self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], :, :] = seg0[:,:]
+                        self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, vs[2], :] = seg1[:,:]
+                        self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, :, vs[3]] = seg2[:,:]
+
                         
                         for p_i in range(ax0.shape[1]):
                             item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
