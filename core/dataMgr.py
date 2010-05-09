@@ -113,7 +113,7 @@ class DataItemImage(DataItemBase):
             if len(tempF) > 0:
                 self.trainingF = numpy.hstack(tempF)
             else:
-                self.trainingF = numpy.zeros((0,0)) #TODO: not right
+                self.trainingF = None
         return self.trainingL, self.trainingF, self.trainingIndices
             
     def updateTrainingMatrix(self, newLabels):
@@ -155,8 +155,6 @@ class DataItemImage(DataItemBase):
                         fm.shape += (1,)
                     if len(fm) > 0:
                         self.trainingF = numpy.vstack((temp2,fm[indices,:]))
-                    else:
-                        self.trainingF = numpy.zeros((0,0)) #TODO: not right
                 else: #no intersection, just add everything...
                     self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
                     tempI = numpy.nonzero(nl.data)
@@ -169,7 +167,8 @@ class DataItemImage(DataItemBase):
                     if len(temp2.shape) == 1:
                         temp2.shape += (1,)
                         fm.shape += (1,)
-                    self.trainingF = numpy.vstack((temp2,fm[indices,:]))
+                    if len(fm) > 0:
+                        self.trainingF = numpy.vstack((temp2,fm[indices,:]))
             else: #erasing == True
                 indic =  list(numpy.nonzero(nl.data))
                 indic[0] = indic[0] + nl.offsets[0]
@@ -193,7 +192,7 @@ class DataItemImage(DataItemBase):
                 if len(nonzero) > 0:
                     self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
                     self.trainingL  = numpy.delete(self.trainingL,nonzero)
-                    #temp2.shape += (1,)
+                    self.trainingL.shape += (1,) #needed because numpy.delete is stupid
                     fm = self.getFeatureMatrix()
                     self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
                 else: #no intersectoin, in erase mode just pass
@@ -291,11 +290,14 @@ class DataMgr():
         self.trainingF = trainingF
         self.trainingIndices = indices
         
-        trainingF = numpy.vstack(trainingF)
-        trainingL = numpy.vstack(trainingL)
+        if len(trainingF) > 0:
+            trainingF = numpy.vstack(trainingF)
+            trainingL = numpy.vstack(trainingL)
         
-        return trainingF, trainingL
-
+            return trainingF, trainingL
+        else:
+            print "######### empty Training Matrix ##########"
+            return None, None
         
     
     def updateTrainingMatrix(self, num, newLabels):
@@ -304,17 +306,8 @@ class DataMgr():
         
         self[num].updateTrainingMatrix(newLabels)
         
-        trainingF = []
-        trainingL = []
-        for index, item in enumerate(self):
-            trainingL.append(item.trainingL)
-            trainingF.append(item.trainingF)
-        
-        self.trainingF = trainingF
-        self.trainingL = trainingL
-        
-        print numpy.vstack(trainingF).shape
-        return numpy.vstack(self.trainingF), numpy.vstack(self.trainingL)
+        return self.getTrainingMatrix()
+
 
     
     def clearFeaturesAndTraining(self):
