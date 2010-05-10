@@ -88,25 +88,25 @@ Section "Demo Files" SecDemo
 
   SetOutPath "$INSTDIR"
   
-  FILE ..\..\..\gui\demo\a_wood.jpg
-  FILE ..\..\..\gui\demo\b_animal1.jpg
-  FILE ..\..\..\gui\demo\c_cells_1.png
-  FILE ..\..\..\gui\demo\c_cells_2.png
-  FILE ..\..\..\gui\demo\c_cells_3.png
-  FILE ..\..\..\gui\demo\d_gewebe_1.png
-  FILE ..\..\..\gui\demo\e_letter.png
-  FILE ..\..\..\gui\demo\f_animal1_gray.jpg
-  FILE ..\..\..\gui\demo\3d_example_1.h5
-  FILE ..\..\..\gui\demo\3d_example_2.h5
-  FILE ..\..\..\gui\demo\ms_example_1.h5
-  FILE ..\..\..\gui\demo\2d_cells_apoptotic.png
-  FILE ..\..\..\gui\demo\2d_cells_apoptotic_small.png
-  FILE ..\..\..\gui\demo\2d_cells_firstType.png
-  FILE ..\..\..\gui\demo\2d_cells_mixed.png
-  FILE ..\..\..\gui\demo\2d_cells_secondType.png
-  FILE ..\..\..\gui\demo\2d_cells_twoTypes.png
-  FILE ..\..\..\gui\demo\2d_texture.png
-  FILE ..\..\..\gui\demo\CoventryCathedral.png
+  FILE ..\..\..\..\gui\demo\a_wood.jpg
+  FILE ..\..\..\..\gui\demo\b_animal1.jpg
+  FILE ..\..\..\..\gui\demo\c_cells_1.png
+  FILE ..\..\..\..\gui\demo\c_cells_2.png
+  FILE ..\..\..\..\gui\demo\c_cells_3.png
+  FILE ..\..\..\..\gui\demo\d_gewebe_1.png
+  FILE ..\..\..\..\gui\demo\e_letter.png
+  FILE ..\..\..\..\gui\demo\f_animal1_gray.jpg
+  FILE ..\..\..\..\gui\demo\3d_example_1.h5
+  FILE ..\..\..\..\gui\demo\3d_example_2.h5
+  FILE ..\..\..\..\gui\demo\ms_example_1.h5
+  FILE ..\..\..\..\gui\demo\2d_cells_apoptotic.png
+  FILE ..\..\..\..\gui\demo\2d_cells_apoptotic_small.png
+  FILE ..\..\..\..\gui\demo\2d_cells_firstType.png
+  FILE ..\..\..\..\gui\demo\2d_cells_mixed.png
+  FILE ..\..\..\..\gui\demo\2d_cells_secondType.png
+  FILE ..\..\..\..\gui\demo\2d_cells_twoTypes.png
+  FILE ..\..\..\..\gui\demo\2d_texture.png
+  FILE ..\..\..\..\gui\demo\CoventryCathedral.png
   
 
   
