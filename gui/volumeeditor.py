@@ -806,10 +806,13 @@ class VolumeEditor(QtGui.QWidget):
         ##undo/redo
         self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo) 
         self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo)
+        self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo)
         self.shortcutUndo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo.setContext(QtCore.Qt.ApplicationShortcut )
+        self.shortcutRedo2.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutUndo.setEnabled(True)
         self.shortcutRedo.setEnabled(True)
+        self.shortcutRedo2.setEnabled(True)
         
     def cleanup(self):
         del self.shortcutUndo
