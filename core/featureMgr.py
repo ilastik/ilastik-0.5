@@ -154,7 +154,7 @@ class FeatureGroups(object):
         self.members['Color'].append(gaussianSmooth)
         #self.members['Color'].append(location)
         
-        #self.members['Texture'].append(structureTensor)
+        self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
         #self.members['Texture'].append(hessianMatrixOfGaussian)
@@ -166,9 +166,9 @@ class FeatureGroups(object):
         
         self.members['Edge'].append(gaussianGradientMagnitude)
         #self.members['Edge'].append(eigStructureTensor2d)
-        #self.members['Edge'].append(eigHessianTensor2d)
+        self.members['Edge'].append(eigHessianTensor2d)
         self.members['Edge'].append(laplacianOfGaussian)
-        self.members['Edge'].append(differenceOfGaussians)
+        #self.members['Edge'].append(differenceOfGaussians)
         #self.members['Edge'].append(cannyEdge)
         
     def createList(self):
@@ -183,16 +183,35 @@ class FeatureGroups(object):
                         resList.append(LocalFeature(featFunc.__name__, [scaleValue for k in argNames], argNames , featFunc))
                         print featFunc.__name__, scaleValue    
         return resList
+    
+def myHessianOfGaussian(x,s):
+    if x.ndim == 2:
+        return vigra.filters.hessianOfGaussian2D(x,s)
+    elif x.ndim == 3:
+        return vigra.filters.hessianOfGaussian3D(x,s)
+    else:
+        print "Error: Dimension must be 2 or 3 dimensional"
+        return None
+    
+def myHessianOfGaussianEigenvalues(x,s):
+    if x.ndim == 2:
+        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(x,s))
+    elif x.ndim == 3:
+        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(x,s))
+    else:
+        print "Error: Dimension must be 2 or 3 dimensional"
+        return None
+    
 
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
 gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
 structureTensor = vigra.filters.structureTensor, ['InnerScale', 'OuterScale']
-hessianMatrixOfGaussian = vigra.filters.hessianOfGaussian, ['Sigma']
+hessianMatrixOfGaussian = myHessianOfGaussian, ['Sigma']
 eigStructureTensor2d = vigra.filters.structureTensorEigenvalues, ['InnerScale', 'OuterScale']
 laplacianOfGaussian = vigra.filters.laplacianOfGaussian, ['Sigma']
 morphologicalOpening = lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
 morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
-eigHessianTensor2d = vigra.filters.hessianOfGaussianEigenvalues, ['Sigma']
+eigHessianTensor2d = myHessianOfGaussianEigenvalues, ['Sigma']
 differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2), ['Sigma']
 cannyEdge = lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1), ['Sigma']
 
@@ -201,6 +220,10 @@ def location_(x,s):
     X.shape = X.shape + (1,)
     Y.shape = Y.shape + (1,)
     return vigra.Image(numpy.concatenate((X,Y),axis=2),numpy.float32)
+
+
+        
+        
 
 location = (location_,['Sigma'])
 
