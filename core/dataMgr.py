@@ -294,7 +294,6 @@ class DataMgr():
         
     
     def buildTrainingMatrix(self):
-        self.trainingVersion =  self.featureVersion
         trainingF = []
         trainingL = []
         indices = []
@@ -310,7 +309,9 @@ class DataMgr():
         self.trainingIndices = indices     
     
     def getTrainingMatrix(self):
-        self.buildTrainingMatrix()
+        if self.trainingVersion < self.featureVersion:
+            self.buildTrainingMatrix()
+        self.trainingVersion =  self.featureVersion
         
         if len(self.trainingF) > 0:
             trainingF = numpy.vstack(self.trainingF)
