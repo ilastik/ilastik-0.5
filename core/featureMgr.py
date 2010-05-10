@@ -142,7 +142,7 @@ class FeatureGroups(object):
         self.groupNames = ['Color', 'Texture', 'Edge']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
-        self.groupScaleValues = [0.2, 0.5, 1, 1.6, 3]
+        self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3]
         
         self.members = {}
         for g in self.groupNames:
@@ -201,13 +201,15 @@ def myHessianOfGaussianEigenvalues(x,s):
     else:
         print "Error: Dimension must be 2 or 3 dimensional"
         return None
+def myStructureTensorEigenvalues(x,s1,s2):
+    return vigra.filters.structureTensorEigenvalues(x,s1,s1/2.0)
     
 
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
 gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
 structureTensor = vigra.filters.structureTensor, ['InnerScale', 'OuterScale']
 hessianMatrixOfGaussian = myHessianOfGaussian, ['Sigma']
-eigStructureTensor2d = vigra.filters.structureTensorEigenvalues, ['InnerScale', 'OuterScale']
+eigStructureTensor2d = myStructureTensorEigenvalues, ['InnerScale', 'OuterScale']
 laplacianOfGaussian = vigra.filters.laplacianOfGaussian, ['Sigma']
 morphologicalOpening = lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
 morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
