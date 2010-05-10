@@ -79,7 +79,7 @@ class ClassifierRandomForest(ClassifierBase):
     
     def predict(self, target):
         #3d: check that only 1D data arrives here
-        if self.classifier is not None:
+        if self.classifier is not None and target is not None:
             if not target.dtype == numpy.float32:
                 target = numpy.array(target, dtype=numpy.float32)
             return self.classifier.predictProbabilities(target)
@@ -201,14 +201,17 @@ class ClassifierTrainThread(threading.Thread):
     
     def run(self):
         self.dataMgr.featureLock.acquire()
-        F, L = self.dataMgr.getTrainingMatrix()
-        if F is not None:
-            classifiers = []
-            for i in range(self.numClassifiers):
-                classifiers.append( self.classifier(F, L))
-                self.count += 1
-            self.dataMgr.classifiers = classifiers
-        self.dataMgr.featureLock.release()
+        try:
+            F, L = self.dataMgr.getTrainingMatrix()
+            if F is not None:
+                classifiers = []
+                for i in range(self.numClassifiers):
+                    classifiers.append( self.classifier(F, L))
+                    self.count += 1
+                self.dataMgr.classifiers = classifiers
+            self.dataMgr.featureLock.release()
+        except:
+            self.dataMgr.featureLock.release()
                     
 class ClassifierPredictThread(threading.Thread):
     def __init__(self, dataMgr):
@@ -225,21 +228,24 @@ class ClassifierPredictThread(threading.Thread):
             interactiveMessagePrint( "Feature Item" )
             interactiveMessagePrint ( "Classifier %d prediction" % cnt )
             self.dataMgr.featureLock.acquire()
-            fm = item.getFeatureMatrix()
-            if len(self.dataMgr.classifiers) > 0:
-                prediction = self.dataMgr.classifiers[0].predict(fm)
-                cnt = 1
-                if prediction is not None:
-                    for ii in range(len(self.dataMgr.classifiers) - 1) :
-                        interactiveMessagePrint( "Classifier %d prediction" % cnt )
-                        prediction += self.dataMgr.classifiers[ii+1].predict(fm)
-                        cnt += 1
-                        self.count += 1
-                    prediction = prediction / cnt
-                    #TODO: Time ! synchronize with featureMgr...
-                    item.prediction = prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],))
-            self.dataMgr.featureLock.release()
-
+            try:
+                fm = item.getFeatureMatrix()
+                if len(self.dataMgr.classifiers) > 0:
+                    prediction = self.dataMgr.classifiers[0].predict(fm)
+                    cnt = 1
+                    if prediction is not None:
+                        for ii in range(len(self.dataMgr.classifiers) - 1) :
+                            interactiveMessagePrint( "Classifier %d prediction" % cnt )
+                            prediction += self.dataMgr.classifiers[ii+1].predict(fm)
+                            cnt += 1
+                            self.count += 1
+                        prediction = prediction / cnt
+                        #TODO: Time ! synchronize with featureMgr...
+                        item.prediction = prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],))
+                self.dataMgr.featureLock.release()
+            except:
+                self.dataMgr.featureLock.release()
+                
 
 class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
     def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
@@ -282,71 +288,75 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                 features = None
                 self.ilastik.project.dataMgr.featureLock.acquire()
                 self.ilastik.activeImageLock.acquire()
-                activeImage = self.ilastik.activeImage
-                newLabels = self.ilastik.labelWidget.getPendingLabels()
-                if len(newLabels) > 0:
-                    self.ilastik.project.dataMgr.updateTrainingMatrix(activeImage, newLabels)
-                if len(newLabels) > 0 or self.ilastik.project.dataMgr.trainingVersion < self.ilastik.project.dataMgr.featureVersion:
-                    features,labels = self.ilastik.project.dataMgr.getTrainingMatrix()
-                if features is not None:
-                    interactiveMessagePrint("1>> Pop training Data")
-                    for i in range(self.numberOfClassifiers):
-                        if features.shape[0] == labels.shape[0]:
-                            self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
-                        else:
-                            print "##################### shape mismatch #####################"
-                vs = self.ilastik.labelWidget.getVisibleState()
-                features = self.ilastik.project.dataMgr[activeImage].getFeatureMatrixForViewState(vs)
-                vs.append(activeImage)
-
-                interactiveMessagePrint("1>> Pop prediction Data")
-                if len(self.classifierList) > 0:
-                    prediction = self.classifierList[0].predict(features)
-                    if prediction is not None:
-                        size = 1
-                        for iii in range(len(self.classifierList) - 1):
-                            classifier = self.classifierList[iii + 1]
-                            prediction += classifier.predict(features)
-                            size += 1                
-                        predictions = prediction / size
-                        shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
-                        index0 = 0
-                        count0 = numpy.prod(shape[2:4])
-                        count1 = numpy.prod((shape[1],shape[3]))
-                        count2 = numpy.prod(shape[1:3])
-                        ax0 = predictions[0:count0,:]
-                        ax1 = predictions[count0:count0+count1,:]
-                        ax2 = predictions[count0+count1:count0+count1+count2,:]
-
-                        tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
-                        tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
-                        tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
-
-                        margin0 = activeLearning.computeEnsembleMargin2D(tp0)*255.0
-                        margin1 = activeLearning.computeEnsembleMargin2D(tp1)*255.0
-                        margin2 = activeLearning.computeEnsembleMargin2D(tp2)*255.0
-                        
-                        seg0 = segmentationMgr.LocallyDominantSegmentation2D(tp0, 1.0)
-                        seg1 = segmentationMgr.LocallyDominantSegmentation2D(tp1, 1.0)
-                        seg2 = segmentationMgr.LocallyDominantSegmentation2D(tp2, 1.0)
-                                               
-                        self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], :, :] = margin0[:,:]
-                        self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, vs[2], :] = margin1[:,:]
-                        self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, :, vs[3]] = margin2[:,:]
-
-                        self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], :, :] = seg0[:,:]
-                        self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, vs[2], :] = seg1[:,:]
-                        self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, :, vs[3]] = seg2[:,:]
-
-                        
-                        for p_i in range(ax0.shape[1]):
-                            item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
-                            item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
-                            item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
-                            item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
-                self.ilastik.activeImageLock.release() 
-                self.ilastik.project.dataMgr.featureLock.release()
-                self.emit(QtCore.SIGNAL("resultsPending()"))
+                try:
+                    activeImage = self.ilastik.activeImage
+                    newLabels = self.ilastik.labelWidget.getPendingLabels()
+                    if len(newLabels) > 0:
+                        self.ilastik.project.dataMgr.updateTrainingMatrix(activeImage, newLabels)
+                    if len(newLabels) > 0 or self.ilastik.project.dataMgr.trainingVersion < self.ilastik.project.dataMgr.featureVersion:
+                        features,labels = self.ilastik.project.dataMgr.getTrainingMatrix()
+                    if features is not None:
+                        interactiveMessagePrint("1>> Pop training Data")
+                        for i in range(self.numberOfClassifiers):
+                            if features.shape[0] == labels.shape[0]:
+                                self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
+                            else:
+                                print "##################### shape mismatch #####################"
+                    vs = self.ilastik.labelWidget.getVisibleState()
+                    features = self.ilastik.project.dataMgr[activeImage].getFeatureMatrixForViewState(vs)
+                    vs.append(activeImage)
+    
+                    interactiveMessagePrint("1>> Pop prediction Data")
+                    if len(self.classifierList) > 0:
+                        prediction = self.classifierList[0].predict(features)
+                        if prediction is not None:
+                            size = 1
+                            for iii in range(len(self.classifierList) - 1):
+                                classifier = self.classifierList[iii + 1]
+                                prediction += classifier.predict(features)
+                                size += 1                
+                            predictions = prediction / size
+                            shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
+                            index0 = 0
+                            count0 = numpy.prod(shape[2:4])
+                            count1 = numpy.prod((shape[1],shape[3]))
+                            count2 = numpy.prod(shape[1:3])
+                            ax0 = predictions[0:count0,:]
+                            ax1 = predictions[count0:count0+count1,:]
+                            ax2 = predictions[count0+count1:count0+count1+count2,:]
+    
+                            tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
+                            tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
+                            tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
+    
+                            margin0 = activeLearning.computeEnsembleMargin2D(tp0)*255.0
+                            margin1 = activeLearning.computeEnsembleMargin2D(tp1)*255.0
+                            margin2 = activeLearning.computeEnsembleMargin2D(tp2)*255.0
+                            
+                            seg0 = segmentationMgr.LocallyDominantSegmentation2D(tp0, 1.0)
+                            seg1 = segmentationMgr.LocallyDominantSegmentation2D(tp1, 1.0)
+                            seg2 = segmentationMgr.LocallyDominantSegmentation2D(tp2, 1.0)
+                                                   
+                            self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], :, :] = margin0[:,:]
+                            self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, vs[2], :] = margin1[:,:]
+                            self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, :, vs[3]] = margin2[:,:]
+    
+                            self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], :, :] = seg0[:,:]
+                            self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, vs[2], :] = seg1[:,:]
+                            self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, :, vs[3]] = seg2[:,:]
+    
+                            
+                            for p_i in range(ax0.shape[1]):
+                                item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
+                                item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
+                                item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
+                                item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
+                    self.ilastik.activeImageLock.release() 
+                    self.ilastik.project.dataMgr.featureLock.release()
+                    self.emit(QtCore.SIGNAL("resultsPending()"))
+                except:
+                    self.ilastik.activeImageLock.release() 
+                    self.ilastik.project.dataMgr.featureLock.release()
 
 
 class ClassifierOnlineThread(threading.Thread):
