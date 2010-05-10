@@ -184,7 +184,6 @@ class MainWindow(QtGui.QMainWindow):
         
     def editProjectDlg(self):
         if hasattr(self, 'projectDlg'):
-            self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
             self.projectDlg.newProject = False
             self.projectDlg.show()
         else:        
