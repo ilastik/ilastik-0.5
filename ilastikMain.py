@@ -763,10 +763,10 @@ class FeatureDlg(QtGui.QDialog):
     def on_confirmButtons_accepted(self):  
         self.parent.project.featureMgr = featureMgr.FeatureMgr()
 
-        featureSelectionList = []
-        for k in range(0, self.featureList.count()):
-            if self.featureList.item(k).isSelected():
-                featureSelectionList.append(self.parent.featureList[k])
+#        featureSelectionList = []
+#        for k in range(0, self.featureList.count()):
+#            if self.featureList.item(k).isSelected():
+#                featureSelectionList.append(self.parent.featureList[k])
         
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         self.parent.project.featureMgr.setFeatureItems(featureSelectionList)

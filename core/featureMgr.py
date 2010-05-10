@@ -93,19 +93,19 @@ class LocalFeature(FeatureBase):
                 else: #more dimensional filter, we only need to add the 3D dimension
                     result.append(temp.reshape((1,) + temp.shape))
         
-        tempres = result[0].view(numpy.ndarray).copy()
-        tempres.shape = (1,) + tempres.shape
-        
-        from spyderlib.utils.qthelpers import qapplication
-        
-        for f_c in range(tempres.shape[-1]):
-            temp = tempres[:,:,:,:,f_c];
-            temp = (((temp - temp.min()) / temp.max())*255).astype(numpy.uint8)
-      
-            app = qapplication()
-            
-            dialog = VolumeEditor(temp,name= self.name + str(f_c))
-            dialog.show()
+#        tempres = result[0].view(numpy.ndarray).copy()
+#        tempres.shape = (1,) + tempres.shape
+#        
+#        from spyderlib.utils.qthelpers import qapplication
+#        
+#        for f_c in range(tempres.shape[-1]):
+#            temp = tempres[:,:,:,:,f_c];
+#            temp = (((temp - temp.min()) / temp.max())*255).astype(numpy.uint8)
+#      
+#            app = qapplication()
+#            
+#            dialog = VolumeEditor(temp,name= self.name + str(f_c))
+#            dialog.show()
 
         
         return result
@@ -160,7 +160,7 @@ class FeatureGroups(object):
         self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
-        self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3]
+        self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5]
         
         self.members = {}
         for g in self.groupNames:
@@ -175,9 +175,9 @@ class FeatureGroups(object):
         #self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
+        self.members['Texture'].append(gaussianGradientMagnitude)
         #self.members['Texture'].append(morphologicalOpening)
         #self.members['Texture'].append(morphologicalClosing)
-        self.members['Texture'].append(gaussianGradientMagnitude)
 
         self.members['Edge'].append(laplacianOfGaussian)
         self.members['Edge'].append(differenceOfGaussians)
@@ -217,7 +217,7 @@ def myHessianOfGaussianEigenvalues(x,s):
         print "Error: Dimension must be 2 or 3 dimensional"
         return None
 def myStructureTensorEigenvalues(x,s1,s2):
-    return vigra.filters.structureTensorEigenvalues(x,s1,s1/2.0)[:,:,:,0:1]
+    return vigra.filters.structureTensorEigenvalues(x,s1,s1/2.0)
     
 
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
