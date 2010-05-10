@@ -107,6 +107,8 @@ Section "Demo Files" SecDemo
   FILE ..\..\..\..\gui\demo\2d_cells_twoTypes.png
   FILE ..\..\..\..\gui\demo\2d_texture.png
   FILE ..\..\..\..\gui\demo\CoventryCathedral.png
+  FILE ..\..\..\..\gui\demo\calyx.h5
+  FILE ..\..\..\..\gui\demo\neuro1.h5
   
 
   
