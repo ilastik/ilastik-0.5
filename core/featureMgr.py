@@ -11,6 +11,8 @@ from core.utilities import irange
 import vigra
 at = vigra.arraytypes
 
+from gui.volumeeditor import VolumeEditor as VolumeEditor
+
     
 class FeatureMgr():
     """
@@ -79,17 +81,33 @@ class LocalFeature(FeatureBase):
         result = []
         for i in range(channel.shape[0]):
             if channel.shape[1] > 1: #3D Case
-                temp = self.featureFunktor(channel[i,:,:,:].astype(numpy.float32).view(vigra.Volume), * self.args)
+                temp = self.featureFunktor(channel[i,:,:,:].astype(numpy.float32), * self.args)
                 if len(temp.shape) == 3:
                     result.append( temp.reshape( temp.shape + (1,)) )
                 else:
                     result.append( temp )
             else: #2D
-                temp = self.featureFunktor(channel[i,0,:,:].astype(numpy.float32).view(vigra.Image), * self.args)
+                temp = self.featureFunktor(channel[i,0,:,:].astype(numpy.float32), * self.args)
                 if len(temp.shape) == 2:
                     result.append(temp.reshape((1,) + temp.shape + (1,)))
                 else: #more dimensional filter, we only need to add the 3D dimension
                     result.append(temp.reshape((1,) + temp.shape))
+        
+        tempres = result[0].view(numpy.ndarray).copy()
+        tempres.shape = (1,) + tempres.shape
+        
+        from spyderlib.utils.qthelpers import qapplication
+        
+        for f_c in range(tempres.shape[-1]):
+            temp = tempres[:,:,:,:,f_c];
+            temp = (((temp - temp.min()) / temp.max())*255).astype(numpy.uint8)
+      
+            app = qapplication()
+            
+            dialog = VolumeEditor(temp,name= self.name + str(f_c))
+            dialog.show()
+
+        
         return result
 
     def __str__(self):
@@ -139,7 +157,7 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-        self.groupNames = ['Color', 'Texture', 'Edge']
+        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
         self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3]
@@ -154,22 +172,19 @@ class FeatureGroups(object):
         self.members['Color'].append(gaussianSmooth)
         #self.members['Color'].append(location)
         
-        self.members['Texture'].append(structureTensor)
+        #self.members['Texture'].append(structureTensor)
         self.members['Texture'].append(eigHessianTensor2d)
         self.members['Texture'].append(eigStructureTensor2d)
-        #self.members['Texture'].append(hessianMatrixOfGaussian)
-        #self.members['Texture'].append(laplacianOfGaussian)
         #self.members['Texture'].append(morphologicalOpening)
         #self.members['Texture'].append(morphologicalClosing)
         self.members['Texture'].append(gaussianGradientMagnitude)
-        #self.members['Texture'].append(differenceOfGaussians)
-        
-        self.members['Edge'].append(gaussianGradientMagnitude)
-        #self.members['Edge'].append(eigStructureTensor2d)
-        self.members['Edge'].append(eigHessianTensor2d)
+
         self.members['Edge'].append(laplacianOfGaussian)
-        #self.members['Edge'].append(differenceOfGaussians)
-        #self.members['Edge'].append(cannyEdge)
+        self.members['Edge'].append(differenceOfGaussians)
+        
+        self.members['Orientation'].append(hessianMatrixOfGaussian)
+        self.members['Orientation'].append(structureTensor)
+        
         
     def createList(self):
         resList = []
@@ -197,12 +212,12 @@ def myHessianOfGaussianEigenvalues(x,s):
     if x.ndim == 2:
         return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(x,s))
     elif x.ndim == 3:
-        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(x,s))
+        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(x,s))[:,:,:,0]
     else:
         print "Error: Dimension must be 2 or 3 dimensional"
         return None
 def myStructureTensorEigenvalues(x,s1,s2):
-    return vigra.filters.structureTensorEigenvalues(x,s1,s1/2.0)
+    return vigra.filters.structureTensorEigenvalues(x,s1,s1/2.0)[:,:,:,0:1]
     
 
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]

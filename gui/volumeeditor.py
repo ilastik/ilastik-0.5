@@ -789,7 +789,8 @@ class VolumeEditor(QtGui.QWidget):
 
         # Make the dialog act as a window and stay on top
         if self.embedded == False:
-            self.setWindowFlags(self.flags() | QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
+            pass
+            #self.setWindowFlags(self.flags() | QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
