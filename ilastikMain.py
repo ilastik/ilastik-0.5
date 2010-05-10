@@ -176,7 +176,7 @@ class MainWindow(QtGui.QMainWindow):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
         self.project = projectMgr.Project.loadFromDisk(str(fileName))
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
         if hasattr(self, 'projectDlg'):
             del self.projectDlg 
             
@@ -487,7 +487,7 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif);;Multi Spectral Data (*.h5)")
+        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif);;3D or Multispectral Data (*.h5)")
         fileNames.sort()
         if fileNames:
             for file_name in fileNames:
@@ -632,7 +632,7 @@ class ProjectDlg(QtGui.QDialog):
         # dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
         #self.parent.project.dataMgr.setDataList(dataItemList)
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
         
         self.parent.projectModified()
         self.close()

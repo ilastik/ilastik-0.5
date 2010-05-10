@@ -15,11 +15,19 @@ coll = COLLECT( exe,
                a.binaries,
                a.zipfiles,
                a.datas,
-			   [('installerScript.nsi', 'installerScript.nsi','DATA')],
+			   [('installerScript.nsi', 'installerScript.nsi','DATA'),
+			    ('gui/dlgChannels.ui', 'gui/dlgChannels.ui','DATA'),
+				('gui/dlgFeature.ui', 'gui/dlgFeature.ui','DATA'),
+				('gui/dlgProject.ui', 'gui/dlgProject.ui','DATA'),
+				('gui/placeholder.png', 'gui/placeholder.png','DATA'),
+				('gui/backGroundBrush.png', 'gui/backGroundBrush.png','DATA')],
                strip=False,
                upx=True,
                name=os.path.join('dist', 'ilastikMain'))
 			   
 import shutil
-print "Copy icons"
+print "#"*30
+print "Post build events"
+print "-> Copy icons ",
 shutil.copytree('gui/icons','ilastikMain/dist/ilastikMain/gui/icons', ignore=shutil.ignore_patterns('.svn'))
+print "Done",

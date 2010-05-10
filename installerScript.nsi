@@ -11,8 +11,8 @@
 ;General
 
   ;Name and file
-  Name "IlastikGUI"
-  OutFile "ilastikGUI-0.3_setup.exe"
+  Name "IlastikGUI 3D"
+  OutFile "ilastikGUI-0.39_setup.exe"
 
   ;Default installation folder
   InstallDir "$PROGRAMFILES\IlastikGUI3D"
@@ -41,7 +41,7 @@
   
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU" 
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\IlastikGUI" 
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\IlastikGUI3D" 
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
   
   !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
@@ -90,10 +90,24 @@ Section "Demo Files" SecDemo
   
   FILE ..\..\..\gui\demo\a_wood.jpg
   FILE ..\..\..\gui\demo\b_animal1.jpg
-  FILE ..\..\..\gui\demo\c_cells_1.tif
-  FILE ..\..\..\gui\demo\c_cells_2.tif
-  FILE ..\..\..\gui\demo\c_cells_3.tif
+  FILE ..\..\..\gui\demo\c_cells_1.png
+  FILE ..\..\..\gui\demo\c_cells_2.png
+  FILE ..\..\..\gui\demo\c_cells_3.png
+  FILE ..\..\..\gui\demo\d_gewebe_1.png
+  FILE ..\..\..\gui\demo\e_letter.png
+  FILE ..\..\..\gui\demo\f_animal1_gray.jpg
   FILE ..\..\..\gui\demo\3d_example_1.h5
+  FILE ..\..\..\gui\demo\3d_example_2.h5
+  FILE ..\..\..\gui\demo\ms_example_1.h5
+  FILE ..\..\..\gui\demo\2d_cells_apoptotic.png
+  FILE ..\..\..\gui\demo\2d_cells_apoptotic_small.png
+  FILE ..\..\..\gui\demo\2d_cells_firstType.png
+  FILE ..\..\..\gui\demo\2d_cells_mixed.png
+  FILE ..\..\..\gui\demo\2d_cells_secondType.png
+  FILE ..\..\..\gui\demo\2d_cells_twoTypes.png
+  FILE ..\..\..\gui\demo\2d_texture.png
+  FILE ..\..\..\gui\demo\CoventryCathedral.png
+  
 
   
 SectionEnd
