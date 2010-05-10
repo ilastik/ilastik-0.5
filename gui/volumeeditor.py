@@ -792,9 +792,9 @@ class VolumeEditor(QtGui.QWidget):
                             "%s" % (" - "+str(title) if str(title) else ""))
 
         #start viewing in the center of the volume
-        self.changeSliceX(numpy.floor((self.image.shape[0] - 1) / 2))
-        self.changeSliceY(numpy.floor((self.image.shape[1] - 1) / 2))
-        self.changeSliceZ(numpy.floor((self.image.shape[2] - 1) / 2))
+        self.changeSliceX(numpy.floor((self.image.shape[1] - 1) / 2))
+        self.changeSliceY(numpy.floor((self.image.shape[2] - 1) / 2))
+        self.changeSliceZ(numpy.floor((self.image.shape[3] - 1) / 2))
 
         #undo/redo
         QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo )
