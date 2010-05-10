@@ -66,6 +66,7 @@ class DataItemImage(DataItemBase):
         self.featureM = None
         self.features = [] #features is an array of arrays of arrays etc. like this
                            #feature, channel, time
+        self.history = None
         
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)
@@ -275,6 +276,7 @@ class DataMgr():
         self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
         self.trainingVersion = 0
         self.featureVersion = 0
+        self.trainingF = None
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems

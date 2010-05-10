@@ -44,12 +44,7 @@ class MainWindow(QtGui.QMainWindow):
         self.initImageWindows()
 
         self.createFeatures()
-
-        #TODO: why the fuck does this not work ???
-        #undo/redo
-        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo)
-        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo)
-               
+              
         self.classificationProcess = None
         self.classificationOnline = None
         
@@ -73,9 +68,14 @@ class MainWindow(QtGui.QMainWindow):
     
     def changeImage(self, number):
         self.activeImageLock.acquire()
+        if number != self.activeImage:
+            self.project.dataMgr[self.activeImage].history = self.labelWidget.history
         self.activeImage = number
         self.destroyImageWindows()
         self.createImageWindows( self.project.dataMgr[number].dataVol)
+        if self.project.dataMgr[self.activeImage].history is not None:
+            self.labelWidget.history = self.project.dataMgr[self.activeImage].history
+            self.labelWidget.history.volumeEditor = self.labelWidget
         
         self.updateLabelWidgetOverlays()
         if hasattr(self, "classificationInteractive"):
@@ -251,15 +251,17 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks = []
         
     def destroyImageWindows(self):
+        if self.labelWidget is not None:
+            self.labelWidget.cleanup()
+            self.labelWidget.close()
+            self.labelWidget = None
         for dock in self.labelDocks:
             self.removeDockWidget(dock)
         self.labelDocks = []
-        if self.labelWidget is not None:
-            self.labelWidget.close()
-            self.labelWidget = None
+
                 
     def createImageWindows(self, dataVol):
-        self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview)
+        self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
                 
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)

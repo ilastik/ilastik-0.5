@@ -544,24 +544,30 @@ class State():
 
 
 class LabelState(State):
-    def __init__(self, title, axis, num, offsets, data, time):
+    def __init__(self, title, axis, num, offsets, shape, time, volumeEditor, erasing, labelNumber):
         self.title = title
         self.time = time
         self.num = num
         self.offsets = offsets
         self.axis = axis
-        self.data = data
+        self.erasing = erasing
+        self.labelNumber = labelNumber
+        self.data = volumeEditor.labels.data.getSubSlice(self.offsets, shape, self.num, self.axis, self.time, 0).copy()
 
     def restore(self, volumeEditor):
         temp = self.data.copy()
-        self.data = volumeEditor.labels.data.getSubSlice(self.offsets, temp.shape, self.num, self.axis, self.time, 0).copy()
-        volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
-        volumeEditor.changeSlice(self.num, self.axis)
+        temp = self.data
+        self.data = numpy.abs(temp - volumeEditor.labels.data.getSubSlice(self.offsets, temp.shape, self.num, self.axis, self.time, 0).copy())
+        #volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
+        labels = numpy.where(self.data > 0, self.labelNumber, 0)
+        volumeEditor.setLabels(self.offsets, self.axis, labels, not(self.erasing))
+        volumeEditor.repaint()
+        self.erasing = not(self.erasing)          
 
 
 
 class HistoryManager(QtCore.QObject):
-    def __init__(self, parent, maxSize = 30):
+    def __init__(self, parent, maxSize = 100):
         self.volumeEditor = parent
         self.maxSize = maxSize
         self.history = []
@@ -612,8 +618,8 @@ class VolumeUpdate():
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
     def __init__(self, image, name="", font=None,
-                 readonly=False, size=(400, 300), labels = None , opengl = True, openglOverview = True, embedded = False):
-        super(VolumeEditor, self).__init__()
+                 readonly=False, size=(400, 300), labels = None , opengl = True, openglOverview = True, embedded = False, parent = None):
+        super(VolumeEditor, self).__init__(parent)
         self.name = name
         title = name
         
@@ -777,13 +783,13 @@ class VolumeEditor(QtGui.QWidget):
 
         self.toolBoxLayout.addWidget( self.labelView)
 
-
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
 
         self.layout.addWidget(self.toolBox)
 
         # Make the dialog act as a window and stay on top
-        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
+        if self.embedded == False:
+            self.setWindowFlags(self.flags() | QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
@@ -796,19 +802,29 @@ class VolumeEditor(QtGui.QWidget):
         self.changeSliceY(numpy.floor((self.image.shape[2] - 1) / 2))
         self.changeSliceZ(numpy.floor((self.image.shape[3] - 1) / 2))
 
-        #undo/redo
-        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo )
-        QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo )
-
+        ##undo/redo
+        self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo) 
+        self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo)
+        self.shortcutUndo.setContext(QtCore.Qt.ApplicationShortcut )
+        self.shortcutRedo.setContext(QtCore.Qt.ApplicationShortcut )
+        self.shortcutUndo.setEnabled(True)
+        self.shortcutRedo.setEnabled(True)
+        
+    def cleanup(self):
+        del self.shortcutUndo
+        del self.shortcutRedo
+        
     def getPendingLabels(self):
         temp = self.pendingLabels
         self.pendingLabels = []
         return temp
 
     def historyUndo(self):
+        print "undo..."
         self.history.undo()
 
     def historyRedo(self):
+        print "redo..."
         self.history.redo()
 
     def clearOverlays(self):
@@ -1188,6 +1204,8 @@ class ImageScene( QtGui.QGraphicsView):
         labels = labels.swapaxes(0,1)
         number = self.volumeEditor.labelView.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
+        ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, number)
+        self.volumeEditor.history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)        
         self.drawManagerCopy.beginDraw(self.mousePos, self.imShape)
 
@@ -1213,6 +1231,8 @@ class ImageScene( QtGui.QGraphicsView):
         labels = labels.swapaxes(0,1)
         number = self.volumeEditor.labelView.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
+        ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, number)
+        self.volumeEditor.history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)
         self.drawing = False
 
