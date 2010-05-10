@@ -81,8 +81,8 @@ class MainWindow(QtGui.QMainWindow):
         if hasattr(self, "classificationInteractive"):
             self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
             self.classificationInteractive.updateThreadQueues()
-        self.activeImageLock.release()
         self.labelWidget.repaint() #for overlays
+        self.activeImageLock.release()
 
     def historyUndo(self):
         if self.labelWidget is not None:
@@ -782,9 +782,9 @@ class FeatureComputation(object):
         
     
     def featureCompute(self):
+        self.parent.project.dataMgr.featureLock.acquire()
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
-        self.parent.project.dataMgr.featureLock.acquire()
         self.parent.project.dataMgr.clearFeaturesAndTraining()
         numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)   
         self.initFeatureProgress(numberOfJobs)

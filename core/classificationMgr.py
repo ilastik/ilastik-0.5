@@ -274,18 +274,20 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
     
                     
     def run(self):
-        self.ilastik.project.dataMgr.getTrainingMatrix()
         self.dataPending.set()
         while not self.stopped:
             self.dataPending.wait()
             self.dataPending.clear()
             if not self.stopped: #no needed, but speeds up the final thread.join()
+                features = None
                 self.ilastik.project.dataMgr.featureLock.acquire()
+                self.ilastik.activeImageLock.acquire()
                 activeImage = self.ilastik.activeImage
                 newLabels = self.ilastik.labelWidget.getPendingLabels()
                 if len(newLabels) > 0:
                     self.ilastik.project.dataMgr.updateTrainingMatrix(activeImage, newLabels)
-                features,labels = self.ilastik.project.dataMgr.getTrainingMatrix()
+                if len(newLabels) > 0 or self.ilastik.project.dataMgr.trainingVersion < self.ilastik.project.dataMgr.featureVersion:
+                    features,labels = self.ilastik.project.dataMgr.getTrainingMatrix()
                 if features is not None:
                     interactiveMessagePrint("1>> Pop training Data")
                     for i in range(self.numberOfClassifiers):
@@ -327,7 +329,7 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                         seg0 = segmentationMgr.LocallyDominantSegmentation2D(tp0, 1.0)
                         seg1 = segmentationMgr.LocallyDominantSegmentation2D(tp1, 1.0)
                         seg2 = segmentationMgr.LocallyDominantSegmentation2D(tp2, 1.0)
-                        self.ilastik.activeImageLock.acquire()                       
+                                               
                         self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], :, :] = margin0[:,:]
                         self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, vs[2], :] = margin1[:,:]
                         self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, :, vs[3]] = margin2[:,:]
@@ -342,9 +344,9 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                             item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
                             item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
                             item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
-                        self.ilastik.activeImageLock.release() 
-                        self.emit(QtCore.SIGNAL("resultsPending()"))
+                self.ilastik.activeImageLock.release() 
                 self.ilastik.project.dataMgr.featureLock.release()
+                self.emit(QtCore.SIGNAL("resultsPending()"))
 
 
 class ClassifierOnlineThread(threading.Thread):

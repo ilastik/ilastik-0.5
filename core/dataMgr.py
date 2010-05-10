@@ -273,6 +273,8 @@ class DataMgr():
         self.labels = {}
         self.classifiers = []
         self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
+        self.trainingVersion = 0
+        self.featureVersion = 0
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
@@ -290,6 +292,7 @@ class DataMgr():
         
     
     def buildTrainingMatrix(self):
+        self.trainingVersion =  self.featureVersion
         trainingF = []
         trainingL = []
         indices = []
@@ -329,6 +332,7 @@ class DataMgr():
             item.getFeatureMatrix()
                     
     def clearFeaturesAndTraining(self):
+        self.featureVersion += 1
         self.trainingF = None
         self.trainingL = None
         self.trainingIndices = None
