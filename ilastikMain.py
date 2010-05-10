@@ -706,6 +706,7 @@ class FeatureDlg(QtGui.QDialog):
         self.initDlg()
         
     def initDlg(self):
+        
         uic.loadUi('gui/dlgFeature.ui', self) 
         for featureItem in self.parent.featureList:
             self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
@@ -714,18 +715,19 @@ class FeatureDlg(QtGui.QDialog):
             rc = self.featureTable.rowCount()
             self.featureTable.insertRow(rc)
         self.featureTable.setVerticalHeaderLabels(featureMgr.ilastikFeatureGroups.groupNames)
+       
         
         for k, scaleName in irange(featureMgr.ilastikFeatureGroups.groupScaleNames):
             rc = self.featureTable.columnCount()
             self.featureTable.insertColumn(rc)
         self.featureTable.setHorizontalHeaderLabels(featureMgr.ilastikFeatureGroups.groupScaleNames)
         
-        self.featureTable.resizeRowsToContents()
-        self.featureTable.resizeColumnsToContents()
+        #self.featureTable.resizeRowsToContents()
+        #self.featureTable.resizeColumnsToContents()
         for c in range(self.featureTable.columnCount()):
             self.featureTable.horizontalHeader().resizeSection(c, 54)#(0, QtGui.QHeaderView.Stretch)
 
-        self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+        #self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.featureTable.setShowGrid(False)
         
         
