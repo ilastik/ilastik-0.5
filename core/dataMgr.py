@@ -88,8 +88,8 @@ class DataItemImage(DataItemBase):
     @classmethod
     def initFromArray(cls, dataArray, originalFileName):
         obj = cls(originalFileName)
-        obj.data = dataArray
-        obj.extractDataAttributes()
+        obj.dataVol = Volume()
+        obj.dataVol.data = DataAccessor(dataArray, True)
         return obj
         
     def getTrainingMatrixRef(self):

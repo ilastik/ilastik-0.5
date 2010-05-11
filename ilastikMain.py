@@ -17,7 +17,7 @@ import numpy
 import time
 from PyQt4 import QtCore, QtGui, uic
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
-from gui import ctrlRibbon, imgLabel
+from gui import ctrlRibbon, imgLabel, stackloader
 from Queue import Queue as queue
 from collections import deque
 from gui.iconMgr import ilastikIcons
@@ -484,7 +484,51 @@ class ProjectDlg(QtGui.QDialog):
         
         self.show()
         self.update()
+
+    
+    @QtCore.pyqtSignature("")     
+    def on_loadStack_clicked(self):
+        sl = stackloader.StackLoader()
+        imageData = sl.exec_()
         
+        projectName = self.projectName
+        labeler = self.labeler
+        description = self.description
+        
+        # New project or edited project? if edited, reuse parts of old dataMgr
+        if hasattr(self.parent,'project') and (not self.newProject):
+            dm = self.parent.project.dataMgr
+            print "edit Project"
+        else:
+            dm = dataMgr.DataMgr()
+            print "new Project"
+        
+        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dm)
+
+            
+        theDataItem = dataMgr.DataItemImage.initFromArray(imageData, "Image Stack")
+        self.parent.project.dataMgr.append(theDataItem)
+        self.parent.project.dataMgr.dataItemsLoaded[-1] = True
+                   
+        theDataItem.hasLabels = True
+        theDataItem.isTraining = True
+        theDataItem.isTesting = True
+
+        contained = False
+        for pr in theDataItem.projects:
+            if pr == self.parent.project:
+                contained = true
+        if not contained:
+            theDataItem.projects.append(self.parent.project)
+        
+        # dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
+        #self.parent.project.dataMgr.setDataList(dataItemList)
+        self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        
+        self.parent.projectModified()
+        self.close()        
+                        
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         

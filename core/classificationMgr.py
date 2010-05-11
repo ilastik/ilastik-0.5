@@ -297,6 +297,7 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                     if len(newLabels) > 0 or self.ilastik.project.dataMgr.trainingVersion < self.ilastik.project.dataMgr.featureVersion:
                         features,labels = self.ilastik.project.dataMgr.getTrainingMatrix()
                     if features is not None:
+                        print "retraining..."
                         interactiveMessagePrint("1>> Pop training Data")
                         for i in range(self.numberOfClassifiers):
                             if features.shape[0] == labels.shape[0]:
