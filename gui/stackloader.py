@@ -188,11 +188,14 @@ class StackLoader(QtGui.QDialog):
 
                     
         self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],1)
-        if destfile != None :
-            f = h5py.File(destfile, 'w')
-            g = f.create_group("volume")        
-            g.create_dataset("data",data = self.image)
-            f.close()
+        try:
+            if destfile != None :
+                f = h5py.File(destfile, 'w')
+                g = f.create_group("volume")        
+                g.create_dataset("data",data = self.image)
+                f.close()
+        except:
+            print "######ERROR saving File ", destfile
         super(StackLoader, self).accept()
         
     def exec_(self):
