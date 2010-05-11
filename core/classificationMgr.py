@@ -352,10 +352,15 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                                 item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
+                        else:
+                            print "##################### prediction None #########################"
+                    else:
+                        print "##################### No Classifiers ############################"
                     self.ilastik.activeImageLock.release() 
                     self.ilastik.project.dataMgr.featureLock.release()
                     self.emit(QtCore.SIGNAL("resultsPending()"))
                 except:
+                    print "########################## exception in Interactivethread ###################"
                     self.ilastik.activeImageLock.release() 
                     self.ilastik.project.dataMgr.featureLock.release()
 

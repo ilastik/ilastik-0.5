@@ -242,9 +242,7 @@ class DataItemImage(DataItemBase):
                    ttt.append(it_t[vs[1],:,:,:].reshape(numpy.prod(it_t.shape[1:3]),it_t.shape[3]))
                    ttt.append(it_t[:,vs[2],:,:].reshape(numpy.prod((it_t.shape[0],it_t.shape[2])),it_t.shape[3]))
                    ttt.append(it_t[:,:,vs[3],:].reshape(numpy.prod(it_t.shape[0:2]),it_t.shape[3]))
-                   tempM.append(numpy.vstack(ttt))   
-
-                       
+                   tempM.append(numpy.vstack(ttt))            
         if len(tempM) > 0:
             featureM = numpy.hstack(tempM)
         else:
@@ -311,7 +309,7 @@ class DataMgr():
     def getTrainingMatrix(self):
         if self.trainingVersion < self.featureVersion:
             self.clearFeaturesAndTraining()
-            self.buildTrainingMatrix()
+        self.buildTrainingMatrix()
         self.trainingVersion =  self.featureVersion
         
         if len(self.trainingF) > 0:
