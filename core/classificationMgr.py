@@ -257,7 +257,6 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
         
         self.stopped = False
         
-        
         self.trainingQueue = trainingQueue
         self.predictionQueue = predictQueue
         self.resultQueue = resultQueue
@@ -364,6 +363,7 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                     print "########################## exception in Interactivethread ###################"
                     self.ilastik.activeImageLock.release() 
                     self.ilastik.project.dataMgr.featureLock.release()
+
 
 
 class ClassifierOnlineThread(threading.Thread):

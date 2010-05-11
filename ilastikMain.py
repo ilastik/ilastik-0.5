@@ -927,6 +927,7 @@ class ClassificationInteractive(object):
     
     def updateThreadQueues(self):
         if self.classificationInteractive is not None:
+            self.myInteractionProgressBar.setVisible(True)
             self.classificationInteractive.dataPending.set()
 
     def updateLabelWidget(self):
@@ -949,7 +950,7 @@ class ClassificationInteractive(object):
                 #item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
                 #item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
                 #item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
-            
+            self.myInteractionProgressBar.setVisible(False)
             self.parent.labelWidget.repaint()                    
         except IndexError:
             pass
@@ -959,6 +960,7 @@ class ClassificationInteractive(object):
     def initInteractiveProgressBar(self):
         statusBar = self.parent.statusBar()
         self.myInteractionProgressBar = QtGui.QProgressBar()
+        self.myInteractionProgressBar.setVisible(False)
         self.myInteractionProgressBar.setMinimum(0)
         self.myInteractionProgressBar.setMaximum(0)
         statusBar.addWidget(self.myInteractionProgressBar)
@@ -970,8 +972,8 @@ class ClassificationInteractive(object):
         
     def start(self):
                
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.trainingQueue, self.predictionQueue, self.resultQueue)
         self.initInteractiveProgressBar()
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.trainingQueue, self.predictionQueue, self.resultQueue)
 
         self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
     

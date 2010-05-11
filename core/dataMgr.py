@@ -311,6 +311,9 @@ class DataMgr():
             self.clearFeaturesAndTraining()
         self.buildTrainingMatrix()
         self.trainingVersion =  self.featureVersion
+            
+        if len(self.trainingF) == 0:
+            self.buildTrainingMatrix()
         
         if len(self.trainingF) > 0:
             trainingF = numpy.vstack(self.trainingF)
@@ -323,7 +326,7 @@ class DataMgr():
         
     
     def updateTrainingMatrix(self, num, newLabels):
-        if self.trainingF is None or self.trainingVersion < self.featureVersion:
+        if len(self.trainingF) == 0 or self.trainingVersion < self.featureVersion:
             self.buildTrainingMatrix()        
         self[num].updateTrainingMatrix(newLabels)
 
