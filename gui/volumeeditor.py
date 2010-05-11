@@ -725,7 +725,7 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceX)
         if self.image.shape[2] > 1 and self.image.shape[3] > 1: #only show when needed
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 0:"))
+            self.toolBoxLayout.addWidget(QtGui.QLabel("X:"))
             self.toolBoxLayout.addWidget(sliceSpin)
         sliceSpin.setRange(0,self.image.shape[1] - 1)
         self.sliceSelectors.append(sliceSpin)
@@ -735,7 +735,7 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceY)
         if self.image.shape[1] > 1 and self.image.shape[3] > 1: #only show when needed
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 1:"))
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Y:"))
             self.toolBoxLayout.addWidget(sliceSpin)
         sliceSpin.setRange(0,self.image.shape[2] - 1)
         self.sliceSelectors.append(sliceSpin)
@@ -744,7 +744,7 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceZ)
         if self.image.shape[1] > 1 and self.image.shape[2] > 1 : #only show when needed
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Slice 2:"))
+            self.toolBoxLayout.addWidget(QtGui.QLabel("Z:"))
             self.toolBoxLayout.addWidget(sliceSpin)
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)

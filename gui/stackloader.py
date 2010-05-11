@@ -29,6 +29,7 @@ class StackLoader(QtGui.QDialog):
 
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
+        self.connect(self.path, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
         self.pathButton = QtGui.QPushButton("Select")
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
         tempLayout.addWidget(self.path)
@@ -126,16 +127,18 @@ class StackLoader(QtGui.QDialog):
                 
         self.image = None
 
+    def pathChanged(self, text):
+        list = glob.glob(str(self.path.text()) )
+        self.sizeZ.setValue(len(list))
+        temp = vigra.impex.readImage(list[0])
+        self.sizeX.setValue(temp.shape[0])
+        self.sizeY.setValue(temp.shape[1])
+
 
     def slotDir(self):
         path = self.path.text()
         filename = QtGui.QFileDialog.getExistingDirectory(self, "Image Stack Directory", path)
         self.path.setText(filename + "/*")
-        list = glob.glob(str(self.path.text()) )
-        self.sizeX.setValue(len(list))
-        temp = vigra.impex.readImage(list[0])
-        self.sizeY.setValue(temp.shape[0])
-        self.sizeZ.setValue(temp.shape[1])
 
     def slotFile(self):
         filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
@@ -161,13 +164,13 @@ class StackLoader(QtGui.QDialog):
         #loop over provided images an put them in the hdf5
         z = 0
         for filename in sorted(glob.glob(pattern), key = str.lower):
-            if z >= offsets[0] and z < offsets[0] + shape[0]:
+            if z >= offsets[2] and z < offsets[2] + shape[2]:
                 try:
                     img_data = vigra.impex.readImage(filename)
                     if invert:
-                        self.image[z-offsets[0],:,:] = 255 - img_data[offsets[1]:offsets[1]+shape[1], offsets[2]:offsets[2]+shape[2]]
+                        self.image[:,:, z-offsets[2]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                     else:
-                        self.image[z-offsets[0],:,:] = img_data[offsets[1]:offsets[1]+shape[1], offsets[2]:offsets[2]+shape[2]]
+                        self.image[:,:,z-offsets[2]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                 except:
                     print "######ERROR loading File ", filename 
             z = z + 1
