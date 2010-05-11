@@ -310,6 +310,7 @@ class DataMgr():
     
     def getTrainingMatrix(self):
         if self.trainingVersion < self.featureVersion:
+            self.clearFeaturesAndTraining()
             self.buildTrainingMatrix()
         self.trainingVersion =  self.featureVersion
         
@@ -324,7 +325,7 @@ class DataMgr():
         
     
     def updateTrainingMatrix(self, num, newLabels):
-        if self.trainingF is None:
+        if self.trainingF is None or self.trainingVersion < self.featureVersion:
             self.buildTrainingMatrix()        
         self[num].updateTrainingMatrix(newLabels)
 

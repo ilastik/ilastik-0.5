@@ -818,10 +818,9 @@ class FeatureComputation(object):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
         self.parent.project.dataMgr.buildTrainingMatrix()
-        if hasattr(self.parent, "classificationInteractive"):
-            self.parent.classificationInteractive.updateThreadQueues()
         self.parent.project.dataMgr.featureLock.release()
-        
+        if hasattr(self.parent, "classificationInteractive"):
+            self.parent.classificationInteractive.updateThreadQueues()        
     def featureShow(self, item):
         pass
 

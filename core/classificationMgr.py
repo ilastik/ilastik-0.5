@@ -229,6 +229,7 @@ class ClassifierPredictThread(threading.Thread):
             interactiveMessagePrint ( "Classifier %d prediction" % cnt )
             self.dataMgr.featureLock.acquire()
             try:
+                #self.dataMgr.clearFeaturesAndTraining()
                 fm = item.getFeatureMatrix()
                 if len(self.dataMgr.classifiers) > 0:
                     prediction = self.dataMgr.classifiers[0].predict(fm)
