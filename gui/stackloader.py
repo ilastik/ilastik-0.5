@@ -70,6 +70,12 @@ class StackLoader(QtGui.QDialog):
         self.layout.addLayout(tempLayout) 
 
         tempLayout = QtGui.QHBoxLayout()
+        self.grayscale = QtGui.QCheckBox("Convert to Grayscale ?")
+        tempLayout.addWidget(self.grayscale)
+        self.layout.addLayout(tempLayout) 
+
+
+        tempLayout = QtGui.QHBoxLayout()
         self.normalize = QtGui.QCheckBox("Normalize Data?")
         tempLayout.addWidget(self.normalize)
         self.layout.addLayout(tempLayout) 
@@ -182,9 +188,10 @@ class StackLoader(QtGui.QDialog):
             filename = None
         normalize = self.normalize.checkState() > 0
         invert = self.invert.checkState() > 0
-        self.load(str(self.path.text()), offsets, shape, destShape, filename, normalize, invert)
+        grayscale = invert = self.grayscale.checkState() > 0
+        self.load(str(self.path.text()), offsets, shape, destShape, filename, normalize, invert, grayscale)
     
-    def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False):
+    def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False, grayscale = False):
         self.logger.clear()
         self.logger.setVisible(True)
 
@@ -229,7 +236,11 @@ class StackLoader(QtGui.QDialog):
             minimum = numpy.min(self.image)
             self.image = self.image * (255.0 / (maximum - minimum)) - minimum
 
-                    
+        
+        if grayscale:
+            if rgb == 3:
+                self.image = numpy.average(self.image, axis = 2)
+        
         self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],self.rgb)
         try:
             if destfile != None :
