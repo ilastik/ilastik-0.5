@@ -188,10 +188,10 @@ class StackLoader(QtGui.QDialog):
             filename = None
         normalize = self.normalize.checkState() > 0
         invert = self.invert.checkState() > 0
-        grayscale = invert = self.grayscale.checkState() > 0
+        grayscale = self.grayscale.checkState() > 0
         self.load(str(self.path.text()), offsets, shape, destShape, filename, normalize, invert, grayscale)
     
-    def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False, grayscale = False):
+    def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False, makegray = False):
         self.logger.clear()
         self.logger.setVisible(True)
 
@@ -205,12 +205,12 @@ class StackLoader(QtGui.QDialog):
                 try:
                     img_data = vigra.impex.readImage(filename)
                     if self.rgb > 1:
-                        if invert:
+                        if invert is True:
                             self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                         else:
                             self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                     else:
-                        if invert:
+                        if invert is True:
                             self.image[:,:, z-offsets[2],0] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                         else:
                             self.image[:,:,z-offsets[2],0] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
@@ -225,8 +225,10 @@ class StackLoader(QtGui.QDialog):
             z = z + 1
                  
         if destShape is not None:
-            destShape = destShape + (self.rgb,)
-            result = vigra.sampling.resizeVolumeSplineInterpolation(self.image.view(vigra.Volume),destShape)
+            result = numpy.zeros(destShape + (self.rgb,), 'float32')
+            for i in range(self.rgb):
+                cresult = vigra.sampling.resizeVolumeSplineInterpolation(self.image[:,:,:,i].view(vigra.Volume),destShape)
+                result[:,:,:,i] = cresult[:,:,:]
             self.image = result
         else:
             destShape = shape
@@ -237,11 +239,14 @@ class StackLoader(QtGui.QDialog):
             self.image = self.image * (255.0 / (maximum - minimum)) - minimum
 
         
-        if grayscale:
-            if rgb == 3:
-                self.image = numpy.average(self.image, axis = 2)
+        if makegray:
+            result = numpy.average(self.image, axis = 3)
+            self.rgb = 1
+            self.image = result.astype('uint8')
+            self.image.reshape(self.image.shape + (1,))
         
         self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],self.rgb)
+        
         try:
             if destfile != None :
                 f = h5py.File(destfile, 'w')
