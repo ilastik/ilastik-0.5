@@ -932,24 +932,6 @@ class ClassificationInteractive(object):
 
     def updateLabelWidget(self):
         try:
-            #predictions, vs = self.resultQueue.pop()
-            #shape = self.parent.project.dataMgr[vs[-1]].dataVol.data.shape
-            #index0 = 0
-            #count0 = numpy.prod(shape[2:4])
-            #count1 = numpy.prod((shape[1],shape[3]))
-            #count2 = numpy.prod(shape[1:3])
-            #ax0 = predictions[0:count0,:]
-            #ax1 = predictions[count0:count0+count1,:]
-            #ax2 = predictions[count0+count1:count0+count1+count2,:]
-
-            #for p_i in range(ax0.shape[1]):
-                #tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
-                #tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
-                #tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
-                #item = self.parent.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
-                #item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
-                #item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
-                #item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
             self.myInteractionProgressBar.setVisible(False)
             self.parent.labelWidget.repaint()                    
         except IndexError:

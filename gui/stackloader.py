@@ -48,7 +48,7 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget( self.offsetX)
         tempLayout.addWidget( self.offsetY)
         tempLayout.addWidget( self.offsetZ)
-        self.layout.addWidget(QtGui.QLabel("Offsets:"))
+        self.layout.addWidget(QtGui.QLabel("Sobvolume Offsets:"))
         self.layout.addLayout(tempLayout)
         
         tempLayout = QtGui.QHBoxLayout()
@@ -61,31 +61,27 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget( self.sizeX)
         tempLayout.addWidget( self.sizeY)
         tempLayout.addWidget( self.sizeZ)
-        self.layout.addWidget(QtGui.QLabel("Dimensions:"))
+        self.layout.addWidget(QtGui.QLabel("Subvolume Size:"))
         self.layout.addLayout(tempLayout)
 
         tempLayout = QtGui.QHBoxLayout()
-        self.invert = QtGui.QCheckBox()
+        self.invert = QtGui.QCheckBox("Invert Colors?")
         tempLayout.addWidget(self.invert)
-        tempLayout.addWidget(QtGui.QLabel("Invert Colors?"))
-        tempLayout.addStretch()
         self.layout.addLayout(tempLayout) 
 
         tempLayout = QtGui.QHBoxLayout()
-        self.normalize = QtGui.QCheckBox()
+        self.normalize = QtGui.QCheckBox("Normalize Data?")
         tempLayout.addWidget(self.normalize)
-        tempLayout.addWidget(QtGui.QLabel("Normalize?"))
-        tempLayout.addStretch()
         self.layout.addLayout(tempLayout) 
 
 
         tempLayout = QtGui.QHBoxLayout()
-        self.downsample = QtGui.QCheckBox()
+        self.downsample = QtGui.QCheckBox("Downsample Subvolume to Size:")
+        self.connect(self.downsample, QtCore.SIGNAL("stateChanged(int)"), self.toggleDownsample)      
         tempLayout.addWidget(self.downsample)
-        tempLayout.addWidget(QtGui.QLabel("Downsample To:"))
-        tempLayout.addStretch()
         self.layout.addLayout(tempLayout)
 
+        self.downsampleFrame = QtGui.QFrame()
         tempLayout = QtGui.QHBoxLayout()
         self.downX = QtGui.QSpinBox()
         self.downX.setRange(0,10000)
@@ -96,36 +92,62 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget( self.downX)
         tempLayout.addWidget( self.downY)
         tempLayout.addWidget( self.downZ)
-        self.layout.addLayout(tempLayout)
+        self.downsampleFrame.setLayout(tempLayout)
+        self.downsampleFrame.setVisible(False)
+        self.layout.addWidget(self.downsampleFrame)
     
         
         tempLayout = QtGui.QHBoxLayout()
-        self.alsoSave = QtGui.QCheckBox()
+        self.alsoSave = QtGui.QCheckBox("also save to Destination File:")
+        self.connect(self.alsoSave, QtCore.SIGNAL("stateChanged(int)"), self.toggleAlsoSave)
         tempLayout.addWidget(self.alsoSave)
-        tempLayout.addWidget(QtGui.QLabel("also save to Destination File:"))
-        tempLayout.addStretch()
         self.layout.addLayout(tempLayout) 
 
+        self.alsoSaveFrame = QtGui.QFrame()
         tempLayout = QtGui.QHBoxLayout()
         self.fileButton = QtGui.QPushButton("Select")
         self.connect(self.fileButton, QtCore.SIGNAL('clicked()'), self.slotFile)
         self.file = QtGui.QLineEdit("")
         tempLayout.addWidget(self.file)
         tempLayout.addWidget(self.fileButton)
-        self.layout.addLayout(tempLayout)        
+        self.alsoSaveFrame.setLayout(tempLayout)
+        self.alsoSaveFrame.setVisible(False)
+        self.layout.addWidget(self.alsoSaveFrame)        
         
         
         
         tempLayout = QtGui.QHBoxLayout()
         self.cancelButton = QtGui.QPushButton("Cancel")
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.close)
-        self.okButton = QtGui.QPushButton("Load")
-        self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
+        self.okButton = QtGui.QPushButton("Ok")
+        self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.accept)
+        self.loadButton = QtGui.QPushButton("Load")
+        self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
+        tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
         tempLayout.addWidget(self.okButton)
+        tempLayout.addWidget(self.loadButton)
+        self.layout.addStretch()
         self.layout.addLayout(tempLayout)
-                
+        
+        
+        self.logger = QtGui.QPlainTextEdit()
+        self.logger.setVisible(False)
+        self.layout.addWidget(self.logger)        
         self.image = None
+
+    def toggleAlsoSave(self, int):
+        if self.alsoSave.checkState() == 0:
+            self.alsoSaveFrame.setVisible(False)
+        else:
+            self.alsoSaveFrame.setVisible(True)
+    
+    def toggleDownsample(self, int):
+        if self.downsample.checkState() == 0:
+            self.downsampleFrame.setVisible(False)
+        else:
+            self.downsampleFrame.setVisible(True)
+
 
     def pathChanged(self, text):
         list = glob.glob(str(self.path.text()) )
@@ -133,6 +155,7 @@ class StackLoader(QtGui.QDialog):
         temp = vigra.impex.readImage(list[0])
         self.sizeX.setValue(temp.shape[0])
         self.sizeY.setValue(temp.shape[1])
+        self.rgb = temp.shape[2]
 
 
     def slotDir(self):
@@ -158,8 +181,10 @@ class StackLoader(QtGui.QDialog):
         self.load(str(self.path.text()), offsets, shape, destShape, filename, normalize, invert)
     
     def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False):
-           
-        self.image = numpy.zeros(shape, 'float32')
+
+        self.logger.setVisible(True)
+
+        self.image = numpy.zeros(shape + (self.rgb,), 'float32')
     
         #loop over provided images an put them in the hdf5
         z = 0
@@ -168,11 +193,16 @@ class StackLoader(QtGui.QDialog):
                 try:
                     img_data = vigra.impex.readImage(filename)
                     if invert:
-                        self.image[:,:, z-offsets[2]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                        self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                     else:
-                        self.image[:,:,z-offsets[2]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                        self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
+                    s = "loaded File " + filename + "as Slice " + str(z-offsets[2])
+                    self.logger.append(s)
                 except:
-                    print "######ERROR loading File ", filename 
+                    s = "Error loading file " + filename + "as Slice " + str(z-offsets[2])
+                    self.logger.appendPlainText(s)
+                self.logger.appendPlainText("\n")
+                self.logger.repaint()
             z = z + 1
                  
         if destShape is not None:
@@ -187,7 +217,7 @@ class StackLoader(QtGui.QDialog):
             self.image = self.image * (255.0 / (maximum - minimum)) - minimum
 
                     
-        self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],1)
+        self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],self.rgb)
         try:
             if destfile != None :
                 f = h5py.File(destfile, 'w')
@@ -196,7 +226,6 @@ class StackLoader(QtGui.QDialog):
                 f.close()
         except:
             print "######ERROR saving File ", destfile
-        super(StackLoader, self).accept()
         
     def exec_(self):
         super(StackLoader, self).exec_()
