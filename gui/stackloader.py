@@ -155,7 +155,10 @@ class StackLoader(QtGui.QDialog):
         temp = vigra.impex.readImage(list[0])
         self.sizeX.setValue(temp.shape[0])
         self.sizeY.setValue(temp.shape[1])
-        self.rgb = temp.shape[2]
+        if len(temp.shape) == 3:
+            self.rgb = temp.shape[2]
+        else:
+            self.rgb = 1
 
 
     def slotDir(self):
@@ -192,13 +195,20 @@ class StackLoader(QtGui.QDialog):
             if z >= offsets[2] and z < offsets[2] + shape[2]:
                 try:
                     img_data = vigra.impex.readImage(filename)
-                    if invert:
-                        self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
+                    if self.rgb > 1:
+                        if invert:
+                            self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
+                        else:
+                            self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                     else:
-                        self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
+                        if invert:
+                            self.image[:,:, z-offsets[2],0] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                        else:
+                            self.image[:,:,z-offsets[2],0] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                     s = "loaded File " + filename + "as Slice " + str(z-offsets[2])
-                    self.logger.append(s)
-                except:
+                    self.logger.appendPlainText(s)
+                except Exception as e:
+                    print e 
                     s = "Error loading file " + filename + "as Slice " + str(z-offsets[2])
                     self.logger.appendPlainText(s)
                 self.logger.appendPlainText("\n")
