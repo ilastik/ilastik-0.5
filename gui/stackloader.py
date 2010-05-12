@@ -118,8 +118,9 @@ class StackLoader(QtGui.QDialog):
         
         tempLayout = QtGui.QHBoxLayout()
         self.cancelButton = QtGui.QPushButton("Cancel")
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.close)
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
         self.okButton = QtGui.QPushButton("Ok")
+        self.okButton.setEnabled(False)
         self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.accept)
         self.loadButton = QtGui.QPushButton("Load")
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
@@ -191,6 +192,7 @@ class StackLoader(QtGui.QDialog):
     
         #loop over provided images an put them in the hdf5
         z = 0
+        allok = True
         for filename in sorted(glob.glob(pattern), key = str.lower):
             if z >= offsets[2] and z < offsets[2] + shape[2]:
                 try:
@@ -205,13 +207,13 @@ class StackLoader(QtGui.QDialog):
                             self.image[:,:, z-offsets[2],0] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                         else:
                             self.image[:,:,z-offsets[2],0] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                    s = "loaded File " + filename + "as Slice " + str(z-offsets[2])
-                    self.logger.appendPlainText(s)
+                    self.logger.insertPlainText(".")
                 except Exception as e:
+                    allok = False
                     print e 
                     s = "Error loading file " + filename + "as Slice " + str(z-offsets[2])
                     self.logger.appendPlainText(s)
-                self.logger.appendPlainText("\n")
+                    self.logger.appendPlainText("")
                 self.logger.repaint()
             z = z + 1
                  
@@ -236,10 +238,15 @@ class StackLoader(QtGui.QDialog):
                 f.close()
         except:
             print "######ERROR saving File ", destfile
+            
+        if allok:
+            self.okButton.setEnabled(True)
         
     def exec_(self):
-        super(StackLoader, self).exec_()
-        return  self.image
+        if super(StackLoader, self).exec_() == QtGui.QDialog.Accepted:
+            return  self.image
+        else:
+            return None
        
 def test():
     """Text editor demo"""
