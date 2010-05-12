@@ -218,6 +218,7 @@ class StackLoader(QtGui.QDialog):
             z = z + 1
                  
         if destShape is not None:
+            destShape = destShape + (self.rgb,)
             result = vigra.sampling.resizeVolumeSplineInterpolation(self.image.view(vigra.Volume),destShape)
             self.image = result
         else:
