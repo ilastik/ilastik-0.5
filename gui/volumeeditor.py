@@ -1157,10 +1157,11 @@ class ImageScene( QtGui.QGraphicsView):
         self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=False)
 
         self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
-        
+
+        p = QtGui.QPainter(self.image)
+
         #add overlays
         for index, item in enumerate(overlays):
-            p = QtGui.QPainter(self.image)
             p.setOpacity(item.alpha)
            
             if item.colorTable != None:
@@ -1173,31 +1174,26 @@ class ImageScene( QtGui.QGraphicsView):
                 imageO.setAlphaChannel(qimage2ndarray.gray2qimage(alphaChan.swapaxes(0,1), False))
 
             p.drawImage(imageO.rect(), imageO)
-            p.end()
-            del p
 
         if labels is not None:
-            p1 = QtGui.QPainter(self.image)
-            #p1.setOpacity(0.99)
+            p.setOpacity(1.0)
             image0 = qimage2ndarray.gray2qimage(labels.swapaxes(0,1), False)
 
             image0.setColorTable(self.volumeEditor.labelView.colorTab)
             mask = image0.createMaskFromColor(QtGui.QColor(0,0,0).rgb(),QtCore.Qt.MaskOutColor) #QtGui.QBitmap.fromImage(
-            #alphaChan = numpy.where(labels > 0, 255, 0)
-            #mask = qimage2ndarray.gray2qimage(alphaChan, False)
             image0.setAlphaChannel(mask)
-            p1.drawImage(image0.rect(), image0)
-            p1.end()
-            del p1
+            p.drawImage(image0.rect(), image0)
 
+        p.end()
+        del p
 
-        self.pixmap = QtGui.QPixmap.fromImage(self.image)
+        self.pixmap = QtGui.QPixmap.fromImage(self.image)        
 
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
 
         self.scene.addItem(self.imageItem)
         
-        self.view.repaint()        
+        self.viewport().repaint()        
 
 
     def updateLabels(self):

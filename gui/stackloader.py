@@ -185,7 +185,7 @@ class StackLoader(QtGui.QDialog):
         self.load(str(self.path.text()), offsets, shape, destShape, filename, normalize, invert)
     
     def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False):
-
+        self.logger.clear()
         self.logger.setVisible(True)
 
         self.image = numpy.zeros(shape + (self.rgb,), 'float32')
@@ -240,6 +240,7 @@ class StackLoader(QtGui.QDialog):
             print "######ERROR saving File ", destfile
             
         if allok:
+            self.logger.appendPlainText("Slices loaded")            
             self.okButton.setEnabled(True)
         
     def exec_(self):
