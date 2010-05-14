@@ -39,51 +39,19 @@ class Project(object):
         projectG.create_dataset('Name', data=str(self.name))
         projectG.create_dataset('Labeler', data=str(self.labeler))
         projectG.create_dataset('Description', data=str(self.description))
-        projectG.create_dataset('LabelNames', data=map(str,self.labelNames))
-        projectG.create_dataset('LabelColors', data=[int(k.rgba()) for k in self.labelColors.values()])
-        
+                
         # get number of images
         n = len(self.dataMgr)
         
         # save raw data and labels
-        for k in range(n):
+        for k, item in enumerate(self.dataMgr):
             # create group for dataItem
             dk = dataSetG.create_group('dataItem%02d' % k)
-            dk.attrs["fileName"] = str(self.dataMgr[k].fileName)
+            dk.attrs["fileName"] = str(item.fileName)
+            dk.attrs["Name"] = str(item.Name)
             # save raw data
-            dataIt = dk.create_dataset('rawData', data=self.dataMgr[k].data)
-            dataIt.attrs["dataKind"] = self.dataMgr[k].dataKind
-            # save raw labels
-            labelIt = dk.create_dataset('labels', data=self.dataMgr[k].labels)
-        
-            # save features if available
-            if not None in self.dataMgr.dataFeatures:
-                feaureG = dk.create_group('features')
-                for fCnt, (feature, featureName, channelIndex) in irange(self.dataMgr.dataFeatures[k]):
-                    featureIT = feaureG.create_dataset('feature%03d' % fCnt,data=feature)
-                    featureIT.attrs['featureName'] = featureName
-                    featureIT.attrs['channelIndex'] = channelIndex
-
-            # save prediction if available
-            if self.dataMgr.prediction[0] is not None:
-                prediction = self.dataMgr.prediction[k]
-                predictionIt = dk.create_dataset('prediction', data=prediction.reshape(self.dataMgr[k].shape[0:2] + (-1,)))
-                # predictionIt.attrs['classifier'] = 'classifierName'
+            item.dataVol.serialize(dk)
             
-            # save segmentation if available
-            if self.dataMgr.segmentation[0] is not None:
-                segmentation = self.dataMgr.segmentation[k]
-                segmentationIt = dk.create_dataset('segmentation', data=segmentation)
-                # segmentationIt.attrs['segmentationOperation'] = 'segmentationOperation'
-                
-            # save overlayImage if available
-            if self.dataMgr[k].overlayImage is not None:
-                overlayImage = self.dataMgr[k].overlayImage
-                overlayImageIt = dk.create_dataset('overlayImage', data=overlayImage)
-
-        dataSetG.attrs["dataKind"] = self.dataMgr[0].dataKind
-        dataSetG.attrs["channelDescription"] = self.dataMgr[0].channelDescription
-        dataSetG.attrs["channelUsed"] = self.dataMgr[0].channelUsed
         
         
         # Save to hdf5 file
@@ -100,50 +68,15 @@ class Project(object):
         name = projectG['Name'].value
         labeler = projectG['Labeler'].value 
         description = projectG['Description'].value
-        labelNames = projectG['LabelNames'].value.tolist() 
-        labelColors = dict([(k+1,QtGui.QColor(projectG['LabelColors'][k])) for k in range(len(projectG['LabelColors']))])
-        
         # init dataMgr 
+        
         n = len(fileHandle['DataSets'])
-        dataMgr = dataMgrModule.DataMgr([None for k in range(n)]);
-                       
-        # add raw data and labels to empty dataMgr                  
-        for ind, dataItemValue in irange(fileHandle['DataSets'].values()):
-            rawData = dataItemValue['rawData'].value.view(at.Image)
-            labels = dataItemValue['labels'].value.view(at.ScalarImage)
-            originalFileName = dataItemValue.attrs['fileName']
-            dataMgr[ind] = dataMgrModule.DataItemImage.initFromArray(rawData, originalFileName)
-            dataMgr[ind].labels = labels
-            dataMgr[ind].hasLabels = True
-            dataMgr[ind].channelDescription = fileHandle['DataSets'].attrs["channelDescription"]
-            dataMgr[ind].channelUsed = fileHandle['DataSets'].attrs["channelUsed"]
+        dataMgr = dataMgrModule.DataMgr();
+        
+        print "Implement me!"
+        # DataImpex.loadVolumeFromGroup(grp)
 
-            # extract features if available
-            if 'features' in dataItemValue:
-                dataFeatures = []
-                for featIT in dataItemValue['features'].values():
-                    feature = featIT.value.view(at.Image)
-                    featureName = featIT.attrs['featureName']
-                    channelIndex = int(featIT.attrs['channelIndex'])
-                    dataFeatures.append((feature, featureName, channelIndex))
-                dataMgr.dataFeatures[ind] = dataFeatures
- 
-            # extract prediction if available
-            if 'prediction' in dataItemValue:
-                prediction = dataItemValue['prediction'].value
-                dataMgr.prediction[ind] = prediction.reshape((prediction.shape[0] * prediction.shape[1] , -1))
-        
-            # extract segmentaion if available
-            if 'segmentation' in dataItemValue:
-                segmentation = dataItemValue['segmentation'].value
-                dataMgr.segmentation[ind] = segmentation
-            
-            # load OverlayImage if available
-            if 'overlayImage' in dataItemValue:
-                overlayImage = at.Image(dataItemValue['overlayImage'].value)
-                dataMgr[ind].overlayImage = overlayImage
-        
-        
+               
         fileHandle.close()
         # print "Project %s loaded from %s " % (p.name, fileName)
         return Project( name, labeler, description, dataMgr, labelNames, labelColors)

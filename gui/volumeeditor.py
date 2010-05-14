@@ -210,7 +210,7 @@ class DataAccessor():
                 self.data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel] = data
      
     def serialize(self, h5G, name='data'):
-        h5G.create_dataset(h5G,name,data = self.data)
+        h5G.create_dataset(name,data = self.data)
          
     @staticmethod
     def deserialize(h5G, name = 'data'):
@@ -370,13 +370,19 @@ class VolumeLabels():
         
     def serialize(self, h5G, name = "labels"):
         self.data.serialize(h5G, name)
-        h5G[name].attrs['color'] = [] 
-        h5G[name].attrs['name'] = []
-        h5G[name].attrs['number'] = []
+        
+        tColor = []
+        tName = []
+        tNumber = []
+        
         for index, item in enumerate(self.descriptions):
-            h5G[name].attrs['color'] +=  item.color
-            h5G[name].attrs['name'] += item.name
-            h5G[name].attrs['number'] += item.number
+            tColor.append(item.color)
+            tName.append(item.name)
+            tNumber.append(item.number)
+            
+        h5G[name].attrs['color'] = tColor 
+        h5G[name].attrs['name'] = str(tName)
+        h5G[name].attrs['number'] = tNumber
     
     @staticmethod    
     def deserialize(h5G, name ="labels"):

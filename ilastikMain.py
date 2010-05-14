@@ -155,8 +155,8 @@ class MainWindow(QtGui.QMainWindow):
         
         self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
         
-        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
         
         #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
@@ -168,7 +168,7 @@ class MainWindow(QtGui.QMainWindow):
         self.projectDlg = ProjectDlg(self)
     
     def saveProjectDlg(self):
-        self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
+        # self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ".", "Project Files (*.ilp)")
         self.project.saveToDisk(str(fileName))
         
@@ -176,7 +176,7 @@ class MainWindow(QtGui.QMainWindow):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
         self.project = projectMgr.Project.loadFromDisk(str(fileName))
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         if hasattr(self, 'projectDlg'):
             del self.projectDlg 
             
@@ -525,7 +525,7 @@ class ProjectDlg(QtGui.QDialog):
             # dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
             #self.parent.project.dataMgr.setDataList(dataItemList)
             self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-            self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+            self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             
             self.parent.projectModified()
             self.close()        
@@ -678,7 +678,7 @@ class ProjectDlg(QtGui.QDialog):
         # dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
         #self.parent.project.dataMgr.setDataList(dataItemList)
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
         self.parent.projectModified()
         self.close()

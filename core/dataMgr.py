@@ -70,9 +70,7 @@ class DataItemImage(DataItemBase):
         
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)
-        if fExt == '.oldh5':
-            self.data, self.channelDescription, self.labels, self.overlayImage = DataImpex.loadMultispectralData(self.fileName)
-        elif fExt == '.h5':
+        if fExt == '.h5':
             self.dataVol = DataImpex.loadVolume(self.fileName)  
         else:
             self.data = DataImpex.loadImageData(self.fileName)
@@ -427,10 +425,16 @@ class DataImpex(object):
     """
     
     @staticmethod
-    def loadVolume(fileName):
+    def loadVolume(fileName, groupName = 'volume'):
         h5file = h5py.File(fileName, 'r')
-        grp = h5file['volume']
-        return Volume.deserialize(grp)
+        grp = h5file[groupName]
+        return self.loadVolumeFromGroup(h5grp)
+        
+    
+    
+    def loadVolumeFromGroup(h5grp):
+        return Volume.deserialize(h5grp)
+        
         
     
     @staticmethod
