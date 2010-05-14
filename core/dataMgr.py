@@ -281,9 +281,9 @@ class DataMgr():
         self.prediction = [None] * len(dataItems)
         self.uncertainty = [None] * len(dataItems)
         
-    def append(self, dataItem):
+    def append(self, dataItem, alreadyLoaded=False):
         self.dataItems.append(dataItem)
-        self.dataItemsLoaded.append(True)
+        self.dataItemsLoaded.append(alreadyLoaded)
         self.segmentation.append(None)
         self.prediction.append(None)
         self.uncertainty.append(None)

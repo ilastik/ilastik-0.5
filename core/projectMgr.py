@@ -80,7 +80,7 @@ class Project(object):
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
             item = dataMgrModule.DataItemImage(name)
             item.dataVol = dataVol
-            dataMgr.append(item)
+            dataMgr.append(item,alreadyLoaded=True)
         # DataImpex.loadVolumeFromGroup(grp)
 
                
