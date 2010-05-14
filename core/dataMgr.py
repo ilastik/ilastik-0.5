@@ -276,7 +276,7 @@ class DataMgr():
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
-        self.dataItemsLoaded = [True] * len(dataItems)
+        self.dataItemsLoaded = [False] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
         self.prediction = [None] * len(dataItems)
         self.uncertainty = [None] * len(dataItems)
@@ -428,10 +428,10 @@ class DataImpex(object):
     def loadVolume(fileName, groupName = 'volume'):
         h5file = h5py.File(fileName, 'r')
         grp = h5file[groupName]
-        return self.loadVolumeFromGroup(h5grp)
+        return DataImpex.loadVolumeFromGroup(grp)
         
     
-    
+    @staticmethod
     def loadVolumeFromGroup(h5grp):
         return Volume.deserialize(h5grp)
         
