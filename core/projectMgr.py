@@ -6,6 +6,9 @@ from core.utilities import irange, debug
 from vigra import arraytypes as at
 from PyQt4 import QtGui
 
+from gui.volumeeditor import DataAccessor as DataAccessor
+from gui.volumeeditor import Volume as Volume
+
 class Project(object):
     """
     Import/Export for the whole project, including any data, settings, lables etc.
@@ -73,13 +76,17 @@ class Project(object):
         n = len(fileHandle['DataSets'])
         dataMgr = dataMgrModule.DataMgr();
         
-        print "Implement me!"
+        for name in fileHandle['DataSets']:
+            dataVol = Volume.deserialize(fileHandle['DataSets'][name])
+            item = dataMgrModule.DataItemImage(name)
+            item.dataVol = dataVol
+            dataMgr.append(item)
         # DataImpex.loadVolumeFromGroup(grp)
 
                
         fileHandle.close()
         # print "Project %s loaded from %s " % (p.name, fileName)
-        return Project( name, labeler, description, dataMgr, labelNames, labelColors)
+        return Project( name, labeler, description, dataMgr)
     
 
         

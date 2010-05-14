@@ -276,14 +276,14 @@ class DataMgr():
         
     def setDataList(self, dataItems):
         self.dataItems = dataItems
-        self.dataItemsLoaded = [False] * len(dataItems)
+        self.dataItemsLoaded = [True] * len(dataItems)
         self.segmentation = [None] * len(dataItems)
         self.prediction = [None] * len(dataItems)
         self.uncertainty = [None] * len(dataItems)
         
     def append(self, dataItem):
         self.dataItems.append(dataItem)
-        self.dataItemsLoaded.append(False)
+        self.dataItemsLoaded.append(True)
         self.segmentation.append(None)
         self.prediction.append(None)
         self.uncertainty.append(None)
