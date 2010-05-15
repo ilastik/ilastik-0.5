@@ -78,7 +78,7 @@ class Project(object):
         
         for name in fileHandle['DataSets']:
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
-            item = dataMgrModule.DataItemImage(name)
+            item = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             item.dataVol = dataVol
             dataMgr.append(item,alreadyLoaded=True)
         # DataImpex.loadVolumeFromGroup(grp)

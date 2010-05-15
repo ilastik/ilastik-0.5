@@ -377,11 +377,11 @@ class VolumeLabels():
         
         for index, item in enumerate(self.descriptions):
             tColor.append(item.color)
-            tName.append(item.name)
+            tName.append(str(item.name))
             tNumber.append(item.number)
             
         h5G[name].attrs['color'] = tColor 
-        h5G[name].attrs['name'] = str(tName)
+        h5G[name].attrs['name'] = tName
         h5G[name].attrs['number'] = tNumber
     
     @staticmethod    
