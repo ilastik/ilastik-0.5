@@ -17,7 +17,7 @@ import numpy
 import time
 from PyQt4 import QtCore, QtGui, uic
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
-from gui import ctrlRibbon, imgLabel, stackloader
+from gui import ctrlRibbon, stackloader
 from Queue import Queue as queue
 from collections import deque
 from gui.iconMgr import ilastikIcons
