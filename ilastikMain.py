@@ -386,14 +386,14 @@ class MainWindow(QtGui.QMainWindow):
 #        debug(self.project.trainingLabels.shape)
     
     def export2Hdf5(self):
-        if not hasattr(self.project,'classifierList'):
+        if not hasattr(self.project.dataMgr,'classifiers'):
             return
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ".", "HDF5 FIles (*.h5)")
         print fileName
         #self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
         #self.project.dataMgr.export2Hdf5(str(fileName))
         
-        rfs = self.project.classifierList
+        rfs = self.project.dataMgr.classifiers
         
         for i,rf in enumerate(rfs):
             tmp = rf.classifier.writeHDF5(str(fileName), "rf_%03d" % i, True)
@@ -902,14 +902,14 @@ class ClassificationTrain(object):
     def updateClassificationProgress(self):
         val = self.classificationProcess.count
         self.myClassificationProgressBar.setValue(val)
-        if not self.classificationProcess.is_alive():
+        if not self.classificationProcess.isRunning():
             self.classificationTimer.stop()
-            self.classificationProcess.join()
+            self.classificationProcess.wait()
             self.finalize()
             self.terminateClassificationProgressBar()
             
     def finalize(self):
-        self.parent.project.classifierList = self.classificationProcess.classifierList
+        pass
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
@@ -970,7 +970,7 @@ class ClassificationInteractive(object):
         self.classificationInteractive.stopped = True
 
         self.classificationInteractive.dataPending.set() #wake up thread one last time before his death
-        self.classificationInteractive.join()
+        self.classificationInteractive.wait()
         self.finalize()
         
         self.terminateClassificationProgressBar()
@@ -1012,7 +1012,7 @@ class ClassificationOnline(object):
         self.OnlineThread.stopped = True
         self.OnlineThread.commandQueue.put((None, None, None, 'stop'))
         print "Joining thread"
-        self.OnlineThread.join()
+        self.OnlineThread.wait()
         print "Thread stopped"
         self.OnlineThread = None
         self.parent.labelWidget.labelForImage[0].DrawManagers[0].deleteBrushQueue('onlineLearning')
@@ -1113,10 +1113,10 @@ class ClassificationPredict(object):
     def updateClassificationProgress(self):
         val = self.classificationPredict.count
         self.myClassificationProgressBar.setValue(val)
-        if not self.classificationPredict.is_alive():
+        if not self.classificationPredict.isRunning():
             self.classificationTimer.stop()
 
-            self.classificationPredict.join()
+            self.classificationPredict.wait()
             self.finalize()           
             self.terminateClassificationProgressBar()
 

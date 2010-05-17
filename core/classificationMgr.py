@@ -51,30 +51,33 @@ class ClassifierRandomForest(ClassifierBase):
         
         interactiveMessagePrint("Building trees..")
         if len(numpy.unique(labels)) > 1:
-            self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
+            self.classifier = vigra.learning.RandomForest_new(treeCount=treeCount)
+            self.train(labels, features)
         else:
             self.classifier = None
             
         self.treeCount = treeCount
+        self.features = features
+        self.labels = labels
 
     
-#    def train(self, features, labels):
-#
-#        if features.shape[0] != labels.shape[0]:
-#            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
-#            
-#        if not labels.dtype == numpy.uint32:
-#            labels = labels.astype(numpy.uint32)
-#        if not features.dtype == numpy.float32:
-#            features = features.astype(numpy.float32)
-#        # print "Create RF with ",self.treeCount," trees"
-#        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
-#        if labels.ndim == 1:
-#            labels.shape = labels.shape + (1,)
-#        labels = labels - 1
-#        
-#        self.classifier.learnRF(features, labels)
-#        print "tree Count", self.treeCount
+    def train(self, labels, features):
+        
+        if features.shape[0] != labels.shape[0]:
+            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
+            
+        if not labels.dtype == numpy.uint32:
+            labels = labels.astype(numpy.uint32)
+        if not features.dtype == numpy.float32:
+            features = features.astype(numpy.float32)
+        # print "Create RF with ",self.treeCount," trees"
+        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
+        if labels.ndim == 1:
+            labels.shape = labels.shape + (1,)
+        labels = labels - 1
+        
+        self.classifier.learnRF(features, labels)
+        #print "tree Count", self.treeCount
         
     
     def predict(self, target):
@@ -189,9 +192,10 @@ class ClassificationImpex(object):
         return numpy.array(res, dtype=numpy.int)
      
     
-class ClassifierTrainThread(threading.Thread):
+class ClassifierTrainThread(QtCore.QThread):
     def __init__(self, queueSize, dataMgr):
-        threading.Thread.__init__(self)
+        QtCore.QThread.__init__(self, None)
+        #threading.Thread.__init__(self)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
         self.count = 0
@@ -213,9 +217,10 @@ class ClassifierTrainThread(threading.Thread):
         except:
             self.dataMgr.featureLock.release()
                     
-class ClassifierPredictThread(threading.Thread):
+class ClassifierPredictThread(QtCore.QThread):
     def __init__(self, dataMgr):
-        threading.Thread.__init__(self)
+        QtCore.QThread.__init__(self, None)
+        #threading.Thread.__init__(self)
         self.count = 0
         self.dataMgr = dataMgr
         self.stopped = False
@@ -248,10 +253,11 @@ class ClassifierPredictThread(threading.Thread):
                 self.dataMgr.featureLock.release()
                 
 
-class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
+class ClassifierInteractiveThread(QtCore.QThread):
     def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
-        threading.Thread.__init__(self)
-        QtCore.QObject.__init__(self)
+        #threading.Thread.__init__(self)
+        #QtCore.QObject.__init__(self)
+        QtCore.QThread.__init__(self, None)
 
         self.ilastik = parent
         
@@ -359,16 +365,19 @@ class ClassifierInteractiveThread(QtCore.QObject, threading.Thread):
                     self.ilastik.activeImageLock.release() 
                     self.ilastik.project.dataMgr.featureLock.release()
                     self.emit(QtCore.SIGNAL("resultsPending()"))
-                except:
+                except Exception as e:
                     print "########################## exception in Interactivethread ###################"
+                    print e
                     self.ilastik.activeImageLock.release() 
                     self.ilastik.project.dataMgr.featureLock.release()
 
 
 
-class ClassifierOnlineThread(threading.Thread):
+class ClassifierOnlineThread(QtCore.QThread):
     def __init__(self, name, features, labels, ids, predictionList, predictionUpdated):
-        threading.Thread.__init__(self)
+        #threading.Thread.__init__(self)
+        QtCore.QThread.__init__(self, None)
+
         self.commandQueue = queue()
         self.stopped = False
         if name=="online laSvm":
