@@ -17,7 +17,7 @@ import numpy
 import time
 from PyQt4 import QtCore, QtGui, uic
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
-from gui import ctrlRibbon, stackloader
+from gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
 from collections import deque
 from gui.iconMgr import ilastikIcons
@@ -25,6 +25,7 @@ from core.utilities import irange, debug
 import copy
 
 from gui import volumeeditor as ve
+
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -131,6 +132,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
         #TODO: reenable segmentation
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
@@ -307,6 +309,11 @@ class MainWindow(QtGui.QMainWindow):
 #            
 #        self.labelWidget.setBrushSize(rad)
 #
+
+    def on_batchProcess(self):
+        dialog = batchProcess.BatchProcess(self)
+        result = dialog.exec_()
+    
     def on_classificationTrain(self):
         self.classificationTrain = ClassificationTrain(self)
         

@@ -409,7 +409,7 @@ class Volume():
         self.labels = None
         self.uncertainty = None
         self.segmentation = None
-    
+        
     def serialize(self, h5G):
         self.data.serialize(h5G, "data")
         self.labels.serialize(h5G, "labels")
@@ -418,6 +418,7 @@ class Volume():
     def deserialize(h5G):
         #TODO: make nicer
         data = DataAccessor.deserialize(h5G)
+        prediction = DataAccessor.deserialize(h5G, "prediction")
         labels = VolumeLabels.deserialize(h5G)
         v =  Volume()
         v.data = data
