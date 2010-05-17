@@ -418,7 +418,6 @@ class Volume():
     def deserialize(h5G):
         #TODO: make nicer
         data = DataAccessor.deserialize(h5G)
-        prediction = DataAccessor.deserialize(h5G, "prediction")
         labels = VolumeLabels.deserialize(h5G)
         v =  Volume()
         v.data = data
