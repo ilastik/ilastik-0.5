@@ -122,8 +122,8 @@ class DataAccessor():
         self.channels = self.data.shape[-1]
 
         self.rgb = False
-        if data.shape[-1] == 3:
-            self.rgb = True
+#        if data.shape[-1] == 3:
+#            self.rgb = True
 
         self.shape = self.data.shape
 
@@ -768,7 +768,7 @@ class VolumeEditor(QtGui.QWidget):
         channelSpin = QtGui.QSpinBox()
         channelSpin.setEnabled(True)
         self.connect(channelSpin, QtCore.SIGNAL("valueChanged(int)"), self.setChannel)
-        if self.image.shape[-1] > 3: #only show when needed
+        if self.image.shape[-1] > 1 and self.image.rgb is False: #only show when needed
             self.toolBoxLayout.addWidget(QtGui.QLabel("Channel:"))
             self.toolBoxLayout.addWidget(channelSpin)
         channelSpin.setRange(0,self.image.shape[-1] - 1)
