@@ -272,8 +272,11 @@ class ClassifierInteractiveThread(QtCore.QThread):
         self.numberOfClassifiers = numberOfClassifiers    
 
         self.treeCount = treeCount
-        
+
         self.classifierList = deque(maxlen=numberOfClassifiers)
+
+        for i, item in enumerate(self.ilastik.project.dataMgr.classifiers):
+            self.classifierList.append(item)
         
         self.result = deque(maxlen=1)
 
@@ -292,8 +295,8 @@ class ClassifierInteractiveThread(QtCore.QThread):
             self.dataPending.clear()
             if not self.stopped: #no needed, but speeds up the final thread.join()
                 features = None
-                self.ilastik.project.dataMgr.featureLock.acquire()
                 self.ilastik.activeImageLock.acquire()
+                self.ilastik.project.dataMgr.featureLock.acquire()
                 try:
                     activeImage = self.ilastik.activeImage
                     newLabels = self.ilastik.labelWidget.getPendingLabels()
@@ -362,8 +365,8 @@ class ClassifierInteractiveThread(QtCore.QThread):
                             print "##################### prediction None #########################"
                     else:
                         print "##################### No Classifiers ############################"
-                    self.ilastik.activeImageLock.release() 
                     self.ilastik.project.dataMgr.featureLock.release()
+                    self.ilastik.activeImageLock.release()                     
                     self.emit(QtCore.SIGNAL("resultsPending()"))
                 except Exception as e:
                     print "########################## exception in Interactivethread ###################"

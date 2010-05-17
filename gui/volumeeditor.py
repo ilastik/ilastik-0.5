@@ -918,6 +918,7 @@ class VolumeEditor(QtGui.QWidget):
 
 
     def changeSlice(self, num, axis):
+        self.selSlices[axis] = num
         tempImage = None
         tempLabels = None
         tempoverlays = []
@@ -1004,7 +1005,7 @@ class VolumeEditor(QtGui.QWidget):
             
     def getVisibleState(self):
         #TODO: ugly, make nicer
-        vs = [self.selectedTime, self.sliceSelectors[0].value(), self.sliceSelectors[1].value(), self.sliceSelectors[2].value(), self.selectedChannel]
+        vs = [self.selectedTime, self.selSlices[0], self.selSlices[1], self.selSlices[2], self.selectedChannel]
         return vs
 
 

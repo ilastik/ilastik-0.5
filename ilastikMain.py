@@ -67,6 +67,8 @@ class MainWindow(QtGui.QMainWindow):
                 self.fileSelectorList.setCurrentIndex(index)
     
     def changeImage(self, number):
+        if hasattr(self, "classificationInteractive"):
+            self.labelWidget.disconnect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
         self.activeImageLock.acquire()
         if number != self.activeImage:
             self.project.dataMgr[self.activeImage].history = self.labelWidget.history
@@ -78,12 +80,12 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.history.volumeEditor = self.labelWidget
         
         self.updateLabelWidgetOverlays()
+        self.labelWidget.repaint() #for overlays
+        self.activeImageLock.release()
         if hasattr(self, "classificationInteractive"):
             self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
             self.classificationInteractive.updateThreadQueues()
-        self.labelWidget.repaint() #for overlays
-        self.activeImageLock.release()
-
+            
     def historyUndo(self):
         if self.labelWidget is not None:
             self.labelWidget.historyUndo
@@ -252,14 +254,13 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks = []
         
     def destroyImageWindows(self):
+        for dock in self.labelDocks:
+            self.removeDockWidget(dock)
+        self.labelDocks = []
         if self.labelWidget is not None:
             self.labelWidget.cleanup()
             self.labelWidget.close()
             self.labelWidget = None
-        for dock in self.labelDocks:
-            self.removeDockWidget(dock)
-        self.labelDocks = []
-
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
@@ -976,7 +977,7 @@ class ClassificationInteractive(object):
         self.terminateClassificationProgressBar()
     
     def finalize(self):
-        self.parent.project.classifierList = list(self.classificationInteractive.classifierList)
+        self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifierList)
         self.classificationInteractive =  None
         
 class ClassificationOnline(object):
