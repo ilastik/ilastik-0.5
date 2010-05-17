@@ -51,8 +51,8 @@ class ClassifierRandomForest(ClassifierBase):
         
         interactiveMessagePrint("Building trees..")
         if len(numpy.unique(labels)) > 1:
-            self.classifier = vigra.learning.RandomForest_new(treeCount=treeCount)
-            self.train(labels, features)
+            self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount, )
+            #self.train(labels, features)
         else:
             self.classifier = None
             
@@ -61,23 +61,23 @@ class ClassifierRandomForest(ClassifierBase):
         self.labels = labels
 
     
-    def train(self, labels, features):
-        
-        if features.shape[0] != labels.shape[0]:
-            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
-            
-        if not labels.dtype == numpy.uint32:
-            labels = labels.astype(numpy.uint32)
-        if not features.dtype == numpy.float32:
-            features = features.astype(numpy.float32)
-        # print "Create RF with ",self.treeCount," trees"
-        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
-        if labels.ndim == 1:
-            labels.shape = labels.shape + (1,)
-        labels = labels - 1
-        
-        self.classifier.learnRF(features, labels)
-        #print "tree Count", self.treeCount
+#    def train(self, labels, features):
+#        
+#        if features.shape[0] != labels.shape[0]:
+#            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
+#            
+#        if not labels.dtype == numpy.uint32:
+#            labels = labels.astype(numpy.uint32)
+#        if not features.dtype == numpy.float32:
+#            features = features.astype(numpy.float32)
+#        # print "Create RF with ",self.treeCount," trees"
+#        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
+#        if labels.ndim == 1:
+#            labels.shape = labels.shape + (1,)
+#        labels = labels - 1
+#        
+#        self.classifier.learnRF(features, labels)
+#        #print "tree Count", self.treeCount
         
     
     def predict(self, target):
