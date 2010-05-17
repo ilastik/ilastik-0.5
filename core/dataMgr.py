@@ -274,6 +274,11 @@ class DataMgr():
         self.dataItems.append(dataItem)
         self.dataItemsLoaded.append(alreadyLoaded)
         
+    def clearDataList(self):
+        self.dataItems = []
+        self.dataFeatures = []
+        self.labels = {}
+        
     
     def buildTrainingMatrix(self):
         trainingF = []
