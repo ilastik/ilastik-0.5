@@ -89,9 +89,3 @@ class Project(object):
         # print "Project %s loaded from %s " % (p.name, fileName)
         return Project( name, labeler, description, dataMgr)
     
-
-        
-            
-#    def setDataMgr(self, dataList):
-#        self.dataMgr = dataMagr.dataMagr(dataList)
-    

@@ -283,31 +283,6 @@ class MainWindow(QtGui.QMainWindow):
     def featureCompute(self):
         if self.project.featureMgr is not None:
             self.featureComputation = FeatureComputation(self)
-    
-#    def on_segmentation(self):
-#
-#        segThreads = []
-#        seg = []
-#        for shape, propmap in zip(self.project.dataMgr.dataItemsShapes(), self.project.dataMgr.prediction):
-#            s = segmentationMgr.LocallyDominantSegmentation2D(shape)
-#            seg.append(s)
-#            
-#            t = threading.Thread(target=s.segment, args=(propmap,))
-#            segThreads.append(t)
-#            t.start()         
-#        
-#        for cnt, t in irange(segThreads):
-#            t.join()
-#            self.project.dataMgr.segmentation[cnt] = seg[cnt].result
-#        
-#        self.labelWidget.OverlayMgr.updateSegmentationPixmaps(dict(irange(self.project.dataMgr.segmentation)))
-#        self.labelWidget.OverlayMgr.setOverlayState('Segmentation')
-#        
-#    def on_changeBrushSize(self, rad):
-#        #if rad / 2 != 0:
-#        #    rad + 1 
-#            
-#        self.labelWidget.setBrushSize(rad)
 #
 
     def on_batchProcess(self):
@@ -325,74 +300,6 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
-#            
-#    def on_classificationOnline(self, state):
-#        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
-#        if state in ['online RF', 'online laSvm']:
-#            print "create and Start new Online"
-#            self.classificationOnline = ClassificationOnline(self)
-#            self.classificationOnline.start(state)
-#            btnOnlineToggle.onlineRfAction.setEnabled(False)
-#            btnOnlineToggle.onlineSVMAction.setEnabled(False)
-#            btnOnlineToggle.onlineStopAction.setEnabled(True)
-#        else:
-#            print "Stop Online"
-#            self.classificationOnline.stop()
-#            btnOnlineToggle.onlineRfAction.setEnabled(True)
-#            btnOnlineToggle.onlineSVMAction.setEnabled(True)
-#            btnOnlineToggle.onlineStopAction.setEnabled(False)
-        
-#    # TODO: This whole function should NOT be here transfer it DataMgr. 
-#    def generateTrainingData(self,labelArrays=None):
-#        trainingMatrices_perDataItem = []
-#        res_labels = []
-#        res_names = []
-#        dataItemNr = 0
-#        for dataItem in self.project.dataMgr.dataFeatures:
-#            res_labeledFeatures = []
-#
-#            if not self.labelWidget.labelForImage.get(dataItemNr, None):
-#                # No Labels available for that image
-#                continue
-#            
-#            # Extract labelMatrix
-#            if labelArrays==None:
-#                labelmatrix = self.labelWidget.labelForImage[dataItemNr].DrawManagers[0].labelmngr.labelArray
-#            else:
-#                labelmatrix = labelArrays[dataItemNr]
-#            labeled_indices = labelmatrix.nonzero()[0]
-#            n_labels = labeled_indices.shape[0]
-#            nFeatures = 0
-#            for featureImage, featureString, c_ind in dataItem:
-#                # todo: fix hardcoded 2D:
-#                n = 1   # n: number of feature-values per pixel
-#                if featureImage.shape.__len__() > 2:
-#                    n = featureImage.shape[2]
-#                if n <= 1:
-#                    res_labeledFeatures.append(featureImage.flat[labeled_indices].reshape(1, n_labels))
-#                    if dataItemNr == 0:
-#                        res_names.append(featureString)
-#                else:
-#                    for featureDim in xrange(n):
-#                        res_labeledFeatures.append(featureImage[:, :, featureDim].flat[labeled_indices].reshape(1, n_labels))
-#                        if dataItemNr == 0:
-#                            res_names.append(featureString + "_%i" % (featureDim))
-#                nFeatures += 1
-#            if (dataItemNr == 0):
-#                nFeatures_ofFirstImage = nFeatures
-#            if nFeatures == nFeatures_ofFirstImage:
-#                trainingMatrices_perDataItem.append(numpy.concatenate(res_labeledFeatures).T)
-#                res_labels.append(labelmatrix[labeled_indices])
-#            else:
-#                print "feature dimensions don't match (maybe #channels differ?). Skipping image."
-#            dataItemNr += 1
-#        trainingMatrix = numpy.concatenate(trainingMatrices_perDataItem)
-#        self.project.trainingMatrix = trainingMatrix
-#        self.project.trainingLabels = numpy.concatenate(res_labels)
-#        self.project.trainingFeatureNames = res_names
-#        
-#        debug(trainingMatrix.shape)
-#        debug(self.project.trainingLabels.shape)
     
     def export2Hdf5(self):
         if not hasattr(self.project.dataMgr,'classifiers'):
@@ -532,8 +439,7 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem.projects.append(self.parent.project)
             
-            # dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
-            #self.parent.project.dataMgr.setDataList(dataItemList)
+         
             self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             
@@ -569,15 +475,6 @@ class ProjectDlg(QtGui.QDialog):
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Unchecked)
                 
-                labelsAvailable = dataMgr.DataImpex.checkForLabels(file_name)
-                if labelsAvailable:
-                    r.setFlags(r.flags() & flagON);
-                    print "Found %d labels" % labelsAvailable
-                    for k in range(labelsAvailable-1):
-                        if self.labelCounter <= labelsAvailable:
-                            self.on_btnAddLabel_clicked()
-                else:
-                    r.setFlags(r.flags() & flagOFF);
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
                 
                 # train
@@ -685,8 +582,6 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem.projects.append(self.parent.project)
         
-        # dataItemList.sort(lambda x, y: cmp(x.fileName, y.fileName))    
-        #self.parent.project.dataMgr.setDataList(dataItemList)
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         

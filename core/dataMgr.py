@@ -258,35 +258,21 @@ class DataMgr():
     """
     Manages Project structure and associated files, e.g. images volumedata
     """
-    #TODO: does not unload data, maybe implement some sort of reference counting if memory scarceness manifests itself
+    # does not unload data, maybe implement some sort of reference 
+    # counting if memory scarceness manifests itself
     
-    def __init__(self, dataItems=None):
-        if dataItems is None:
-            dataItems = []            
-        self.setDataList(dataItems)
-        self.dataFeatures = [None] * len(dataItems)
-        self.prediction = [None] * len(dataItems)
-        self.segmentation = [None] * len(dataItems)
-        self.labels = {}
+    def __init__(self):
+        self.dataItems = []            
         self.classifiers = []
         self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
         self.trainingVersion = 0
         self.featureVersion = 0
+        self.dataItemsLoaded = []
         self.trainingF = None
-        
-    def setDataList(self, dataItems):
-        self.dataItems = dataItems
-        self.dataItemsLoaded = [False] * len(dataItems)
-        self.segmentation = [None] * len(dataItems)
-        self.prediction = [None] * len(dataItems)
-        self.uncertainty = [None] * len(dataItems)
-        
+               
     def append(self, dataItem, alreadyLoaded=False):
         self.dataItems.append(dataItem)
         self.dataItemsLoaded.append(alreadyLoaded)
-        self.segmentation.append(None)
-        self.prediction.append(None)
-        self.uncertainty.append(None)
         
     
     def buildTrainingMatrix(self):
@@ -369,53 +355,16 @@ class DataMgr():
     def remove(self, dataItemIndex):
         del self.dataItems[dataItemIndex]
         del self.dataItemsLoaded[dataItemIndex]
-        del self.segmentation[dataItemIndex]
-        del self.prediction[dataItemIndex]
-        del self.uncertainty[dataItemIndex]
-    
-    def clearDataList(self):
-        self.dataItems = []
-        self.dataFeatures = []
-        self.labels = {}
     
     def __len__(self):
         return len(self.dataItems)
     
-    def export2Hdf5(self, fileName):
-        for imageIndex, dataFeatures in irange(self.dataFeatures):
-            groupName = os.path.split(self[imageIndex].fileName)[-1]
-            groupName, dummy = os.path.splitext(groupName)
-            F = {}
-            F_name = {}
-            prefix = 'Channel'
-            for feat, f_name, channel_ind in dataFeatures:
-                if not F.has_key('%s%03d' % (prefix,channel_ind)):
-                    F['%s%03d' % (prefix,channel_ind)] = []
-                if not F_name.has_key('%s%03d' % (prefix,channel_ind)):
-                    F_name['%s%03d' % (prefix,channel_ind)] = []
-                
-                if len(feat.shape) == 2:
-                    feat.shape = feat.shape +  (1,)
-                    
-                F['%s%03d' % (prefix,channel_ind)].append(feat)
-                F_name['%s%03d' % (prefix,channel_ind)].append(f_name)
-                
-            F_res = {}
-            for f in F:
-                F_res[f] = numpy.concatenate(F[f], axis=2)
-            
-            P = self.prediction[imageIndex]
-            if P is not None:
-                F_res['Prediction'] = P.reshape(self[imageIndex].shape[0:2] +(-1,))
-            
-            
-            
-            L = {}
-            L['Labels'] = self[imageIndex].labels
-             
-                
-            DataImpex.exportFeatureLabel2Hdf5(F_res, L, fileName, groupName)
-            print "Object saved to disk: %s" % fileName
+    def serialize(self, h5grp):
+        pass
+        
+    @staticmethod
+    def deserialize(self):
+        pass
         
         
 
@@ -430,48 +379,10 @@ class DataImpex(object):
         grp = h5file[groupName]
         return DataImpex.loadVolumeFromGroup(grp)
         
-    
     @staticmethod
     def loadVolumeFromGroup(h5grp):
         return Volume.deserialize(h5grp)
-        
-        
-    
-    @staticmethod
-    def loadMultispectralData(fileName):
-        h5file = h5py.File(fileName,'r')       
-        try:
-            if 'data' in h5file.listnames():
-                data = at.Image(h5file['data'].value, at.float32)
-            else:
-                print 'No "data"-field contained in: %s ' % fileName
-                return -1
-            
-            if 'labels' in h5file.listnames():
-                labels = at.ScalarImage(h5file['labels'].value, at.uint8)
-            else:
-                print 'No "labels"-field contained in: %s ' % fileName
-                labels = at.ScalarImage(data.shape[0:2], at.uint8)
-            
-            if 'channelNames' in h5file.listnames():
-                channelNames = h5file['channelNames'].value
-                channelNames = map(str,channelNames[:,0])
-            else:
-                print 'No "channelNames"-field contained in: %s ' % fileName
-                channelNames = map(str, range(data.shape[2]))
-            if 'overlayImage' in h5file.listnames():
-                overlayImage = at.Image(h5file['overlayImage'].value)
-            else:
-                print 'No "overlayImage"-field contained in: %s ' % fileName
-                overlayImage = None
-                               
-        except Exception as e:
-            print "Error while reading H5 File %s " % fileName
-            print e
-        finally:
-            h5file.close()
-            
-        return (data, channelNames, labels, overlayImage)
+
     
     @staticmethod
     def loadImageData(fileName):
@@ -479,119 +390,7 @@ class DataImpex(object):
         # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
         data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
         return data
-    
-    @staticmethod    
-    def _exportFeatureLabel2Hdf5(features, labels, h5file, h5group):
-        try:
-            h5group = h5file.createGroup(h5file.root, h5group, 'Some Title')
-        except tables.NodeError as ne:
-            print ne
-            print "_exportFeatureLabel2Hdf5: Overwriting"
-            h5file.removeNode(h5file.root, h5group, recursive=True)
-            h5group = h5file.createGroup(h5file.root, h5group, 'Some Title')
-        
-        cnt = 0
-        for key in features:
-            val = features[key]    
-            #print val.flags
-            tmp = h5file.createArray(h5group, key, val, "Description")
-            
-            tmp._v_attrs.order = cnt
-            tmp._v_attrs.type = 'INPUT'
-            tmp._v_attrs.scale = 'ORDINAL'
-            tmp._v_attrs.domain = 'REAL'
-            tmp._v_attrs.dimension = 2
-            tmp._v_attrs.missing_label = 0
-            cnt += 1
-        
-        for key in labels:
-            val = labels[key]
-            print val.flags
-            print '***************'
-            val = val.T
-            print val.flags
-            tmp = h5file.createArray(h5group, key  , val.T,  "Description")
-            
-            tmp._v_attrs.order = cnt
-            tmp._v_attrs.type= 'OUTPUT'
-            tmp._v_attrs.scale = 'NOMINAL'
-            tmp._v_attrs.domain = numpy.array(range(int(val.max())+1))
-            tmp._v_attrs.dimension = 2
-            tmp._v_attrs.missing_label = 0
-            cnt += 1    
-            
-    @staticmethod
-    def exportFeatureLabel2Hdf5(features, labels, hFilename, h5group):
-        if os.path.isfile(hFilename):
-            mode = 'a'
-        else:
-            mode = 'w'
-        h5file = tables.openFile(hFilename, mode = mode, title = "Ilastik File Version")
-        
-        try:
-            DataImpex._exportFeatureLabel2Hdf5(features, labels, h5file, h5group)
-        except Exception as e:
-            print e
-        finally:
-            h5file.close() 
-    
-    @staticmethod
-    def checkForLabels(fileName):
-        fileName = str(fileName)
-        fBase, fExt = os.path.splitext(fileName)
-        if fExt != '.h5':
-            return 0
-               
-        h5file = h5py.File(fileName,'r')       
-        try:
-            # Data sets below root are asumed to be data, labels and featureDescriptor
-            if 'labels' in h5file.listnames():
-                labels = h5file['labels'].value
-                res = len(numpy.unique(labels)) - 1
-                del labels
-            else:
-                res = 0
-        except Exception as e:
-            print "Error while reading H5 File %s " % fileName
-            print e
-        finally:
-            h5file.close()
-        return res
-    
-class channelMgr(object):
-    def __init__(self, dataMgr):
-        self.dataMgr = dataMgr
-        self.compoundChannels = {'rgb':{},'gray':{},'multi':{}}
-        
-        self.registerCompoundChannels('rgb', 'TrueColor', self.compoundSelectChannelFunctor, [0,1,2]) 
-        self.registerCompoundChannels('gray', 'Intensities', self.compoundSelectChannelFunctor, [0,1,2])
-        self.registerCompoundChannels('multi', 'Channel:', self.compoundSelectChannelFunctor, 0)
-        
-    def channelConcatenation(self, dataInd, channelList):
-        if self.dataMgr[dataInd].dataKind == 'gray':
-            res = self.dataMgr[dataInd].data
-        else:
-            res = self.dataMgr[dataInd].data[:,:, channelList]
-        return res
-    
-    def getDefaultDisplayImage(self, dataInd):
-        if self.dataMgr[dataInd].dataKind == 'gray':
-            res = channelConcatenation(self, dataInd, channelList)
-        elif self.dataMgr[dataInd].dataKind == 'rgb':
-            res = channelConcatenation(self, dataInd, [0,1,2])
-        elif self.dataMgr[dataInd].dataKind == 'multi':
-            res = channelConcatenation(self, dataInd, [0]) 
-        return res 
-    
-    def registerCompoundChannels(self, dataKind, compoundName, compundFunctor, compundArg):
-        self.compoundChannels[dataKind][compoundName] = lambda x,compundArg=compundArg:compundFunctor(x, compundArg)
-    
-    def compoundSelectChannelFunctor(self, data, selectionList):
-        if data.ndim == 3:
-            return data[:,:,selectionList]
-        else:
-            return data
-        
+
         
         
         
