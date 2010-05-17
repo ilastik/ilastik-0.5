@@ -131,7 +131,7 @@ class BatchProcess(QtGui.QDialog):
             
             
             self.dataMgr.clearDataList()
-        
+            self.logger.repaint()
             
         if allok:
             self.logger.appendPlainText("Batch processing finished")            
