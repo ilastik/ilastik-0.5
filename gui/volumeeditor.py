@@ -1179,7 +1179,7 @@ class ImageScene( QtGui.QGraphicsView):
 
         if image.dtype == 'uint16':
             image = (image / 255).astype(numpy.uint8)
-        self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(0,255))
+        self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=True)
 
         self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
 
