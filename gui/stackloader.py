@@ -240,6 +240,7 @@ class StackLoader(QtGui.QDialog):
 
         
         if makegray:
+            self.image = self.image.view(numpy.ndarray)
             result = numpy.average(self.image, axis = 3)
             self.rgb = 1
             self.image = result.astype('uint8')

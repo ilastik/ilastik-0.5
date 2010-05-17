@@ -17,9 +17,10 @@ import vigra, numpy
 import qimage2ndarray
 import h5py
 import copy
+import os.path
 
 # Local import
-from spyderlib.config import get_icon, get_font
+#from spyderlib.config import get_icon, get_font
 
 ##mixin to enable label access
 #class VolumeLabelAccessor():
@@ -341,6 +342,7 @@ class VolumeLabelDescription():
         self.name = name
         self.color = color
         self.prediction = None
+
         
     def __eq__(self, other):
         answer = True
@@ -430,7 +432,8 @@ class LabelListItem(QtGui.QListWidgetItem):
         self.number = number
         self.visible = True
         self.setColor(color)
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
+        #self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
+        #self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
 
         
 
@@ -465,8 +468,7 @@ class LabelListView(QtGui.QListWidget):
             self.addItem(li)
             self.items.append(li)
         self.buildColorTab()
-
-
+        
     def changeText(self, text):
         self.volumeLabel.descriptions[self.currentRow()].name = text
         
@@ -629,6 +631,8 @@ class VolumeEditor(QtGui.QWidget):
         self.name = name
         title = name
         
+        self.labelsAlpha = 1.0
+        
         self.opengl = opengl
         self.openglOverview = openglOverview
         if self.opengl is True:
@@ -789,6 +793,13 @@ class VolumeEditor(QtGui.QWidget):
 
         self.toolBoxLayout.addWidget( self.labelView)
 
+        self.labelAlphaSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        self.labelAlphaSlider.setRange(0,20)
+        self.labelAlphaSlider.setValue(20)
+        self.connect(self.labelAlphaSlider, QtCore.SIGNAL('valueChanged(int)'), self.setLabelsAlpha)
+        self.toolBoxLayout.addWidget( self.labelAlphaSlider)
+
+
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
 
         self.layout.addWidget(self.toolBox)
@@ -800,7 +811,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        self.setWindowIcon(get_icon('edit.png'))
+        #self.setWindowIcon(get_icon('edit.png'))
         self.setWindowTitle(self.tr("Volume") + \
                             "%s" % (" - "+str(title) if str(title) else ""))
 
@@ -819,6 +830,10 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutUndo.setEnabled(True)
         self.shortcutRedo.setEnabled(True)
         self.shortcutRedo2.setEnabled(True)
+
+    def setLabelsAlpha(self, num):
+        self.labelsAlpha = num / 20.0
+        self.repaint()
         
     def cleanup(self):
         del self.shortcutUndo
@@ -870,7 +885,7 @@ class VolumeEditor(QtGui.QWidget):
             if self.labels.data is not None:
                 tempLabels = self.labels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
     
-            self.imageScenes[i].display(tempImage, tempoverlays, tempLabels)
+            self.imageScenes[i].display(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
         self.overview.redisplay()        
 
 
@@ -919,7 +934,7 @@ class VolumeEditor(QtGui.QWidget):
             tempLabels = self.labels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
-        self.imageScenes[axis].display(tempImage, tempoverlays, tempLabels)
+        self.imageScenes[axis].display(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
         self.overview.display(axis)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
@@ -1098,7 +1113,10 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setScene(self.scene)
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
-        brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
+        if os.path.isfile('gui/backGroundBrush.png'):
+            brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
+        else:
+            brushImage = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
         self.setBackgroundBrush(brushImage)
 
         ##enable OpenGL acceleratino
@@ -1144,7 +1162,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.updateLabels)
 
 
-    def display(self, image, overlays = [], labels = None):
+    def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         if self.imageItem is not None:
             self.scene.removeItem(self.imageItem)
             del self.imageItem
@@ -1182,7 +1200,9 @@ class ImageScene( QtGui.QGraphicsView):
             p.drawImage(imageO.rect(), imageO)
 
         if labels is not None:
-            p.setOpacity(1.0)
+            #p.setOpacity(item.alpha)
+            
+            p.setOpacity(labelsAlpha)
             image0 = qimage2ndarray.gray2qimage(labels.swapaxes(0,1), False)
 
             image0.setColorTable(self.volumeEditor.labelView.colorTab)

@@ -62,9 +62,9 @@ class MainWindow(QtGui.QMainWindow):
     def updateFileSelector(self):
         self.fileSelectorList.clear()
         for index, item in enumerate(self.project.dataMgr):
-            self.fileSelectorList.addItem(QtGui.QListWidgetItem(item.Name))
+            self.fileSelectorList.addItem(item.Name)
             if index == self.activeImage:
-                self.fileSelectorList.setCurrentRow(index)
+                self.fileSelectorList.setCurrentIndex(index)
     
     def changeImage(self, number):
         self.activeImageLock.acquire()
@@ -104,17 +104,18 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.setMaximumHeight(80)
         
         
-        self.fileSelectorList = QtGui.QListWidget()
+        self.fileSelectorList = QtGui.QComboBox()
         widget = QtGui.QWidget()
-        self.fileSelectorList.setMaximumWidth(160)
+        self.fileSelectorList.setMinimumWidth(140)
+        self.fileSelectorList.setMaximumWidth(240)
+        self.fileSelectorList.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         layout = QtGui.QVBoxLayout()
         layout.addWidget(QtGui.QLabel("Select Image:"))
         layout.addWidget(self.fileSelectorList)
         widget.setLayout(layout)
-        widget.setMaximumWidth(160)
-        widget.setMaximumHeight(80)
+        widget.setMaximumWidth(240)
         self.ribbonToolbar.addWidget(widget)
-        self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentRowChanged(int)"), self.changeImage)
+        self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
                 
         # Wee, this is really ugly... anybody have better ideas for connecting 
         # the signals. This way has no future and is just a workaround
