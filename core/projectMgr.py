@@ -28,6 +28,7 @@ class Project(object):
         self.trainingMatrix = None
         self.trainingLabels = None
         self.trainingFeatureNames = None
+        self.featureMgr = None
     
     def saveToDisk(self, fileName):
         """ Save the whole project includeing data, feautues, labels and settings to 

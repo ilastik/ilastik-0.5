@@ -279,7 +279,8 @@ class MainWindow(QtGui.QMainWindow):
         self.featureList = featureMgr.ilastikFeatures
         
     def featureCompute(self):
-        self.featureComputation = FeatureComputation(self)
+        if self.project.featureMgr is not None:
+            self.featureComputation = FeatureComputation(self)
     
 #    def on_segmentation(self):
 #
