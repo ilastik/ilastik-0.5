@@ -223,7 +223,11 @@ def myStructureTensorEigenvalues(x,s1,s2):
 
 def svenSpecial(x):
     res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.4, 1)
-    return vigra.filters.distanceTransform2D(res)
+    if numpy.max(res) == 0:
+        res[:,:] = 3000
+        return res
+    else:
+        return vigra.filters.distanceTransform2D(res)
 
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
 gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
