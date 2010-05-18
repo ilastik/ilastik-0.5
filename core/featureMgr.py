@@ -157,7 +157,7 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']
+        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation', 'SvenSpecial']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
         self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5]
@@ -185,6 +185,7 @@ class FeatureGroups(object):
         self.members['Orientation'].append(hessianMatrixOfGaussian)
         self.members['Orientation'].append(structureTensor)
         
+        self.members['SvenSpecial'].append(svenSpecialWaveFrontDistance)
         
     def createList(self):
         resList = []
@@ -220,6 +221,10 @@ def myStructureTensorEigenvalues(x,s1,s2):
     return vigra.filters.structureTensorEigenvalues(x,s1,s1/2.0)
     
 
+def svenSpecial(x):
+    res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.4, 1)
+    return vigra.filters.distanceTransform2D(res)
+
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
 gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
 structureTensor = vigra.filters.structureTensor, ['InnerScale', 'OuterScale']
@@ -231,6 +236,7 @@ morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.u
 eigHessianTensor2d = myHessianOfGaussianEigenvalues, ['Sigma']
 differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2), ['Sigma']
 cannyEdge = lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1), ['Sigma']
+svenSpecialWaveFrontDistance = lambda x: svenSpecial(x), []
 
 def location_(x,s):
     X, Y = numpy.meshgrid(range(-x.shape[1]/2, x.shape[1]/2), range(-x.shape[0]/2, x.shape[0]/2))
