@@ -240,21 +240,21 @@ def svenSpecialSpecial(x):
         res = vigra.filters.distanceTransform2D(res)
     temp[:,:,0] = res
 
-    res = vigra.analysis.cannyEdgeImage(x, 2.5, 0.45, 1)
+    res = vigra.analysis.cannyEdgeImage(x, 2.2, 0.42, 1)
     if numpy.max(res) == 0:
         res[:,:] = 3000
     else:
         res = vigra.filters.distanceTransform2D(res)
     temp[:,:,1] = res
 
-    res = vigra.analysis.cannyEdgeImage(x, 1.8, 0.38, 1)
+    res = vigra.analysis.cannyEdgeImage(x, 1.9, 0.38, 1)
     if numpy.max(res) == 0:
         res[:,:] = 3000
     else:
         res = vigra.filters.distanceTransform2D(res)
     temp[:,:,2] = res
 
-    res = vigra.analysis.cannyEdgeImage(x, 1.8, 0.35, 1)
+    res = vigra.analysis.cannyEdgeImage(x, 1.8, 0.38, 1)
     if numpy.max(res) == 0:
         res[:,:] = 3000
     else:
