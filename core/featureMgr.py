@@ -157,7 +157,7 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation', 'SvenSpecial']
+        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation', 'SvenSpecial', 'SvenSpecial___Special']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
         self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5]
@@ -186,6 +186,7 @@ class FeatureGroups(object):
         self.members['Orientation'].append(structureTensor)
         
         self.members['SvenSpecial'].append(svenSpecialWaveFrontDistance)
+        self.members['SvenSpecial___Special'].append(svenSpecialWaveFrontDistance)
         
     def createList(self):
         resList = []
@@ -229,6 +230,42 @@ def svenSpecial(x):
     else:
         return vigra.filters.distanceTransform2D(res)
 
+def svenSpecialSpecial(x):
+    temp = numpy.zeros(x.shape + (4,))
+    
+    res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.39, 1)
+    if numpy.max(res) == 0:
+        res[:,:] = 3000
+    else:
+        res = vigra.filters.distanceTransform2D(res)
+    temp[:,:,0] = res
+
+    res = vigra.analysis.cannyEdgeImage(x, 2.5, 0.45, 1)
+    if numpy.max(res) == 0:
+        res[:,:] = 3000
+    else:
+        res = vigra.filters.distanceTransform2D(res)
+    temp[:,:,1] = res
+
+    res = vigra.analysis.cannyEdgeImage(x, 1.8, 0.38, 1)
+    if numpy.max(res) == 0:
+        res[:,:] = 3000
+    else:
+        res = vigra.filters.distanceTransform2D(res)
+    temp[:,:,2] = res
+
+    res = vigra.analysis.cannyEdgeImage(x, 1.8, 0.35, 1)
+    if numpy.max(res) == 0:
+        res[:,:] = 3000
+    else:
+        res = vigra.filters.distanceTransform2D(res)
+    temp[:,:,3] = res
+
+
+    return temp
+
+
+
 gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
 gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
 structureTensor = vigra.filters.structureTensor, ['InnerScale', 'OuterScale']
@@ -241,6 +278,7 @@ eigHessianTensor2d = myHessianOfGaussianEigenvalues, ['Sigma']
 differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2), ['Sigma']
 cannyEdge = lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1), ['Sigma']
 svenSpecialWaveFrontDistance = lambda x: svenSpecial(x), []
+svenSpecialWaveFrontDistance = lambda x: svenSpecialSpecial(x), []
 
 def location_(x,s):
     X, Y = numpy.meshgrid(range(-x.shape[1]/2, x.shape[1]/2), range(-x.shape[0]/2, x.shape[0]/2))
