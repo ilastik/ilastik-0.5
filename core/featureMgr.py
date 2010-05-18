@@ -222,7 +222,7 @@ def myStructureTensorEigenvalues(x,s1,s2):
     
 
 def svenSpecial(x):
-    res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.4, 1)
+    res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.39, 1)
     if numpy.max(res) == 0:
         res[:,:] = 3000
         return res
