@@ -1,16 +1,23 @@
 # -*- mode: python -*-
-a = Analysis([os.path.join(HOMEPATH,'support\\_mountzlib.py'), os.path.join(HOMEPATH,'support\\useUnicode.py'), '..\\ilastikMain.py'],
-             pathex=['C:\\Users\\csommer\\ilastik\\trunk\\src'])
+import os
+
+def getOsPath():
+	if os.name == 'posix':
+		return 'build/pyi.linux2/ilastikMain/ilastikMain'
+	elif os.name == 'nt':
+		return 'build\\pyi.win32\\ilastikMain\\ilastikMain.exe'
+
+a = Analysis([os.path.join(HOMEPATH,'support/_mountzlib.py'), os.path.join(HOMEPATH,'support/useUnicode.py'), '../ilastikMain.py'],
+             pathex=[os.getcwd()])
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
           exclude_binaries=1,
-          name=os.path.join('build\\pyi.win32\\ilastikMain', 'ilastikMain.exe'),
-		  #icon='../gui/pyc.ico',
+          name=getOsPath(),
           debug=False,
           strip=False,
           upx=True,
-          console=False)
+          console=True)
 coll = COLLECT( exe,
                a.binaries,
                a.zipfiles,

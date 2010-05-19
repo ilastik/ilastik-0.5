@@ -91,7 +91,9 @@ class DataAccessor():
             (a,b,c), c == 3 or channels = True:  (0,0,a,b,c)
             etc.
         """
-
+        if len(data.shape) == 5:
+            channels = True
+            
         if issubclass(data.__class__, DataAccessor):
             data = data.data
             channels = True
@@ -1037,10 +1039,10 @@ class DrawManager(QtCore.QObject):
         self.bottomMost = 0
 
     def growBoundingBox(self):
-        self.leftMost = max(0,self.leftMost - 10)
-        self.topMost = max(0,self.topMost - 10)
-        self.rightMost = min(self.shape[0],self.rightMost + 10)
-        self.bottomMost = min(self.shape[1],self.bottomMost + 10)
+        self.leftMost = max(0,self.leftMost - self.brushSize -1)
+        self.topMost = max(0,self.topMost - self.brushSize -1 )
+        self.rightMost = min(self.shape[0],self.rightMost + self.brushSize + 1)
+        self.bottomMost = min(self.shape[1],self.bottomMost + self.brushSize + 1)
 
     def toggleErase(self):
         self.erasing = not(self.erasing)
@@ -1049,6 +1051,17 @@ class DrawManager(QtCore.QObject):
         self.brushSize = size
         self.penVis.setWidth(size)
         self.penDraw.setWidth(size)
+        
+    def getCurrentPenPixmap(self):
+        pixmap = QtGui.QPixmap(self.brushSize, self.brushSize)
+        if self.erasing == True:
+            self.penVis.setColor(QtCore.Qt.black)
+        else:
+            self.penVis.setColor(self.volumeEditor.labelView.currentItem().color)
+                    
+        painter = QtGui.QPainter(pixmap)
+        painter.setPen(self.penVis)
+        painter.drawPoint(QtGui.Q)
 
     def beginDraw(self, pos, shape):
         self.shape = shape
@@ -1161,7 +1174,14 @@ class ImageScene( QtGui.QGraphicsView):
         #label updates while drawing, needed for interactive segmentation
         self.drawTimer = QtCore.QTimer()
         self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.updateLabels)
-
+        
+        #invisible cursor to enable custom cursor
+        bitmapMask = QtGui.QBitmap(8,8)
+        bitmapMask.clear()
+        bitmap = QtGui.QBitmap(8,8)
+        bitmap.clear()
+        self.hiddenCursor  = QtGui.QCursor(bitmap, bitmapMask)
+        
 
     def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         if self.imageItem is not None:
@@ -1317,6 +1337,9 @@ class ImageScene( QtGui.QGraphicsView):
         y = mousePos.y()
 
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
+            #should we hide the cursor only when entering once ? performance?
+            self.setCursor(self.hiddenCursor)
+            
             self.linex.setZValue(100)
             self.liney.setZValue(100)
             
@@ -1347,6 +1370,8 @@ class ImageScene( QtGui.QGraphicsView):
                 scene1.linex.setZValue(-100)
                 scene1.liney.setZValue(100)
                 scene1.liney.setLine(x,0,x,scene1.image.height())
+        else:
+            self.unsetCursor()
                 
         
         if event.buttons() == QtCore.Qt.LeftButton and self.drawing == True:
@@ -1675,8 +1700,7 @@ class OverviewScene2(QtGui.QGraphicsView):
 def test():
     """Text editor demo"""
     import numpy
-    from spyderlib.utils.qthelpers import qapplication
-    app = qapplication()
+    app = QtGui.QApplication([""])
 
     im = (numpy.random.rand(1024,1024)*255).astype(numpy.uint8)
     im[0:10,0:10] = 255
@@ -1684,9 +1708,9 @@ def test():
     dialog = VolumeEditor(im)
     dialog.show()
     app.exec_()
+    del app
 
-
-    app = qapplication()
+    app = QtGui.QApplication([""])
 
     im = (numpy.random.rand(128,128,128)*255).astype(numpy.uint8)
     im[0:10,0:10,0:10] = 255
