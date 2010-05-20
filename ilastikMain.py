@@ -591,60 +591,6 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
         self.close()
-
-class editChannelsDlg(QtGui.QDialog):
-    def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self)
-        self.parent = parent
-        uic.loadUi('gui/dlgChannels.ui', self)
-        self.show()
-        
-        dataMgr = parent.project.dataMgr
-        
-        channelNames = dataMgr[0].channelDescription
-        channelUsed = dataMgr[0].channelUsed
-        self.channelTab.horizontalHeader().resizeSection(1, 54)
-        self.channelTab.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
-        
-        checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
-        for k, cName in irange(channelNames): 
-            itName = QtGui.QTableWidgetItem(channelNames[k])
-            self.channelTab.insertRow(k)
-            self.channelTab.setItem(k,0,itName)
-            
-            itUsed = QtGui.QTableWidgetItem()
-            itUsed.data(QtCore.Qt.CheckStateRole)
-            itUsed.setCheckState(checker(channelUsed[k]))
-            self.channelTab.setItem(k,1,itUsed)
-            #self.channelTab.verticalHeader().resizeRowToContents(k)
-    
-    def on_confirmButtons_rejected(self):
-        self.close()
-        
-    def on_confirmButtons_accepted(self):
-        dataMgr = self.parent.project.dataMgr
-        newChannelNames = []
-        newChannelUsed = []
-        # get edits
-        for k in xrange(self.channelTab.rowCount()):
-            self.close()
-            itName = str(self.channelTab.item(k,0).text())
-            itUsed = self.channelTab.item(k,1).checkState()
-            
-            newChannelNames.append(itName)
-            newChannelUsed.append(bool(int(itUsed)))
-        
-        # write them into dataMgr
-        for dataItem in dataMgr:
-            dataItem.channelDescription = newChannelNames
-            dataItem.channelUsed = newChannelUsed
-            
-        # update checkbox
-        self.parent.labelWidget.loadChannelList()
-        self.close()
-            
-            
-        
         
         
 
