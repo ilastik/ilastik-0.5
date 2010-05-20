@@ -8,8 +8,13 @@
 Dataset Editor Dialog based on PyQt4
 """
 import math
-from OpenGL.GL import *
-from OpenGL.GLU import *
+
+try:
+    from OpenGL.GL import *
+    from OpenGL.GLU import *
+except Exception as e:
+    print e
+    pass
 
 from PyQt4 import QtCore, QtGui, QtOpenGL
 
@@ -124,8 +129,8 @@ class DataAccessor():
         self.channels = self.data.shape[-1]
 
         self.rgb = False
-#        if data.shape[-1] == 3:
-#            self.rgb = True
+        if data.shape[-1] == 3:
+            self.rgb = True
 
         self.shape = self.data.shape
 
@@ -654,7 +659,7 @@ class VolumeEditor(QtGui.QWidget):
         else:
             self.image = DataAccessor(image)
 
-
+       
         if hasattr(image, '_labels'):
             self.labels = image._labels
         elif labels is not None:
@@ -665,6 +670,7 @@ class VolumeEditor(QtGui.QWidget):
 
         if issubclass(image.__class__, Volume):
             image.labels = self.labels
+
             
         self.editor_list = VolumeEditorList.editors
 
@@ -684,6 +690,7 @@ class VolumeEditor(QtGui.QWidget):
         self.layout = QtGui.QHBoxLayout()
         self.setLayout(self.layout)
 
+
         self.grid = QtGui.QGridLayout()
 
         self.drawManager = DrawManager(self)
@@ -695,8 +702,12 @@ class VolumeEditor(QtGui.QWidget):
         self.grid.addWidget(self.imageScenes[2], 0, 0)
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
-        
-        self.overview = OverviewScene(self, self.image.shape[1:4])
+
+        if self.openglOverview is True:
+            self.overview = OverviewScene(self, self.image.shape[1:4])
+        else:
+            self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
+            
         self.grid.addWidget(self.overview, 1, 1)
 
         if self.image.shape[1] == 1:
@@ -707,6 +718,7 @@ class VolumeEditor(QtGui.QWidget):
         self.gridWidget = QtGui.QWidget()
         self.gridWidget.setLayout(self.grid)
         self.layout.addWidget(self.gridWidget)
+
 
         #right side toolbox
         self.toolBox = QtGui.QWidget()
@@ -761,6 +773,7 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
 
+
         self.selSlices = []
         self.selSlices.append(0)
         self.selSlices.append(0)
@@ -781,6 +794,7 @@ class VolumeEditor(QtGui.QWidget):
             self.toolBoxLayout.addWidget(self.addOverlayButton)
         else:
             self.toolBoxLayout.addWidget(QtGui.QLabel("Overlays:"))
+
 
         #Overlay selector
         self.overlayView = OverlayListView(self)
@@ -1199,7 +1213,7 @@ class ImageScene( QtGui.QGraphicsView):
 
         if image.dtype == 'uint16':
             image = (image / 255).astype(numpy.uint8)
-        self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=True)
+        self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=False)
 
         self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
 
@@ -1425,6 +1439,17 @@ class ImageScene( QtGui.QGraphicsView):
             self.drawManager.setBrushSize(10)
 
 
+class OverviewSceneDummy(QtGui.QWidget):
+    def __init__(self, parent, shape):
+        QtGui.QWidget.__init__(self)
+        pass
+    
+    def display(self, axis):
+        pass
+
+    def redisplay(self):
+        pass
+    
 class OverviewScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
         QtOpenGL.QGLWidget.__init__(self)
