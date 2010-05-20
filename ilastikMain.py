@@ -24,6 +24,7 @@ from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
 import copy
 
+
 from gui import volumeeditor as ve
 
 
@@ -104,7 +105,6 @@ class MainWindow(QtGui.QMainWindow):
             tabs = ribbon_group.makeTab()   
             self.ribbon.addTab(tabs, ribbon_group.name)
         self.ribbonToolbar.addWidget(self.ribbon)
-        self.ribbon.setMaximumHeight(80)
         
         
         self.fileSelectorList = QtGui.QComboBox()
@@ -116,7 +116,6 @@ class MainWindow(QtGui.QMainWindow):
         layout.addWidget(QtGui.QLabel("Select Image:"))
         layout.addWidget(self.fileSelectorList)
         widget.setLayout(layout)
-        widget.setMaximumWidth(240)
         self.ribbonToolbar.addWidget(widget)
         self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
                 

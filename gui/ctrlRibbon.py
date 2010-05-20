@@ -31,14 +31,12 @@ class RibbonBaseItem(QtGui.QWidget):
         QtGui.QPushButton.__init__(self)
         self.name = ribbon_entry.name
         self.setToolTip(ribbon_entry.tool_tip)
-        self.setMaximumSize(QtCore.QSize(128,48)) 
         
 class RibbonButtonItem(QtGui.QPushButton,RibbonBaseItem):
     def __init__(self,  ribbon_entry):
         QtGui.QPushButton.__init__(self)
         RibbonBaseItem.__init__(self,  ribbon_entry)
         self.setIcon(ribbon_entry.icon)   
-        self.setIconSize(ribbon_entry.size)
         self.setText(ribbon_entry.name)
 
 class RibbonToggleButtonItem(QtGui.QToolButton, RibbonBaseItem):
@@ -48,7 +46,6 @@ class RibbonToggleButtonItem(QtGui.QToolButton, RibbonBaseItem):
         action = QtGui.QAction(self)
         action.setIcon(ribbon_entry.icon)
         action.setCheckable(True)
-        self.setIconSize(ribbon_entry.size)
         action.setIconText(ribbon_entry.name)
         self.setToolButtonStyle(2)
         self.setDefaultAction(action)
@@ -58,7 +55,6 @@ class RibbonSlider(QtGui.QSlider,RibbonBaseItem):
     def __init__(self, ribbon_entry):
         QtGui.QSlider.__init__(self)
         RibbonBaseItem.__init__(self, ribbon_entry)
-        self.setMaximumSize(QtCore.QSize(20,40)) 
         self.setMinimum(1)
         self.setMaximum(6)
         self.setSliderPosition(1)
@@ -80,7 +76,7 @@ class RibbonListItem(QtGui.QListWidget, RibbonBaseItem):
     def __init__(self,  ribbon_entry):
         QtGui.QListWidget.__init__(self)
         RibbonBaseItem.__init__(self, ribbon_entry)
-        self.setMaximumSize(QtCore.QSize(300,40)) 
+
 
 class RibbonTabContainer(QtGui.QWidget):
     def __init__(self, position, parent=None, ):
@@ -95,7 +91,6 @@ class RibbonTabContainer(QtGui.QWidget):
         self.signalList = []
     def addItem(self, item):
         self.itemDict[item.name] = item
-        #self.signalList.append(QtCore.SIGNAL('clicked()'))
         self.layout().addWidget(item)
 
 class RibbonEntry():
@@ -106,7 +101,6 @@ class RibbonEntry():
         self.callback = callback
         self.icon = QtGui.QIcon(str(self.icon_file)) 
         self.type = type
-        self.size = QtCore.QSize(32,32)
     
 class RibbonEntryGroup():
     def __init__(self, name, position):
@@ -118,11 +112,12 @@ class RibbonEntryGroup():
         self.entries.append(entry)
         
     def makeTab(self):
-        tabs = RibbonTabContainer(self.position)
+        self.tabs = RibbonTabContainer(self.position)
         for rib in self.entries:
             item = rib.type(rib)
-            tabs.addItem(item)  
-        return tabs   
+            self.tabs.addItem(item)
+        self.tabs.layout().addStretch()
+        return self.tabs   
 
 def createRibbons():
     RibbonGroupObjects = {}
