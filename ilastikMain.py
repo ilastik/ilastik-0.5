@@ -3,7 +3,7 @@
 # profile with python -m cProfile ilastikMain.py
 # python -m cProfile -o profiling.prf  ilastikMain.py
 # import pstats
-# p = pstats.Stats('fooprof')
+# p = pstats.StaPATHts('fooprof')
 # p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
 import vigra
