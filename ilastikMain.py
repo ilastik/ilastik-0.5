@@ -168,7 +168,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.ribbon.setCurrentIndex (0)
           
-    def newProjectDlg(self):      
+    def newProjectDlg(self):
         self.projectDlg = ProjectDlg(self)
     
     def saveProjectDlg(self):
@@ -318,7 +318,9 @@ class MainWindow(QtGui.QMainWindow):
         
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self)
+        QtGui.QWidget.__init__(self, parent)
+        
+        self.ilastik = parent
 
         self.labelCounter = 2
         self.columnPos = {}
@@ -331,6 +333,21 @@ class ProjectDlg(QtGui.QDialog):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         self.defaultLabelColors = {}
         self.newProject = True
+
+        projectName = self.projectName
+        labeler = self.labeler
+        description = self.description
+
+        # New project or edited project? if edited, reuse parts of old dataMgr
+        if hasattr(self.ilastik,'project') and (not self.newProject):
+            self.dataMgr = self.ilastik.project.dataMgr
+            print "edit Project"
+        else:
+            self.dataMgr = dataMgr.DataMgr()
+            print "new Project"
+        
+        self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
+        
         
     def initDlg(self):
         uic.loadUi('gui/dlgProject.ui', self) 
@@ -407,43 +424,56 @@ class ProjectDlg(QtGui.QDialog):
         sl = stackloader.StackLoader()
         imageData = sl.exec_()
         
-        if imageData is not None:
-            projectName = self.projectName
-            labeler = self.labeler
-            description = self.description
-            
-            # New project or edited project? if edited, reuse parts of old dataMgr
-            if hasattr(self.parent,'project') and (not self.newProject):
-                dm = self.parent.project.dataMgr
-                print "edit Project"
-            else:
-                dm = dataMgr.DataMgr()
-                print "new Project"
-            
-            self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dm)
-    
+        if imageData is not None:   
                 
             theDataItem = dataMgr.DataItemImage.initFromArray(imageData, "Image Stack")
-            self.parent.project.dataMgr.append(theDataItem)
-            self.parent.project.dataMgr.dataItemsLoaded[-1] = True
+            self.dataMgr.append(theDataItem)
+            self.dataMgr.dataItemsLoaded[-1] = True
                        
             theDataItem.hasLabels = True
             theDataItem.isTraining = True
             theDataItem.isTesting = True
-    
-            contained = False
-            for pr in theDataItem.projects:
-                if pr == self.parent.project:
-                    contained = true
-            if not contained:
-                theDataItem.projects.append(self.parent.project)
+                    
+            self.ilastik.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+            self.ilastik.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             
-         
-            self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-            self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+            rowCount = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(rowCount)
             
-            self.parent.projectModified()
-            self.close()        
+            theFlag = QtCore.Qt.ItemIsEnabled
+            flagON = ~theFlag | theFlag 
+            flagOFF = ~theFlag
+            
+            # file name
+            r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
+            self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+            
+            # group
+            r = QtGui.QComboBox()
+            r.setEditable(True)
+            self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
+            
+            # labels
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(QtCore.Qt.Unchecked)
+            
+            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+            
+            # train
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(QtCore.Qt.Checked)
+            r.setFlags(r.flags() & flagON);
+            self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
+            
+            # test
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(QtCore.Qt.Checked)
+            r.setFlags(r.flags() & flagON);
+            self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
+
                         
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
@@ -452,7 +482,12 @@ class ProjectDlg(QtGui.QDialog):
         fileNames.sort()
         if fileNames:
             for file_name in fileNames:
-                self.fileList.append(file_name)
+                file_name = str(file_name)
+                
+                theDataItem = dataMgr.DataItemImage(file_name)
+                self.dataMgr.append(theDataItem)                
+                #self.dataMgr.dataItemsLoaded[-1] = True
+
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(rowCount)
                 
@@ -500,12 +535,9 @@ class ProjectDlg(QtGui.QDialog):
         fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
         print "remvoe Filename in row: ", fileName, " -- ", row
         # Check if this file was already loaded before
-        if hasattr(self.parent,'project'):
-            if fileName in [str(k.fileName) for k in self.parent.project.dataMgr]:
-                # delete it from dataMgr
-                removeIndex = self.parent.project.dataMgr.getIndexFromFileName(fileName) 
-                self.parent.project.dataMgr.remove(removeIndex)
-                print "Remove loaded File"
+        removeIndex = self.dataMgr.getIndexFromFileName(fileName) 
+        self.dataMgr.remove(removeIndex)
+        print "Remove loaded File"
 
         # Remove Row from display Table
         
@@ -534,46 +566,25 @@ class ProjectDlg(QtGui.QDialog):
         projectName = self.projectName
         labeler = self.labeler
         description = self.description
-        
-        # New project or edited project? if edited, reuse parts of old dataMgr
-        if hasattr(self.parent,'project') and (not self.newProject):
-            dm = self.parent.project.dataMgr
-            print "edit Project"
-        else:
-            dm = dataMgr.DataMgr()
-            print "new Project"
-        
-        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , dm)
+               
+        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
 
             
         # Go through the rows of the table and add files if needed
         rowCount = self.tableWidget.rowCount()
-        
-        # Get added dataItems so far to check if new ones were added
-        # dataItemList = self.parent.project.dataMgr.getDataList()
-        oldDataFileNames = [str(k.fileName) for k in self.parent.project.dataMgr]
-        
+               
         for k in range(0, rowCount):
-                 
-            fileName = str(self.tableWidget.item(k, self.columnPos['File']).text())
-            if fileName in oldDataFileNames:
-                # Old File
-                continue
-            
-            theDataItem = dataMgr.DataItemImage(fileName)
-            self.parent.project.dataMgr.append(theDataItem)
-            
             groups = []
             for i in xrange(self.tableWidget.cellWidget(k, self.columnPos['Groups']).count()):
                 groups.append(str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)))
+                
+            theDataItem = self.dataMgr[k]
             theDataItem.groupMembership = groups
             
             theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
             theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']).checkState() == QtCore.Qt.Checked
             theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']).checkState() == QtCore.Qt.Checked
-            
-            
-            
+
             contained = False
             for pr in theDataItem.projects:
                 if pr == self.parent.project:
