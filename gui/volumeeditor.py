@@ -388,18 +388,24 @@ class VolumeLabels():
             tColor.append(item.color)
             tName.append(str(item.name))
             tNumber.append(item.number)
+
+        if len(tColor) > 0:            
+            h5G[name].attrs['color'] = tColor 
+            h5G[name].attrs['name'] = tName
+            h5G[name].attrs['number'] = tNumber
             
-        h5G[name].attrs['color'] = tColor 
-        h5G[name].attrs['name'] = tName
-        h5G[name].attrs['number'] = tNumber
     
     @staticmethod    
     def deserialize(h5G, name ="labels"):
         if name in h5G.keys():
             data = DataAccessor.deserialize(h5G, name)
-            colors = h5G[name].attrs['color']
-            names = h5G[name].attrs['name']
-            numbers = h5G[name].attrs['number']
+            colors = []
+            names = []
+            numbers = []
+            if h5G[name].attrs.__contains__('color'):
+                colors = h5G[name].attrs['color']
+                names = h5G[name].attrs['name']
+                numbers = h5G[name].attrs['number']
             descriptions = []
             for index, item in enumerate(colors):
                 descriptions.append(VolumeLabelDescription(names[index], numbers[index], colors[index]))
@@ -419,7 +425,8 @@ class Volume():
         
     def serialize(self, h5G):
         self.data.serialize(h5G, "data")
-        self.labels.serialize(h5G, "labels")
+        if self.labels is not None:
+            self.labels.serialize(h5G, "labels")
         
     @staticmethod
     def deserialize(h5G):
