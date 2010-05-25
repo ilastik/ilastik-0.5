@@ -465,9 +465,9 @@ class ProjectDlg(QtGui.QDialog):
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             
             # group
-            r = QtGui.QComboBox()
-            r.setEditable(True)
-            self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
+#            r = QtGui.QComboBox()
+#            r.setEditable(False)
+#            self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
             
             # labels
             r = QtGui.QTableWidgetItem()
@@ -477,18 +477,18 @@ class ProjectDlg(QtGui.QDialog):
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
             # train
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Checked)
-            r.setFlags(r.flags() & flagON);
-            self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
+#            r = QtGui.QTableWidgetItem()
+#            r.data(QtCore.Qt.CheckStateRole)
+#            r.setCheckState(QtCore.Qt.Checked)
+#            r.setFlags(r.flags() & flagON);
+#            self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
             
             # test
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Checked)
-            r.setFlags(r.flags() & flagON);
-            self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
+#            r = QtGui.QTableWidgetItem()
+#            r.data(QtCore.Qt.CheckStateRole)
+#            r.setCheckState(QtCore.Qt.Checked)
+#            r.setFlags(r.flags() & flagON);
+#            self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
 
                         
     @QtCore.pyqtSignature("")     
@@ -516,9 +516,9 @@ class ProjectDlg(QtGui.QDialog):
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                 
                 # group
-                r = QtGui.QComboBox()
-                r.setEditable(True)
-                self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
+#                r = QtGui.QComboBox()
+#                r.setEditable(True)
+#                self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
                 
                 # labels
                 r = QtGui.QTableWidgetItem()
@@ -528,18 +528,18 @@ class ProjectDlg(QtGui.QDialog):
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
                 
                 # train
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
-                r.setFlags(r.flags() & flagON);
-                self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
+#                r = QtGui.QTableWidgetItem()
+#                r.data(QtCore.Qt.CheckStateRole)
+#                r.setCheckState(QtCore.Qt.Checked)
+#                r.setFlags(r.flags() & flagON);
+#                self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
                 
                 # test
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
-                r.setFlags(r.flags() & flagON);
-                self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
+#                r = QtGui.QTableWidgetItem()
+#                r.data(QtCore.Qt.CheckStateRole)
+#                r.setCheckState(QtCore.Qt.Checked)
+#                r.setFlags(r.flags() & flagON);
+#                self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
                 
                 self.initThumbnail(file_name)
                 self.tableWidget.setCurrentCell(0, 0)
@@ -590,16 +590,16 @@ class ProjectDlg(QtGui.QDialog):
         rowCount = self.tableWidget.rowCount()
                
         for k in range(0, rowCount):
-            groups = []
-            for i in xrange(self.tableWidget.cellWidget(k, self.columnPos['Groups']).count()):
-                groups.append(str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)))
-                
+#            groups = []
+#            for i in xrange(self.tableWidget.cellWidget(k, self.columnPos['Groups']).count()):
+#                groups.append(str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)))
+#                
             theDataItem = self.dataMgr[k]
-            theDataItem.groupMembership = groups
+#            theDataItem.groupMembership = groups
             
             theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
-            theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']).checkState() == QtCore.Qt.Checked
-            theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']).checkState() == QtCore.Qt.Checked
+#            theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']).checkState() == QtCore.Qt.Checked
+#            theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']).checkState() == QtCore.Qt.Checked
 
             contained = False
             for pr in theDataItem.projects:
@@ -711,7 +711,7 @@ class FeatureDlg(QtGui.QDialog):
             numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
             # 7 bytes per pixel overhead
             memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
-            print "Total feature vector length is %d with memory demand: %f MB" % (numOfEffectiveFeatures, memoryReq)
+            print "Total feature vector length is %d with aprox. memory demand of %8.2f MB" % (numOfEffectiveFeatures, memoryReq)
         else:
             print "No features selected"
         # return memoryReq
