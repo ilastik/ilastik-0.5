@@ -255,7 +255,7 @@ class ClassifierPredictThread(QtCore.QThread):
                 
 
 class ClassifierInteractiveThread(QtCore.QThread):
-    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=5):
+    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=10):
         #threading.Thread.__init__(self)
         #QtCore.QObject.__init__(self)
         QtCore.QThread.__init__(self, None)
