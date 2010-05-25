@@ -446,16 +446,8 @@ class ProjectDlg(QtGui.QDialog):
             # file name
             r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-<<<<<<< .mine
+
                       
-=======
-            
-            # group
-#            r = QtGui.QComboBox()
-#            r.setEditable(False)
-#            self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
-            
->>>>>>> .r405
             # labels
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
@@ -463,23 +455,6 @@ class ProjectDlg(QtGui.QDialog):
             
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
-<<<<<<< .mine
-=======
-            # train
-#            r = QtGui.QTableWidgetItem()
-#            r.data(QtCore.Qt.CheckStateRole)
-#            r.setCheckState(QtCore.Qt.Checked)
-#            r.setFlags(r.flags() & flagON);
-#            self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
-            
-            # test
-#            r = QtGui.QTableWidgetItem()
-#            r.data(QtCore.Qt.CheckStateRole)
-#            r.setCheckState(QtCore.Qt.Checked)
-#            r.setFlags(r.flags() & flagON);
-#            self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
-
->>>>>>> .r405
                         
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
@@ -504,41 +479,11 @@ class ProjectDlg(QtGui.QDialog):
                 # file name
                 r = QtGui.QTableWidgetItem(file_name)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-<<<<<<< .mine
-                                
-=======
-                
-                # group
-#                r = QtGui.QComboBox()
-#                r.setEditable(True)
-#                self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
-                
->>>>>>> .r405
                 # labels
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
-<<<<<<< .mine
                 r.setCheckState(QtCore.Qt.Checked)
 
-=======
-                r.setCheckState(QtCore.Qt.Unchecked)
-                
-                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-                
-                # train
-#                r = QtGui.QTableWidgetItem()
-#                r.data(QtCore.Qt.CheckStateRole)
-#                r.setCheckState(QtCore.Qt.Checked)
-#                r.setFlags(r.flags() & flagON);
-#                self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
-                
-                # test
-#                r = QtGui.QTableWidgetItem()
-#                r.data(QtCore.Qt.CheckStateRole)
-#                r.setCheckState(QtCore.Qt.Checked)
-#                r.setFlags(r.flags() & flagON);
-#                self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
->>>>>>> .r405
                 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
                                 
@@ -588,31 +533,13 @@ class ProjectDlg(QtGui.QDialog):
         # Go through the rows of the table and add files if needed
         rowCount = self.tableWidget.rowCount()
                
-<<<<<<< .mine
         for k in range(0, rowCount):               
-=======
-        for k in range(0, rowCount):
-#            groups = []
-#            for i in xrange(self.tableWidget.cellWidget(k, self.columnPos['Groups']).count()):
-#                groups.append(str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)))
-#                
->>>>>>> .r405
             theDataItem = self.dataMgr[k]
-<<<<<<< .mine
-=======
-#            theDataItem.groupMembership = groups
->>>>>>> .r405
             
             theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
-<<<<<<< .mine
             if theDataItem.hasLabels == False:
                 theDataItem.dataVol.labels = None
                 
-=======
-#            theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']).checkState() == QtCore.Qt.Checked
-#            theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']).checkState() == QtCore.Qt.Checked
-
->>>>>>> .r405
             contained = False
             for pr in theDataItem.projects:
                 if pr == self.parent.project:
