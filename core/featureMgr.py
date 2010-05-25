@@ -160,7 +160,7 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation', 'SvenSpecial', 'SvenSpecial___Special']
+        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
         self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5]
@@ -188,8 +188,8 @@ class FeatureGroups(object):
         self.members['Orientation'].append(hessianMatrixOfGaussian)
         self.members['Orientation'].append(structureTensor)
         
-        self.members['SvenSpecial'].append(svenSpecialWaveFrontDistance)
-        self.members['SvenSpecial___Special'].append(svenSpecialWaveFrontDistance)
+        #self.members['SvenSpecial'].append(svenSpecialWaveFrontDistance)
+        #self.members['SvenSpecial___Special'].append(svenSpecialWaveFrontDistance)
         
     def createList(self):
         resList = []
@@ -267,19 +267,19 @@ def svenSpecialSpecial(x):
     return temp
 
 
-gaussianGradientMagnitude = LocalFeature('Gradient Magnitude', ['Sigma' ], 1, vigra.filters.gaussianGradientMagnitude)
-gaussianSmooth = LocalFeature('Gaussian', ['Sigma' ], 1, vigra.filters.gaussianSmoothing)
-structureTensor = LocalFeature('Structure Tensor', ['InnerScale', 'OuterScale'], 6, vigra.filters.structureTensor)
-hessianMatrixOfGaussian = LocalFeature('Hessian', ['Sigma' ], 1, myHessianOfGaussian)
-eigStructureTensor2d = LocalFeature('Eigenvalues of Structure Tensor', ['InnerScale', 'OuterScale'], 6, myStructureTensorEigenvalues)
-laplacianOfGaussian = gaussianSmooth = LocalFeature('LoG', ['Sigma' ], 1, vigra.filters.laplacianOfGaussian)
-morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], 1,lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)) )
-morphologicalClosing = LocalFeature('Morph Colosing', ['Sigma' ], 1,lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)))
-eigHessianTensor2d = LocalFeature('Eigenvalues of Hessian', ['Sigma' ], 6, myHessianOfGaussianEigenvalues)
-differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], 1, lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2))
-cannyEdge = LocalFeature('Canny', ['Sigma' ], 1, lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
-svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 1', [], 1, lambda x: svenSpecial(x))
-svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], 1,lambda x: svenSpecialSpecial(x))
+gaussianGradientMagnitude = LocalFeature('Gradient Magnitude', ['Sigma' ], (1,1), vigra.filters.gaussianGradientMagnitude)
+gaussianSmooth = LocalFeature('Gaussian', ['Sigma' ], (1,1), vigra.filters.gaussianSmoothing)
+structureTensor = LocalFeature('Structure Tensor', ['InnerScale', 'OuterScale'], (3,6), vigra.filters.structureTensor)
+hessianMatrixOfGaussian = LocalFeature('Hessian', ['Sigma' ], (3,6), myHessianOfGaussian)
+eigStructureTensor2d = LocalFeature('Eigenvalues of Structure Tensor', ['InnerScale', 'OuterScale'], (2,3), myStructureTensorEigenvalues)
+laplacianOfGaussian = LocalFeature('LoG', ['Sigma' ], (1,1), vigra.filters.laplacianOfGaussian)
+morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], (1,1), lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)) )
+morphologicalClosing = LocalFeature('Morph Colosing', ['Sigma' ], (1,1), lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)))
+eigHessianTensor2d = LocalFeature('Eigenvalues of Hessian', ['Sigma' ], (2,3), myHessianOfGaussianEigenvalues)
+differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], (1,1), lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2))
+cannyEdge = LocalFeature('Canny', ['Sigma' ], (1,1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
+svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 1', [], (1,1), lambda x: svenSpecial(x))
+svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], (1,1), lambda x: svenSpecialSpecial(x))
                                                         
 
 ilastikFeatureGroups = FeatureGroups()

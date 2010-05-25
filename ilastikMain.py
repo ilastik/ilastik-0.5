@@ -689,7 +689,7 @@ class FeatureDlg(QtGui.QDialog):
 
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
-        self.computeMemoryRequirement()
+        self.computeMemoryRequirement(featureSelectionList)
         self.close()
         
     @QtCore.pyqtSignature("")    
@@ -698,9 +698,19 @@ class FeatureDlg(QtGui.QDialog):
         
     def computeMemoryRequirement(self, featureSelectionList):
         if featureSelectionList != []:
-            numOfEffectiveFeatures = reduce(lambda x,y: x +y, [k.numOfOutputs for k in featureSelectionList]) * self.parent.project.dataMgr[0].dataVol.data.shape[-1]
-            numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in self.parent.project.dataMgr ])
-            memoryReq = numOfPixels * (5 + numOfEffectiveFeatures*4.0) /1024.0**2
+            dataMgr = self.parent.project.dataMgr
+            if dataMgr[0].dataVol.data.shape[1] > 1:
+                #3D
+                dimSel = 1
+            else:
+                #2D
+                dimSel = 0
+                
+            numOfChannels = dataMgr[0].dataVol.data.shape[-1]
+            numOfEffectiveFeatures = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureSelectionList]) * numOfChannels
+            numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
+            # 7 bytes per pixel overhead
+            memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
             print "Total feature vector length is %d with memory demand: %f MB" % (numOfEffectiveFeatures, memoryReq)
         else:
             print "No features selected"
