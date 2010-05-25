@@ -357,17 +357,13 @@ class ProjectDlg(QtGui.QDialog):
         # New project or edited project? if edited, reuse parts of old dataMgr
         if hasattr(self.ilastik,'project') and (not self.newProject):
             self.dataMgr = self.ilastik.project.dataMgr
+            self.project = self.ilastik.project
             print "edit Project"
         else:
             self.dataMgr = dataMgr.DataMgr()
-            print "new Project"
-            
-        if self.ilastik.project is None:
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
-        else:
-            self.project = self.ilastik.project
-            self.dataMgr = self.ilastik.project.dataMgr
-        
+            print "new Project"
+                    
     def initDlg(self):
         uic.loadUi('gui/dlgProject.ui', self) 
         self.tableWidget.resizeRowsToContents()
