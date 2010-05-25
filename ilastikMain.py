@@ -188,19 +188,14 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         if hasattr(self, 'projectDlg'):
-            del self.projectDlg 
-            
+            del self.projectDlg
+        self.activeImage = 0
         self.projectModified() 
         
     def editProjectDlg(self):
-        if hasattr(self, 'projectDlg'):
-            self.projectDlg.newProject = False
-            self.projectDlg.show()
-        else:        
-            self.projectDlg = ProjectDlg(self)
-            self.projectDlg.newProject = False
-            self.projectDlg.updateDlg(self.project)
-            self.projectModified()
+        self.projectDlg = ProjectDlg(self, False)
+        self.projectDlg.updateDlg(self.project)
+        self.projectModified()
             
         
     def projectModified(self):
@@ -333,10 +328,11 @@ class MainWindow(QtGui.QMainWindow):
             
         
 class ProjectDlg(QtGui.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, newProject = True):
         QtGui.QWidget.__init__(self, parent)
         
         self.ilastik = parent
+        self.newProject = newProject
 
         self.labelCounter = 2
         self.columnPos = {}
@@ -348,7 +344,6 @@ class ProjectDlg(QtGui.QDialog):
         for i in xrange(self.tableWidget.columnCount()):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         self.defaultLabelColors = {}
-        self.newProject = True
 
         projectName = self.projectName
         labeler = self.labeler
@@ -405,13 +400,12 @@ class ProjectDlg(QtGui.QDialog):
             # labels
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(checker(d.hasLabels))
-            r.setFlags(r.flags() & flagOFF);
+            r.setCheckState(checker(d.dataVol.labels.data != None))
+            #r.setFlags(r.flags() & flagOFF);
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
                
-        self.show()
-        self.update()
+        self.exec_()
 
     
     @QtCore.pyqtSignature("")     
