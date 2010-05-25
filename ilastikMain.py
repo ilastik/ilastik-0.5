@@ -478,7 +478,7 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif);;3D or Multispectral Data (*.h5)")
+        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif *.h5)")
         fileNames.sort()
         if fileNames:
             for file_name in fileNames:
