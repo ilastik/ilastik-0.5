@@ -87,6 +87,8 @@ class Project(object):
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             activeItem.dataVol = dataVol
+            activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
+
             if 'prediction' in fileHandle['DataSets'][name].keys():
                 prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], 'prediction' )
                 activeItem.prediction = prediction

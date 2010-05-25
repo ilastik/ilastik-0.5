@@ -3,7 +3,6 @@
 import numpy
 import math
 import time
-#import matplotlib as mpl
 
 try:
     import vigra

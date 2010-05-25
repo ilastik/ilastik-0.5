@@ -361,9 +361,12 @@ class ProjectDlg(QtGui.QDialog):
         else:
             self.dataMgr = dataMgr.DataMgr()
             print "new Project"
-        
-        self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
-        
+            
+        if self.ilastik.project is None:
+            self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
+        else:
+            self.project = self.ilastik.project
+            self.dataMgr = self.ilastik.project.dataMgr
         
     def initDlg(self):
         uic.loadUi('gui/dlgProject.ui', self) 
@@ -382,6 +385,8 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def updateDlg(self, project):
+        self.project = project
+        self.dataMgr = project.dataMgr        
         self.projectName.setText(project.name)
         self.labeler.setText(project.labeler)
         self.description.setText(project.description)
@@ -397,11 +402,7 @@ class ProjectDlg(QtGui.QDialog):
             # File Name
             r = QtGui.QTableWidgetItem(d.fileName)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-            
-            r = QtGui.QComboBox()
-            r.setEditable(True)
-            self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
-            
+                       
             # Here comes the cool python "checker" use it for if_than_else in lambdas
             checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
             
@@ -412,25 +413,7 @@ class ProjectDlg(QtGui.QDialog):
             r.setFlags(r.flags() & flagOFF);
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
-            # train
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(checker(d.isTraining))
-            r.setFlags(r.flags() & flagON);
-            self.tableWidget.setItem(rowCount, self.columnPos['Train'], r)
-            
-            # test
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(checker(d.isTesting))
-            r.setFlags(r.flags() & flagON);
-            self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)                  
-        
-        self.cmbLabelName.clear()
-        self.labelColor = project.labelColors
-        for name in project.labelNames:
-            self.cmbLabelName.addItem(name)
-        
+               
         self.show()
         self.update()
 
@@ -463,12 +446,16 @@ class ProjectDlg(QtGui.QDialog):
             # file name
             r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+<<<<<<< .mine
+                      
+=======
             
             # group
 #            r = QtGui.QComboBox()
 #            r.setEditable(False)
 #            self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
             
+>>>>>>> .r405
             # labels
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
@@ -476,6 +463,8 @@ class ProjectDlg(QtGui.QDialog):
             
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
+<<<<<<< .mine
+=======
             # train
 #            r = QtGui.QTableWidgetItem()
 #            r.data(QtCore.Qt.CheckStateRole)
@@ -490,6 +479,7 @@ class ProjectDlg(QtGui.QDialog):
 #            r.setFlags(r.flags() & flagON);
 #            self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
 
+>>>>>>> .r405
                         
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
@@ -514,15 +504,23 @@ class ProjectDlg(QtGui.QDialog):
                 # file name
                 r = QtGui.QTableWidgetItem(file_name)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+<<<<<<< .mine
+                                
+=======
                 
                 # group
 #                r = QtGui.QComboBox()
 #                r.setEditable(True)
 #                self.tableWidget.setCellWidget(rowCount, self.columnPos['Groups'], r)
                 
+>>>>>>> .r405
                 # labels
                 r = QtGui.QTableWidgetItem()
                 r.data(QtCore.Qt.CheckStateRole)
+<<<<<<< .mine
+                r.setCheckState(QtCore.Qt.Checked)
+
+=======
                 r.setCheckState(QtCore.Qt.Unchecked)
                 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
@@ -540,7 +538,10 @@ class ProjectDlg(QtGui.QDialog):
 #                r.setCheckState(QtCore.Qt.Checked)
 #                r.setFlags(r.flags() & flagON);
 #                self.tableWidget.setItem(rowCount, self.columnPos['Test'], r)
+>>>>>>> .r405
                 
+                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+                                
                 self.initThumbnail(file_name)
                 self.tableWidget.setCurrentCell(0, 0)
     
@@ -550,9 +551,7 @@ class ProjectDlg(QtGui.QDialog):
         row = self.tableWidget.currentRow()
         fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
         print "remvoe Filename in row: ", fileName, " -- ", row
-        # Check if this file was already loaded before
-        removeIndex = self.dataMgr.getIndexFromFileName(fileName) 
-        self.dataMgr.remove(removeIndex)
+        self.dataMgr.remove(row)
         print "Remove loaded File"
 
         # Remove Row from display Table
@@ -589,18 +588,31 @@ class ProjectDlg(QtGui.QDialog):
         # Go through the rows of the table and add files if needed
         rowCount = self.tableWidget.rowCount()
                
+<<<<<<< .mine
+        for k in range(0, rowCount):               
+=======
         for k in range(0, rowCount):
 #            groups = []
 #            for i in xrange(self.tableWidget.cellWidget(k, self.columnPos['Groups']).count()):
 #                groups.append(str(self.tableWidget.cellWidget(k, self.columnPos['Groups']).itemText(i)))
 #                
+>>>>>>> .r405
             theDataItem = self.dataMgr[k]
+<<<<<<< .mine
+=======
 #            theDataItem.groupMembership = groups
+>>>>>>> .r405
             
             theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
+<<<<<<< .mine
+            if theDataItem.hasLabels == False:
+                theDataItem.dataVol.labels = None
+                
+=======
 #            theDataItem.isTraining = self.tableWidget.item(k, self.columnPos['Train']).checkState() == QtCore.Qt.Checked
 #            theDataItem.isTesting = self.tableWidget.item(k, self.columnPos['Test']).checkState() == QtCore.Qt.Checked
 
+>>>>>>> .r405
             contained = False
             for pr in theDataItem.projects:
                 if pr == self.parent.project:

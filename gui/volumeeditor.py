@@ -298,9 +298,12 @@ class OverlayListView(QtGui.QListWidget):
             
     def onItemDoubleClick(self, itemIndex):
         self.currentItem = item = self.itemFromIndex(itemIndex)
-        dialog = QSliderDialog(1, 20, round(item.alpha*20))
-        dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
-        dialog.exec_()
+        if item.checkState() == item.visible * 2:
+            dialog = QSliderDialog(1, 20, round(item.alpha*20))
+            dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
+            dialog.exec_()
+        else:
+            self.onItemClick(self,itemIndex)
             
             
     def setCurrentItemAlpha(self, num):
@@ -843,16 +846,33 @@ class VolumeEditor(QtGui.QWidget):
         self.changeSliceY(numpy.floor((self.image.shape[2] - 1) / 2))
         self.changeSliceZ(numpy.floor((self.image.shape[3] - 1) / 2))
 
-        ##undo/redo
+        ##undo/redo and other shortcuts
         self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo) 
         self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo)
         self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo)
+        self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction) 
+        
         self.shortcutUndo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo2.setContext(QtCore.Qt.ApplicationShortcut )
+        self.togglePredictionSC.setContext(QtCore.Qt.ApplicationShortcut)
+        
         self.shortcutUndo.setEnabled(True)
         self.shortcutRedo.setEnabled(True)
         self.shortcutRedo2.setEnabled(True)
+        self.togglePredictionSC.setEnabled(True)
+
+    def togglePrediction(self):
+        print "toggling prediction.."
+        maxi = self.overlayView.count() - 2
+        if maxi >= 0:
+            state = not(self.overlayView.item(0).visible)
+            for index in range(0,maxi):
+                item = self.overlayView.item(index)
+                item.visible = state
+                item.setCheckState(item.visible * 2)
+        self.repaint()
+        
 
     def setLabelsAlpha(self, num):
         self.labelsAlpha = num / 20.0
