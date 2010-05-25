@@ -12,6 +12,7 @@ from PyQt4 import QtCore
 from core.utilities import irange
 from core import onlineClassifcator
 from core import activeLearning, segmentationMgr
+from gui import volumeeditor as ve
 
 import numpy
 
@@ -247,7 +248,7 @@ class ClassifierPredictThread(QtCore.QThread):
                             self.count += 1
                         prediction = prediction / cnt
                         #TODO: Time ! synchronize with featureMgr...
-                        item.prediction = prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],))
+                        item.prediction = ve.DataAccessor(prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],)), channels = True)
                 self.dataMgr.featureLock.release()
             except:
                 self.dataMgr.featureLock.release()

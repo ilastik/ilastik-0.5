@@ -1,4 +1,5 @@
 from core import dataMgr as dataMgrModule
+import numpy
 import cPickle as pickle
 import h5py
 from core.utilities import irange, debug
@@ -8,6 +9,9 @@ from PyQt4 import QtGui
 
 from gui.volumeeditor import DataAccessor as DataAccessor
 from gui.volumeeditor import Volume as Volume
+
+from core import activeLearning
+from core import segmentationMgr
 
 class Project(object):
     """
@@ -55,6 +59,8 @@ class Project(object):
             dk.attrs["Name"] = str(item.Name)
             # save raw data
             item.dataVol.serialize(dk)
+            if item.prediction is not None:
+                item.prediction.serialize(dk, 'prediction' )
             
         
         
@@ -79,10 +85,20 @@ class Project(object):
         
         for name in fileHandle['DataSets']:
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
-            item = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
-            item.dataVol = dataVol
-            dataMgr.append(item,alreadyLoaded=True)
-        # DataImpex.loadVolumeFromGroup(grp)
+            activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
+            activeItem.dataVol = dataVol
+            if 'prediction' in fileHandle['DataSets'][name].keys():
+                prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], 'prediction' )
+                activeItem.prediction = prediction
+                for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
+                    item.prediction = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+    
+                margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
+                activeItem.dataVol.uncertainty = margin[:,:,:,:]
+                seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction[:,:,:,:,:], 1.0)
+                activeItem.dataVol.segmentation = seg[:,:,:,:]
+
+            dataMgr.append(activeItem,alreadyLoaded=True)
 
                
         fileHandle.close()

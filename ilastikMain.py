@@ -988,9 +988,9 @@ class ClassificationPredict(object):
                 print ":", item.prediction.shape
                 item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 
-            margin = activeLearning.computeEnsembleMargin(activeItem.prediction)*255.0
+            margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
             activeItem.dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]
-            seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction, 1.0)
+            seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction[:,:,:,:,:], 1.0)
             activeItem.dataVol.segmentation[:,:,:,:] = seg[:,:,:,:]
 
             self.parent.labelWidget.repaint()
