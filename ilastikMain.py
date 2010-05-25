@@ -159,9 +159,15 @@ class MainWindow(QtGui.QMainWindow):
         
         self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
         
-        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        
+        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        self.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(False)        
+        self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
+        self.ribbon.tabDict['Export'].itemDict['Export'].setEnabled(False)        
         
         #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
         #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
@@ -200,6 +206,10 @@ class MainWindow(QtGui.QMainWindow):
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
         self.changeImage(self.activeImage)
+        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        self.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(True)
+        
         
     def updateLabelWidgetOverlays(self):
         #TODO: this whole method is so ugly, it should be forbidden !
@@ -247,6 +257,12 @@ class MainWindow(QtGui.QMainWindow):
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
+        self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(True)
+        self.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
+        
         
     def newEditChannelsDlg(self):
         self.editChannelsDlg = editChannelsDlg(self)
@@ -733,7 +749,11 @@ class FeatureComputation(object):
         self.parent.project.dataMgr.buildTrainingMatrix()
         self.parent.project.dataMgr.featureLock.release()
         if hasattr(self.parent, "classificationInteractive"):
-            self.parent.classificationInteractive.updateThreadQueues()        
+            self.parent.classificationInteractive.updateThreadQueues()
+            
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(True)        
+        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)        
+                    
     def featureShow(self, item):
         pass
 
@@ -781,6 +801,9 @@ class ClassificationTrain(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
+        self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)        
+        self.parent.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(True)        
+        
 
 class ClassificationInteractive(object):
     def __init__(self, parent):
@@ -957,7 +980,9 @@ class ClassificationPredict(object):
         self.parent = parent
         self.start()
     
-    def start(self):               
+    def start(self):       
+        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
+
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
               
@@ -1005,7 +1030,7 @@ class ClassificationPredict(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
-
+        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)  
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
