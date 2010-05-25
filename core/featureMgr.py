@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy
-import dummy_threading as threading
+import threading as threading
 #import threading
 #import multiprocessing
 import time
