@@ -639,7 +639,7 @@ class FeatureDlg(QtGui.QDialog):
             numOfEffectiveFeatures = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureSelectionList]) * numOfChannels
             numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
             # 7 bytes per pixel overhead
-            memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
+            memoryReq = 2 * numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
             print "Total feature vector length is %d with aprox. memory demand of %8.2f MB" % (numOfEffectiveFeatures, memoryReq)
         else:
             print "No features selected"

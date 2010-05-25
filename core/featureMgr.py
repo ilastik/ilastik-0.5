@@ -216,7 +216,7 @@ def myHessianOfGaussianEigenvalues(x,s):
     if x.ndim == 2:
         return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(x,s))
     elif x.ndim == 3:
-        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(x,s))[:,:,:,0]
+        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(x,s))
     else:
         print "Error: Dimension must be 2 or 3 dimensional"
         return None
