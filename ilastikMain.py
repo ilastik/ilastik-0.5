@@ -664,24 +664,31 @@ class FeatureDlg(QtGui.QDialog):
                 icon = QtGui.QIcon()
                 i.setIcon(icon)   
                 featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = False     
+                
+        self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
         
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):  
         self.parent.project.featureMgr = featureMgr.FeatureMgr()
 
-#        featureSelectionList = []
-#        for k in range(0, self.featureList.count()):
-#            if self.featureList.item(k).isSelected():
-#                featureSelectionList.append(self.parent.featureList[k])
-        
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
+        self.computeMemoryRequirement()
         self.close()
-        #self.parent.projectModified()
         
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
         self.close()
+        
+    def computeMemoryRequirement(self, featureSelectionList):
+        if featureSelectionList != []:
+            numOfEffectiveFeatures = reduce(lambda x,y: x +y, [k.numOfOutputs for k in featureSelectionList]) * self.parent.project.dataMgr[0].dataVol.data.shape[-1]
+            numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in self.parent.project.dataMgr ])
+            memoryReq = numOfPixels * (5 + numOfEffectiveFeatures*4.0) /1024.0**2
+            print "Total feature vector length is %d with memory demand: %f MB" % (numOfEffectiveFeatures, memoryReq)
+        else:
+            print "No features selected"
+        # return memoryReq
 
 class FeatureComputation(object):
     def __init__(self, parent):

@@ -68,14 +68,17 @@ class LocalFeature(FeatureBase):
     """
     #3D: important if using  octree optimization in the future
     
-    def __init__(self, name, args, arg_names, featureFunktor):
+    def __init__(self, name, argNames, numOfOutputs, featureFunktor):
         FeatureBase.__init__(self)
-        self.name = featureFunktor.__name__
-        self.args = args
-        self.arg_names = arg_names
+        self.name = name
+        self.argNames = argNames
+        self.numOfOutputs = numOfOutputs
         self.featureFunktor = featureFunktor
+        
+    def setArguments(self,args):
+        self.args = args
     
-    def compute(self, channel):
+    def __call__(self, channel):
         # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
         # the result of featureFunktor is numpy.ndarray and NOT a vigra type!? I don't know why... (see dateMgr loadData)
         result = []
@@ -111,7 +114,7 @@ class LocalFeature(FeatureBase):
         return result
 
     def __str__(self):
-        return '%s: %s' % (self.name , ', '.join(["%s = %f" % (x[0], x[1]) for x in zip(self.arg_names, self.args)]))
+        return '%s: %s' % (self.name , ', '.join(["%s = %f" % (x[0], x[1]) for x in zip(self.argNames, self.args)]))
 
 
 class FeatureParallelBase(object):
@@ -139,7 +142,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                 result = []
                 for c_ind in range(image.dataVol.data.shape[-1]):
                     print image.dataVol.data.shape[0:5], str(feature)
-                    result.append(feature.compute(image.dataVol.data[:,:,:,:,c_ind]))
+                    result.append(feature(image.dataVol.data[:,:,:,:,c_ind]))
                     self.count += 1
                 resultImage.append(result)
             imageFeatures.append(resultImage)
@@ -192,13 +195,12 @@ class FeatureGroups(object):
         resList = []
         for groupIndex, scaleList in irange(self.selection):
             for scaleIndex, selected in irange(scaleList):
-                for feat in self.members[self.groupNames[groupIndex]]:
-                    featFunc = feat[0]
-                    argNames = feat[1]
+                for feature in self.members[self.groupNames[groupIndex]]:
                     if selected:
                         scaleValue = self.groupScaleValues[scaleIndex]
-                        resList.append(LocalFeature(featFunc.__name__, [scaleValue for k in argNames], argNames , featFunc))
-                        print featFunc.__name__, scaleValue    
+                        #TODO: This should be replaced by somethon more genric
+                        feature.setArguments([scaleValue for k in feature.argNames])
+                        resList.append(feature)
         return resList
     
 def myHessianOfGaussian(x,s):
@@ -265,44 +267,20 @@ def svenSpecialSpecial(x):
     return temp
 
 
-
-gaussianGradientMagnitude = vigra.filters.gaussianGradientMagnitude, ['Sigma' ]
-gaussianSmooth = vigra.filters.gaussianSmoothing, ['Sigma']
-structureTensor = vigra.filters.structureTensor, ['InnerScale', 'OuterScale']
-hessianMatrixOfGaussian = myHessianOfGaussian, ['Sigma']
-eigStructureTensor2d = myStructureTensorEigenvalues, ['InnerScale', 'OuterScale']
-laplacianOfGaussian = vigra.filters.laplacianOfGaussian, ['Sigma']
-morphologicalOpening = lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
-morphologicalClosing = lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)), ['Sigma']
-eigHessianTensor2d = myHessianOfGaussianEigenvalues, ['Sigma']
-differenceOfGaussians = lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2), ['Sigma']
-cannyEdge = lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1), ['Sigma']
-svenSpecialWaveFrontDistance = lambda x: svenSpecial(x), []
-svenSpecialWaveFrontDistance = lambda x: svenSpecialSpecial(x), []
-
-def location_(x,s):
-    X, Y = numpy.meshgrid(range(-x.shape[1]/2, x.shape[1]/2), range(-x.shape[0]/2, x.shape[0]/2))
-    X.shape = X.shape + (1,)
-    Y.shape = Y.shape + (1,)
-    return vigra.Image(numpy.concatenate((X,Y),axis=2),numpy.float32)
-
-
-        
-        
-
-location = (location_,['Sigma'])
-
-identity = lambda x: x, []
-identity[0].__name__ = "identity"
-
-#from scipy import linalg
-def orientation(x,s):
-    st = vigra.convolution.structureTensor(x,s,s)
-    for x in xrange(st.shape[0]):
-        for y in xrange(st.shape[1]):
-            pass
-            # dummy, ev = linalg.eig(numpy.array([st[x,y,0],st[x,y,1],[st[x,y,1],st[x,y,2]]]))
-                                                                        
+gaussianGradientMagnitude = LocalFeature('Gradient Magnitude', ['Sigma' ], 1, vigra.filters.gaussianGradientMagnitude)
+gaussianSmooth = LocalFeature('Gaussian', ['Sigma' ], 1, vigra.filters.gaussianSmoothing)
+structureTensor = LocalFeature('Structure Tensor', ['InnerScale', 'OuterScale'], 6, vigra.filters.structureTensor)
+hessianMatrixOfGaussian = LocalFeature('Hessian', ['Sigma' ], 1, myHessianOfGaussian)
+eigStructureTensor2d = LocalFeature('Eigenvalues of Structure Tensor', ['InnerScale', 'OuterScale'], 6, myStructureTensorEigenvalues)
+laplacianOfGaussian = gaussianSmooth = LocalFeature('LoG', ['Sigma' ], 1, vigra.filters.laplacianOfGaussian)
+morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], 1,lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)) )
+morphologicalClosing = LocalFeature('Morph Colosing', ['Sigma' ], 1,lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)))
+eigHessianTensor2d = LocalFeature('Eigenvalues of Hessian', ['Sigma' ], 6, myHessianOfGaussianEigenvalues)
+differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], 1, lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2))
+cannyEdge = LocalFeature('Canny', ['Sigma' ], 1, lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
+svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 1', [], 1, lambda x: svenSpecial(x))
+svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], 1,lambda x: svenSpecialSpecial(x))
+                                                        
 
 ilastikFeatureGroups = FeatureGroups()
 ilastikFeatures = ilastikFeatureGroups.createList()

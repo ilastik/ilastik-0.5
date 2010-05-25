@@ -1,4 +1,4 @@
-__main__: None -> <Module __main__ support\_mountzlib.py imports=[('archive', 0, 0, -1), ('iu', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
+__main__: None -> <Module __main__ support/_mountzlib.py imports=[('archive', 0, 0, -1), ('iu', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]>
 archive: None -> <Module archive C:\Users\csommer\ilastik\trunk\src\py26installer\archive.pyc imports=[('marshal', 0, 0, -1), ('struct', 0, 0, -1), ('imp', 0, 0, -1), ('sys', 0, 0, -1), ('iu', 0, 0, -1), ('imp', 1, 0, -1), ('os', 1, 1, -1), ('zlib', 1, 1, -1), ('AES', 1, 1, -1), ('os', 1, 1, -1)] binaries=[] datas=[]>
 iu: None -> <Module iu C:\Users\csommer\ilastik\trunk\src\py26installer\iu.pyc imports=[('sys', 0, 0, -1), ('imp', 0, 0, -1), ('marshal', 0, 0, -1), ('zipimport', 0, 0, -1), ('win32api', 1, 0, -1), ('__builtin__', 1, 0, -1), ('posix', 1, 1, -1), ('posix.stat', 1, 1, -1), ('posix.getcwd', 1, 1, -1), ('posix.environ', 1, 1, -1), ('posix.listdir', 1, 1, -1), ('nt', 1, 1, -1), ('nt.stat', 1, 1, -1), ('nt.getcwd', 1, 1, -1), ('nt.environ', 1, 1, -1), ('nt.listdir', 1, 1, -1), ('dos', 1, 1, -1), ('dos.stat', 1, 1, -1), ('dos.getcwd', 1, 1, -1), ('dos.environ', 1, 1, -1), ('dos.listdir', 1, 1, -1), ('os2', 1, 1, -1), ('os2.stat', 1, 1, -1), ('os2.getcwd', 1, 1, -1), ('os2.environ', 1, 1, -1), ('os2.listdir', 1, 1, -1), ('mac', 1, 1, -1), ('mac.stat', 1, 1, -1), ('mac.getcwd', 1, 1, -1), ('mac.environ', 1, 1, -1), ('mac.listdir', 1, 1, -1)] binaries=[] datas=[]>
 sys: None -> <Module sys None imports=[] binaries=[] datas=[]>
@@ -435,7 +435,7 @@ org: None -> None
   DEL org
 org: None -> None
   DEL org
-__main__: <Module __main__ support\_mountzlib.py imports=[('archive', 0, 0, -1), ('iu', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]> -> <Module __main__ support\useUnicode.py imports=[('encodings', 0, 0, -1)] binaries=[] datas=[]>
+__main__: <Module __main__ support/_mountzlib.py imports=[('archive', 0, 0, -1), ('iu', 0, 0, -1), ('sys', 0, 0, -1)] binaries=[] datas=[]> -> <Module __main__ support/useUnicode.py imports=[('encodings', 0, 0, -1)] binaries=[] datas=[]>
 posix: None -> None
   DEL posix
 posix: None -> None
@@ -520,7 +520,7 @@ org: None -> None
   DEL org
 org: None -> None
   DEL org
-__main__: <Module __main__ support\useUnicode.py imports=[('encodings', 0, 0, -1)] binaries=[] datas=[]> -> <Module __main__ ..\ilastikMain.py imports=[('vigra', 0, 0, -1), ('vigra', 0, 0, -1), ('vigra.arraytypes', 0, 0, -1), ('sys', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('numpy', 0, 0, -1), ('time', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.uic', 0, 0, -1), ('core', 0, 0, -1), ('core.version', 0, 0, -1), ('core.dataMgr', 0, 0, -1), ('core.projectMgr', 0, 0, -1), ('core.featureMgr', 0, 0, -1), ('core.classificationMgr', 0, 0, -1), ('core.segmentationMgr', 0, 0, -1), ('core.activeLearning', 0, 0, -1), ('core.onlineClassifcator', 0, 0, -1), ('gui', 0, 0, -1), ('gui.ctrlRibbon', 0, 0, -1), ('gui.imgLabel', 0, 0, -1), ('gui.stackloader', 0, 0, -1), ('Queue', 0, 0, -1), ('Queue.Queue', 0, 0, -1), ('collections', 0, 0, -1), ('collections.deque', 0, 0, -1), ('gui.iconMgr', 0, 0, -1), ('gui.iconMgr.ilastikIcons', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('core.utilities.debug', 0, 0, -1), ('copy', 0, 0, -1), ('gui', 0, 0, -1), ('gui.volumeeditor', 0, 0, -1)] binaries=[] datas=[]>
+__main__: <Module __main__ support/useUnicode.py imports=[('encodings', 0, 0, -1)] binaries=[] datas=[]> -> <Module __main__ ../ilastikMain.py imports=[('vigra', 0, 0, -1), ('vigra', 0, 0, -1), ('vigra.arraytypes', 0, 0, -1), ('sys', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('numpy', 0, 0, -1), ('time', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.uic', 0, 0, -1), ('core', 0, 0, -1), ('core.version', 0, 0, -1), ('core.dataMgr', 0, 0, -1), ('core.projectMgr', 0, 0, -1), ('core.featureMgr', 0, 0, -1), ('core.classificationMgr', 0, 0, -1), ('core.segmentationMgr', 0, 0, -1), ('core.activeLearning', 0, 0, -1), ('core.onlineClassifcator', 0, 0, -1), ('gui', 0, 0, -1), ('gui.ctrlRibbon', 0, 0, -1), ('gui.stackloader', 0, 0, -1), ('gui.batchProcess', 0, 0, -1), ('Queue', 0, 0, -1), ('Queue.Queue', 0, 0, -1), ('collections', 0, 0, -1), ('collections.deque', 0, 0, -1), ('gui.iconMgr', 0, 0, -1), ('gui.iconMgr.ilastikIcons', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('core.utilities.debug', 0, 0, -1), ('copy', 0, 0, -1), ('gui', 0, 0, -1), ('gui.volumeeditor', 0, 0, -1)] binaries=[] datas=[]>
 vigra: None -> <Module vigra C:\Python26\lib\site-packages\vigra\__init__.pyc imports=[('sys', 0, 0, -1), ('os', 0, 0, -1), ('__version__', 0, 0, -1), ('__version__.version', 0, 0, -1), ('vigranumpycore', 0, 0, -1), ('arraytypes', 0, 0, -1), ('impex', 0, 0, -1), ('filters', 0, 0, -1), ('sampling', 0, 0, -1), ('analysis', 0, 0, -1), ('learning', 0, 0, -1), ('colors', 0, 0, -1), ('noise', 0, 0, -1), ('fourier', 0, 0, -1), ('fourier', 0, 0, -1), ('vigranumpycore', 0, 0, -1), ('vigranumpycore.registerPythonArrayType', 0, 0, -1), ('vigranumpycore.listExportedArrayKeys', 0, 0, -1), ('arraytypes', 0, 0, -1), ('arraytypes.*', 0, 0, -1), ('impex', 0, 0, -1), ('impex.readImage', 0, 0, -1), ('impex.readImageFromHDF5', 0, 0, -1), ('impex.readVolume', 0, 0, -1), ('impex.readVolumeFromHDF5', 0, 0, -1), ('filters', 0, 0, -1), ('filters.convolve', 0, 0, -1), ('filters.gaussianSmoothing', 0, 0, -1), ('sampling', 0, 0, -1), ('sampling.resize', 0, 0, -1), ('sys', 1, 0, -1), ('matplotlib.pylab', 1, 0, -1)] binaries=[] datas=[]>
 vigra.arraytypes: None -> <Module vigra.arraytypes C:\Python26\lib\site-packages\vigra\arraytypes.pyc imports=[('copy', 0, 0, -1), ('numpy', 0, 0, -1), ('ufunc', 0, 0, -1), ('sys', 0, 0, -1), ('numpy', 0, 0, -1), ('numpy.int8', 0, 0, -1), ('numpy.uint8', 0, 0, -1), ('numpy.int16', 0, 0, -1), ('numpy.uint16', 0, 0, -1), ('numpy.int32', 0, 0, -1), ('numpy.uint32', 0, 0, -1), ('numpy.int64', 0, 0, -1), ('numpy.uint64', 0, 0, -1), ('numpy', 0, 0, -1), ('numpy.float32', 0, 0, -1), ('numpy.float64', 0, 0, -1), ('numpy.longdouble', 0, 0, -1), ('numpy.complex64', 0, 0, -1), ('numpy.complex128', 0, 0, -1), ('numpy.clongdouble', 0, 0, -1), ('qimage2ndarray', 0, 0, -1), ('vigra', 0, 0, -1), ('qimage2ndarray', 0, 0, -1), ('PyQt4.QtGui', 1, 0, -1), ('qimage2ndarray', 1, 0, -1), ('vigranumpycore', 1, 0, -1), ('vigranumpycore.constructNumpyArray', 1, 0, -1), ('vigra.impex', 1, 0, -1), ('vigra.impex', 1, 0, -1), ('pyqt.imagewindow', 1, 0, -1), ('pyqt.imagewindow.showImage', 1, 0, -1), ('PyQt4.QtGui', 1, 0, -1), ('qimage2ndarray', 1, 0, -1), ('vigra.impex', 1, 0, -1), ('vigra.impex', 1, 0, -1), ('filters', 1, 0, -1), ('filters', 1, 0, -1), ('filters', 1, 0, -1), ('filters', 1, 0, -1), ('vigranumpycore', 1, 0, -1), ('vigranumpycore.registerPythonArrayType', 1, 0, -1)] binaries=[] datas=[]>
 numpy: None -> <Module numpy C:\Python26\lib\site-packages\numpy\__init__.pyc imports=[('sys', 0, 1, -1), ('numpy.__config__', 0, 1, -1), ('numpy.__config__.show', 0, 1, -1), ('version', 0, 1, -1), ('version.version', 0, 1, -1), ('_import_tools', 0, 1, -1), ('_import_tools.PackageLoader', 0, 1, -1), ('add_newdocs', 0, 1, -1), ('testing', 0, 1, -1), ('testing.Tester', 0, 1, -1), ('core', 0, 1, -1), ('core', 0, 1, -1), ('core.*', 0, 1, -1), ('compat', 0, 1, -1), ('lib', 0, 1, -1), ('lib', 0, 1, -1), ('lib.*', 0, 1, -1), ('linalg', 0, 1, -1), ('fft', 0, 1, -1), ('polynomial', 0, 1, -1), ('random', 0, 1, -1), ('ctypeslib', 0, 1, -1), ('ma', 0, 1, -1), ('matrixlib', 0, 1, -1), ('matrixlib', 0, 1, -1), ('matrixlib.*', 0, 1, -1), ('__builtin__', 0, 1, -1), ('__builtin__.bool', 0, 1, -1), ('__builtin__.int', 0, 1, -1), ('__builtin__.long', 0, 1, -1), ('__builtin__.float', 0, 1, -1), ('__builtin__.complex', 0, 1, -1), ('__builtin__.object', 0, 1, -1), ('__builtin__.unicode', 0, 1, -1), ('__builtin__.str', 0, 1, -1), ('core', 0, 1, -1), ('core.round', 0, 1, -1), ('core.abs', 0, 1, -1), ('core.max', 0, 1, -1), ('core.min', 0, 1, -1)] binaries=[] datas=[]>
@@ -531,7 +531,7 @@ PyQt4.uic: None -> <Module PyQt4.uic C:\Python26\lib\site-packages\PyQt4\uic\__i
 core: None -> <Module core C:\Users\csommer\ilastik\trunk\src\core\__init__.pyc imports=[] binaries=[] datas=[]>
 core.version: None -> <Module core.version C:\Users\csommer\ilastik\trunk\src\core\version.pyc imports=[] binaries=[] datas=[]>
 core.dataMgr: None -> <Module core.dataMgr C:\Users\csommer\ilastik\trunk\src\core\dataMgr.pyc imports=[('numpy', 0, 0, -1), ('sys', 0, 0, -1), ('Queue', 0, 0, -1), ('Queue.Queue', 0, 0, -1), ('copy', 0, 0, -1), ('copy.copy', 0, 0, -1), ('os', 0, 0, -1), ('threading', 0, 0, -1), ('h5py', 0, 0, -1), ('h5py', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('core.utilities.debug', 0, 0, -1), ('core.utilities.irangeIfTrue', 0, 0, -1), ('gui.volumeeditor', 0, 0, -1), ('gui.volumeeditor.DataAccessor', 0, 0, -1), ('gui.volumeeditor', 0, 0, -1), ('gui.volumeeditor.Volume', 0, 0, -1), ('vigra', 0, 0, -1)] binaries=[] datas=[]>
-core.projectMgr: None -> <Module core.projectMgr C:\Users\csommer\ilastik\trunk\src\core\projectMgr.pyc imports=[('core', 0, 0, -1), ('core.dataMgr', 0, 0, -1), ('cPickle', 0, 0, -1), ('h5py', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('core.utilities.debug', 0, 0, -1), ('vigra', 0, 0, -1), ('vigra.arraytypes', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1)] binaries=[] datas=[]>
+core.projectMgr: None -> <Module core.projectMgr C:\Users\csommer\ilastik\trunk\src\core\projectMgr.pyc imports=[('core', 0, 0, -1), ('core.dataMgr', 0, 0, -1), ('cPickle', 0, 0, -1), ('h5py', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('core.utilities.debug', 0, 0, -1), ('vigra', 0, 0, -1), ('vigra.arraytypes', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('gui.volumeeditor', 0, 0, -1), ('gui.volumeeditor.DataAccessor', 0, 0, -1), ('gui.volumeeditor', 0, 0, -1), ('gui.volumeeditor.Volume', 0, 0, -1)] binaries=[] datas=[]>
 core.featureMgr: None -> <Module core.featureMgr C:\Users\csommer\ilastik\trunk\src\core\featureMgr.pyc imports=[('numpy', 0, 0, -1), ('dummy_threading', 0, 0, -1), ('time', 0, 0, -1), ('sys', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('vigra', 0, 0, -1), ('gui.volumeeditor', 0, 0, -1), ('gui.volumeeditor.VolumeEditor', 0, 0, -1)] binaries=[] datas=[]>
 core.classificationMgr: None -> <Module core.classificationMgr C:\Users\csommer\ilastik\trunk\src\core\classificationMgr.pyc imports=[('numpy', 0, 0, -1), ('threading', 0, 0, -1), ('time', 0, 0, -1), ('sys', 0, 0, -1), ('os', 0, 0, -1), ('Queue', 0, 0, -1), ('Queue.Queue', 0, 0, -1), ('Queue', 0, 0, -1), ('Queue.Empty', 0, 0, -1), ('collections', 0, 0, -1), ('collections.deque', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('core', 0, 0, -1), ('core.onlineClassifcator', 0, 0, -1), ('core', 0, 0, -1), ('core.activeLearning', 0, 0, -1), ('core.segmentationMgr', 0, 0, -1), ('numpy', 0, 0, -1), ('vigra', 0, 0, -1), ('vigra.learning', 0, 0, -1)] binaries=[] datas=[]>
 core.segmentationMgr: None -> <Module core.segmentationMgr C:\Users\csommer\ilastik\trunk\src\core\segmentationMgr.pyc imports=[('numpy', 0, 0, -1), ('vigra', 0, 0, -1)] binaries=[] datas=[]>
@@ -539,12 +539,12 @@ core.activeLearning: None -> <Module core.activeLearning C:\Users\csommer\ilasti
 core.onlineClassifcator: None -> <Module core.onlineClassifcator C:\Users\csommer\ilastik\trunk\src\core\onlineClassifcator.pyc imports=[('numpy', 0, 0, -1), ('math', 0, 0, -1), ('time', 0, 0, -1), ('vigra', 0, 0, -1)] binaries=[] datas=[]>
 gui: None -> <Module gui C:\Users\csommer\ilastik\trunk\src\gui\__init__.pyc imports=[] binaries=[] datas=[]>
 gui.ctrlRibbon: None -> <Module gui.ctrlRibbon C:\Users\csommer\ilastik\trunk\src\gui\ctrlRibbon.pyc imports=[('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('sys', 0, 0, -1), ('gui.iconMgr', 0, 0, -1), ('gui.iconMgr.ilastikIcons', 0, 0, -1)] binaries=[] datas=[]>
-gui.imgLabel: None -> <Module gui.imgLabel C:\Users\csommer\ilastik\trunk\src\gui\imgLabel.pyc imports=[('PyQt4', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.uic', 0, 0, -1), ('sys', 0, 0, -1), ('random', 0, 0, -1), ('numpy', 0, 0, -1), ('os', 0, 0, -1), ('collections', 0, 0, -1), ('collections.deque', 0, 0, -1), ('core', 0, 0, -1), ('core.labelMgr', 0, 0, -1), ('core.activeLearning', 0, 0, -1), ('core.utilities', 0, 0, -1), ('core.utilities.irange', 0, 0, -1), ('core.utilities.debug', 0, 0, -1), ('gui.iconMgr', 0, 0, -1), ('gui.iconMgr.ilastikIcons', 0, 0, -1), ('time', 0, 0, -1), ('labelArrayDrawQImage', 0, 0, -1), ('vigra', 0, 0, -1)] binaries=[] datas=[]>
 gui.stackloader: None -> <Module gui.stackloader C:\Users\csommer\ilastik\trunk\src\gui\stackloader.pyc imports=[('os', 0, 0, -1), ('glob', 0, 0, -1), ('vigra', 0, 0, -1), ('numpy', 0, 0, -1), ('numpy', 0, 0, -1), ('sys', 0, 0, -1), ('vigra', 0, 0, -1), ('getopt', 0, 0, -1), ('h5py', 0, 0, -1), ('glob', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.uic', 0, 0, -1), ('numpy', 1, 0, -1), ('spyderlib.utils.qthelpers', 1, 0, -1), ('spyderlib.utils.qthelpers.qapplication', 1, 0, -1)] binaries=[] datas=[]>
+gui.batchProcess: None -> <Module gui.batchProcess C:\Users\csommer\ilastik\trunk\src\gui\batchProcess.pyc imports=[('os', 0, 0, -1), ('glob', 0, 0, -1), ('vigra', 0, 0, -1), ('numpy', 0, 0, -1), ('numpy', 0, 0, -1), ('sys', 0, 0, -1), ('vigra', 0, 0, -1), ('getopt', 0, 0, -1), ('h5py', 0, 0, -1), ('glob', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.uic', 0, 0, -1), ('sys', 0, 0, -1), ('volumeeditor', 0, 0, -1), ('core', 0, 0, -1), ('core.dataMgr', 0, 0, -1), ('core', 0, 0, -1), ('core.classificationMgr', 0, 0, -1), ('numpy', 1, 0, -1)] binaries=[] datas=[]>
 Queue: None -> <Module Queue C:\Python26\lib\Queue.pyc imports=[('time', 0, 0, -1), ('time.time', 0, 0, -1), ('collections', 0, 0, -1), ('collections.deque', 0, 0, -1), ('heapq', 0, 0, -1), ('threading', 1, 0, -1), ('dummy_threading', 1, 1, -1)] binaries=[] datas=[]>
 gui.iconMgr: None -> <Module gui.iconMgr C:\Users\csommer\ilastik\trunk\src\gui\iconMgr.pyc imports=[] binaries=[] datas=[]>
 core.utilities: None -> <Module core.utilities C:\Users\csommer\ilastik\trunk\src\core\utilities.pyc imports=[] binaries=[] datas=[]>
-gui.volumeeditor: None -> <Module gui.volumeeditor C:\Users\csommer\ilastik\trunk\src\gui\volumeeditor.pyc imports=[('math', 0, 0, -1), ('OpenGL.GL', 0, 0, -1), ('OpenGL.GL.*', 0, 0, -1), ('OpenGL.GLU', 0, 0, -1), ('OpenGL.GLU.*', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.QtOpenGL', 0, 0, -1), ('vigra', 0, 0, -1), ('numpy', 0, 0, -1), ('qimage2ndarray', 0, 0, -1), ('h5py', 0, 0, -1), ('copy', 0, 0, -1), ('spyderlib.config', 0, 0, -1), ('spyderlib.config.get_icon', 0, 0, -1), ('spyderlib.config.get_font', 0, 0, -1), ('numpy', 1, 0, -1), ('spyderlib.utils.qthelpers', 1, 0, -1), ('spyderlib.utils.qthelpers.qapplication', 1, 0, -1)] binaries=[] datas=[]>
+gui.volumeeditor: None -> <Module gui.volumeeditor C:\Users\csommer\ilastik\trunk\src\gui\volumeeditor.pyc imports=[('math', 0, 0, -1), ('OpenGL.GL', 0, 0, -1), ('OpenGL.GL.*', 0, 0, -1), ('OpenGL.GLU', 0, 0, -1), ('OpenGL.GLU.*', 0, 0, -1), ('PyQt4', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.QtOpenGL', 0, 0, -1), ('vigra', 0, 0, -1), ('numpy', 0, 0, -1), ('qimage2ndarray', 0, 0, -1), ('h5py', 0, 0, -1), ('copy', 0, 0, -1), ('os.path', 0, 0, -1), ('numpy', 1, 0, -1)] binaries=[] datas=[]>
 vigra.sys: None -> None
 vigra.os: None -> None
 vigra.__version__: None -> <Module vigra.__version__ C:\Python26\lib\site-packages\vigra\__version__.pyc imports=[] binaries=[] datas=[]>
@@ -2911,11 +2911,7 @@ gui.numpy: None -> None
 gui.qimage2ndarray: None -> None
 gui.h5py: None -> None
 gui.copy: None -> None
-gui.spyderlib: None -> None
-spyderlib: None -> <Module spyderlib C:\Python26\lib\site-packages\spyderlib\__init__.pyc imports=[] binaries=[] datas=[]>
-spyderlib.config: None -> <Module spyderlib.config C:\Python26\lib\site-packages\spyderlib\config.pyc imports=[('os', 0, 0, -1), ('sys', 0, 0, -1), ('os.path', 0, 0, -1), ('datetime', 0, 0, -1), ('datetime.date', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.QtGui.QLabel', 0, 0, -1), ('PyQt4.QtGui.QIcon', 0, 0, -1), ('PyQt4.QtGui.QPixmap', 0, 0, -1), ('PyQt4.QtGui.QFont', 0, 0, -1), ('PyQt4.QtGui.QFontDatabase', 0, 0, -1), ('userconfig', 0, 0, -1), ('userconfig.UserConfig', 0, 0, -1), ('userconfig.get_home_dir', 0, 0, -1), ('numpy', 0, 0, -1), ('numpy.ndarray', 0, 0, -1), ('PIL.Image', 0, 0, -1), ('PIL.Image.Image', 0, 0, -1), ('matplotlib', 0, 0, -1), ('matplotlib.rcParams', 0, 0, -1)] binaries=[] datas=[]>
-spyderlib.utils: None -> <Module spyderlib.utils C:\Python26\lib\site-packages\spyderlib\utils\__init__.pyc imports=[('__future__', 0, 0, -1), ('__future__.with_statement', 0, 0, -1), ('os', 0, 0, -1), ('os.path', 0, 0, -1), ('shutil', 0, 0, -1), ('socket', 1, 0, -1), ('os', 1, 0, -1), ('os.path', 1, 0, -1)] binaries=[] datas=[]>
-spyderlib.utils.qthelpers: None -> <Module spyderlib.utils.qthelpers C:\Python26\lib\site-packages\spyderlib\utils\qthelpers.pyc imports=[('os.path', 0, 0, -1), ('os', 0, 0, -1), ('webbrowser', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.QtGui.QAction', 0, 0, -1), ('PyQt4.QtGui.QStyle', 0, 0, -1), ('PyQt4.QtGui.QWidget', 0, 0, -1), ('PyQt4.QtGui.QIcon', 0, 0, -1), ('PyQt4.QtGui.QApplication', 0, 0, -1), ('PyQt4.QtGui.QVBoxLayout', 0, 0, -1), ('PyQt4.QtGui.QHBoxLayout', 0, 0, -1), ('PyQt4.QtGui.QLineEdit', 0, 0, -1), ('PyQt4.QtGui.QLabel', 0, 0, -1), ('PyQt4.QtGui.QKeySequence', 0, 0, -1), ('PyQt4.QtGui.QToolButton', 0, 0, -1), ('PyQt4.QtGui.QKeyEvent', 0, 0, -1), ('PyQt4.QtGui.QMenu', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtCore.SIGNAL', 0, 0, -1), ('PyQt4.QtCore.QVariant', 0, 0, -1), ('PyQt4.QtCore.QObject', 0, 0, -1), ('PyQt4.QtCore.Qt', 0, 0, -1), ('PyQt4.QtCore.QLocale', 0, 0, -1), ('PyQt4.QtCore.QTranslator', 0, 0, -1), ('PyQt4.QtCore.QLibraryInfo', 0, 0, -1), ('spyderlib.config', 0, 0, -1), ('spyderlib.config.get_icon', 0, 0, -1), ('spyderlib.config.DATA_PATH', 0, 0, -1), ('spyderlib.utils', 0, 0, -1), ('spyderlib.utils.programs', 0, 0, -1), ('sys', 1, 0, -1)] binaries=[] datas=[]>
+gui.os: None -> None
 OpenGL.OpenGL: None -> None
 OpenGL.version: None -> <Module OpenGL.version C:\Python26\lib\site-packages\OpenGL\version.pyc imports=[] binaries=[] datas=[]>
 OpenGL.plugins: None -> <Module OpenGL.plugins C:\Python26\lib\site-packages\OpenGL\plugins.pyc imports=[] binaries=[] datas=[]>
@@ -6533,6 +6529,30 @@ OpenGL_accelerate: None -> None
 OpenGL.raw.GL.ARB.vertex_buffer_object: None -> <Module OpenGL.raw.GL.ARB.vertex_buffer_object C:\Python26\lib\site-packages\OpenGL\raw\GL\ARB\vertex_buffer_object.pyc imports=[('OpenGL', 0, 0, -1), ('OpenGL.platform', 0, 0, -1), ('OpenGL.constants', 0, 0, -1), ('OpenGL.constant', 0, 0, -1), ('OpenGL.arrays', 0, 0, -1), ('OpenGL', 0, 0, -1), ('OpenGL.extensions', 0, 0, -1), ('OpenGL.GL', 0, 0, -1), ('OpenGL.GL.glget', 0, 0, -1), ('ctypes', 0, 0, -1)] binaries=[] datas=[]>
 OpenGL.arrays.ArrayDatatype: None -> None
   DEL OpenGL.arrays.ArrayDatatype
+core.cPickle: None -> None
+core.PyQt4: None -> None
+core.dummy_threading: None -> None
+core.time: None -> None
+core.collections: None -> None
+core.math: None -> None
+gui.sys: None -> None
+gui.gui: None -> None
+gui.glob: None -> None
+gui.getopt: None -> None
+gui.spyderlib: None -> None
+spyderlib: None -> <Module spyderlib C:\Python26\lib\site-packages\spyderlib\__init__.pyc imports=[] binaries=[] datas=[]>
+spyderlib.utils: None -> <Module spyderlib.utils C:\Python26\lib\site-packages\spyderlib\utils\__init__.pyc imports=[('__future__', 0, 0, -1), ('__future__.with_statement', 0, 0, -1), ('os', 0, 0, -1), ('os.path', 0, 0, -1), ('shutil', 0, 0, -1), ('socket', 1, 0, -1), ('os', 1, 0, -1), ('os.path', 1, 0, -1)] binaries=[] datas=[]>
+spyderlib.utils.qthelpers: None -> <Module spyderlib.utils.qthelpers C:\Python26\lib\site-packages\spyderlib\utils\qthelpers.pyc imports=[('os.path', 0, 0, -1), ('os', 0, 0, -1), ('webbrowser', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.QtGui.QAction', 0, 0, -1), ('PyQt4.QtGui.QStyle', 0, 0, -1), ('PyQt4.QtGui.QWidget', 0, 0, -1), ('PyQt4.QtGui.QIcon', 0, 0, -1), ('PyQt4.QtGui.QApplication', 0, 0, -1), ('PyQt4.QtGui.QVBoxLayout', 0, 0, -1), ('PyQt4.QtGui.QHBoxLayout', 0, 0, -1), ('PyQt4.QtGui.QLineEdit', 0, 0, -1), ('PyQt4.QtGui.QLabel', 0, 0, -1), ('PyQt4.QtGui.QKeySequence', 0, 0, -1), ('PyQt4.QtGui.QToolButton', 0, 0, -1), ('PyQt4.QtGui.QKeyEvent', 0, 0, -1), ('PyQt4.QtGui.QMenu', 0, 0, -1), ('PyQt4.QtCore', 0, 0, -1), ('PyQt4.QtCore.SIGNAL', 0, 0, -1), ('PyQt4.QtCore.QVariant', 0, 0, -1), ('PyQt4.QtCore.QObject', 0, 0, -1), ('PyQt4.QtCore.Qt', 0, 0, -1), ('PyQt4.QtCore.QLocale', 0, 0, -1), ('PyQt4.QtCore.QTranslator', 0, 0, -1), ('PyQt4.QtCore.QLibraryInfo', 0, 0, -1), ('spyderlib.config', 0, 0, -1), ('spyderlib.config.get_icon', 0, 0, -1), ('spyderlib.config.DATA_PATH', 0, 0, -1), ('spyderlib.utils', 0, 0, -1), ('spyderlib.utils.programs', 0, 0, -1), ('sys', 1, 0, -1)] binaries=[] datas=[]>
+spyderlib.utils.__future__: None -> None
+spyderlib.utils.os: None -> None
+spyderlib.utils.shutil: None -> None
+spyderlib.utils.socket: None -> None
+spyderlib.utils.webbrowser: None -> None
+spyderlib.utils.PyQt4: None -> None
+spyderlib.utils.spyderlib: None -> None
+spyderlib.config: None -> <Module spyderlib.config C:\Python26\lib\site-packages\spyderlib\config.pyc imports=[('os', 0, 0, -1), ('sys', 0, 0, -1), ('os.path', 0, 0, -1), ('datetime', 0, 0, -1), ('datetime.date', 0, 0, -1), ('PyQt4.QtGui', 0, 0, -1), ('PyQt4.QtGui.QLabel', 0, 0, -1), ('PyQt4.QtGui.QIcon', 0, 0, -1), ('PyQt4.QtGui.QPixmap', 0, 0, -1), ('PyQt4.QtGui.QFont', 0, 0, -1), ('PyQt4.QtGui.QFontDatabase', 0, 0, -1), ('userconfig', 0, 0, -1), ('userconfig.UserConfig', 0, 0, -1), ('userconfig.get_home_dir', 0, 0, -1), ('numpy', 0, 0, -1), ('numpy.ndarray', 0, 0, -1), ('PIL.Image', 0, 0, -1), ('PIL.Image.Image', 0, 0, -1), ('matplotlib', 0, 0, -1), ('matplotlib.rcParams', 0, 0, -1)] binaries=[] datas=[]>
+spyderlib.utils.programs: None -> <Module spyderlib.utils.programs C:\Python26\lib\site-packages\spyderlib\utils\programs.pyc imports=[('os', 0, 0, -1), ('sys', 0, 0, -1), ('subprocess', 0, 0, -1), ('imp', 0, 0, -1), ('os.path', 0, 0, -1)] binaries=[] datas=[]>
+spyderlib.utils.sys: None -> None
 spyderlib.os: None -> None
 spyderlib.sys: None -> None
 spyderlib.datetime: None -> None
@@ -6625,33 +6645,6 @@ PIL.ICCProfile: None -> None
 ICCProfile: None -> None
   DEL ICCProfile
 PIL.OleFileIO: None -> <Module PIL.OleFileIO C:\Python26\lib\site-packages\PIL\OleFileIO.pyc imports=[('string', 0, 0, -1), ('StringIO', 0, 0, -1), ('sys', 0, 1, -1)] binaries=[] datas=[]>
-spyderlib.utils.__future__: None -> None
-spyderlib.utils.os: None -> None
-spyderlib.utils.shutil: None -> None
-spyderlib.utils.socket: None -> None
-spyderlib.utils.webbrowser: None -> None
-spyderlib.utils.PyQt4: None -> None
-spyderlib.utils.spyderlib: None -> None
-spyderlib.utils.programs: None -> <Module spyderlib.utils.programs C:\Python26\lib\site-packages\spyderlib\utils\programs.pyc imports=[('os', 0, 0, -1), ('sys', 0, 0, -1), ('subprocess', 0, 0, -1), ('imp', 0, 0, -1), ('os.path', 0, 0, -1)] binaries=[] datas=[]>
-spyderlib.utils.sys: None -> None
 spyderlib.utils.subprocess: None -> None
 spyderlib.utils.imp: None -> None
-core.cPickle: None -> None
-core.PyQt4: None -> None
-core.dummy_threading: None -> None
-core.time: None -> None
-core.collections: None -> None
-core.math: None -> None
-gui.sys: None -> None
-gui.gui: None -> None
-gui.random: None -> None
-gui.os: None -> None
-gui.collections: None -> None
 gui.core: None -> None
-core.labelMgr: None -> <Module core.labelMgr C:\Users\csommer\ilastik\trunk\src\core\labelMgr.pyc imports=[('numpy', 0, 0, -1), ('vigra', 0, 0, -1), ('vigra.arraytypes', 0, 0, -1)] binaries=[] datas=[]>
-gui.time: None -> None
-gui.labelArrayDrawQImage: None -> None
-labelArrayDrawQImage: None -> <Module labelArrayDrawQImage C:\Python26\lib\site-packages\labelArrayDrawQImage\__init__.pyc imports=[('draw', 0, 0, -1), ('draw.drawImage', 0, 0, -1)] binaries=[] datas=[]>
-labelArrayDrawQImage.draw: None -> <Module labelArrayDrawQImage.draw C:\Python26\lib\site-packages\labelArrayDrawQImage\draw.pyd imports=[] binaries=[] datas=[]>
-gui.glob: None -> None
-gui.getopt: None -> None
