@@ -216,22 +216,7 @@ p, li { white-space: pre-wrap; }
         </column>
         <column>
          <property name="text">
-          <string>Groups</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
           <string>Labels</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Train</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Test</string>
          </property>
         </column>
        </widget>
