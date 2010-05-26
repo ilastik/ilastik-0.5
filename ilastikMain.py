@@ -82,47 +82,44 @@ class MainWindow(QtGui.QMainWindow):
         self.classificationProcess = None
         self.classificationOnline = None
         
-        
-        try:
-            opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project="])
-        except getopt.GetoptError, err:
-            # print help information and exit:
-            print str(err) # will print something like "option -a not recognized"
-            usage()
-            sys.exit(2)
-
         self.opengl = None
         project = None        
         
-        for o, a in opts:
-            if o == "-v":
-                verbose = True
-            elif o in ("--help"):
-                print '%30s  %s' % ("--help", "print help on command line options")
-                print '%30s  %s' % ("--render=[s,s_gl,gl_gl]", "chose slice renderer:")
-                print '%30s  %s' % ("s", "software without 3d overview")
-                print '%30s  %s' % ("s_gl", "software with opengl 3d overview")
-                print '%30s  %s' % ("gl_gl", "opengl with opengl 3d overview")
-                print '%30s  %s' % ("--project=[filename]", "open specified project file")
-                sys.exit()
-            elif o in ("--render"):
-                if a == 's':
-                    self.opengl = False
-                    self.openglOverview = False
-                elif a == 's_gl':
-                    self.opengl = False
-                    self.openglOverview = True
-                elif a == 'gl_gl':
-                    self.opengl = True
-                    self.openglOverview = True
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project="])
+            for o, a in opts:
+                if o == "-v":
+                    verbose = True
+                elif o in ("--help"):
+                    print '%30s  %s' % ("--help", "print help on command line options")
+                    print '%30s  %s' % ("--render=[s,s_gl,gl_gl]", "chose slice renderer:")
+                    print '%30s  %s' % ("s", "software without 3d overview")
+                    print '%30s  %s' % ("s_gl", "software with opengl 3d overview")
+                    print '%30s  %s' % ("gl_gl", "opengl with opengl 3d overview")
+                    print '%30s  %s' % ("--project=[filename]", "open specified project file")
+                    sys.exit()
+                elif o in ("--render"):
+                    if a == 's':
+                        self.opengl = False
+                        self.openglOverview = False
+                    elif a == 's_gl':
+                        self.opengl = False
+                        self.openglOverview = True
+                    elif a == 'gl_gl':
+                        self.opengl = True
+                        self.openglOverview = True
+                    else:
+                        print "invalid --render option"
+                        sys.exit()                                         
+                elif o in ("--project"):
+                    project = a
                 else:
-                    print "invalid --render option"
-                    sys.exit()                                         
-            elif o in ("--project"):
-                project = a
-            else:
-                assert False, "unhandled option"
-        
+                    assert False, "unhandled option"
+            
+        except getopt.GetoptError, err:
+            # print help information and exit:
+            print str(err) # will print something like "option -a not recognized"
+                
 
         if self.opengl == None:   
             #test for opengl version
@@ -131,12 +128,17 @@ class MainWindow(QtGui.QMainWindow):
             w.setVisible(False)
             w.makeCurrent()
             gl_version =  glGetString(GL_VERSION)
+            if gl_version is None:
+                gl_version = '0'
             del w
             
             if int(gl_version[0]) >= 2:
                 dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], 0, False)
-            else:
+            elif int(gl_version[0]) > 0:
                 dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['Software without Overview', 'Software + OpenGL Overview'], 0, False)
+            else:
+                dl = []
+                dl.append("")
                 
             self.opengl = False
             self.openglOverview = False
@@ -1072,7 +1074,6 @@ class ClassificationPredict(object):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    print sys.argv
     mainwindow = MainWindow(sys.argv)
       
     mainwindow.show() 
