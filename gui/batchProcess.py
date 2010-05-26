@@ -111,7 +111,7 @@ class BatchProcess(QtGui.QDialog):
             try:
                 f = h5py.File(filename + '_processed.h5', 'w')
                 g = f.create_group("volume")        
-                self.dataMgr[0].dataVol.data.serialize(g, 'data')
+                self.dataMgr[0].dataVol.serialize(g)
                 self.dataMgr[0].prediction.serialize(g, 'prediction')
                 f.close()
                 self.logger.insertPlainText(".")
@@ -124,6 +124,7 @@ class BatchProcess(QtGui.QDialog):
             
             
             self.dataMgr.clearDataList()
+            #self.logger.update()
             self.logger.repaint()
             
         if allok:
