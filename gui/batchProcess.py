@@ -31,20 +31,18 @@ from core import classificationMgr as cm
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self)
+        self.filenames = []
         self.ilastik = parent
         self.setMinimumWidth(400)
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.path = QtGui.QLineEdit("")
-        self.connect(self.path, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
+        self.filesView = QtGui.QListWidget()
+        self.filesView.setMinimumHeight(300)
         self.pathButton = QtGui.QPushButton("Select")
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
-        tempLayout.addWidget(self.path)
-        tempLayout.addWidget(self.pathButton)
-        self.layout.addWidget(QtGui.QLabel("Path to Image Stack:"))
-        self.layout.addLayout(tempLayout)
+        self.layout.addWidget(self.pathButton)
+        self.layout.addWidget(self.filesView)
 
 
         tempLayout = QtGui.QHBoxLayout()
@@ -71,30 +69,26 @@ class BatchProcess(QtGui.QDialog):
         
         self.dataMgr = dataMgr.DataMgr()
         
-        
-
-
-    def pathChanged(self, text):
-        list = glob.glob(str(self.path.text()) )
 
 
     def slotDir(self):
-        path = self.path.text()
-        filename = QtGui.QFileDialog.getExistingDirectory(self, "Image Stack Directory", path)
-        self.path.setText(filename + "/*")
+        self.filenames = QtGui.QFileDialog.getOpenFileNames(self, "Image Files")
+        self.filesView.clear()
+        for f in self.filenames:
+            self.filesView.addItem(f)
 
     def slotProcess(self):
-        pattern = self.path.text()
-        self.process(str(pattern))
+        self.process(self.filenames)
     
-    def process(self, pattern):
+    def process(self, fileNames):
         self.logger.clear()
         self.logger.setVisible(True)
   
         #loop over provided images an put them in the hdf5
         z = 0
         allok = True
-        for filename in sorted(glob.glob(pattern), key = str.lower):
+        for filename in fileNames:
+            filename = str(filename)
             di = dataMgr.DataItemImage(filename)
             di.loadData()
             self.dataMgr.append(di)
@@ -148,7 +142,7 @@ def test():
     import numpy
     app = QtGui.QApplication([""])
     
-    dialog = BatchProcess()
+    dialog = BatchProcess(None)
     print dialog.show()
     app.exec_()
 
