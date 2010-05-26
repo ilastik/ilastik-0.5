@@ -596,7 +596,7 @@ class State():
 
 
 class LabelState(State):
-    def __init__(self, title, axis, num, offsets, shape, time, volumeEditor, erasing, labelNumber):
+    def __init__(self, title, axis, num, offsets, shape, time, volumeEditor, erasing, labels, labelNumber):
         self.title = title
         self.time = time
         self.num = num
@@ -604,15 +604,18 @@ class LabelState(State):
         self.axis = axis
         self.erasing = erasing
         self.labelNumber = labelNumber
-        self.data = volumeEditor.labels.data.getSubSlice(self.offsets, shape, self.num, self.axis, self.time, 0).copy()
-
+        self.labels = labels
+        self.dataBefore = volumeEditor.labels.data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        
     def restore(self, volumeEditor):
-        temp = self.data.copy()
-        temp = self.data
-        self.data = numpy.abs(temp - volumeEditor.labels.data.getSubSlice(self.offsets, temp.shape, self.num, self.axis, self.time, 0).copy())
+        temp = volumeEditor.labels.data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        restore  = numpy.where(self.labels > 0, self.dataBefore, 0)
+        stuff = numpy.where(self.labels > 0, self.dataBefore + 1, 0)
+        erase = numpy.where(stuff == 1, self.labels, 0)
+        self.dataBefore = temp
         #volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
-        labels = numpy.where(self.data > 0, self.labelNumber, 0)
-        volumeEditor.setLabels(self.offsets, self.axis, labels, not(self.erasing))
+        volumeEditor.setLabels(self.offsets, self.axis, restore, False)
+        volumeEditor.setLabels(self.offsets, self.axis, erase, True)
         volumeEditor.repaint()
         self.erasing = not(self.erasing)          
 
@@ -623,7 +626,7 @@ class HistoryManager(QtCore.QObject):
         self.volumeEditor = parent
         self.maxSize = maxSize
         self.history = []
-        self.current = 0
+        self.current = -1
 
     def append(self, state):
         if self.current + 1 < len(self.history):
@@ -636,7 +639,7 @@ class HistoryManager(QtCore.QObject):
         self.current = len(self.history) - 1
 
     def undo(self):
-        if self.current > 0:
+        if self.current >= 0:
             self.history[self.current].restore(self.volumeEditor)
             self.current -= 1
 
@@ -915,11 +918,9 @@ class VolumeEditor(QtGui.QWidget):
         return temp
 
     def historyUndo(self):
-        print "undo..."
         self.history.undo()
 
     def historyRedo(self):
-        print "redo..."
         self.history.redo()
 
     def clearOverlays(self):
@@ -1319,7 +1320,7 @@ class ImageScene( QtGui.QGraphicsView):
         labels = labels.swapaxes(0,1)
         number = self.volumeEditor.labelView.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
-        ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, number)
+        ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor.history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)        
         self.drawManagerCopy.beginDraw(self.mousePos, self.imShape)
@@ -1346,7 +1347,7 @@ class ImageScene( QtGui.QGraphicsView):
         labels = labels.swapaxes(0,1)
         number = self.volumeEditor.labelView.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
-        ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, number)
+        ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor.history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)
         self.drawing = False
