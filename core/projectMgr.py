@@ -51,7 +51,7 @@ class Project(object):
             labelNames = []
         if labelColors is None:
             labelColors = {}     
-            
+        self.filename = None
         self.name = name
         self.labeler = labeler
         self.description = description
@@ -63,9 +63,14 @@ class Project(object):
         self.trainingFeatureNames = None
         self.featureMgr = None
     
-    def saveToDisk(self, fileName):
+    def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
+        if fileName is not None:
+            self.filename = fileName
+        else:
+            fileName = self.filename
+            
         fileHandle = h5py.File(fileName,'w')
         # pickle.dump(self, fileHandle, True)
         
@@ -133,6 +138,10 @@ class Project(object):
 
                
         fileHandle.close()
+        
+        
+        project = Project( name, labeler, description, dataMgr)
+        project.filename = fileName
         # print "Project %s loaded from %s " % (p.name, fileName)
-        return Project( name, labeler, description, dataMgr)
+        return project
     

@@ -358,6 +358,7 @@ class DataMgr():
         self.trainingF = None
         self.trainingL = None
         self.trainingIndices = None
+        self.classifiers = []
         
         for index, item in enumerate(self):
             item.clearFeaturesAndTraining()

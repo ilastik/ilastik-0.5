@@ -122,7 +122,7 @@ class MainWindow(QtGui.QMainWindow):
             print str(err) # will print something like "option -a not recognized"
                 
 
-        if self.opengl == None:   
+        if self.opengl == None:   #no command line option for opengl was given, ask user interactively
             #test for opengl version
             gl2 = False
             w = QtOpenGL.QGLWidget()
@@ -155,7 +155,10 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             self.activeImage = 0
-            self.projectModified() 
+            self.projectModified()
+        
+        self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject) 
+
         
                 
     def updateFileSelector(self):
@@ -282,6 +285,14 @@ class MainWindow(QtGui.QMainWindow):
             if fn[-4:] != '.ilp':
                 fn = fn + '.ilp'
             self.project.saveToDisk(fn)
+            
+    def saveProject(self):
+        if hasattr(self,'project'):
+            if self.project.filename is not None:
+                self.project.saveToDisk()
+            else:
+                self.saveProjectDlg()
+            print "saved Project to ", self.project.filename
         
     def loadProjectDlg(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
@@ -750,6 +761,8 @@ class FeatureDlg(QtGui.QDialog):
 class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
+        self.parent.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
+        self.parent.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(False)
         self.featureCompute()
         
         
@@ -792,6 +805,7 @@ class FeatureComputation(object):
         if hasattr(self.parent, "classificationInteractive"):
             self.parent.classificationInteractive.updateThreadQueues()
             
+        self.parent.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(True)            
         self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(True)        
         self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)        
                     
@@ -853,6 +867,8 @@ class ClassificationInteractive(object):
         self.trainingQueue = deque(maxlen=1)
         self.predictionQueue = deque(maxlen=1)
         self.resultQueue = deque(maxlen=3)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
+        self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
         self.temp_cnt = 0
@@ -907,6 +923,10 @@ class ClassificationInteractive(object):
         self.terminateClassificationProgressBar()
     
     def finalize(self):
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(True)
+        if len(self.parent.project.dataMgr.classifiers)>0:
+            self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)
+        
         self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifierList)
         self.classificationInteractive =  None
         
