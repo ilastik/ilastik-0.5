@@ -112,8 +112,7 @@ class BatchProcess(QtGui.QDialog):
                 f = h5py.File(filename + '_processed.h5', 'w')
                 g = f.create_group("volume")        
                 self.dataMgr[0].dataVol.data.serialize(g, 'data')
-                da = ve.DataAccessor(self.dataMgr[0].prediction, channels = True)
-                da.serialize(g, 'prediction')
+                self.dataMgr[0].prediction.serialize(g, 'prediction')
                 f.close()
                 self.logger.insertPlainText(".")
             except Exception as e:
