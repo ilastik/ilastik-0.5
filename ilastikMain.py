@@ -1018,7 +1018,8 @@ class ClassificationPredict(object):
     
     def start(self):       
         self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
-
+        self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)
+          
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
               
@@ -1066,6 +1067,7 @@ class ClassificationPredict(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
+        self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)  
         self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)  
 
 if __name__ == "__main__":

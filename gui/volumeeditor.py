@@ -571,7 +571,9 @@ class LabelListView(QtGui.QListWidget):
             del it
             self.buildColorTab()
             self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+            self.volumeEditor.repaint()
         elif action == toggleHideAction:
+            self.buildColorTab()
             item.toggleVisible()
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
@@ -579,8 +581,10 @@ class LabelListView(QtGui.QListWidget):
             self.volumeLabel.descriptions[index.row()].color = color.rgb()
             
             self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+            self.buildColorTab()
+            self.volumeEditor.repaint()
 
-        self.buildColorTab()
+        
 
 #abstract base class for undo redo stuff
 class State():
