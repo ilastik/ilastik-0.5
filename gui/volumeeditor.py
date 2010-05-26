@@ -1049,13 +1049,17 @@ class VolumeEditor(QtGui.QWidget):
         event.accept()
 
     def wheelEvent(self, event):
-        if event.delta() > 0:
-            scaleFactor = 1.1
-        else:
-            scaleFactor = 0.9
-        self.imageScenes[0].doScale(scaleFactor)
-        self.imageScenes[1].doScale(scaleFactor)
-        self.imageScenes[2].doScale(scaleFactor)
+        keys = QtGui.QApplication.keyboardModifiers()
+        k_ctrl = (keys == QtCore.Qt.ControlModifier)
+        
+        if k_ctrl is True:        
+            if event.delta() > 0:
+                scaleFactor = 1.1
+            else:
+                scaleFactor = 0.9
+            self.imageScenes[0].doScale(scaleFactor)
+            self.imageScenes[1].doScale(scaleFactor)
+            self.imageScenes[2].doScale(scaleFactor)
 
     def setLabels(self, offsets, axis, labels, erase):
         num = self.sliceSelectors[axis].value()
