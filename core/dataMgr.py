@@ -99,7 +99,7 @@ class DataItemImage(DataItemBase):
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)
         if fExt == '.h5':
-            self.dataVol = DataImpex.loadVolume(self.fileName)  
+            self.dataVol, self.prediction = DataImpex.loadVolume(self.fileName)  
         else:
             self.data = DataImpex.loadImageData(self.fileName)
             self.labels = None
@@ -415,8 +415,10 @@ class DataImpex(object):
         
     @staticmethod
     def loadVolumeFromGroup(h5grp):
-        return Volume.deserialize(h5grp)
-
+        if 'prediction' in h5grp.keys():
+            return Volume.deserialize(h5grp), DataAccessor.deserialize(h5grp, 'prediction')
+        else:
+            return Volume.deserialize(h5grp), None
     
     @staticmethod
     def loadImageData(fileName):
