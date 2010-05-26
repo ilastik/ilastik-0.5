@@ -24,6 +24,9 @@ from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
 import copy
 
+from OpenGL.GL import *
+
+from PyQt4 import QtCore, QtGui, QtOpenGL
 
 from gui import volumeeditor as ve
 
@@ -50,7 +53,20 @@ class MainWindow(QtGui.QMainWindow):
         self.classificationProcess = None
         self.classificationOnline = None
         
-        dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], 0, False)
+        
+        #test for opengl version
+        gl2 = False
+        w = QtOpenGL.QGLWidget()
+        w.setVisible(False)
+        w.makeCurrent()
+        gl_version =  glGetString(GL_VERSION)
+        del w
+        
+        if int(gl_version[0]) >= 2:
+            dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], 0, False)
+        else:
+            dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['Software without Overview', 'Software + OpenGL Overview'], 0, False)
+            
         self.opengl = False
         self.openglOverview = False
         if dl[0] == "OpenGL + OpenGL Overview":
