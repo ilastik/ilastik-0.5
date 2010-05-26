@@ -34,6 +34,7 @@
 # p = pstats.StaPATHts('fooprof')
 # p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
+
 import vigra
 from vigra import arraytypes as at
 
@@ -276,7 +277,11 @@ class MainWindow(QtGui.QMainWindow):
     def saveProjectDlg(self):
         # self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ".", "Project Files (*.ilp)")
-        self.project.saveToDisk(str(fileName))
+        fn = str(fileName)
+        if len(fn) > 4:
+            if fn[-4:] != '.ilp':
+                fn = fn + '.ilp'
+            self.project.saveToDisk(fn)
         
     def loadProjectDlg(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
@@ -348,7 +353,6 @@ class MainWindow(QtGui.QMainWindow):
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
-        self.newFeatureDlg.exec_()
         self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(True)
         self.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
         self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
@@ -637,6 +641,7 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
+        self.parent.activeImage = 0
         self.parent.projectModified()
         self.close()
         
@@ -848,8 +853,7 @@ class ClassificationInteractive(object):
         self.trainingQueue = deque(maxlen=1)
         self.predictionQueue = deque(maxlen=1)
         self.resultQueue = deque(maxlen=3)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)
-          
+
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
         self.temp_cnt = 0
         self.start()
@@ -903,9 +907,8 @@ class ClassificationInteractive(object):
         self.terminateClassificationProgressBar()
     
     def finalize(self):
+        self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifierList)
         self.classificationInteractive =  None
-        if self.parent.project.dataMgr.trainingF is not None and len(self.parent.project.dataMgr.classifiers) > 0:
-            self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)  
         
 class ClassificationOnline(object):
     def __init__(self, parent):
@@ -1078,3 +1081,4 @@ if __name__ == "__main__":
       
     mainwindow.show() 
     app.exec_()
+
