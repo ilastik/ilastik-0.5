@@ -110,7 +110,9 @@ class BatchProcess(QtGui.QDialog):
             #save results
             try:
                 f = h5py.File(filename + '_processed.h5', 'w')
-                g = f.create_group("volume")        
+                g = f.create_group("volume")
+                self.dataMgr[0].dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((self.dataMgr[0].dataVol.data.shape[0:4]),'uint8')))
+                self.dataMgr[0].dataVol.labels.descriptions = self.ilastik.project.dataMgr[0].dataVol.labels.descriptions
                 self.dataMgr[0].dataVol.serialize(g)
                 self.dataMgr[0].prediction.serialize(g, 'prediction')
                 f.close()

@@ -40,6 +40,9 @@ from core.utilities import irange, debug, irangeIfTrue
 from gui.volumeeditor import DataAccessor as DataAccessor
 from gui.volumeeditor import Volume as Volume
 
+from core import activeLearning
+from core import segmentationMgr
+
 import vigra
 at = vigra.arraytypes
     
@@ -99,7 +102,9 @@ class DataItemImage(DataItemBase):
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)
         if fExt == '.h5':
-            self.dataVol, self.prediction = DataImpex.loadVolume(self.fileName)  
+            f = h5py.File(self.fileName, 'r')
+            g = f['volume']
+            self.deserialize(g)
         else:
             self.data = DataImpex.loadImageData(self.fileName)
             self.labels = None
@@ -277,11 +282,27 @@ class DataItemImage(DataItemBase):
             
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
+        self.dataVol = None
         self.data = None
         
      
     def serialize(self, h5G):
         self.dataVol.serialize(h5G)
+        if self.prediction is not None:
+            self.prediction.serialize(h5G, 'prediction')
+            
+    def deserialize(self, h5G):
+        self.dataVol = Volume.deserialize(h5G)
+        if 'prediction' in h5G.keys():
+            self.prediction = DataAccessor.deserialize(h5G, 'prediction')
+            for p_i, item in enumerate(self.dataVol.labels.descriptions):
+                item.prediction = (self.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+
+            margin = activeLearning.computeEnsembleMargin(self.prediction[:,:,:,:,:])*255.0
+            self.dataVol.uncertainty = margin[:,:,:,:]
+            seg = segmentationMgr.LocallyDominantSegmentation(self.prediction[:,:,:,:,:], 1.0)
+            self.dataVol.segmentation = seg[:,:,:,:]
+            
 class DataMgr():
     """
     Manages Project structure and associated files, e.g. images volumedata
@@ -406,19 +427,11 @@ class DataImpex(object):
     """
     Data Import/Export class 
     """
-    
-    @staticmethod
-    def loadVolume(fileName, groupName = 'volume'):
-        h5file = h5py.File(fileName, 'r')
-        grp = h5file[groupName]
-        return DataImpex.loadVolumeFromGroup(grp)
         
     @staticmethod
     def loadVolumeFromGroup(h5grp):
-        if 'prediction' in h5grp.keys():
-            return Volume.deserialize(h5grp), DataAccessor.deserialize(h5grp, 'prediction')
-        else:
-            return Volume.deserialize(h5grp), None
+        di = DataItemImage
+
     
     @staticmethod
     def loadImageData(fileName):
