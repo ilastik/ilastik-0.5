@@ -27,6 +27,7 @@ import copy
 from OpenGL.GL import *
 
 from PyQt4 import QtCore, QtGui, QtOpenGL
+import getopt
 
 from gui import volumeeditor as ve
 
@@ -54,27 +55,76 @@ class MainWindow(QtGui.QMainWindow):
         self.classificationOnline = None
         
         
-        #test for opengl version
-        gl2 = False
-        w = QtOpenGL.QGLWidget()
-        w.setVisible(False)
-        w.makeCurrent()
-        gl_version =  glGetString(GL_VERSION)
-        del w
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project="])
+        except getopt.GetoptError, err:
+            # print help information and exit:
+            print str(err) # will print something like "option -a not recognized"
+            usage()
+            sys.exit(2)
+
+        self.opengl = None
+        project = None        
         
-        if int(gl_version[0]) >= 2:
-            dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], 0, False)
-        else:
-            dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['Software without Overview', 'Software + OpenGL Overview'], 0, False)
+        for o, a in opts:
+            if o == "-v":
+                verbose = True
+            elif o in ("--help"):
+                print '%30s  %s' % ("--help", "print help on command line options")
+                print '%30s  %s' % ("--render=[s,s_gl,gl_gl]", "chose slice renderer:")
+                print '%30s  %s' % ("s", "software without 3d overview")
+                print '%30s  %s' % ("s_gl", "software with opengl 3d overview")
+                print '%30s  %s' % ("gl_gl", "opengl with opengl 3d overview")
+                print '%30s  %s' % ("--project=[filename]", "open specified project file")
+                sys.exit()
+            elif o in ("--render"):
+                if a == 's':
+                    self.opengl = False
+                    self.openglOverview = False
+                elif a == 's_gl':
+                    self.opengl = False
+                    self.openglOverview = True
+                elif a == 'gl_gl':
+                    self.opengl = True
+                    self.openglOverview = True
+                else:
+                    print "invalid --render option"
+                    sys.exit()                                         
+            elif o in ("--project"):
+                project = a
+            else:
+                assert False, "unhandled option"
+        
+
+        if self.opengl == None:   
+            #test for opengl version
+            gl2 = False
+            w = QtOpenGL.QGLWidget()
+            w.setVisible(False)
+            w.makeCurrent()
+            gl_version =  glGetString(GL_VERSION)
+            del w
             
-        self.opengl = False
-        self.openglOverview = False
-        if dl[0] == "OpenGL + OpenGL Overview":
-            self.opengl = True
-            self.openglOverview = True
-        elif dl[0] == "Software + OpenGL Overview":
+            if int(gl_version[0]) >= 2:
+                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], 0, False)
+            else:
+                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['Software without Overview', 'Software + OpenGL Overview'], 0, False)
+                
             self.opengl = False
-            self.openglOverview = True
+            self.openglOverview = False
+            if dl[0] == "OpenGL + OpenGL Overview":
+                self.opengl = True
+                self.openglOverview = True
+            elif dl[0] == "Software + OpenGL Overview":
+                self.opengl = False
+                self.openglOverview = True
+
+        if project != None:
+            self.project = projectMgr.Project.loadFromDisk(project)
+            self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+            self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+            self.activeImage = 0
+            self.projectModified() 
         
                 
     def updateFileSelector(self):
@@ -989,6 +1039,8 @@ class ClassificationPredict(object):
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
-    mainwindow = MainWindow()  
+    print sys.argv
+    mainwindow = MainWindow(sys.argv)
+      
     mainwindow.show() 
     app.exec_()
