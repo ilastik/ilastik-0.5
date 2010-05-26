@@ -346,6 +346,7 @@ class MainWindow(QtGui.QMainWindow):
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
+        self.newFeatureDlg.exec_()
         self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(True)
         self.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
         self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
@@ -845,7 +846,8 @@ class ClassificationInteractive(object):
         self.trainingQueue = deque(maxlen=1)
         self.predictionQueue = deque(maxlen=1)
         self.resultQueue = deque(maxlen=3)
-
+        self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)
+          
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
         self.temp_cnt = 0
         self.start()
@@ -899,8 +901,9 @@ class ClassificationInteractive(object):
         self.terminateClassificationProgressBar()
     
     def finalize(self):
-        self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifierList)
         self.classificationInteractive =  None
+        if self.parent.project.dataMgr.trainingF is not None and len(self.parent.project.dataMgr.classifiers) > 0:
+            self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)  
         
 class ClassificationOnline(object):
     def __init__(self, parent):
