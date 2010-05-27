@@ -40,6 +40,7 @@ from core.utilities import irange
 from core import onlineClassifcator
 from core import activeLearning, segmentationMgr
 from gui import volumeeditor as ve
+from core import jobMachine
 
 import numpy
 
@@ -230,20 +231,36 @@ class ClassifierTrainThread(QtCore.QThread):
         self.classifierList = []
         self.stopped = False
         self.classifier = ClassifierRandomForest
-    
+        self.jobMachine = jobMachine.JobMachine()
+        self.classifiers = deque()
+
+    def trainClassifier(self, F, L):
+        print "training  classifier"
+        classifier = self.classifier(F, L)
+        self.count += 1
+        self.classifiers.append(classifier)
+
+        
     def run(self):
         self.dataMgr.featureLock.acquire()
         try:
             F, L = self.dataMgr.getTrainingMatrix()
             if F is not None:
-                classifiers = []
+                self.count = 0
+                self.classifiers = deque()
+                jobs = []
                 for i in range(self.numClassifiers):
-                    classifiers.append( self.classifier(F, L))
-                    self.count += 1
-                self.dataMgr.classifiers = classifiers
+                    job = jobMachine.IlastikJob(ClassifierTrainThread.trainClassifier, [self, F, L])
+                    jobs.append(job)
+                self.jobMachine.process(jobs)
+                
+                self.dataMgr.classifiers = self.classifiers
+
             self.dataMgr.featureLock.release()
         except:
-            self.dataMgr.featureLock.release()
+            self.dataMgr.featureLock.release()        
+
+
                     
 class ClassifierPredictThread(QtCore.QThread):
     def __init__(self, dataMgr):
@@ -252,7 +269,18 @@ class ClassifierPredictThread(QtCore.QThread):
         self.count = 0
         self.dataMgr = dataMgr
         self.stopped = False
-
+        self.jobMachine = jobMachine.JobMachine()
+        self.prediction = None
+        self.predLock = threading.Lock()
+    
+    def classifierPredict(self, num, featureMatrix):
+        cf = self.dataMgr.classifiers[num]
+        pred = cf.predict(featureMatrix)
+        print "predicting"
+        #self.predLock.acquire()
+        self.prediction += pred
+        self.count += 1
+        #self.predLock.release()
     
     def run(self):
         
@@ -263,22 +291,69 @@ class ClassifierPredictThread(QtCore.QThread):
             self.dataMgr.featureLock.acquire()
             try:
                 #self.dataMgr.clearFeaturesAndTraining()
-                fm = item.getFeatureMatrix()
                 if len(self.dataMgr.classifiers) > 0:
-                    prediction = self.dataMgr.classifiers[0].predict(fm)
-                    cnt = 1
-                    if prediction is not None:
-                        for ii in range(len(self.dataMgr.classifiers) - 1) :
-                            interactiveMessagePrint( "Classifier %d prediction" % cnt )
-                            prediction += self.dataMgr.classifiers[ii+1].predict(fm)
-                            cnt += 1
-                            self.count += 1
-                        prediction = prediction / cnt
-                        #TODO: Time ! synchronize with featureMgr...
-                        item.prediction = ve.DataAccessor(prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],)), channels = True)
-                self.dataMgr.featureLock.release()
+                    fm = item.getFeatureMatrix()
+
+                    #make a little test prediction to get the shape and see if it works:
+                    tempPred = None
+                    if fm is not None:
+                        tfm = fm[0,:]
+                        tfm.shape = (1,) + tfm.shape 
+                        tempPred = self.dataMgr.classifiers[0].predict(tfm)
+                                        
+                    if tempPred is not None:
+                        self.prediction = numpy.zeros((fm.shape[0],) + (tempPred.shape[1],) , 'float32')
+                        jobs= []
+                        for i in range(len(self.dataMgr.classifiers)):
+                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, i, fm])
+                            jobs.append(job)
+                        self.jobMachine.process(jobs)
+                        if self.count == 0:
+                            self.count = 1
+                        self.prediction = self.prediction / self.count
+                        print self.prediction.shape
+                        item.prediction = ve.DataAccessor(self.prediction.reshape(item.dataVol.data.shape[0:-1] + (self.prediction.shape[-1],)), channels = True)
+                        self.prediction = None
+                    self.dataMgr.featureLock.release()
             except:
                 self.dataMgr.featureLock.release()
+
+
+                    
+#class ClassifierPredictThread(QtCore.QThread):
+#    def __init__(self, dataMgr):
+#        QtCore.QThread.__init__(self, None)
+#        #threading.Thread.__init__(self)
+#        self.count = 0
+#        self.dataMgr = dataMgr
+#        self.stopped = False
+#
+#    
+#    def run(self):
+#        
+#        for item in self.dataMgr:
+#            cnt = 0
+#            interactiveMessagePrint( "Feature Item" )
+#            interactiveMessagePrint ( "Classifier %d prediction" % cnt )
+#            self.dataMgr.featureLock.acquire()
+#            try:
+#                #self.dataMgr.clearFeaturesAndTraining()
+#                fm = item.getFeatureMatrix()
+#                if len(self.dataMgr.classifiers) > 0:
+#                    prediction = self.dataMgr.classifiers[0].predict(fm)
+#                    cnt = 1
+#                    if prediction is not None:
+#                        for ii in range(len(self.dataMgr.classifiers) - 1) :
+#                            interactiveMessagePrint( "Classifier %d prediction" % cnt )
+#                            prediction += self.dataMgr.classifiers[ii+1].predict(fm)
+#                            cnt += 1
+#                            self.count += 1
+#                        prediction = prediction / cnt
+#                        #TODO: Time ! synchronize with featureMgr...
+#                        item.prediction = ve.DataAccessor(prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],)), channels = True)
+#                self.dataMgr.featureLock.release()
+#            except:
+#                self.dataMgr.featureLock.release()
                 
 
 class ClassifierInteractiveThread(QtCore.QThread):
