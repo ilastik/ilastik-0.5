@@ -45,8 +45,11 @@ class FeatureMgr():
     """
     Manages selected features (merkmale) for classificator.
     """
-    def __init__(self, featureItems=[]):
-        self.featureItems = featureItems
+    def __init__(self, dataMgr, featureItems=[]):
+        self.dataMgr = dataMgr
+        self.featureSizes = []
+        self.featureOffsets = []
+        self.setFeatureItems(featureItems)
         self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
         self.child_conn = None
@@ -54,13 +57,39 @@ class FeatureMgr():
         
     def setFeatureItems(self, featureItems):
         self.featureItems = featureItems
+        self.featureSizes = []
+        self.featureOffsets = []
+        if len(featureItems) > 0:
+            dataMgr = self.dataMgr
+            if dataMgr[0].dataVol.data.shape[1] > 1:
+                #3D
+                dimSel = 1
+            else:
+                #2D
+                dimSel = 0
+                
+            numChannels = dataMgr[0].dataVol.data.shape[-1]
+            totalSize = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureItems] )
+            for i, f in enumerate(featureItems):
+                if i != 0:
+                    offset = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureItems[0:i]] )
+                else:
+                    offset = 0 
+                size = f.numOfOutputs[dimSel]
+                self.featureSizes.append(size)
+                self.featureOffsets.append(offset)
+            
+            for i, di in enumerate(dataMgr):
+                di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,),'float32')
+        else:
+            print "no features selected"
         
     def prepareCompute(self, dataMgr):
         self.dataMgr = dataMgr
 
         self.featureProcessList = [[] for i in range(len(dataMgr))]
 
-        self.featureProcess = FeatureThread(self.featureItems, dataMgr)
+        self.featureProcess = FeatureThread(self, dataMgr)
 
         return self.featureProcess.jobs
     
@@ -145,48 +174,43 @@ class LocalFeature(FeatureBase):
 
 
 class FeatureParallelBase(object):
-    def __init__(self, featureItems, dataMgr):
+    def __init__(self, featureMgr, dataMgr):
         self.count = 0
         self.jobs = 0
-        self.featureItems = featureItems
+        self.featureMgr = featureMgr
         self.dataMgr = dataMgr
         self.computeNumberOfJobs()
     
     def computeNumberOfJobs(self):
         for image in self.dataMgr:
-            self.jobs += image.dataVol.data.shape[-1] * len(self.featureItems)
+            self.jobs += image.dataVol.data.shape[-1] * len(self.featureMgr.featureItems)
 
 class FeatureThread(threading.Thread, FeatureParallelBase):
-    def __init__(self, featureItems, datMgr):
-        FeatureParallelBase.__init__(self, featureItems, datMgr)
+    def __init__(self, featureMgr, datMgr):
+        FeatureParallelBase.__init__(self, featureMgr, datMgr)
         threading.Thread.__init__(self)  
         self.jobMachine = jobMachine.JobMachine()
     
-    def calcFeature(self, image, number, feature):
-        result = []
+    def calcFeature(self, image, offset,size, feature):
         for c_ind in range(image.dataVol.data.shape[-1]):
             print image.dataVol.data.shape[0:5], str(feature)
-            result.append(feature(image.dataVol.data[:,:,:,:,c_ind]))
+            result = feature(image.dataVol.data[:,:,:,:,c_ind])
+            try:
+                image._featureM[:,:,:,:,c_ind,offset:offset+size] = result
+            except Exception as e:
+                print e
             self.count += 1
-        self.resultImage[number] = result
         
     
     def run(self):
-        imageFeatures = []
         for image in self.dataMgr:
             self.resultImage = deque()
             jobs = []
-            for feature in self.featureItems:
-                self.resultImage.append(None)
-                
-            for i, feature in enumerate(self.featureItems):
-                job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, i, feature])
+                            
+            for i, feature in enumerate(self.featureMgr.featureItems):
+                job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature])
                 jobs.append(job)
             self.jobMachine.process(jobs)
-            imageFeatures.append(self.resultImage)
-            
-        for index, feat in enumerate(imageFeatures):
-            self.dataMgr[index].features = feat
     
 
 ###########################################################################

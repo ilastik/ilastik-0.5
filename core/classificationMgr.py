@@ -41,6 +41,7 @@ from core import onlineClassifcator
 from core import activeLearning, segmentationMgr
 from gui import volumeeditor as ve
 from core import jobMachine
+import sys, traceback
 
 import numpy
 
@@ -276,7 +277,6 @@ class ClassifierPredictThread(QtCore.QThread):
     def classifierPredict(self, num, featureMatrix):
         cf = self.dataMgr.classifiers[num]
         pred = cf.predict(featureMatrix)
-        print "predicting"
         #self.predLock.acquire()
         self.prediction += pred
         self.count += 1
@@ -292,7 +292,7 @@ class ClassifierPredictThread(QtCore.QThread):
             try:
                 #self.dataMgr.clearFeaturesAndTraining()
                 if len(self.dataMgr.classifiers) > 0:
-                    fm = item.getFeatureMatrix()
+                    fm = item.getFlatFeatureMatrix()
 
                     #make a little test prediction to get the shape and see if it works:
                     tempPred = None
@@ -316,6 +316,9 @@ class ClassifierPredictThread(QtCore.QThread):
                         self.prediction = None
                     self.dataMgr.featureLock.release()
             except:
+                print "########################## exception in Interactivethread ###################"
+                print e
+                traceback.print_exc(file=sys.stdout)                
                 self.dataMgr.featureLock.release()
 
 
@@ -474,6 +477,8 @@ class ClassifierInteractiveThread(QtCore.QThread):
                 except Exception as e:
                     print "########################## exception in Interactivethread ###################"
                     print e
+                    traceback.print_exc(file=sys.stdout)
+
                     self.ilastik.activeImageLock.release() 
                     self.ilastik.project.dataMgr.featureLock.release()
 

@@ -68,7 +68,7 @@ class MainWindow(QtGui.QMainWindow):
         self.setGeometry(50, 50, 800, 600)
         self.iconPath = '../../icons/32x32/'
         
-        self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
+        #self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
@@ -743,7 +743,7 @@ class FeatureDlg(QtGui.QDialog):
         
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):  
-        self.parent.project.featureMgr = featureMgr.FeatureMgr()
+        self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
 
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
@@ -812,8 +812,6 @@ class FeatureComputation(object):
             
             
     def terminateFeatureProgressBar(self):
-        ##should we do this here ?
-        self.parent.project.dataMgr.buildFeatureMatrix()
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
         self.parent.project.dataMgr.buildTrainingMatrix()

@@ -94,9 +94,9 @@ class DataItemImage(DataItemBase):
         self.dataVol = None
         self.prediction = None
         self.trainingF = None        
-        self.featureM = None
         self.features = [] #features is an array of arrays of arrays etc. like this
                            #feature, channel, time
+        self._featureM = None
         self.history = None
         
     def loadData(self):
@@ -126,25 +126,19 @@ class DataItemImage(DataItemBase):
     def getTrainingMatrixRef(self):
         #TODO: time behaviour should be discussed !
         #also adapt feature computation when doing this(4D??)!
-        if self.trainingF is None:
+        if self.trainingF is None and self._featureM is not None:
             tempF = []
             tempL = []
     
-            tempd =  self.dataVol.labels.data[0, :, :, :, 0].ravel()
+            tempd =  self.dataVol.labels.data[:, :, :, :, 0].ravel()
             indices = numpy.nonzero(tempd)[0]
-            tempL = self.dataVol.labels.data[0,:,:,:,0].ravel()[indices]
+            tempL = self.dataVol.labels.data[:,:,:,:,0].ravel()[indices]
             tempL.shape += (1,)
-                        
-            for i_f, it_f in enumerate(self.features): #features
-                for i_c, it_c in enumerate(it_f): #channels
-                    for i_t, it_t in enumerate(it_c): #time
-                        t = it_t.reshape((numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
-                        tempF.append(t[indices, :])
-            
+                                   
             self.trainingIndices = indices
             self.trainingL = tempL
-            if len(tempF) > 0:
-                self.trainingF = numpy.hstack(tempF)
+            if len(tempL) > 0:
+                self.trainingF = self._featureM.reshape((numpy.prod(self._featureM.shape[0:5]),)+(numpy.prod(self._featureM.shape[5:]),))[self.trainingIndices,:]
             else:
                 self.trainingF = None
         return self.trainingL, self.trainingF, self.trainingIndices
@@ -187,7 +181,7 @@ class DataItemImage(DataItemBase):
                     temp2 = numpy.delete(self.trainingL,nonzero)
                     temp2.shape += (1,)
                     self.trainingL = numpy.vstack((temp2,tempL))
-                    fm = self.getFeatureMatrix()
+                    fm = self.getFlatFeatureMatrix()
                     if fm is not None:
                         temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
                         if len(temp2.shape) == 1:
@@ -201,7 +195,7 @@ class DataItemImage(DataItemBase):
                     tempL.shape += (1,)
                     temp2 = self.trainingL
                     self.trainingL = numpy.vstack((temp2,tempL))
-                    fm = self.getFeatureMatrix()
+                    fm = self.getFlatFeatureMatrix()
                     if fm is not None:
                         temp2 = self.trainingF
                         if len(temp2.shape) == 1:
@@ -237,48 +231,45 @@ class DataItemImage(DataItemBase):
                     pass             
 
             
-    def getFeatureMatrixRef(self):
-        if self.featureM is None:
-            tempM = []
-            for i_f, it_f in enumerate(self.features): #features
-               for i_c, it_c in enumerate(it_f): #channels
-                   for i_t, it_t in enumerate(it_c): #time
-                       tempM.append(it_t.reshape(numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
-
-            if len(tempM) > 0:
-                self.featureM = numpy.hstack(tempM)
-            else:
-                self.featureM = None
-        return self.featureM      
-    
-    def getFeatureMatrix(self):
-        self.getFeatureMatrixRef()
-        if self.featureM is not None:
-            return self.featureM
+#    def getFeatureMatrixRef(self):
+#        if self.featureM is None:
+#            tempM = []
+#            for i_f, it_f in enumerate(self.features): #features
+#               for i_c, it_c in enumerate(it_f): #channels
+#                   for i_t, it_t in enumerate(it_c): #time
+#                       tempM.append(it_t.reshape(numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
+#
+#            if len(tempM) > 0:
+#                self.featureM = numpy.hstack(tempM)
+#            else:
+#                self.featureM = None
+#        return self.featureM      
+#    
+    def getFlatFeatureMatrix(self):
+        if self._featureM is not None:
+            return self._featureM.reshape((numpy.prod(self._featureM.shape[0:5]),) + (numpy.prod(self._featureM.shape[5:]),))
         else:
             return None
         
     def clearFeaturesAndTraining(self):
         self.trainingF = None
         self.trainingL = None
-        self.featureM = None
         self.trainingIndices = None
                 
     def getFeatureMatrixForViewState(self, vs):
         tempM = []
-        for i_f, it_f in enumerate(self.features): #features
-           for i_c, it_c in enumerate(it_f): #channels
-               for i_t, it_t in enumerate(it_c): #time
-                   ttt = []
-                   ttt.append(it_t[vs[1],:,:,:].reshape(numpy.prod(it_t.shape[1:3]),it_t.shape[3]))
-                   ttt.append(it_t[:,vs[2],:,:].reshape(numpy.prod((it_t.shape[0],it_t.shape[2])),it_t.shape[3]))
-                   ttt.append(it_t[:,:,vs[3],:].reshape(numpy.prod(it_t.shape[0:2]),it_t.shape[3]))
-                   tempM.append(numpy.vstack(ttt))            
-        if len(tempM) > 0:
-            featureM = numpy.hstack(tempM)
+        if self._featureM is not None:
+            tempM.append(self._featureM[vs[0],vs[1],:,:,:,:])
+            tempM.append(self._featureM[vs[0],:,vs[2],:,:,:])
+            tempM.append(self._featureM[vs[0],:,:,vs[3],:,:])
+            for i, f in enumerate(tempM):
+                tf = f.reshape((numpy.prod(f.shape[0:3]),) + (numpy.prod(f.shape[3:]),))
+                tempM[i] = tf
+                
+            featureM = numpy.vstack(tempM)
+            return featureM
         else:
-            featureM = None
-        return featureM              
+            return None
             
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
@@ -371,8 +362,8 @@ class DataMgr():
 
 
     def buildFeatureMatrix(self):
-        for item in self:
-            item.getFeatureMatrix()
+        print "buildFeatureMatrix should not be called !!"
+
                     
     def clearFeaturesAndTraining(self):
         self.featureVersion += 1
