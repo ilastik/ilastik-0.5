@@ -34,6 +34,7 @@ import sys
 from core import jobMachine
 from collections import deque
 from core.utilities import irange
+import copy
 
 import vigra
 at = vigra.arraytypes
@@ -132,7 +133,6 @@ class LocalFeature(FeatureBase):
         self.featureFunktor = featureFunktor
         
     def setArguments(self,args):
-        print args
         self.args = args
     
     def __call__(self, channel):
