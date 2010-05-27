@@ -52,6 +52,7 @@ from collections import deque
 from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
 import copy
+import h5py
 
 from OpenGL.GL import *
 
@@ -278,13 +279,28 @@ class MainWindow(QtGui.QMainWindow):
         self.projectDlg = ProjectDlg(self)
     
     def saveProjectDlg(self):
-        # self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ".", "Project Files (*.ilp)")
         fn = str(fileName)
         if len(fn) > 4:
             if fn[-4:] != '.ilp':
                 fn = fn + '.ilp'
             self.project.saveToDisk(fn)
+            
+            # TEMPO: change to save history for experiments
+            histFn = h5py.File(fn,'a')
+            histGrp = histFn.create_group('History')
+            for i, hist in enumerate(self.labelWidget.history.history):
+                histItemGrp = histGrp.create_group('%04d'%i)
+                histItemGrp.create_dataset('labels',data=hist.labels)
+                histItemGrp.create_dataset('axis',data=hist.axis)
+                histItemGrp.create_dataset('slice',data=hist.num)
+                histItemGrp.create_dataset('imageNumber',data=hist.labelNumber)
+                histItemGrp.create_dataset('offset',data=hist.offsets)
+                histItemGrp.create_dataset('time',data=hist.time)
+                histItemGrp.create_dataset('erasing',data=hist.erasing)
+                
+            histFn.close()
+                
             
     def saveProject(self):
         if hasattr(self,'project'):
