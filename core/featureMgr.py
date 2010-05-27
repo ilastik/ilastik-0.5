@@ -132,6 +132,7 @@ class LocalFeature(FeatureBase):
         self.featureFunktor = featureFunktor
         
     def setArguments(self,args):
+        print args
         self.args = args
     
     def __call__(self, channel):
@@ -261,8 +262,9 @@ class FeatureGroups(object):
                     if selected:
                         scaleValue = self.groupScaleValues[scaleIndex]
                         #TODO: This should be replaced by somethon more genric
-                        feature.setArguments([scaleValue for k in feature.argNames])
-                        resList.append(feature)
+                        fc = copy.copy(feature)
+                        fc.setArguments([scaleValue for k in fc.argNames])
+                        resList.append(fc)
         return resList
     
 def myHessianOfGaussian(x,s):

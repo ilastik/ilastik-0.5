@@ -286,20 +286,7 @@ class MainWindow(QtGui.QMainWindow):
                 fn = fn + '.ilp'
             self.project.saveToDisk(fn)
             
-            # TEMPO: change to save history for experiments
-            histFn = h5py.File(fn,'a')
-            histGrp = histFn.create_group('History')
-            for i, hist in enumerate(self.labelWidget.history.history):
-                histItemGrp = histGrp.create_group('%04d'%i)
-                histItemGrp.create_dataset('labels',data=hist.labels)
-                histItemGrp.create_dataset('axis',data=hist.axis)
-                histItemGrp.create_dataset('slice',data=hist.num)
-                histItemGrp.create_dataset('imageNumber',data=hist.labelNumber)
-                histItemGrp.create_dataset('offset',data=hist.offsets)
-                histItemGrp.create_dataset('time',data=hist.time)
-                histItemGrp.create_dataset('erasing',data=hist.erasing)
-                
-            histFn.close()
+
                 
             
     def saveProject(self):

@@ -649,6 +649,18 @@ class HistoryManager(QtCore.QObject):
         if self.current < len(self.history) - 1:
             self.history[self.current + 1].restore(self.volumeEditor)
             self.current += 1
+            
+    def serialize(self, grp):
+        histGrp= grp.create_group('history')
+        for i, hist in enumerate(self.history):
+            histItemGrp = histGrp.create_group('%04d'%i)
+            histItemGrp.create_dataset('labels',data=hist.labels)
+            histItemGrp.create_dataset('axis',data=hist.axis)
+            histItemGrp.create_dataset('slice',data=hist.num)
+            histItemGrp.create_dataset('labelNumber',data=hist.labelNumber)
+            histItemGrp.create_dataset('offsets',data=hist.offsets)
+            histItemGrp.create_dataset('time',data=hist.time)
+            histItemGrp.create_dataset('erasing',data=hist.erasing)
 
 class VolumeUpdate():
     def __init__(self, data, offsets, sizes, erasing):
