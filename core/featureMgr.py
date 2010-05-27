@@ -31,7 +31,8 @@ import numpy
 import threading as threading
 import time
 import sys
-
+from core import jobMachine
+from collections import deque
 from core.utilities import irange
 
 import vigra
@@ -159,19 +160,27 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
     def __init__(self, featureItems, datMgr):
         FeatureParallelBase.__init__(self, featureItems, datMgr)
         threading.Thread.__init__(self)  
+        self.jobMachine = jobMachine.JobMachine()
+    
+    def calcFeature(self, image, feature):
+        result = []
+        for c_ind in range(image.dataVol.data.shape[-1]):
+            print image.dataVol.data.shape[0:5], str(feature)
+            result.append(feature(image.dataVol.data[:,:,:,:,c_ind]))
+            self.count += 1
+        self.resultImage.append(result)
+        
     
     def run(self):
         imageFeatures = []
         for image in self.dataMgr:
-            resultImage = []
+            self.resultImage = deque()
+            jobs = []
             for feature in self.featureItems:
-                result = []
-                for c_ind in range(image.dataVol.data.shape[-1]):
-                    print image.dataVol.data.shape[0:5], str(feature)
-                    result.append(feature(image.dataVol.data[:,:,:,:,c_ind]))
-                    self.count += 1
-                resultImage.append(result)
-            imageFeatures.append(resultImage)
+                job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, feature])
+                jobs.append(job)
+            self.jobMachine.process(jobs)
+            imageFeatures.append(self.resultImage)
             
         for index, feat in enumerate(imageFeatures):
             self.dataMgr[index].features = feat
