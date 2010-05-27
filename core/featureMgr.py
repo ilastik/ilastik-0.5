@@ -162,13 +162,13 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
         threading.Thread.__init__(self)  
         self.jobMachine = jobMachine.JobMachine()
     
-    def calcFeature(self, image, feature):
+    def calcFeature(self, image, number, feature):
         result = []
         for c_ind in range(image.dataVol.data.shape[-1]):
             print image.dataVol.data.shape[0:5], str(feature)
             result.append(feature(image.dataVol.data[:,:,:,:,c_ind]))
             self.count += 1
-        self.resultImage.append(result)
+        self.resultImage[number] = result
         
     
     def run(self):
@@ -177,7 +177,10 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
             self.resultImage = deque()
             jobs = []
             for feature in self.featureItems:
-                job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, feature])
+                self.resultImage.append(None)
+                
+            for i, feature in enumerate(self.featureItems):
+                job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, i, feature])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             imageFeatures.append(self.resultImage)

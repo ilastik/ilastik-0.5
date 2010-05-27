@@ -111,6 +111,17 @@ for i in range(CPU_COUNT):
     WORKER_POOL.append(worker)
 
 
+class WorkerManager(object):
+    def __init__(self):
+        pass
+    
+    def __del__(self):
+        for w in WORKER_POOL:
+            w.stopped = True
+            w.event.set()
+            w.join()
+
+GLOBAL_WM = WorkerManager()
 
 ########################################################################################
 def testFunction(s1, s2):
