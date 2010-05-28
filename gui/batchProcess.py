@@ -25,7 +25,7 @@ sys.path.append( os.path.join(os.getcwd(), '..') )
 
 import volumeeditor as ve
 
-from core import dataMgr
+from core import dataMgr, featureMgr
 from core import classificationMgr as cm
 
 class BatchProcess(QtGui.QDialog):
@@ -93,13 +93,13 @@ class BatchProcess(QtGui.QDialog):
             di.loadData()
             self.dataMgr.append(di)
             
-            self.ilastik.project.featureMgr.prepareCompute(self.dataMgr)  
-            self.ilastik.project.featureMgr.triggerCompute()
-            self.ilastik.project.featureMgr.joinCompute(self.dataMgr)
+            fm = featureMgr.FeatureMgr(self.dataMgr, self.ilastik.project.featureMgr.featureItems)
             
+            fm.prepareCompute(self.dataMgr)  
+            fm.triggerCompute()
+            fm.joinCompute(self.dataMgr)
             
-            self.dataMgr.buildFeatureMatrix()
-            
+                       
             self.dataMgr.classifiers = self.ilastik.project.dataMgr.classifiers
 
             classificationPredict = cm.ClassifierPredictThread(self.dataMgr)
