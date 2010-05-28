@@ -51,6 +51,7 @@ from Queue import Queue as queue
 from collections import deque
 from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
+from core import jobMachine
 import copy
 import h5py
 
@@ -173,6 +174,8 @@ class MainWindow(QtGui.QMainWindow):
         if hasattr(self, "classificationInteractive"):
             self.labelWidget.disconnect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
         self.activeImageLock.acquire()
+        if self.labelWidget is not None:
+            self.labelWidget.history.volumeEditor = None
         if number != self.activeImage:
             self.project.dataMgr[self.activeImage].history = self.labelWidget.history
         self.activeImage = number
@@ -387,7 +390,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.labelWidget is not None:
             self.labelWidget.cleanup()
             self.labelWidget.close()
-            self.labelWidget = None
+            del self.labelWidget
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
@@ -755,7 +758,7 @@ class FeatureDlg(QtGui.QDialog):
             numOfEffectiveFeatures = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureSelectionList]) * numOfChannels
             numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
             # 7 bytes per pixel overhead
-            memoryReq = 2 * numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
+            memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
             print "Total feature vector length is %d with aprox. memory demand of %8.2f MB" % (numOfEffectiveFeatures, memoryReq)
         else:
             print "No features selected"
@@ -928,7 +931,7 @@ class ClassificationInteractive(object):
         if len(self.parent.project.dataMgr.classifiers)>0:
             self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)
         
-        self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifierList)
+        self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
         
 class ClassificationOnline(object):
@@ -1102,4 +1105,10 @@ if __name__ == "__main__":
       
     mainwindow.show() 
     app.exec_()
+    print "cleaning up..."
+    if mainwindow.labelWidget is not None:
+        del mainwindow.labelWidget
+    del mainwindow
+    del jobMachine.GLOBAL_WM
+    
 

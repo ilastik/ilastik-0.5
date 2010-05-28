@@ -236,7 +236,6 @@ class ClassifierTrainThread(QtCore.QThread):
         self.classifiers = deque()
 
     def trainClassifier(self, F, L):
-        print "training  classifier"
         classifier = self.classifier(F, L)
         self.count += 1
         self.classifiers.append(classifier)
@@ -322,41 +321,6 @@ class ClassifierPredictThread(QtCore.QThread):
                 self.dataMgr.featureLock.release()
 
 
-                    
-#class ClassifierPredictThread(QtCore.QThread):
-#    def __init__(self, dataMgr):
-#        QtCore.QThread.__init__(self, None)
-#        #threading.Thread.__init__(self)
-#        self.count = 0
-#        self.dataMgr = dataMgr
-#        self.stopped = False
-#
-#    
-#    def run(self):
-#        
-#        for item in self.dataMgr:
-#            cnt = 0
-#            interactiveMessagePrint( "Feature Item" )
-#            interactiveMessagePrint ( "Classifier %d prediction" % cnt )
-#            self.dataMgr.featureLock.acquire()
-#            try:
-#                #self.dataMgr.clearFeaturesAndTraining()
-#                fm = item.getFeatureMatrix()
-#                if len(self.dataMgr.classifiers) > 0:
-#                    prediction = self.dataMgr.classifiers[0].predict(fm)
-#                    cnt = 1
-#                    if prediction is not None:
-#                        for ii in range(len(self.dataMgr.classifiers) - 1) :
-#                            interactiveMessagePrint( "Classifier %d prediction" % cnt )
-#                            prediction += self.dataMgr.classifiers[ii+1].predict(fm)
-#                            cnt += 1
-#                            self.count += 1
-#                        prediction = prediction / cnt
-#                        #TODO: Time ! synchronize with featureMgr...
-#                        item.prediction = ve.DataAccessor(prediction.reshape(item.dataVol.data.shape[0:-1] + (prediction.shape[-1],)), channels = True)
-#                self.dataMgr.featureLock.release()
-#            except:
-#                self.dataMgr.featureLock.release()
                 
 
 class ClassifierInteractiveThread(QtCore.QThread):
@@ -379,21 +343,38 @@ class ClassifierInteractiveThread(QtCore.QThread):
 
         self.treeCount = treeCount
 
-        self.classifierList = deque(maxlen=numberOfClassifiers)
+        self.classifiers = deque(maxlen=numberOfClassifiers)
 
         for i, item in enumerate(self.ilastik.project.dataMgr.classifiers):
-            self.classifierList.append(item)
+            self.classifiers.append(item)
         
         self.result = deque(maxlen=1)
 
         self.dataPending = threading.Event()
         self.dataPending.clear()
         
+        self.classifier = ClassifierRandomForest
+                
+        self.jobMachine = jobMachine.JobMachine()
+        
         
     def classifierListFull(self):
-        return self.numberOfClassifiers == len(self.classifierList)
+        return self.numberOfClassifiers == len(self.classifiers)
     
-                    
+    def trainClassifier(self, F, L):
+        classifier = self.classifier(F, L)
+        self.classifiers.append(classifier)
+
+
+    def classifierPredict(self, num, featureMatrix):
+        cf = self.classifiers[num]
+        pred = cf.predict(featureMatrix)
+        #self.predLock.acquire()
+        self.prediction += pred
+        self.count += 1
+        #self.predLock.release()
+
+                            
     def run(self):
         self.dataPending.set()
         while not self.stopped:
@@ -413,25 +394,50 @@ class ClassifierInteractiveThread(QtCore.QThread):
                     if features is not None:
                         print "retraining..."
                         interactiveMessagePrint("1>> Pop training Data")
-                        for i in range(self.numberOfClassifiers):
-                            if features.shape[0] == labels.shape[0]:
-                                self.classifierList.append( ClassifierRandomForest(features, labels, treeCount=self.treeCount) )
-                            else:
-                                print "##################### shape mismatch #####################"
+                        if features.shape[0] == labels.shape[0]:
+                            #self.classifiers = deque()
+                            jobs = []
+                            for i in range(self.numberOfClassifiers):
+                                job = jobMachine.IlastikJob(ClassifierInteractiveThread.trainClassifier, [self, features, labels])
+                                jobs.append(job)
+                            self.jobMachine.process(jobs)                        
+                        else:
+                            print "##################### shape mismatch #####################"
                     vs = self.ilastik.labelWidget.getVisibleState()
                     features = self.ilastik.project.dataMgr[activeImage].getFeatureMatrixForViewState(vs)
                     vs.append(activeImage)
     
                     interactiveMessagePrint("1>> Pop prediction Data")
-                    if len(self.classifierList) > 0:
-                        prediction = self.classifierList[0].predict(features)
-                        if prediction is not None:
-                            size = 1
-                            for iii in range(len(self.classifierList) - 1):
-                                classifier = self.classifierList[iii + 1]
-                                prediction += classifier.predict(features)
-                                size += 1                
-                            predictions = prediction / size
+                    if len(self.classifiers) > 0:
+                        #make a little test prediction to get the shape and see if it works:
+                        tempPred = None
+                        if features is not None:
+                            tfm = features[0,:]
+                            tfm.shape = (1,) + tfm.shape 
+                            tempPred = self.classifiers[0].predict(tfm)
+                                            
+                        if tempPred is not None:
+                            self.prediction = numpy.zeros((features.shape[0],) + (tempPred.shape[1],) , 'float32')
+                            jobs= []
+                            self.count = 0
+                            for i in range(len(self.classifiers)):
+                                job = jobMachine.IlastikJob(ClassifierInteractiveThread.classifierPredict, [self, i, features])
+                                jobs.append(job)
+                            self.jobMachine.process(jobs)
+                            predictions = self.prediction / self.count
+                        
+                        
+#                        prediction = self.classifiers[0].predict(features)
+#                        if prediction is not None:
+#                            size = 1
+#                            for iii in range(len(self.classifiers) - 1):
+#                                classifier = self.classifiers[iii + 1]
+#                                prediction += classifier.predict(features)
+#                                size += 1                
+#                            predictions = prediction / size
+                            
+                            
+                            
                             shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
                             index0 = 0
                             count0 = numpy.prod(shape[2:4])

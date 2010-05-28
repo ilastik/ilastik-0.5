@@ -70,7 +70,7 @@ class JobMachine(object):
     
     def __init__(self):
         self.results = deque()
-        self.numWorkers = CPU_COUNT
+        self.numWorkers = CPU_COUNT+1
         self.sem = threading.Semaphore(self.numWorkers)
         self.workers = deque()
         for i in range(self.numWorkers):
@@ -106,7 +106,7 @@ CPU_COUNT = detectCPUs()
 WORKER_POOL = deque()
 print "Detected ", CPU_COUNT, " CPUs"
 
-for i in range(CPU_COUNT):
+for i in range(CPU_COUNT+1):
     worker = JobMachineWorker()
     WORKER_POOL.append(worker)
 
@@ -116,7 +116,8 @@ class WorkerManager(object):
         pass
     
     def __del__(self):
-        for w in WORKER_POOL:
+        for i,w in enumerate(WORKER_POOL):
+            print "stopping worker thread ", str(i)
             w.stopped = True
             w.event.set()
             w.join()
