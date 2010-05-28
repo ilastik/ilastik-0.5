@@ -46,10 +46,12 @@ class FeatureMgr():
     """
     Manages selected features (merkmale) for classificator.
     """
-    def __init__(self, dataMgr, featureItems=[]):
+    def __init__(self, dataMgr, featureItems=None):
         self.dataMgr = dataMgr
         self.featureSizes = []
         self.featureOffsets = []
+        if featureItems is None:
+            featureItems = []
         self.setFeatureItems(featureItems)
         self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
@@ -70,10 +72,10 @@ class FeatureMgr():
                 dimSel = 0
                 
             numChannels = dataMgr[0].dataVol.data.shape[-1]
-            totalSize = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureItems] )
+            totalSize = reduce(lambda x, y: x + y, [k.numOfOutputs[dimSel] for k in featureItems])
             for i, f in enumerate(featureItems):
                 if i != 0:
-                    offset = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureItems[0:i]] )
+                    offset = reduce(lambda x, y: x + y, [k.numOfOutputs[dimSel] for k in featureItems[0:i]])
                 else:
                     offset = 0 
                 size = f.numOfOutputs[dimSel]
@@ -81,7 +83,7 @@ class FeatureMgr():
                 self.featureOffsets.append(offset)
             
             for i, di in enumerate(dataMgr):
-                di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,),'float32')
+                di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,), 'float32')
         else:
             print "no features selected"
         
@@ -132,7 +134,7 @@ class LocalFeature(FeatureBase):
         self.numOfOutputs = numOfOutputs
         self.featureFunktor = featureFunktor
         
-    def setArguments(self,args):
+    def setArguments(self, args):
         self.args = args
     
     def __call__(self, channel):
@@ -141,13 +143,13 @@ class LocalFeature(FeatureBase):
         result = []
         for i in range(channel.shape[0]):
             if channel.shape[1] > 1: #3D Case
-                temp = self.featureFunktor(channel[i,:,:,:].astype(numpy.float32), * self.args)
+                temp = self.featureFunktor(channel[i, :, :, :].astype(numpy.float32), * self.args)
                 if len(temp.shape) == 3:
-                    result.append( temp.reshape( temp.shape + (1,)) )
+                    result.append(temp.reshape(temp.shape + (1,)))
                 else:
-                    result.append( temp )
+                    result.append(temp)
             else: #2D
-                temp = self.featureFunktor(channel[i,0,:,:].astype(numpy.float32), * self.args)
+                temp = self.featureFunktor(channel[i, 0, :, :].astype(numpy.float32), * self.args)
                 if len(temp.shape) == 2:
                     result.append(temp.reshape((1,) + temp.shape + (1,)))
                 else: #more dimensional filter, we only need to add the 3D dimension
@@ -192,12 +194,12 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
         threading.Thread.__init__(self)  
         self.jobMachine = jobMachine.JobMachine()
     
-    def calcFeature(self, image, offset,size, feature):
+    def calcFeature(self, image, offset, size, feature):
         for c_ind in range(image.dataVol.data.shape[-1]):
             print image.dataVol.data.shape[0:5], str(feature)
-            result = feature(image.dataVol.data[:,:,:,:,c_ind])
+            result = feature(image.dataVol.data[:, :, :, :, c_ind])
             try:
-                image._featureM[:,:,:,:,c_ind,offset:offset+size] = result
+                image._featureM[:, :, :, :, c_ind, offset:offset + size] = result
             except Exception as e:
                 print e
             self.count += 1
@@ -267,31 +269,31 @@ class FeatureGroups(object):
                         resList.append(fc)
         return resList
     
-def myHessianOfGaussian(x,s):
+def myHessianOfGaussian(x, s):
     if x.ndim == 2:
-        return vigra.filters.hessianOfGaussian2D(x,s)
+        return vigra.filters.hessianOfGaussian2D(x, s)
     elif x.ndim == 3:
-        return vigra.filters.hessianOfGaussian3D(x,s)
+        return vigra.filters.hessianOfGaussian3D(x, s)
     else:
         print "Error: Dimension must be 2 or 3 dimensional"
         return None
     
-def myHessianOfGaussianEigenvalues(x,s):
+def myHessianOfGaussianEigenvalues(x, s):
     if x.ndim == 2:
-        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(x,s))
+        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(x, s))
     elif x.ndim == 3:
-        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(x,s))
+        return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(x, s))
     else:
         print "Error: Dimension must be 2 or 3 dimensional"
         return None
-def myStructureTensorEigenvalues(x,s1,s2):
-    return vigra.filters.structureTensorEigenvalues(x,s1,s1/2.0)
+def myStructureTensorEigenvalues(x, s1, s2):
+    return vigra.filters.structureTensorEigenvalues(x, s1, s1 / 2.0)
     
 
 def svenSpecial(x):
     res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.39, 1)
     if numpy.max(res) == 0:
-        res[:,:] = 3000
+        res[:, :] = 3000
         return res
     else:
         return vigra.filters.distanceTransform2D(res)
@@ -301,49 +303,49 @@ def svenSpecialSpecial(x):
     
     res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.39, 1)
     if numpy.max(res) == 0:
-        res[:,:] = 3000
+        res[:, :] = 3000
     else:
         res = vigra.filters.distanceTransform2D(res)
-    temp[:,:,0] = res
+    temp[:, :, 0] = res
 
     res = vigra.analysis.cannyEdgeImage(x, 2.2, 0.42, 1)
     if numpy.max(res) == 0:
-        res[:,:] = 3000
+        res[:, :] = 3000
     else:
         res = vigra.filters.distanceTransform2D(res)
-    temp[:,:,1] = res
+    temp[:, :, 1] = res
 
     res = vigra.analysis.cannyEdgeImage(x, 1.9, 0.38, 1)
     if numpy.max(res) == 0:
-        res[:,:] = 3000
+        res[:, :] = 3000
     else:
         res = vigra.filters.distanceTransform2D(res)
-    temp[:,:,2] = res
+    temp[:, :, 2] = res
 
     res = vigra.analysis.cannyEdgeImage(x, 1.8, 0.38, 1)
     if numpy.max(res) == 0:
-        res[:,:] = 3000
+        res[:, :] = 3000
     else:
         res = vigra.filters.distanceTransform2D(res)
-    temp[:,:,3] = res
+    temp[:, :, 3] = res
 
 
     return temp
 
 
-gaussianGradientMagnitude = LocalFeature('Gradient Magnitude', ['Sigma' ], (1,1), vigra.filters.gaussianGradientMagnitude)
-gaussianSmooth = LocalFeature('Gaussian', ['Sigma' ], (1,1), vigra.filters.gaussianSmoothing)
-structureTensor = LocalFeature('Structure Tensor', ['InnerScale', 'OuterScale'], (3,6), vigra.filters.structureTensor)
-hessianMatrixOfGaussian = LocalFeature('Hessian', ['Sigma' ], (3,6), myHessianOfGaussian)
-eigStructureTensor2d = LocalFeature('Eigenvalues of Structure Tensor', ['InnerScale', 'OuterScale'], (2,3), myStructureTensorEigenvalues)
-laplacianOfGaussian = LocalFeature('LoG', ['Sigma' ], (1,1), vigra.filters.laplacianOfGaussian)
-morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], (1,1), lambda x,s: vigra.morphology.discOpening(x.astype(numpy.uint8),int(s*1.5+1)) )
-morphologicalClosing = LocalFeature('Morph Colosing', ['Sigma' ], (1,1), lambda x,s: vigra.morphology.discClosing(x.astype(numpy.uint8),int(s*1.5+1)))
-eigHessianTensor2d = LocalFeature('Eigenvalues of Hessian', ['Sigma' ], (2,3), myHessianOfGaussianEigenvalues)
-differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], (1,1), lambda x, s: vigra.filters.gaussianSmoothing(x,s) - vigra.filters.gaussianSmoothing(x,s/3*2))
-cannyEdge = LocalFeature('Canny', ['Sigma' ], (1,1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
-svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 1', [], (1,1), lambda x: svenSpecial(x))
-svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], (1,1), lambda x: svenSpecialSpecial(x))
+gaussianGradientMagnitude = LocalFeature('Gradient Magnitude', ['Sigma' ], (1, 1), vigra.filters.gaussianGradientMagnitude)
+gaussianSmooth = LocalFeature('Gaussian', ['Sigma' ], (1, 1), vigra.filters.gaussianSmoothing)
+structureTensor = LocalFeature('Structure Tensor', ['InnerScale', 'OuterScale'], (3, 6), vigra.filters.structureTensor)
+hessianMatrixOfGaussian = LocalFeature('Hessian', ['Sigma' ], (3, 6), myHessianOfGaussian)
+eigStructureTensor2d = LocalFeature('Eigenvalues of Structure Tensor', ['InnerScale', 'OuterScale'], (2, 3), myStructureTensorEigenvalues)
+laplacianOfGaussian = LocalFeature('LoG', ['Sigma' ], (1, 1), vigra.filters.laplacianOfGaussian)
+morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], (1, 1), lambda x, s: vigra.morphology.discOpening(x.astype(numpy.uint8), int(s * 1.5 + 1)))
+morphologicalClosing = LocalFeature('Morph Colosing', ['Sigma' ], (1, 1), lambda x, s: vigra.morphology.discClosing(x.astype(numpy.uint8), int(s * 1.5 + 1)))
+eigHessianTensor2d = LocalFeature('Eigenvalues of Hessian', ['Sigma' ], (2, 3), myHessianOfGaussianEigenvalues)
+differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], (1, 1), lambda x, s: vigra.filters.gaussianSmoothing(x, s) - vigra.filters.gaussianSmoothing(x, s / 3 * 2))
+cannyEdge = LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
+svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 1', [], (1, 1), lambda x: svenSpecial(x))
+svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], (1, 1), lambda x: svenSpecialSpecial(x))
                                                         
 
 ilastikFeatureGroups = FeatureGroups()
