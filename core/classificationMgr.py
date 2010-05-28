@@ -314,7 +314,7 @@ class ClassifierPredictThread(QtCore.QThread):
                         item.prediction = ve.DataAccessor(self.prediction.reshape(item.dataVol.data.shape[0:-1] + (self.prediction.shape[-1],)), channels = True)
                         self.prediction = None
                     self.dataMgr.featureLock.release()
-            except:
+            except Exception as e:
                 print "########################## exception in Interactivethread ###################"
                 print e
                 traceback.print_exc(file=sys.stdout)                
