@@ -156,8 +156,5 @@ def test():
     for r in results:
         print r
 
-
-
-
 if __name__ == "__main__":
     test()

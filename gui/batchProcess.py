@@ -105,8 +105,7 @@ class BatchProcess(QtGui.QDialog):
             classificationPredict = cm.ClassifierPredictThread(self.dataMgr)
             classificationPredict.start()
             classificationPredict.wait()            
-            
-            
+  
             #save results
             try:
                 f = h5py.File(filename + '_processed.h5', 'w')
@@ -123,7 +122,6 @@ class BatchProcess(QtGui.QDialog):
                 allok = False
                 self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
                 self.logger.appendPlainText("")                
-            
             
             self.dataMgr.clearDataList()
             #self.logger.update()
