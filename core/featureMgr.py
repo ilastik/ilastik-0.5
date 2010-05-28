@@ -90,7 +90,7 @@ class FeatureMgr():
                     di._featureM = di.featureCacheDS.resize(di.dataVol.data.shape + (totalSize,))
                 di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM, 128)
         else:
-            print "no features selected"
+            print "setFeatureItems(): no features selected"
         
     def prepareCompute(self, dataMgr):
         self.dataMgr = dataMgr
@@ -197,13 +197,16 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
     def __init__(self, featureMgr, datMgr):
         FeatureParallelBase.__init__(self, featureMgr, datMgr)
         threading.Thread.__init__(self)  
-        self.jobMachine = jobMachine.JobMachine()     
+        self.jobMachine = jobMachine.JobMachine()    
+        self.printLock = threading.Lock()
 
 
     def calcFeature(self, image, offset, size, feature, blockNum):
         for c_ind in range(image.dataVol.data.shape[-1]):
             try:
-                print image.dataVol.data.shape[0:5], str(feature)
+                self.printLock.acquire()
+                print "calcFeature(): iamge =", image.Name, "## shape =", image.dataVol.data.shape[0:5], "## featureName=", str(feature), "## channel ", c_ind, "## block =",blockNum
+                self.printLock.release()
                 #TODO: ceil(blockNum,feature.args[0]*3) means sigma*3, make nicer
                 overlap = int(numpy.ceil(feature.args[0]*3))
                 bounds = image.featureBlockAccessor.getBlockBounds(blockNum, overlap)
@@ -225,11 +228,10 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                     tres = result[t][sx:ex,sy:ey,sz:ez]
                     image._featureM[t,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],c_ind,offset:offset+size] = tres
             except Exception as e:
-                print "########################## exception in Interactivethread ###################"
+                print "########################## exception in FeatureThread ###################"
                 print e
                 traceback.print_exc(file=sys.stdout)
             self.count += 1
-
         
     
     def run(self):
