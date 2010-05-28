@@ -85,6 +85,7 @@ class MainWindow(QtGui.QMainWindow):
         self.classificationProcess = None
         self.classificationOnline = None
         
+        self.featureCache = None
         self.opengl = None
         project = None        
         
@@ -100,6 +101,7 @@ class MainWindow(QtGui.QMainWindow):
                     print '%30s  %s' % ("s_gl", "software with opengl 3d overview")
                     print '%30s  %s' % ("gl_gl", "opengl with opengl 3d overview")
                     print '%30s  %s' % ("--project=[filename]", "open specified project file")
+                    print '%30s  %s' % ("--featureCache=[filename]", "use specified file for caching of features")
                     sys.exit()
                 elif o in ("--render"):
                     if a == 's':
@@ -116,6 +118,8 @@ class MainWindow(QtGui.QMainWindow):
                         sys.exit()                                         
                 elif o in ("--project"):
                     project = a
+                elif o in ("--featureCache"):
+                    self.featureCache = a
                 else:
                     assert False, "unhandled option"
             
@@ -473,7 +477,7 @@ class ProjectDlg(QtGui.QDialog):
             self.project = self.ilastik.project
             print "edit Project"
         else:
-            self.dataMgr = dataMgr.DataMgr()
+            self.dataMgr = dataMgr.DataMgr(self.ilastik.featureCache)
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
             print "new Project"
                     

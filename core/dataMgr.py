@@ -86,6 +86,36 @@ class DataItemBase():
         elif self.dataKind in ['gray']:
             return [ self.data ]   
 
+
+class BlockAccessor():
+    def __init__(self, data, blockSize = 128):
+        self.data = data
+        self.blockSize = blockSize
+        
+        self.cX = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
+        self.cY = int(numpy.ceil(1.0 * data.shape[2] / self.blockSize))
+        self.cZ = int(numpy.ceil(1.0 * data.shape[3] / self.blockSize))
+        self.blockCount = self.cX * self.cY * self.cZ
+        
+        
+    def getBlockBounds(self, blockNum, overlap):
+        z = int(numpy.floor(blockNum / (self.cX*self.cY)))
+        rest = blockNum % (self.cX*self.cY)
+        y = int(numpy.floor(rest / self.cX))
+        x = rest % self.cX
+        
+        startx = max(0, x*self.blockSize - overlap) 
+        endx = min(self.data.shape[1], (x+1)*self.blockSize + overlap) 
+        
+        starty = max(0, y*self.blockSize - overlap)
+        endy = min(self.data.shape[2], (y+1)*self.blockSize + overlap) 
+    
+        startz = max(0, z*self.blockSize - overlap)
+        endz = min(self.data.shape[3], (z+1)*self.blockSize + overlap)
+        
+        return [startx,endx,starty,endy,startz,endz]
+
+
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
@@ -98,6 +128,8 @@ class DataItemImage(DataItemBase):
                            #feature, channel, time
         self._featureM = None
         self.history = None
+        self.featureCacheDS = None
+        self.featureBlockAccessor = None
         
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)
@@ -301,7 +333,7 @@ class DataMgr():
     # does not unload data, maybe implement some sort of reference 
     # counting if memory scarceness manifests itself
     
-    def __init__(self):
+    def __init__(self, featureCacheFile = None):
         self.dataItems = []            
         self.classifiers = []
         self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
@@ -309,8 +341,14 @@ class DataMgr():
         self.featureVersion = 0
         self.dataItemsLoaded = []
         self.trainingF = None
+        if featureCacheFile is not None:
+            self.featureCacheFile = h5py.File(featureCacheFile, 'w')
+        else:
+            self.featureCacheFile = None
                
     def append(self, dataItem, alreadyLoaded=False):
+        if self.featureCacheFile is not None:
+            dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,64,64,64,1,1))
         self.dataItems.append(dataItem)
         self.dataItemsLoaded.append(alreadyLoaded)
         
