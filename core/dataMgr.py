@@ -46,6 +46,21 @@ from core import segmentationMgr
 import vigra
 at = vigra.arraytypes
     
+    
+#def testfunc(a,b):
+#    return numpy.unravel_index(a,b)
+    
+def unravelIndices(indices, shape):
+    if len(indices.shape) == 1:
+        indices.shape = indices.shape + (1,)
+    try:
+        ti =  numpy.apply_along_axis(numpy.unravel_index, 1, indices , shape)
+    except Exception as e:
+        print e
+        print indices
+        print shape
+    return ti    
+
 
 class DataItemBase():
     """
@@ -96,6 +111,11 @@ class BlockAccessor():
         self.cY = int(numpy.ceil(1.0 * data.shape[2] / self.blockSize))
         self.cZ = int(numpy.ceil(1.0 * data.shape[3] / self.blockSize))
         self.blockCount = self.cX * self.cY * self.cZ
+        self.lock = threading.Lock()
+        if issubclass(self.data.__class__, numpy.ndarray):
+            self.fileBacked = False
+        else:
+            self.fileBacked = True
         
         
     def getBlockBounds(self, blockNum, overlap):
@@ -115,6 +135,23 @@ class BlockAccessor():
         
         return [startx,endx,starty,endy,startz,endz]
 
+
+    def __getitem__(self, args):
+        if self.fileBacked is False:
+            return self.data[args]
+        else:
+            self.lock.acquire()
+            temp =  self.data[args]
+            self.lock.release()
+            return temp
+            
+    def __setitem__(self, args, data):
+        if self.fileBacked is False:
+            elf.data[args] = data
+        else:
+            self.lock.acquire()
+            self.data[args] = data
+            self.lock.release()
 
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
@@ -155,6 +192,25 @@ class DataItemImage(DataItemBase):
         obj.dataVol.data = DataAccessor(dataArray, True)
         return obj
         
+        
+    def getTrainingMforInd(self, ind):
+#                        featureShape = self._featureM.shape[0:4]
+#                        URI =  unravelIndices(indices, featureShape)
+#                        tempfm = self._featureM[URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
+#                        tempfm.shape = (tempfm.shape[0],) + (tempfm.shape[1]*tempfm.shape[2],)
+        featureShape = self._featureM.shape[0:4]
+        URI =  unravelIndices(ind, featureShape)
+        if issubclass(self._featureM.__class__,numpy.ndarray): 
+            trainingF = self._featureM[URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
+        else:
+            print ind.shape
+            print self._featureM.shape
+            trainingF = numpy.zeros((ind.shape[0],) + (self._featureM.shape[4],self._featureM.shape[5],), 'float32')
+            for i in range(URI.shape[0]): 
+                trainingF[i,:,:] = self._featureM[URI[i,0],URI[i,1],URI[i,2],URI[i,3],:]
+        trainingF.shape = (trainingF.shape[0],) + (trainingF.shape[1]*trainingF.shape[2],)
+        return trainingF
+        
     def getTrainingMatrixRef(self):
         #TODO: time behaviour should be discussed !
         #also adapt feature computation when doing this(4D??)!
@@ -169,8 +225,8 @@ class DataItemImage(DataItemBase):
                                    
             self.trainingIndices = indices
             self.trainingL = tempL
-            if len(tempL) > 0:
-                self.trainingF = self._featureM.reshape((numpy.prod(self._featureM.shape[0:5]),)+(numpy.prod(self._featureM.shape[5:]),))[self.trainingIndices,:]
+            if len(indices) > 0:
+                self.trainingF = self.getTrainingMforInd(indices)
             else:
                 self.trainingF = None
         return self.trainingL, self.trainingF, self.trainingIndices
@@ -213,27 +269,42 @@ class DataItemImage(DataItemBase):
                     temp2 = numpy.delete(self.trainingL,nonzero)
                     temp2.shape += (1,)
                     self.trainingL = numpy.vstack((temp2,tempL))
-                    fm = self.getFlatFeatureMatrix()
-                    if fm is not None:
-                        temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
+
+                        
+                    temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
+                    
+                    if self._featureM is not None and len(indices) > 0:
+                        tempfm = self.getTrainingMforInd(indices)
+                        
                         if len(temp2.shape) == 1:
                             temp2.shape += (1,)
-                            fm.shape += (1,)
-                        self.trainingF = numpy.vstack((temp2,fm[indices,:]))
+
+                        self.trainingF = numpy.vstack((temp2,tempfm))
+                    else:
+                        self.trainingF = temp2
+
                 else: #no intersection, just add everything...
-                    self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
+                    try:
+                        self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
+                    except Exception as e:
+                        print e
+                        print self.trainingIndices.shape
+                        print indices.shape
+                        
                     tempI = numpy.nonzero(nl.data)
                     tempL = nl.data[tempI]
                     tempL.shape += (1,)
                     temp2 = self.trainingL
                     self.trainingL = numpy.vstack((temp2,tempL))
-                    fm = self.getFlatFeatureMatrix()
-                    if fm is not None:
+ 
+                    if self._featureM is not None and len(indices) > 0:
                         temp2 = self.trainingF
                         if len(temp2.shape) == 1:
                             temp2.shape += (1,)
-                            fm.shape += (1,)
-                        self.trainingF = numpy.vstack((temp2,fm[indices,:]))
+
+                        tempfm = self.getTrainingMforInd(indices)
+                        self.trainingF = numpy.vstack((temp2,tempfm))
+                        
             else: #erasing == True
                 indic =  list(numpy.nonzero(nl.data))
                 indic[0] = indic[0] + nl.offsets[0]
@@ -262,26 +333,6 @@ class DataItemImage(DataItemBase):
                 else: #no intersectoin, in erase mode just pass
                     pass             
 
-            
-#    def getFeatureMatrixRef(self):
-#        if self.featureM is None:
-#            tempM = []
-#            for i_f, it_f in enumerate(self.features): #features
-#               for i_c, it_c in enumerate(it_f): #channels
-#                   for i_t, it_t in enumerate(it_c): #time
-#                       tempM.append(it_t.reshape(numpy.prod(it_t.shape[0:3]),it_t.shape[3]))
-#
-#            if len(tempM) > 0:
-#                self.featureM = numpy.hstack(tempM)
-#            else:
-#                self.featureM = None
-#        return self.featureM      
-#    
-    def getFlatFeatureMatrix(self):
-        if self._featureM is not None:
-            return self._featureM.reshape((numpy.prod(self._featureM.shape[0:5]),) + (numpy.prod(self._featureM.shape[5:]),))
-        else:
-            return None
         
     def clearFeaturesAndTraining(self):
         self.trainingF = None
@@ -333,7 +384,7 @@ class DataMgr():
     # does not unload data, maybe implement some sort of reference 
     # counting if memory scarceness manifests itself
     
-    def __init__(self, featureCacheFile = None):
+    def __init__(self, featureCacheFile):
         self.dataItems = []            
         self.classifiers = []
         self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
@@ -348,7 +399,7 @@ class DataMgr():
                
     def append(self, dataItem, alreadyLoaded=False):
         if self.featureCacheFile is not None:
-            dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,64,64,64,1,1))
+            dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,64,64,64,1,1), compression=None)
         self.dataItems.append(dataItem)
         self.dataItemsLoaded.append(alreadyLoaded)
         

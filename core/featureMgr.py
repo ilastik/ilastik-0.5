@@ -87,7 +87,8 @@ class FeatureMgr():
                 if di.featureCacheDS is None:
                     di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,),'float32')
                 else:
-                    di._featureM = di.featureCacheDS.resize(di.dataVol.data.shape + (totalSize,))
+                    di.featureCacheDS.resize(di.dataVol.data.shape + (totalSize,))
+                    di._featureM = di.featureCacheDS 
                 di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM, 128)
         else:
             print "setFeatureItems(): no features selected"
@@ -226,7 +227,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                 
                 for t in range(len(result)):
                     tres = result[t][sx:ex,sy:ey,sz:ez]
-                    image._featureM[t,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],c_ind,offset:offset+size] = tres
+                    image.featureBlockAccessor[t,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],c_ind,offset:offset+size] = tres
             except Exception as e:
                 print "########################## exception in FeatureThread ###################"
                 print e

@@ -272,14 +272,34 @@ class ClassifierPredictThread(QtCore.QThread):
         self.jobMachine = jobMachine.JobMachine()
         self.prediction = None
         self.predLock = threading.Lock()
+        self.numberOfJobs = 0
+        for i, item in enumerate(self.dataMgr):
+            self.numberOfJobs += item.featureBlockAccessor.blockCount * len(self.dataMgr.classifiers)
     
-    def classifierPredict(self, num, featureMatrix):
-        cf = self.dataMgr.classifiers[num]
-        pred = cf.predict(featureMatrix)
-        #self.predLock.acquire()
-        self.prediction += pred
-        self.count += 1
-        #self.predLock.release()
+    def classifierPredict(self, num, bnr, fm):
+        try:
+            cf = self.dataMgr.classifiers[num]
+            b = fm.getBlockBounds(bnr, 0)
+            tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
+            tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4]*tfm.shape[5])
+            pred = cf.predict(tfm2)
+            pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
+            self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] + pred[:,:,:,:]
+            self.count += 1
+            
+#            tfm = fm[:,bnr, :,:,:,:]
+#            tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2],tfm.shape[3]*tfm.shape[4])
+#            pred = cf.predict(tfm2)
+#            pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],pred.shape[1])
+#            #self.predLock.acquire()
+#            self.prediction[:,bnr,:,:,:] = self.prediction[:,bnr,:,:,:] + pred[:,:,:,:]
+#            self.count += 1
+#            #self.predLock.release()
+        except Exception as e:
+            print e
+            traceback.print_exc(file=sys.stdout)         
+            
+            
     
     def run(self):
         
@@ -291,27 +311,27 @@ class ClassifierPredictThread(QtCore.QThread):
             try:
                 #self.dataMgr.clearFeaturesAndTraining()
                 if len(self.dataMgr.classifiers) > 0:
-                    fm = item.getFlatFeatureMatrix()
-
                     #make a little test prediction to get the shape and see if it works:
                     tempPred = None
-                    if fm is not None:
-                        tfm = fm[0,:]
-                        tfm.shape = (1,) + tfm.shape 
+                    if item._featureM is not None:
+                        tfm = item._featureM[0,0,0,0,:,:]
+                        tfm.shape = (1,) + (tfm.shape[0]*tfm.shape[1],) 
                         tempPred = self.dataMgr.classifiers[0].predict(tfm)
                                         
                     if tempPred is not None:
-                        self.prediction = numpy.zeros((fm.shape[0],) + (tempPred.shape[1],) , 'float32')
+                        self.prediction = numpy.zeros((item._featureM.shape[0:4]) + (tempPred.shape[1],) , 'float32')
                         jobs= []
                         for i in range(len(self.dataMgr.classifiers)):
-                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, i, fm])
-                            jobs.append(job)
+                            for bnr in range(item.featureBlockAccessor.blockCount):
+                                job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, i, bnr, item.featureBlockAccessor])
+                                jobs.append(job)
                         self.jobMachine.process(jobs)
-                        if self.count == 0:
-                            self.count = 1
-                        self.prediction = self.prediction / self.count
-                        print self.prediction.shape
-                        item.prediction = ve.DataAccessor(self.prediction.reshape(item.dataVol.data.shape[0:-1] + (self.prediction.shape[-1],)), channels = True)
+                        count = len(self.dataMgr.classifiers)
+                        if count == 0:
+                            count = 1
+                        self.prediction = self.prediction / count
+                        #item.prediction = ve.DataAccessor(self.prediction.reshape(item.dataVol.data.shape[0:-1] + (self.prediction.shape[-1],)), channels = True)
+                        item.prediction = ve.DataAccessor(self.prediction, channels = True)
                         self.prediction = None
                     self.dataMgr.featureLock.release()
             except Exception as e:

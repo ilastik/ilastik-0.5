@@ -906,6 +906,12 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutRedo2.setEnabled(True)
         self.togglePredictionSC.setEnabled(True)
 
+    def __del__(self):
+        QtGui.QWidget.__del__(self)
+        print "deleting imagescenes"
+        for i, item in enumerate(self.imageScenes):
+            del item
+
     def togglePrediction(self):
         print "toggling prediction.."
         maxi = self.overlayView.count() - 2
@@ -1330,7 +1336,13 @@ class ImageScene( QtGui.QGraphicsView):
         self.connect(self.thread, QtCore.SIGNAL('finished()'),self.redrawScene)
         self.thread.start()
 
+    def __del__(self):
+        QtGui.QGraphicsView.__del__(self)
+        print "stopping ImageSCeneRenderThread", str(self.axis)
         
+        self.thread.stopped = True
+        self.thread.dataPending.set()
+        self.thread.join()
 
     def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         stuff = [image, overlays, labels, labelsAlpha]

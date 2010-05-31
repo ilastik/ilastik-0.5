@@ -90,7 +90,7 @@ class MainWindow(QtGui.QMainWindow):
         project = None        
         
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project="])
+            opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project=", "featureCache="])
             for o, a in opts:
                 if o == "-v":
                     verbose = True
@@ -102,7 +102,6 @@ class MainWindow(QtGui.QMainWindow):
                     print '%30s  %s' % ("gl_gl", "opengl with opengl 3d overview")
                     print '%30s  %s' % ("--project=[filename]", "open specified project file")
                     print '%30s  %s' % ("--featureCache=[filename]", "use specified file for caching of features")
-                    sys.exit()
                 elif o in ("--render"):
                     if a == 's':
                         self.opengl = False
@@ -157,7 +156,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.openglOverview = True
 
         if project != None:
-            self.project = projectMgr.Project.loadFromDisk(project)
+            self.project = projectMgr.Project.loadFromDisk(project, self.featureCache)
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             self.activeImage = 0
@@ -306,7 +305,7 @@ class MainWindow(QtGui.QMainWindow):
         
     def loadProjectDlg(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
-        self.project = projectMgr.Project.loadFromDisk(str(fileName))
+        self.project = projectMgr.Project.loadFromDisk(str(fileName), self.featureCache)
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         if hasattr(self, 'projectDlg'):
@@ -1055,11 +1054,10 @@ class ClassificationPredict(object):
           
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-              
-        numberOfJobs = len(self.parent.project.dataMgr) * len(self.parent.project.dataMgr.classifiers)
-        
-        self.initClassificationProgress(numberOfJobs)
+                    
         self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.dataMgr)
+        numberOfJobs = self.classificationPredict.numberOfJobs
+        self.initClassificationProgress(numberOfJobs)
         self.classificationPredict.start()
         self.classificationTimer.start(200) 
 

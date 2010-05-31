@@ -105,7 +105,7 @@ class Project(object):
         print "Project %s saved to %s " % (self.name, fileName)
     
     @staticmethod
-    def loadFromDisk(fileName):
+    def loadFromDisk(fileName, featureCache):
         fileHandle = h5py.File(fileName,'r')
         # p = pickle.load(fileHandle)
         
@@ -117,7 +117,7 @@ class Project(object):
         # init dataMgr 
         
         n = len(fileHandle['DataSets'])
-        dataMgr = dataMgrModule.DataMgr();
+        dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
@@ -135,7 +135,6 @@ class Project(object):
                 activeItem.dataVol.uncertainty = margin[:,:,:,:]
                 seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction[:,:,:,:,:], 1.0)
                 activeItem.dataVol.segmentation = seg[:,:,:,:]
-
             dataMgr.append(activeItem,alreadyLoaded=True)
 
                
