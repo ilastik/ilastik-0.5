@@ -147,7 +147,7 @@ class BlockAccessor():
             
     def __setitem__(self, args, data):
         if self.fileBacked is False:
-            elf.data[args] = data
+            self.data[args] = data
         else:
             self.lock.acquire()
             self.data[args] = data
@@ -346,7 +346,7 @@ class DataItemImage(DataItemBase):
             tempM.append(self._featureM[vs[0],:,vs[2],:,:,:])
             tempM.append(self._featureM[vs[0],:,:,vs[3],:,:])
             for i, f in enumerate(tempM):
-                tf = f.reshape((numpy.prod(f.shape[0:3]),) + (numpy.prod(f.shape[3:]),))
+                tf = f.reshape((numpy.prod(f.shape[0:2]),) + (numpy.prod(f.shape[2:]),))
                 tempM[i] = tf
                 
             featureM = numpy.vstack(tempM)
@@ -399,7 +399,10 @@ class DataMgr():
                
     def append(self, dataItem, alreadyLoaded=False):
         if self.featureCacheFile is not None:
-            dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,64,64,64,1,1), compression=None)
+            cx = 1
+            cy = 32
+            cz = 32
+            dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,cx,cy,cz,1,1), compression=None)
         self.dataItems.append(dataItem)
         self.dataItemsLoaded.append(alreadyLoaded)
         

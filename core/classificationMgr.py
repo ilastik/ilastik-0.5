@@ -443,21 +443,11 @@ class ClassifierInteractiveThread(QtCore.QThread):
                             for i in range(len(self.classifiers)):
                                 job = jobMachine.IlastikJob(ClassifierInteractiveThread.classifierPredict, [self, i, features])
                                 jobs.append(job)
+                                
                             self.jobMachine.process(jobs)
+                            
                             predictions = self.prediction / self.count
-                        
-                        
-#                        prediction = self.classifiers[0].predict(features)
-#                        if prediction is not None:
-#                            size = 1
-#                            for iii in range(len(self.classifiers) - 1):
-#                                classifier = self.classifiers[iii + 1]
-#                                prediction += classifier.predict(features)
-#                                size += 1                
-#                            predictions = prediction / size
-                            
-                            
-                            
+                                                   
                             shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
                             index0 = 0
                             count0 = numpy.prod(shape[2:4])
@@ -466,11 +456,11 @@ class ClassifierInteractiveThread(QtCore.QThread):
                             ax0 = predictions[0:count0,:]
                             ax1 = predictions[count0:count0+count1,:]
                             ax2 = predictions[count0+count1:count0+count1+count2,:]
-    
+
                             tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
                             tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
                             tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
-    
+
                             margin0 = activeLearning.computeEnsembleMargin2D(tp0)*255.0
                             margin1 = activeLearning.computeEnsembleMargin2D(tp1)*255.0
                             margin2 = activeLearning.computeEnsembleMargin2D(tp2)*255.0
@@ -478,7 +468,7 @@ class ClassifierInteractiveThread(QtCore.QThread):
                             seg0 = segmentationMgr.LocallyDominantSegmentation2D(tp0, 1.0)
                             seg1 = segmentationMgr.LocallyDominantSegmentation2D(tp1, 1.0)
                             seg2 = segmentationMgr.LocallyDominantSegmentation2D(tp2, 1.0)
-                                                   
+                            
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], :, :] = margin0[:,:]
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, vs[2], :] = margin1[:,:]
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, :, vs[3]] = margin2[:,:]
@@ -487,12 +477,12 @@ class ClassifierInteractiveThread(QtCore.QThread):
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, vs[2], :] = seg1[:,:]
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, :, vs[3]] = seg2[:,:]
     
-                            
                             for p_i in range(ax0.shape[1]):
                                 item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
                                 item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
+                                
                         else:
                             print "##################### prediction None #########################"
                     else:
