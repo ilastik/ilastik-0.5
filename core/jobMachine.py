@@ -61,6 +61,15 @@ class JobMachineWorker(threading.Thread):
         self.args = args
         self.event.set()
 
+class JobMachineWorkerUnthreaded(object):
+    def __init__(self):
+        pass
+    
+    def process(self, target, args, machine):
+        result = target(*args)
+        machine.results.append(result)
+        machine.workers.append(self)
+        machine.sem.release()      
 
 class JobMachine(object):
     """
@@ -70,16 +79,17 @@ class JobMachine(object):
     
     def __init__(self):
         self.results = deque()
-        self.numWorkers = CPU_COUNT+1
+    
+    def process(self, jobs):
+        """this function is blocking"""
+        
+        self.numWorkers = GLOBAL_WM.threads
         self.sem = threading.Semaphore(self.numWorkers)
         self.workers = deque()
         for i in range(self.numWorkers):
-            worker = WORKER_POOL[i]
+            worker = GLOBAL_WM.workerPool[i]
             #TODO: only append free workers !
             self.workers.append(worker)
-    
-    def process(self, jobs):
-        #this function is blocking
         
         #do the work
         while len(jobs) > 0:
@@ -101,26 +111,39 @@ class JobMachine(object):
     
 
 
-
-CPU_COUNT = detectCPUs()
-WORKER_POOL = deque()
-print "Detected ", CPU_COUNT, " CPUs"
-
-for i in range(CPU_COUNT+1):
-    worker = JobMachineWorker()
-    WORKER_POOL.append(worker)
-
-
 class WorkerManager(object):
     def __init__(self):
-        pass
-    
+        self.cpus = detectCPUs()
+        self.workerPool = deque()
+        if os.environ.has_key("NUMBER_OF_PROCESSORS"):
+            self.setThreadCount(0) #don't use threading under windows for now
+        else:
+            self.setThreadCount(self.cpus + 1)
+        
+    def setThreadCount(self, threadCount):
+        self.stopWorkers()
+        if threadCount == 0:
+            self.threads = 1
+            worker = JobMachineWorkerUnthreaded()
+            self.workerPool.append(worker)
+        else:
+            self.threads = threadCount
+            for i in range(threadCount):
+                worker = JobMachineWorker()
+                self.workerPool.append(worker)
+            
+        
+    def stopWorkers(self):
+        for i,w in enumerate(self.workerPool):
+            if not issubclass(w.__class__,JobMachineWorkerUnthreaded):
+                print "stopping worker thread ", str(i)
+                w.stopped = True
+                w.event.set()
+                w.join()
+        self.workerPool.clear()
+        
     def __del__(self):
-        for i,w in enumerate(WORKER_POOL):
-            print "stopping worker thread ", str(i)
-            w.stopped = True
-            w.event.set()
-            w.join()
+        self.stopWorkers()
 
 GLOBAL_WM = WorkerManager()
 
@@ -145,6 +168,8 @@ def test():
     for r in results:
         print r
 
+    GLOBAL_WM.setThreadCount(0) #set unthreaded mode
+    
     #second round
     for i in range(10):
         job = IlastikJob(testFunction, ["#2 Processing task ",str(i)])
