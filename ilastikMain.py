@@ -937,110 +937,110 @@ class ClassificationInteractive(object):
         self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
         
-class ClassificationOnline(object):
-    def __init__(self, parent):
-        print "Online Classification initialized"
-        self.parent = parent
-        
-        self.OnlineThread = None
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingData)
-        self.parent.connect(self.parent, QtCore.SIGNAL('newPredictionsPending'), self.updatePredictionData)
-
-    def __del__(self):
-        self.parent.labelWidget.disconnect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'))
-        self.parent.disconnect(self.parent,self.QtCore.SIGNAL('newPredictionsPending'))
-        
-    def start(self,name):
-        print "Online Classification starting"
-
-        #self.parent.generateTrainingData()
-        
-        features = self.parent.project.trainingMatrix
-        labels = self.parent.project.trainingLabels  
-
-        self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
-        predictionList = self.parent.project.dataMgr.buildFeatureMatrix()
-        ids = numpy.zeros((len(labels),)).astype(numpy.int32)
-
-        self.OnlineThread = classificationMgr.ClassifierOnlineThread(name, features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
-        self.OnlineThread.start()
-        
-    def stop(self):
-        print "Online Classification stopped"
-        self.OnlineThread.stopped = True
-        self.OnlineThread.commandQueue.put((None, None, None, 'stop'))
-        print "Joining thread"
-        self.OnlineThread.wait()
-        print "Thread stopped"
-        self.OnlineThread = None
-        self.parent.labelWidget.labelForImage[0].DrawManagers[0].deleteBrushQueue('onlineLearning')
-    
-    def predictionUpdatedCallBack(self):
-        self.parent.emit(QtCore.SIGNAL('newPredictionsPending'))
-
-    def updatePredictionData(self):
-        print "Updating prediction data"
-        tic = time.time()
-        if self.OnlineThread == None:
-            return
-        new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
-        #self.preds=numpy.zeros((new_pred.shape[0],2))
-        #for i in xrange(len(new_pred)):
-        #    self.preds[i,0]=1.0-new_pred[i]
-        #    self.preds[i,1]=new_pred[i]
-        print new_pred.shape
-
-        tmp = {}
-        print new_pred.shape
-        tmp[self.parent.labelWidget.activeImage] = new_pred
-        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
-        self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
-        
-        
-        print "Done updating prediction data: %f secs" % (time.time() - tic)
-        #self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
-        
-    
-    def updateTrainingData(self):
-        active_image=self.parent.labelWidget.activeImage
-        print active_image
-        Labels=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].labelmngr.labelArray
-        queue=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].BrushQueues['onlineLearning']
-
-        #TODO: make as many as there are images
-        labelArrays=[numpy.array([0])] * (active_image+1)
-
-        while(True):
-            labelArrays[active_image]=numpy.zeros(Labels.shape,Labels.dtype)
-            try:
-                step=queue.pop()
-            except IndexError:
-                break
-            #decompose step, start by removing data
-            remove_data=[]
-
-            for i in xrange(len(step.oldValues)):
-                if step.oldValues[i]!=0 or step.isUndo:
-                    remove_data.append(step.positions[i])
-            remove_data=numpy.array(remove_data).astype(numpy.float32)
-            self.OnlineThread.commandQueue.put((None,None,remove_data,'remove'))
-
-            #add new data
-            add_indexes=[]
-            for i in xrange(len(step.oldValues)):
-                if (not step.isUndo and step.newLabel!=0) or (step.isUndo and step.oldValues[i]!=0): 
-                    add_indexes.append(step.positions[i])
-                    labelArrays[active_image][step.positions[i]]=Labels[step.positions[i]]
-            #create the new features
-            #self.parent.generateTrainingData(labelArrays)
-            add_indexes=numpy.array(add_indexes)
-
-            print "*************************************"
-            print "************* SENDING ***************"
-            print "*************************************"
-            self.OnlineThread.commandQueue.put((self.parent.project.trainingMatrix,
-                                                self.parent.project.trainingLabels.astype(numpy.int32),
-                                                numpy.array(add_indexes).astype(numpy.int32),'learn'))
+#class ClassificationOnline(object):
+#    def __init__(self, parent):
+#        print "Online Classification initialized"
+#        self.parent = parent
+#        
+#        self.OnlineThread = None
+#        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingData)
+#        self.parent.connect(self.parent, QtCore.SIGNAL('newPredictionsPending'), self.updatePredictionData)
+#
+#    def __del__(self):
+#        self.parent.labelWidget.disconnect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'))
+#        self.parent.disconnect(self.parent,self.QtCore.SIGNAL('newPredictionsPending'))
+#        
+#    def start(self,name):
+#        print "Online Classification starting"
+#
+#        #self.parent.generateTrainingData()
+#        
+#        features = self.parent.project.trainingMatrix
+#        labels = self.parent.project.trainingLabels  
+#
+#        self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
+#        predictionList = self.parent.project.dataMgr.buildFeatureMatrix()
+#        ids = numpy.zeros((len(labels),)).astype(numpy.int32)
+#
+#        self.OnlineThread = classificationMgr.ClassifierOnlineThread(name, features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
+#        self.OnlineThread.start()
+#        
+#    def stop(self):
+#        print "Online Classification stopped"
+#        self.OnlineThread.stopped = True
+#        self.OnlineThread.commandQueue.put((None, None, None, 'stop'))
+#        print "Joining thread"
+#        self.OnlineThread.wait()
+#        print "Thread stopped"
+#        self.OnlineThread = None
+#        self.parent.labelWidget.labelForImage[0].DrawManagers[0].deleteBrushQueue('onlineLearning')
+#    
+#    def predictionUpdatedCallBack(self):
+#        self.parent.emit(QtCore.SIGNAL('newPredictionsPending'))
+#
+#    def updatePredictionData(self):
+#        print "Updating prediction data"
+#        tic = time.time()
+#        if self.OnlineThread == None:
+#            return
+#        new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
+#        #self.preds=numpy.zeros((new_pred.shape[0],2))
+#        #for i in xrange(len(new_pred)):
+#        #    self.preds[i,0]=1.0-new_pred[i]
+#        #    self.preds[i,1]=new_pred[i]
+#        print new_pred.shape
+#
+#        tmp = {}
+#        print new_pred.shape
+#        tmp[self.parent.labelWidget.activeImage] = new_pred
+#        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
+#        self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
+#        
+#        
+#        print "Done updating prediction data: %f secs" % (time.time() - tic)
+#        #self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
+#        
+#    
+#    def updateTrainingData(self):
+#        active_image=self.parent.labelWidget.activeImage
+#        print active_image
+#        Labels=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].labelmngr.labelArray
+#        queue=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].BrushQueues['onlineLearning']
+#
+#        #TODO: make as many as there are images
+#        labelArrays=[numpy.array([0])] * (active_image+1)
+#
+#        while(True):
+#            labelArrays[active_image]=numpy.zeros(Labels.shape,Labels.dtype)
+#            try:
+#                step=queue.pop()
+#            except IndexError:
+#                break
+#            #decompose step, start by removing data
+#            remove_data=[]
+#
+#            for i in xrange(len(step.oldValues)):
+#                if step.oldValues[i]!=0 or step.isUndo:
+#                    remove_data.append(step.positions[i])
+#            remove_data=numpy.array(remove_data).astype(numpy.float32)
+#            self.OnlineThread.commandQueue.put((None,None,remove_data,'remove'))
+#
+#            #add new data
+#            add_indexes=[]
+#            for i in xrange(len(step.oldValues)):
+#                if (not step.isUndo and step.newLabel!=0) or (step.isUndo and step.oldValues[i]!=0): 
+#                    add_indexes.append(step.positions[i])
+#                    labelArrays[active_image][step.positions[i]]=Labels[step.positions[i]]
+#            #create the new features
+#            #self.parent.generateTrainingData(labelArrays)
+#            add_indexes=numpy.array(add_indexes)
+#
+#            print "*************************************"
+#            print "************* SENDING ***************"
+#            print "*************************************"
+#            self.OnlineThread.commandQueue.put((self.parent.project.trainingMatrix,
+#                                                self.parent.project.trainingLabels.astype(numpy.int32),
+#                                                numpy.array(add_indexes).astype(numpy.int32),'learn'))
         
     
 class ClassificationPredict(object):

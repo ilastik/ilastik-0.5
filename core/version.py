@@ -30,20 +30,21 @@
 import subprocess, os
 
 def getIlastikVersion():
-#    version = "$Revision$"  #SVN keyword, get replaced
-#    version = version.split(" ")[1]    
-#    return version.strip()
-    if os.name == 'nt':
-        # Windows        
-        process = subprocess.Popen(['SubWCRev','..'], shell=True, stdout=subprocess.PIPE)
-        a = process.communicate()
-        version = a[0][a[0].find('committed at revision') + 21:a[0].find('committed at revision') + 25]
-        return version.strip() 
-    else:
-        # Linux/ Mac
-        process = subprocess.Popen(['svn info ../ | grep " Rev:" | cut -d ' ' -f 4',''], shell=True, stdout=subprocess.PIPE)
-        a = process.communicate()
-        return version.strip() 
+    version = "$Revision$"  #SVN keyword, get replaced
+    version = version.split(" ")[1]    
+    return version.strip()
+
+#    if os.name == 'nt':
+#        # Windows        
+#        process = subprocess.Popen(['SubWCRev','..'], shell=True, stdout=subprocess.PIPE)
+#        a = process.communicate()
+#        version = a[0][a[0].find('committed at revision') + 21:a[0].find('committed at revision') + 25]
+#        return version.strip() 
+#    else:
+#        # Linux/ Mac
+#        process = subprocess.Popen(['svn info ../ | grep " Rev:" | cut -d ' ' -f 4',''], shell=True, stdout=subprocess.PIPE)
+#        a = process.communicate()
+#        return version.strip() 
         
 
 

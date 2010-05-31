@@ -79,10 +79,9 @@ class ClassifierRandomForest(ClassifierBase):
         if not features.dtype == numpy.float32:
             features = features.astype(numpy.float32)
         
-        interactiveMessagePrint("Building trees..")
         if len(numpy.unique(labels)) > 1:
             print "Learning RF: %d labels given, %d classes, and %d features " % (features.shape[0], len(numpy.unique(labels)), features.shape[1])
-            self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount, )
+            self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
         else:
             self.classifier = None
             
@@ -344,7 +343,7 @@ class ClassifierPredictThread(QtCore.QThread):
                 
 
 class ClassifierInteractiveThread(QtCore.QThread):
-    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=10):
+    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=100):
         #threading.Thread.__init__(self)
         #QtCore.QObject.__init__(self)
         QtCore.QThread.__init__(self, None)

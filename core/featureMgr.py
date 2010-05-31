@@ -206,7 +206,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
         for c_ind in range(image.dataVol.data.shape[-1]):
             try:
                 self.printLock.acquire()
-                print "calcFeature(): iamge =", image.Name, "## shape =", image.dataVol.data.shape[0:5], "## featureName=", str(feature), "## channel ", c_ind, "## block =",blockNum
+                print "calcFeature(): image =", image.Name, "## shape =", image.dataVol.data.shape[0:5], "## featureName =", str(feature), "## channel ", c_ind, "## block =",blockNum
                 self.printLock.release()
                 #TODO: ceil(blockNum,feature.args[0]*3) means sigma*3, make nicer
                 overlap = int(numpy.ceil(feature.args[0]*3))

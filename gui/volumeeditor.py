@@ -624,7 +624,7 @@ class LabelState(State):
 
 
 class HistoryManager(QtCore.QObject):
-    def __init__(self, parent, maxSize = 100):
+    def __init__(self, parent, maxSize = 3000):
         self.volumeEditor = parent
         self.maxSize = maxSize
         self.history = []
