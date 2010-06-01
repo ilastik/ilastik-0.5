@@ -375,11 +375,8 @@ class ClassifierInteractiveThread(QtCore.QThread):
         return self.numberOfClassifiers == len(self.classifiers)
     
     def trainClassifier(self, F, L):
-        print "#### 1"
         classifier = self.classifier(F, L)
-        print "#### 2"
         self.classifiers.append(classifier)
-        print "#### 3"
 
 
     def classifierPredict(self, num, featureMatrix):
