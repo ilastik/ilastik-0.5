@@ -1875,26 +1875,26 @@ class OverviewScene(QtOpenGL.QGLWidget):
         
         self.initialized = True
 
-class OverviewScene2(QtGui.QGraphicsView):
-    def __init__(self, images):
-        QtGui.QGraphicsView.__init__(self)
-        self.scene = QtGui.QGraphicsScene(self)
-#        self.scene.setSceneRect(0,0, imShape[0],imShape[1])
-        self.setScene(self.scene)
-        self.setRenderHint(QtGui.QPainter.Antialiasing)
-        self.images = images
-        self.sceneItems = []
-
-    def display(self):
-        for index, item in enumerate(self.sceneItems):
-            self.scene.removeItem(item)
-            del item
-        self.sceneItems = []
-        self.sceneItems.append(QtGui.QGraphicsPixmapItem(self.images[0].pixmap))
-        self.sceneItems.append(QtGui.QGraphicsPixmapItem(self.images[1].pixmap))
-        self.sceneItems.append(QtGui.QGraphicsPixmapItem(self.images[2].pixmap))
-        for index, item in enumerate(self.sceneItems):
-            self.scene.addItem(item)
+#class OverviewScene2(QtGui.QGraphicsView):
+#    def __init__(self, images):
+#        QtGui.QGraphicsView.__init__(self)
+#        self.scene = QtGui.QGraphicsScene(self)
+##        self.scene.setSceneRect(0,0, imShape[0],imShape[1])
+#        self.setScene(self.scene)
+#        self.setRenderHint(QtGui.QPainter.Antialiasing)
+#        self.images = images
+#        self.sceneItems = []
+#
+#    def display(self):
+#        for index, item in enumerate(self.sceneItems):
+#            self.scene.removeItem(item)
+#            del item
+#        self.sceneItems = []
+#        self.sceneItems.append(QtGui.QGraphicsPixmapItem(self.images[0].pixmap))
+#        self.sceneItems.append(QtGui.QGraphicsPixmapItem(self.images[1].pixmap))
+#        self.sceneItems.append(QtGui.QGraphicsPixmapItem(self.images[2].pixmap))
+#        for index, item in enumerate(self.sceneItems):
+#            self.scene.addItem(item)
 
 def test():
     """Text editor demo"""

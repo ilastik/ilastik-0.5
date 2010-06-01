@@ -118,7 +118,7 @@ class MainWindow(QtGui.QMainWindow):
                 elif o in ("--project"):
                     project = a
                 elif o in ("--featureCache"):
-                    self.featureCache = a
+                    self.featureCache = h5py.File(a, 'w')
                 else:
                     assert False, "unhandled option"
             
@@ -476,7 +476,14 @@ class ProjectDlg(QtGui.QDialog):
             self.project = self.ilastik.project
             print "edit Project"
         else:
-            self.dataMgr = dataMgr.DataMgr(self.ilastik.featureCache)
+            if self.ilastik.featureCache is not None:
+                if 'tempF' in self.ilastik.featureCache.keys():
+                    grp = self.ilastik.featureCache['tempF']
+                else:
+                    grp = self.ilastik.featureCache.create_group('tempF')
+            else:
+                grp = None
+            self.dataMgr = dataMgr.DataMgr(grp)
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
             print "new Project"
                     

@@ -392,11 +392,8 @@ class DataMgr():
         self.featureVersion = 0
         self.dataItemsLoaded = []
         self.trainingF = None
-        if featureCacheFile is not None:
-            self.featureCacheFile = h5py.File(featureCacheFile, 'w')
-        else:
-            self.featureCacheFile = None
-               
+        self.featureCacheFile = featureCacheFile
+            
     def append(self, dataItem, alreadyLoaded=False):
         if self.featureCacheFile is not None:
             cx = 1
