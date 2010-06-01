@@ -108,6 +108,7 @@ class BlockAccessor():
         self.blockSize = blockSize
         
         self.cX = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
+
         self.cY = int(numpy.ceil(1.0 * data.shape[2] / self.blockSize))
         self.cZ = int(numpy.ceil(1.0 * data.shape[3] / self.blockSize))
         self.blockCount = self.cX * self.cY * self.cZ
@@ -399,6 +400,8 @@ class DataMgr():
             cx = 1
             cy = 32
             cz = 32
+            if str(len(self)) in self.featureCacheFile.keys():
+                del self.featureCacheFile[str(len(self))]
             dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,cx,cy,cz,1,1), compression=None)
         self.dataItems.append(dataItem)
         self.dataItemsLoaded.append(alreadyLoaded)

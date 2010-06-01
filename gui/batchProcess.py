@@ -65,9 +65,16 @@ class BatchProcess(QtGui.QDialog):
         self.logger.setVisible(False)
         self.layout.addWidget(self.logger)        
         self.image = None
-        
-        
-        self.dataMgr = dataMgr.DataMgr()
+
+        if self.ilastik.featureCache is not None:
+            if 'tempF_batch' in self.ilastik.featureCache.keys():
+                grp = self.ilastik.featureCache['tempF_batch']
+            else:
+                grp = self.ilastik.featureCache.create_group('tempF_batch')
+        else:
+            grp = None
+
+        self.dataMgr = dataMgr.DataMgr(grp)
         
 
 

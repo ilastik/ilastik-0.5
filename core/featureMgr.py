@@ -155,6 +155,7 @@ class LocalFeature(FeatureBase):
                 else:
                     result.append(temp)
             else: #2D
+                print channel.shape
                 temp = self.featureFunktor(channel[i, 0, :, :].astype(numpy.float32), * self.args)
                 if len(temp.shape) == 2:
                     result.append(temp.reshape((1,) + temp.shape + (1,)))
