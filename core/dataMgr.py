@@ -42,7 +42,7 @@ from gui.volumeeditor import Volume as Volume
 
 from core import activeLearning
 from core import segmentationMgr
-
+import traceback
 import vigra
 at = vigra.arraytypes
     
@@ -271,97 +271,107 @@ class DataItemImage(DataItemBase):
     def updateTrainingMatrix(self, newLabels):
         #TODO: this method is crazy, make it less crazy
         for nl in newLabels:
-            if nl.erasing == False:
-                indic =  list(numpy.nonzero(nl.data))
-                indic[0] = indic[0] + nl.offsets[0]
-                indic[1] += nl.offsets[1]
-                indic[2] += nl.offsets[2]
-                indic[3] += nl.offsets[3]
-                indic[4] += nl.offsets[4]
-                
-                loopc = 2
-                count = 1
-                indices = indic[-loopc]*count
-                templ = list(self.dataVol.data.shape[1:-1])
-                templ.reverse()
-                for s in templ:
-                    loopc += 1
-                    count *= s
-                    indices += indic[-loopc]*count
-                
-                mask = numpy.in1d(self.trainingIndices,indices)
-                nonzero = numpy.nonzero(mask)[0]
-                if len(nonzero) > 0:
-                    self.trainingIndices = numpy.concatenate((numpy.delete(self.trainingIndices,nonzero),indices))
-                    tempI = numpy.nonzero(nl.data)
-                    tempL = nl.data[tempI]
-                    tempL.shape += (1,)
-                    temp2 = numpy.delete(self.trainingL,nonzero)
-                    temp2.shape += (1,)
-                    self.trainingL = numpy.vstack((temp2,tempL))
+            try:
+                if nl.erasing == False:
+                    indic =  list(numpy.nonzero(nl.data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
 
-                        
-                    temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
-                    
-                    if self._featureM is not None and len(indices) > 0:
-                        tempfm = self.getTrainingMforInd(indices)
-                        
-                        if len(temp2.shape) == 1:
-                            temp2.shape += (1,)
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(self.dataVol.data.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
 
-                        self.trainingF = numpy.vstack((temp2,tempfm))
-                    else:
-                        self.trainingF = temp2
+                    if len(indices.shape) == 1:
+                        indices.shape = indices.shape + (1,)
 
-                else: #no intersection, just add everything...
-                    try:
-                        self.trainingIndices = numpy.hstack((self.trainingIndices,indices))
-                    except Exception as e:
-                        print e
-                        print self.trainingIndices.shape
-                        print indices.shape
-                        
-                    tempI = numpy.nonzero(nl.data)
-                    tempL = nl.data[tempI]
-                    tempL.shape += (1,)
-                    temp2 = self.trainingL
-                    self.trainingL = numpy.vstack((temp2,tempL))
- 
-                    if self._featureM is not None and len(indices) > 0:
-                        temp2 = self.trainingF
-                        if len(temp2.shape) == 1:
-                            temp2.shape += (1,)
+                    mask = numpy.in1d(self.trainingIndices,indices)
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        tt = numpy.delete(self.trainingIndices,nonzero)
+                        if len(tt.shape) == 1:
+                            tt.shape = tt.shape + (1,)
+                        self.trainingIndices = numpy.concatenate((tt,indices))
+                        tempI = numpy.nonzero(nl.data)
+                        tempL = nl.data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = numpy.delete(self.trainingL,nonzero)
+                        temp2.shape += (1,)
+                        self.trainingL = numpy.vstack((temp2,tempL))
 
-                        tempfm = self.getTrainingMforInd(indices)
-                        self.trainingF = numpy.vstack((temp2,tempfm))
-                        
-            else: #erasing == True
-                indic =  list(numpy.nonzero(nl.data))
-                indic[0] = indic[0] + nl.offsets[0]
-                indic[1] += nl.offsets[1]
-                indic[2] += nl.offsets[2]
-                indic[3] += nl.offsets[3]
-                indic[4] += nl.offsets[4]
-                
-                loopc = 2
-                count = 1
-                indices = indic[-loopc]*count
-                templ = list(self.dataVol.data.shape[1:-1])
-                templ.reverse()
-                for s in templ:
-                    loopc += 1
-                    count *= s
-                    indices += indic[-loopc]*count
-                
-                mask = numpy.in1d(self.trainingIndices,indices) #get intersection
-                nonzero = numpy.nonzero(mask)[0]
-                if len(nonzero) > 0:
-                    self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
-                    self.trainingL  = numpy.delete(self.trainingL,nonzero)
-                    self.trainingL.shape += (1,) #needed because numpy.delete is stupid
-                    self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
-                else: #no intersectoin, in erase mode just pass
-                    pass             
+
+                        temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
+
+                        if self._featureM is not None and len(indices) > 0:
+                            tempfm = self.getTrainingMforInd(indices)
+
+                            if len(temp2.shape) == 1:
+                                temp2.shape += (1,)
+
+                            self.trainingF = numpy.vstack((temp2,tempfm))
+                        else:
+                            self.trainingF = temp2
+
+                    elif indices.shape[0] > 0: #no intersection, just add everything...
+                        if len(self.trainingIndices.shape) == 1:
+                            self.trainingIndices.shape = self.trainingIndices.shape + (1,)
+                        self.trainingIndices = numpy.concatenate((self.trainingIndices,indices))
+
+                        tempI = numpy.nonzero(nl.data)
+                        tempL = nl.data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = self.trainingL
+                        self.trainingL = numpy.vstack((temp2,tempL))
+
+                        if self._featureM is not None and len(indices) > 0:
+                            temp2 = self.trainingF
+                            if len(temp2.shape) == 1:
+                                temp2.shape += (1,)
+
+                            tempfm = self.getTrainingMforInd(indices)
+                            self.trainingF = numpy.vstack((temp2,tempfm))
+
+                else: #erasing == True
+                    indic =  list(numpy.nonzero(nl.data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(self.dataVol.data.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
+
+                    mask = numpy.in1d(self.trainingIndices,indices) #get intersection
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
+                        self.trainingL  = numpy.delete(self.trainingL,nonzero)
+                        self.trainingL.shape += (1,) #needed because numpy.delete is stupid
+                        self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
+                    else: #no intersectoin, in erase mode just pass
+                        pass
+            except Exception as e:
+                print e
+                traceback.print_exc(file=sys.stdout)
+                print self.trainingIndices.shape
+                print indices.shape
+
 
         
     def clearFeaturesAndTraining(self):
