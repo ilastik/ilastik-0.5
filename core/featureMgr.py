@@ -29,6 +29,7 @@
 
 import numpy
 import threading as threading
+import threading
 import time
 import sys
 from core import jobMachine
@@ -156,7 +157,9 @@ class LocalFeature(FeatureBase):
                     result.append(temp)
             else: #2D
                 print channel.shape
+                print "before"
                 temp = self.featureFunktor(channel[i, 0, :, :].astype(numpy.float32), * self.args)
+                print "after"
                 if len(temp.shape) == 2:
                     result.append(temp.reshape((1,) + temp.shape + (1,)))
                 else: #more dimensional filter, we only need to add the 3D dimension
@@ -283,7 +286,7 @@ class FeatureGroups(object):
         self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
-        self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5, 7.0, 10.0]
+        self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5, 5.0, 10.0]
         
         self.members = {}
         for g in self.groupNames:
@@ -405,4 +408,5 @@ svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], (1, 1), lambda 
 
 ilastikFeatureGroups = FeatureGroups()
 ilastikFeatures = ilastikFeatureGroups.createList()
+
 
