@@ -49,8 +49,10 @@ class JobMachineWorker(threading.Thread):
                 try:
                     result = self.target(*self.args)
                     self.machine.results.append(result)
-                except:
-                    pass
+                except Exception as e:
+                    print "JobMachineWorker::run()"
+                    print e
+                    
                 self.machine.workers.append(self) #reappend me to the deque of available workers, IlastikJob popped me at the beginning
                 self.machine.sem.release() # the semaphore is required in the JobMachine, we release it here when finished
                     
@@ -116,7 +118,7 @@ class WorkerManager(object):
         self.cpus = detectCPUs()
         self.workerPool = deque()
         if os.environ.has_key("NUMBER_OF_PROCESSORS"):
-            self.setThreadCount(0) #don't use threading under windows for now
+            self.setThreadCount(self.cpus + 1) #don't use threading under windows for now
         else:
             self.setThreadCount(self.cpus + 1)
         

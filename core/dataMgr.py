@@ -384,7 +384,7 @@ class DataMgr():
     # does not unload data, maybe implement some sort of reference 
     # counting if memory scarceness manifests itself
     
-    def __init__(self, featureCacheFile):
+    def __init__(self, featureCacheFile=None):
         self.dataItems = []            
         self.classifiers = []
         self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff

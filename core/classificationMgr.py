@@ -73,6 +73,7 @@ class ClassifierBase(object):
     
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None, treeCount=10):
+    def __init__(self, features=None, labels=None, treeCount=100):
         ClassifierBase.__init__(self)
         if not labels.dtype == numpy.uint32:
             labels = labels.astype(numpy.uint32)
@@ -80,14 +81,14 @@ class ClassifierRandomForest(ClassifierBase):
             features = features.astype(numpy.float32)
         
         if len(numpy.unique(labels)) > 1:
-            print "Learning RF: %d labels given, %d classes, and %d features " % (features.shape[0], len(numpy.unique(labels)), features.shape[1])
+            print "Learning RF %d trees: %d labels given, %d classes, and %d features " % (treeCount, features.shape[0], len(numpy.unique(labels)), features.shape[1])
             self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
         else:
             self.classifier = None
             
         self.treeCount = treeCount
-        self.features = features
         self.labels = labels
+        self.features = features
 
     
 #    def train(self, labels, features):
@@ -238,7 +239,6 @@ class ClassifierTrainThread(QtCore.QThread):
         classifier = self.classifier(F, L)
         self.count += 1
         self.classifiers.append(classifier)
-
         
     def run(self):
         self.dataMgr.featureLock.acquire()
@@ -347,7 +347,7 @@ class ClassifierPredictThread(QtCore.QThread):
                 
 
 class ClassifierInteractiveThread(QtCore.QThread):
-    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=100):
+    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=10):
         #threading.Thread.__init__(self)
         #QtCore.QObject.__init__(self)
         QtCore.QThread.__init__(self, None)
@@ -385,13 +385,11 @@ class ClassifierInteractiveThread(QtCore.QThread):
         return self.numberOfClassifiers == len(self.classifiers)
     
     def trainClassifier(self, F, L):
-        try:
-            classifier = self.classifier(F, L)
-            self.classifiers.append(classifier)
-        except Exception as e:
-            print "### ClassifierInteractiveThread::trainClassifier"
-            print e
-            traceback.print_exc(file=sys.stdout)        
+        print "#### 1"
+        classifier = self.classifier(F, L)
+        print "#### 2"
+        self.classifiers.append(classifier)
+        print "#### 3"
 
 
     def classifierPredict(self, num, featureMatrix):
