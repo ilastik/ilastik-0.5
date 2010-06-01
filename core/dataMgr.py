@@ -109,8 +109,31 @@ class BlockAccessor():
         
         self.cX = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
 
+        #last blocks can be very small -> merge them with the secondlast one
+        self.cXend = data.shape[1] % self.blockSize
+        if self.cXend < self.blockSize / 3 and self.cX > 1:
+            self.cX -= 1
+        else:
+            self.cXend = 0
+                
         self.cY = int(numpy.ceil(1.0 * data.shape[2] / self.blockSize))
+
+        #last blocks can be very small -> merge them with the secondlast one
+        self.cYend = data.shape[2] % self.blockSize
+        if self.cYend < self.blockSize / 3 and self.cY > 1:
+            self.cY -= 1
+        else:
+            self.cYend = 0
+
         self.cZ = int(numpy.ceil(1.0 * data.shape[3] / self.blockSize))
+
+        #last blocks can be very small -> merge them with the secondlast one
+        self.cZend = data.shape[3] % self.blockSize
+        if self.cZend < self.blockSize / 3 and self.cZ > 1:
+            self.cZ -= 1
+        else:
+            self.cZend = 0
+
         self.blockCount = self.cX * self.cY * self.cZ
         self.lock = threading.Lock()
         if issubclass(self.data.__class__, numpy.ndarray):
@@ -126,13 +149,19 @@ class BlockAccessor():
         x = rest % self.cX
         
         startx = max(0, x*self.blockSize - overlap) 
-        endx = min(self.data.shape[1], (x+1)*self.blockSize + overlap) 
+        endx = min(self.data.shape[1], (x+1)*self.blockSize + overlap)
+        if x == self.cX:
+            endx = self.data.shape[1]
         
         starty = max(0, y*self.blockSize - overlap)
         endy = min(self.data.shape[2], (y+1)*self.blockSize + overlap) 
+        if y == self.cY:
+            endy = self.data.shape[2]
     
         startz = max(0, z*self.blockSize - overlap)
         endz = min(self.data.shape[3], (z+1)*self.blockSize + overlap)
+        if z == self.cZ:
+            endz = self.data.shape[3]
         
         return [startx,endx,starty,endy,startz,endz]
 
