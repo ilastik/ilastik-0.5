@@ -89,7 +89,7 @@ class VolumeEditorList(QtCore.QObject):
     editors = None #class variable to hold global editor list
 
     def __init__(self):
-        super(VolumeEditorList, self).__init__()
+        QtCore.QObject.__init__(self)
         self.editors = []
 
 
@@ -305,8 +305,8 @@ class QSliderDialog(QtGui.QDialog):
 
 class OverlayListView(QtGui.QListWidget):
     def __init__(self,parent):
+        QtGui.QListWidget.__init__(self, parent)
         self.volumeEditor = parent
-        super(OverlayListView, self).__init__(parent)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.connect(self, QtCore.SIGNAL("clicked(QModelIndex)"), self.onItemClick)
@@ -470,7 +470,7 @@ class Volume():
 
 class LabelListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
-        super(LabelListItem, self).__init__(name)
+        QtGui.QListWidgetItem.__init__(self, name)
         self.number = number
         self.visible = True
         self.setColor(color)
@@ -492,7 +492,7 @@ class LabelListItem(QtGui.QListWidgetItem):
 
 class LabelListView(QtGui.QListWidget):
     def __init__(self,parent = None):
-        super(LabelListView, self).__init__(parent)
+        QtGui.QListWidget.__init__(self,parent)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.colorTab = []
@@ -625,6 +625,7 @@ class LabelState(State):
 
 class HistoryManager(QtCore.QObject):
     def __init__(self, parent, maxSize = 3000):
+        QtCore.QObject.__init__(self)
         self.volumeEditor = parent
         self.maxSize = maxSize
         self.history = []
@@ -688,7 +689,7 @@ class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
     def __init__(self, image, name="", font=None,
                  readonly=False, size=(400, 300), labels = None , opengl = True, openglOverview = True, embedded = False, parent = None):
-        super(VolumeEditor, self).__init__(parent)
+        QtGui.QWidget.__init__(self, parent)
         self.name = name
         title = name
         
@@ -905,9 +906,10 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutRedo.setEnabled(True)
         self.shortcutRedo2.setEnabled(True)
         self.togglePredictionSC.setEnabled(True)
+        
+        self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
 
-    def __del__(self):
-        QtGui.QWidget.__del__(self)
+    def cleanUp(self):
         print "deleting imagescenes"
         for i, item in enumerate(self.imageScenes):
             del item
@@ -1112,6 +1114,7 @@ class VolumeEditor(QtGui.QWidget):
 
 class DrawManager(QtCore.QObject):
     def __init__(self, parent):
+        QtCore.QObject.__init__(self)
         self.volumeEditor = parent
         self.shape = None
         self.brushSize = 3
@@ -1335,14 +1338,15 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread = ImageSceneRenderThread(self)
         self.connect(self.thread, QtCore.SIGNAL('finished()'),self.redrawScene)
         self.thread.start()
+        
+        self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
 
-    def __del__(self):
-        QtGui.QGraphicsView.__del__(self)
+
+    def cleanUp(self):
         print "stopping ImageSCeneRenderThread", str(self.axis)
         
         self.thread.stopped = True
         self.thread.dataPending.set()
-        self.thread.join()
 
     def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         stuff = [image, overlays, labels, labelsAlpha]

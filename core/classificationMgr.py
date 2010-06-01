@@ -244,7 +244,7 @@ class ClassifierTrainThread(QtCore.QThread):
         self.dataMgr.featureLock.acquire()
         try:
             F, L = self.dataMgr.getTrainingMatrix()
-            if F is not None:
+            if F is not None and L is not None:
                 self.count = 0
                 self.classifiers = deque()
                 jobs = []
@@ -256,8 +256,11 @@ class ClassifierTrainThread(QtCore.QThread):
                 self.dataMgr.classifiers = self.classifiers
 
             self.dataMgr.featureLock.release()
-        except:
-            self.dataMgr.featureLock.release()        
+        except Exception as e:
+            print "######### Exception in ClassifierTrainThread ##########"
+            print e
+            traceback.print_exc(file=sys.stdout)   
+            self.dataMgr.featureLock.release()       
 
 
                     
@@ -295,6 +298,7 @@ class ClassifierPredictThread(QtCore.QThread):
 #            self.count += 1
 #            #self.predLock.release()
         except Exception as e:
+            print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
             
@@ -332,9 +336,9 @@ class ClassifierPredictThread(QtCore.QThread):
                         #item.prediction = ve.DataAccessor(self.prediction.reshape(item.dataVol.data.shape[0:-1] + (self.prediction.shape[-1],)), channels = True)
                         item.prediction = ve.DataAccessor(self.prediction, channels = True)
                         self.prediction = None
-                    self.dataMgr.featureLock.release()
+                self.dataMgr.featureLock.release()
             except Exception as e:
-                print "########################## exception in Interactivethread ###################"
+                print "########################## exception in ClassifierPredictThread ###################"
                 print e
                 traceback.print_exc(file=sys.stdout)                
                 self.dataMgr.featureLock.release()
@@ -381,17 +385,27 @@ class ClassifierInteractiveThread(QtCore.QThread):
         return self.numberOfClassifiers == len(self.classifiers)
     
     def trainClassifier(self, F, L):
-        classifier = self.classifier(F, L)
-        self.classifiers.append(classifier)
+        try:
+            classifier = self.classifier(F, L)
+            self.classifiers.append(classifier)
+        except Exception as e:
+            print "### ClassifierInteractiveThread::trainClassifier"
+            print e
+            traceback.print_exc(file=sys.stdout)        
 
 
     def classifierPredict(self, num, featureMatrix):
-        cf = self.classifiers[num]
-        pred = cf.predict(featureMatrix)
-        #self.predLock.acquire()
-        self.prediction += pred
-        self.count += 1
-        #self.predLock.release()
+        try:
+            cf = self.classifiers[num]
+            pred = cf.predict(featureMatrix)
+            #self.predLock.acquire()
+            self.prediction += pred
+            self.count += 1
+            #self.predLock.release()
+        except Exception as e:
+            print "### ClassifierInteractiveThread::classifierPredict"
+            print e
+            traceback.print_exc(file=sys.stdout)        
 
                             
     def run(self):

@@ -826,6 +826,10 @@ class ClassificationTrain(object):
         
     def start(self):
         #process all unaccounted label changes
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
+        self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
+        self.parent.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
+        
         newLabels = self.parent.labelWidget.getPendingLabels()
         if len(newLabels) > 0:
             self.parent.project.dataMgr.updateTrainingMatrix(self.parent.activeImage, newLabels)
@@ -863,6 +867,7 @@ class ClassificationTrain(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(True)        
         self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)        
         self.parent.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(True)        
         
@@ -1051,6 +1056,7 @@ class ClassificationPredict(object):
     def start(self):       
         self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
         self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)
           
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
@@ -1100,6 +1106,7 @@ class ClassificationPredict(object):
         self.parent.statusBar().hide()
         self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(True)  
         self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)  
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(True)
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
