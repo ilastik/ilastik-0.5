@@ -150,17 +150,17 @@ class BlockAccessor():
         
         startx = max(0, x*self.blockSize - overlap) 
         endx = min(self.data.shape[1], (x+1)*self.blockSize + overlap)
-        if x == self.cX:
+        if x+1 >= self.cX:
             endx = self.data.shape[1]
         
         starty = max(0, y*self.blockSize - overlap)
         endy = min(self.data.shape[2], (y+1)*self.blockSize + overlap) 
-        if y == self.cY:
+        if y+1 >= self.cY:
             endy = self.data.shape[2]
     
         startz = max(0, z*self.blockSize - overlap)
         endz = min(self.data.shape[3], (z+1)*self.blockSize + overlap)
-        if z == self.cZ:
+        if z+1 >= self.cZ:
             endz = self.data.shape[3]
         
         return [startx,endx,starty,endy,startz,endz]
