@@ -156,7 +156,6 @@ class LocalFeature(FeatureBase):
                 else:
                     result.append(temp)
             else: #2D
-                print channel.shape
                 temp = self.featureFunktor(channel[i, 0, :, :].astype(numpy.float32), * self.args)
                 if len(temp.shape) == 2:
                     result.append(temp.reshape((1,) + temp.shape + (1,)))
@@ -281,7 +280,7 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']
+        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']#, 'ChannelRep']
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
         self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5, 5.0, 10.0]
@@ -311,7 +310,9 @@ class FeatureGroups(object):
         
         #self.members['SvenSpecial'].append(svenSpecialWaveFrontDistance)
         #self.members['SvenSpecial___Special'].append(svenSpecialWaveFrontDistance)
-        
+
+        #self.members['ChannelRep'].append(christophChannels8)
+
     def createList(self):
         resList = []
         for groupIndex, scaleList in irange(self.selection):
@@ -345,6 +346,25 @@ def myHessianOfGaussianEigenvalues(x, s):
 def myStructureTensorEigenvalues(x, s1, s2):
     return vigra.filters.structureTensorEigenvalues(x, s1, s1 / 2.0)
     
+
+
+def ChristophChannels8(x,s1):
+    if len(x.shape) == 3: #3D
+        res = numpy.zeros(x.shape + (7*4,),'float32')
+        for index, i in enumerate(range(16,255,32)):
+            center = numpy.exp(-(x-i)**2 / (11)**2)
+            res[:,:,:,index*3] = vigra.filters.gaussianSmoothing(center, s1).view(numpy.ndarray)
+            res[:,:,:,index*3+1:index*3+4] = vigra.filters.structureTensorEigenvalues(center, s1, s1 / 2.0)
+    else:#2D
+        res = numpy.zeros(x.shape + (7*3,),'float32')
+        for index, i in enumerate(range(16,255,32)):
+            center = numpy.exp(-(x-i)**2 / (11)**2)
+            res[:,:,index*2] = vigra.filters.gaussianSmoothing(center, s1).view(numpy.ndarray)
+            res[:,:,index*2+1:index*2+3] = vigra.filters.structureTensorEigenvalues(center, s1, s1 / 2.0)
+
+    return res
+        
+
 
 def svenSpecial(x):
     res = vigra.analysis.cannyEdgeImage(x, 2.0, 0.39, 1)
@@ -402,7 +422,7 @@ differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], (1, 1), lambda x, s: vig
 cannyEdge = LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
 svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 1', [], (1, 1), lambda x: svenSpecial(x))
 svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], (1, 1), lambda x: svenSpecialSpecial(x))
-                                                        
+christophChannels8 = LocalFeature('Channels8', ['Sigma' ], (7*3, 7*4), lambda x, s: ChristophChannels8(x,s))
 
 ilastikFeatureGroups = FeatureGroups()
 ilastikFeatures = ilastikFeatureGroups.createList()

@@ -305,13 +305,14 @@ class MainWindow(QtGui.QMainWindow):
         
     def loadProjectDlg(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
-        self.project = projectMgr.Project.loadFromDisk(str(fileName), self.featureCache)
-        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        if hasattr(self, 'projectDlg'):
-            del self.projectDlg
-        self.activeImage = 0
-        self.projectModified() 
+        if str(fileName) != "":
+            self.project = projectMgr.Project.loadFromDisk(str(fileName), self.featureCache)
+            self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+            self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+            if hasattr(self, 'projectDlg'):
+                del self.projectDlg
+            self.activeImage = 0
+            self.projectModified()
         
     def editProjectDlg(self):
         self.projectDlg = ProjectDlg(self, False)
@@ -474,7 +475,6 @@ class ProjectDlg(QtGui.QDialog):
         if hasattr(self.ilastik,'project') and (not self.newProject):
             self.dataMgr = self.ilastik.project.dataMgr
             self.project = self.ilastik.project
-            print "edit Project"
         else:
             if self.ilastik.featureCache is not None:
                 if 'tempF' in self.ilastik.featureCache.keys():
@@ -485,7 +485,6 @@ class ProjectDlg(QtGui.QDialog):
                 grp = None
             self.dataMgr = dataMgr.DataMgr(grp)
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
-            print "new Project"
                     
     def initDlg(self):
         uic.loadUi('gui/dlgProject.ui', self) 
@@ -1096,9 +1095,7 @@ class ClassificationPredict(object):
     def finalize(self):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
         if activeItem.prediction is not None:
-            print activeItem.prediction.shape
             for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
-                print ":", item.prediction.shape
                 item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 
             margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
