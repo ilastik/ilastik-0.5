@@ -208,9 +208,15 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
         
         self.ribbon = ctrlRibbon.Ribbon(self.ribbonToolbar)
-        for ribbon_name, ribbon_group in ctrlRibbon.createRibbons().items():
-            tabs = ribbon_group.makeTab()   
-            self.ribbon.addTab(tabs, ribbon_group.name)
+        
+        ribbonDict = ctrlRibbon.createRibbons()
+        
+        for k in range(10):
+            for ribbon_group in ribbonDict.values():
+                if ribbon_group.position == k:
+                    tabs = ribbon_group.makeTab()   
+                    self.ribbon.addTab(tabs, ribbon_group.name)
+                    print "Add tab", ribbon_group.name
         self.ribbonToolbar.addWidget(self.ribbon)
         
         
@@ -260,9 +266,7 @@ class MainWindow(QtGui.QMainWindow):
 #        self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
         
         # make Label and View Tab invisible (this tabs are not helpful so far)
-        self.ribbon.removeTab(1)
-        self.ribbon.removeTab(1)
-              
+             
         
         self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
         

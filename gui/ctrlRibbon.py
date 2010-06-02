@@ -21,8 +21,7 @@
 #    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
 #    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 #    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#    
+#    ADVISED OF THE POSSIBILITY OF SUCH 
 #    The views and conclusions contained in the software and documentation are those of the
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
@@ -39,20 +38,23 @@ class Ribbon(QtGui.QTabWidget):
             self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
 
     def orientationEvent(self, orientation):
-        for name, tab in self.tabDict.items():
-            lo = tab.layout()
-            lo.setDirection(lo.Direction(orientation))
         if orientation == QtCore.Qt.Horizontal: 
             self.setTabPosition(self.North)            
         if orientation == QtCore.Qt.Vertical: 
             self.setTabPosition(self.West)
+        for name, tab in self.tabDict.items():
+            lo = tab.layout()
+            if orientation == 1:
+                orientation = 0
+            lo.setDirection(lo.Direction(orientation))
+
             
     def moveEvent(self, event):
         QtGui.QTabWidget.moveEvent(self, event)
     
     def addTab(self, w, s="TabName"):
         self.tabDict[s] = w
-        QtGui.QTabWidget.insertTab(self, w.position, w, s)              
+        QtGui.QTabWidget.addTab(self, w, s)              
 
 class RibbonBaseItem(QtGui.QWidget):
     def __init__(self,  ribbon_entry):
@@ -109,7 +111,6 @@ class RibbonListItem(QtGui.QListWidget, RibbonBaseItem):
 class RibbonTabContainer(QtGui.QWidget):
     def __init__(self, position, parent=None, ):
         QtGui.QWidget.__init__(self)
-        #careful: QWidget.layout() is a member function - don't overwrite!
         layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight)
         layout.setAlignment(QtCore.Qt.AlignLeft)
         layout.setAlignment(QtCore.Qt.AlignTop)
@@ -117,6 +118,7 @@ class RibbonTabContainer(QtGui.QWidget):
         self.setLayout(layout)
         self.itemDict = {}
         self.signalList = []
+        
     def addItem(self, item):
         self.itemDict[item.name] = item
         self.layout().addWidget(item)
@@ -149,13 +151,11 @@ class RibbonEntryGroup():
 
 def createRibbons():
     RibbonGroupObjects = {}
-    RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects",0)    
-    RibbonGroupObjects["View"] = RibbonEntryGroup("View", 1)     
-    RibbonGroupObjects["Features"] = RibbonEntryGroup("Features",0)   
-    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 1)   
+    RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
+    RibbonGroupObjects["Features"] = RibbonEntryGroup("Features", 1)   
+    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
     #RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)
-    RibbonGroupObjects["Label"] = RibbonEntryGroup("Label", 0)
-    RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 4)   
+    RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)   
     
     RibbonGroupObjects["Projects"].append(RibbonEntry("New", ilastikIcons.New ,"New"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Open", ilastikIcons.Open ,"Open"))
@@ -169,20 +169,6 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
-
-    #TODO: reenable online classification !
-    
-#    RibbonGroupObjects["Classification"].append(RibbonEntry("Online", ilastikIcons.Play ,"Online Classifier", type=RibbonToggleButtonItem))
-    #RibbonGroupObjects["Classification"].append(RibbonEntry("OnlineClassificator", ilastikIcons.Select, "Select online classificator", type=RibbonListItem))
-    
-    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Segment ,"Segmentation"))
-    
-#    RibbonGroupObjects["View"].append(RibbonEntry("Image", "categories/preferences-system.png" ,"View Probability map"))
-#    RibbonGroupObjects["View"].append(RibbonEntry("Probabilities", "categories/preferences-system.png" ,"View Probability map"))
-#    RibbonGroupObjects["View"].append(RibbonEntry("Uncertainty", "categories/preferences-system.png" ,"View Probability map"))
-#    RibbonGroupObjects["View"].append(RibbonEntry("Segmentation", "categories/preferences-system.png" ,"View Segmentation"))
-#    
-    RibbonGroupObjects["Label"].append(RibbonEntry("Brushsize", ilastikIcons.System  ,"Change Brush size",type=RibbonSlider))
     
     RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
     return RibbonGroupObjects   
