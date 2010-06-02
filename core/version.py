@@ -36,6 +36,8 @@ def getIlastikVersion():
 
 
 
+
+
 #    if os.name == 'nt':
 #        # Windows        
 #        process = subprocess.Popen(['SubWCRev','..'], shell=True, stdout=subprocess.PIPE)

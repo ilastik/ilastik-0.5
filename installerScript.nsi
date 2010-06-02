@@ -11,14 +11,14 @@
 ;General
 
   ;Name and file
-  Name "IlastikGUI 3D"
-  OutFile "ilastikGUI-0.39_setup.exe"
+  Name "Ilastik"
+  OutFile "ilastik_setup.exe"
 
   ;Default installation folder
-  InstallDir "$PROGRAMFILES\IlastikGUI3D"
+  InstallDir "$PROGRAMFILES\Ilastik"
   
   ;Get installation folder from registry if available
-  InstallDirRegKey HKCU "Software\IlastikGUI3D" ""
+  InstallDirRegKey HKCU "Software\Ilastik" ""
 
   ;Request application privileges for Windows Vista
   RequestExecutionLevel user
@@ -41,7 +41,7 @@
   
   ;Start Menu Folder Page Configuration
   !define MUI_STARTMENUPAGE_REGISTRY_ROOT "HKCU" 
-  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\IlastikGUI3D" 
+  !define MUI_STARTMENUPAGE_REGISTRY_KEY "Software\Ilastik" 
   !define MUI_STARTMENUPAGE_REGISTRY_VALUENAME "Start Menu Folder"
   
   !insertmacro MUI_PAGE_STARTMENU Application $StartMenuFolder
@@ -67,7 +67,7 @@ Section "Ilastik" SecDummy
   FILE /r *
   
   ;Store installation folder
-  WriteRegStr HKCU "Software\IlastikGUI3D" "" $INSTDIR
+  WriteRegStr HKCU "Software\Ilastik" "" $INSTDIR
   
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
@@ -77,7 +77,7 @@ Section "Ilastik" SecDummy
     ;Create shortcuts
     CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
 
-    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\IlastikGUI3D.lnk" "$INSTDIR\ilastikMain.exe"  
+    CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Ilastik.lnk" "$INSTDIR\ilastikMain.exe"  
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
   
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -145,6 +145,6 @@ Section "Uninstall"
   Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk"
   RMDir /r "$SMPROGRAMS\$StartMenuFolder"
   
-  DeleteRegKey /ifempty HKCU "Software\IlastikGUI"
+  DeleteRegKey /ifempty HKCU "Software\Ilastik"
 
 SectionEnd
