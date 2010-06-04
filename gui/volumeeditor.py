@@ -813,6 +813,7 @@ class VolumeEditor(QtGui.QWidget):
         self.labelAlphaSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
         self.labelAlphaSlider.setRange(0,20)
         self.labelAlphaSlider.setValue(20)
+        self.labelAlphaSlider.setToolTip('Change Label Opacity')
         self.connect(self.labelAlphaSlider, QtCore.SIGNAL('valueChanged(int)'), self.setLabelsAlpha)
         self.toolBoxLayout.addWidget( self.labelAlphaSlider)
 
@@ -836,15 +837,18 @@ class VolumeEditor(QtGui.QWidget):
             self.toolBoxLayout.addWidget(QtGui.QLabel("Link to:"))
             self.toolBoxLayout.addWidget(self.linkCombo)
 
-        
+        self.toolBoxLayout.addSpacing(30)
+
         #Slice Selector Combo Box in right side toolbox
         self.sliceSelectors = []
         sliceSpin = QtGui.QSpinBox()
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceX)
         if self.image.shape[2] > 1 and self.image.shape[3] > 1: #only show when needed
-            self.toolBoxLayout.addWidget(QtGui.QLabel("X:"))
-            self.toolBoxLayout.addWidget(sliceSpin)
+            tempLay = QtGui.QHBoxLayout()
+            tempLay.addWidget(QtGui.QLabel("<pre>X:</pre>"))
+            tempLay.addWidget(sliceSpin, 1)
+            self.toolBoxLayout.addLayout(tempLay)
         sliceSpin.setRange(0,self.image.shape[1] - 1)
         self.sliceSelectors.append(sliceSpin)
         
@@ -853,8 +857,10 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceY)
         if self.image.shape[1] > 1 and self.image.shape[3] > 1: #only show when needed
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Y:"))
-            self.toolBoxLayout.addWidget(sliceSpin)
+            tempLay = QtGui.QHBoxLayout()
+            tempLay.addWidget(QtGui.QLabel("<pre>Y:</pre>"))
+            tempLay.addWidget(sliceSpin, 1)
+            self.toolBoxLayout.addLayout(tempLay)
         sliceSpin.setRange(0,self.image.shape[2] - 1)
         self.sliceSelectors.append(sliceSpin)
 
@@ -862,8 +868,10 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceZ)
         if self.image.shape[1] > 1 and self.image.shape[2] > 1 : #only show when needed
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Z:"))
-            self.toolBoxLayout.addWidget(sliceSpin)
+            tempLay = QtGui.QHBoxLayout()
+            tempLay.addWidget(QtGui.QLabel("<pre>Z:</pre>"))
+            tempLay.addWidget(sliceSpin, 1)
+            self.toolBoxLayout.addLayout(tempLay)
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
 
@@ -894,6 +902,7 @@ class VolumeEditor(QtGui.QWidget):
         #Overlay selector
         self.overlayView = OverlayListView(self)
         self.toolBoxLayout.addWidget( self.overlayView)
+        self.toolBoxLayout.addStretch()
 
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
@@ -1471,9 +1480,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.tempImageItems = []
         self.image = self.thread.image
         self.pixmap = QtGui.QPixmap.fromImage(self.image)        
-        self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
+        self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap, None, self.scene)
         
-        self.scene.addItem(self.imageItem)        
         self.viewport().repaint()
         self.volumeEditor.overview.display(self.axis)
 
