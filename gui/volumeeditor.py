@@ -960,7 +960,6 @@ class VolumeEditor(QtGui.QWidget):
         
 
     def cleanUp(self):
-        print "deleting imagescenes"
         for i, item in enumerate(self.imageScenes):
             del item
 
@@ -1402,6 +1401,7 @@ class ImageScene( QtGui.QGraphicsView):
         
         self.thread.stopped = True
         self.thread.dataPending.set()
+        self.thread.wait()
 
     def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         stuff = [image, overlays, labels, labelsAlpha]
