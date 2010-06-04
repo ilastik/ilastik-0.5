@@ -415,6 +415,8 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks.append(dock)
 
     def labelRemoved(self, number):
+        self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
         self.project.dataMgr.removeLabel(number)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()

@@ -312,7 +312,7 @@ class FeatureGroups(object):
         #self.members['SvenSpecial'].append(svenSpecialWaveFrontDistance)
         #self.members['SvenSpecial___Special'].append(svenSpecialWaveFrontDistance)
 
-        self.members['ChannelRep'].append(christophChannels8)
+        self.members['ChannelRep'].append(channels4)
 
     def createList(self):
         resList = []
@@ -349,7 +349,7 @@ def myStructureTensorEigenvalues(x, s1, s2):
     
 
 
-def ChristophChannels8(x,s1):
+def Channels4(x,s1):
     if len(x.shape) == 3: #3D
         res = numpy.zeros(x.shape + (4*4,),'float32')
         for index, i in enumerate(range(80,190,32)):
@@ -423,7 +423,7 @@ differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], (1, 1), lambda x, s: vig
 cannyEdge = LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
 svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 1', [], (1, 1), lambda x: svenSpecial(x))
 svenSpecialWaveFrontDistance = LocalFeature('SvenSpecial 2', [], (1, 1), lambda x: svenSpecialSpecial(x))
-christophChannels8 = LocalFeature('Channels8', ['Sigma' ], (4*3, 4*4), lambda x, s: ChristophChannels8(x,s))
+channels4 = LocalFeature('Channels4', ['Sigma' ], (4*3, 4*4), lambda x, s: Channels4(x,s))
 
 ilastikFeatureGroups = FeatureGroups()
 ilastikFeatures = ilastikFeatureGroups.createList()
