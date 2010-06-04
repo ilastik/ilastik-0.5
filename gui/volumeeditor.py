@@ -1347,12 +1347,11 @@ class ImageScene( QtGui.QGraphicsView):
         self.drawTimer = QtCore.QTimer()
         self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.updateLabels)
         
-        #invisible cursor to enable custom cursor
-        bitmapMask = QtGui.QBitmap(8,8)
-        bitmapMask.clear()
-        bitmap = QtGui.QBitmap(8,8)
-        bitmap.clear()
-        self.hiddenCursor  = QtGui.QCursor(bitmap, bitmapMask)
+        # invisible cursor to enable custom cursor
+        self.hiddenCursor = QtGui.QCursor(QtCore.Qt.BlankCursor)
+        
+        # For screen recording BlankCursor dont work
+        #self.hiddenCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
         
         self.thread = ImageSceneRenderThread(self)
         self.connect(self.thread, QtCore.SIGNAL('finished()'),self.redrawScene)
