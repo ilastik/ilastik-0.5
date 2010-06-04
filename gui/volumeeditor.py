@@ -500,7 +500,7 @@ class LabelListView(QtGui.QListWidget):
         self.volumeEditor = parent
         self.initFromMgr(parent.labels)
         self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
-        self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
+        #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
 
     
     def initFromMgr(self, volumelabel):
@@ -565,13 +565,17 @@ class LabelListView(QtGui.QListWidget):
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
             self.volumeLabel.descriptions.__delitem__(index.row())
-            #TODO make nicer !
             temp = numpy.where(self.volumeLabel.data[:,:,:,:,:] == item.number, 0, self.volumeLabel.data[:,:,:,:,:])
+            temp = numpy.where(temp[:,:,:,:,:] > item.number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
             self.volumeLabel.data[:,:,:,:,:] = temp[:,:,:,:,:]
+            for ii, it in enumerate(self.items):
+                if it.number > item.number:
+                    it.number -= 1
             self.items.remove(item)
             it = self.takeItem(index.row())
             del it
             self.buildColorTab()
+            self.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
             self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
             self.volumeEditor.repaint()
         elif action == toggleHideAction:

@@ -403,6 +403,7 @@ class MainWindow(QtGui.QMainWindow):
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
+        self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
                 
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
@@ -412,7 +413,13 @@ class MainWindow(QtGui.QMainWindow):
         area = QtCore.Qt.BottomDockWidgetArea
         self.addDockWidget(area, dock)
         self.labelDocks.append(dock)
-        
+
+    def labelRemoved(self, number):
+        self.project.dataMgr.clearFeaturesAndTraining()
+        self.updateLabelWidgetOverlays()
+        if hasattr(self, "classificationInteractive"):
+            self.classificationInteractive.updateThreadQueues()
+
     def createFeatures(self):
         self.featureList = featureMgr.ilastikFeatures
         
@@ -1099,8 +1106,10 @@ class ClassificationPredict(object):
     def finalize(self):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
         if activeItem.prediction is not None:
-            for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
-                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+#            for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
+#                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
+                activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 
             margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
             activeItem.dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]

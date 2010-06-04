@@ -78,8 +78,10 @@ class ClassifierRandomForest(ClassifierBase):
             labels = labels.astype(numpy.uint32)
         if not features.dtype == numpy.float32:
             features = features.astype(numpy.float32)
-        
-        if len(numpy.unique(labels)) > 1:
+
+        self.unique_vals = numpy.unique(labels)
+
+        if len(self.unique_vals) > 1:
             print "Learning RF %d trees: %d labels given, %d classes, and %d features " % (treeCount, features.shape[0], len(numpy.unique(labels)), features.shape[1])
             self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
         else:
@@ -475,9 +477,10 @@ class ClassifierInteractiveThread(QtCore.QThread):
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], :, :] = seg0[:,:]
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, vs[2], :] = seg1[:,:]
                             self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, :, vs[3]] = seg2[:,:]
-    
-                            for p_i in range(ax0.shape[1]):
-                                item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_i]
+            
+                            
+                            for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
+                                item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
                                 item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
