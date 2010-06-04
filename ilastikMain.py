@@ -269,17 +269,24 @@ class MainWindow(QtGui.QMainWindow):
         # make Label and View Tab invisible (this tabs are not helpful so far)
              
         
-        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
+#        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
+        self.ribbon.tabDict['Projects'].itemDict['Edit'].setToolTip('Add and Remove files from the current project')
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+        self.ribbon.tabDict['Projects'].itemDict['Save'].setToolTip('Save the current Project')
         self.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(False)        
         self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)        
         self.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Train'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
         self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Predict'].setToolTip('Use the trained RandomForest classifier to predict unlabeled pixels')
         self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
-        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
-        self.ribbon.tabDict['Export'].itemDict['Export'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Interactive'].setToolTip('Train the RandomForest classifier while drawing labels and browsing through the file. \nThe currently visible part of the image gets predicted on the fly.')
+        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setToolTip('Batchprocess a list of files with the currently trained classifier.\n The processed files and their prediction are stored with the file extension "_processed.h5" ')
+
+#        self.ribbon.tabDict['Export'].itemDict['Export'].setEnabled(False)
         
         #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
         #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)

@@ -155,7 +155,7 @@ def createRibbons():
     RibbonGroupObjects["Features"] = RibbonEntryGroup("Features", 1)   
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
     #RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)
-    RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)   
+    #RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)
     
     RibbonGroupObjects["Projects"].append(RibbonEntry("New", ilastikIcons.New ,"New"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Open", ilastikIcons.Open ,"Open"))
@@ -169,8 +169,8 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
-    
-    RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
+
+    #RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
     return RibbonGroupObjects   
         
         
