@@ -782,6 +782,23 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBox.setMaximumWidth(150)
         self.toolBox.setMinimumWidth(150)
 
+
+        #Label selector
+        self.addLabelButton = QtGui.QPushButton("Create Label Class")
+        self.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.addLabel)
+        self.toolBoxLayout.addWidget(self.addLabelButton)
+
+        self.labelAlphaSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        self.labelAlphaSlider.setRange(0,20)
+        self.labelAlphaSlider.setValue(20)
+        self.connect(self.labelAlphaSlider, QtCore.SIGNAL('valueChanged(int)'), self.setLabelsAlpha)
+        self.toolBoxLayout.addWidget( self.labelAlphaSlider)
+
+        self.labelView = LabelListView(self)
+
+        self.toolBoxLayout.addWidget( self.labelView)
+
+
         if self.embedded == False:
             #Link to ComboBox
             self.editor_list.append(self)
@@ -851,24 +868,10 @@ class VolumeEditor(QtGui.QWidget):
             self.toolBoxLayout.addWidget(QtGui.QLabel("Overlays:"))
 
 
+
         #Overlay selector
         self.overlayView = OverlayListView(self)
         self.toolBoxLayout.addWidget( self.overlayView)
-
-        #Label selector
-        self.addLabelButton = QtGui.QPushButton("Create Label Class")
-        self.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.addLabel)
-        self.toolBoxLayout.addWidget(self.addLabelButton)
-
-        self.labelView = LabelListView(self)
-
-        self.toolBoxLayout.addWidget( self.labelView)
-
-        self.labelAlphaSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
-        self.labelAlphaSlider.setRange(0,20)
-        self.labelAlphaSlider.setValue(20)
-        self.connect(self.labelAlphaSlider, QtCore.SIGNAL('valueChanged(int)'), self.setLabelsAlpha)
-        self.toolBoxLayout.addWidget( self.labelAlphaSlider)
 
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
