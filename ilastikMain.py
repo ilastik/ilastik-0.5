@@ -41,7 +41,8 @@ from vigra import arraytypes as at
 import sys
 import os
 
-import threading 
+import threading
+import traceback
 import numpy
 import time
 from PyQt4 import QtCore, QtGui, uic
@@ -555,34 +556,40 @@ class ProjectDlg(QtGui.QDialog):
         if imageData is not None:   
                 
             theDataItem = dataMgr.DataItemImage.initFromArray(imageData, "Image Stack")
-            self.dataMgr.append(theDataItem)
-            self.dataMgr.dataItemsLoaded[-1] = True
-                       
-            theDataItem.hasLabels = True
-            theDataItem.isTraining = True
-            theDataItem.isTesting = True
-                    
-            self.ilastik.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-            self.ilastik.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-            
-            rowCount = self.tableWidget.rowCount()
-            self.tableWidget.insertRow(rowCount)
-            
-            theFlag = QtCore.Qt.ItemIsEnabled
-            flagON = ~theFlag | theFlag 
-            flagOFF = ~theFlag
-            
-            # file name
-            r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
-            self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+            try:
+                self.dataMgr.append(theDataItem, True)
+                self.dataMgr.dataItemsLoaded[-1] = True
 
-                      
-            # labels
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Unchecked)
-            
-            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+                theDataItem.hasLabels = True
+                theDataItem.isTraining = True
+                theDataItem.isTesting = True
+
+                self.ilastik.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+                self.ilastik.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+
+                rowCount = self.tableWidget.rowCount()
+                self.tableWidget.insertRow(rowCount)
+
+                theFlag = QtCore.Qt.ItemIsEnabled
+                flagON = ~theFlag | theFlag
+                flagOFF = ~theFlag
+
+                # file name
+                r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
+                self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+
+
+                # labels
+                r = QtGui.QTableWidgetItem()
+                r.data(QtCore.Qt.CheckStateRole)
+                r.setCheckState(QtCore.Qt.Unchecked)
+
+                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+            except Exception as e:
+                traceback.print_exc(file=sys.stdout)
+                print e
+                QtGui.QErrorMessage(self)
+                ed.showMessage(str(e))
             
                         
     @QtCore.pyqtSignature("")     
@@ -592,33 +599,39 @@ class ProjectDlg(QtGui.QDialog):
         fileNames.sort()
         if fileNames:
             for file_name in fileNames:
-                file_name = str(file_name)
-                
-                theDataItem = dataMgr.DataItemImage(file_name)
-                self.dataMgr.append(theDataItem)                
-                #self.dataMgr.dataItemsLoaded[-1] = True
+                try:
+                    file_name = str(file_name)
 
-                rowCount = self.tableWidget.rowCount()
-                self.tableWidget.insertRow(rowCount)
-                
-                theFlag = QtCore.Qt.ItemIsEnabled
-                flagON = ~theFlag | theFlag 
-                flagOFF = ~theFlag
-                
-                # file name
-                r = QtGui.QTableWidgetItem(file_name)
-                self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-                # labels
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
+                    theDataItem = dataMgr.DataItemImage(file_name)
+                    self.dataMgr.append(theDataItem)
+                    #self.dataMgr.dataItemsLoaded[-1] = True
 
-                
-                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-                                
-                self.initThumbnail(file_name)
-                self.tableWidget.setCurrentCell(0, 0)
-    
+                    rowCount = self.tableWidget.rowCount()
+                    self.tableWidget.insertRow(rowCount)
+
+                    theFlag = QtCore.Qt.ItemIsEnabled
+                    flagON = ~theFlag | theFlag
+                    flagOFF = ~theFlag
+
+                    # file name
+                    r = QtGui.QTableWidgetItem(file_name)
+                    self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+                    # labels
+                    r = QtGui.QTableWidgetItem()
+                    r.data(QtCore.Qt.CheckStateRole)
+                    r.setCheckState(QtCore.Qt.Checked)
+
+
+                    self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+
+                    self.initThumbnail(file_name)
+                    self.tableWidget.setCurrentCell(0, 0)
+                except Exception as e:
+                    traceback.print_exc(file=sys.stdout)
+                    print e
+                    QtGui.QErrorMessage(self)
+                    ed.showMessage(str(e))
+                    
     @QtCore.pyqtSignature("")   
     def on_removeFile_clicked(self):
         # Get row and fileName to remove

@@ -433,17 +433,26 @@ class DataMgr():
         self.dataItemsLoaded = []
         self.trainingF = None
         self.featureCacheFile = featureCacheFile
+        self.channels = -1
             
     def append(self, dataItem, alreadyLoaded=False):
-        if self.featureCacheFile is not None:
-            cx = 1
-            cy = 32
-            cz = 32
-            if str(len(self)) in self.featureCacheFile.keys():
-                del self.featureCacheFile[str(len(self))]
-            dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,cx,cy,cz,1,1), compression=None)
-        self.dataItems.append(dataItem)
-        self.dataItemsLoaded.append(alreadyLoaded)
+        if alreadyLoaded == False:
+            dataItem.loadData()
+            alreadyLoaded = True
+            
+        if self.channels == -1 or dataItem.dataVol.data.shape[-1] == self.channels:
+            self.channels = dataItem.dataVol.data.shape[-1]
+            if self.featureCacheFile is not None:
+                cx = 1
+                cy = 32
+                cz = 32
+                if str(len(self)) in self.featureCacheFile.keys():
+                    del self.featureCacheFile[str(len(self))]
+                dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,cx,cy,cz,1,1), compression=None)
+            self.dataItems.append(dataItem)
+            self.dataItemsLoaded.append(alreadyLoaded)
+        else:
+            raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         
     def clearDataList(self):
         self.dataItems = []
@@ -553,6 +562,8 @@ class DataMgr():
     def remove(self, dataItemIndex):
         del self.dataItems[dataItemIndex]
         del self.dataItemsLoaded[dataItemIndex]
+        if len(self) == 0:
+            self.channels = -1
     
     def __len__(self):
         return len(self.dataItems)

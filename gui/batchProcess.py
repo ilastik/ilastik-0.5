@@ -17,6 +17,7 @@ import vigra
 import getopt
 import h5py
 import glob
+import traceback
 
 from PyQt4 import QtCore, QtGui, uic
 
@@ -75,6 +76,7 @@ class BatchProcess(QtGui.QDialog):
             grp = None
 
         self.dataMgr = dataMgr.DataMgr(grp)
+        self.dataMgr.channels = self.ilastik.project.dataMgr.channels
         
 
 
@@ -95,26 +97,27 @@ class BatchProcess(QtGui.QDialog):
         z = 0
         allok = True
         for filename in fileNames:
-            filename = str(filename)
-            di = dataMgr.DataItemImage(filename)
-            di.loadData()
-            self.dataMgr.append(di)
-            
-            fm = featureMgr.FeatureMgr(self.dataMgr, self.ilastik.project.featureMgr.featureItems)
-            
-            fm.prepareCompute(self.dataMgr)  
-            fm.triggerCompute()
-            fm.joinCompute(self.dataMgr)
-            
-                       
-            self.dataMgr.classifiers = self.ilastik.project.dataMgr.classifiers
-
-            classificationPredict = cm.ClassifierPredictThread(self.dataMgr)
-            classificationPredict.start()
-            classificationPredict.wait()            
-  
-            #save results
             try:
+                filename = str(filename)
+                di = dataMgr.DataItemImage(filename)
+                di.loadData()
+                self.dataMgr.append(di)
+
+                fm = featureMgr.FeatureMgr(self.dataMgr, self.ilastik.project.featureMgr.featureItems)
+
+                fm.prepareCompute(self.dataMgr)
+                fm.triggerCompute()
+                fm.joinCompute(self.dataMgr)
+
+
+                self.dataMgr.classifiers = self.ilastik.project.dataMgr.classifiers
+
+                classificationPredict = cm.ClassifierPredictThread(self.dataMgr)
+                classificationPredict.start()
+                classificationPredict.wait()
+  
+                #save results
+            
                 f = h5py.File(filename + '_processed.h5', 'w')
                 g = f.create_group("volume")
                 self.dataMgr[0].dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((self.dataMgr[0].dataVol.data.shape[0:4]),'uint8')))
@@ -125,6 +128,7 @@ class BatchProcess(QtGui.QDialog):
                 self.logger.insertPlainText(".")
             except Exception as e:
                 print "######Exception"
+                traceback.print_exc(file=sys.stdout)
                 print e
                 allok = False
                 self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
