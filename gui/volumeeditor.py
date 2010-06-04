@@ -908,6 +908,22 @@ class VolumeEditor(QtGui.QWidget):
         self.togglePredictionSC.setEnabled(True)
         
         self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
+        
+        self.focusAxis =  0
+
+
+    def focusNextPrevChild(self, forward = True):
+        if forward is True:
+            self.focusAxis += 1
+            if self.focusAxis > 2:
+                self.focusAxis = 0
+        else:
+            self.focusAxis -= 1
+            if self.focusAxis < 0:
+                self.focusAxis = 2
+        self.imageScenes[self.focusAxis].setFocus()
+        return True
+        
 
     def cleanUp(self):
         print "deleting imagescenes"
@@ -1341,6 +1357,12 @@ class ImageScene( QtGui.QGraphicsView):
         
         self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
 
+        self.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), self, self.zoomIn, self.zoomIn)
+        self.shortcutZoomIn.setContext(QtCore.Qt.WidgetShortcut )
+
+        self.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), self, self.zoomOut, self.zoomOut)
+        self.shortcutZoomOut.setContext(QtCore.Qt.WidgetShortcut )
+
 
     def cleanUp(self):
         print "stopping ImageSCeneRenderThread", str(self.axis)
@@ -1501,6 +1523,12 @@ class ImageScene( QtGui.QGraphicsView):
                 self.doScale(scaleFactor)
             else:
                 self.volumeEditor.sliceSelectors[self.axis].stepDown()
+
+    def zoomOut(self):
+        self.doScale(0.9)
+
+    def zoomIn(self):
+        self.doScale(1.1)
 
     def doScale(self, factor):
         self.view.scale(factor, factor)
