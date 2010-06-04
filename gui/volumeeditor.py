@@ -564,10 +564,7 @@ class LabelListView(QtGui.QListWidget):
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
-            self.volumeLabel.descriptions.__delitem__(index.row())
-            temp = numpy.where(self.volumeLabel.data[:,:,:,:,:] == item.number, 0, self.volumeLabel.data[:,:,:,:,:])
-            temp = numpy.where(temp[:,:,:,:,:] > item.number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-            self.volumeLabel.data[:,:,:,:,:] = temp[:,:,:,:,:]
+            self.volumeEditor.history.removeLabel(item.number)
             for ii, it in enumerate(self.items):
                 if it.number > item.number:
                     it.number -= 1
@@ -666,6 +663,27 @@ class HistoryManager(QtCore.QObject):
             histItemGrp.create_dataset('offsets',data=hist.offsets)
             histItemGrp.create_dataset('time',data=hist.time)
             histItemGrp.create_dataset('erasing',data=hist.erasing)
+
+
+    def removeLabel(self, number):
+        tobedeleted = []
+        for index, item in enumerate(self.history):
+            if item.labelNumber != number:
+                item.dataBefore = numpy.where(item.dataBefore == number, 0, item.dataBefore)
+                item.dataBefore = numpy.where(item.dataBefore > number, item.dataBefore - 1, item.dataBefore)
+                item.labels = numpy.where(item.labels == number, 0, item.labels)
+                item.labels = numpy.where(item.labels > number, item.labels - 1, item.labels)
+            else:
+                #if item.erasing == False:
+                    #item.restore(self.volumeEditor)
+                tobedeleted.append(index - len(tobedeleted))
+                if index <= self.current:
+                    self.current -= 1
+
+        for val in tobedeleted:
+            it = self.history[val]
+            self.history.__delitem__(val)
+            del it
 
 class VolumeUpdate():
     def __init__(self, data, offsets, sizes, erasing):

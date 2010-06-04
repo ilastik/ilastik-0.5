@@ -505,7 +505,28 @@ class DataMgr():
         
         for index, item in enumerate(self):
             item.clearFeaturesAndTraining()
-    
+
+    def removeLabel(self, number):
+        self.featureLock.acquire()
+        self.clearFeaturesAndTraining()
+        for index, item in enumerate(self):
+            ldnr = -1
+            for j, ld in enumerate(item.dataVol.labels.descriptions):
+                if ld.number == number:
+                    ldnr = j
+            if ldnr != -1:
+                item.dataVol.labels.descriptions.__delitem__(j)
+                for j, ld in enumerate(item.dataVol.labels.descriptions):
+                    if ld.number > number:
+                        ld.number -= 1
+                temp = numpy.where(item.dataVol.labels.data[:,:,:,:,:] == number, 0, item.dataVol.labels.data[:,:,:,:,:])
+                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
+                item.dataVol.labels.data[:,:,:,:,:] = temp[:,:,:,:,:]
+                if item.history is not None:
+                    item.history.removeLabel(number)
+        self.featureLock.release()
+
+
     def getDataList(self):
         return self.dataItems
         

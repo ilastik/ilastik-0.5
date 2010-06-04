@@ -415,8 +415,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks.append(dock)
 
     def labelRemoved(self, number):
-        self.project.dataMgr.clearFeaturesAndTraining()
-        self.updateLabelWidgetOverlays()
+        self.project.dataMgr.removeLabel(number)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
 
