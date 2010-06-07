@@ -614,7 +614,7 @@ class LabelState(State):
         temp = volumeEditor.labels.data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         restore  = numpy.where(self.labels > 0, self.dataBefore, 0)
         stuff = numpy.where(self.labels > 0, self.dataBefore + 1, 0)
-        erase = numpy.where(stuff == 1, self.labels, 0)
+        erase = numpy.where(stuff == 1, 1, 0)
         self.dataBefore = temp
         #volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
         volumeEditor.setLabels(self.offsets, self.axis, restore, False)
@@ -696,7 +696,7 @@ class VolumeUpdate():
         offsets = self.offsets
         sizes = self.sizes
         #TODO: move part of function into DataAccessor class !! e.g. setSubVolume or somethign
-        tempData = dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]] 
+        tempData = dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]].copy()
 
         if self.erasing == True:
             tempData = numpy.where(self.data > 0, 0, tempData)

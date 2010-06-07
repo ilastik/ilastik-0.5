@@ -293,8 +293,8 @@ class DataItemImage(DataItemBase):
                     if len(indices.shape) == 1:
                         indices.shape = indices.shape + (1,)
 
-                    mask = numpy.in1d(self.trainingIndices,indices)
-                    nonzero = numpy.nonzero(mask)[0]
+                    mask = numpy.setmember1d(self.trainingIndices.ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)
                     if len(nonzero) > 0:
                         tt = numpy.delete(self.trainingIndices,nonzero)
                         if len(tt.shape) == 1:
@@ -357,8 +357,8 @@ class DataItemImage(DataItemBase):
                         count *= s
                         indices += indic[-loopc]*count
 
-                    mask = numpy.in1d(self.trainingIndices,indices) #get intersection
-                    nonzero = numpy.nonzero(mask)[0]
+                    mask = numpy.setmember1d(self.trainingIndices.ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)
                     if len(nonzero) > 0:
                         self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
                         self.trainingL  = numpy.delete(self.trainingL,nonzero)
