@@ -484,7 +484,16 @@ class ClassifierInteractiveThread(QtCore.QThread):
                                 item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
                                 item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
-                                
+
+                            all =  range(len(self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions))
+                            not_predicted = numpy.setdiff1d(all, self.classifiers[0].unique_vals - 1)
+                            for p_i, p_num in enumerate(not_predicted):
+                                item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
+                                item.prediction[vs[0],vs[1],:,:] = 0
+                                item.prediction[vs[0],:,vs[2],:] = 0
+                                item.prediction[vs[0],:,:,vs[3]] = 0
+
+
                         else:
                             print "##################### prediction None #########################"
                     else:

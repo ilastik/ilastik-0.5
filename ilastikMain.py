@@ -1132,6 +1132,13 @@ class ClassificationPredict(object):
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 
+            all =  range(len(activeItem.dataVol.labels.descriptions))
+            not_predicted = numpy.setdiff1d(all, self.parent.project.dataMgr.classifiers[0].unique_vals - 1)
+            for p_i, p_num in enumerate(not_predicted):
+                activeItem.dataVol.labels.descriptions[p_num].prediction[:,:,:,:] = 0
+
+
+
             margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
             activeItem.dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]
             seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction[:,:,:,:,:], 1.0)
