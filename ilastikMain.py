@@ -410,7 +410,9 @@ class MainWindow(QtGui.QMainWindow):
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
-        self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
+        self.labelWidget.labelView.labelPropertiesChanged_callback = self.updateLabelWidgetOverlays
+
+        #self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
                 
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)

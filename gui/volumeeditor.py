@@ -501,6 +501,7 @@ class LabelListView(QtGui.QListWidget):
         self.initFromMgr(parent.labels)
         self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
         #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
+        self.labelPropertiesChanged_callback = None
 
     
     def initFromMgr(self, volumelabel):
@@ -533,7 +534,9 @@ class LabelListView(QtGui.QListWidget):
         self.items.append(label)
         self.addItem(label)
         self.buildColorTab()
-        self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+        #self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+        if self.labelPropertiesChanged_callback is not None:
+            self.labelPropertiesChanged_callback()
 
     def buildColorTab(self):
         self.colorTab = []
@@ -573,7 +576,9 @@ class LabelListView(QtGui.QListWidget):
             del it
             self.buildColorTab()
             self.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
-            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+            #self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+            if self.labelPropertiesChanged_callback is not None:
+                self.labelPropertiesChanged_callback()
             self.volumeEditor.repaint()
         elif action == toggleHideAction:
             self.buildColorTab()
@@ -583,7 +588,9 @@ class LabelListView(QtGui.QListWidget):
             item.setColor(color)
             self.volumeLabel.descriptions[index.row()].color = color.rgb()
             
-            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+#            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
+            if self.labelPropertiesChanged_callback is not None:
+                self.labelPropertiesChanged_callback()
             self.buildColorTab()
             self.volumeEditor.repaint()
 
