@@ -727,11 +727,14 @@ class VolumeEditor(QtGui.QWidget):
         self.opengl = opengl
         self.openglOverview = openglOverview
         if self.opengl is True:
-            print "Using OpenGL Slice rendering"
+            #print "Using OpenGL Slice rendering"
+            pass
         else:
-            print "Using Software Slice rendering"
+            #print "Using Software Slice rendering"
+            pass
         if self.openglOverview is True:
-            print "Enabling OpenGL Overview rendering"
+            #print "Enabling OpenGL Overview rendering"
+            pass
             
         self.embedded = embedded
         
@@ -1272,7 +1275,7 @@ class ImageSceneRenderThread(QtCore.QThread):
 
         self.dataPending = threading.Event()
         self.dataPending.clear()
-        self.stopped = False        
+        self.stopped = False
 
 
     def run(self):
@@ -1319,7 +1322,7 @@ class ImageSceneRenderThread(QtCore.QThread):
         
                 p.end()
                 del p
-                        
+                
             self.emit(QtCore.SIGNAL("finished()"))        
 
 class ImageScene( QtGui.QGraphicsView):
@@ -1332,9 +1335,9 @@ class ImageScene( QtGui.QGraphicsView):
         self.axis = axis
         self.drawing = False
         self.view = self
-        self.scene = QtGui.QGraphicsScene(self.view)
-        self.scene.setSceneRect(0,0, imShape[0],imShape[1])
+        self.scene = QtGui.QGraphicsScene(parent = self)
         self.view.setScene(self.scene)
+        self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
         if os.path.isfile('gui/backGroundBrush.png'):
             brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
@@ -1402,9 +1405,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), self, self.zoomOut, self.zoomOut)
         self.shortcutZoomOut.setContext(QtCore.Qt.WidgetShortcut )
 
-
     def cleanUp(self):
-        print "stopping ImageSCeneRenderThread", str(self.axis)
+        #print "stopping ImageSCeneRenderThread", str(self.axis)
         
         self.thread.stopped = True
         self.thread.dataPending.set()
@@ -1474,23 +1476,23 @@ class ImageScene( QtGui.QGraphicsView):
 #        self.viewport().repaint()        
 
     def redrawScene(self):
-        if self.imageItem is not None:
-            self.scene.removeItem(self.imageItem)
-            del self.imageItem
-            del self.pixmap
-            del self.image
-            self.imageItem = None
+        if self.thread.stopped is False:
+            if self.imageItem is not None:
+                self.scene.removeItem(self.imageItem)
+                self.imageItem = None
+                self.pixmap = None
+                self.image = None
 
-        for index, item in enumerate(self.tempImageItems):
-            self.scene.removeItem(item)
+            for index, item in enumerate(self.tempImageItems):
+                self.scene.removeItem(item)
 
-        self.tempImageItems = []
-        self.image = self.thread.image
-        self.pixmap = QtGui.QPixmap.fromImage(self.image)        
-        self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap, None, self.scene)
-        
-        self.viewport().repaint()
-        self.volumeEditor.overview.display(self.axis)
+            self.tempImageItems = []
+            self.image = self.thread.image
+            self.pixmap = QtGui.QPixmap.fromImage(self.image)
+            self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
+            self.scene.addItem(self.imageItem)
+            self.viewport().repaint()
+            self.volumeEditor.overview.display(self.axis)
 
     def updateLabels(self):
         result = self.drawManagerCopy.endDraw(self.mousePos)
@@ -1708,7 +1710,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
     def display(self, axis):
         if self.volumeEditor.openglOverview is True:  
-            if self.initialized is True:
+            if self.initialized is True and self.images[0].pixmap is not None and self.images[1].pixmap is not None and self.images[2].pixmap is not None:
                 #self.initializeGL()
                 self.makeCurrent()
                 if self.tex[axis] is not 0:
