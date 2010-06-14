@@ -295,6 +295,7 @@ class ClassifierPredictThread(QtCore.QThread):
             print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
+        print "Prediction Job ", self.count, "/", self.numberOfJobs, " finished"
             
             
     
@@ -395,7 +396,7 @@ class ClassifierInteractiveThread(QtCore.QThread):
             print e
             traceback.print_exc(file=sys.stdout)        
 
-                            
+
     def run(self):
         self.dataPending.set()
         while not self.stopped:

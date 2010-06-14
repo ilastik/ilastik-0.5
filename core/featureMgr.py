@@ -235,6 +235,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                 print e
                 traceback.print_exc(file=sys.stdout)
             self.count += 1
+            print "Feature Job ", self.count, "/", self.jobs, " finished"
         
     
     def run(self):

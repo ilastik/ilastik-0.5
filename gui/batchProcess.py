@@ -143,7 +143,7 @@ class BatchProcess(QtGui.QDialog):
             self.okButton.setEnabled(True)
         
     def exec_(self):
-        if super(BatchProcess, self).exec_() == QtGui.QDialog.Accepted:
+        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
             return  self.image
         else:
             return None

@@ -1173,7 +1173,7 @@ class VolumeEditor(QtGui.QWidget):
 
 
     def show(self):
-        super(VolumeEditor, self).show()
+        QtGui.QWidget.show(self)
         return  self.labels
 
 
