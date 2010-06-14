@@ -35,7 +35,7 @@ import math
 try:
     from OpenGL.GL import *
     from OpenGL.GLU import *
-except Exception as e:
+except Exception, e:
     print e
     pass
 
@@ -284,7 +284,14 @@ class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
         self.alpha = alpha
         self.name = name
         self.visible = visible
-        self.setCheckState(self.visible * 2)
+
+	s = None
+	if self.visible:
+		s = QtCore.Qt.Checked
+	else:
+		s = QtCore.Qt.Unchecked
+
+        self.setCheckState(s)
         self.oldCheckState = self.visible
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
 
@@ -1271,7 +1278,8 @@ class ImageSceneRenderThread(QtCore.QThread):
     def __init__(self, parent):
         QtCore.QThread.__init__(self, None)
         self.volumeEditor = parent.volumeEditor
-        self.queue = deque(maxlen=1)
+        #self.queue = deque(maxlen=1) #python 2.6
+        self.queue = deque() #python 2.5
 
         self.dataPending = threading.Event()
         self.dataPending.clear()
@@ -1335,7 +1343,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.axis = axis
         self.drawing = False
         self.view = self
-        self.scene = QtGui.QGraphicsScene(parent = self)
+        self.scene = QtGui.QGraphicsScene(self)
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
@@ -1414,6 +1422,7 @@ class ImageScene( QtGui.QGraphicsView):
 
     def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         stuff = [image, overlays, labels, labelsAlpha]
+        self.thread.queue.clear()
         self.thread.queue.append(stuff)
         self.thread.dataPending.set()
         

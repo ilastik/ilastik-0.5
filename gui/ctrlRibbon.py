@@ -77,9 +77,9 @@ class RibbonToggleButtonItem(QtGui.QToolButton, RibbonBaseItem):
         action.setIcon(ribbon_entry.icon)
         action.setCheckable(True)
         action.setIconText(ribbon_entry.name)
-        self.setToolButtonStyle(2)
+        self.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
         self.setDefaultAction(action)
-        self.setPopupMode(2)
+        self.setPopupMode(QtGui.QToolButton.InstantPopup)
     
 class RibbonSlider(QtGui.QSlider,RibbonBaseItem):
     def __init__(self, ribbon_entry):
@@ -154,7 +154,7 @@ def createRibbons():
     RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
     RibbonGroupObjects["Features"] = RibbonEntryGroup("Features", 1)   
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
-    #RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 0)
+    RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
     #RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)
     
     RibbonGroupObjects["Projects"].append(RibbonEntry("New", ilastikIcons.New ,"New"))
@@ -169,6 +169,10 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
+
+
+    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment Foreground/Background"))
+    RibbonGroupObjects["Segmentation"].append(RibbonEntry("BorderSegment", ilastikIcons.Play ,"Segment Foreground/Background with Border"))
 
     #RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
     return RibbonGroupObjects   

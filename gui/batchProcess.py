@@ -126,7 +126,7 @@ class BatchProcess(QtGui.QDialog):
                 self.dataMgr[0].prediction.serialize(g, 'prediction')
                 f.close()
                 self.logger.insertPlainText(".")
-            except Exception as e:
+            except Exception, e:
                 print "######Exception"
                 traceback.print_exc(file=sys.stdout)
                 print e

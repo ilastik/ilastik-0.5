@@ -247,8 +247,9 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
-        #TODO: reenable segmentation
-        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
+
+        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
+        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
         
         
         #TODO: reenable online classification sometime 
@@ -454,6 +455,13 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
+
+
+    def on_segmentation(self):
+        pass
+
+    def on_segmentation_border(self):
+        pass
     
     def export2Hdf5(self):
         if not hasattr(self.project.dataMgr,'classifiers'):
@@ -594,7 +602,7 @@ class ProjectDlg(QtGui.QDialog):
                 r.setCheckState(QtCore.Qt.Unchecked)
 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-            except Exception as e:
+            except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 print e
                 QtGui.QErrorMessage(self)
@@ -635,7 +643,7 @@ class ProjectDlg(QtGui.QDialog):
 
                     self.initThumbnail(file_name)
                     self.tableWidget.setCurrentCell(0, 0)
-                except Exception as e:
+                except Exception, e:
                     traceback.print_exc(file=sys.stdout)
                     print e
                     QtGui.QErrorMessage(self)
@@ -838,7 +846,8 @@ class FeatureComputation(object):
     def updateFeatureProgress(self):
         val = self.parent.project.featureMgr.getCount() 
         self.myFeatureProgressBar.setValue(val)
-        if not self.parent.project.featureMgr.featureProcess.is_alive():
+        #if not self.parent.project.featureMgr.featureProcess.is_alive(): #python 2.6
+        if not self.parent.project.featureMgr.featureProcess.isAlive():
             self.myTimer.stop()
             self.terminateFeatureProgressBar()
             self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)

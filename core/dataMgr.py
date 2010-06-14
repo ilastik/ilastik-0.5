@@ -55,7 +55,7 @@ def unravelIndices(indices, shape):
         indices.shape = indices.shape + (1,)
     try:
         ti =  numpy.apply_along_axis(numpy.unravel_index, 1, indices , shape)
-    except Exception as e:
+    except Exception, e:
         print e
         print indices
         print shape
@@ -366,7 +366,7 @@ class DataItemImage(DataItemBase):
                         self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
                     else: #no intersectoin, in erase mode just pass
                         pass
-            except Exception as e:
+            except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
                 print self.trainingIndices.shape

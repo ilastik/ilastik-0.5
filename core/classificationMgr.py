@@ -258,7 +258,7 @@ class ClassifierTrainThread(QtCore.QThread):
                 self.dataMgr.classifiers = self.classifiers
 
             self.dataMgr.featureLock.release()
-        except Exception as e:
+        except Exception, e:
             print "######### Exception in ClassifierTrainThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)   
@@ -291,7 +291,7 @@ class ClassifierPredictThread(QtCore.QThread):
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] + pred[:,:,:,:]
             self.count += 1
-        except Exception as e:
+        except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
@@ -330,7 +330,7 @@ class ClassifierPredictThread(QtCore.QThread):
                         item.prediction = ve.DataAccessor(self.prediction, channels = True)
                         self.prediction = None
                 self.dataMgr.featureLock.release()
-            except Exception as e:
+            except Exception, e:
                 print "########################## exception in ClassifierPredictThread ###################"
                 print e
                 traceback.print_exc(file=sys.stdout)                
@@ -390,7 +390,7 @@ class ClassifierInteractiveThread(QtCore.QThread):
             self.prediction += pred
             self.count += 1
             #self.predLock.release()
-        except Exception as e:
+        except Exception, e:
             print "### ClassifierInteractiveThread::classifierPredict"
             print e
             traceback.print_exc(file=sys.stdout)        
@@ -501,7 +501,7 @@ class ClassifierInteractiveThread(QtCore.QThread):
                     self.ilastik.project.dataMgr.featureLock.release()
                     self.ilastik.activeImageLock.release()                     
                     self.emit(QtCore.SIGNAL("resultsPending()"))
-                except Exception as e:
+                except Exception, e:
                     print "########################## exception in Interactivethread ###################"
                     print e
                     traceback.print_exc(file=sys.stdout)
@@ -539,7 +539,7 @@ class ClassifierOnlineThread(QtCore.QThread):
         while not self.stopped:
             try:
                 features, labels, ids, action = self.commandQueue.get(True, 0.5)
-            except QueueEmpty as empty:
+            except QueueEmpty, empty:
                 action = 'improve'
 
             if action == 'stop':

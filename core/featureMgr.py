@@ -230,7 +230,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                 for t in range(len(result)):
                     tres = result[t][sx:ex,sy:ey,sz:ez]
                     image.featureBlockAccessor[t,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],c_ind,offset:offset+size] = tres
-            except Exception as e:
+            except Exception, e:
                 print "########################## exception in FeatureThread ###################"
                 print e
                 traceback.print_exc(file=sys.stdout)
@@ -239,7 +239,6 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
     
     def run(self):
         for image in self.dataMgr:
-            self.resultImage = deque()
             jobs = []
             for blockNum in range(image.featureBlockAccessor.blockCount):
                 for i, feature in enumerate(self.featureMgr.featureItems):

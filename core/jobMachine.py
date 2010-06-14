@@ -49,7 +49,7 @@ class JobMachineWorker(threading.Thread):
                 try:
                     result = self.target(*self.args)
                     self.machine.results.append(result)
-                except Exception as e:
+                except Exception, e:
                     print "JobMachineWorker::run()"
                     print e
                     

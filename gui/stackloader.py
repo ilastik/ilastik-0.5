@@ -215,7 +215,7 @@ class StackLoader(QtGui.QDialog):
                         else:
                             self.image[:,:,z-offsets[2],0] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                     self.logger.insertPlainText(".")
-                except Exception as e:
+                except Exception, e:
                     allok = False
                     print e 
                     s = "Error loading file " + filename + "as Slice " + str(z-offsets[2])
