@@ -195,8 +195,13 @@ class StackLoader(QtGui.QDialog):
         self.logger.clear()
         self.logger.setVisible(True)
 
-        self.image = numpy.zeros(shape + (self.rgb,), 'float32')
-    
+        try:
+            self.image = numpy.zeros(shape + (self.rgb,), 'float32')
+        except Exception, e:
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            self.reject()
+            return
+        
         #loop over provided images an put them in the hdf5
         z = 0
         allok = True

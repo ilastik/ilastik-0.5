@@ -605,8 +605,7 @@ class ProjectDlg(QtGui.QDialog):
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 print e
-                QtGui.QErrorMessage(self)
-                ed.showMessage(str(e))
+                QtGui.QErrorMessage.qtHandler().showMessage(str(e))
             
                         
     @QtCore.pyqtSignature("")     
@@ -646,8 +645,8 @@ class ProjectDlg(QtGui.QDialog):
                 except Exception, e:
                     traceback.print_exc(file=sys.stdout)
                     print e
-                    QtGui.QErrorMessage(self)
-                    ed.showMessage(str(e))
+                    QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+
                     
     @QtCore.pyqtSignature("")   
     def on_removeFile_clicked(self):
@@ -787,9 +786,13 @@ class FeatureDlg(QtGui.QDialog):
         self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
 
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
-        self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
-        self.computeMemoryRequirement(featureSelectionList)
-        self.close()
+        res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
+        if res is True:
+            self.computeMemoryRequirement(featureSelectionList)
+            self.close()
+        else:
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
+            return False
         
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):

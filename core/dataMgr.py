@@ -294,7 +294,7 @@ class DataItemImage(DataItemBase):
                         indices.shape = indices.shape + (1,)
 
                     mask = numpy.setmember1d(self.trainingIndices.ravel(),indices.ravel())
-                    nonzero = numpy.nonzero(mask)
+                    nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         tt = numpy.delete(self.trainingIndices,nonzero)
                         if len(tt.shape) == 1:
@@ -358,7 +358,7 @@ class DataItemImage(DataItemBase):
                         indices += indic[-loopc]*count
 
                     mask = numpy.setmember1d(self.trainingIndices.ravel(),indices.ravel())
-                    nonzero = numpy.nonzero(mask)
+                    nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
                         self.trainingL  = numpy.delete(self.trainingL,nonzero)
@@ -371,7 +371,8 @@ class DataItemImage(DataItemBase):
                 traceback.print_exc(file=sys.stdout)
                 print self.trainingIndices.shape
                 print indices.shape
-
+                print self.trainingF.shape
+                print nonzero
 
         
     def clearFeaturesAndTraining(self):
@@ -437,7 +438,14 @@ class DataMgr():
             
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
-            dataItem.loadData()
+            try:
+                dataItem.loadData()
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
+                QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
+                raise e
+
             alreadyLoaded = True
             
         if self.channels == -1 or dataItem.dataVol.data.shape[-1] == self.channels:

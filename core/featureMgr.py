@@ -59,7 +59,6 @@ class FeatureMgr():
         self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
         self.child_conn = None
-        self.featureProcessList = []
         
     def setFeatureItems(self, featureItems):
         self.featureItems = featureItems
@@ -83,21 +82,25 @@ class FeatureMgr():
                 size = f.numOfOutputs[dimSel]
                 self.featureSizes.append(size)
                 self.featureOffsets.append(offset)
-            
-            for i, di in enumerate(self.dataMgr):
-                if di.featureCacheDS is None:
-                    di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,),'float32')
-                else:
-                    di.featureCacheDS.resize(di.dataVol.data.shape + (totalSize,))
-                    di._featureM = di.featureCacheDS 
-                di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM, 128)
+            try:
+                for i, di in enumerate(self.dataMgr):
+                    if di.featureCacheDS is None:
+                        di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,),'float32')
+                    else:
+                        di.featureCacheDS.resize(di.dataVol.data.shape + (totalSize,))
+                        di._featureM = di.featureCacheDS
+                    di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM, 128)
+
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
+                return False
         else:
             print "setFeatureItems(): no features selected"
-        
+        return True
+    
     def prepareCompute(self, dataMgr):
         self.dataMgr = dataMgr
-
-        self.featureProcessList = [[] for i in range(len(dataMgr))]
 
         self.featureProcess = FeatureThread(self, dataMgr)
 
