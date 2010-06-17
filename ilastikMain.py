@@ -63,6 +63,9 @@ import getopt
 
 from gui import volumeeditor as ve
 
+#make the program quit on Ctrl+C
+import signal
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
