@@ -151,6 +151,39 @@ class LocalFeature(FeatureBase):
     def setArguments(self, args):
         self.args = args
     
+    def serialize(self, h5grp):
+        h5grp.create_dataset('name',data=self.name)
+        h5grp.create_dataset('argNames',data=self.argNames)
+        h5grp.create_dataset('numOfOutputs',data=self.numOfOutputs)
+        h5grp.create_dataset('featureFunktor',data=self.featureFunktor.__name__)
+        
+        try:
+            dummy = self.featureFunktor.__module__
+            vigraFunktor = False
+        except AttributeError:
+            vigraFunktor = True
+            
+    
+        h5grp.create_dataset('vigraFunktor',data=vigraFunktor)
+        
+    @classmethod
+    def deserialize(cls, h5grp):
+        name = h5grp['name']
+        argNames = h5grp['argNames'].value
+        numOfOutputs = h5grp['numOfOutputs'].value
+        featureFunktor = h5grp['featureFunktor'].value
+        vigraFunktor = h5grp['vigraFunktor'].value
+        
+        # TODO This is quite hacky, but didn found better way.
+        # This approach of course will not work for other featurers 
+        # than filters
+        if vigraFunktor:
+            funktor = eval('vigra.filters.' + featureFunktor)
+        else:
+            funktor = eval(featureFunktor)
+            
+        return cls(name, argNames, numOfOutputs, funktor)
+    
     def __call__(self, channel):
         # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
         # the result of featureFunktor is numpy.ndarray and NOT a vigra type!? I don't know why... (see dateMgr loadData)
@@ -214,8 +247,8 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
         for c_ind in range(image.dataVol.data.shape[-1]):
             try:
                 self.printLock.acquire()
-                #print "calcFeature(): image =", image.Name, "## shape =", image.dataVol.data.shape[0:5], "## featureName =", str(feature), "## channel ", c_ind, "## block =",blockNum
-                print ".",
+                # print "calcFeature(): image =", image.Name, "## shape =", image.dataVol.data.shape[0:5], "## featureName =", str(feature), "## channel ", c_ind, "## block =",blockNum
+                # print ".",
                 self.printLock.release()
                 #TODO: ceil(blockNum,feature.args[0]*3) means sigma*3, make nicer
                 overlap = int(numpy.ceil(feature.args[0]*3))
@@ -242,7 +275,7 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
                 print e
                 traceback.print_exc(file=sys.stdout)
             self.count += 1
-            print "Feature Job ", self.count, "/", self.jobs, " finished"
+            # print "Feature Job ", self.count, "/", self.jobs, " finished"
         
     
     def run(self):
@@ -288,10 +321,10 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation', 'ChannelRep']
-        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
+        self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']#, 'ChannelRep']
+        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']#, 'Megahuge', 'Gigahuge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
-        self.groupScaleValues = [0.2, 0.5, 1, 1.5, 3.5, 5.0, 10.0]
+        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5]#, 5.0, 10.0]
         
         self.members = {}
         for g in self.groupNames:
@@ -319,7 +352,7 @@ class FeatureGroups(object):
         #self.members['SvenSpecial'].append(svenSpecialWaveFrontDistance)
         #self.members['SvenSpecial___Special'].append(svenSpecialWaveFrontDistance)
 
-        self.members['ChannelRep'].append(channels4)
+        #self.members['ChannelRep'].append(channels4)
 
     def createList(self):
         resList = []
