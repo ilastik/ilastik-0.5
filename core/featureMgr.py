@@ -55,11 +55,12 @@ class FeatureMgr():
         self.featureOffsets = []
         if featureItems is None:
             featureItems = []
+        self.maxSigma = 0
         self.setFeatureItems(featureItems)
         self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
         self.child_conn = None
-        self.maxSigma = 0
+        
         
     def setFeatureItems(self, featureItems):
         self.featureItems = featureItems
@@ -163,7 +164,6 @@ class LocalFeature(FeatureBase):
         except AttributeError:
             vigraFunktor = True
             
-    
         h5grp.create_dataset('vigraFunktor',data=vigraFunktor)
         
     @classmethod
