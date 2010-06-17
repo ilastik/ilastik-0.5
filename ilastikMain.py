@@ -162,6 +162,7 @@ class MainWindow(QtGui.QMainWindow):
         if project != None:
             self.project = projectMgr.Project.loadFromDisk(project, self.featureCache)
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+            self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             self.activeImage = 0
             self.projectModified()
@@ -243,6 +244,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Save'], QtCore.SIGNAL('clicked()'), self.saveProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
+        self.connect(self.ribbon.tabDict['Projects'].itemDict['Options'], QtCore.SIGNAL('clicked()'), self.optionsDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
@@ -277,6 +279,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setToolTip('Add and Remove files from the current project')
+        self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setToolTip('Save the current Project')
         self.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(False)        
@@ -324,6 +327,7 @@ class MainWindow(QtGui.QMainWindow):
         if str(fileName) != "":
             self.project = projectMgr.Project.loadFromDisk(str(fileName), self.featureCache)
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+            self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             if hasattr(self, 'projectDlg'):
                 del self.projectDlg
@@ -340,9 +344,13 @@ class MainWindow(QtGui.QMainWindow):
         self.updateFileSelector() #this one also changes the image
         self.changeImage(self.activeImage)
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+        self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         self.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(True)
         
+    def optionsDlg(self):
+        tmp = ProjectSettingsDlg(self, self.project)
+        tmp.exec_()
         
     def updateLabelWidgetOverlays(self):
         #TODO: this whole method is so ugly, it should be forbidden !
@@ -415,7 +423,10 @@ class MainWindow(QtGui.QMainWindow):
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
         self.labelWidget.labelView.labelPropertiesChanged_callback = self.updateLabelWidgetOverlays
-
+        
+        self.labelWidget.normalizeData = self.project.normalizeData
+        self.labelWidget.useBorderMargin = self.project.useBorderMargin
+        
         #self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
                 
@@ -481,7 +492,54 @@ class MainWindow(QtGui.QMainWindow):
             print "Write Random Forest # %03d -> %d" % (i,tmp)
         print "Done"
             
-        
+class ProjectSettingsDlg(QtGui.QDialog):
+    def __init__(self, ilastik = None, project=None):
+        QtGui.QWidget.__init__(self, ilastik)
+
+        self.project = project
+        self.ilastik = ilastik
+
+
+        self.layout = QtGui.QVBoxLayout()
+        self.setLayout(self.layout)
+
+
+        self.normalizeCheckbox = QtGui.QCheckBox("normalize Data for display in each SliceView seperately")
+        self.layout.addWidget(self.normalizeCheckbox)
+
+        self.borderMarginCheckbox = QtGui.QCheckBox("don't use labels near border - also shows a indicator for the region from wich no labels are used ")
+        self.layout.addWidget(self.borderMarginCheckbox)
+
+        self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)
+        self.normalizeCheckbox.setCheckState(self.project.normalizeData*2)
+
+        tempLayout = QtGui.QHBoxLayout()
+        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
+        self.okButton = QtGui.QPushButton("Ok")
+        self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
+        tempLayout.addStretch()
+        tempLayout.addWidget(self.cancelButton)
+        tempLayout.addWidget(self.okButton)
+        self.layout.addLayout(tempLayout)
+
+    def ok(self):
+        self.project.useBorderMargin = False
+        self.project.normalizeData = False
+        if self.normalizeCheckbox.checkState() == QtCore.Qt.Checked:
+            self.project.normalizeData = True
+        if self.borderMarginCheckbox.checkState() == QtCore.Qt.Checked:
+            self.project.useBorderMargin = True
+        if self.ilastik.labelWidget is not None:
+            self.ilastik.labelWidget.normalizeData = self.project.normalizeData
+            self.ilastik.labelWidget.setUseBorderMargin(self.project.useBorderMargin)
+            self.ilastik.labelWidget.repaint()
+            
+        self.close()
+
+    def cancel(self):
+        self.close()
+
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None, newProject = True):
         QtGui.QWidget.__init__(self, parent)
@@ -585,6 +643,8 @@ class ProjectDlg(QtGui.QDialog):
                 theDataItem.isTesting = True
 
                 self.ilastik.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+                self.ilastik.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
+
                 self.ilastik.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
 
                 rowCount = self.tableWidget.rowCount()
@@ -709,6 +769,8 @@ class ProjectDlg(QtGui.QDialog):
                 theDataItem.projects.append(self.parent.project)
         
         self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
+        self.parent.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
+
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         
         self.parent.activeImage = 0

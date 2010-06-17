@@ -738,8 +738,16 @@ class VolumeEditor(QtGui.QWidget):
         title = name
         
         self.labelsAlpha = 1.0
+
+        #Bordermargin settings - they control the blue markers that signal the region from wich the
+        #labels are not used for trainig
+        self.useBorderMargin = True
         self.borderMargin = 0
-        
+
+
+        #this setting controls the rescaling of the displayed data to the full 0-255 range
+        self.normalizeData = False
+
         self.opengl = opengl
         self.openglOverview = openglOverview
         if self.opengl is True:
@@ -1066,14 +1074,24 @@ class VolumeEditor(QtGui.QWidget):
         """Return modified text"""
         return unicode(self.edit.toPlainText())
 
+    def setUseBorderMargin(self, use):
+        self.useBorderMargin = use
+        self.setBorderMargin(self.borderMargin)
+
     def setBorderMargin(self, margin):
-        if self.borderMargin != margin:
-            print "new border margin:", margin
-            self.borderMargin = margin
-            self.imageScenes[0].__borderMarginIndicator__(margin)
-            self.imageScenes[1].__borderMarginIndicator__(margin)
-            self.imageScenes[2].__borderMarginIndicator__(margin)
-            self.repaint()
+        if self.useBorderMargin is True:
+            if self.borderMargin != margin:
+                print "new border margin:", margin
+                self.borderMargin = margin
+                self.imageScenes[0].__borderMarginIndicator__(margin)
+                self.imageScenes[1].__borderMarginIndicator__(margin)
+                self.imageScenes[2].__borderMarginIndicator__(margin)
+                self.repaint()
+        else:
+                self.imageScenes[0].__borderMarginIndicator__(0)
+                self.imageScenes[1].__borderMarginIndicator__(0)
+                self.imageScenes[2].__borderMarginIndicator__(0)
+                self.repaint()
 
     def changeSliceX(self, num):
         self.changeSlice(num, 0)
@@ -1338,7 +1356,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                 
                 if image.dtype == 'uint16':
                     image = (image / 255).astype(numpy.uint8)
-                self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=False)
+                self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=self.volumeEditor.normalizeData)
         
                 self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
         
@@ -1520,7 +1538,7 @@ class ImageScene( QtGui.QGraphicsView):
         if self.thread.stopped is False:
             #if, in slicing direction, we are within the margin of the image border
             #we set the border overlay indicator to visible
-            self.allBorder.setVisible(self.sliceNumber < self.volumeEditor.borderMargin or self.sliceExtent - self.sliceNumber < self.volumeEditor.borderMargin)
+            self.allBorder.setVisible((self.sliceNumber < self.volumeEditor.borderMargin or self.sliceExtent - self.sliceNumber < self.volumeEditor.borderMargin) and self.sliceExtent > 1)
             
             if self.imageItem is not None:
                 self.scene.removeItem(self.imageItem)

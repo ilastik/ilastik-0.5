@@ -52,6 +52,8 @@ class Project(object):
         if labelColors is None:
             labelColors = {}     
         self.filename = None
+        self.useBorderMargin = True
+        self.normalizeData = False
         self.name = name
         self.labeler = labeler
         self.description = description
