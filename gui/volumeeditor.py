@@ -323,9 +323,14 @@ class OverlayListView(QtGui.QListWidget):
 
     def onItemClick(self, itemIndex):
         item = self.itemFromIndex(itemIndex)
-        if item.checkState() != item.visible * 2:
+        if (item.checkState() == QtCore.Qt.Checked and not item.visible) or (item.checkState() == QtCore.Qt.Unchecked and item.visible):
             item.visible = not(item.visible)
-            item.setCheckState(item.visible * 2)
+            s = None
+	    if item.visible:
+                s = QtCore.Qt.Checked
+            else:
+                s = QtCore.Qt.Unchecked
+            item.setCheckState(s)
             self.volumeEditor.repaint()
             
     def onItemDoubleClick(self, itemIndex):
