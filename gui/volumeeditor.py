@@ -796,9 +796,11 @@ class VolumeEditor(QtGui.QWidget):
         self.drawManager = DrawManager(self)
 
         self.imageScenes = []
-        self.imageScenes.append(ImageScene(self, self.image.shape[2:4], 0,self.drawManager))
-        self.imageScenes.append(ImageScene( self, (self.image.shape[1], self.image.shape[3]) ,  1,self.drawManager))
-        self.imageScenes.append(ImageScene(self, self.image.shape[1:3], 2,self.drawManager))
+        
+        self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
+        self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
+        self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[2], self.image.shape[3]), 2 ,self.drawManager))
+        
         self.grid.addWidget(self.imageScenes[2], 0, 0)
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
@@ -1062,7 +1064,13 @@ class VolumeEditor(QtGui.QWidget):
         return unicode(self.edit.toPlainText())
 
     def setBorderMargin(self, margin):
-        self.borderMargin = margin
+        if self.borderMargin != margin:
+            print "new border margin:", margin
+            self.borderMargin = margin
+            self.imageScenes[0].__borderMarginIndicator__(margin)
+            self.imageScenes[1].__borderMarginIndicator__(margin)
+            self.imageScenes[2].__borderMarginIndicator__(margin)
+            self.repaint()
 
     def changeSliceX(self, num):
         self.changeSlice(num, 0)
@@ -1102,6 +1110,7 @@ class VolumeEditor(QtGui.QWidget):
             tempLabels = self.labels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
+        self.imageScenes[axis].sliceNumber = num
         self.imageScenes[axis].display(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
         self.overview.display(axis)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
@@ -1343,19 +1352,49 @@ class ImageSceneRenderThread(QtCore.QThread):
             self.emit(QtCore.SIGNAL("finished()"))        
 
 class ImageScene( QtGui.QGraphicsView):
+    def __borderMarginIndicator__(self, margin):
+        """
+        update the border margin indicator (left, right, top, bottom)
+        to reflect the new given margin
+        """
+        if self.border:
+            self.scene.removeItem(self.border)
+        borderPath = QtGui.QPainterPath()
+        borderPath.setFillRule(QtCore.Qt.WindingFill)
+        borderPath.addRect(0,0, margin, self.imShape[1])
+        borderPath.addRect(0,0, self.imShape[0], margin)
+        borderPath.addRect(self.imShape[0]-margin,0, margin, self.imShape[1])
+        borderPath.addRect(0,self.imShape[1]-margin, self.imShape[0], margin)
+        self.border = QtGui.QGraphicsPathItem(borderPath)
+        brush = QtGui.QBrush(QtGui.QColor(0,0,255))
+        brush.setStyle( QtCore.Qt.DiagCrossPattern )
+        self.border.setBrush(brush)
+        self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+        self.border.setZValue(200)
+        self.scene.addItem(self.border)
+        
     def __init__(self, parent, imShape, axis, drawManager):
+        """
+        imShape: 3D shape of the block that this slice view displays.
+                 first two entries denote the x,y extent of one slice,
+                 the last entry is the extent in slice direction
+        """
         QtGui.QGraphicsView.__init__(self)
-        self.imShape = imShape
+        self.imShape = imShape[0:2]
         self.drawManager = drawManager
         self.tempImageItems = []
         self.volumeEditor = parent
         self.axis = axis
+        self.sliceNumber = 0
+        self.sliceExtent = imShape[2]
         self.drawing = False
         self.view = self
         self.scene = QtGui.QGraphicsScene(self)
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
+        self.border = None
+        self.allBorder = None
         if os.path.isfile('gui/backGroundBrush.png'):
             brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
         else:
@@ -1399,6 +1438,23 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene.addItem(self.linex)
         self.scene.addItem(self.liney)
         ##############################
+
+        #indicators for the biggest filter mask's size
+        #marks the area where labels should not be placed
+        # -> the margin top, left, right, bottom
+        self.__borderMarginIndicator__(0)
+        # -> the complete 2D slice is marked
+        brush = QtGui.QBrush(QtGui.QColor(0,0,255))
+        brush.setStyle( QtCore.Qt.DiagCrossPattern )
+        allBorderPath = QtGui.QPainterPath()
+        allBorderPath.setFillRule(QtCore.Qt.WindingFill)
+        allBorderPath.addRect(0, 0, imShape[0], imShape[1])
+        self.allBorder = QtGui.QGraphicsPathItem(allBorderPath)
+        self.allBorder.setBrush(brush)
+        self.allBorder.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+        self.scene.addItem(self.allBorder)
+        self.allBorder.setVisible(False)
+        self.allBorder.setZValue(200)
 
         #label updates while drawing, needed for interactive segmentation
         self.drawTimer = QtCore.QTimer()
@@ -1495,6 +1551,10 @@ class ImageScene( QtGui.QGraphicsView):
 
     def redrawScene(self):
         if self.thread.stopped is False:
+            #if, in slicing direction, we are within the margin of the image border
+            #we set the border overlay indicator to visible
+            self.allBorder.setVisible(self.sliceNumber < self.volumeEditor.borderMargin or self.sliceExtent - self.sliceNumber < self.volumeEditor.borderMargin)
+            
             if self.imageItem is not None:
                 self.scene.removeItem(self.imageItem)
                 self.imageItem = None
@@ -1511,7 +1571,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.scene.addItem(self.imageItem)
             self.viewport().repaint()
             self.volumeEditor.overview.display(self.axis)
-
+        
     def updateLabels(self):
         result = self.drawManagerCopy.endDraw(self.mousePos)
         image = result[2]

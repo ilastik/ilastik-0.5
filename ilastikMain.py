@@ -787,10 +787,11 @@ class FeatureDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):  
         self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
-        self.parent.labelWidget.setBorderMargin(self.parent.project.featureMgr.maxSigma*3)
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
+            #print "features have maximum needed margin of:", self.parent.project.featureMgr.maxSigma*3
+            self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxSigma*3))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
         else:
