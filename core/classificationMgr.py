@@ -226,7 +226,6 @@ class ClassificationImpex(object):
 class ClassifierTrainThread(QtCore.QThread):
     def __init__(self, queueSize, dataMgr, treeCount=10):
         QtCore.QThread.__init__(self, None)
-        #threading.Thread.__init__(self)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
         self.count = 0
@@ -269,7 +268,6 @@ class ClassifierTrainThread(QtCore.QThread):
 class ClassifierPredictThread(QtCore.QThread):
     def __init__(self, dataMgr):
         QtCore.QThread.__init__(self, None)
-        #threading.Thread.__init__(self)
         self.count = 0
         self.dataMgr = dataMgr
         self.stopped = False
@@ -341,19 +339,13 @@ class ClassifierPredictThread(QtCore.QThread):
                 
 
 class ClassifierInteractiveThread(QtCore.QThread):
-    def __init__(self, parent, trainingQueue, predictQueue, resultQueue, numberOfClassifiers=5, treeCount=8):
-        #threading.Thread.__init__(self)
-        #QtCore.QObject.__init__(self)
+    def __init__(self, parent, numberOfClassifiers=5, treeCount=8):
         QtCore.QThread.__init__(self, None)
 
         self.ilastik = parent
         
         self.stopped = False
-        
-        self.trainingQueue = trainingQueue
-        self.predictionQueue = predictQueue
-        self.resultQueue = resultQueue
-        
+               
         self.resultList = deque(maxlen=10)
                
         self.numberOfClassifiers = numberOfClassifiers    
@@ -514,7 +506,6 @@ class ClassifierInteractiveThread(QtCore.QThread):
 
 class ClassifierOnlineThread(QtCore.QThread):
     def __init__(self, name, features, labels, ids, predictionList, predictionUpdated):
-        #threading.Thread.__init__(self)
         QtCore.QThread.__init__(self, None)
 
         self.commandQueue = queue()

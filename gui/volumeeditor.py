@@ -735,6 +735,7 @@ class VolumeEditor(QtGui.QWidget):
         title = name
         
         self.labelsAlpha = 1.0
+        self.borderMargin = 0
         
         self.opengl = opengl
         self.openglOverview = openglOverview
@@ -1059,6 +1060,9 @@ class VolumeEditor(QtGui.QWidget):
     def get_copy(self):
         """Return modified text"""
         return unicode(self.edit.toPlainText())
+
+    def setBorderMargin(self, margin):
+        self.borderMargin = margin
 
     def changeSliceX(self, num):
         self.changeSlice(num, 0)

@@ -787,7 +787,7 @@ class FeatureDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):  
         self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
-
+        self.parent.labelWidget.setBorderMargin(self.parent.project.featureMgr.maxSigma*3)
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
@@ -931,9 +931,6 @@ class ClassificationInteractive(object):
     def __init__(self, parent):
         self.parent = parent
         self.stopped = False
-        self.trainingQueue = deque(maxlen=1)
-        self.predictionQueue = deque(maxlen=1)
-        self.resultQueue = deque(maxlen=3)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
         self.parent.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)
 
@@ -971,7 +968,7 @@ class ClassificationInteractive(object):
     def start(self):
                
         self.initInteractiveProgressBar()
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.trainingQueue, self.predictionQueue, self.resultQueue)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent)
 
         self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
     
