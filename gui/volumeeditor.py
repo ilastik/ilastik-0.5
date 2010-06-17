@@ -1211,6 +1211,19 @@ class DrawManager(QtCore.QObject):
         self.lines = []
         self.scene = QtGui.QGraphicsScene()
 
+    def copy(self):
+        cp = DrawManager(self.parent)
+        cp.volumeEditor = self.volumeEditor
+        cp.shape = self.shape
+        cp.brushSize = self.brushSize
+        cp.penVis = self.penVis
+        cp.penDraw = self.penDraw
+        cp.pos = self.pos
+        cp.erasing = self.erasing
+        cp.lines = self.lines
+        cp.scene = self.scene
+        return cp
+
     def initBoundingBox(self):
         self.leftMost = self.shape[0]
         self.rightMost = 0
@@ -1490,64 +1503,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.queue.clear()
         self.thread.queue.append(stuff)
         self.thread.dataPending.set()
-        
-#        if self.imageItem is not None:
-#            self.scene.removeItem(self.imageItem)
-#            del self.imageItem
-#            del self.pixmap
-#            del self.image
-#            self.imageItem = None
-#
-#        for index, item in enumerate(self.tempImageItems):
-#            self.scene.removeItem(item)
-#
-#        self.tempImageItems = []
-#
-#
-#        if image.dtype == 'uint16':
-#            image = (image / 255).astype(numpy.uint8)
-#        self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=False)
-#
-#        self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
-#
-#        p = QtGui.QPainter(self.image)
-#
-#        #add overlays
-#        for index, item in enumerate(overlays):
-#            p.setOpacity(item.alpha)
-#           
-#            if item.colorTable != None:
-#                imageO = qimage2ndarray.gray2qimage(item.data.swapaxes(0,1), normalize=False)
-#                alphaChan = item.alphaChannel
-#                imageO.setColorTable(item.colorTable)
-#            else:
-#                imageO = qimage2ndarray.array2qimage(item.data.swapaxes(0,1), normalize=False)
-#                alphaChan = item.alphaChannel
-#                imageO.setAlphaChannel(qimage2ndarray.gray2qimage(alphaChan.swapaxes(0,1), False))
-#
-#            p.drawImage(imageO.rect(), imageO)
-#
-#        if labels is not None:
-#            #p.setOpacity(item.alpha)
-#            
-#            p.setOpacity(labelsAlpha)
-#            image0 = qimage2ndarray.gray2qimage(labels.swapaxes(0,1), False)
-#
-#            image0.setColorTable(self.volumeEditor.labelView.colorTab)
-#            mask = image0.createMaskFromColor(QtGui.QColor(0,0,0).rgb(),QtCore.Qt.MaskOutColor) #QtGui.QBitmap.fromImage(
-#            image0.setAlphaChannel(mask)
-#            p.drawImage(image0.rect(), image0)
-#
-#        p.end()
-#        del p
-#
-#        self.pixmap = QtGui.QPixmap.fromImage(self.image)        
-#
-#        self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
-#
-#        self.scene.addItem(self.imageItem)
-#        
-#        self.viewport().repaint()        
+             
 
     def redrawScene(self):
         if self.thread.stopped is False:
@@ -1588,7 +1544,7 @@ class ImageScene( QtGui.QGraphicsView):
     
     def beginDraw(self, pos):
         self.mousePos = pos
-        self.drawManagerCopy = copy.copy(self.drawManager)
+        self.drawManagerCopy = self.drawManager.copy()
         self.drawing  = True
         line = self.drawManager.beginDraw(pos, self.imShape)
         line.setZValue(99)
