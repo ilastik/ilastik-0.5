@@ -507,7 +507,7 @@ class ProjectSettingsDlg(QtGui.QDialog):
         self.normalizeCheckbox = QtGui.QCheckBox("normalize Data for display in each SliceView seperately")
         self.layout.addWidget(self.normalizeCheckbox)
 
-        self.borderMarginCheckbox = QtGui.QCheckBox("don't use labels near border - also shows a indicator for the region from wich no labels are used ")
+        self.borderMarginCheckbox = QtGui.QCheckBox("show border margin indicator")
         self.layout.addWidget(self.borderMarginCheckbox)
 
         self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)

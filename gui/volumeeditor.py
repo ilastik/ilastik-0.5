@@ -1399,6 +1399,7 @@ class ImageScene( QtGui.QGraphicsView):
         update the border margin indicator (left, right, top, bottom)
         to reflect the new given margin
         """
+        self.margin = margin
         if self.border:
             self.scene.removeItem(self.border)
         borderPath = QtGui.QPainterPath()
@@ -1538,7 +1539,7 @@ class ImageScene( QtGui.QGraphicsView):
         if self.thread.stopped is False:
             #if, in slicing direction, we are within the margin of the image border
             #we set the border overlay indicator to visible
-            self.allBorder.setVisible((self.sliceNumber < self.volumeEditor.borderMargin or self.sliceExtent - self.sliceNumber < self.volumeEditor.borderMargin) and self.sliceExtent > 1)
+            self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
             
             if self.imageItem is not None:
                 self.scene.removeItem(self.imageItem)
