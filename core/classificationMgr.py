@@ -73,6 +73,9 @@ class ClassifierBase(object):
     
 class ClassifierRandomForest(ClassifierBase):
     def __init__(self, features=None, labels=None, treeCount=10):
+        if features is None:
+            return
+        
         ClassifierBase.__init__(self)
         if not labels.dtype == numpy.uint32:
             labels = labels.astype(numpy.uint32)
@@ -82,8 +85,10 @@ class ClassifierRandomForest(ClassifierBase):
         self.unique_vals = numpy.unique(labels)
 
         if len(self.unique_vals) > 1:
-            print "Learning RF %d trees: %d labels given, %d classes, and %d features " % (treeCount, features.shape[0], len(numpy.unique(labels)), features.shape[1])
+            # print "Learning RF %d trees: %d labels given, %d classes, and %d features " % (treeCount, features.shape[0], len(numpy.unique(labels)), features.shape[1])
             self.classifier = vigra.learning.RandomForestOld(features, labels, treeCount=treeCount)
+            #self.classifier = vigra.learning.RandomForest(treeCount=treeCount)
+            #self.classifier.learnRF(features, labels)
         else:
             self.classifier = None
             
@@ -224,7 +229,7 @@ class ClassificationImpex(object):
      
     
 class ClassifierTrainThread(QtCore.QThread):
-    def __init__(self, queueSize, dataMgr, classifier = ClassifierRandomForest, classifierOptions = (10)):
+    def __init__(self, queueSize, dataMgr, classifier = ClassifierRandomForest, classifierOptions = (10,)):
         QtCore.QThread.__init__(self, None)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
@@ -293,7 +298,7 @@ class ClassifierPredictThread(QtCore.QThread):
             print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
-        print "Prediction Job ", self.count, "/", self.numberOfJobs, " finished"
+        # print "Prediction Job ", self.count, "/", self.numberOfJobs, " finished"
             
             
     
