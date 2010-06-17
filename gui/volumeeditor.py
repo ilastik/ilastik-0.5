@@ -636,9 +636,12 @@ class LabelState(State):
         erase = numpy.where(stuff == 1, 1, 0)
         self.dataBefore = temp
         #volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
-        volumeEditor.setLabels(self.offsets, self.axis, restore, False)
-        volumeEditor.setLabels(self.offsets, self.axis, erase, True)
-        volumeEditor.repaint()
+        volumeEditor.setLabels(self.offsets, self.axis, self.num, restore, False)
+        volumeEditor.setLabels(self.offsets, self.axis, self.num, erase, True)
+        if volumeEditor.sliceSelectors[self.axis].value() != self.num:
+            volumeEditor.sliceSelectors[self.axis].setValue(self.num)
+        else:
+            volumeEditor.repaint()
         self.erasing = not(self.erasing)          
 
 
@@ -1166,8 +1169,7 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[1].doScale(scaleFactor)
             self.imageScenes[2].doScale(scaleFactor)
 
-    def setLabels(self, offsets, axis, labels, erase):
-        num = self.sliceSelectors[axis].value()
+    def setLabels(self, offsets, axis, num, labels, erase):
         if axis == 0:
             offsets5 = (self.selectedTime,num,offsets[0],offsets[1],0)
             sizes5 = (1,1,labels.shape[0], labels.shape[1],1)
@@ -1212,6 +1214,9 @@ class DrawManager(QtCore.QObject):
         self.scene = QtGui.QGraphicsScene()
 
     def copy(self):
+        """
+        make a shallow copy of DrawManager - needed for python 2.5 compatibility
+        """
         cp = DrawManager(self.parent)
         cp.volumeEditor = self.volumeEditor
         cp.shape = self.shape
@@ -1281,6 +1286,12 @@ class DrawManager(QtCore.QObject):
         oldLeft = self.leftMost
         oldTop = self.topMost
         return (oldLeft, oldTop, tempi) #TODO: hackish, probably return a class ??
+
+    def dumpDraw(self, pos):
+        res = self.endDraw(pos)
+        self.beginDraw(pos, self.shape)
+        return res
+
 
     def moveTo(self, pos):      
         lineVis = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
@@ -1529,7 +1540,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.volumeEditor.overview.display(self.axis)
         
     def updateLabels(self):
-        result = self.drawManagerCopy.endDraw(self.mousePos)
+        result = self.drawManager.dumpDraw(self.mousePos)
         image = result[2]
         ndarr = qimage2ndarray.rgb_view(image)
         labels = ndarr[:,:,0]
@@ -1538,13 +1549,11 @@ class ImageScene( QtGui.QGraphicsView):
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor.history.append(ls)        
-        self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)        
-        self.drawManagerCopy.beginDraw(self.mousePos, self.imShape)
+        self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
 
     
     def beginDraw(self, pos):
         self.mousePos = pos
-        self.drawManagerCopy = self.drawManager.copy()
         self.drawing  = True
         line = self.drawManager.beginDraw(pos, self.imShape)
         line.setZValue(99)
@@ -1552,7 +1561,6 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene.addItem(line)
         
         self.drawTimer.start(100) #update labels every some ms
-        self.drawManagerCopy.beginDraw(pos, self.imShape)
         
     def endDraw(self, pos):
         self.drawTimer.stop()
@@ -1565,7 +1573,7 @@ class ImageScene( QtGui.QGraphicsView):
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor.history.append(ls)        
-        self.volumeEditor.setLabels(result[0:2], self.axis, labels, self.drawManager.erasing)
+        self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
         self.drawing = False
 
 
@@ -1666,7 +1674,6 @@ class ImageScene( QtGui.QGraphicsView):
                 
         
         if event.buttons() == QtCore.Qt.LeftButton and self.drawing == True:
-            self.drawManagerCopy.moveTo(mousePos)
             line = self.drawManager.moveTo(mousePos)
             line.setZValue(99)
             self.tempImageItems.append(line)

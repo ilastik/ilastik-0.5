@@ -224,20 +224,20 @@ class ClassificationImpex(object):
      
     
 class ClassifierTrainThread(QtCore.QThread):
-    def __init__(self, queueSize, dataMgr, treeCount=10):
+    def __init__(self, queueSize, dataMgr, classifier = ClassifierRandomForest, classifierOptions = (10)):
         QtCore.QThread.__init__(self, None)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
         self.count = 0
         self.classifierList = []
         self.stopped = False
-        self.classifier = ClassifierRandomForest
+        self.classifier = classifier
+        self.classifierOptions = classifierOptions
         self.jobMachine = jobMachine.JobMachine()
         self.classifiers = deque()
-        self.treeCount = treeCount
 
     def trainClassifier(self, F, L):
-        classifier = self.classifier(F, L, self.treeCount)
+        classifier = self.classifier(F, L, *self.classifierOptions)
         self.count += 1
         self.classifiers.append(classifier)
         
