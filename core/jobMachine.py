@@ -1,5 +1,7 @@
 import os
 import threading
+from PyQt4 import QtCore
+
 from collections import deque
 
 #detectCPUS function is shamelessly copied from the intertubes
@@ -33,13 +35,14 @@ class IlastikJob():
         self.args = None
 
 
-class JobMachineWorker(threading.Thread):
+class JobMachineWorker(QtCore.QThread):
     def __init__(self):
-        threading.Thread.__init__(self)
+        QtCore.QThread.__init__(self)
         self.event = threading.Event()
         self.event.clear()
         self.stopped = False
         self.start()
+        self.setPriority(QtCore.QThread.LowPriority)
         
     def run(self):
         while self.stopped is False:
@@ -141,7 +144,8 @@ class WorkerManager(object):
                 print "stopping worker thread ", str(i)
                 w.stopped = True
                 w.event.set()
-                w.join()
+                w.terminate()
+                w.wait()
         self.workerPool.clear()
         
     def __del__(self):

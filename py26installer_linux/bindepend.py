@@ -111,9 +111,9 @@ excludes = {
     'MSIMG32.DLL':1,
     # regex excludes
     # don't include in the bundle the libc and the tls stuff
-    r'^/usr/lib/tls':1,
-    r'^/lib/libc\.so\..*':1,
-    r'^/lib/tls':1,
+    #r'^/usr/lib/tls':1,
+    #r'^/lib/libc\.so\..*':1,
+    #r'^/lib/tls':1,
     # libGL can reference some hw specific libraries (like nvidia libs)
     r'/usr/lib/libGL.*':1,
     # MS assembly excludes

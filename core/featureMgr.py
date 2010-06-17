@@ -59,6 +59,7 @@ class FeatureMgr():
         self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
         self.child_conn = None
+        self.maxSigma = 0
         
     def setFeatureItems(self, featureItems):
         self.featureItems = featureItems
@@ -75,6 +76,9 @@ class FeatureMgr():
             numChannels = self.dataMgr[0].dataVol.data.shape[-1]
             totalSize = reduce(lambda x, y: x + y, [k.numOfOutputs[dimSel] for k in featureItems])
             for i, f in enumerate(featureItems):
+                if f.args[0] > self.maxSigma:
+                    self.maxSigma = f.args[0]
+
                 if i != 0:
                     offset = reduce(lambda x, y: x + y, [k.numOfOutputs[dimSel] for k in featureItems[0:i]])
                 else:

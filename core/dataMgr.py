@@ -36,6 +36,7 @@ import threading
 import h5py
 import h5py as tables # TODO: exchange tables with h5py
 from core.utilities import irange, debug, irangeIfTrue
+from PyQt4 import QtGui
 
 from gui.volumeeditor import DataAccessor as DataAccessor
 from gui.volumeeditor import Volume as Volume
@@ -332,12 +333,14 @@ class DataItemImage(DataItemBase):
                         self.trainingL = numpy.vstack((temp2,tempL))
 
                         if self._featureM is not None and len(indices) > 0:
-                            temp2 = self.trainingF
-                            if len(temp2.shape) == 1:
-                                temp2.shape += (1,)
+                            if self.trainingF is not None:
+                                if len(self.trainingF.shape) == 1:
+                                    self.trainingF.shape += (1,)
 
-                            tempfm = self.getTrainingMforInd(indices)
-                            self.trainingF = numpy.vstack((temp2,tempfm))
+                                tempfm = self.getTrainingMforInd(indices)
+                                self.trainingF = numpy.vstack((self.trainingF,tempfm))
+                            else:
+                                self.trainingF = self.getTrainingMforInd(indices)
 
                 else: #erasing == True
                     indic =  list(numpy.nonzero(nl.data))
@@ -360,10 +363,11 @@ class DataItemImage(DataItemBase):
                     mask = numpy.setmember1d(self.trainingIndices.ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
-                        self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
-                        self.trainingL  = numpy.delete(self.trainingL,nonzero)
-                        self.trainingL.shape += (1,) #needed because numpy.delete is stupid
-                        self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
+                        if self.trainingF is not None:
+                            self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
+                            self.trainingL  = numpy.delete(self.trainingL,nonzero)
+                            self.trainingL.shape += (1,) #needed because numpy.delete is stupid
+                            self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
                     else: #no intersectoin, in erase mode just pass
                         pass
             except Exception, e:
@@ -468,7 +472,7 @@ class DataMgr():
         self.labels = {}
         
     
-    def buildTrainingMatrix(self):
+    def buildTrainingMatrix(self, sigma = 0):
         trainingF = []
         trainingL = []
         indices = []
@@ -483,7 +487,11 @@ class DataMgr():
         self.trainingF = trainingF
         self.trainingIndices = indices     
     
-    def getTrainingMatrix(self):
+    def getTrainingMatrix(self, sigma = 0):
+        """
+        sigma: trainig data that is within sigma to the image borders is not considered to prevent
+        border artifacts in training
+        """
         if self.trainingVersion < self.featureVersion:
             self.clearFeaturesAndTraining()
         self.buildTrainingMatrix()
