@@ -799,9 +799,20 @@ class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self)
         self.parent = parent
+        self.ilastik = parent
         self.initDlg()
         
     def initDlg(self):
+
+        #determine the minimum x,y,z of all images
+        min = self.ilastik.project.dataMgr[0].dataVol.data.shape[3]
+        for i, it in enumerate(self.ilastik.project.dataMgr):
+            if it.dataVol.data.shape[2] < min:
+                min = it.dataVol.data.shape[2]
+            if it.dataVol.data.shape[3] < min:
+                min = it.dataVol.data.shape[3]
+            if it.dataVol.data.shape[1] < min and it.dataVol.data.shape[1] > 1:
+                min = it.dataVol.data.shape[1]
         
         uic.loadUi('gui/dlgFeature.ui', self) 
         for featureItem in self.parent.featureList:
@@ -814,8 +825,12 @@ class FeatureDlg(QtGui.QDialog):
        
         
         for k, scaleName in irange(featureMgr.ilastikFeatureGroups.groupScaleNames):
-            rc = self.featureTable.columnCount()
-            self.featureTable.insertColumn(rc)
+            #only add features scales that fit within the minimum dimension of the smallest image
+            if featureMgr.ilastikFeatureGroups.groupScaleValues[k]*7 + 3< min:
+                rc = self.featureTable.columnCount()
+                self.featureTable.insertColumn(rc)
+            else:
+                print "Scale ", scaleName, " too large for image of size ", min
         self.featureTable.setHorizontalHeaderLabels(featureMgr.ilastikFeatureGroups.groupScaleNames)
         
         #self.featureTable.resizeRowsToContents()

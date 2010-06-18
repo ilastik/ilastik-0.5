@@ -58,6 +58,7 @@ class JobMachineWorker(QtCore.QThread):
                     
                 self.machine.workers.append(self) #reappend me to the deque of available workers, IlastikJob popped me at the beginning
                 self.machine.sem.release() # the semaphore is required in the JobMachine, we release it here when finished
+        self.exit(0)
                     
     def process(self, target, args, machine):
         #this function gets called from outside the thread and is non blocking

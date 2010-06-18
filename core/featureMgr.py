@@ -322,9 +322,9 @@ class FeatureGroups(object):
     """
     def __init__(self):
         self.groupNames = ['Color', 'Texture', 'Edge', 'Orientation']#, 'ChannelRep']
-        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge']#, 'Megahuge', 'Gigahuge']
+        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groupNames ]
-        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5]#, 5.0, 10.0]
+        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
         
         self.members = {}
         for g in self.groupNames:
