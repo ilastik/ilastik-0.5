@@ -423,7 +423,8 @@ class MainWindow(QtGui.QMainWindow):
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
         self.labelWidget.labelView.labelPropertiesChanged_callback = self.updateLabelWidgetOverlays
-        
+
+        self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
         self.labelWidget.normalizeData = self.project.normalizeData
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
         self.labelWidget.setRgbMode(self.project.rgbData)
@@ -504,7 +505,26 @@ class ProjectSettingsDlg(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
 
+        self.drawUpdateIntervalCheckbox = QtGui.QCheckBox("Train&Predict during brush strokes in Interactive Mode")
+        self.drawUpdateIntervalCheckbox.setCheckState((self.project.drawUpdateInterval > 0)  * 2)
+        self.connect(self.drawUpdateIntervalCheckbox, QtCore.SIGNAL("stateChanged(int)"), self.toggleUpdateInterval)
+        self.layout.addWidget(self.drawUpdateIntervalCheckbox)
 
+        self.drawUpdateIntervalFrame = QtGui.QFrame()
+        tempLayout = QtGui.QHBoxLayout()
+        self.drawUpdateIntervalSpin = QtGui.QSpinBox()
+        self.drawUpdateIntervalSpin.setRange(0,1000)
+        self.drawUpdateIntervalSpin.setSuffix("ms")
+        self.drawUpdateIntervalSpin.setValue(self.project.drawUpdateInterval)
+        tempLayout.addWidget(QtGui.QLabel(" "))
+        tempLayout.addWidget(self.drawUpdateIntervalSpin)
+        tempLayout.addStretch()
+        self.drawUpdateIntervalFrame.setLayout(tempLayout)
+        self.layout.addWidget(self.drawUpdateIntervalFrame)
+        if self.project.drawUpdateInterval == 0:
+            self.drawUpdateIntervalFrame.setVisible(False)
+            self.drawUpdateIntervalSpin.setValue(300)
+        
         self.normalizeCheckbox = QtGui.QCheckBox("normalize Data for display in each SliceView seperately")
         self.normalizeCheckbox.setCheckState(self.project.normalizeData * 2)
         self.layout.addWidget(self.normalizeCheckbox)
@@ -530,6 +550,18 @@ class ProjectSettingsDlg(QtGui.QDialog):
         tempLayout.addWidget(self.okButton)
         self.layout.addLayout(tempLayout)
 
+        self.layout.addStretch()
+
+    def toggleUpdateInterval(self, state):
+        state = self.drawUpdateIntervalCheckbox.checkState()
+        self.project.drawUpdateInterval = int(self.drawUpdateIntervalSpin.value())
+        if state > 0:
+            self.drawUpdateIntervalFrame.setVisible(True)
+        else:
+            self.drawUpdateIntervalFrame.setVisible(False)
+            self.project.drawUpdateInterval = 0
+
+
     def ok(self):
         self.project.useBorderMargin = False
         self.project.normalizeData = False
@@ -541,6 +573,7 @@ class ProjectSettingsDlg(QtGui.QDialog):
         if self.rgbDataCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.rgbData = True
         if self.ilastik.labelWidget is not None:
+            self.ilastik.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
             self.ilastik.labelWidget.normalizeData = self.project.normalizeData
             self.ilastik.labelWidget.setRgbMode(self.project.rgbData)
             self.ilastik.labelWidget.setUseBorderMargin(self.project.useBorderMargin)

@@ -748,6 +748,10 @@ class VolumeEditor(QtGui.QWidget):
         #this setting controls the rescaling of the displayed data to the full 0-255 range
         self.normalizeData = False
 
+        #this settings controls the timer interval during interactive mode
+        #set to 0 to wait for complete brushstrokes !
+        self.drawUpdateInterval = 300
+
         self.opengl = opengl
         self.openglOverview = openglOverview
         if self.opengl is True:
@@ -1591,8 +1595,9 @@ class ImageScene( QtGui.QGraphicsView):
         line.setZValue(99)
         self.tempImageItems.append(line)
         self.scene.addItem(line)
-        
-        self.drawTimer.start(100) #update labels every some ms
+
+        if self.volumeEditor.drawUpdateInterval > 0:
+            self.drawTimer.start(self.volumeEditor.drawUpdateInterval) #update labels every some ms
         
     def endDraw(self, pos):
         self.drawTimer.stop()
