@@ -918,13 +918,16 @@ class VolumeEditor(QtGui.QWidget):
         self.selSlices.append(0)
         
         #Channel Selector Combo Box in right side toolbox
-        channelSpin = QtGui.QSpinBox()
-        channelSpin.setEnabled(True)
-        self.connect(channelSpin, QtCore.SIGNAL("valueChanged(int)"), self.setChannel)
-        if self.image.shape[-1] > 1 and self.image.rgb is False: #only show when needed
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Channel:"))
-            self.toolBoxLayout.addWidget(channelSpin)
-        channelSpin.setRange(0,self.image.shape[-1] - 1)
+        self.channelSpin = QtGui.QSpinBox()
+        self.channelSpin.setEnabled(True)
+        self.connect(self.channelSpin, QtCore.SIGNAL("valueChanged(int)"), self.setChannel)
+        self.channelSpinLabel = QtGui.QLabel("Channel:")
+        self.toolBoxLayout.addWidget(self.channelSpinLabel)
+        self.toolBoxLayout.addWidget(self.channelSpin)
+        if self.image.shape[-1] == 1 or self.image.rgb is True: #only show when needed
+            self.channelSpin.setVisible(False)
+            self.channelSpinLabel.setVisible(False)
+        self.channelSpin.setRange(0,self.image.shape[-1] - 1)
 
         if self.embedded == False:
             self.addOverlayButton = QtGui.QPushButton("Add Overlay")
@@ -1073,6 +1076,16 @@ class VolumeEditor(QtGui.QWidget):
     def get_copy(self):
         """Return modified text"""
         return unicode(self.edit.toPlainText())
+
+    def setRgbMode(self, mode):
+        """
+        change display mode of 3-channel images to either rgb, or 3-channels
+        mode can bei either  True or False
+        """
+        if self.image.shape[-1] == 3:
+            self.image.rgb = mode
+            self.channelSpin.setVisible(not mode)
+            self.channelSpinLabel.setVisible(not mode)
 
     def setUseBorderMargin(self, use):
         self.useBorderMargin = use

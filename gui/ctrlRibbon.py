@@ -154,7 +154,7 @@ def createRibbons():
     RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
     RibbonGroupObjects["Features"] = RibbonEntryGroup("Features", 1)   
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
-    RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
+    #RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
     #RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)
     
     RibbonGroupObjects["Projects"].append(RibbonEntry("New", ilastikIcons.New ,"New"))
@@ -172,8 +172,8 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
 
 
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment Foreground/Background"))
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("BorderSegment", ilastikIcons.Play ,"Segment Foreground/Background with Border"))
+    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment Foreground/Background"))
+    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("BorderSegment", ilastikIcons.Play ,"Segment Foreground/Background with Border"))
 
     #RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
     return RibbonGroupObjects   

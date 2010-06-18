@@ -54,6 +54,7 @@ class Project(object):
         self.filename = None
         self.useBorderMargin = True
         self.normalizeData = False
+        self.rgbData = True
         self.name = name
         self.labeler = labeler
         self.description = description

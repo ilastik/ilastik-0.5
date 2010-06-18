@@ -253,8 +253,8 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
 
-        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
+        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
+        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
         
         
         #TODO: reenable online classification sometime 
@@ -426,6 +426,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.labelWidget.normalizeData = self.project.normalizeData
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
+        self.labelWidget.setRgbMode(self.project.rgbData)
         
         #self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
@@ -505,9 +506,15 @@ class ProjectSettingsDlg(QtGui.QDialog):
 
 
         self.normalizeCheckbox = QtGui.QCheckBox("normalize Data for display in each SliceView seperately")
+        self.normalizeCheckbox.setCheckState(self.project.normalizeData * 2)
         self.layout.addWidget(self.normalizeCheckbox)
 
+        self.rgbDataCheckbox = QtGui.QCheckBox("interpret 3-Channel files as RGB Data")
+        self.rgbDataCheckbox.setCheckState(self.project.rgbData * 2)
+        self.layout.addWidget(self.rgbDataCheckbox)
+
         self.borderMarginCheckbox = QtGui.QCheckBox("show border margin indicator")
+        self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin * 2)
         self.layout.addWidget(self.borderMarginCheckbox)
 
         self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)
@@ -526,12 +533,16 @@ class ProjectSettingsDlg(QtGui.QDialog):
     def ok(self):
         self.project.useBorderMargin = False
         self.project.normalizeData = False
+        self.project.rgbData = False
         if self.normalizeCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.normalizeData = True
         if self.borderMarginCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.useBorderMargin = True
+        if self.rgbDataCheckbox.checkState() == QtCore.Qt.Checked:
+            self.project.rgbData = True
         if self.ilastik.labelWidget is not None:
             self.ilastik.labelWidget.normalizeData = self.project.normalizeData
+            self.ilastik.labelWidget.setRgbMode(self.project.rgbData)
             self.ilastik.labelWidget.setUseBorderMargin(self.project.useBorderMargin)
             self.ilastik.labelWidget.repaint()
             
