@@ -1,5 +1,7 @@
-import os
+import os, sys
 import threading
+import traceback
+
 from PyQt4 import QtCore
 
 from collections import deque
@@ -53,8 +55,8 @@ class JobMachineWorker(QtCore.QThread):
                     result = self.target(*self.args)
                     self.machine.results.append(result)
                 except Exception, e:
-                    print "JobMachineWorker::run()"
                     print e
+                    traceback.print_exc(file=sys.stdout)
                     
                 self.machine.workers.append(self) #reappend me to the deque of available workers, IlastikJob popped me at the beginning
                 self.machine.sem.release() # the semaphore is required in the JobMachine, we release it here when finished
