@@ -147,7 +147,6 @@ class WorkerManager(object):
                 print "stopping worker thread ", str(i)
                 w.stopped = True
                 w.event.set()
-                w.terminate()
                 w.wait()
         self.workerPool.clear()
         

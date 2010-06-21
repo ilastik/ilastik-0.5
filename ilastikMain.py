@@ -851,10 +851,10 @@ class FeatureDlg(QtGui.QDialog):
         for featureItem in self.parent.featureList:
             self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
         
-        for k, groupName in irange(featureMgr.ilastikFeatureGroups.groupNames):
+        for k, groupName in irange(featureMgr.ilastikFeatureGroups.groups.keys()):
             rc = self.featureTable.rowCount()
             self.featureTable.insertRow(rc)
-        self.featureTable.setVerticalHeaderLabels(featureMgr.ilastikFeatureGroups.groupNames)
+        self.featureTable.setVerticalHeaderLabels(featureMgr.ilastikFeatureGroups.groups.keys())
        
         
         for k, scaleName in irange(featureMgr.ilastikFeatureGroups.groupScaleNames):
@@ -912,7 +912,7 @@ class FeatureDlg(QtGui.QDialog):
         res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
             #print "features have maximum needed margin of:", self.parent.project.featureMgr.maxSigma*3
-            self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxSigma*3))
+            self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
         else:
@@ -926,15 +926,12 @@ class FeatureDlg(QtGui.QDialog):
     def computeMemoryRequirement(self, featureSelectionList):
         if featureSelectionList != []:
             dataMgr = self.parent.project.dataMgr
-            if dataMgr[0].dataVol.data.shape[1] > 1:
-                #3D
-                dimSel = 1
-            else:
-                #2D
-                dimSel = 0
                 
             numOfChannels = dataMgr[0].dataVol.data.shape[-1]
-            numOfEffectiveFeatures = reduce(lambda x,y: x +y, [k.numOfOutputs[dimSel] for k in featureSelectionList]) * numOfChannels
+            numOfEffectiveFeatures =  0
+            for f in featureSelectionList:
+              numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0].dataVol.data.shape)
+            numOfEffectiveFeatures *= numOfChannels
             numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
             # 7 bytes per pixel overhead
             memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
@@ -974,8 +971,7 @@ class FeatureComputation(object):
     def updateFeatureProgress(self):
         val = self.parent.project.featureMgr.getCount() 
         self.myFeatureProgressBar.setValue(val)
-        #if not self.parent.project.featureMgr.featureProcess.is_alive(): #python 2.6
-        if not self.parent.project.featureMgr.featureProcess.isAlive():
+        if not self.parent.project.featureMgr.featureProcess.isRunning():
             self.myTimer.stop()
             self.terminateFeatureProgressBar()
             self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
