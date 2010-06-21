@@ -7,6 +7,11 @@ class ClassifierBase(object):
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
+    #minimum required isotropic context
+    #0 means pixel based classification
+    #-1 means whole dataset
+    minContext = 0
+
     def __init__(self):
         pass
 

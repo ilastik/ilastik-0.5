@@ -190,13 +190,13 @@ class LocalFeature(FeatureBase):
         result = []
         for i in range(channel.shape[0]):
             if channel.shape[1] > 1: #3D Case
-                temp = self.featureFunktor(channel[i, :, :, :].astype(numpy.float32), * self.args)
+                temp = self.featureFunktor(channel[i, :, :, :], * self.args)
                 if len(temp.shape) == 3:
                     result.append(temp.reshape(temp.shape + (1,)))
                 else:
                     result.append(temp)
             else: #2D
-                temp = self.featureFunktor(channel[i, 0, :, :].astype(numpy.float32), * self.args)
+                temp = self.featureFunktor(channel[i, 0, :, :], * self.args)
                 if len(temp.shape) == 2:
                     result.append(temp.reshape((1,) + temp.shape + (1,)))
                 else: #more dimensional filter, we only need to add the 3D dimension
@@ -246,10 +246,6 @@ class FeatureThread(threading.Thread, FeatureParallelBase):
     def calcFeature(self, image, offset, size, feature, blockNum):
         for c_ind in range(image.dataVol.data.shape[-1]):
             try:
-                self.printLock.acquire()
-                # print "calcFeature(): image =", image.Name, "## shape =", image.dataVol.data.shape[0:5], "## featureName =", str(feature), "## channel ", c_ind, "## block =",blockNum
-                # print ".",
-                self.printLock.release()
                 #TODO: ceil(blockNum,feature.args[0]*3) means sigma*3, make nicer
                 overlap = int(numpy.ceil(feature.args[0]*3))
                 bounds = image.featureBlockAccessor.getBlockBounds(blockNum, overlap)
