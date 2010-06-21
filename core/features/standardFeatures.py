@@ -33,33 +33,27 @@ import vigra
 class HessianOfGaussian(FeatureBase):
     name = "Hessian matrix of Gaussian"
     groups = ['Orientation']
-    numOutputs2D = 3
-    numOutputs3D = 6
+    numOutputChannels2d = 3
+    numOutputChannels3d = 6
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.hessianOfGaussian2D(data[i, 0, :, :].astype('float32'), self.sigma)
-            result.append(temp.reshape((1,) + temp.shape))
+        result = vigra.filters.hessianOfGaussian2D(data, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.hessianOfGaussian3D(data[i, :, :, :].astype('float32'), self.sigma)
-            result.append(temp)
+        result = vigra.filters.hessianOfGaussian3D(data, self.sigma)
         return result
 
 
 class HessianOfGaussianEigenvalues(FeatureBase):
     name = "Eigenvalues of Hessian matrix of Gaussian"
     groups = ['Texture']
-    numOutputs2D = 2
-    numOutputs3D = 3
+    numOutputChannels2d = 2
+    numOutputChannels3d = 3
 
 
     def __init__(self, sigma):
@@ -67,41 +61,29 @@ class HessianOfGaussianEigenvalues(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data[i, 0, :, :].astype('float32'), self.sigma))
-            result.append(temp.reshape((1,) + temp.shape))
+        result = vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, self.sigma))
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data[i, :, :, :].astype('float32'), self.sigma))
-            result.append(temp)
+        result = vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, self.sigma))
         return result
 
 class StructureTensorEigenvalues(FeatureBase):
     name = "Eigenvalues of structure tensor"
     groups = ['Texture']
-    numOutputs2D = 2
-    numOutputs3D = 3
+    numOutputChannels2d = 2
+    numOutputChannels3d = 3
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.structureTensorEigenvalues(data[i, 0, :, :].astype('float32'), self.sigma, self.sigma / 2.0)
-            result.append(temp.reshape((1,) + temp.shape))
+        result = vigra.filters.structureTensorEigenvalues(data, self.sigma, self.sigma / 2.0)
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.structureTensorEigenvalues(data[i, :, :, :].astype('float32'), self.sigma, self.sigma / 2.0)
-            result.append(temp)
+        result = vigra.filters.structureTensorEigenvalues(data, self.sigma, self.sigma / 2.0)
         return result
 
 
@@ -109,123 +91,93 @@ class StructureTensorEigenvalues(FeatureBase):
 class GaussianGradientMagnitude(FeatureBase):
     name = "Gradient Magnitude of Gaussian"
     groups = ['Texture']
-    numOutputs2D = 1
-    numOutputs3D = 1
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.gaussianGradientMagnitude(data[i, 0, :, :].astype('float32'), self.sigma)
-            result.append(temp.reshape((1,) + temp.shape + (1,)))
+        result = vigra.filters.gaussianGradientMagnitude(data, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.gaussianGradientMagnitude(data[i, :, :, :].astype('float32'), self.sigma)
-            result.append(temp.reshape(temp.shape + (1,)))
+        result = vigra.filters.gaussianGradientMagnitude(data, self.sigma)
         return result
 
 
 class GaussianSmoothing(FeatureBase):
     name = "Gaussian Smoothing"
     groups = ['Color']
-    numOutputs2D = 1
-    numOutputs3D = 1
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.gaussianSmoothing(data[i, 0, :, :].astype('float32'), self.sigma)
-            result.append(temp.reshape((1,) + temp.shape + (1,)))
+        result = vigra.filters.gaussianSmoothing(data, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.gaussianSmoothing(data[i, :, :, :].astype('float32'), self.sigma)
-            result.append(temp.reshape(temp.shape + (1,)))
+        result = vigra.filters.gaussianSmoothing(data, self.sigma)
         return result
 
 class StructureTensor(FeatureBase):
     name = "Structure Tensor"
     groups = ['Orientation']
-    numOutputs2D = 3
-    numOutputs3D = 6
+    numOutputChannels2d = 3
+    numOutputChannels3d = 6
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.structureTensor(data[i, 0, :, :].astype('float32'), self.sigma, self.sigma)
-            result.append(temp.reshape((1,) + temp.shape))
+        result = vigra.filters.structureTensor(data, self.sigma, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.structureTensor(data[i, :, :, :].astype('float32'), self.sigma, self.sigma)
-            result.append(temp)
+        result = vigra.filters.structureTensor(data, self.sigma, self.sigma)
         return result
 
 class LaplacianOfGaussian(FeatureBase):
     name = "Laplacian of Gaussian"
     groups = ['Edge']
-    numOutputs2D = 1
-    numOutputs3D = 1
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.laplacianOfGaussian(data[i, 0, :, :].astype('float32'), self.sigma)
-            result.append(temp.reshape((1,) + temp.shape + (1,)))
+        result = vigra.filters.laplacianOfGaussian(data, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.laplacianOfGaussian(data[i, :, :, :].astype('float32'), self.sigma)
-            result.append(temp.reshape(temp.shape + (1,)))
+        result = vigra.filters.laplacianOfGaussian(data, self.sigma)
         return result
 
 
 class DifferenceOfGaussians(FeatureBase):
     name = "Difference of Gaussians"
     groups = ['Edge']
-    numOutputs2D = 1
-    numOutputs3D = 1
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.gaussianSmoothing(data[i, 0, :, :].astype('float32'), self.sigma) - vigra.filters.gaussianSmoothing(data[i, 0, :, :].astype('float32'), self.sigma * 0.66)
-            result.append(temp.reshape((1,) + temp.shape + (1,)))
+        result = vigra.filters.gaussianSmoothing(data, self.sigma) - vigra.filters.gaussianSmoothing(data, self.sigma * 0.66)
         return result
 
     def compute3d(self, data):
-        result = []
-        for i in range(data.shape[0]):
-            temp = vigra.filters.gaussianSmoothing(data[i, :, :, :].astype('float32'), self.sigma) - vigra.filters.gaussianSmoothing(data[i, :, :, :].astype('float32'), self.sigma * 0.66)
-            result.append(temp.reshape(temp.shape + (1,)))
+        result = vigra.filters.gaussianSmoothing(data, self.sigma) - vigra.filters.gaussianSmoothing(data, self.sigma * 0.66)
         return result
 
 
