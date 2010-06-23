@@ -20,6 +20,14 @@ class ClassifierBase(object):
 
     def predict(self, features):
         pass
+    
+    def serialize(self, h5grp):
+        pass
+
+    @classmethod
+    def deserialize(cls, h5grp):
+        pass
+
 
 #    @static
 #    def settings():

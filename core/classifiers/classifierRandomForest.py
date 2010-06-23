@@ -30,9 +30,9 @@ class ClassifierRandomForest(ClassifierBase):
 
         if len(self.unique_vals) > 1:
             # print "Learning RF %d trees: %d labels given, %d classes, and %d features " % (treeCount, features.shape[0], len(numpy.unique(labels)), features.shape[1])
-            self.RF = vigra.learning.RandomForestOld(features, labels, treeCount=self.treeCount)
-            #self.classifier = vigra.learning.RandomForest(treeCount=treeCount)
-            #self.classifier.learnRF(features, labels)
+            #self.RF = vigra.learning.RandomForestOld(features, labels, treeCount=self.treeCount)
+            self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
+            self.RF.learnRF(features, labels)
         else:
             self.RF = None
 
@@ -47,6 +47,18 @@ class ClassifierRandomForest(ClassifierBase):
             return self.RF.predictProbabilities(features)
         else:
             return None
+        
+    def serialize(self, fileName, pathInFile):
+        # cannot serilaze into grp because can not pass h5py handle to vigra yet
+        # works only with new RF version
+        self.RF.writeHDF5(fileName, pathInFile, True)
+
+    @classmethod
+    def deserialize(cls, fileName, pathInFile):
+        classifier = cls()
+        classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
+        classifier.treeCount = classifier.RF.treeCount
+        return classifier
 
 
 #NEW RandomForest from Raoul: (reenable when new RF performance bug is fixed) :
