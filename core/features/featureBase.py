@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 import numpy, h5py
-
+import core.features
 
 class FeatureBase(object):
     """
@@ -96,7 +96,7 @@ class FeatureBase(object):
         
     def serialize(self, h5grp):
         h5grp.create_dataset('name',data=self.name)
-        h5grp.create_dataset('class',data=self.__class__)
+        h5grp.create_dataset('class',data=self.__class__.__name__)
         h5grp.create_dataset('sigma',data=self.sigma)
 
 
@@ -106,7 +106,7 @@ class FeatureBase(object):
         _class = h5grp['class']
         _sigma = h5grp['sigma']
 
-        return cls(_class, _sigma)
+        return eval('core.features.standardFeatures.' + _class.value + '(' + str(_sigma.value) + ')')
 
     def __str__(self):
         return self.name
