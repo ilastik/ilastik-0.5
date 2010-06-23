@@ -1279,6 +1279,12 @@ class DrawManager(QtCore.QObject):
     def toggleErase(self):
         self.erasing = not(self.erasing)
 
+    def setErasing(self):
+        self.erasing = True
+    
+    def disableErasing(self):
+        self.erasing = False
+
     def setBrushSize(self, size):
         self.brushSize = size
         self.penVis.setWidth(size)
@@ -1657,6 +1663,27 @@ class ImageScene( QtGui.QGraphicsView):
     def doScale(self, factor):
         self.view.scale(factor, factor)
 
+
+    def tabletEvent(self, event):
+        mousePos = self.mapToScene(event.pos())
+        x = mousePos.x()
+        y = mousePos.y()
+        if event.pointerType() == QtCore.QTabletEvent.Eraser:
+            self.drawManager.setErasing()
+        elif event.pointerType() == QtCore.QTabletEvent.Pen:
+            self.drawManager.disableErasing()
+        if self.drawing == True:
+            if event.pressure() == 0:
+                self.endDraw(mousePos)
+                self.volumeEditor.changeSlice(self.volumeEditor.selSlices[self.axis], self.axis)
+            else:
+                self.drawManager.setBrushSize(int(event.pressure()*10))
+        if self.drawing == False:
+            if event.pressure() > 0:
+                self.beginDraw(mousePos)
+
+
+
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
             if self.volumeEditor.labelView.currentItem() is not None:
@@ -1714,7 +1741,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.unsetCursor()
                 
         
-        if event.buttons() == QtCore.Qt.LeftButton and self.drawing == True:
+        if self.drawing == True:
             line = self.drawManager.moveTo(mousePos)
             line.setZValue(99)
             self.tempImageItems.append(line)
