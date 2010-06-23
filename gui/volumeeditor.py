@@ -1003,8 +1003,9 @@ class VolumeEditor(QtGui.QWidget):
         
 
     def cleanUp(self):
-        for i, item in enumerate(self.imageScenes):
-            del item
+        pass
+#        for i, item in enumerate(self.imageScenes):
+#            item.deleteLater()
 
     def togglePrediction(self):
         print "toggling prediction.."
@@ -1023,8 +1024,7 @@ class VolumeEditor(QtGui.QWidget):
         self.repaint()
         
     def cleanup(self):
-        del self.shortcutUndo
-        del self.shortcutRedo
+        pass
         
     def getPendingLabels(self):
         temp = self.pendingLabels
@@ -1354,6 +1354,7 @@ class DrawManager(QtCore.QObject):
 class ImageSceneRenderThread(QtCore.QThread):
     def __init__(self, parent):
         QtCore.QThread.__init__(self, None)
+        self.imageScene = parent
         self.volumeEditor = parent.volumeEditor
         #self.queue = deque(maxlen=1) #python 2.6
         self.queue = deque() #python 2.5
@@ -1361,7 +1362,7 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.dataPending = threading.Event()
         self.dataPending.clear()
         self.stopped = False
-
+        self.image = None
 
     def run(self):
         while not self.stopped:
@@ -1373,9 +1374,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                 
                 if image.dtype == 'uint16':
                     image = (image / 255).astype(numpy.uint8)
+                    
                 self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=self.volumeEditor.normalizeData)
         
-                self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
+                #self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
         
                 p = QtGui.QPainter(self.image)
         
@@ -1406,9 +1408,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                     p.drawImage(image0.rect(), image0)
         
                 p.end()
-                del p
-                
-            self.emit(QtCore.SIGNAL("finished()"))        
+                self.emit(QtCore.SIGNAL("finished()"))
 
 class ImageScene( QtGui.QGraphicsView):
     def __borderMarginIndicator__(self, margin):
@@ -1427,7 +1427,7 @@ class ImageScene( QtGui.QGraphicsView):
         borderPath.addRect(0,self.imShape[1]-margin, self.imShape[0], margin)
         self.border = QtGui.QGraphicsPathItem(borderPath)
         brush = QtGui.QBrush(QtGui.QColor(0,0,255))
-        brush.setStyle( QtCore.Qt.DiagCrossPattern )
+        brush.setStyle( QtCore.Qt.Dense7Pattern )
         self.border.setBrush(brush)
         self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
         self.border.setZValue(200)
@@ -1468,9 +1468,10 @@ class ImageScene( QtGui.QGraphicsView):
         
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
-        self.imageItem = None
-        self.pixmap = None
         self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_ARGB32_Premultiplied)
+        self.pixmap = QtGui.QPixmap.fromImage(self.image)
+        self.imageItem = None
+        
         if self.axis is 0:
             self.setStyleSheet("QWidget { border: 2px solid red; border-radius: 4px; }")
             self.view.rotate(90.0)
@@ -1514,7 +1515,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.allBorder.setPen(QtGui.QPen(QtCore.Qt.NoPen))
         self.scene.addItem(self.allBorder)
         self.allBorder.setVisible(False)
-        self.allBorder.setZValue(200)
+        self.allBorder.setZValue(99)
 
         #label updates while drawing, needed for interactive segmentation
         self.drawTimer = QtCore.QTimer()
@@ -1559,19 +1560,22 @@ class ImageScene( QtGui.QGraphicsView):
             self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
             
             if self.imageItem is not None:
+                pass
                 self.scene.removeItem(self.imageItem)
                 self.imageItem = None
-                self.pixmap = None
-                self.image = None
+                #self.pixmap = None
+                #self.image = None
 
             for index, item in enumerate(self.tempImageItems):
                 self.scene.removeItem(item)
 
             self.tempImageItems = []
             self.image = self.thread.image
-            self.pixmap = QtGui.QPixmap.fromImage(self.image)
+            self.pixmap = QtGui.QPixmap.fromImage(self.thread.image)
+
             self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
             self.scene.addItem(self.imageItem)
+
             self.viewport().repaint()
             self.volumeEditor.overview.display(self.axis)
         

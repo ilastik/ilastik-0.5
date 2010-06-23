@@ -179,15 +179,21 @@ class MainWindow(QtGui.QMainWindow):
                 self.fileSelectorList.setCurrentIndex(index)
     
     def changeImage(self, number):
-        if hasattr(self, "classificationInteractive"):
-            self.labelWidget.disconnect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
         self.activeImageLock.acquire()
+        QtCore.QCoreApplication.processEvents()
+        if hasattr(self, "classificationInteractive"):
+            #self.labelWidget.disconnect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
+            self.classificationInteractive.stop()
+            del self.classificationInteractive
+            self.classificationInteractive = True
         if self.labelWidget is not None:
             self.labelWidget.history.volumeEditor = None
         if number != self.activeImage:
             self.project.dataMgr[self.activeImage].history = self.labelWidget.history
         self.activeImage = number
+
         self.destroyImageWindows()
+
         self.createImageWindows( self.project.dataMgr[number].dataVol)
         if self.project.dataMgr[self.activeImage].history is not None:
             self.labelWidget.history = self.project.dataMgr[self.activeImage].history
@@ -197,7 +203,8 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.repaint() #for overlays
         self.activeImageLock.release()
         if hasattr(self, "classificationInteractive"):
-            self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
+            self.classificationInteractive = ClassificationInteractive(self)
+            #self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
             self.classificationInteractive.updateThreadQueues()
             
     def historyUndo(self):
@@ -330,7 +337,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
             if hasattr(self, 'projectDlg'):
-                del self.projectDlg
+                self.projectDlg.deleteLater()
             self.activeImage = 0
             self.projectModified()
         
@@ -418,7 +425,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.labelWidget is not None:
             self.labelWidget.cleanup()
             self.labelWidget.close()
-            del self.labelWidget
+            self.labelWidget.deleteLater()
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
@@ -471,6 +478,8 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
+            del self.classificationInteractive
+
 
 
     def on_segmentation(self):

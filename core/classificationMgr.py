@@ -39,6 +39,7 @@ from collections import deque
 from PyQt4 import QtCore
 from core.utilities import irange
 from core import onlineClassifcator
+from core import dataMgr as DM
 from core import activeLearning, segmentationMgr
 from gui import volumeeditor as ve
 from core import jobMachine
@@ -221,14 +222,12 @@ class ClassifierInteractiveThread(QtCore.QThread):
         self.classifiers.append(classifier)
 
 
-    def classifierPredict(self, num, featureMatrix):
+    def classifierPredict(self, i, start, end, num, featureMatrix):
         try:
             cf = self.classifiers[num]
-            pred = cf.predict(featureMatrix)
-            #self.predLock.acquire()
-            self.prediction += pred
+            pred = cf.predict(featureMatrix[i][start:end,:]) / len(self.classifiers)
+            self.prediction[i][start:end,:] += pred
             self.count += 1
-            #self.predLock.release()
         except Exception, e:
             print "### ClassifierInteractiveThread::classifierPredict"
             print e
@@ -264,7 +263,7 @@ class ClassifierInteractiveThread(QtCore.QThread):
                         else:
                             print "##################### shape mismatch #####################"
                     vs = self.ilastik.labelWidget.getVisibleState()
-                    features = self.ilastik.project.dataMgr[activeImage].getFeatureMatrixForViewState(vs)
+                    features = self.ilastik.project.dataMgr[activeImage].getFeatureSlicesForViewState(vs)
                     vs.append(activeImage)
     
                     interactiveMessagePrint("1>> Pop prediction Data")
@@ -272,74 +271,102 @@ class ClassifierInteractiveThread(QtCore.QThread):
                         #make a little test prediction to get the shape and see if it works:
                         tempPred = None
                         if features is not None:
-                            tfm = features[0,:]
+                            tfm = features[0][0,:]
                             tfm.shape = (1,) + tfm.shape 
                             tempPred = self.classifiers[0].predict(tfm)
                                             
                         if tempPred is not None:
-                            self.prediction = numpy.zeros((features.shape[0],) + (tempPred.shape[1],) , 'float32')
+                            self.prediction = []
                             jobs= []
                             self.count = 0
-                            for i in range(len(self.classifiers)):
-                                job = jobMachine.IlastikJob(ClassifierInteractiveThread.classifierPredict, [self, i, features])
-                                jobs.append(job)
+                            for i in range(len(features)):
+                                self.prediction.append(numpy.zeros((features[i].shape[0],) + (tempPred.shape[1],) , 'float32'))
+                                for j in range(0,features[i].shape[0],128**2):
+                                    for k in range(len(self.classifiers)):
+                                        end = min(j+128**2,features[i].shape[0])
+                                        job = jobMachine.IlastikJob(ClassifierInteractiveThread.classifierPredict, [self, i, j, end, k, features])
+                                        jobs.append(job)
                                 
                             self.jobMachine.process(jobs)
-                            
-                            predictions = self.prediction / self.count
-                                                   
+
                             shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
-                            index0 = 0
-                            count0 = numpy.prod(shape[2:4])
-                            count1 = numpy.prod((shape[1],shape[3]))
-                            count2 = numpy.prod(shape[1:3])
-                            ax0 = predictions[0:count0,:]
-                            ax1 = predictions[count0:count0+count1,:]
-                            ax2 = predictions[count0+count1:count0+count1+count2,:]
 
-                            tp0 = ax0.reshape((shape[2],shape[3],ax0.shape[-1]))
-                            tp1 = ax1.reshape((shape[1],shape[3],ax0.shape[-1]))
-                            tp2 = ax2.reshape((shape[1],shape[2],ax0.shape[-1]))
-
-                            margin0 = activeLearning.computeEnsembleMargin2D(tp0)*255.0
-                            margin1 = activeLearning.computeEnsembleMargin2D(tp1)*255.0
-                            margin2 = activeLearning.computeEnsembleMargin2D(tp2)*255.0
-                            
-                            seg0 = segmentationMgr.LocallyDominantSegmentation2D(tp0, 1.0)
-                            seg1 = segmentationMgr.LocallyDominantSegmentation2D(tp1, 1.0)
-                            seg2 = segmentationMgr.LocallyDominantSegmentation2D(tp2, 1.0)
-                            
-                            self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], :, :] = margin0[:,:]
-                            self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, vs[2], :] = margin1[:,:]
-                            self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], :, :, vs[3]] = margin2[:,:]
-    
-                            self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], :, :] = seg0[:,:]
-                            self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, vs[2], :] = seg1[:,:]
-                            self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], :, :, vs[3]] = seg2[:,:]
-            
-                            
-                            for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
-                                item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
-                                item.prediction[vs[0],vs[1],:,:] = (tp0[:,:,p_i]* 255).astype(numpy.uint8)
-                                item.prediction[vs[0],:,vs[2],:] = (tp1[:,:,p_i]* 255).astype(numpy.uint8)
-                                item.prediction[vs[0],:,:,vs[3]] = (tp2[:,:,p_i]* 255).astype(numpy.uint8)
+                            tp = []
+                            tp.append(self.prediction[0].reshape((shape[2],shape[3],self.prediction[0].shape[-1])))
+                            tp.append(self.prediction[1].reshape((shape[1],shape[3],self.prediction[1].shape[-1])))
+                            tp.append(self.prediction[2].reshape((shape[1],shape[2],self.prediction[2].shape[-1])))
 
                             all =  range(len(self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions))
                             not_predicted = numpy.setdiff1d(all, self.classifiers[0].unique_vals - 1)
-                            for p_i, p_num in enumerate(not_predicted):
-                                item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
-                                item.prediction[vs[0],vs[1],:,:] = 0
-                                item.prediction[vs[0],:,vs[2],:] = 0
-                                item.prediction[vs[0],:,:,vs[3]] = 0
+
+                            #Axis 0
+                            tpc = tp[0]
+                            ba = DM.BlockAccessor2D(tpc[:,:,:])
+                            for i in range(ba.blockCount):
+                                b = ba.getBlockBounds(i,0)
+                                lb = tpc[b[0]:b[1],b[2]:b[3],:]
+                                margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
+                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
+                                self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = margin
+                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = seg
+
+                                for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
+                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
+                                    item.prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+
+                                for p_i, p_num in enumerate(not_predicted):
+                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
+                                    item.prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = 0
+
+                            #Axis 1
+                            tpc = tp[1]
+                            ba = DM.BlockAccessor2D(tpc[:,:,:])
+                            for i in range(ba.blockCount):
+                                b = ba.getBlockBounds(i,0)
+                                lb = tpc[b[0]:b[1],b[2]:b[3],:]
+                                margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
+                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
+                                self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = margin
+                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = seg
+
+                                for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
+                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
+                                    item.prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+
+                                for p_i, p_num in enumerate(not_predicted):
+                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
+                                    item.prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = 0
+
+
+                            #Axis 2
+                            tpc = tp[2]
+                            ba = DM.BlockAccessor2D(tpc[:,:,:])
+                            for i in range(ba.blockCount):
+                                b = ba.getBlockBounds(i,0)
+                                lb = tpc[b[0]:b[1],b[2]:b[3],:]
+                                margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
+                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
+                                self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], b[0]:b[1],b[2]:b[3], vs[3]] = margin
+                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], b[0]:b[1],b[2]:b[3],vs[3]] = seg
+
+                                for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
+                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
+                                    item.prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+
+                                for p_i, p_num in enumerate(not_predicted):
+                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
+                                    item.prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = 0
+
+
 
 
                         else:
                             print "##################### prediction None #########################"
                     else:
                         print "##################### No Classifiers ############################"
+                    self.emit(QtCore.SIGNAL("resultsPending()"))
                     self.ilastik.project.dataMgr.featureLock.release()
                     self.ilastik.activeImageLock.release()                     
-                    self.emit(QtCore.SIGNAL("resultsPending()"))
                 except Exception, e:
                     print "########################## exception in Interactivethread ###################"
                     print e

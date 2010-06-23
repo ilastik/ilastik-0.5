@@ -166,6 +166,74 @@ class BlockAccessor():
         
         return [startx,endx,starty,endy,startz,endz]
 
+    def __getitem__(self, args):
+        if self.fileBacked is False:
+            return self.data[args]
+        else:
+            self.lock.acquire()
+            temp =  self.data[args]
+            self.lock.release()
+            return temp
+
+    def __setitem__(self, args, data):
+        if self.fileBacked is False:
+            self.data[args] = data
+        else:
+            self.lock.acquire()
+            self.data[args] = data
+            self.lock.release()
+            
+class BlockAccessor2D():
+    def __init__(self, data, blockSize = 128):
+        self.data = data
+        self.blockSize = blockSize
+
+        self.cX = int(numpy.ceil(1.0 * data.shape[0] / self.blockSize))
+
+        #last blocks can be very small -> merge them with the secondlast one
+        self.cXend = data.shape[0] % self.blockSize
+        if self.cXend < self.blockSize / 3 and self.cX > 1:
+            self.cX -= 1
+        else:
+            self.cXend = 0
+
+        self.cY = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
+
+        #last blocks can be very small -> merge them with the secondlast one
+        self.cYend = data.shape[1] % self.blockSize
+        if self.cYend < self.blockSize / 3 and self.cY > 1:
+            self.cY -= 1
+        else:
+            self.cYend = 0
+
+
+        self.blockCount = self.cX * self.cY
+        self.lock = threading.Lock()
+        if issubclass(self.data.__class__, numpy.ndarray):
+            self.fileBacked = False
+        else:
+            self.fileBacked = True
+
+
+    def getBlockBounds(self, blockNum, overlap):
+        z = int(numpy.floor(blockNum / (self.cX*self.cY)))
+        rest = blockNum % (self.cX*self.cY)
+        y = int(numpy.floor(rest / self.cX))
+        x = rest % self.cX
+
+        startx = max(0, x*self.blockSize - overlap)
+        endx = min(self.data.shape[0], (x+1)*self.blockSize + overlap)
+        if x+1 >= self.cX:
+            endx = self.data.shape[0]
+
+        starty = max(0, y*self.blockSize - overlap)
+        endy = min(self.data.shape[1], (y+1)*self.blockSize + overlap)
+        if y+1 >= self.cY:
+            endy = self.data.shape[1]
+
+
+        return [startx,endx,starty,endy]
+
 
     def __getitem__(self, args):
         if self.fileBacked is False:
@@ -384,7 +452,7 @@ class DataItemImage(DataItemBase):
         self.trainingL = None
         self.trainingIndices = None
                 
-    def getFeatureMatrixForViewState(self, vs):
+    def getFeatureSlicesForViewState(self, vs):
         tempM = []
         if self._featureM is not None:
             tempM.append(self._featureM[vs[0],vs[1],:,:,:,:])
@@ -394,8 +462,7 @@ class DataItemImage(DataItemBase):
                 tf = f.reshape((numpy.prod(f.shape[0:2]),) + (numpy.prod(f.shape[2:]),))
                 tempM[i] = tf
                 
-            featureM = numpy.vstack(tempM)
-            return featureM
+            return tempM
         else:
             return None
             
