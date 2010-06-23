@@ -51,7 +51,9 @@ import os, sys
 
 """ Import all feature plugins"""
 
-for f in os.listdir(os.path.abspath('core/features')):
+pathext = os.path.dirname(__file__)
+
+for f in os.listdir(os.path.abspath(pathext + '/features')):
     module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
     if ext == '.py': # Important, ignore .pyc/other files.
         module = __import__('core.features.' + module_name)
