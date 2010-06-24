@@ -858,6 +858,7 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBoxLayout.addWidget( self.labelAlphaSlider)
 
         self.labelView = LabelListView(self)
+        self.connect(self.labelView, QtCore.SIGNAL("activated(QModelIndex)"), self.onLabelSelected)
 
         self.toolBoxLayout.addWidget( self.labelView)
 
@@ -988,6 +989,8 @@ class VolumeEditor(QtGui.QWidget):
         
         self.focusAxis =  0
 
+    def onLabelSelected(self, index):
+        self.drawManager.setBrushColor(self.labelView.currentItem().color)
 
     def focusNextPrevChild(self, forward = True):
         if forward is True:
@@ -1286,13 +1289,19 @@ class DrawManager(QtCore.QObject):
         self.erasing = False
 
     def setBrushSize(self, size):
+        for i in range(3):
+            self.volumeEditor.imageScenes[i].crossHairCursor.setBrushSize(size)
+        
         self.brushSize = size
         self.penVis.setWidth(size)
         self.penDraw.setWidth(size)
         
+    def setBrushColor(self, color):
+        self.penVis.setColor(color)
+        
     def getCurrentPenPixmap(self):
         pixmap = QtGui.QPixmap(self.brushSize, self.brushSize)
-        if self.erasing == True:
+        if self.erasing == True or not self.volumeEditor.labelView.currentItem():
             self.penVis.setColor(QtCore.Qt.black)
         else:
             self.penVis.setColor(self.volumeEditor.labelView.currentItem().color)
@@ -1305,7 +1314,7 @@ class DrawManager(QtCore.QObject):
         self.shape = shape
         self.initBoundingBox()
         self.scene.clear()
-        if self.erasing == True:
+        if self.erasing == True or not self.volumeEditor.labelView.currentItem():
             self.penVis.setColor(QtCore.Qt.black)
         else:
             self.penVis.setColor(self.volumeEditor.labelView.currentItem().color)
@@ -1416,6 +1425,76 @@ class ImageSceneRenderThread(QtCore.QThread):
                 p.end()
                 self.emit(QtCore.SIGNAL("finished()"))
 
+class CrossHairCursor(QtGui.QGraphicsItem) :
+    modeYPosition  = 0
+    modeXPosition  = 1
+    modeXYPosition = 2
+    
+    def boundingRect(self):
+        return QtCore.QRectF(0,0, self.width, self.height)
+    def __init__(self, width, height):
+        QtGui.QGraphicsItem.__init__(self)
+        
+        self.width = width
+        self.height = height
+        
+        self.penDotted = QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.penDotted.setCosmetic(True)
+        
+        self.penSolid = QtGui.QPen(QtCore.Qt.red, 2)
+        self.penSolid.setCosmetic(True)
+        
+        self.x = 0
+        self.y = 0
+        self.brushSize = 0
+        
+        self.mode = self.modeXYPosition
+    
+    def showXPosition(self, x):
+        """only mark the x position by displaying a line f(y) = x"""
+        self.setVisible(True)
+        self.mode = self.modeXPosition
+        self.setPos(x,0)
+        
+    def showYPosition(self, y):
+        """only mark the y position by displaying a line f(x) = y"""
+        self.setVisible(True)
+        self.mode = self.modeYPosition
+        self.setPos(0,y)
+        
+    def showXYPosition(self, x,y):
+        """mark the (x,y) position by displaying a cross hair cursor
+           including a circle indicating the current brush size"""
+        self.setVisible(True)
+        self.mode = self.modeXYPosition
+        self.setPos(x,y)
+    
+    def paint(self, painter, option, widget=None):
+        painter.setPen(self.penDotted)
+        
+        if self.mode == self.modeXPosition:
+            painter.drawLine(self.x, 0, self.x, self.height)
+        elif self.mode == self.modeYPosition:
+            painter.drawLine(0, self.y, self.width, self.y)
+        else:
+            painter.drawLine(0,                         self.y, self.x-0.5*self.brushSize, self.y)
+            painter.drawLine(self.x+0.5*self.brushSize, self.y, self.width,                self.y)
+
+            painter.drawLine(self.x, 0,                         self.x, self.y-0.5*self.brushSize)
+            painter.drawLine(self.x, self.y+0.5*self.brushSize, self.x, self.height)
+
+            painter.setPen(self.penSolid)
+            painter.drawEllipse(self.x-0.5*self.brushSize, self.y-0.5*self.brushSize, 1*self.brushSize, 1*self.brushSize)
+        
+    def setPos(self, x, y):
+        self.x = x
+        self.y = y
+        self.update()
+        
+    def setBrushSize(self, size):
+        self.brushSize = size
+        self.update()
+
 class ImageScene( QtGui.QGraphicsView):
     def __borderMarginIndicator__(self, margin):
         """
@@ -1488,23 +1567,8 @@ class ImageScene( QtGui.QGraphicsView):
             self.setStyleSheet("QWidget { border: 2px solid blue; border-radius: 4px; }")
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
-        #############################
-        #cross chair
-        pen = QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
-        self.setMouseTracking(True)
-        
-        # Fixed pen width
-        pen.setCosmetic(True)
-        self.linex = QtGui.QGraphicsLineItem()
-        self.liney = QtGui.QGraphicsLineItem()
-        self.linex.setZValue(100)
 
-        self.linex.setPen(pen)
-        self.liney.setPen(pen)
-        self.liney.setZValue(100)
-        self.scene.addItem(self.linex)
-        self.scene.addItem(self.liney)
-        ##############################
+        self.setMouseTracking(True)
 
         #indicators for the biggest filter mask's size
         #marks the area where labels should not be placed
@@ -1544,6 +1608,25 @@ class ImageScene( QtGui.QGraphicsView):
 
         self.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), self, self.zoomOut, self.zoomOut)
         self.shortcutZoomOut.setContext(QtCore.Qt.WidgetShortcut )
+        
+        self.shortcutBrushSizeUp = QtGui.QShortcut(QtGui.QKeySequence("n"), self, self.brushSmaller, self.brushSmaller)
+        self.shortcutBrushSizeDown = QtGui.QShortcut(QtGui.QKeySequence("m"), self, self.brushBigger, self.brushBigger)
+ 
+        self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
+        self.crossHairCursor.setZValue(100)
+        self.scene.addItem(self.crossHairCursor)                
+
+    def brushSmaller(self):
+        b = self.drawManager.brushSize
+        if b > 2:
+            self.drawManager.setBrushSize(b-1)
+            self.crossHairCursor.setBrushSize(b-1)
+        
+    def brushBigger(self):
+        b = self.drawManager.brushSize
+        if b < 20:
+            self.drawManager.setBrushSize(b+1)
+            self.crossHairCursor.setBrushSize(b+1)
 
     def cleanUp(self):
         #print "stopping ImageSCeneRenderThread", str(self.axis)
@@ -1665,12 +1748,16 @@ class ImageScene( QtGui.QGraphicsView):
 
 
     def tabletEvent(self, event):
+        if not self.volumeEditor.labelView.currentItem():
+            return
+        
         mousePos = self.mapToScene(event.pos())
+        
         x = mousePos.x()
         y = mousePos.y()
-        if event.pointerType() == QtCore.QTabletEvent.Eraser:
+        if event.pointerType() == QtGui.QTabletEvent.Eraser:
             self.drawManager.setErasing()
-        elif event.pointerType() == QtCore.QTabletEvent.Pen:
+        elif event.pointerType() == QtGui.QTabletEvent.Pen:
             self.drawManager.disableErasing()
         if self.drawing == True:
             if event.pressure() == 0:
@@ -1681,6 +1768,9 @@ class ImageScene( QtGui.QGraphicsView):
         if self.drawing == False:
             if event.pressure() > 0:
                 self.beginDraw(mousePos)
+                
+                
+        self.mouseMoveEvent(event)
 
 
 
@@ -1707,36 +1797,28 @@ class ImageScene( QtGui.QGraphicsView):
             #should we hide the cursor only when entering once ? performance?
             self.setCursor(self.hiddenCursor)
             
-            self.linex.setZValue(100)
-            self.liney.setZValue(100)
+            self.crossHairCursor.showXYPosition(x,y)
+            #self.crossHairCursor.setPos(x,y)
             
-            self.linex.setLine(0,y,self.image.width(),y)
-            self.liney.setLine(x,0,x,self.image.height())
             if self.axis == 0:
-                scene1 = self.volumeEditor.imageScenes[1]
-                scene2 = self.volumeEditor.imageScenes[2]
-                scene1.linex.setZValue(-100)
-                scene1.liney.setZValue(-100)
-                scene2.liney.setZValue(-100)
-                scene2.linex.setZValue(100)
-                scene2.linex.setLine(0,x,scene2.image.width(),x)
+                yView = self.volumeEditor.imageScenes[1].crossHairCursor
+                zView = self.volumeEditor.imageScenes[2].crossHairCursor
+                
+                yView.setVisible(False)
+                zView.showYPosition(x)
+                
             elif self.axis == 1:
-                scene0 = self.volumeEditor.imageScenes[0]
-                scene2 = self.volumeEditor.imageScenes[2]
-                scene0.linex.setZValue(-100)
-                scene0.liney.setZValue(-100)
-                scene2.linex.setZValue(-100)
-                scene2.liney.setZValue(100)
-                scene2.liney.setLine(x,0,x,scene2.image.height())
-            elif self.axis == 2:
-                scene0 = self.volumeEditor.imageScenes[0]
-                scene1 = self.volumeEditor.imageScenes[1]
-                scene0.liney.setZValue(-100)
-                scene0.linex.setZValue(100)
-                scene0.linex.setLine(y,0,y,scene0.image.height())
-                scene1.linex.setZValue(-100)
-                scene1.liney.setZValue(100)
-                scene1.liney.setLine(x,0,x,scene1.image.height())
+                xView = self.volumeEditor.imageScenes[0].crossHairCursor
+                zView = self.volumeEditor.imageScenes[2].crossHairCursor
+                
+                zView.showXPosition(x)
+                xView.setVisible(False)
+            else:
+                xView = self.volumeEditor.imageScenes[0].crossHairCursor
+                yView = self.volumeEditor.imageScenes[1].crossHairCursor
+                
+                xView.showXPosition(y)
+                yView.showXPosition(x)
         else:
             self.unsetCursor()
                 
