@@ -524,6 +524,9 @@ class LabelListView(QtGui.QListWidget):
             self.items.append(li)
         self.buildColorTab()
         
+        #just select the first item in the list so we have some selection
+        self.selectionModel().setCurrentIndex(self.model().index(0,0), QtGui.QItemSelectionModel.ClearAndSelect)
+        
     def changeText(self, text):
         self.volumeLabel.descriptions[self.currentRow()].name = text
         
@@ -549,6 +552,9 @@ class LabelListView(QtGui.QListWidget):
         #self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
         if self.labelPropertiesChanged_callback is not None:
             self.labelPropertiesChanged_callback()
+        
+        #select the last item in the last
+        self.selectionModel().setCurrentIndex(self.model().index(self.model().rowCount()-1,0), QtGui.QItemSelectionModel.ClearAndSelect)
 
     def buildColorTab(self):
         self.colorTab = []
@@ -858,7 +864,8 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBoxLayout.addWidget( self.labelAlphaSlider)
 
         self.labelView = LabelListView(self)
-        self.connect(self.labelView, QtCore.SIGNAL("activated(QModelIndex)"), self.onLabelSelected)
+        self.labelView.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.connect(self.labelView.selectionModel(), QtCore.SIGNAL("selectionChanged(QItemSelection, QItemSelection)"), self.onLabelSelected)
 
         self.toolBoxLayout.addWidget( self.labelView)
 
@@ -975,10 +982,15 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo)
         self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction) 
         
+        self.shortcutNextLabel = QtGui.QShortcut(QtGui.QKeySequence("l"), self, self.nextLabel, self.nextLabel)
+        self.shortcutPrevLabel = QtGui.QShortcut(QtGui.QKeySequence("k"), self, self.prevLabel, self.prevLabel)
+        
         self.shortcutUndo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo2.setContext(QtCore.Qt.ApplicationShortcut )
         self.togglePredictionSC.setContext(QtCore.Qt.ApplicationShortcut)
+        self.shortcutPrevLabel.setContext(QtCore.Qt.ApplicationShortcut)
+        self.shortcutNextLabel.setContext(QtCore.Qt.ApplicationShortcut)
         
         self.shortcutUndo.setEnabled(True)
         self.shortcutRedo.setEnabled(True)
@@ -989,8 +1001,28 @@ class VolumeEditor(QtGui.QWidget):
         
         self.focusAxis =  0
 
+    def nextLabel(self):
+        print "next label"
+        i = self.labelView.selectedIndexes()[0].row()
+        if i+1 == self.labelView.model().rowCount():
+            i = self.labelView.model().index(0,0)
+        else:
+            i = self.labelView.model().index(i+1,0)
+        self.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
+
+    def prevLabel(self):
+        print "prev label"
+        i = self.labelView.selectedIndexes()[0].row()
+        if i >  0:
+            i = self.labelView.model().index(i-1,0)
+        else:
+            i = self.labelView.model().index(self.labelView.model().rowCount()-1,0)
+        self.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
+
     def onLabelSelected(self, index):
         self.drawManager.setBrushColor(self.labelView.currentItem().color)
+        for i in range(3):
+            self.imageScenes[i].crossHairCursor.setColor(self.labelView.currentItem().color)
 
     def focusNextPrevChild(self, forward = True):
         if forward is True:
@@ -1449,6 +1481,13 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.brushSize = 0
         
         self.mode = self.modeXYPosition
+    
+    def setColor(self, color):
+        self.penDotted = QtGui.QPen(color, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.penDotted.setCosmetic(True)
+        self.penSolid  = QtGui.QPen(color, 2)
+        self.penSolid.setCosmetic(True)
+        self.update()
     
     def showXPosition(self, x):
         """only mark the x position by displaying a line f(y) = x"""
