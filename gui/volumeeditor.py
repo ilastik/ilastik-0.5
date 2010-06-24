@@ -510,11 +510,9 @@ class LabelListView(QtGui.QListWidget):
         self.colorTab = []
         self.items = []
         self.volumeEditor = parent
-        self.initFromMgr(parent.labels)
         self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
         #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
         self.labelPropertiesChanged_callback = None
-
     
     def initFromMgr(self, volumelabel):
         self.volumeLabel = volumelabel
@@ -865,6 +863,8 @@ class VolumeEditor(QtGui.QWidget):
         self.labelView = LabelListView(self)
         self.labelView.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.connect(self.labelView.selectionModel(), QtCore.SIGNAL("selectionChanged(QItemSelection, QItemSelection)"), self.onLabelSelected)
+        #only initialize after we have made the necessary connections
+        self.labelView.initFromMgr(self.labels)
 
         self.toolBoxLayout.addWidget( self.labelView)
 
