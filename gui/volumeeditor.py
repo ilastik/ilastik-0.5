@@ -747,7 +747,7 @@ class VolumeEditor(QtGui.QWidget):
 
         #Bordermargin settings - they control the blue markers that signal the region from wich the
         #labels are not used for trainig
-        self.useBorderMargin = True
+        self.useBorderMargin = False
         self.borderMargin = 0
 
 
@@ -1674,7 +1674,9 @@ class ImageScene( QtGui.QGraphicsView):
  
         self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
         self.crossHairCursor.setZValue(100)
-        self.scene.addItem(self.crossHairCursor)                
+        self.scene.addItem(self.crossHairCursor)
+
+        self.tempErase = False
 
     def brushSmaller(self):
         b = self.drawManager.brushSize
@@ -1837,12 +1839,13 @@ class ImageScene( QtGui.QGraphicsView):
         self.mouseMoveEvent(event)
 
 
-
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton:
-            if self.volumeEditor.labelView.currentItem() is not None:
-                mousePos = self.mapToScene(event.pos())
-                self.beginDraw(mousePos)
+            if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
+                self.drawManager.setErasing()
+                self.tempErase = True
+            mousePos = self.mapToScene(event.pos())
+            self.beginDraw(mousePos)
         elif event.buttons() == QtCore.Qt.RightButton:
             self.onContext(event.pos())
 
@@ -1851,7 +1854,10 @@ class ImageScene( QtGui.QGraphicsView):
             mousePos = self.mapToScene(event.pos())
             self.endDraw(mousePos)
             self.volumeEditor.changeSlice(self.volumeEditor.selSlices[self.axis], self.axis)
-
+        if self.tempErase == True:
+            self.drawManager.disableErasing()
+            self.tempErase = False
+            
     def mouseMoveEvent(self,event):
         mousePos = self.mousePos = self.mapToScene(event.pos())
         x = mousePos.x()
