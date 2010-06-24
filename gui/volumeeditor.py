@@ -842,7 +842,6 @@ class VolumeEditor(QtGui.QWidget):
         self.gridWidget.setLayout(self.grid)
         self.layout.addWidget(self.gridWidget)
 
-
         #right side toolbox
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
@@ -985,12 +984,19 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutNextLabel = QtGui.QShortcut(QtGui.QKeySequence("l"), self, self.nextLabel, self.nextLabel)
         self.shortcutPrevLabel = QtGui.QShortcut(QtGui.QKeySequence("k"), self, self.prevLabel, self.prevLabel)
         
+        self.shortcutToggleFullscreenX = QtGui.QShortcut(QtGui.QKeySequence("x"), self, self.toggleFullscreenX, self.toggleFullscreenX)
+        self.shortcutToggleFullscreenY = QtGui.QShortcut(QtGui.QKeySequence("y"), self, self.toggleFullscreenY, self.toggleFullscreenY)
+        self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ)
+        
         self.shortcutUndo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo2.setContext(QtCore.Qt.ApplicationShortcut )
         self.togglePredictionSC.setContext(QtCore.Qt.ApplicationShortcut)
         self.shortcutPrevLabel.setContext(QtCore.Qt.ApplicationShortcut)
         self.shortcutNextLabel.setContext(QtCore.Qt.ApplicationShortcut)
+        self.shortcutToggleFullscreenX.setContext(QtCore.Qt.ApplicationShortcut)
+        self.shortcutToggleFullscreenY.setContext(QtCore.Qt.ApplicationShortcut)
+        self.shortcutToggleFullscreenZ.setContext(QtCore.Qt.ApplicationShortcut)
         
         self.shortcutUndo.setEnabled(True)
         self.shortcutRedo.setEnabled(True)
@@ -1001,6 +1007,21 @@ class VolumeEditor(QtGui.QWidget):
         
         self.focusAxis =  0
 
+    def toggleFullscreenX(self):
+        self.maximizeSliceView(0, self.imageScenes[1].isVisible())
+    
+    def toggleFullscreenY(self):
+        self.maximizeSliceView(1, self.imageScenes[0].isVisible())
+        
+    def toggleFullscreenZ(self):
+        self.maximizeSliceView(2, self.imageScenes[1].isVisible())
+
+    def maximizeSliceView(self, axis, maximize):
+        a = range(3)
+        a.remove(axis)
+        for i in a:
+            self.imageScenes[i].setVisible(not maximize)
+    
     def nextLabel(self):
         print "next label"
         i = self.labelView.selectedIndexes()[0].row()
@@ -1897,6 +1918,7 @@ class ImageScene( QtGui.QGraphicsView):
             toggleEraseA = labeling.addAction("Enable Labelmode")
         else:
             toggleEraseA = labeling.addAction("Enable Eraser")
+            
         brushM = labeling.addMenu("Brush size")
         brush1 = brushM.addAction("1")
         brush3 = brushM.addAction("3")
