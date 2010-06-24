@@ -1755,16 +1755,20 @@ class ImageScene( QtGui.QGraphicsView):
         
         x = mousePos.x()
         y = mousePos.y()
-        if event.pointerType() == QtGui.QTabletEvent.Eraser:
+        if event.pointerType() == QtGui.QTabletEvent.Eraser or QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
             self.drawManager.setErasing()
-        elif event.pointerType() == QtGui.QTabletEvent.Pen:
+        elif event.pointerType() == QtGui.QTabletEvent.Pen and QtGui.QApplication.keyboardModifiers() != QtCore.Qt.ShiftModifier:
             self.drawManager.disableErasing()
         if self.drawing == True:
             if event.pressure() == 0:
                 self.endDraw(mousePos)
                 self.volumeEditor.changeSlice(self.volumeEditor.selSlices[self.axis], self.axis)
             else:
-                self.drawManager.setBrushSize(int(event.pressure()*10))
+                if self.drawManager.erasing:
+                    #make the brush size bigger while erasing
+                    self.drawManager.setBrushSize(int(event.pressure()*15))
+                else:
+                    self.drawManager.setBrushSize(int(event.pressure()*10))
         if self.drawing == False:
             if event.pressure() > 0:
                 self.beginDraw(mousePos)
