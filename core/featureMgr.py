@@ -53,11 +53,13 @@ import os, sys
 
 pathext = os.path.dirname(__file__)
 
-for f in os.listdir(os.path.abspath(pathext + '/features')):
-    module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
-    if ext == '.py': # Important, ignore .pyc/other files.
-        module = __import__('core.features.' + module_name)
-
+try:
+    for f in os.listdir(os.path.abspath(pathext + '/features')):
+        module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
+        if ext == '.py': # Important, ignore .pyc/other files.
+            module = __import__('core.features.' + module_name)
+except Exception, e:
+    pass
 
 
 

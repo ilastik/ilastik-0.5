@@ -47,13 +47,17 @@ import sys, traceback
 
 import numpy
 
+import core.classifiers
+
 """ Import all classification plugins"""
 pathext = os.path.dirname(__file__)
-
-for f in os.listdir(os.path.abspath(pathext + '/classifiers')):
-    module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
-    if ext == '.py': # Important, ignore .pyc/other files.
-        module = __import__('core.classifiers.' + module_name)
+try:
+    for f in os.listdir(os.path.join(os.path.dirname(sys.executable), 'core/classifiers')):
+        module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
+        if ext == '.py': # Important, ignore .pyc/other files.
+            module = __import__('core.classifiers.' + module_name)
+except Exception, e:
+    pass
 
 
 def interactiveMessagePrint(* args):
