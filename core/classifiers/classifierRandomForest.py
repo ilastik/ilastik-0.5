@@ -30,9 +30,9 @@ class ClassifierRandomForest(ClassifierBase):
 
         if len(self.unique_vals) > 1:
             # print "Learning RF %d trees: %d labels given, %d classes, and %d features " % (treeCount, features.shape[0], len(numpy.unique(labels)), features.shape[1])
-            #self.RF = vigra.learning.RandomForestOld(features, labels, treeCount=self.treeCount)
-            self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
-            self.RF.learnRF(features, labels)
+            self.RF = vigra.learning.RandomForestOld(features, labels, treeCount=self.treeCount)
+            #self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
+            #self.RF.learnRF(features, labels)
         else:
             self.RF = None
 
