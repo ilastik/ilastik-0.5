@@ -70,6 +70,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         QtGui.QMainWindow.__init__(self)
+        self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
         self.iconPath = '../../icons/32x32/'
         
@@ -168,8 +169,14 @@ class MainWindow(QtGui.QMainWindow):
             self.projectModified()
         
         self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject) 
-
-        
+        self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen) 
+    
+    def showFullscreen(self):
+        if self.fullScreen:
+            self.showNormal()
+        else:
+            self.showFullScreen()
+        self.fullScreen = not self.fullScreen
                 
     def updateFileSelector(self):
         self.fileSelectorList.clear()
