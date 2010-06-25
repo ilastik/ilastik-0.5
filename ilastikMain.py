@@ -62,6 +62,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import getopt
 
 from gui import volumeeditor as ve
+from gui.shortcutmanager import *
 
 #make the program quit on Ctrl+C
 import signal
@@ -469,9 +470,9 @@ class MainWindow(QtGui.QMainWindow):
     def featureCompute(self):
         if self.project.featureMgr is not None:
             self.featureComputation = FeatureComputation(self)
-#
+
     def on_shortcutsDlg(self):
-        pass
+        shortcutManager.showDialog()
 
     def on_batchProcess(self):
         dialog = batchProcess.BatchProcess(self)
