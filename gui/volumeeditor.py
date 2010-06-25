@@ -48,6 +48,8 @@ import copy
 import os.path
 from collections import deque
 import threading
+import traceback
+import os, sys
 
 # Local import
 #from spyderlib.config import get_icon, get_font
@@ -250,29 +252,89 @@ class DataAccessor():
         data = h5G[name].value
         return DataAccessor(data, channels = True)
         
+class PatchAccessor():
+    def __init__(self, size_x,size_y, blockSize = 128):
+        self.blockSize = blockSize
+        self.size_x = size_x
+        self.size_y = size_y
 
+        self.cX = int(numpy.ceil(1.0 * size_x / self.blockSize))
+
+        #last blocks can be very small -> merge them with the secondlast one
+        self.cXend = size_x % self.blockSize
+        if self.cXend < self.blockSize / 3 and self.cX > 1:
+            self.cX -= 1
+        else:
+            self.cXend = 0
+
+        self.cY = int(numpy.ceil(1.0 * size_y / self.blockSize))
+
+        #last blocks can be very small -> merge them with the secondlast one
+        self.cYend = size_y % self.blockSize
+        if self.cYend < self.blockSize / 3 and self.cY > 1:
+            self.cY -= 1
+        else:
+            self.cYend = 0
+
+
+        self.patchCount = self.cX * self.cY
+
+
+    def getPatchBounds(self, blockNum, overlap = 0):
+        z = int(numpy.floor(blockNum / (self.cX*self.cY)))
+        rest = blockNum % (self.cX*self.cY)
+        y = int(numpy.floor(rest / self.cX))
+        x = rest % self.cX
+
+        startx = max(0, x*self.blockSize - overlap)
+        endx = min(self.size_x, (x+1)*self.blockSize + overlap)
+        if x+1 >= self.cX:
+            endx = self.size_x
+
+        starty = max(0, y*self.blockSize - overlap)
+        endy = min(self.size_y, (y+1)*self.blockSize + overlap)
+        if y+1 >= self.cY:
+            endy = self.size_y
+
+
+        return [startx,endx,starty,endy]
+
+    def getPatchesForRect(self,startx,starty,endx,endy):
+        sx = int(numpy.floor(1.0 * startx / self.blockSize))
+        ex = int(numpy.floor(1.0 * endx / self.blockSize))
+        sy = int(numpy.floor(1.0 * starty / self.blockSize))
+        ey = int(numpy.floor(1.0 * endy / self.blockSize))
+
+        nums = []
+        for y in range(sy,ey+1):
+            nums += range(y*self.cX+sx,y*self.cX+ex+1)
+
+        return nums
+    
 class OverlaySlice():
     def __init__(self, data, color, alpha, colorTable):
         self.colorTable = colorTable
         self.color = color
         self.alpha = alpha
+        self.alphaChannel = None
+        self.data = data
 
-        if data.shape[-1] != 3 and colorTable == None:
-            self.alphaChannel = data
-    
-            shape = data.shape
-            shape +=(3,)
-    
-            self.data = numpy.zeros(shape, 'uint8')
-            self.data[:,:,0] = data[:,:]*(self.color.red()/255.0)
-            self.data[:,:,1] = data[:,:]*(self.color.green()/255.0)
-            self.data[:,:,2] = data[:,:]*(self.color.blue()/255.0)
-        elif colorTable == None:
-            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')*255
-            self.data = data
-        else:
-            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')
-            self.data = data
+#        if data.shape[-1] != 3 and colorTable == None:
+#            self.alphaChannel = data
+#
+#            shape = data.shape
+#            shape +=(3,)
+#
+#            self.data = numpy.zeros(shape, 'uint8')
+#            self.data[:,:,0] = data[:,:]*(self.color.red()/255.0)
+#            self.data[:,:,1] = data[:,:]*(self.color.green()/255.0)
+#            self.data[:,:,2] = data[:,:]*(self.color.blue()/255.0)
+#        elif colorTable == None:
+#            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')*255
+#            self.data = data
+#        else:
+#            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')
+#            self.data = data
 
 class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
     def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None, visible = True):
@@ -645,7 +707,9 @@ class LabelState(State):
         if volumeEditor.sliceSelectors[self.axis].value() != self.num:
             volumeEditor.sliceSelectors[self.axis].setValue(self.num)
         else:
-            volumeEditor.repaint()
+            #volumeEditor.repaint()
+            #repainting is already done automatically by the setLabels function
+            pass
         self.erasing = not(self.erasing)          
 
 
@@ -767,9 +831,13 @@ class VolumeEditor(QtGui.QWidget):
         if self.openglOverview is True:
             #print "Enabling OpenGL Overview rendering"
             pass
-            
-        self.embedded = embedded
         
+        self.embedded = embedded
+
+
+        QtGui.QPixmapCache.setCacheLimit(100000)
+
+
         if issubclass(image.__class__, DataAccessor):
             self.image = image
         elif issubclass(image.__class__, Volume):
@@ -1274,6 +1342,24 @@ class VolumeEditor(QtGui.QWidget):
         vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
         vu.applyTo(self.labels.data)
         self.pendingLabels.append(vu)
+
+        patches = self.imageScenes[axis].patchAccessor.getPatchesForRect(offsets[0], offsets[1],offsets[0]+labels.shape[0], offsets[1]+labels.shape[1])
+
+        tempImage = None
+        tempLabels = None
+        tempoverlays = []
+        for index, item in enumerate(self.overlayView.overlays):
+            if item.visible:
+                tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
+
+        tempImage = self.image.getSlice(self.selSlices[axis], axis, self.selectedTime, self.selectedChannel)
+
+        if self.labels.data is not None:
+            tempLabels = self.labels.data.getSlice(self.selSlices[axis],axis, self.selectedTime, 0)
+
+        self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays, tempLabels, self.labelsAlpha)
+
+
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
             
     def getVisibleState(self):
@@ -1419,10 +1505,13 @@ class DrawManager(QtCore.QObject):
         return lineVis
 
 
+    
+
 class ImageSceneRenderThread(QtCore.QThread):
     def __init__(self, parent):
         QtCore.QThread.__init__(self, None)
         self.imageScene = parent
+        self.patchAccessor = parent.patchAccessor
         self.volumeEditor = parent.volumeEditor
         #self.queue = deque(maxlen=1) #python 2.6
         self.queue = deque() #python 2.5
@@ -1430,7 +1519,7 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.dataPending = threading.Event()
         self.dataPending.clear()
         self.stopped = False
-        self.image = None
+        self.imagePatches = range(self.patchAccessor.patchCount + 1)
 
     def run(self):
         while not self.stopped:
@@ -1438,45 +1527,61 @@ class ImageSceneRenderThread(QtCore.QThread):
             self.dataPending.clear()
             while len(self.queue) > 0:
                 stuff = self.queue.pop()
-                image, overlays , labels , labelsAlpha  = stuff
-                
-                if image.dtype == 'uint16':
-                    image = (image / 255).astype(numpy.uint8)
+                nums, origimage, overlays , origlabels , labelsAlpha  = stuff
+                for patchNr in nums:
+                    bounds = self.patchAccessor.getPatchBounds(patchNr)
+
+                    image = origimage[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                     
-                self.image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=self.volumeEditor.normalizeData)
-        
-                #self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
-        
-                p = QtGui.QPainter(self.image)
-        
-                #add overlays
-                for index, item in enumerate(overlays):
-                    p.setOpacity(item.alpha)
-                   
-                    if item.colorTable != None:
-                        imageO = qimage2ndarray.gray2qimage(item.data.swapaxes(0,1), normalize=False)
-                        alphaChan = item.alphaChannel
-                        imageO.setColorTable(item.colorTable)
-                    else:
-                        imageO = qimage2ndarray.array2qimage(item.data.swapaxes(0,1), normalize=False)
-                        alphaChan = item.alphaChannel
-                        imageO.setAlphaChannel(qimage2ndarray.gray2qimage(alphaChan.swapaxes(0,1), False))
-        
-                    p.drawImage(imageO.rect(), imageO)
-        
-                if labels is not None:
-                    #p.setOpacity(item.alpha)
+                    if image.dtype == 'uint16':
+                        image = (image / 255).astype(numpy.uint8)
+
+                    temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=self.volumeEditor.normalizeData)
+
+                    #self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
+
+                    p = QtGui.QPainter(temp_image)
+                    p.drawImage(0,0,temp_image)
                     
-                    p.setOpacity(labelsAlpha)
-                    image0 = qimage2ndarray.gray2qimage(labels.swapaxes(0,1), False)
-        
-                    image0.setColorTable(self.volumeEditor.labelView.colorTab)
-                    mask = image0.createMaskFromColor(QtGui.QColor(0,0,0).rgb(),QtCore.Qt.MaskOutColor) #QtGui.QBitmap.fromImage(
-                    image0.setAlphaChannel(mask)
-                    p.drawImage(image0.rect(), image0)
-        
-                p.end()
-                self.emit(QtCore.SIGNAL("finished()"))
+                    #add overlays
+                    for index, origitem in enumerate(overlays):
+                        p.setOpacity(origitem.alpha)
+                        itemcolorTable = origitem.colorTable
+                        itemdata = origitem.data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+                        if origitem.colorTable != None:
+                            image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
+                            image0.setColorTable(origitem.colorTable)
+                        else:
+                            image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                            image0.fill(origitem.color.rgba())
+                            image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), False))
+
+                        p.drawImage(0,0, image0)
+                    if origlabels is not None:
+                        labels = origlabels[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+                        #p.setOpacity(item.alpha)
+
+                        p.setOpacity(labelsAlpha)
+                        image0 = qimage2ndarray.gray2qimage(labels.swapaxes(0,1), False)
+
+                        image0.setColorTable(self.volumeEditor.labelView.colorTab)
+                        mask = image0.createMaskFromColor(QtGui.QColor(0,0,0).rgb(),QtCore.Qt.MaskOutColor)
+                        image0.setAlphaChannel(mask)
+                        p.drawImage(0,0, image0)
+
+                    p.end()
+
+                    self.imagePatches[patchNr] = temp_image
+
+                    ###WHy in the name of the allmighty, does this crash with opengl rendering ?????????
+                    #would be so much faster :(
+#                    p = QtGui.QPainter(self.imageScene.scene.image)
+#                    p.drawImage(bounds[0],bounds[2],self.imagePatches[patchNr])
+#                    p.end()
+
+                    self.emit(QtCore.SIGNAL("finishedPatch(int)"),patchNr)
+
+                self.emit(QtCore.SIGNAL('finishedQueue()'))
 
 class CrossHairCursor(QtGui.QGraphicsItem) :
     modeYPosition  = 0
@@ -1555,6 +1660,35 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.brushSize = size
         self.update()
 
+class ImageGraphicsItem(QtGui.QGraphicsItem):
+    def __init__(self, image):
+        QtGui.QGraphicsItem.__init__(self)
+        self.image = image
+
+    def paint(self,painter, options, widget):
+        painter.setClipRect( options.exposedRect )
+        painter.drawImage(0,0,self.image)
+
+    def boundingRect(self):
+        return QtCore.QRectF(self.image.rect())
+
+class CustomGraphicsScene( QtGui.QGraphicsScene):
+    def __init__(self,image):
+        QtGui.QGraphicsScene.__init__(self)
+        #QtGui.QGLWidget.__init__(self)
+        self.image = image
+        self.bgBrush = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
+
+    def drawBackground(self, painter, rect):
+        #painter.fillRect(rect,self.bgBrush)
+
+        #trect = rect.intersected(QtCore.QRectF(self.image.rect()))
+        painter.setClipRect(rect)
+        painter.drawImage(0,0,self.image)
+        
+
+
+
 class ImageScene( QtGui.QGraphicsView):
     def __borderMarginIndicator__(self, margin):
         """
@@ -1594,17 +1728,18 @@ class ImageScene( QtGui.QGraphicsView):
         self.sliceExtent = imShape[2]
         self.drawing = False
         self.view = self
-        self.scene = QtGui.QGraphicsScene(self)
+        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_ARGB32)
+        self.scene = CustomGraphicsScene(self.image)
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
         self.border = None
         self.allBorder = None
         if os.path.isfile('gui/backGroundBrush.png'):
-            brushImage = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
+            self.scene.bgBrush = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
         else:
-            brushImage = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
-        self.setBackgroundBrush(brushImage)
+            self.scene.bgBrush = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
+        #self.setBackgroundBrush(brushImage)
 
         ##enable OpenGL acceleratino
         if self.volumeEditor.opengl is True:
@@ -1612,10 +1747,18 @@ class ImageScene( QtGui.QGraphicsView):
             self.setViewport(self.openglWidget)
         
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
-        self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
-        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_ARGB32_Premultiplied)
+        #self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
+
+        self.patchAccessor = PatchAccessor(imShape[0],imShape[1],64)
+        print "PatchCount :", self.patchAccessor.patchCount
+        self.imagePatchItems = []
+        self.pixmapPatches = []
+        for i in range(self.patchAccessor.patchCount + 1):
+            self.imagePatchItems.append(None)
+            self.pixmapPatches.append(None)
+            
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
-        self.imageItem = None
+        self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
         
         if self.axis is 0:
             self.setStyleSheet("QWidget { border: 2px solid red; border-radius: 4px; }")
@@ -1658,7 +1801,8 @@ class ImageScene( QtGui.QGraphicsView):
         #self.hiddenCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
         
         self.thread = ImageSceneRenderThread(self)
-        self.connect(self.thread, QtCore.SIGNAL('finished()'),self.redrawScene)
+        self.connect(self.thread, QtCore.SIGNAL('finishedPatch(int)'),self.redrawPatch)
+        self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.clearTempitems)
         self.thread.start()
         
         self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
@@ -1697,38 +1841,36 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.dataPending.set()
         self.thread.wait()
 
-    def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
-        stuff = [image, overlays, labels, labelsAlpha]
-        self.thread.queue.clear()
+    def updatePatches(self, patchNumbers ,image, overlays = [], labels = None, labelsAlpha = 1.0):
+        stuff = [patchNumbers,image, overlays, labels, labelsAlpha]
         self.thread.queue.append(stuff)
         self.thread.dataPending.set()
-             
 
-    def redrawScene(self):
+
+    def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
+        self.thread.queue.clear()
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
+
+    def clearTempitems(self):
+        for index, item in enumerate(self.tempImageItems):
+            self.scene.removeItem(item)
+        self.tempImageItems = []
+        self.scene.update(QtCore.QRectF(self.image.rect()))
+        self.volumeEditor.overview.display(self.axis)
+            
+    def redrawPatch(self, patchNr):
         if self.thread.stopped is False:
             #if, in slicing direction, we are within the margin of the image border
             #we set the border overlay indicator to visible
+
             self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
             
-            if self.imageItem is not None:
-                pass
-                self.scene.removeItem(self.imageItem)
-                self.imageItem = None
-                #self.pixmap = None
-                #self.image = None
+            bounds = self.patchAccessor.getPatchBounds(patchNr)
+            p = QtGui.QPainter(self.scene.image)
+            p.drawImage(bounds[0],bounds[2],self.thread.imagePatches[patchNr])
+            p.end()
 
-            for index, item in enumerate(self.tempImageItems):
-                self.scene.removeItem(item)
-
-            self.tempImageItems = []
-            self.image = self.thread.image
-            self.pixmap = QtGui.QPixmap.fromImage(self.thread.image)
-
-            self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
-            self.scene.addItem(self.imageItem)
-
-            self.viewport().repaint()
-            self.volumeEditor.overview.display(self.axis)
+            #self.scene.update(bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2])
         
     def updateLabels(self):
         result = self.drawManager.dumpDraw(self.mousePos)
@@ -1853,7 +1995,6 @@ class ImageScene( QtGui.QGraphicsView):
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
             self.endDraw(mousePos)
-            self.volumeEditor.changeSlice(self.volumeEditor.selSlices[self.axis], self.axis)
         if self.tempErase == True:
             self.drawManager.disableErasing()
             self.tempErase = False
@@ -1972,7 +2113,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
     def display(self, axis):
         if self.volumeEditor.openglOverview is True:  
-            if self.initialized is True and self.images[0].pixmap is not None and self.images[1].pixmap is not None and self.images[2].pixmap is not None:
+            if self.initialized is True:
                 #self.initializeGL()
                 self.makeCurrent()
                 if self.tex[axis] is not 0:
@@ -2066,7 +2207,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
             curCenter = -(( 1.0 * self.volumeEditor.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
             if axis is 2 or self.tex[2] is 0:
-                self.tex[2] = self.bindTexture(self.images[2].image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[2] = self.bindTexture(self.images[2].scene.image, GL_TEXTURE_2D, GL_RGB)
             else:
                 glBindTexture(GL_TEXTURE_2D,self.tex[2])
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -2106,7 +2247,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
             curCenter = (( (1.0 * self.volumeEditor.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
     
             if axis is 0 or self.tex[0] is 0:
-                self.tex[0] = self.bindTexture(self.images[0].image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[0] = self.bindTexture(self.images[0].scene.image, GL_TEXTURE_2D, GL_RGB)
             else:
                 glBindTexture(GL_TEXTURE_2D,self.tex[0])
     
@@ -2143,7 +2284,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
     
             if axis is 1 or self.tex[1] is 0:
-                self.tex[1] = self.bindTexture(self.images[1].image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[1] = self.bindTexture(self.images[1].scene.image, GL_TEXTURE_2D, GL_RGB)
             else:
                 glBindTexture(GL_TEXTURE_2D,self.tex[1])
     
