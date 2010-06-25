@@ -2010,9 +2010,9 @@ class ImageScene( QtGui.QGraphicsView):
             else:
                 if self.drawManager.erasing:
                     #make the brush size bigger while erasing
-                    self.drawManager.setBrushSize(int(event.pressure()*15))
-                else:
                     self.drawManager.setBrushSize(int(event.pressure()*10))
+                else:
+                    self.drawManager.setBrushSize(int(event.pressure()*7))
         if self.drawing == False:
             if event.pressure() > 0:
                 self.beginDraw(mousePos)
