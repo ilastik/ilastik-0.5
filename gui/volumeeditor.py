@@ -1105,9 +1105,14 @@ class VolumeEditor(QtGui.QWidget):
 
     def maximizeSliceView(self, axis, maximize):
         a = range(3)
-        a.remove(axis)
-        for i in a:
-            self.imageScenes[i].setVisible(not maximize)
+        if maximize:
+            for i in a:
+                self.imageScenes[i].setVisible(i == axis)
+        else:
+            for i in range(3):
+                self.imageScenes[i].setVisible(True)
+        
+        self.imageScenes[axis].setFocus()
     
     def nextLabel(self):
         print "next label"
