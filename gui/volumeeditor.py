@@ -303,13 +303,19 @@ class PatchAccessor():
 
     def getPatchesForRect(self,startx,starty,endx,endy):
         sx = int(numpy.floor(1.0 * startx / self.blockSize))
-        ex = int(numpy.floor(1.0 * endx / self.blockSize))
+        ex = int(numpy.ceil(1.0 * endx / self.blockSize))
         sy = int(numpy.floor(1.0 * starty / self.blockSize))
-        ey = int(numpy.floor(1.0 * endy / self.blockSize))
+        ey = int(numpy.ceil(1.0 * endy / self.blockSize))
+
+        if ey > self.cY:
+            ey = self.cY
+
+        if ex > self.cX:
+            ex = self.cX
 
         nums = []
-        for y in range(sy,ey+1):
-            nums += range(y*self.cX+sx,y*self.cX+ex+1)
+        for y in range(sy,ey):
+            nums += range(y*self.cX+sx,y*self.cX+ex)
 
         return nums
     
@@ -1541,9 +1547,11 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.dataPending = threading.Event()
         self.dataPending.clear()
         self.stopped = False
-        self.imagePatches = range(self.patchAccessor.patchCount + 1)
-
+        self.imagePatches = range(self.patchAccessor.patchCount)
+            
     def run(self):
+        #self.context.makeCurrent()
+
         while not self.stopped:
             self.dataPending.wait()
             self.dataPending.clear()
@@ -1560,7 +1568,7 @@ class ImageSceneRenderThread(QtCore.QThread):
 
                     temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=self.volumeEditor.normalizeData)
 
-                    #self.image = self.image.convertToFormat(QtGui.QImage.Format_ARGB32_Premultiplied)
+                    self.image = temp_image.convertToFormat(QtGui.QImage.Format_RGB888)
 
                     p = QtGui.QPainter(temp_image)
                     p.drawImage(0,0,temp_image)
@@ -1595,11 +1603,16 @@ class ImageSceneRenderThread(QtCore.QThread):
 
                     self.imagePatches[patchNr] = temp_image
 
-                    ###WHy in the name of the allmighty, does this crash with opengl rendering ?????????
-                    #would be so much faster :(
-#                    p = QtGui.QPainter(self.imageScene.scene.image)
-#                    p.drawImage(bounds[0],bounds[2],self.imagePatches[patchNr])
-#                    p.end()
+                    #draw the patch result to complete image
+                    p = QtGui.QPainter(self.imageScene.scene.image)
+                    p.drawImage(bounds[0],bounds[2],self.imagePatches[patchNr])
+                    p.end()
+
+#                    #this code would be cool, but unfortunately glTexSubimage doesnt work ??
+#                    glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
+#                    pixels = qimage2ndarray.byte_view(temp_image)
+#                    print pixels.shape
+#                    glTexSubImage2D(GL_TEXTURE_2D,0,bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2],GL_RGBA,GL_UNSIGNED_BYTE, pixels )
 
                     self.emit(QtCore.SIGNAL("finishedPatch(int)"),patchNr)
 
@@ -1694,19 +1707,60 @@ class ImageGraphicsItem(QtGui.QGraphicsItem):
     def boundingRect(self):
         return QtCore.QRectF(self.image.rect())
 
-class CustomGraphicsScene( QtGui.QGraphicsScene):
-    def __init__(self,image):
-        QtGui.QGraphicsScene.__init__(self)
-        #QtGui.QGLWidget.__init__(self)
-        self.image = image
-        self.bgBrush = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
 
+class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
+    def __init__(self,parent,widget,image):
+        QtGui.QGraphicsScene.__init__(self)
+        #QtOpenGL.QGLWidget.__init__(self)
+        self.widget = widget
+        self.imageScene = parent
+        self.image = image
+        self.bgColor = QtGui.QColor(QtCore.Qt.black)
+        self.tex = -1
+
+            
     def drawBackground(self, painter, rect):
         #painter.fillRect(rect,self.bgBrush)
+        if self.widget != None:
 
-        #trect = rect.intersected(QtCore.QRectF(self.image.rect()))
-        painter.setClipRect(rect)
-        painter.drawImage(0,0,self.image)
+            self.widget.context().makeCurrent()
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            viewRect = rect # self.imageScene.view.sceneRect()
+
+
+            point1 = self.imageScene.view.mapToScene(0,0)
+            point2 = self.imageScene.view.mapToScene(self.imageScene.view.width(),self.imageScene.view.height())
+            
+            glOrtho(point1.y(),point2.y(), point2.x(),point1.x(), -1.0, 1.0)
+            #glTranslatef(0.5, 0.5, 0)
+
+
+            glClearColor(self.bgColor.redF(),self.bgColor.greenF(),self.bgColor.blueF(),1.0)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+            glEnable(GL_TEXTURE_2D)
+
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+
+            if self.tex > -1:
+                self.widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
+
+#            rect = rect.intersected(QtCore.QRectF(self.image.rect()))
+#
+#            patches =  self.imageScene.patchAccessor.getPatchesForRect(rect.x(),rect.y(),rect.x()+rect.width(),rect.y()+rect.height())
+#            #print self.imageScene.patchAccessor.patchCount
+#            #print patches
+#            for i in patches:
+#                bounds = self.imageScene.patchAccessor.getPatchBounds(i)
+#                if self.imageScene.textures[i] >= 0:
+#                    self.widget.drawTexture(QtCore.QRectF(QtCore.QRect(bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2])), self.imageScene.textures[i] )
+
+        else:
+            painter.setClipRect(rect)
+            painter.drawImage(0,0,self.image)
         
 
 
@@ -1751,23 +1805,27 @@ class ImageScene( QtGui.QGraphicsView):
         self.drawing = False
         self.view = self
         self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_ARGB32)
-        self.scene = CustomGraphicsScene(self.image)
+        self.border = None
+        self.allBorder = None
+
+        self.openglWidget = None
+        ##enable OpenGL acceleratino
+        if self.volumeEditor.opengl is True:
+            self.openglWidget = QtOpenGL.QGLWidget()
+            self.setViewport(self.openglWidget)
+            self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
+
+
+        self.scene = CustomGraphicsScene(self, self.openglWidget, self.image)
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
-        self.border = None
-        self.allBorder = None
+        self.scene.bgColor = QtGui.QColor(QtCore.Qt.white)
         if os.path.isfile('gui/backGroundBrush.png'):
             self.scene.bgBrush = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
         else:
             self.scene.bgBrush = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
         #self.setBackgroundBrush(brushImage)
-
-        ##enable OpenGL acceleratino
-        if self.volumeEditor.opengl is True:
-            self.openglWidget = QtOpenGL.QGLWidget()
-            self.setViewport(self.openglWidget)
-        
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         #self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
 
@@ -1775,10 +1833,12 @@ class ImageScene( QtGui.QGraphicsView):
         print "PatchCount :", self.patchAccessor.patchCount
         self.imagePatchItems = []
         self.pixmapPatches = []
+        self.textures = []
         for i in range(self.patchAccessor.patchCount + 1):
             self.imagePatchItems.append(None)
             self.pixmapPatches.append(None)
-            
+            self.textures.append(-1)
+
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
         
@@ -1883,6 +1943,7 @@ class ImageScene( QtGui.QGraphicsView):
 
     def updatePatches(self, patchNumbers ,image, overlays = [], labels = None, labelsAlpha = 1.0):
         stuff = [patchNumbers,image, overlays, labels, labelsAlpha]
+        #print patchNumbers
         self.thread.queue.append(stuff)
         self.thread.dataPending.set()
 
@@ -1895,20 +1956,39 @@ class ImageScene( QtGui.QGraphicsView):
         for index, item in enumerate(self.tempImageItems):
             self.scene.removeItem(item)
         self.tempImageItems = []
+        #if, in slicing direction, we are within the margin of the image border
+        #we set the border overlay indicator to visible
+
+        self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
+        if self.openglWidget is not None:
+            self.openglWidget.context().makeCurrent()
+            t = self.scene.tex
+            self.scene.tex = -1
+            if t > -1:
+                self.openglWidget.deleteTexture(t)
+            self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
         self.scene.update(QtCore.QRectF(self.image.rect()))
         self.volumeEditor.overview.display(self.axis)
-            
+        
     def redrawPatch(self, patchNr):
         if self.thread.stopped is False:
-            #if, in slicing direction, we are within the margin of the image border
-            #we set the border overlay indicator to visible
+            pass
+#            patch = self.thread.imagePatches[patchNr]
+#            if self.textures[patchNr] < 0 :
+#                t = self.openglWidget.bindTexture(patch)
+#                self.textures[patchNr] = t
+#            else:
+#                t_old = self.textures[patchNr]
+#
+#                t_new = self.openglWidget.bindTexture(patch)
+#                self.textures[patchNr] = t_new
+#
+#                self.openglWidget.deleteTexture(t_old)
 
-            self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
-            
-            bounds = self.patchAccessor.getPatchBounds(patchNr)
-            p = QtGui.QPainter(self.scene.image)
-            p.drawImage(bounds[0],bounds[2],self.thread.imagePatches[patchNr])
-            p.end()
+#            bounds = self.patchAccessor.getPatchBounds(patchNr)
+#            p = QtGui.QPainter(self.scene.image)
+#            p.drawImage(bounds[0],bounds[2],self.thread.imagePatches[patchNr])
+#            p.end()
 
             #self.scene.update(bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2])
         

@@ -35,6 +35,13 @@
 # p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
 
+from OpenGL.GL import *
+try:
+    from OpenGL.GLX import *
+    XInitThreads()
+except:
+    pass
+
 import vigra
 from vigra import arraytypes as at
 
