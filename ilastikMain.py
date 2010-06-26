@@ -187,11 +187,11 @@ class MainWindow(QtGui.QMainWindow):
         self.fullScreen = not self.fullScreen
                 
     def updateFileSelector(self):
+        self.fileSelectorList.blockSignals(True)
         self.fileSelectorList.clear()
+        self.fileSelectorList.blockSignals(False)
         for index, item in enumerate(self.project.dataMgr):
             self.fileSelectorList.addItem(item.Name)
-            if index == self.activeImage:
-                self.fileSelectorList.setCurrentIndex(index)
     
     def changeImage(self, number):
         self.activeImageLock.acquire()
@@ -365,7 +365,7 @@ class MainWindow(QtGui.QMainWindow):
         
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
-        self.changeImage(self.activeImage)
+        #self.changeImage(self.activeImage)
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)

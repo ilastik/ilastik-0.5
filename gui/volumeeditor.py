@@ -1953,13 +1953,11 @@ class ImageScene( QtGui.QGraphicsView):
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
 
     def clearTempitems(self):
-        for index, item in enumerate(self.tempImageItems):
-            self.scene.removeItem(item)
-        self.tempImageItems = []
         #if, in slicing direction, we are within the margin of the image border
         #we set the border overlay indicator to visible
-
         self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
+
+        #if we are in opengl 2d render mode, update the texture
         if self.openglWidget is not None:
             self.openglWidget.context().makeCurrent()
             t = self.scene.tex
@@ -1967,6 +1965,14 @@ class ImageScene( QtGui.QGraphicsView):
             if t > -1:
                 self.openglWidget.deleteTexture(t)
             self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+
+        #if all updates have been rendered remove tempitems
+        if self.thread.queue.__len__() == 0:
+            for index, item in enumerate(self.tempImageItems):
+                self.scene.removeItem(item)
+            self.tempImageItems = []
+
+        #update the scene, and the 3d overview
         self.scene.update(QtCore.QRectF(self.image.rect()))
         self.volumeEditor.overview.display(self.axis)
         
@@ -2225,9 +2231,9 @@ class OverviewScene(QtOpenGL.QGLWidget):
         self.sceneItems = []
         self.initialized = False
         self.tex = []
-        self.tex.append(0)
-        self.tex.append(0)
-        self.tex.append(0)
+        self.tex.append(-1)
+        self.tex.append(-1)
+        self.tex.append(-1)
         if self.volumeEditor.openglOverview is False:
             self.setVisible(False)
 
@@ -2326,7 +2332,9 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
     
             curCenter = -(( 1.0 * self.volumeEditor.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
-            if axis is 2 or self.tex[2] is 0:
+            if axis is 2 and self.tex[2] != -1:
+                self.deleteTexture(self.tex[2])
+            if axis is 2 or self.tex[2] is -1:
                 self.tex[2] = self.bindTexture(self.images[2].scene.image, GL_TEXTURE_2D, GL_RGB)
             else:
                 glBindTexture(GL_TEXTURE_2D,self.tex[2])
@@ -2366,7 +2374,9 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
             curCenter = (( (1.0 * self.volumeEditor.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
     
-            if axis is 0 or self.tex[0] is 0:
+            if axis is 0 and self.tex[0] != -1:
+                self.deleteTexture(self.tex[0])
+            if axis is 0 or self.tex[0] is -1:
                 self.tex[0] = self.bindTexture(self.images[0].scene.image, GL_TEXTURE_2D, GL_RGB)
             else:
                 glBindTexture(GL_TEXTURE_2D,self.tex[0])
@@ -2403,7 +2413,9 @@ class OverviewScene(QtOpenGL.QGLWidget):
             curCenter = (( 1.0 * self.volumeEditor.selSlices[1] / self.sceneShape[1] ) - 0.5 )*2.0*ratio2h
     
     
-            if axis is 1 or self.tex[1] is 0:
+            if axis is 1 and self.tex[1] != -1:
+                self.deleteTexture(self.tex[1])
+            if axis is 1 or self.tex[1] is -1:
                 self.tex[1] = self.bindTexture(self.images[1].scene.image, GL_TEXTURE_2D, GL_RGB)
             else:
                 glBindTexture(GL_TEXTURE_2D,self.tex[1])
