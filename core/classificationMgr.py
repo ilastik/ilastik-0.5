@@ -41,6 +41,7 @@ from core.utilities import irange
 from core import onlineClassifcator
 from core import dataMgr as DM
 from core import activeLearning, segmentationMgr
+from core import classifiers
 from gui import volumeeditor as ve
 from core import jobMachine
 import sys, traceback
@@ -51,13 +52,17 @@ import core.classifiers
 
 """ Import all classification plugins"""
 pathext = os.path.dirname(__file__)
+
 try:
-    for f in os.listdir(os.path.join(os.path.dirname(sys.executable), 'core/classifiers')):
+    for f in os.listdir(os.path.abspath(pathext + '/classifiers')):
         module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
         if ext == '.py': # Important, ignore .pyc/other files.
             module = __import__('core.classifiers.' + module_name)
 except Exception, e:
     pass
+
+for i, c in enumerate(classifiers.classifierBase.ClassifierBase.__subclasses__()):
+    print "loaded classifier ", c.name
 
 
 def interactiveMessagePrint(* args):

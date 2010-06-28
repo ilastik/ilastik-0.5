@@ -1740,6 +1740,8 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 #self.widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
                 d = painter.device()
                 dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
+
+                #see QTBUG-6800 , this unfortunately does not work with Qt 4.6.3, please us 4.7 beta
                 dc.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
 #            rect = rect.intersected(QtCore.QRectF(self.image.rect()))
 #
