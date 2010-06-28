@@ -164,8 +164,7 @@ def createRibbons():
     RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", ilastikIcons.Edit ,"Edit"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Options", ilastikIcons.Edit ,"Options"))
     
-    RibbonGroupObjects["Features"].append(RibbonEntry("Select", ilastikIcons.Select ,"Select Features"))
-    RibbonGroupObjects["Features"].append(RibbonEntry("Compute", ilastikIcons.System ,"Compute Features"))
+    RibbonGroupObjects["Features"].append(RibbonEntry("Select and Compute", ilastikIcons.Select ,"Select & Compute Features"))
     
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train", ilastikIcons.System ,"Train Classifier"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 

@@ -267,8 +267,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Options'], QtCore.SIGNAL('clicked()'), self.optionsDlg)
-        self.connect(self.ribbon.tabDict['Features'].itemDict['Select'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
-        self.connect(self.ribbon.tabDict['Features'].itemDict['Compute'], QtCore.SIGNAL('clicked()'), self.featureCompute)
+        self.connect(self.ribbon.tabDict['Features'].itemDict['Select and Compute'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationPredict)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
@@ -305,8 +304,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setToolTip('Save the current Project')
-        self.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(False)        
-        self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)        
+        self.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
         self.ribbon.tabDict['Classification'].itemDict['Train'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
         self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
@@ -369,7 +367,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        self.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(True)
+        self.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
         
     def optionsDlg(self):
         tmp = ProjectSettingsDlg(self, self.project)
@@ -421,7 +419,6 @@ class MainWindow(QtGui.QMainWindow):
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
-        self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(True)
         self.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(False)        
         self.ribbon.tabDict['Classification'].itemDict['Predict'].setEnabled(False)        
         self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
@@ -942,12 +939,16 @@ class FeatureDlg(QtGui.QDialog):
             self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
+            self.ilastik.featureCompute()
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
             return False
         
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
+        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)
         self.close()
         
     def computeMemoryRequirement(self, featureSelectionList):
@@ -970,8 +971,7 @@ class FeatureDlg(QtGui.QDialog):
 class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
-        self.parent.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
-        self.parent.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(False)
+        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(False)
         self.featureCompute()
         
         
@@ -1012,7 +1012,7 @@ class FeatureComputation(object):
         if hasattr(self.parent, "classificationInteractive"):
             self.parent.classificationInteractive.updateThreadQueues()
             
-        self.parent.ribbon.tabDict['Features'].itemDict['Select'].setEnabled(True)            
+        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train'].setEnabled(True)        
         self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)        
                     
