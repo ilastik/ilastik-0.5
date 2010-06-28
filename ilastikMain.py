@@ -512,6 +512,13 @@ class MainWindow(QtGui.QMainWindow):
             tmp = rf.classifier.writeHDF5(str(fileName), "rf_%03d" % i, True)
             print "Write Random Forest # %03d -> %d" % (i,tmp)
         print "Done"
+
+    def closeEvent(self, event):
+        reply = QtGui.QMessageBox.question(self, 'Message', "Are you sure to quit?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+        if reply == QtGui.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
             
 class ProjectSettingsDlg(QtGui.QDialog):
     def __init__(self, ilastik = None, project=None):
