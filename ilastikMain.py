@@ -69,7 +69,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import getopt
 
 from gui import volumeeditor as ve
-#from gui.shortcutmanager import *
+from gui.shortcutmanager import *
 
 #make the program quit on Ctrl+C
 import signal
