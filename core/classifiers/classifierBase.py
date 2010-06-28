@@ -12,6 +12,14 @@ class ClassifierBase(object):
     #-1 means whole dataset
     minContext = 0
 
+    #If you want to provide a gui to the user, to set up additional parameter and stuff
+    #implement the following settings classmethod in your derived class
+
+#    @classmethod
+#    def settings(cls):
+#        pass
+
+
     def __init__(self):
         pass
 
@@ -29,10 +37,3 @@ class ClassifierBase(object):
         pass
 
 
-#    @static
-#    def settings():
-#        pass
-#
-#    @static
-#    def setup():
-#        pass

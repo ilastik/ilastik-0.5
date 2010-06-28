@@ -14,6 +14,7 @@ class ClassifierSelectionDlg(QtGui.QDialog):
 
         self.connect(self.buttonBox, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)
+        self.connect(self.settingsButton, QtCore.SIGNAL('pressed()'), self.classifierSettings)
 
         self.classifiers = core.classifiers.classifierBase.ClassifierBase.__subclasses__()
         j = 0
@@ -32,6 +33,17 @@ class ClassifierSelectionDlg(QtGui.QDialog):
         self.homepage.setText(c.homepage)
         self.description.setText(c.description)
         self.author.setText(c.author)
+        #check wether the plugin writer provided a settings method
+        func = getattr(c, "settings", None)
+        if callable(func):
+            self.settingsButton.setVisible(True)
+        else:
+            self.settingsButton.setVisible(False)
+
+
+    def classifierSettings(self):
+        self.currentClassifier.settings()
+
 
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:

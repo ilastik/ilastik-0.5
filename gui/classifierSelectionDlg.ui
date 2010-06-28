@@ -46,7 +46,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="name"/>
+         <widget class="QLineEdit" name="name">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_2">
@@ -56,7 +60,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="author"/>
+         <widget class="QLineEdit" name="author">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_3">
@@ -66,7 +74,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="homepage"/>
+         <widget class="QLineEdit" name="homepage">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_4">
@@ -77,6 +89,13 @@
         </item>
         <item>
          <widget class="QTextBrowser" name="description"/>
+        </item>
+        <item>
+         <widget class="QToolButton" name="settingsButton">
+          <property name="text">
+           <string>Classifier Settings</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

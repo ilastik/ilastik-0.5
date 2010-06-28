@@ -14,8 +14,8 @@ class ClassifierRandomForest(ClassifierBase):
     treeCount = 10
 
     def __init__(self, treeCount = 10):
-        self.treeCount = treeCount
         ClassifierBase.__init__(self)
+        self.treeCount = treeCount
 
     def train(self, features, labels):
         if features is None:
