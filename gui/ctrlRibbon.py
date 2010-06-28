@@ -166,8 +166,7 @@ def createRibbons():
     
     RibbonGroupObjects["Features"].append(RibbonEntry("Select and Compute", ilastikIcons.Select ,"Select & Compute Features"))
     
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Train", ilastikIcons.System ,"Train Classifier"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Predict", ilastikIcons.Dialog ,"Predict Classifier")) 
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and Predict Image(s)"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
 
