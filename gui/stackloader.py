@@ -125,14 +125,10 @@ class StackLoader(QtGui.QDialog):
         tempLayout = QtGui.QHBoxLayout()
         self.cancelButton = QtGui.QPushButton("Cancel")
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
-        self.okButton = QtGui.QPushButton("Ok")
-        self.okButton.setEnabled(False)
-        self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.accept)
         self.loadButton = QtGui.QPushButton("Load")
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
-        tempLayout.addWidget(self.okButton)
         tempLayout.addWidget(self.loadButton)
         self.layout.addStretch()
         self.layout.addLayout(tempLayout)
@@ -263,8 +259,8 @@ class StackLoader(QtGui.QDialog):
             print "######ERROR saving File ", destfile
             
         if allok:
-            self.logger.appendPlainText("Slices loaded")            
-            self.okButton.setEnabled(True)
+            self.logger.appendPlainText("Slices loaded")
+            self.accept()
         
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
