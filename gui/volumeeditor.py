@@ -40,7 +40,7 @@ except Exception, e:
     pass
 
 from PyQt4 import QtCore, QtGui, QtOpenGL
-
+import sip
 import vigra, numpy
 import qimage2ndarray
 import h5py
@@ -1732,30 +1732,15 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
         if self.widget != None:
 
             self.widget.context().makeCurrent()
-            glMatrixMode(GL_PROJECTION);
-            glLoadIdentity();
-            viewRect = rect # self.imageScene.view.sceneRect()
-
-
-            point1 = self.imageScene.view.mapToScene(0,0)
-            point2 = self.imageScene.view.mapToScene(self.imageScene.view.width(),self.imageScene.view.height())
             
-            glOrtho(point1.y(),point2.y(), point2.x(),point1.x(), -1.0, 1.0)
-            #glTranslatef(0.5, 0.5, 0)
-
-
             glClearColor(self.bgColor.redF(),self.bgColor.greenF(),self.bgColor.blueF(),1.0)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-            glEnable(GL_TEXTURE_2D)
-
-            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-
             if self.tex > -1:
-                self.widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
-
+                #self.widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
+                d = painter.device()
+                dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
+                dc.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
 #            rect = rect.intersected(QtCore.QRectF(self.image.rect()))
 #
 #            patches =  self.imageScene.patchAccessor.getPatchesForRect(rect.x(),rect.y(),rect.x()+rect.width(),rect.y()+rect.height())
