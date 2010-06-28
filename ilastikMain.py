@@ -59,6 +59,7 @@ from Queue import Queue as queue
 from collections import deque
 from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
+from gui.classifierSelectionDialog import ClassifierSelectionDlg
 from core import jobMachine
 import copy
 import h5py
@@ -270,6 +271,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select and Compute'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
@@ -477,6 +479,12 @@ class MainWindow(QtGui.QMainWindow):
         dialog = batchProcess.BatchProcess(self)
         result = dialog.exec_()
     
+    def on_changeClassifier(self):
+        dialog = ClassifierSelectionDlg(self)
+        self.project.classifier = dialog.exec_()
+        print self.project.classifier
+
+
     def on_classificationTrain(self):
         self.classificationTrain = ClassificationTrain(self)
         
@@ -1041,7 +1049,7 @@ class ClassificationTrain(object):
         numberOfJobs = 10                 
         self.initClassificationProgress(numberOfJobs)
         
-        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, self.parent.project.dataMgr)
+        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, self.parent.project.dataMgr, classifier = self.parent.project.classifier)
         self.classificationProcess.start()
         self.classificationTimer.start(500) 
 
@@ -1113,7 +1121,7 @@ class ClassificationInteractive(object):
     def start(self):
                
         self.initInteractiveProgressBar()
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, classifier = self.parent.project.classifier)
 
         self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
     
