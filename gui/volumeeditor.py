@@ -1484,7 +1484,8 @@ class DrawManager(QtCore.QObject):
             self.penVis.setColor(QtCore.Qt.black)
         else:
             self.penVis.setColor(self.volumeEditor.labelView.currentItem().color)
-        self.pos = pos
+        self.pos = QtCore.QPoint(pos.x()+0.0001, pos.y()+0.0001)
+        
         line = self.moveTo(pos)
         return line
 
