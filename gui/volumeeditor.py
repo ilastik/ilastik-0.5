@@ -1851,13 +1851,16 @@ class ImageScene( QtGui.QGraphicsView):
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
         
         if self.axis is 0:
-            self.setStyleSheet("QWidget { border: 2px solid red; border-radius: 4px; }")
+            self.setStyleSheet("QWidget:!focus { border: 2px solid red; border-radius: 4px; }\
+                                QWidget:focus { border: 2px solid white; border-radius: 4px; }")
             self.view.rotate(90.0)
             self.view.scale(1.0,-1.0)
         if self.axis is 1:
-            self.setStyleSheet("QWidget { border: 2px solid green; border-radius: 4px; }")
+            self.setStyleSheet("QWidget:!focus { border: 2px solid green; border-radius: 4px; } \
+                                QWidget:focus { border: 2px solid white; border-radius: 4px; }")
         if self.axis is 2:
-            self.setStyleSheet("QWidget { border: 2px solid blue; border-radius: 4px; }")
+            self.setStyleSheet("QWidget:!focus { border: 2px solid blue; border-radius: 4px; } \
+                                QWidget:focus { border: 2px solid white; border-radius: 4px; }")
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
 

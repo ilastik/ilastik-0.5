@@ -154,7 +154,8 @@ def createRibbons():
     RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
     RibbonGroupObjects["Features"] = RibbonEntryGroup("Features", 1)   
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
-    RibbonGroupObjects["Help"] = RibbonEntryGroup("Help", 3)
+    RibbonGroupObjects["Automate"] = RibbonEntryGroup("Automate", 3)
+    RibbonGroupObjects["Help"] = RibbonEntryGroup("Help", 4)
     #RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
     #RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)
     
@@ -168,7 +169,7 @@ def createRibbons():
     
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and Predict Image(s)"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
+    RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
 
     RibbonGroupObjects["Help"].append(RibbonEntry("Shortcuts", ilastikIcons.System ,"Shortcuts"))
 

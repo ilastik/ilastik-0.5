@@ -270,7 +270,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select and Compute'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
+        self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
 
@@ -308,8 +308,8 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
         self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
         self.ribbon.tabDict['Classification'].itemDict['Interactive'].setToolTip('Train the RandomForest classifier while drawing labels and browsing through the file. \nThe currently visible part of the image gets predicted on the fly.')
-        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setToolTip('Batchprocess a list of files with the currently trained classifier.\n The processed files and their prediction are stored with the file extension "_processed.h5" ')
+        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setToolTip('Batchprocess a list of files with the currently trained classifier.\n The processed files and their prediction are stored with the file extension "_processed.h5" ')
 
 #        self.ribbon.tabDict['Export'].itemDict['Export'].setEnabled(False)
         
@@ -418,7 +418,7 @@ class MainWindow(QtGui.QMainWindow):
         self.newFeatureDlg = FeatureDlg(self)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
-        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
+        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         
         
     def newEditChannelsDlg(self):
@@ -458,7 +458,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks.append(dock)
 
     def labelRemoved(self, number):
-        self.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
+        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         self.project.dataMgr.removeLabel(number)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
@@ -1030,7 +1030,7 @@ class ClassificationTrain(object):
     def start(self):
         #process all unaccounted label changes
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(False)        
+        self.parent.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         
         newLabels = self.parent.labelWidget.getPendingLabels()
         if len(newLabels) > 0:
@@ -1070,7 +1070,7 @@ class ClassificationTrain(object):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Batchprocess'].setEnabled(True)        
+        self.parent.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(True)
         
 
 class ClassificationInteractive(object):
