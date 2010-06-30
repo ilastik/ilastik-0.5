@@ -1896,11 +1896,11 @@ class ImageScene( QtGui.QGraphicsView):
         shortcutManager.register(self.shortcutZoomOut, "zoom out")
         self.shortcutZoomOut.setContext(QtCore.Qt.WidgetShortcut )
         
-        self.shortcutSliceUp = QtGui.QShortcut(QtGui.QKeySequence("o"), self, self.sliceUp, self.sliceUp)
+        self.shortcutSliceUp = QtGui.QShortcut(QtGui.QKeySequence("p"), self, self.sliceUp, self.sliceUp)
         shortcutManager.register(self.shortcutSliceUp, "slice up")
         self.shortcutSliceUp.setContext(QtCore.Qt.WidgetShortcut )
         
-        self.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("p"), self, self.sliceDown, self.sliceDown)
+        self.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("o"), self, self.sliceDown, self.sliceDown)
         shortcutManager.register(self.shortcutSliceDown, "slice down")
         self.shortcutSliceDown.setContext(QtCore.Qt.WidgetShortcut )
 
@@ -1933,17 +1933,26 @@ class ImageScene( QtGui.QGraphicsView):
 
         self.tempErase = False
 
+    def changeSlice(self, delta):
+        if self.drawing == True:
+            self.endDraw(self.mousePos)
+            self.drawing = True
+            self.drawManager.beginDraw(self.mousePos, self.imShape)
+
+        self.volumeEditor.sliceSelectors[self.axis].stepBy(delta)
+
+
     def sliceUp(self):
-        self.volumeEditor.sliceSelectors[self.axis].stepBy(1)
+        self.changeSlice(1)
         
     def sliceUp10(self):
-        self.volumeEditor.sliceSelectors[self.axis].stepBy(10)
+        self.changeSlice(10)
 
     def sliceDown(self):
-        self.volumeEditor.sliceSelectors[self.axis].stepBy(-1)
+        self.changeSlice(-1)
 
     def sliceDown10(self):
-        self.volumeEditor.sliceSelectors[self.axis].stepBy(-10)
+        self.changeSlice(-10)
 
 
     def brushSmaller(self):
@@ -2067,30 +2076,24 @@ class ImageScene( QtGui.QGraphicsView):
         k_alt = (keys == QtCore.Qt.AltModifier)
         k_ctrl = (keys == QtCore.Qt.ControlModifier)
 
-        if self.drawing == True:
-            mousePos = self.mapToScene(event.pos())
-            self.endDraw(mousePos)
-            self.drawing = True
-            self.drawManager.beginDraw(mousePos, self.imShape)
-
-
+        self.mousePos = self.mapToScene(event.pos())
 
         if event.delta() > 0:
             if k_alt is True:
-                self.volumeEditor.sliceSelectors[self.axis].stepBy(10)
+                self.changeSlice(10)
             elif k_ctrl is True:
                 scaleFactor = 1.1
                 self.doScale(scaleFactor)
             else:
-                self.volumeEditor.sliceSelectors[self.axis].stepUp()
+                self.changeSlice(1)
         else:
             if k_alt is True:
-                self.volumeEditor.sliceSelectors[self.axis].stepBy(-10)
+                self.changeSlice(-10)
             elif k_ctrl is True:
                 scaleFactor = 0.9
                 self.doScale(scaleFactor)
             else:
-                self.volumeEditor.sliceSelectors[self.axis].stepDown()
+                self.changeSlice(-1)
 
     def zoomOut(self):
         self.doScale(0.9)
@@ -2106,7 +2109,7 @@ class ImageScene( QtGui.QGraphicsView):
         if not self.volumeEditor.labelView.currentItem():
             return
         
-        mousePos = self.mapToScene(event.pos())
+        self.mousePos = mousePos = self.mapToScene(event.pos())
         
         x = mousePos.x()
         y = mousePos.y()
@@ -2133,6 +2136,9 @@ class ImageScene( QtGui.QGraphicsView):
 
 
     def mousePressEvent(self, event):
+        if not self.volumeEditor.labelView..currentItem():
+            return
+        
         if event.buttons() == QtCore.Qt.LeftButton:
             if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
                 self.drawManager.setErasing()
@@ -2151,7 +2157,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.tempErase = False
             
     def mouseMoveEvent(self,event):
-        mousePos = self.mousePos = self.mapToScene(event.pos())
+        self.mousePos = mousePos = self.mousePos = self.mapToScene(event.pos())
         x = mousePos.x()
         y = mousePos.y()
 
