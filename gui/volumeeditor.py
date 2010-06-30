@@ -2273,7 +2273,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 #self.initializeGL()
                 self.makeCurrent()
-                if self.tex[axis] is not 0:
+                if self.tex[axis] > -1:
                     self.deleteTexture(self.tex[axis])
                 self.paintGL(axis)
                 self.swapBuffers()
@@ -2283,7 +2283,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 for i in range(3):
                     self.makeCurrent()
-                    if self.tex[i] is not 0:
+                    if self.tex[i] > -1:
                         self.deleteTexture(self.tex[i])
                     self.paintGL(i)
                 self.swapBuffers()        
