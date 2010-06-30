@@ -38,8 +38,7 @@ shutil.copy('../installerScript.nsi','ilastikMain/dist/ilastikMain/installerScri
 shutil.copy('../gui/dlgChannels.ui','ilastikMain/dist/ilastikMain/gui/dlgChannels.ui')
 shutil.copy('../gui/dlgFeature.ui','ilastikMain/dist/ilastikMain/gui/dlgFeature.ui')
 shutil.copy('../gui/dlgProject.ui','ilastikMain/dist/ilastikMain/gui/dlgProject.ui')
-shutil.copy('../gui/placeholder.png','ilastikMain/dist/ilastikMain/gui/placeholder.png')
-shutil.copy('../gui/backGroundBrush.png','ilastikMain/dist/ilastikMain/gui/backGroundBrush.png')
+shutil.copy('../gui/classifierSelectionDlg.ui','ilastikMain/dist/ilastikMain/gui/classifierSelectionDlg.ui')
 shutil.copy('../gui/pyc.ico','ilastikMain/dist/ilastikMain/gui/pyc.ico')
 print "Done"
 
