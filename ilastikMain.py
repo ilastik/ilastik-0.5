@@ -76,7 +76,11 @@ from gui.shortcutmanager import *
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+#bad bad bad
+LAST_DIRECTORY = os.path.expanduser("~")
+
 class MainWindow(QtGui.QMainWindow):
+    global LAST_DIRECTORY
     def __init__(self, parent=None):
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
@@ -324,12 +328,14 @@ class MainWindow(QtGui.QMainWindow):
         self.projectDlg = ProjectDlg(self)
     
     def saveProjectDlg(self):
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ".", "Project Files (*.ilp)")
+        global LAST_DIRECTORY
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", LAST_DIRECTORY, "Project Files (*.ilp)")
         fn = str(fileName)
         if len(fn) > 4:
             if fn[-4:] != '.ilp':
                 fn = fn + '.ilp'
             self.project.saveToDisk(fn)
+            LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
             
 
                 
@@ -343,8 +349,11 @@ class MainWindow(QtGui.QMainWindow):
             print "saved Project to ", self.project.filename
         
     def loadProjectDlg(self):
-        fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ".", "Project Files (*.ilp)")
+        global LAST_DIRECTORY
+        print LAST_DIRECTORY
+        fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", LAST_DIRECTORY, "Project Files (*.ilp)")
         if str(fileName) != "":
+            LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
             self.project = projectMgr.Project.loadFromDisk(str(fileName), self.featureCache)
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
@@ -507,9 +516,11 @@ class MainWindow(QtGui.QMainWindow):
         pass
     
     def export2Hdf5(self):
+        global LAST_DIRECTORY
         if not hasattr(self.project.dataMgr,'classifiers'):
             return
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ".", "HDF5 FIles (*.h5)")
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 FIles (*.h5)")
+        LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         print fileName
         #self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
         #self.project.dataMgr.export2Hdf5(str(fileName))
@@ -751,11 +762,12 @@ class ProjectDlg(QtGui.QDialog):
                         
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
-        
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ".", "Image Files (*.png *.jpg *.bmp *.tif *.gif *.h5)")
+        global LAST_DIRECTORY
+        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.gif *.h5)")
         fileNames.sort()
         if fileNames:
             for file_name in fileNames:
+                LAST_DIRECTORY = QtCore.QFileInfo(file_name).path()
                 try:
                     file_name = str(file_name)
 
