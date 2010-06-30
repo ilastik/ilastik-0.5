@@ -1303,7 +1303,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.selSlices[axis] = num
         self.imageScenes[axis].sliceNumber = num
-        self.imageScenes[axis].display(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
+        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
 #        for i in range(256):
@@ -1987,35 +1987,53 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.queue.append(stuff)
         self.thread.dataPending.set()
 
-
-    def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
+    def displayNewSlice(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         self.thread.queue.clear()
         #self.thread.newerDataPending.set()
-        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
 
-    def clearTempitems(self):
-        #if, in slicing direction, we are within the margin of the image border
-        #we set the border overlay indicator to visible
-        self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
-
-        #if we are in opengl 2d render mode, update the texture
-        if self.openglWidget is not None:
+        #if we are in opengl 2d render mode, quickly update the texture without any overlays
+        #to get a fast update on slice change
+        if self.openglWidget is not None and len(image.shape) == 2:
             self.openglWidget.context().makeCurrent()
             t = self.scene.tex
             self.scene.tex = -1
             if t > -1:
                 self.openglWidget.deleteTexture(t)
-            self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+            ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = False)
+            self.scene.tex = self.openglWidget.bindTexture(ti, GL_TEXTURE_2D, GL_RGB)
+            self.viewport().repaint()
+            
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
 
-        #if all updates have been rendered remove tempitems
-        if self.thread.queue.__len__() == 0:
-            for index, item in enumerate(self.tempImageItems):
-                self.scene.removeItem(item)
-            self.tempImageItems = []
+    def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
+        self.thread.queue.clear()
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
 
-        #update the scene, and the 3d overview
-        self.viewport().repaint() #update(QtCore.QRectF(self.image.rect()))
-        self.volumeEditor.overview.display(self.axis)
+    def clearTempitems(self):
+        #only proceed if htere is no new data already in the rendering thread queue
+        if not self.thread.dataPending.isSet():
+            #if, in slicing direction, we are within the margin of the image border
+            #we set the border overlay indicator to visible
+            self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
+
+            #if we are in opengl 2d render mode, update the texture
+            if self.openglWidget is not None:
+                self.openglWidget.context().makeCurrent()
+                t = self.scene.tex
+                self.scene.tex = -1
+                if t > -1:
+                    self.openglWidget.deleteTexture(t)
+                self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+
+            #if all updates have been rendered remove tempitems
+            if self.thread.queue.__len__() == 0:
+                for index, item in enumerate(self.tempImageItems):
+                    self.scene.removeItem(item)
+                self.tempImageItems = []
+
+            #update the scene, and the 3d overview
+            self.viewport().repaint() #update(QtCore.QRectF(self.image.rect()))
+            self.volumeEditor.overview.display(self.axis)
         
     def redrawPatch(self, patchNr):
         if self.thread.stopped is False:
