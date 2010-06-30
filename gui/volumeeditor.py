@@ -1903,7 +1903,25 @@ class ImageScene( QtGui.QGraphicsView):
         self.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("p"), self, self.sliceDown, self.sliceDown)
         shortcutManager.register(self.shortcutSliceDown, "slice down")
         self.shortcutSliceDown.setContext(QtCore.Qt.WidgetShortcut )
-        
+
+        self.shortcutSliceUp2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Up"), self, self.sliceUp, self.sliceUp)
+        shortcutManager.register(self.shortcutSliceUp2, "slice up")
+        self.shortcutSliceUp2.setContext(QtCore.Qt.WidgetShortcut )
+
+        self.shortcutSliceDown2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Down"), self, self.sliceDown, self.sliceDown)
+        shortcutManager.register(self.shortcutSliceDown2, "slice down")
+        self.shortcutSliceDown2.setContext(QtCore.Qt.WidgetShortcut )
+
+
+        self.shortcutSliceUp10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Up"), self, self.sliceUp10, self.sliceUp10)
+        shortcutManager.register(self.shortcutSliceUp10, "10 slices up")
+        self.shortcutSliceUp10.setContext(QtCore.Qt.WidgetShortcut )
+
+        self.shortcutSliceDown10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Down"), self, self.sliceDown10, self.sliceDown10)
+        shortcutManager.register(self.shortcutSliceDown10, "10 slices down")
+        self.shortcutSliceDown10.setContext(QtCore.Qt.WidgetShortcut )
+
+
         self.shortcutBrushSizeUp = QtGui.QShortcut(QtGui.QKeySequence("n"), self, self.brushSmaller, self.brushSmaller)
         shortcutManager.register(self.shortcutBrushSizeUp, "increase brush size")
         self.shortcutBrushSizeDown = QtGui.QShortcut(QtGui.QKeySequence("m"), self, self.brushBigger, self.brushBigger)
@@ -1918,8 +1936,15 @@ class ImageScene( QtGui.QGraphicsView):
     def sliceUp(self):
         self.volumeEditor.sliceSelectors[self.axis].stepBy(1)
         
+    def sliceUp10(self):
+        self.volumeEditor.sliceSelectors[self.axis].stepBy(10)
+
     def sliceDown(self):
         self.volumeEditor.sliceSelectors[self.axis].stepBy(-1)
+
+    def sliceDown10(self):
+        self.volumeEditor.sliceSelectors[self.axis].stepBy(-10)
+
 
     def brushSmaller(self):
         b = self.drawManager.brushSize
