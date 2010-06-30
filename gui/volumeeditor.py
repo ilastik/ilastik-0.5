@@ -2136,7 +2136,7 @@ class ImageScene( QtGui.QGraphicsView):
 
 
     def mousePressEvent(self, event):
-        if not self.volumeEditor.labelView..currentItem():
+        if not self.volumeEditor.labelView.currentItem():
             return
         
         if event.buttons() == QtCore.Qt.LeftButton:
