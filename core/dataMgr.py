@@ -578,7 +578,7 @@ class DataMgr():
         
     
     def updateTrainingMatrix(self, num, newLabels):
-        if len(self.trainingF) == 0 or self.trainingVersion < self.featureVersion:
+        if self.trainingF is None or len(self.trainingF) == 0 or self.trainingVersion < self.featureVersion:
             self.buildTrainingMatrix()        
         self[num].updateTrainingMatrix(newLabels)
 

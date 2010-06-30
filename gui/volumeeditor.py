@@ -1137,9 +1137,10 @@ class VolumeEditor(QtGui.QWidget):
         self.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
 
     def onLabelSelected(self, index):
-        self.drawManager.setBrushColor(self.labelView.currentItem().color)
-        for i in range(3):
-            self.imageScenes[i].crossHairCursor.setColor(self.labelView.currentItem().color)
+        if self.labelView.currentItem() is not None:
+            self.drawManager.setBrushColor(self.labelView.currentItem().color)
+            for i in range(3):
+                self.imageScenes[i].crossHairCursor.setColor(self.labelView.currentItem().color)
 
     def focusNextPrevChild(self, forward = True):
         if forward is True:
