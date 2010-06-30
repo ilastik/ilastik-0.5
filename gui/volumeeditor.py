@@ -30,6 +30,7 @@
 """
 Dataset Editor Dialog based on PyQt4
 """
+import qimage2ndarray.qimageview
 import math
 
 try:
@@ -1557,7 +1558,6 @@ class ImageSceneRenderThread(QtCore.QThread):
 
         while not self.stopped:
             self.dataPending.wait()
-            self.dataPending.clear()
             self.newerDataPending.clear()
             while len(self.queue) > 0:
                 stuff = self.queue.pop()
@@ -1624,8 +1624,8 @@ class ImageSceneRenderThread(QtCore.QThread):
 
                         #This signal is not needed anymore for now
                         #self.emit(QtCore.SIGNAL("finishedPatch(int)"),patchNr)
-
-                self.emit(QtCore.SIGNAL('finishedQueue()'))
+            self.dataPending.clear()
+            self.emit(QtCore.SIGNAL('finishedQueue()'))
 
 class CrossHairCursor(QtGui.QGraphicsItem) :
     modeYPosition  = 0

@@ -533,8 +533,11 @@ class MainWindow(QtGui.QMainWindow):
         print "Done"
 
     def closeEvent(self, event):
-        reply = QtGui.QMessageBox.question(self, 'Message', "Are you sure to quit?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+        reply = QtGui.QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No, QtGui.QMessageBox.Cancel)
         if reply == QtGui.QMessageBox.Yes:
+            self.saveProject()
+            event.accept()
+        elif reply == QtGui.QMessageBox.No:
             event.accept()
         else:
             event.ignore()
