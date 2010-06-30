@@ -1742,8 +1742,16 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 d = painter.device()
                 dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
 
-                #see QTBUG-6800 , this unfortunately does not work with Qt 4.6.3, please us 4.7 beta
-                dc.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
+                rect = QtCore.QRectF(self.image.rect())
+                
+                #switch corrdinates if qt version is small
+                painter.beginNativePainting()
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+                rect = QtCore.QRectF(rect.y(), rect.x(), rect.height(), rect.width())
+                dc.drawTexture(rect,self.tex)
+                painter.endNativePainting()
+
 #            rect = rect.intersected(QtCore.QRectF(self.image.rect()))
 #
 #            patches =  self.imageScene.patchAccessor.getPatchesForRect(rect.x(),rect.y(),rect.x()+rect.width(),rect.y()+rect.height())
