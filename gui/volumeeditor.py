@@ -1748,7 +1748,6 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 painter.beginNativePainting()
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-                rect = QtCore.QRectF(rect.y(), rect.x(), rect.height(), rect.width())
                 dc.drawTexture(rect,self.tex)
                 painter.endNativePainting()
 
