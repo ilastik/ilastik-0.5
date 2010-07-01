@@ -265,7 +265,7 @@ class PatchAccessor():
 
         #last blocks can be very small -> merge them with the secondlast one
         self.cXend = size_x % self.blockSize
-        if self.cXend < self.blockSize / 3 and self.cX > 1:
+        if self.cXend < self.blockSize / 3 and self.cXend != 0 and self.cX > 1:
             self.cX -= 1
         else:
             self.cXend = 0
@@ -274,7 +274,7 @@ class PatchAccessor():
 
         #last blocks can be very small -> merge them with the secondlast one
         self.cYend = size_y % self.blockSize
-        if self.cYend < self.blockSize / 3 and self.cY > 1:
+        if self.cYend < self.blockSize / 3 and self.cYend != 0 and self.cY > 1:
             self.cY -= 1
         else:
             self.cYend = 0
@@ -304,21 +304,19 @@ class PatchAccessor():
 
     def getPatchesForRect(self,startx,starty,endx,endy):
         sx = int(numpy.floor(1.0 * startx / self.blockSize))
-        ex = int(numpy.ceil(1.0 * endx / self.blockSize))
+        ex = int(numpy.floor(1.0 * endx / self.blockSize))
         sy = int(numpy.floor(1.0 * starty / self.blockSize))
-        ey = int(numpy.ceil(1.0 * endy / self.blockSize))
+        ey = int(numpy.floor(1.0 * endy / self.blockSize))
 
         if ey > self.cY:
             ey = self.cY
 
-        if ex > self.cX:
+        if ex > self.cX :
             ex = self.cX
 
         nums = []
-        for y in range(sy,ey):
-            nums += range(y*self.cX+sx,y*self.cX+ex)
-
-        return nums
+        for y in range(sy,ey+1):
+            nums += range(y*self.cX+sx,y*self.cX+ex+1)
     
 class OverlaySlice():
     def __init__(self, data, color, alpha, colorTable):
@@ -327,23 +325,6 @@ class OverlaySlice():
         self.alpha = alpha
         self.alphaChannel = None
         self.data = data
-
-#        if data.shape[-1] != 3 and colorTable == None:
-#            self.alphaChannel = data
-#
-#            shape = data.shape
-#            shape +=(3,)
-#
-#            self.data = numpy.zeros(shape, 'uint8')
-#            self.data[:,:,0] = data[:,:]*(self.color.red()/255.0)
-#            self.data[:,:,1] = data[:,:]*(self.color.green()/255.0)
-#            self.data[:,:,2] = data[:,:]*(self.color.blue()/255.0)
-#        elif colorTable == None:
-#            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')*255
-#            self.data = data
-#        else:
-#            self.alphaChannel = numpy.ones(data.shape[0:2],'uint8')
-#            self.data = data
 
 class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
     def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None, visible = True):
@@ -1984,8 +1965,9 @@ class ImageScene( QtGui.QGraphicsView):
     def updatePatches(self, patchNumbers ,image, overlays = [], labels = None, labelsAlpha = 1.0):
         stuff = [patchNumbers,image, overlays, labels, labelsAlpha]
         #print patchNumbers
-        self.thread.queue.append(stuff)
-        self.thread.dataPending.set()
+	if patchNumbers is not None:
+		self.thread.queue.append(stuff)
+		self.thread.dataPending.set()
 
     def displayNewSlice(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
         self.thread.queue.clear()
