@@ -133,19 +133,21 @@ class ClassifierPredictThread(QtCore.QThread):
         self.predLock = threading.Lock()
         self.numberOfJobs = 0
         for i, item in enumerate(self.dataMgr):
-            self.numberOfJobs += item.featureBlockAccessor.blockCount
+            self.numberOfJobs += item.featureBlockAccessor.blockCount * len(self.dataMgr.classifiers)
     
     def classifierPredict(self, bnr, fm):
         try:
             b = fm.getBlockBounds(bnr, 0)
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4]*tfm.shape[5])
+	    tpred = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             for num in range(len(self.dataMgr.classifiers)):
                 cf = self.dataMgr.classifiers[num]
                 pred = cf.predict(tfm2)
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
-                self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] + pred[:,:,:,:]
-            self.count += 1
+                tpred += pred[:,:,:,:]
+		self.count += 1
+	    self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred
         except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e

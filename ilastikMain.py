@@ -1285,7 +1285,7 @@ class ClassificationPredict(object):
         numberOfJobs = self.classificationPredict.numberOfJobs
         self.initClassificationProgress(numberOfJobs)
         self.classificationPredict.start()
-        self.classificationTimer.start(200) 
+        self.classificationTimer.start(200)
 
     def initClassificationProgress(self, numberOfJobs):
         statusBar = self.parent.statusBar()

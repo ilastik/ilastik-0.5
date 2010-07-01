@@ -104,9 +104,16 @@ class DataItemBase():
 
 
 class BlockAccessor():
-    def __init__(self, data, blockSize = 128):
+    def __init__(self, data, blockSize = None):
         self.data = data
-        self.blockSize = blockSize
+	if blockSize is None:
+		max = int(numpy.max(self.data.shape[1:4]))
+		if max > 128:
+			self.blockSize = blockSize = 128
+		else:
+			self.blockSize = blockSize = max / 2
+	else:
+		self.blockSize = blockSize
         
         self.cX = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
 
