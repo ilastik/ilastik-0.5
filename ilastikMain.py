@@ -155,11 +155,12 @@ class MainWindow(QtGui.QMainWindow):
             if gl_version is None:
                 gl_version = '0'
             del w
-            
+
+            help_text = "Normally the default option should work for you\nhowever, in some cases it might be beneficial to try to use another rendering method:"
             if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['OpenGL + OpenGL Overview', 'Software without Overview', 'Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview', 'Software without Overview'], 0, False)
             elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', "choose render method", ['Software without Overview', 'Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['Software + OpenGL Overview', 'Software without Overview'], 0, False)
             else:
                 dl = []
                 dl.append("")
@@ -274,7 +275,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Options'], QtCore.SIGNAL('clicked()'), self.optionsDlg)
         self.connect(self.ribbon.tabDict['Features'].itemDict['Select and Compute'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Interactive'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
@@ -312,8 +313,8 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
-        self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
-        self.ribbon.tabDict['Classification'].itemDict['Interactive'].setToolTip('Train the RandomForest classifier while drawing labels and browsing through the file. \nThe currently visible part of the image gets predicted on the fly.')
+        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setToolTip('Train the RandomForest classifier while drawing labels and browsing through the file. \nThe currently visible part of the image gets predicted on the fly.')
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setToolTip('Batchprocess a list of files with the currently trained classifier.\n The processed files and their prediction are stored with the file extension "_processed.h5" ')
 
@@ -428,7 +429,7 @@ class MainWindow(QtGui.QMainWindow):
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
+        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         
         
@@ -502,10 +503,12 @@ class MainWindow(QtGui.QMainWindow):
     
     def on_classificationInteractive(self, state):
         if state:
+	    self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Stop Live Prediction')
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
             del self.classificationInteractive
+	    self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Start Live Prediction')
 
 
 
@@ -973,7 +976,7 @@ class FeatureDlg(QtGui.QDialog):
     def on_confirmButtons_rejected(self):
         self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
         self.close()
         
     def computeMemoryRequirement(self, featureSelectionList):
@@ -1039,7 +1042,7 @@ class FeatureComputation(object):
             
         self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)        
+        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
                     
     def featureShow(self, item):
         pass
@@ -1272,7 +1275,7 @@ class ClassificationPredict(object):
         self.start()
     
     def start(self):       
-        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(False)        
+        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
           
         self.classificationTimer = QtCore.QTimer()
@@ -1328,7 +1331,7 @@ class ClassificationPredict(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
-        self.parent.ribbon.tabDict['Classification'].itemDict['Interactive'].setEnabled(True)  
+        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
 
 if __name__ == "__main__":

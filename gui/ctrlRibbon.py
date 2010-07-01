@@ -89,6 +89,10 @@ class RibbonSlider(QtGui.QSlider,RibbonBaseItem):
         self.setMaximum(6)
         self.setSliderPosition(1)
         
+class RibbonStretch(RibbonBaseItem):
+    def __init__(self, ribbon_entry):
+        QtGui.QSlider.__init__(self)
+        RibbonBaseItem.__init__(self, ribbon_entry)
 
 class RibbonDropButtonItem(QtGui.QToolButton,RibbonBaseItem):
     def __init__(self,  ribbon_entry):
@@ -120,8 +124,11 @@ class RibbonTabContainer(QtGui.QWidget):
         self.signalList = []
         
     def addItem(self, item):
-        self.itemDict[item.name] = item
-        self.layout().addWidget(item)
+	if item.__class__ is not RibbonStretch:
+	    self.itemDict[item.name] = item
+            self.layout().addWidget(item)
+	else:
+	    self.layout().addStretch()
 
 class RibbonEntry():
     def __init__(self, name, icon_file=None, tool_tip=None, type=RibbonButtonItem, callback=None):
@@ -143,10 +150,14 @@ class RibbonEntryGroup():
         
     def makeTab(self):
         self.tabs = RibbonTabContainer(self.position)
+	stretched = False
         for rib in self.entries:
             item = rib.type(rib)
+	    if rib.type is RibbonStretch:
+		    stretched = True
             self.tabs.addItem(item)
-        self.tabs.layout().addStretch()
+	if not stretched:
+		self.tabs.layout().addStretch()
         return self.tabs   
 
 def createRibbons():
@@ -163,14 +174,16 @@ def createRibbons():
     RibbonGroupObjects["Projects"].append(RibbonEntry("Open", ilastikIcons.Open ,"Open"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Save", ilastikIcons.Save,"Save"))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", ilastikIcons.Edit ,"Edit"))
+    RibbonGroupObjects["Projects"].append(RibbonEntry("", None, "", type=RibbonStretch))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Options", ilastikIcons.Edit ,"Options"))
     
-    RibbonGroupObjects["Features"].append(RibbonEntry("Select and Compute", ilastikIcons.Select ,"Select & Compute Features"))
+    RibbonGroupObjects["Features"].append(RibbonEntry("Select and Compute", ilastikIcons.Select ,"Select & compute features"))
     
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Start Live Prediction", ilastikIcons.Play ,"Interactive prediction of visible image parts while drawing etc.",type=RibbonToggleButtonItem))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and predict the whole image"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("", None, "", type=RibbonStretch))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Change Classifier", ilastikIcons.System ,"Select a classifier and change its settings"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and Predict Image(s)"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Interactive", ilastikIcons.Play ,"Interactive Classifier",type=RibbonToggleButtonItem))
-    RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batch Process Files in a Directory"))
+    RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batchpredict files in a directory with the currently trained classifier"))
 
     RibbonGroupObjects["Help"].append(RibbonEntry("Shortcuts", ilastikIcons.System ,"Shortcuts"))
 
