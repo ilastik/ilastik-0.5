@@ -2113,6 +2113,8 @@ class ImageScene( QtGui.QGraphicsView):
 
 
     def tabletEvent(self, event):
+        self.setFocus(True)
+        
         if not self.volumeEditor.labelView.currentItem():
             return
         
