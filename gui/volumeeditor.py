@@ -1992,7 +1992,7 @@ class ImageScene( QtGui.QGraphicsView):
 		self.max = numpy.max(image)
 	else:
 		self.min = 0
-		self.max = 0
+		self.max = 255
             
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
 
