@@ -1205,7 +1205,7 @@ class VolumeEditor(QtGui.QWidget):
             if self.labels.data is not None:
                 tempLabels = self.labels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
     
-            self.imageScenes[i].display(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
+            self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
 
 
     def addLabel(self):
