@@ -1286,7 +1286,6 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes[axis].sliceNumber = num
         self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
-        self.emit(QtCore.SIGNAL('newLabelsPending()'))
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
 #            image.setColor(i, col.rgba())
@@ -1543,7 +1542,7 @@ class ImageSceneRenderThread(QtCore.QThread):
             while len(self.queue) > 0:
                 stuff = self.queue.pop()
                 if stuff is not None:
-                    nums, origimage, overlays , origlabels , labelsAlpha  = stuff
+                    nums, origimage, overlays , origlabels , labelsAlpha, min, max  = stuff
                     for patchNr in nums:
                         if self.newerDataPending.isSet():
                             self.newerDataPending.clear()
@@ -1555,7 +1554,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                         if image.dtype == 'uint16':
                             image = (image / 255).astype(numpy.uint8)
 
-                        temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=self.volumeEditor.normalizeData)
+                        temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
 
                         p = QtGui.QPainter(self.imageScene.scene.image)
                         p.translate(bounds[0],bounds[2])
@@ -1792,6 +1791,9 @@ class ImageScene( QtGui.QGraphicsView):
         self.border = None
         self.allBorder = None
 
+	self.min = 0
+	self.max = 255
+
         self.openglWidget = None
         ##enable OpenGL acceleratino
         if self.volumeEditor.opengl is True:
@@ -1963,7 +1965,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.wait()
 
     def updatePatches(self, patchNumbers ,image, overlays = [], labels = None, labelsAlpha = 1.0):
-        stuff = [patchNumbers,image, overlays, labels, labelsAlpha]
+        stuff = [patchNumbers,image, overlays, labels, labelsAlpha, self.min, self.max]
         #print patchNumbers
 	if patchNumbers is not None:
 		self.thread.queue.append(stuff)
@@ -1973,7 +1975,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.queue.clear()
         #self.thread.newerDataPending.set()
 
-        #if we are in opengl 2d render mode, quickly update the texture without any overlays
+	#if we are in opengl 2d render mode, quickly update the texture without any overlays
         #to get a fast update on slice change
         if self.openglWidget is not None and len(image.shape) == 2:
             self.openglWidget.context().makeCurrent()
@@ -1981,9 +1983,16 @@ class ImageScene( QtGui.QGraphicsView):
             self.scene.tex = -1
             if t > -1:
                 self.openglWidget.deleteTexture(t)
-            ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = False)
+            ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
             self.scene.tex = self.openglWidget.bindTexture(ti, GL_TEXTURE_2D, GL_RGB)
             self.viewport().repaint()
+
+	if self.volumeEditor.normalizeData:
+		self.min = numpy.min(image)
+		self.max = numpy.max(image)
+	else:
+		self.min = 0
+		self.max = 0
             
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
 
