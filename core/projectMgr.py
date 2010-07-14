@@ -42,6 +42,7 @@ from gui.volumeeditor import Volume as Volume
 from core import activeLearning
 from core import segmentationMgr
 from core import classifiers
+from core import segmentors
 
 class Project(object):
     """
@@ -68,6 +69,7 @@ class Project(object):
         self.trainingFeatureNames = None
         self.featureMgr = None
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
+        self.segmentor = segmentors.segmentorPW.SegmentorPW
     
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 

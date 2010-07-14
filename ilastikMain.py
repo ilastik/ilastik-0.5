@@ -60,6 +60,7 @@ from collections import deque
 from gui.iconMgr import ilastikIcons
 from core.utilities import irange, debug
 from gui.classifierSelectionDialog import ClassifierSelectionDlg
+from gui.segmentorSelectionDlg import SegmentorSelectionDlg
 from core import jobMachine
 import copy
 import h5py
@@ -277,6 +278,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
+        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
@@ -494,6 +496,10 @@ class MainWindow(QtGui.QMainWindow):
         self.project.classifier = dialog.exec_()
         print self.project.classifier
 
+    def on_changeSegmentor(self):
+        dialog = SegmentorSelectionDlg(self)
+        self.project.segmentor = dialog.exec_()
+        print self.project.segmentor
 
     def on_classificationTrain(self):
         self.classificationTrain = ClassificationTrain(self)

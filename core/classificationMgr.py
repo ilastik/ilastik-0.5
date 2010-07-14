@@ -48,7 +48,7 @@ import sys, traceback
 
 import numpy
 
-import core.classifiers
+from core import classifiers
 
 """ Import all classification plugins"""
 pathext = os.path.dirname(__file__)
