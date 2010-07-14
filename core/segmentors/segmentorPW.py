@@ -56,25 +56,33 @@ if ok:
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        borderPotential = Enum("Brightness", "Darkness", "Gradient")
-        normalizePotential = CBool
+        borderIndicator = Enum("Brightness", "Darkness", "Gradient")
+        sigma = CFloat(1.0)
+        normalizePotential = CBool(True)
+
 
         def segment3D(self, volume , labels):
             #TODO: this , until now, only supports gray scale !
-            if self.borderPotential == "Brightness":
-                weights = volume[:,:,:,0]
-            elif self.borderPotential == "Darkness":
-                weights = 255 - volume[:,:,:,0]
-            elif self.borderPotential == "Gradient":
-                weights = vigra.filters.gaussianGradient(volume[:,:,:,0].astype('float32'), 1.3).swapaxes(0,2).view(numpy.ndarray).astype('uint8')
+            if self.borderIndicator == "Brightness":
+                weights = vigra.filters.gaussianSmoothing(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
+            elif self.borderIndicator == "Darkness":
+                weights = vigra.filters.gaussianSmoothing(255 - volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
+            elif self.borderIndicator == "Gradient":
+                weights = vigra.filters.gaussianGradient(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), 0.5)
 
+            weights = weights.swapaxes(0,2).view(numpy.ndarray)
+            
             if self.normalizePotential == True:
                 min = numpy.min(weights)
                 max = numpy.max(weights)
                 weights = (weights - min)*(255.0 / (max - min))
-                weights = weights.astype('uint8')
 
-            pws = vigra.pws.q2powerwatershed3D(weights.swapaxes(0,2).view(vigra.ScalarVolume), labels.swapaxes(0,2).view(vigra.ScalarVolume))
+            real_weights = numpy.zeros(weights.shape, 'uint8')
+
+            real_weights[:] = weights[:]
+            real_weights = real_weights.swapaxes(0,2).view(vigra.ScalarVolume)
+
+            pws = vigra.pws.q2powerwatershed3D(real_weights, labels.swapaxes(0,2).view(vigra.ScalarVolume))
             print pws.shape
             return pws.swapaxes(0,2).view(numpy.ndarray)
 
