@@ -21,14 +21,14 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         for i, c in enumerate(self.segmentors):
             #qli = QtGui.QListWidgetItem(c.name)
             self.listWidget.addItem(c.name)
-            if c == self.currentSegmentor:
+            if c == self.currentSegmentor.__class__:
                 j = i
 
         self.connect(self.listWidget, QtCore.SIGNAL('currentRowChanged(int)'), self.currentRowChanged)
         self.listWidget.setCurrentRow(j)
 
     def currentRowChanged(self, current):
-        c = self.currentSegmentor = self.segmentors[current]
+        c = self.currentSegmentor = self.segmentors[current]()
         self.name.setText(c.name)
         self.homepage.setText(c.homepage)
         self.description.setText(c.description)

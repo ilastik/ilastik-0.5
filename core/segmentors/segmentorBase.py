@@ -47,13 +47,20 @@ class SegmentorBase(object):
 
     def segment(self, volume , labels):
         """
-        This method must return a unit8 volume that contains label numbers
+        Arguments:
+            volume : 4D scalar containing 3D Data + Color information in the last dimension
+            labels : 3D uint8 scalar containing the seeds
+        return:
+            3D unit8 volume that contains label numbers
         """
-        pass
+        if volume.shape[0] > 1:
+            return self.segment3D(volume, labels)
+        else:
+            res = self.segment2D(volume[0,:,:,:], labels)
 
-    def setings(self):
-        """
-        This method can be implemented to have a settings dialog
-        """
-        pass
+#    def setings(self):
+#        """
+#        This method can be implemented to have a settings dialog
+#        """
+#        pass
 

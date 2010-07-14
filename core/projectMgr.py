@@ -69,7 +69,7 @@ class Project(object):
         self.trainingFeatureNames = None
         self.featureMgr = None
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
-        self.segmentor = segmentors.segmentorPW.SegmentorPW
+        self.segmentor = segmentors.segmentorPW.SegmentorPW()
     
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 

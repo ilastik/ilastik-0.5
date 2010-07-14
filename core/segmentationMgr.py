@@ -30,6 +30,8 @@
 import numpy, vigra, os, sys
 
 from  core import segmentors
+from PyQt4 import QtCore
+from core import jobMachine
 
 """ Import all segmentation plugins"""
 pathext = os.path.dirname(__file__)
@@ -74,4 +76,37 @@ if __name__ == "__main__":
     s = LocallyDominantSegmentation()
     r = s.segment(a)
     print r 
-        
+
+
+
+class SegmentationThread(QtCore.QThread):
+    def __init__(self, dataMgr, image, segmentor = segmentors.segmentorPW.SegmentorPW, segmentorOptions = None):
+        QtCore.QThread.__init__(self, None)
+        self.dataItem = image
+        self.dataMgr = dataMgr
+        self.count = 0
+        self.numberOfJobs = self.dataItem.dataVol.data.shape[0]
+        self.stopped = False
+        self.segmentor = segmentor
+        self.segmentorOptions = segmentorOptions
+        self.jobMachine = jobMachine.JobMachine()
+
+    def segment(self, i, data, labels):
+        self.result[i,:,:,:] = self.segmentor.segment(data, labels)
+        self.count += 1
+
+    def run(self):
+        self.dataMgr.featureLock.acquire()
+        try:
+            self.result = numpy.zeros(self.dataItem.dataVol.data.shape[0:-1], 'uint8')
+            jobs = []
+            for i in range(self.dataItem.dataVol.data.shape[0]):
+                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem.dataVol.data[i,:,:,:,:], self.dataItem.dataVol.labels.data[i,:,:,:]])
+                jobs.append(job)
+            self.jobMachine.process(jobs)
+            self.dataMgr.featureLock.release()
+        except Exception, e:
+            print "######### Exception in ClassifierTrainThread ##########"
+            print e
+            traceback.print_exc(file=sys.stdout)
+            self.dataMgr.featureLock.release()

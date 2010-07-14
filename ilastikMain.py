@@ -42,11 +42,15 @@ try:
 except:
     pass
 
+import sys
+import os
+
+#force QT4 toolkit for the enthought traits UI
+#os.environ['ETS_TOOLKIT'] = 'qt4'
+
 import vigra
 from vigra import arraytypes as at
 
-import sys
-import os
 
 import threading
 import traceback
@@ -79,6 +83,9 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 #bad bad bad
 LAST_DIRECTORY = os.path.expanduser("~")
+
+
+
 
 class MainWindow(QtGui.QMainWindow):
     global LAST_DIRECTORY
@@ -278,6 +285,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
+        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationSegment)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
@@ -501,6 +509,9 @@ class MainWindow(QtGui.QMainWindow):
         self.project.segmentor = dialog.exec_()
         print self.project.segmentor
 
+    def on_segmentationSegment(self):
+        self.segmentationSegment = Segmentation(self)
+
     def on_classificationTrain(self):
         self.classificationTrain = ClassificationTrain(self)
         
@@ -516,10 +527,6 @@ class MainWindow(QtGui.QMainWindow):
             del self.classificationInteractive
 	    self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Start Live Prediction')
 
-
-
-    def on_segmentation(self):
-        pass
 
     def on_segmentation_border(self):
         pass
@@ -1340,6 +1347,56 @@ class ClassificationPredict(object):
         self.parent.statusBar().hide()
         self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
+
+
+
+
+class Segmentation(object):
+    def __init__(self, parent):
+        self.parent = parent
+        self.ilastik = parent
+        self.start()
+
+    def start(self):
+        self.parent.ribbon.tabDict['Segmentation'].itemDict['Segment'].setEnabled(False)
+        
+        self.timer = QtCore.QTimer()
+        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
+
+        self.segmentation = segmentationMgr.SegmentationThread(self.parent.project.dataMgr, self.parent.project.dataMgr[self.ilastik.activeImage], self.ilastik.project.segmentor)
+        numberOfJobs = self.segmentation.numberOfJobs
+        self.initClassificationProgress(numberOfJobs)
+        self.segmentation.start()
+        self.timer.start(200)
+
+    def initClassificationProgress(self, numberOfJobs):
+        statusBar = self.parent.statusBar()
+        self.progressBar = QtGui.QProgressBar()
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(numberOfJobs)
+        self.progressBar.setFormat(' Segmentation... %p%')
+        statusBar.addWidget(self.progressBar)
+        statusBar.show()
+
+    def updateProgress(self):
+        val = self.segmentation.count
+        self.progressBar.setValue(val)
+        if not self.segmentation.isRunning():
+            self.timer.stop()
+            self.segmentation.wait()
+            self.finalize()
+            self.terminateProgressBar()
+
+    def finalize(self):
+        activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+        activeItem.dataVol.segmentation[:,:,:,:] = numpy.where(self.segmentation.result[:,:,:,:] > 127, 2, 1)
+        self.parent.labelWidget.repaint()
+
+    def terminateProgressBar(self):
+        self.parent.statusBar().removeWidget(self.progressBar)
+        self.parent.statusBar().hide()
+        self.parent.ribbon.tabDict['Segmentation'].itemDict['Segment'].setEnabled(True)
+
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)

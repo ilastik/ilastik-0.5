@@ -33,24 +33,55 @@ Powerwatershed segmentation plugin
 
 import vigra, numpy
 from segmentorBase import *
+import traceback
 
 ok = False
 
 try:
     import vigra.pws
+    from enthought.traits.api import *
+    from enthought.traits.ui.api import *
     ok = True
 except Exception, e:
-    print "vigra.pws module not found, please recompile vigra with PowerWaterShed support to enable the pws segmentation plugin"
+    print e
+    traceback.print_exc(file=sys.stdout)
+    print "propably the vigra.pws module was not found, please recompile vigra with PowerWaterShed support to enable the pws segmentation plugin"
 
 
 if ok:
 
-    class SegmentorPW(SegmentorBase):
+    class SegmentorPW(SegmentorBase, HasTraits):
         name = "Powerwatershed Segmentation"
         description = "Segmentation plugin using the cool Powerwatershed formalism of Cuprie and Grady"
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        def segment(self, volume , labels):
-            #TODO: implement this function
-            pass
+        borderPotential = Enum("Brightness", "Darkness", "Gradient")
+        normalizePotential = CBool
+
+        def segment3D(self, volume , labels):
+            #TODO: this , until now, only supports gray scale !
+            if self.borderPotential == "Brightness":
+                weights = volume[:,:,:,0]
+            elif self.borderPotential == "Darkness":
+                weights = 255 - volume[:,:,:,0]
+            elif self.borderPotential == "Gradient":
+                weights = vigra.filters.gaussianGradient(volume[:,:,:,0].astype('float32'), 1.3).swapaxes(0,2).view(numpy.ndarray).astype('uint8')
+
+            if self.normalizePotential == True:
+                min = numpy.min(weights)
+                max = numpy.max(weights)
+                weights = (weights - min)*(255.0 / (max - min))
+                weights = weights.astype('uint8')
+
+            pws = vigra.pws.q2powerwatershed3D(weights.swapaxes(0,2).view(vigra.ScalarVolume), labels.swapaxes(0,2).view(vigra.ScalarVolume))
+            print pws.shape
+            return pws.swapaxes(0,2).view(numpy.ndarray)
+
+        def segment2D(self, slice , labels):
+            #TODO: implement
+            return labels
+
+
+        def settings(self):
+            self.configure_traits()
