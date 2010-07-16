@@ -20,7 +20,7 @@ class ClassifierRandomForestNew(ClassifierBase):
 
     def train(self, features, labels):
         if features.shape[0] != labels.shape[0]:
-            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
+            print " 3, 2 ,1 ... BOOOM!! #features != # labels"
 
         if not labels.dtype == numpy.uint32:
             labels = labels.astype(numpy.uint32)
