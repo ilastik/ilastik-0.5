@@ -35,7 +35,7 @@ class ClassifierRandomForestNew(ClassifierBase):
         # Have to set this becauce the new rf dont set mtry properly by default
         mtry = max(1,int(numpy.sqrt(features.shape[1]))+1) 
         
-        self.RF = vigra.learning.RandomForest(treeCount=self.treeCount,mtry=mtry)
+        self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
         
         oob = self.RF.learnRF(features, labels)
         print "Out-of-bag error %f" % oob

@@ -277,6 +277,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Save Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
@@ -284,6 +285,7 @@ class MainWindow(QtGui.QMainWindow):
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
         
+        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
         
         #TODO: reenable online classification sometime 
 #        # Make menu for online Classification
@@ -431,7 +433,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
-        
+        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
         
     def newEditChannelsDlg(self):
         self.editChannelsDlg = editChannelsDlg(self)
@@ -518,22 +520,52 @@ class MainWindow(QtGui.QMainWindow):
     def on_segmentation_border(self):
         pass
     
-    def export2Hdf5(self):
-        global LAST_DIRECTORY
+    def on_saveClassifier(self, fileName=None):
+        
         if not hasattr(self.project.dataMgr,'classifiers'):
+            reply = QtGui.QMessageBox.warning(self, 'Error', "No classifiers trained so far. Use Train and Predict to learn classifiers.", QtGui.QMessageBox.Ok)
+        classifiers = self.project.dataMgr.classifiers
+        
+        if len(classifiers) == 0:
+            print "no classifiers"
+            reply = QtGui.QMessageBox.warning(self, 'Error', "No classifiers trained so far. Use Train and Predict to learn classifiers.", QtGui.QMessageBox.Ok)
+        
+        if not hasattr(classifiers[0],'serialize'):
+            reply = QtGui.QMessageBox.warning(self, 'Error', "The selected classifier is not serializable and cannot be saved to file.", QtGui.QMessageBox.Ok)
             return
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 FIles (*.h5)")
-        LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
-        print fileName
-        #self.labelWidget.updateLabelsOfDataItems(self.project.dataMgr)
-        #self.project.dataMgr.export2Hdf5(str(fileName))
         
-        rfs = self.project.dataMgr.classifiers
         
-        for i,rf in enumerate(rfs):
-            tmp = rf.classifier.writeHDF5(str(fileName), "rf_%03d" % i, True)
+        
+        
+        if fileName is not None:
+            global LAST_DIRECTORY
+            fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
+            LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+        
+        # Make sure group 'classifiers' exist
+        h5file = h5py.File(str(fileName),'w')
+        h5file.create_group('classifiers')
+        h5file.close()
+        
+        for i, c in enumerate(classifiers):
+            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
             print "Write Random Forest # %03d -> %d" % (i,tmp)
-        print "Done"
+        
+        # Export user feature selection
+        h5file = h5py.File(str(fileName),'a')
+        h5featGrp = h5file.create_group('features')
+        
+        featureItems = self.project.featureMgr.featureItems
+        for k, feat in enumerate(featureItems):
+            itemGroup = h5featGrp.create_group('feature_%03d' % k)
+            feat.serialize(itemGroup)
+        h5file.close()
+        
+        reply = QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have be saved to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+        
+        
+        
+        
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No, QtGui.QMessageBox.Cancel)
@@ -1333,6 +1365,7 @@ class ClassificationPredict(object):
         self.parent.statusBar().hide()
         self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(True)
 
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)

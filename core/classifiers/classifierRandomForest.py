@@ -48,35 +48,14 @@ class ClassifierRandomForest(ClassifierBase):
         else:
             return None
         
-    def serialize(self, fileName, pathInFile):
-        # cannot serilaze into grp because can not pass h5py handle to vigra yet
-        # works only with new RF version
-        self.RF.writeHDF5(fileName, pathInFile, True)
-
-    @classmethod
-    def deserialize(cls, fileName, pathInFile):
-        classifier = cls()
-        classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
-        classifier.treeCount = classifier.RF.treeCount
-        return classifier
-
-
-#NEW RandomForest from Raoul: (reenable when new RF performance bug is fixed) :
-
-#    def train(self, labels, features):
+#    def serialize(self, fileName, pathInFile):
+#        # cannot serilaze into grp because can not pass h5py handle to vigra yet
+#        # works only with new RF version
+#        self.RF.writeHDF5(fileName, pathInFile, True)
 #
-#        if features.shape[0] != labels.shape[0]:
-#            interactiveMessagePrint( " 3, 2 ,1 ... BOOOM!! #features != # labels" )
-#
-#        if not labels.dtype == numpy.uint32:
-#            labels = labels.astype(numpy.uint32)
-#        if not features.dtype == numpy.float32:
-#            features = features.astype(numpy.float32)
-#        # print "Create RF with ",self.treeCount," trees"
-#        #self.classifier = vigra.classification.RandomForest(features, labels, self.treeCount)
-#        if labels.ndim == 1:
-#            labels.shape = labels.shape + (1,)
-#        labels = labels - 1
-#
-#        self.classifier.learnRF(features, labels)
-#        #print "tree Count", self.treeCount
+#    @classmethod
+#    def deserialize(cls, fileName, pathInFile):
+#        classifier = cls()
+#        classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
+#        classifier.treeCount = classifier.RF.treeCount
+#        return classifier
