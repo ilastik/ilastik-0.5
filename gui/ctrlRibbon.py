@@ -183,6 +183,7 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Start Live Prediction", ilastikIcons.Play ,"Interactive prediction of visible image parts while drawing etc.",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and predict the whole image"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("", None, "", type=RibbonStretch))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Save Classifier", ilastikIcons.System ,"Save current classifier and its feature settings"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Change Classifier", ilastikIcons.System ,"Select a classifier and change its settings"))
 
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.System ,"Segment the image into foreground/background"))
