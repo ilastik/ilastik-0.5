@@ -44,9 +44,10 @@ except:
 
 import sys
 import os
+from PyQt4 import QtCore, QtGui, uic
 
 #force QT4 toolkit for the enthought traits UI
-#os.environ['ETS_TOOLKIT'] = 'qt4'
+os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import vigra
 from vigra import arraytypes as at
@@ -56,7 +57,7 @@ import threading
 import traceback
 import numpy
 import time
-from PyQt4 import QtCore, QtGui, uic
+
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
@@ -1399,7 +1400,7 @@ class Segmentation(object):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtGui.QApplication.instance()
     mainwindow = MainWindow(sys.argv)
       
     mainwindow.show() 

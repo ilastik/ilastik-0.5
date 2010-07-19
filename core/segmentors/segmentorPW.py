@@ -64,11 +64,11 @@ if ok:
         def segment3D(self, volume , labels):
             #TODO: this , until now, only supports gray scale !
             if self.borderIndicator == "Brightness":
-                weights = vigra.filters.gaussianSmoothing(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-            elif self.borderIndicator == "Darkness":
                 weights = vigra.filters.gaussianSmoothing(255 - volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
+            elif self.borderIndicator == "Darkness":
+                weights = vigra.filters.gaussianSmoothing(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
             elif self.borderIndicator == "Gradient":
-                weights = vigra.filters.gaussianGradient(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), 0.5)
+                weights = 255 - vigra.filters.gaussianGradientMagnitude(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
 
             weights = weights.swapaxes(0,2).view(numpy.ndarray)
             
