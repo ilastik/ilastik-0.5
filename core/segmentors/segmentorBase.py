@@ -27,9 +27,11 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 import vigra, numpy
+from enthought.traits.api import *
+from enthought.traits.ui.api import *
 
 
-class SegmentorBase(object):
+class SegmentorBase(HasTraits):
     #human readable information
     name = "Base Segmentation Plugin"
     description = "virtual base class"
@@ -58,9 +60,6 @@ class SegmentorBase(object):
         else:
             res = self.segment2D(volume[0,:,:,:], labels)
 
-#    def setings(self):
-#        """
-#        This method can be implemented to have a settings dialog
-#        """
-#        pass
+    def settings(self):
+        self.configure_traits( kind = 'livemodal')
 

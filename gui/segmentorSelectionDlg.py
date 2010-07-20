@@ -33,12 +33,7 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         self.homepage.setText(c.homepage)
         self.description.setText(c.description)
         self.author.setText(c.author)
-        #check wether the plugin writer provided a settings method
-        func = getattr(c, "settings", None)
-        if callable(func):
-            self.settingsButton.setVisible(True)
-        else:
-            self.settingsButton.setVisible(False)
+        self.settingsButton.setVisible(True)
 
 
     def segmentorSettings(self):

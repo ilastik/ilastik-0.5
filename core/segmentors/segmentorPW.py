@@ -34,13 +34,13 @@ Powerwatershed segmentation plugin
 import vigra, numpy
 from segmentorBase import *
 import traceback
+from enthought.traits.api import *
+from enthought.traits.ui.api import *
 
 ok = False
 
 try:
     import vigra.pws
-    from enthought.traits.api import *
-    from enthought.traits.ui.api import *
     ok = True
 except Exception, e:
     print e
@@ -49,8 +49,7 @@ except Exception, e:
 
 
 if ok:
-
-    class SegmentorPW(SegmentorBase, HasTraits):
+    class SegmentorPW(SegmentorBase):
         name = "Powerwatershed Segmentation"
         description = "Segmentation plugin using the cool Powerwatershed formalism of Cuprie and Grady"
         author = "HCI, University of Heidelberg"
@@ -59,6 +58,7 @@ if ok:
         borderIndicator = Enum("Brightness", "Darkness", "Gradient")
         sigma = CFloat(1.0)
         normalizePotential = CBool(True)
+
 
 
         def segment3D(self, volume , labels):
@@ -83,13 +83,9 @@ if ok:
             real_weights = real_weights.swapaxes(0,2).view(vigra.ScalarVolume)
 
             pws = vigra.pws.q2powerwatershed3D(real_weights, labels.swapaxes(0,2).view(vigra.ScalarVolume))
-            print pws.shape
+            pws = numpy.where(pws > 127, 2, 1)
             return pws.swapaxes(0,2).view(numpy.ndarray)
 
         def segment2D(self, slice , labels):
             #TODO: implement
             return labels
-
-
-        def settings(self):
-            self.configure_traits()

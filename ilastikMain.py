@@ -1423,7 +1423,7 @@ class Segmentation(object):
 
     def finalize(self):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
-        activeItem.dataVol.segmentation[:,:,:,:] = numpy.where(self.segmentation.result[:,:,:,:] > 127, 2, 1)
+        activeItem.dataVol.segmentation[:,:,:,:] = self.segmentation.result[:,:,:,:]
         self.parent.labelWidget.repaint()
 
     def terminateProgressBar(self):
@@ -1433,7 +1433,7 @@ class Segmentation(object):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication.instance()
+    app = QtGui.QApplication.instance() #(sys.argv)
     mainwindow = MainWindow(sys.argv)
       
     mainwindow.show() 

@@ -52,6 +52,13 @@ import threading
 import traceback
 import os, sys
 
+from enthought.mayavi import mlab
+from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
+from enthought.traits.ui.api import View, Item, Group
+
+from enthought.mayavi.core.api import PipelineBase
+from enthought.mayavi.core.ui.api import MayaviScene, SceneEditor, MlabSceneModel
+
 from shortcutmanager import *
 
 # Local import
@@ -64,6 +71,37 @@ from shortcutmanager import *
 
 ##extend ndarray with _label attribute
 #numpy.ndarray.__base__ += (VolumeLabelAccessor, )
+
+
+class Maya3DScene(HasTraits):
+
+    scene = Instance(MlabSceneModel, ())
+
+    plot = Instance(PipelineBase)
+
+
+    def __init__(self, item):
+        HasTraits.__init__(self)
+        self.item = item
+
+    # When the scene is activated, or when the parameters are changed, we
+    # update the plot.
+    @on_trait_change('scene.activated')
+    def update_plot(self):
+        if self.plot is None:
+            self.plot = self.scene.mlab.contour3d(self.item.data[0,:,:,:,0], opacity=1.0)
+            self.scene.mlab.outline()
+        else:
+            self.plot.mlab_source.set(self.item.data[0,:,:,:,0])
+
+
+    # The layout of the dialog created
+    view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene),
+                     height=250, width=300, show_label=False),
+                resizable=True,
+                )
+
+
 
 
 class LabeledVolumeArray(numpy.ndarray):
@@ -410,29 +448,22 @@ class OverlayListView(QtGui.QListWidget):
     def onContext(self, pos):
         index = self.indexAt(pos)
 
-#        if not index.isValid():
-#           return
-#
-#        item = self.itemAt(pos)
-#        name = item.text()
-#
-#        menu = QtGui.QMenu(self)
-#
-#        #removeAction = menu.addAction("Remove")
-#        if item.visible is True:
-#            toggleHideAction = menu.addAction("Hide")
-#        else:
-#            toggleHideAction = menu.addAction("Show")
-#
-#        action = menu.exec_(QtGui.QCursor.pos())
-##        if action == removeAction:
-##            self.overlays.remove(item)
-##            it = self.takeItem(index.row())
-##            del it
-#        if action == toggleHideAction:
-#            item.visible = not(item.visible)
-#            self.volumeEditor.repaint()
-            
+        if not index.isValid():
+           return
+
+        item = self.itemAt(pos)
+        name = item.text()
+
+        menu = QtGui.QMenu(self)
+
+        show3dAction = menu.addAction("Display in Mayavi")
+
+        action = menu.exec_(QtGui.QCursor.pos())
+        if action == show3dAction:
+#            mlab.contour3d(item.data[0,:,:,:,0], opacity=0.6)
+#            mlab.outline()
+            my_model = Maya3DScene(item)
+            my_model.configure_traits()
 
 
 class VolumeLabelDescription():
