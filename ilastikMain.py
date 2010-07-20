@@ -534,9 +534,6 @@ class MainWindow(QtGui.QMainWindow):
             reply = QtGui.QMessageBox.warning(self, 'Error', "The selected classifier is not serializable and cannot be saved to file.", QtGui.QMessageBox.Ok)
             return
         
-        
-        
-        
         if fileName is not None:
             global LAST_DIRECTORY
             fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
