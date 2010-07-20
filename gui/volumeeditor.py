@@ -342,10 +342,11 @@ class PatchAccessor():
 
     def getPatchesForRect(self,startx,starty,endx,endy):
         sx = int(numpy.floor(1.0 * startx / self.blockSize))
-        ex = int(numpy.floor(1.0 * endx / self.blockSize))
+        ex = int(numpy.ceil(1.0 * endx / self.blockSize))
         sy = int(numpy.floor(1.0 * starty / self.blockSize))
-        ey = int(numpy.floor(1.0 * endy / self.blockSize))
-
+        ey = int(numpy.ceil(1.0 * endy / self.blockSize))
+        
+        
         if ey > self.cY:
             ey = self.cY
 
@@ -353,9 +354,11 @@ class PatchAccessor():
             ex = self.cX
 
         nums = []
-        for y in range(sy,ey+1):
-            nums += range(y*self.cX+sx,y*self.cX+ex+1)
-    
+        for y in range(sy,ey):
+            nums += range(y*self.cX+sx,y*self.cX+ex)
+        
+        return nums
+
 class OverlaySlice():
     def __init__(self, data, color, alpha, colorTable):
         self.colorTable = colorTable
