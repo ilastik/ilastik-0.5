@@ -47,7 +47,7 @@ import os
 from PyQt4 import QtCore, QtGui, uic
 
 #force QT4 toolkit for the enthought traits UI
-os.environ['ETS_TOOLKIT'] = 'qt4'
+#os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import vigra
 from vigra import arraytypes as at
@@ -1433,7 +1433,8 @@ class Segmentation(object):
 
 
 if __name__ == "__main__":
-    app = QtGui.QApplication.instance() #(sys.argv)
+    #app = QtGui.QApplication.instance() #(sys.argv)
+    app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow(sys.argv)
       
     mainwindow.show() 

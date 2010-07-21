@@ -89,15 +89,15 @@ class Maya3DScene(HasTraits):
     @on_trait_change('scene.activated')
     def update_plot(self):
         if self.plot is None:
-            self.plot = self.scene.mlab.contour3d(self.item.data[0,:,:,:,0], opacity=1.0)
-            self.scene.mlab.outline()
+            self.plot = self.scene.mlab.contour3d(self.item.data[0,:,:,:,0], opacity=1.0, contours=[2])
+            #self.scene.mlab.outline()
         else:
             self.plot.mlab_source.set(self.item.data[0,:,:,:,0])
 
 
     # The layout of the dialog created
     view = View(Item('scene', editor=SceneEditor(scene_class=MayaviScene),
-                     height=250, width=300, show_label=False),
+                     height=480, width=640, show_label=False),
                 resizable=True,
                 )
 
@@ -2057,7 +2057,7 @@ class ImageScene( QtGui.QGraphicsView):
                 self.tempImageItems = []
 
             #update the scene, and the 3d overvie
-        print "updating slice view ", self.axis
+        #print "updating slice view ", self.axis
         self.viewport().repaint() #update(QtCore.QRectF(self.image.rect()))
         self.volumeEditor.overview.display(self.axis)
         

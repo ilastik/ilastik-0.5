@@ -61,5 +61,5 @@ class SegmentorBase(HasTraits):
             res = self.segment2D(volume[0,:,:,:], labels)
 
     def settings(self):
-        self.configure_traits( kind = 'livemodal')
+        self.configure_traits( kind = 'modal')
 
