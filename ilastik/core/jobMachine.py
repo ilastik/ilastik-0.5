@@ -2,7 +2,14 @@ import os, sys
 import threading
 import traceback
 
-from PyQt4 import QtCore
+try:
+    from PyQt4 import QtCore
+    ThreadBase = QtCore.QThread
+    have_qt = True
+except:
+    ThreadBase = threading.Thread
+    have_qt = False
+
 
 from collections import deque
 
@@ -37,14 +44,15 @@ class IlastikJob():
         self.args = None
 
 
-class JobMachineWorker(QtCore.QThread):
+class JobMachineWorker(ThreadBase):
     def __init__(self):
-        QtCore.QThread.__init__(self)
+        ThreadBase.__init__(self)
         self.event = threading.Event()
         self.event.clear()
         self.stopped = False
         self.start()
-        self.setPriority(QtCore.QThread.LowPriority)
+        if have_qt:
+            self.setPriority(QtCore.QThread.LowPriority)
         
     def run(self):
         while self.stopped is False:
