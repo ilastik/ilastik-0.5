@@ -30,10 +30,10 @@
 import numpy
 import time
 import sys
-from core import jobMachine
+from ilastik.core import jobMachine
 from collections import deque
-from core.utilities import irange
-from core import dataMgr
+from ilastik.core.utilities import irange
+from ilastik.core import dataMgr
 import copy
 import traceback
 import threading
@@ -42,9 +42,9 @@ from PyQt4 import QtCore
 import vigra
 at = vigra.arraytypes
 
-from gui.volumeeditor import VolumeEditor as VolumeEditor
+from ilastik.gui.volumeeditor import VolumeEditor as VolumeEditor
 
-import core.features
+import ilastik.core.features
 
 
 import os, sys
@@ -211,7 +211,7 @@ class FeatureGroups(object):
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
         
     def createGroups(self):
-        for c in core.features.featureBase.FeatureBase.__subclasses__():
+        for c in ilastik.core.features.featureBase.FeatureBase.__subclasses__():
             for g in c.groups:
                 print "Adding ", c.__name__, " to Group ", g
                 if g in self.groups:

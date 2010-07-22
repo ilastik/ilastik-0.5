@@ -1,7 +1,7 @@
 
 from PyQt4 import QtCore, QtGui, uic
 
-import core.classifiers
+import ilastik.core.classifiers
 
 class ClassifierSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastik):

@@ -53,14 +53,14 @@ import traceback
 import numpy
 import time
 from PyQt4 import QtCore, QtGui, uic
-from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
-from gui import ctrlRibbon, stackloader, batchProcess
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
 from collections import deque
-from gui.iconMgr import ilastikIcons
-from core.utilities import irange, debug
-from gui.classifierSelectionDialog import ClassifierSelectionDlg
-from core import jobMachine
+from ilastik.gui.iconMgr import ilastikIcons
+from ilastik.core.utilities import irange, debug
+from ilastik.gui.classifierSelectionDialog import ClassifierSelectionDlg
+from ilastik.core import jobMachine
 import copy
 import h5py
 
@@ -69,8 +69,8 @@ from OpenGL.GL import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import getopt
 
-from gui import volumeeditor as ve
-from gui.shortcutmanager import *
+from ilastik.gui import volumeeditor as ve
+from ilastik.gui.shortcutmanager import *
 
 #make the program quit on Ctrl+C
 import signal

@@ -5,7 +5,6 @@ Created on Mon Mar 22 09:33:57 2010
 @author: - 
 """
 
-
 import os, glob
 import vigra
 import numpy
@@ -22,12 +21,11 @@ import traceback
 from PyQt4 import QtCore, QtGui, uic
 
 import sys
-sys.path.append( os.path.join(os.getcwd(), '..') )
 
-import volumeeditor as ve
+import ilastik.gui.volumeeditor as ve
 
-from core import dataMgr, featureMgr
-from core import classificationMgr as cm
+from ilastik.core import dataMgr, featureMgr
+from ilastik.core import classificationMgr as cm
 
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent):
