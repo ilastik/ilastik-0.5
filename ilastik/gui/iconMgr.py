@@ -27,8 +27,14 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+import os
+import ilastik
+
 class ilastikIcons(object):
-    iconPath = 'gui/icons/32x32/'
+    #get the absolute path of the 'ilastik' module
+    ilastikPath = os.path.dirname(ilastik.__file__)
+    
+    iconPath = ilastikPath+'/gui/icons/32x32/'
     Brush = iconPath + 'actions/edit-clear.png'
     Play = iconPath + "actions/media-playback-start.png"
     View = iconPath + 'emotes/face-glasses.png'
@@ -46,7 +52,7 @@ class ilastikIcons(object):
     Select = iconPath + "actions/edit-select-all.png"
     Erase = iconPath + "actions/my_erase.png"
     Edit2 = iconPath + "actions/edit-find-replace.png"
-    Python = iconPath + "../../pyc.ico"
+    Python = iconPath + ilastikPath+"/gui/pyc.ico"
     
     
     
