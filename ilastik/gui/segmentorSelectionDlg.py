@@ -38,7 +38,7 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         self.previousSegmentor = self.currentSegmentor = self.ilastik.project.segmentor
 
 
-        uic.loadUi('gui/classifierSelectionDlg.ui', self)
+        uic.loadUi('ilastik/gui/classifierSelectionDlg.ui', self)
 
         self.connect(self.buttonBox, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)

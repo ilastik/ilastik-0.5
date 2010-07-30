@@ -42,7 +42,7 @@ from ilastik.gui.volumeeditor import Volume as Volume
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
-from core import segmentors
+from ilastik.core import segmentors
 
 class Project(object):
     """

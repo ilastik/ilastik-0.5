@@ -29,9 +29,9 @@
 
 import numpy, vigra, os, sys
 
-from  core import segmentors
+from  ilastik.core import segmentors
 from PyQt4 import QtCore
-from core import jobMachine
+from ilastik.core import jobMachine
 
 """ Import all segmentation plugins"""
 pathext = os.path.dirname(__file__)
@@ -40,7 +40,7 @@ try:
     for f in os.listdir(os.path.abspath(pathext + '/segmentors')):
         module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
         if ext == '.py': # Important, ignore .pyc/other files.
-            module = __import__('core.segmentors.' + module_name)
+            module = __import__('ilastik.core.segmentors.' + module_name)
 except Exception, e:
     pass
 
