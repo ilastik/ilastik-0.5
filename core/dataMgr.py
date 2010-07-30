@@ -273,6 +273,7 @@ class DataItemImage(DataItemBase):
         self.history = None
         self.featureCacheDS = None
         self.featureBlockAccessor = None
+        self.segmentationWeights = None
         
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)

@@ -55,48 +55,27 @@ if ok:
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        borderIndicator = Enum("Brightness", "Darkness", "Gradient")
-        sigma = CFloat(1.0)
-        normalizePotential = CBool(True)
+        twsAlgorithm = Enum("tws", "twsParallel")
 
 
-
-        def segment3D(self, volume , labels):
-
-
-            #TODO: this , until now, only supports gray scale !
-            if self.borderIndicator == "Brightness":
-                weights = vigra.filters.gaussianSmoothing(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-            elif self.borderIndicator == "Darkness":
-                weights = vigra.filters.gaussianSmoothing(255 - volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-            elif self.borderIndicator == "Gradient":
-                weights = vigra.filters.gaussianGradientMagnitude(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-
-            weights = weights.swapaxes(0,2).view(numpy.ndarray)
-
-            if self.normalizePotential == True:
-                min = numpy.min(weights)
-                max = numpy.max(weights)
-                weights = (weights - min)*(255.0 / (max - min))
-
-            #real_weights = numpy.zeros(weights.shape, 'float32')
-            real_weights = numpy.zeros(weights.shape, 'uint8')
-
-            real_weights[:] = weights[:]
-            real_weights = real_weights.swapaxes(0,2).view(vigra.ScalarVolume)
-
+        def segment3D(self, labels):
             seeds = numpy.zeros(labels.shape[0:-1], 'uint32')
             seeds[:,:,:] = labels[:,:,:,0]
-
-            print real_weights.shape, seeds.shape
-            print real_weights.dtype, seeds.dtype
-            
+           
             #pws = vigra.analysis.watersheds(real_weights, neighborhood=6, seeds = seeds.swapaxes(0,2).view(vigra.ScalarVolume))
-            pws = vigra.tws.tws(real_weights, seeds.swapaxes(0,2).view(vigra.ScalarVolume))
+            if self.twsAlgorithm == "tws":
+                pws = vigra.tws.tws(self.weights, seeds.swapaxes(0,2).view(vigra.ScalarVolume))
+            else:
+                pws = vigra.tws.twsParallel(self.weights, seeds.swapaxes(0,2).view(vigra.ScalarVolume))
+                
             pws = pws.swapaxes(0,2).view(numpy.ndarray)
             print numpy.max(pws),numpy.min(pws)
             return pws
 
-        def segment2D(self, slice , labels):
+        def segment2D(self, labels):
             #TODO: implement
             return labels
+
+
+        def setupWeights(self, weights):
+            self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8).swapaxes(0,2).view(vigra.ScalarVolume)

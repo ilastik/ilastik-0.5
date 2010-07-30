@@ -39,8 +39,40 @@ from enthought.traits.ui.api import *
 
 ok = False
 
+#try:
+#    import vigra.pws
+#    import vigra.pws2
+#    ok = True
+#except Exception, e:
+#    print e
+#    traceback.print_exc(file=sys.stdout)
+#    print "propably the vigra.pws module was not found, please recompile vigra with PowerWaterShed support to enable the pws segmentation plugin"
+#
+#
+#if ok:
+#    class SegmentorPW(SegmentorBase):
+#        name = "Powerwatershed Segmentation"
+#        description = "Segmentation plugin using the cool Powerwatershed formalism of Cuprie and Grady"
+#        author = "HCI, University of Heidelberg"
+#        homepage = "http://hci.iwr.uni-heidelberg.de"
+#
+#
+#        def segment3D(self, labels):
+#            pws = vigra.pws.q2powerwatershed3D(self.weights, labels.swapaxes(0,2).view(vigra.ScalarVolume))
+#            pws = numpy.where(pws > 127, 2, 1)
+#            return pws.swapaxes(0,2).view(numpy.ndarray)
+#
+#        def segment2D(self, labels):
+#            #TODO: implement
+#            return labels
+#
+#        def setupWeights(self, weights):
+#            self.weights = (255 - numpy.average(weights, axis = 3)).astype(numpy.uint8).swapaxes(0,2).view(vigra.ScalarVolume)
+
+
 try:
     import vigra.pws
+    import vigra.pws2
     ok = True
 except Exception, e:
     print e
@@ -55,37 +87,22 @@ if ok:
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        borderIndicator = Enum("Brightness", "Darkness", "Gradient")
-        sigma = CFloat(1.0)
-        normalizePotential = CBool(True)
+        pwsAlgorithm = Enum("Powerwatershed (RW)", "Powerwatershed Boute (RW)")
 
-
-
-        def segment3D(self, volume , labels):
-            #TODO: this , until now, only supports gray scale !
-            if self.borderIndicator == "Brightness":
-                weights = vigra.filters.gaussianSmoothing(255 - volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-            elif self.borderIndicator == "Darkness":
-                weights = vigra.filters.gaussianSmoothing(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-            elif self.borderIndicator == "Gradient":
-                weights = 255 - vigra.filters.gaussianGradientMagnitude(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-
-            weights = weights.swapaxes(0,2).view(numpy.ndarray)
-            
-            if self.normalizePotential == True:
-                min = numpy.min(weights)
-                max = numpy.max(weights)
-                weights = (weights - min)*(255.0 / (max - min))
-
-            real_weights = numpy.zeros(weights.shape, 'uint8')
-
-            real_weights[:] = weights[:]
-            real_weights = real_weights.swapaxes(0,2).view(vigra.ScalarVolume)
-
-            pws = vigra.pws.q2powerwatershed3D(real_weights, labels.swapaxes(0,2).view(vigra.ScalarVolume))
-            pws = numpy.where(pws > 127, 2, 1)
+        def segment3D(self, labels):
+            l = labels.copy()
+            if self.pwsAlgorithm == 'Powerwatershed (RW)':
+                pws = vigra.pws.q2powerwatershed3D(self.weights, labels.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = numpy.where(pws > 127, 2, 1)
+            elif self.pwsAlgorithm == 'Powerwatershed Boute (RW)':
+                pws = vigra.pws2.q2powerwatershed3D(self.weights, l.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = l[:,:,:,0]
+                pws = pws.swapaxes(0,2)
             return pws.swapaxes(0,2).view(numpy.ndarray)
 
-        def segment2D(self, slice , labels):
+        def segment2D(self, labels):
             #TODO: implement
             return labels
+
+        def setupWeights(self, weights):
+            self.weights = (255 - numpy.average(weights, axis = 3)).astype(numpy.uint8).swapaxes(0,2).view(vigra.ScalarVolume)

@@ -92,7 +92,7 @@ class SegmentationThread(QtCore.QThread):
         self.jobMachine = jobMachine.JobMachine()
 
     def segment(self, i, data, labels):
-        self.result[i,:,:,:] = self.segmentor.segment(data, labels)
+        self.result[i,:,:,:] = self.segmentor.segment(labels)
         self.count += 1
 
     def run(self):

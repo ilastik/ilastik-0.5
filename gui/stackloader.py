@@ -155,13 +155,18 @@ class StackLoader(QtGui.QDialog):
     def pathChanged(self, text):
         list = glob.glob(str(self.path.text()) )
         self.sizeZ.setValue(len(list))
-        temp = vigra.impex.readImage(list[0])
-        self.sizeX.setValue(temp.shape[0])
-        self.sizeY.setValue(temp.shape[1])
-        if len(temp.shape) == 3:
-            self.rgb = temp.shape[2]
-        else:
-            self.rgb = 1
+        try:
+            temp = vigra.impex.readImage(list[0])
+            self.sizeX.setValue(temp.shape[0])
+            self.sizeY.setValue(temp.shape[1])
+            if len(temp.shape) == 3:
+                self.rgb = temp.shape[2]
+            else:
+                self.rgb = 1
+        except Exception as e:
+            self.sizeZ.setValue(0)
+            self.sizeX.setValue(0)
+            self.sizeY.setValue(0)
 
 
     def slotDir(self):

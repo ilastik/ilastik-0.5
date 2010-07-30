@@ -186,7 +186,8 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Save Classifier", ilastikIcons.System ,"Save current classifier and its feature settings"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Change Classifier", ilastikIcons.System ,"Select a classifier and change its settings"))
 
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.System ,"Segment the image into foreground/background"))
+    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Choose Weights", ilastikIcons.System ,"Choose the edge weights for the segmentation task"))
+    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment the image into foreground/background"))
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("", None, "", type=RibbonStretch))
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Change Segmentation", ilastikIcons.System ,"Select a segmentation plugin and change settings"))
 

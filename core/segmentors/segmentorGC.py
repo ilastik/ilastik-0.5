@@ -57,16 +57,9 @@ if ok:
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        borderIndicator = Enum("Brightness", "Darkness", "Gradient")
-        sigma = CFloat(1.0)
-        normalizePotential = CBool(True)
 
-
-        def segment3D(self, volume , labels):
-            print volume.shape
-            weights = volume
-
-            tweights = numpy.zeros(weights.shape[0:-1] + (2,), 'int32')
+        def segment3D(self, labels):
+            tweights = numpy.zeros(self.weights.shape[0:-1] + (2,), 'int32')
 
             a = numpy.where(labels == 1, 99999999, 0)
             tweights[:,:,:,0] = a[:,:,:,0]
@@ -74,40 +67,15 @@ if ok:
             tweights[:,:,:,1] = a[:,:,:,0]
 
 
-            real_weights = numpy.zeros(weights.shape[0:-1] + (3,), 'int32')
-
-            #TODO: this , until now, only supports gray scale !
-            if self.borderIndicator == "Brightness":
-                weights = vigra.filters.gaussianSmoothing(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-                weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                real_weights[:,:,:,0] = weights[:,:,:]
-                real_weights[:,:,:,1] = weights[:,:,:]
-                real_weights[:,:,:,2] = weights[:,:,:]
-            elif self.borderIndicator == "Darkness":
-                weights = vigra.filters.gaussianSmoothing(255 - volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-                weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                real_weights[:,:,:,0] = weights[:,:,:]
-                real_weights[:,:,:,1] = weights[:,:,:]
-                real_weights[:,:,:,2] = weights[:,:,:]
-            elif self.borderIndicator == "Gradient":
-                weights = vigra.filters.gaussianGradient(volume[:,:,:,0].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), self.sigma)
-                weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                print real_weights.shape, weights.shape
-                real_weights[:] = weights[:]
-
-            if self.normalizePotential == True:
-                min = numpy.min(real_weights)
-                max = numpy.max(real_weights)
-                weights = (real_weights - min)*(255.0 / (max - min))
-                real_weights[:] = weights[:]
 
 
-            res = vigra.cutKolmogorov.cutKolmogorov(tweights.swapaxes(0,2).view(vigra.ScalarVolume), real_weights)
+            res = vigra.cutKolmogorov.cutKolmogorov(tweights.swapaxes(0,2).view(vigra.ScalarVolume), self.weights)
             res = res.swapaxes(0,2).view(vigra.ScalarVolume)
-            print res.shape
             return res
 
-        def segment2D(self, slice , labels):
+        def segment2D(self, labels):
             #TODO
             return labels
 
+        def setupWeights(self, weights):
+            self.weights = (255 - weights).astype(numpy.int32).swapaxes(0,2).view(vigra.ScalarVolume)

@@ -37,8 +37,7 @@ class ClassifierRandomForestNew(ClassifierBase):
         
         self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
         
-        oob = self.RF.learnRF(features, labels)
-        print "Out-of-bag error %f" % oob
+        self.oob = self.RF.learnRF(features, labels)
         
     def predict(self, features):
         #3d: check that only 1D data arrives here

@@ -26,48 +26,22 @@
 #    The views and conclusions contained in the software and documentation are those of the
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
+
 import vigra, numpy
 from enthought.traits.api import *
 from enthought.traits.ui.api import *
 
 
-class SegmentorBase(HasTraits):
-    #human readable information
-    name = "Base Segmentation Plugin"
-    description = "virtual base class"
-    author = "HCI, University of Heidelberg"
-    homepage = "http://hci.iwr.uni-heidelberg.de"
+class SegmentationWeightSelectionDlg(HasTraits):
+    borderIndicator = Enum("Brightness", "Darkness", "Gradient")
+    sigma = CFloat(1.0)
+    normalizePotential = CBool(True)
 
-    #minimum required isotropic context
-    #0 means pixel based classification
-    #-1 means whole dataset - segmentation plugins normally need the whole volume for segmentation
-    minContext = -1
 
     def __init__(self):
-        self.weights = None
+        HasTraits.__init__(self)
 
 
-    def segment(self, labels):
-        """
-        Arguments:
-            volume : 4D scalar containing 3D Data + Color information in the last dimension
-            labels : 3D uint8 scalar containing the seeds
-        return:
-            3D unit8 volume that contains label numbers
-        """
-        if labels.shape[0] > 1:
-            return self.segment3D(labels)
-        else:
-            res = self.segment2D(labels)
-
-    def setupWeights(self, weights):
-        """
-        Override this function and setup the weights as needed
-        you get a 3D 3Vector of the weights to the [x+1,y,z], [x,y+1,z], [x,y,z+1] neighbours
-        """
-        print "setting up weights"
-        self.weights = weights
-
-    def settings(self):
-        self.configure_traits( kind = 'modal')
-
+    view = View( ('borderIndicator', 'sigma'),
+                title = "Choose Segmentation Weights",
+                buttons = ['OK', 'Cancel'])

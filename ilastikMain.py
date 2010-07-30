@@ -47,7 +47,7 @@ import os
 from PyQt4 import QtCore, QtGui, uic
 
 #force QT4 toolkit for the enthought traits UI
-#os.environ['ETS_TOOLKIT'] = 'qt4'
+os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import vigra
 from vigra import arraytypes as at
@@ -59,6 +59,7 @@ import numpy
 import time
 
 from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
+from gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
 from gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
 from collections import deque
@@ -286,6 +287,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
+        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Choose Weights'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationWeights)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationSegment)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Save Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
@@ -510,7 +512,45 @@ class MainWindow(QtGui.QMainWindow):
     def on_changeSegmentor(self):
         dialog = SegmentorSelectionDlg(self)
         self.project.segmentor = dialog.exec_()
-        print self.project.segmentor
+        self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
+
+    def on_segmentationWeights(self):
+        dialog = SegmentationWeightSelectionDlg()
+        dialog.configure_traits( kind = 'livemodal')
+
+        volume = self.project.dataMgr[self.activeImage].dataVol.data[0,:,:,:,0]
+
+        real_weights = numpy.zeros(volume.shape + (3,))
+
+        #TODO: this , until now, only supports gray scale !
+        if dialog.borderIndicator == "Brightness":
+            weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma)
+            weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
+            real_weights[:,:,:,0] = weights[:,:,:]
+            real_weights[:,:,:,1] = weights[:,:,:]
+            real_weights[:,:,:,2] = weights[:,:,:]
+        elif dialog.borderIndicator == "Darkness":
+            weights = vigra.filters.gaussianSmoothing(255 - volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma)
+            weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
+            real_weights[:,:,:,0] = weights[:,:,:]
+            real_weights[:,:,:,1] = weights[:,:,:]
+            real_weights[:,:,:,2] = weights[:,:,:]
+        elif dialog.borderIndicator == "Gradient":
+            weights = numpy.abs(vigra.filters.gaussianGradient(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma))
+            weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
+            real_weights[:] = weights[:]
+
+        if dialog.normalizePotential == True:
+            min = numpy.min(real_weights)
+            max = numpy.max(real_weights)
+            weights = (real_weights - min)*(255.0 / (max - min))
+            real_weights[:] = weights[:]
+
+        self.project.segmentor.setupWeights(real_weights)
+        self.project.dataMgr[self.activeImage].segmentationWeights = real_weights
+
+
+
 
     def on_segmentationSegment(self):
         self.segmentationSegment = Segmentation(self)
@@ -1433,8 +1473,8 @@ class Segmentation(object):
 
 
 if __name__ == "__main__":
-    #app = QtGui.QApplication.instance() #(sys.argv)
-    app = QtGui.QApplication(sys.argv)
+    app = QtGui.QApplication.instance() #(sys.argv)
+    #app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow(sys.argv)
       
     mainwindow.show() 
