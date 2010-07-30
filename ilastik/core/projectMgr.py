@@ -27,21 +27,21 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from core import dataMgr as dataMgrModule
+from ilastik.core import dataMgr as dataMgrModule
 import numpy
 import cPickle as pickle
 import h5py
-from core.utilities import irange, debug
+from ilastik.core.utilities import irange, debug
 
 from vigra import arraytypes as at
 from PyQt4 import QtGui
 
-from gui.volumeeditor import DataAccessor as DataAccessor
-from gui.volumeeditor import Volume as Volume
+from ilastik.gui.volumeeditor import DataAccessor as DataAccessor
+from ilastik.gui.volumeeditor import Volume as Volume
 
-from core import activeLearning
-from core import segmentationMgr
-from core import classifiers
+from ilastik.core import activeLearning
+from ilastik.core import segmentationMgr
+from ilastik.core import classifiers
 from core import segmentors
 
 class Project(object):

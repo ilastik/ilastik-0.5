@@ -28,7 +28,7 @@
 
 from PyQt4 import QtCore, QtGui
 import sys
-from gui.iconMgr import ilastikIcons
+from ilastik.gui.iconMgr import ilastikIcons
 
 class Ribbon(QtGui.QTabWidget):
     def __init__(self, parent=None):

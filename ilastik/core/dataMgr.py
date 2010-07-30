@@ -35,14 +35,14 @@ import os
 import threading
 import h5py
 import h5py as tables # TODO: exchange tables with h5py
-from core.utilities import irange, debug, irangeIfTrue
+from utilities import irange, debug, irangeIfTrue
 from PyQt4 import QtGui
 
-from gui.volumeeditor import DataAccessor as DataAccessor
-from gui.volumeeditor import Volume as Volume
+from ilastik.gui.volumeeditor import DataAccessor as DataAccessor
+from ilastik.gui.volumeeditor import Volume as Volume
 
-from core import activeLearning
-from core import segmentationMgr
+from ilastik.core import activeLearning
+from ilastik.core import segmentationMgr
 import traceback
 import vigra
 at = vigra.arraytypes

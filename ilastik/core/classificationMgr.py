@@ -1,4 +1,3 @@
-import core.classifiers.classifierRandomForest
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
@@ -37,26 +36,26 @@ from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
 from collections import deque
 from PyQt4 import QtCore
-from core.utilities import irange
-from core import onlineClassifcator
-from core import dataMgr as DM
-from core import activeLearning, segmentationMgr
-from core import classifiers
-from gui import volumeeditor as ve
-from core import jobMachine
+from ilastik.core.utilities import irange
+import onlineClassifcator
+import dataMgr as DM
+import activeLearning, segmentationMgr
+import classifiers
+from ilastik.gui import volumeeditor as ve
+import jobMachine
 import sys, traceback
+import ilastik.core.classifiers.classifierRandomForest
 
 import numpy
 
-from core import classifiers
 
-""" Import all classification plugins"""
+"" Import all classification plugins"""
 pathext = os.path.dirname(__file__)
 
 try:
     for f in os.listdir(os.path.abspath(pathext + '/classifiers')):
         module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
-        if ext == '.py': # Important, ignore .pyc/other files.
+        if ext == '.py': # Important, ignore .pyc/othesr files.
             module = __import__('core.classifiers.' + module_name)
 except Exception, e:
     pass
@@ -80,7 +79,7 @@ class ClassificationMgr(object):
         pass         
     
 class ClassifierTrainThread(QtCore.QThread):
-    def __init__(self, queueSize, dataMgr, classifier = core.classifiers.classifierRandomForest.ClassifierRandomForest, classifierOptions = (10,)):
+    def __init__(self, queueSize, dataMgr, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, classifierOptions = (10,)):
         QtCore.QThread.__init__(self, None)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
@@ -198,7 +197,7 @@ class ClassifierPredictThread(QtCore.QThread):
                 
 
 class ClassifierInteractiveThread(QtCore.QThread):
-    def __init__(self, parent, classifier = core.classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):
+    def __init__(self, parent, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):
         QtCore.QThread.__init__(self, None)
 
         self.ilastik = parent

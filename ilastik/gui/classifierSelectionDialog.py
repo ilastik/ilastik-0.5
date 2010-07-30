@@ -1,22 +1,25 @@
 
 from PyQt4 import QtCore, QtGui, uic
 
-import core.classifiers
+import ilastik
+import ilastik.core.classifiers
+import os
 
 class ClassifierSelectionDlg(QtGui.QDialog):
-    def __init__(self, ilastik):
-        QtGui.QWidget.__init__(self, ilastik)
-        self.ilastik = ilastik
+    def __init__(self, ilastikMain):
+        QtGui.QWidget.__init__(self, ilastikMain)
+        self.ilastik = ilastikMain
         self.previousClassifier = self.currentClassifier = self.ilastik.project.classifier
 
-
-        uic.loadUi('gui/classifierSelectionDlg.ui', self)
+        #get the absolute path of the 'ilastik' module
+        ilastikPath = os.path.dirname(ilastik.__file__)
+        uic.loadUi(ilastikPath+'/gui/classifierSelectionDlg.ui', self)
 
         self.connect(self.buttonBox, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)
         self.connect(self.settingsButton, QtCore.SIGNAL('pressed()'), self.classifierSettings)
 
-        self.classifiers = core.classifiers.classifierBase.ClassifierBase.__subclasses__()
+        self.classifiers = ilastik.core.classifiers.classifierBase.ClassifierBase.__subclasses__()
         j = 0
         for i, c in enumerate(self.classifiers):
             #qli = QtGui.QListWidgetItem(c.name)
@@ -52,7 +55,6 @@ class ClassifierSelectionDlg(QtGui.QDialog):
             return self.previousClassifier
 
 def test():
-    """Text editor demo"""
     import numpy
     #from spyderlib.utils.qthelpers import qapplication
     app = QtGui.QApplication([""])

@@ -58,16 +58,16 @@ import traceback
 import numpy
 import time
 
-from core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
-from gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
-from gui import ctrlRibbon, stackloader, batchProcess
+
+from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
 from collections import deque
-from gui.iconMgr import ilastikIcons
-from core.utilities import irange, debug
-from gui.classifierSelectionDialog import ClassifierSelectionDlg
-from gui.segmentorSelectionDlg import SegmentorSelectionDlg
-from core import jobMachine
+from ilastik.gui.iconMgr import ilastikIcons
+from ilastik.core.utilities import irange, debug
+from ilastik.gui.classifierSelectionDialog import ClassifierSelectionDlg
+from ilastik.gui.segmentorSelectionDlg import SegmentorSelectionDlg
 import copy
 import h5py
 
@@ -76,8 +76,8 @@ from OpenGL.GL import *
 from PyQt4 import QtCore, QtGui, QtOpenGL
 import getopt
 
-from gui import volumeeditor as ve
-from gui.shortcutmanager import *
+from ilastik.gui import volumeeditor as ve
+from ilastik.gui.shortcutmanager import *
 
 #make the program quit on Ctrl+C
 import signal
@@ -95,7 +95,6 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
-        self.iconPath = '../../icons/32x32/'
         
         #self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
@@ -189,6 +188,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
             self.activeImage = 0
             self.projectModified()
         
@@ -299,6 +299,7 @@ class MainWindow(QtGui.QMainWindow):
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
         
         self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(False)
         
         #TODO: reenable online classification sometime 
 #        # Make menu for online Classification
@@ -374,6 +375,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
             if hasattr(self, 'projectDlg'):
                 self.projectDlg.deleteLater()
             self.activeImage = 0
@@ -588,9 +590,6 @@ class MainWindow(QtGui.QMainWindow):
             reply = QtGui.QMessageBox.warning(self, 'Error', "The selected classifier is not serializable and cannot be saved to file.", QtGui.QMessageBox.Ok)
             return
         
-        
-        
-        
         if fileName is not None:
             global LAST_DIRECTORY
             fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
@@ -759,7 +758,9 @@ class ProjectDlg(QtGui.QDialog):
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
                     
     def initDlg(self):
-        uic.loadUi('gui/dlgProject.ui', self) 
+        #get the absolute path of the 'ilastik' module
+        ilastikPath = os.path.dirname(ilastik.__file__)
+        uic.loadUi(ilastikPath+'/gui/dlgProject.ui', self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setAlternatingRowColors(True)
@@ -954,6 +955,7 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
 
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
         
         self.parent.activeImage = 0
         self.parent.projectModified()
@@ -985,7 +987,9 @@ class FeatureDlg(QtGui.QDialog):
             if it.dataVol.data.shape[1] < min and it.dataVol.data.shape[1] > 1:
                 min = it.dataVol.data.shape[1]
         
-        uic.loadUi('gui/dlgFeature.ui', self) 
+        #get the absolute path of the 'ilastik' module
+        ilastikPath = os.path.dirname(ilastik.__file__)
+        uic.loadUi(ilastikPath+'/gui/dlgFeature.ui', self) 
         for featureItem in self.parent.featureList:
             self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
         
