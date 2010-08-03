@@ -58,12 +58,12 @@ if ok:
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
 
-        def segment3D(self, labels):
+        def segment3D(self, labelVolume, labelValues, labelIndices):
             tweights = numpy.zeros(self.weights.shape[0:-1] + (2,), 'int32')
 
-            a = numpy.where(labels == 1, 99999999, 0)
+            a = numpy.where(labelVolume == 1, 99999999, 0)
             tweights[:,:,:,0] = a[:,:,:,0]
-            a = numpy.where(labels == 2, 99999999, 0)
+            a = numpy.where(labelVolume == 2, 99999999, 0)
             tweights[:,:,:,1] = a[:,:,:,0]
 
 
@@ -71,11 +71,12 @@ if ok:
 
             res = vigra.cutKolmogorov.cutKolmogorov(tweights.swapaxes(0,2).view(vigra.ScalarVolume), self.weights)
             res = res.swapaxes(0,2).view(vigra.ScalarVolume)
+            res.shape = res.shape + (1,)
             return res
 
-        def segment2D(self, labels):
+        def segment2D(self, labelVolume, labelValues, labelIndices):
             #TODO
-            return labels
+            return labelVolume
 
         def setupWeights(self, weights):
             self.weights = (255 - weights).astype(numpy.int32).swapaxes(0,2).view(vigra.ScalarVolume)

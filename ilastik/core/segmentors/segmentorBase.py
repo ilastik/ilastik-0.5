@@ -46,8 +46,7 @@ class SegmentorBase(HasTraits):
     def __init__(self):
         self.weights = None
 
-
-    def segment(self, labels):
+    def segment(self, labelVolume, labelValues, labelIndices):
         """
         Arguments:
             volume : 4D scalar containing 3D Data + Color information in the last dimension
@@ -55,10 +54,10 @@ class SegmentorBase(HasTraits):
         return:
             3D unit8 volume that contains label numbers
         """
-        if labels.shape[0] > 1:
-            return self.segment3D(labels)
+        if labelVolume.shape[0] > 1:
+            return self.segment3D(labelVolume, labelValues, labelIndices)
         else:
-            res = self.segment2D(labels)
+            res = self.segment2D(labelVolume, labelValues, labelIndices)
 
     def setupWeights(self, weights):
         """

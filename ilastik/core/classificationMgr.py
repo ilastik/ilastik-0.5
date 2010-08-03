@@ -317,9 +317,9 @@ class ClassifierInteractiveThread(QtCore.QThread):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
                                 margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
-                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
                                 self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = margin
-                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = seg
+#                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
+#                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = seg
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
                                     item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]

@@ -1,31 +1,27 @@
-from distutils.core import setup
+__author__="cstraehl"
+__date__ ="$Aug 2, 2010 4:06:01 PM$"
 
-import os
+from setuptools import setup,find_packages
 
-iconFileList = []
-rootdir = 'ilastik/gui/icons/'
-for root, subFolders, files in os.walk(rootdir):
-    for file in files:
-        iconFileList.append(os.path.join(root[12:],file))
+setup (
+  name = 'ilastik',
+  version = '0.1',
+  packages = find_packages(),
 
-uiFileList  = []
-rootdir = 'ilastik/gui/'
-for root, subFolders, files in os.walk(rootdir):
-    for file in files:
-        if '.ui' in file:
-            uiFileList.append(os.path.join(root[12:],file))
-        
-iconFileList.extend(uiFileList)
+  # Declare your packages' dependencies here, for eg:
+  install_requires=['foo>=3'],
 
-setup(name = 'ilastik',
-      version = '0.5',
-      description = 'Interactive Learning and Segmentation Tool Kit',
-      author = 'Christoph Sommer, Christoph Straehle, Ullrich Koethe, Fred Hamprecht',
-      author_email = 'ilastik@hci.iwr.uni-heidelberg.de',
-      url = 'http://www.ilastik.org',
-      download_url = 'http://www.ilastik.org',
-      keywords = ['segmentation', 'numpy', 'ndarray', 'image', 'classification', 'PyQt4'],
-      packages = ['ilastik', 'ilastik.core', 'ilastik.gui', 'ilastik.core.features', 'ilastik.core.classifiers'],
-      py_modules = ['ilastik/ilastikMain'],
-      package_data = {'ilastik.gui' : iconFileList},
-      long_description = ''' ''')
+  # Fill in these to make your Egg ready for upload to
+  # PyPI
+  author = 'cstraehl',
+  author_email = '',
+
+  summary = 'Just another Python package for the cheese shop',
+  url = '',
+  license = '',
+  long_description= 'Long description of the package',
+
+  # could also include long_description, download_url, classifiers, etc.
+
+  
+)

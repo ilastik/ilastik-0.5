@@ -173,24 +173,6 @@ class MayaviQWidget(QtGui.QWidget):
         self.ui.setVisible(False)
         mlab.close()
 
-
-class LabeledVolumeArray(numpy.ndarray):
-    def __new__(cls, input_array, labels=None):
-        # Input array is an already formed ndarray instance
-        # We first cast to be our class type
-        obj = numpy.asarray(input_array).view(cls)
-        # add the new attribute to the created instance
-        obj._labels = labels
-        # Finally, we must return the newly created object:
-        return obj
-
-    def __array_finalize__(self,obj):
-        # reset the attribute from passed original object
-        self.info = getattr(obj, '_labels', None)
-        # We do not need to return anything
-
-
-
 def rgb(r, g, b):
     # use qRgb to pack the colors, and then turn the resulting long
     # into a negative integer with the same bitpattern.
@@ -263,7 +245,8 @@ class DataAccessor():
         if rgb:
             tempShape = tempShape + (1,)
 
-        self.data = self.data.reshape(tempShape)
+        if len(self.data.shape) != len(tempShape):
+            self.data = self.data.reshape(tempShape)
         self.channels = self.data.shape[-1]
 
         self.rgb = False
@@ -430,6 +413,9 @@ class PatchAccessor():
         return nums
 
 class OverlaySlice():
+    """
+    Helper class to encapsulate the overlay slice and its drawing related settings
+    """
     def __init__(self, data, color, alpha, colorTable):
         self.colorTable = colorTable
         self.color = color
@@ -438,6 +424,9 @@ class OverlaySlice():
         self.data = data
 
 class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
+    """
+    Class to encapsulate the overlay data and its properties
+    """
     def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None, visible = True):
         QtGui.QListWidgetItem.__init__(self,name)
         DataAccessor.__init__(self,data)
@@ -461,19 +450,19 @@ class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
 
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
         return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)
-         
+                 
 
-class QSliderDialog(QtGui.QDialog):
-    def __init__(self, min, max, value):
-        QtGui.QDialog.__init__(self)
-        self.setWindowTitle('Change Alpha')
-        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
-        self.slider.setGeometry(20, 30, 140, 20)
-        self.slider.setRange(min,max)
-        self.slider.setValue(value)
-        
+class OverlayListWidget(QtGui.QListWidget):
 
-class OverlayListView(QtGui.QListWidget):
+    class QAlphaSliderDialog(QtGui.QDialog):
+        def __init__(self, min, max, value):
+            QtGui.QDialog.__init__(self)
+            self.setWindowTitle('Change Alpha')
+            self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+            self.slider.setGeometry(20, 30, 140, 20)
+            self.slider.setRange(min,max)
+            self.slider.setValue(value)
+
     def __init__(self,parent):
         QtGui.QListWidget.__init__(self, parent)
         self.volumeEditor = parent
@@ -499,7 +488,7 @@ class OverlayListView(QtGui.QListWidget):
     def onItemDoubleClick(self, itemIndex):
         self.currentItem = item = self.itemFromIndex(itemIndex)
         if item.checkState() == item.visible * 2:
-            dialog = QSliderDialog(1, 20, round(item.alpha*20))
+            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.alpha*20))
             dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
             dialog.exec_()
         else:
@@ -513,6 +502,22 @@ class OverlayListView(QtGui.QListWidget):
     def clearOverlays(self):
         self.clear()
         self.overlays = []
+
+    def removeOverlay(self, item):
+        itemNr = None
+        if isinstance(item, str):
+            for idx, it in enumerate(self.overlays):
+                if it.name == item:
+                    itemNr = idx
+                    item = it
+        else:
+            itemNr = item
+        if itemNr != None:
+            self.overlays.pop(itemNr)
+            self.takeItem(itemNr)
+            return item
+        else:
+            return None
 
     def addOverlay(self, overlay):
         self.overlays.append(overlay)
@@ -565,6 +570,11 @@ class VolumeLabelDescription():
         return t
     
 class VolumeLabels():
+    """
+    Class that manages the different labels (VolumeLabelDescriptions) for one Volume
+
+    can serialize and deserialize into a h5py group
+    """
     def __init__(self, data = None):
         if issubclass(data.__class__, DataAccessor):
             self.data = data
@@ -572,6 +582,12 @@ class VolumeLabels():
             self.data = DataAccessor(data, channels = False)
 
         self.descriptions = [] #array of VolumeLabelDescriptions
+
+    def getLabelNames(self):
+        labelNames = []
+        for idx, it in enumerate(self.descriptions):
+            labelNames.append(it.name)
+        return labelNames
         
     def serialize(self, h5G, name = "labels"):
         self.data.serialize(h5G, name)
@@ -613,6 +629,11 @@ class VolumeLabels():
             return None
         
 class Volume():
+    """
+    Represents a data volume including labels etc.
+    
+    can serialize and deserialize into a h5py group
+    """
     def __init__(self):
         self.data = None
         self.labels = None
@@ -658,7 +679,7 @@ class LabelListItem(QtGui.QListWidgetItem):
         self.setIcon(icon)      
 
 
-class LabelListView(QtGui.QListWidget):
+class LabelListWidget(QtGui.QListWidget):
     def __init__(self,parent = None):
         QtGui.QListWidget.__init__(self,parent)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -1022,7 +1043,7 @@ class VolumeEditor(QtGui.QWidget):
         self.connect(self.labelAlphaSlider, QtCore.SIGNAL('valueChanged(int)'), self.setLabelsAlpha)
         self.toolBoxLayout.addWidget( self.labelAlphaSlider)
 
-        self.labelView = LabelListView(self)
+        self.labelView = LabelListWidget(self)
         self.labelView.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.connect(self.labelView.selectionModel(), QtCore.SIGNAL("selectionChanged(QItemSelection, QItemSelection)"), self.onLabelSelected)
         #only initialize after we have made the necessary connections
@@ -1112,7 +1133,7 @@ class VolumeEditor(QtGui.QWidget):
 
 
         #Overlay selector
-        self.overlayView = OverlayListView(self)
+        self.overlayView = OverlayListWidget(self)
         self.toolBoxLayout.addWidget( self.overlayView)
         self.toolBoxLayout.addStretch()
 
@@ -1247,12 +1268,13 @@ class VolumeEditor(QtGui.QWidget):
 #            item.deleteLater()
 
     def togglePrediction(self):
-        print "toggling prediction.."
-        maxi = self.overlayView.count() - 2
-        if maxi >= 0:
-            state = not(self.overlayView.item(0).visible)
-            for index in range(0,maxi):
-                item = self.overlayView.item(index)
+        labelNames = self.labels.getLabelNames()
+        state = None
+        for index in range(0,self.overlayView.count()):
+            item = self.overlayView.item(index)
+            if str(item.text()) in labelNames:
+                if state is None:
+                   state = not(item.visible)
                 item.visible = state
                 item.setCheckState(item.visible * 2)
         self.repaint()
@@ -1261,9 +1283,6 @@ class VolumeEditor(QtGui.QWidget):
     def setLabelsAlpha(self, num):
         self.labelsAlpha = num / 20.0
         self.repaint()
-        
-    def cleanup(self):
-        pass
         
     def getPendingLabels(self):
         temp = self.pendingLabels
@@ -1283,6 +1302,9 @@ class VolumeEditor(QtGui.QWidget):
         ov = VolumeOverlay(data,name, color, alpha, colorTab, visible)
         self.overlayView.addOverlay(ov)
 
+    def addOverlayObject(self, ov):
+        self.overlayView.addOverlay(ov)
+        
     def addOverlayDialog(self):
         overlays = []
         for index, item in enumerate(self.editor_list.editors):

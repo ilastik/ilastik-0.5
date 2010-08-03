@@ -28,7 +28,7 @@
 #    or implied, of their employers.
 
 """
-Powerwatershed segmentation plugin
+Watershed segmentation plugin
 """
 
 import vigra, numpy
@@ -58,24 +58,24 @@ if ok:
         twsAlgorithm = Enum("tws", "twsParallel")
 
 
-        def segment3D(self, labels):
-            seeds = numpy.zeros(labels.shape[0:-1], 'uint32')
-            seeds[:,:,:] = labels[:,:,:,0]
+        def segment3D(self, labelVolume, labelValues, labelIndices):
+            seeds = numpy.zeros(labelVolume.shape[0:-1], 'uint32')
+            seeds[:,:,:] = labelVolume[:,:,:,0]
            
             #pws = vigra.analysis.watersheds(real_weights, neighborhood=6, seeds = seeds.swapaxes(0,2).view(vigra.ScalarVolume))
             if self.twsAlgorithm == "tws":
-                pws = vigra.tws.tws(self.weights, seeds.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = vigra.tws.tws(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
             else:
-                pws = vigra.tws.twsParallel(self.weights, seeds.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = vigra.tws.twsParallel(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
                 
-            pws = pws.swapaxes(0,2).view(numpy.ndarray)
-            print numpy.max(pws),numpy.min(pws)
+            pws = pws#.swapaxes(0,2).view(numpy.ndarray)
+            pws.shape = pws.shape + (1,)
             return pws
 
-        def segment2D(self, labels):
+        def segment2D(self, labelVolume, labelValues, labelIndices):
             #TODO: implement
-            return labels
+            return labelVolume
 
 
         def setupWeights(self, weights):
-            self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8).swapaxes(0,2).view(vigra.ScalarVolume)
+            self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)

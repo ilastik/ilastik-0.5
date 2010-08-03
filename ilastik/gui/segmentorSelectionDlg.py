@@ -28,8 +28,10 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui, uic
+import sys, os
 
 import core.segmentors
+from core.segmentors import *
 
 class SegmentorSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastik):
@@ -38,7 +40,9 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         self.previousSegmentor = self.currentSegmentor = self.ilastik.project.segmentor
 
 
-        uic.loadUi('ilastik/gui/classifierSelectionDlg.ui', self)
+        #get the absolute path of the 'ilastik' module
+        path = os.path.dirname(__file__)
+        uic.loadUi(path + '/classifierSelectionDlg.ui', self)
 
         self.connect(self.buttonBox, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)
@@ -47,7 +51,7 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         self.segmentors = core.segmentors.segmentorBase.SegmentorBase.__subclasses__()
         j = 0
         for i, c in enumerate(self.segmentors):
-            #qli = QtGui.QListWidgetItem(c.name)
+            print c.name
             self.listWidget.addItem(c.name)
             if c == self.currentSegmentor.__class__:
                 j = i

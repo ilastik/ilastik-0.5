@@ -89,20 +89,24 @@ if ok:
 
         pwsAlgorithm = Enum("Powerwatershed (RW)", "Powerwatershed Boute (RW)")
 
-        def segment3D(self, labels):
-            l = labels.copy()
+        def segment3D(self, labelVolume, labelValues, labelIndices):
+            l = labelVolume.copy()
             if self.pwsAlgorithm == 'Powerwatershed (RW)':
-                pws = vigra.pws.q2powerwatershed3D(self.weights, labels.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = vigra.pws.q2powerwatershed3D(self.weights, labelVolume.swapaxes(0,2).view(vigra.ScalarVolume))
                 pws = numpy.where(pws > 127, 2, 1)
             elif self.pwsAlgorithm == 'Powerwatershed Boute (RW)':
                 pws = vigra.pws2.q2powerwatershed3D(self.weights, l.swapaxes(0,2).view(vigra.ScalarVolume))
                 pws = l[:,:,:,0]
                 pws = pws.swapaxes(0,2)
-            return pws.swapaxes(0,2).view(numpy.ndarray)
 
-        def segment2D(self, labels):
+            pws = pws.swapaxes(0,2).view(numpy.ndarray)
+            pws.shape = pws.shape + (1,)
+
+            return pws
+
+        def segment2D(self, labelVolume, labelValues, labelIndices):
             #TODO: implement
-            return labels
+            return labelVolume
 
         def setupWeights(self, weights):
             self.weights = (255 - numpy.average(weights, axis = 3)).astype(numpy.uint8).swapaxes(0,2).view(vigra.ScalarVolume)

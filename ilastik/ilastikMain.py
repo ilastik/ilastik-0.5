@@ -435,13 +435,7 @@ class MainWindow(QtGui.QMainWindow):
 
             if imageIndex == self.activeImage: 
                 self.labelWidget.addOverlay(False, activeItem.dataVol.uncertainty, "Uncertainty", QtGui.QColor(255,0,0), 0.9)
-            
-            if imageItem.dataVol.segmentation is None:
-                imageItem.dataVol.segmentation = numpy.zeros(imageItem.dataVol.data.shape[0:-1],'uint8')
-
-            if imageIndex == self.activeImage:
-                self.labelWidget.addOverlay(False, activeItem.dataVol.segmentation, "Segmentation", QtGui.QColor(255,126,255), 1.0, self.labelWidget.labelView.colorTab)
-       
+                  
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
@@ -461,7 +455,6 @@ class MainWindow(QtGui.QMainWindow):
             self.removeDockWidget(dock)
         self.labelDocks = []
         if self.labelWidget is not None:
-            self.labelWidget.cleanup()
             self.labelWidget.close()
             self.labelWidget.deleteLater()
                 
@@ -476,6 +469,7 @@ class MainWindow(QtGui.QMainWindow):
         
         #self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
         self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
+        self.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.on_NewLabels)
                 
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
@@ -575,7 +569,14 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_segmentation_border(self):
         pass
-    
+
+
+    def on_NewLabels(self):
+        newLabels = self.labelWidget.getPendingLabels()
+        if len(newLabels) > 0:
+            self.project.dataMgr.updateTrainingMatrix(self.activeImage, newLabels)
+
+
     def on_saveClassifier(self, fileName=None):
         
         if not hasattr(self.project.dataMgr,'classifiers'):
@@ -759,7 +760,7 @@ class ProjectDlg(QtGui.QDialog):
                     
     def initDlg(self):
         #get the absolute path of the 'ilastik' module
-        ilastikPath = os.path.dirname(ilastik.__file__)
+        ilastikPath = os.path.dirname(__file__)
         uic.loadUi(ilastikPath+'/gui/dlgProject.ui', self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
@@ -965,7 +966,7 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
         self.close()
-        
+
         
 
 class FeatureDlg(QtGui.QDialog):
@@ -988,8 +989,8 @@ class FeatureDlg(QtGui.QDialog):
                 min = it.dataVol.data.shape[1]
         
         #get the absolute path of the 'ilastik' module
-        ilastikPath = os.path.dirname(ilastik.__file__)
-        uic.loadUi(ilastikPath+'/gui/dlgFeature.ui', self) 
+        pathext = os.path.dirname(__file__)
+        uic.loadUi(pathext+'/gui/dlgFeature.ui', self)
         for featureItem in self.parent.featureList:
             self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
         
@@ -1414,8 +1415,6 @@ class ClassificationPredict(object):
 
             margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
             activeItem.dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]
-            seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction[:,:,:,:,:], 1.0)
-            activeItem.dataVol.segmentation[:,:,:,:] = seg[:,:,:,:]
 
             self.parent.labelWidget.repaint()
         
@@ -1430,6 +1429,7 @@ class ClassificationPredict(object):
 
 
 class Segmentation(object):
+
     def __init__(self, parent):
         self.parent = parent
         self.ilastik = parent
@@ -1464,12 +1464,25 @@ class Segmentation(object):
             self.segmentation.wait()
             self.finalize()
             self.terminateProgressBar()
+            self.addSegmentationOverlay()
 
     def finalize(self):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
-        activeItem.dataVol.segmentation[:,:,:,:] = self.segmentation.result[:,:,:,:]
+        activeItem.dataVol.segmentation = self.segmentation.result
         self.parent.labelWidget.repaint()
 
+
+    def addSegmentationOverlay(self):
+        ov = self.ilastik.labelWidget.overlayView.removeOverlay("Segmentation")
+        activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+        visible = True
+        alpha = 1.0
+        if ov is not None:
+            visible = ov.visible
+            alpha = ov.alpha
+        self.ilastik.labelWidget.addOverlay(visible, activeItem.dataVol.segmentation, "Segmentation", QtGui.QColor(255,126,255), alpha, self.ilastik.labelWidget.labelView.colorTab)
+        self.ilastik.labelWidget.repaint()
+        
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)
         self.parent.statusBar().hide()
