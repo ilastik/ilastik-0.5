@@ -87,6 +87,7 @@ class Maya3DScene(HasTraits):
         HasTraits.__init__(self)
         self.item = item
         self.raw = raw
+        print self.item.shape, self.item.dtype
         
 
     # When the scene is activated, or when the parameters are changed, we
@@ -94,8 +95,8 @@ class Maya3DScene(HasTraits):
     @on_trait_change('scene.activated')
     def update_plot(self):
         if self.plot is None:
-            self.dataField = self.scene.mlab.pipeline.scalar_field(self.item.data[0,:,:,:,0])
-            self.rawField = self.scene.mlab.pipeline.scalar_field(self.raw.data[0,:,:,:,0])
+            self.dataField = self.scene.mlab.pipeline.scalar_field(self.item)
+            self.rawField = self.scene.mlab.pipeline.scalar_field(self.raw)
 
 
             self.xp = self.scene.mlab.pipeline.image_plane_widget(self.rawField,
@@ -171,7 +172,7 @@ class MayaviQWidget(QtGui.QWidget):
 
     def closeEvent(self, ev):
         self.ui.setVisible(False)
-        mlab.close()
+        #mlab.close()
 
 def rgb(r, g, b):
     # use qRgb to pack the colors, and then turn the resulting long
@@ -540,7 +541,7 @@ class OverlayListWidget(QtGui.QListWidget):
         if action == show3dAction:
 #            mlab.contour3d(item.data[0,:,:,:,0], opacity=0.6)
 #            mlab.outline()
-            my_model = MayaviQWidget(item, self.volumeEditor.image)
+            my_model = MayaviQWidget(item[0,:,:,:,0], self.volumeEditor.image[0,:,:,:,0])
             my_model.show()
 
 

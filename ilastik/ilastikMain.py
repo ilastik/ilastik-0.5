@@ -526,7 +526,7 @@ class MainWindow(QtGui.QMainWindow):
             real_weights[:,:,:,1] = weights[:,:,:]
             real_weights[:,:,:,2] = weights[:,:,:]
         elif dialog.borderIndicator == "Darkness":
-            weights = vigra.filters.gaussianSmoothing(255 - volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma)
+            weights = vigra.filters.gaussianSmoothing((255 - volume[:,:,:]).swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma)
             weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
             real_weights[:,:,:,0] = weights[:,:,:]
             real_weights[:,:,:,1] = weights[:,:,:]

@@ -55,9 +55,9 @@ class SegmentorBase(HasTraits):
             3D unit8 volume that contains label numbers
         """
         if labelVolume.shape[0] > 1:
-            return self.segment3D(labelVolume, labelValues, labelIndices)
+            return self.segment3D(labelVolume, labelValues.astype('uint8'), labelIndices)
         else:
-            res = self.segment2D(labelVolume, labelValues, labelIndices)
+            res = self.segment2D(labelVolume, labelValues.astype('uint8'), labelIndices)
 
     def setupWeights(self, weights):
         """

@@ -28,8 +28,9 @@
 #    or implied, of their employers.
 
 """
-Watershed segmentation plugin
+Watershed iterative segmentation plugin
 """
+
 
 import vigra, numpy
 from segmentorBase import *
@@ -49,34 +50,57 @@ except Exception, e:
 
 
 if ok:
-    class SegmentorWS(SegmentorBase):
-        name = "Watershed Segmentation (normal)"
-        description = "Segmentation plugin using seeded Region Growing Watershed algorithm"
+    class SegmentorWSiter(SegmentorBase):
+        name = "Watershed Segmentation (incremental)"
+        description = "Segmentation plugin using sparse Basin graph"
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        twsAlgorithm = Enum("tws", "twsParallel")
 
+        class IndexedAccessor:
+            """
+            Helper class that behaves like an ndarray, but does a Lookuptable access
+            """
+
+            def __init__(self, volumeBasins, basinLabels):
+                self.volumeBasins = volumeBasins
+                self.basinLabels = basinLabels
+                self.dtype = basinLabels.dtype
+                self.shape = volumeBasins.shape
+
+            def __getitem__(self, key):
+                return self.basinLabels[self.volumeBasins[tuple(key)]]
+
+            def __setitem__(self, key, data):
+                #self.data[tuple(key)] = data
+                print "##########ERROR ######### : SegmentationDataAccessor setitem should not be called"
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
-            seeds = numpy.zeros(labelVolume.shape[0:-1], 'uint32')
-            seeds[:,:,:] = labelVolume[:,:,:,0]
-           
-            #pws = vigra.analysis.watersheds(real_weights, neighborhood=6, seeds = seeds.swapaxes(0,2).view(vigra.ScalarVolume))
-            if self.twsAlgorithm == "tws":
-                pws = vigra.tws.tws(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
-            else:
-                pws = vigra.tws.twsParallel(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
-            
-            ret = numpy.zeros(labelVolume.shape[0:-1], 'uint8')
-            ret[:] = pws[:]#.swapaxes(0,2).view(numpy.ndarray)
-            ret.shape = ret.shape + (1,)
-            return ret
+            self.ws.flood(labelValues, labelIndices)
 
-        def segment2D(self, labelVolume, labelValues, labelIndices):
+            self.basinLabels = self.ws.getBasinLabels()
+            print self.basinLabels
+            self.acc = SegmentorWSiter.IndexedAccessor(self.volumeBasins, self.basinLabels)
+            return self.acc
+
+        def segment2D(self, labels):
             #TODO: implement
             return labelVolume
 
 
         def setupWeights(self, weights):
-            self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)
+            print "Incoming weights :", weights.shape
+            self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)#
+
+#            self.weights = numpy.zeros(weights.shape[0:-1], 'uint8')
+#            self.weights[:] = 3
+#            self.weights[:,:,0::4] = 10
+#            self.weights[:,0::4,:] = 10
+#            self.weights[0::4,:,:] = 10
+#            self.weights = self.weights
+
+            self.ws = vigra.tws.IncrementalWS(self.weights)
+            self.volumeBasins = self.ws.getVolumeBasins() #WithBorders()
+            print "Outgoing weights :", self.volumeBasins.shape
+
+            self.volumeBasins.shape = self.volumeBasins.shape + (1,)
