@@ -76,10 +76,10 @@ if ok:
                 print "##########ERROR ######### : SegmentationDataAccessor setitem should not be called"
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
-            self.ws.flood(labelValues, labelIndices)
+            self.basinLabels = self.ws.flood(labelValues, labelIndices)
 
-            self.basinLabels = self.ws.getBasinLabels()
-            print self.basinLabels
+            print self.basinLabels 
+            
             self.acc = SegmentorWSiter.IndexedAccessor(self.volumeBasins, self.basinLabels)
             return self.acc
 

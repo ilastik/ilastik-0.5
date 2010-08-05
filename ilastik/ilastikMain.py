@@ -1500,6 +1500,6 @@ if __name__ == "__main__":
     if mainwindow.labelWidget is not None:
         del mainwindow.labelWidget
     del mainwindow
-    del jobMachine.GLOBAL_WM
+    del core.jobMachine.GLOBAL_WM
     
 
