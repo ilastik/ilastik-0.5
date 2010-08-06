@@ -52,7 +52,7 @@ import threading
 import traceback
 import os, sys
 
-from ilastic.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
+from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
 
 from shortcutmanager import *
 

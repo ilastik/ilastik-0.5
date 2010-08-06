@@ -1,3 +1,5 @@
+import vigra
+
 class DataAccessor():
     """
     This class gives consistent access to data volumes, images channels etc.
