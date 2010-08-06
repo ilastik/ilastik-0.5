@@ -35,13 +35,19 @@ import os
 from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
 from collections import deque
-from PyQt4 import QtCore
+try:
+    from PyQt4 import QtCore
+    ThreadBase = QtCore.QThread
+    have_qt = True
+except:
+    ThreadBase = threading.Thread
+    have_qt = False
 from ilastik.core.utilities import irange
 import onlineClassifcator
 import dataMgr as DM
 import activeLearning, segmentationMgr
 import classifiers
-from ilastik.gui import volumeeditor as ve
+from ilastik.core.volume import DataAccessor as DataAccessor
 import jobMachine
 import sys, traceback
 import ilastik.core.classifiers.classifierRandomForest
@@ -78,9 +84,9 @@ class ClassificationMgr(object):
     def __init__(self):
         pass         
     
-class ClassifierTrainThread(QtCore.QThread):
+class ClassifierTrainThread(ThreadBase):
     def __init__(self, queueSize, dataMgr, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, classifierOptions = (10,)):
-        QtCore.QThread.__init__(self, None)
+        ThreadBase.__init__(self, None)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
         self.count = 0
@@ -121,9 +127,9 @@ class ClassifierTrainThread(QtCore.QThread):
 
 
                     
-class ClassifierPredictThread(QtCore.QThread):
+class ClassifierPredictThread(ThreadBase):
     def __init__(self, dataMgr):
-        QtCore.QThread.__init__(self, None)
+        ThreadBase.__init__(self, None)
         self.count = 0
         self.dataMgr = dataMgr
         self.stopped = False
@@ -184,7 +190,7 @@ class ClassifierPredictThread(QtCore.QThread):
                             count = 1
                         self.prediction = self.prediction / count
                         #item.prediction = ve.DataAccessor(self.prediction.reshape(item.dataVol.data.shape[0:-1] + (self.prediction.shape[-1],)), channels = True)
-                        item.prediction = ve.DataAccessor(self.prediction, channels = True)
+                        item.prediction = DataAccessor(self.prediction, channels = True)
                         self.prediction = None
                 self.dataMgr.featureLock.release()
             except Exception, e:
@@ -196,9 +202,9 @@ class ClassifierPredictThread(QtCore.QThread):
 
                 
 
-class ClassifierInteractiveThread(QtCore.QThread):
+class ClassifierInteractiveThread(ThreadBase):
     def __init__(self, parent, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):
-        QtCore.QThread.__init__(self, None)
+        ThreadBase.__init__(self, None)
 
         self.ilastik = parent
         
@@ -375,7 +381,10 @@ class ClassifierInteractiveThread(QtCore.QThread):
                             print "##################### prediction None #########################"
                     else:
                         print "##################### No Classifiers ############################"
-                    self.emit(QtCore.SIGNAL("resultsPending()"))
+                    if have_qt:
+                        self.emit(QtCore.SIGNAL("resultsPending()"))
+                    else:
+                        raise "Need to add code to signal results pending without Qt"
                     self.ilastik.project.dataMgr.featureLock.release()
                     self.ilastik.activeImageLock.release()                     
                 except Exception, e:
