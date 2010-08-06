@@ -507,8 +507,10 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_changeSegmentor(self):
         dialog = SegmentorSelectionDlg(self)
-        self.project.segmentor = dialog.exec_()
-        self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
+        answer = dialog.exec_()
+        if answer != None:
+            self.project.segmentor = answer
+            self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
 
     def on_segmentationWeights(self):
         dialog = SegmentationWeightSelectionDlg()

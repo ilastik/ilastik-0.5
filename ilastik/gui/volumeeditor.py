@@ -99,38 +99,38 @@ class Maya3DScene(HasTraits):
             self.rawField = self.scene.mlab.pipeline.scalar_field(self.raw)
 
 
-            self.xp = self.scene.mlab.pipeline.image_plane_widget(self.rawField,
-                            plane_orientation='x_axes',
-                            slice_index=10
-                            )
-            def move_slicex(obj, evt):
-                #print obj
-                print obj.GetCurrentCursorPosition()
-                print self.xp.ipw.slice_position
-
-            self.xp.ipw.add_observer('EndInteractionEvent', move_slicex)
-
-            self.yp = self.scene.mlab.pipeline.image_plane_widget(self.rawField,
-                            plane_orientation='y_axes',
-                            slice_index=10
-                        )
-            def move_slicey(obj, evt):
-                #print obj
-                print obj.GetCurrentCursorPosition()
-                print self.yp.ipw.slice_position
-
-            self.yp.ipw.add_observer('EndInteractionEvent', move_slicey)
-
-            self.zp = self.scene.mlab.pipeline.image_plane_widget(self.rawField,
-                            plane_orientation='z_axes',
-                            slice_index=10
-                        )
-            def move_slicez(obj, evt):
-                #print obj
-                print obj.GetCurrentCursorPosition()
-                print self.zp.ipw.slice_position
-
-            self.zp.ipw.add_observer('EndInteractionEvent', move_slicez)
+#            self.xp = self.scene.mlab.pipeline.image_plane_widget(self.rawField,
+#                            plane_orientation='x_axes',
+#                            slice_index=10
+#                            )
+#            def move_slicex(obj, evt):
+#                #print obj
+#                print obj.GetCurrentCursorPosition()
+#                print self.xp.ipw.slice_position
+#
+#            self.xp.ipw.add_observer('EndInteractionEvent', move_slicex)
+#
+#            self.yp = self.scene.mlab.pipeline.image_plane_widget(self.rawField,
+#                            plane_orientation='y_axes',
+#                            slice_index=10
+#                        )
+#            def move_slicey(obj, evt):
+#                #print obj
+#                print obj.GetCurrentCursorPosition()
+#                print self.yp.ipw.slice_position
+#
+#            self.yp.ipw.add_observer('EndInteractionEvent', move_slicey)
+#
+#            self.zp = self.scene.mlab.pipeline.image_plane_widget(self.rawField,
+#                            plane_orientation='z_axes',
+#                            slice_index=10
+#                        )
+#            def move_slicez(obj, evt):
+#                #print obj
+#                print obj.GetCurrentCursorPosition()
+#                print self.zp.ipw.slice_position
+#
+#            self.zp.ipw.add_observer('EndInteractionEvent', move_slicez)
 
             self.plot = self.scene.mlab.pipeline.iso_surface(self.dataField, opacity=0.4, contours=[2])
             

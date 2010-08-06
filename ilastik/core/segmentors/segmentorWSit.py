@@ -56,7 +56,9 @@ if ok:
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-
+        bias = Float(0.8)
+        biasedLabel = Int(2)
+        
         class IndexedAccessor:
             """
             Helper class that behaves like an ndarray, but does a Lookuptable access
@@ -76,6 +78,7 @@ if ok:
                 print "##########ERROR ######### : SegmentationDataAccessor setitem should not be called"
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
+            self.ws.setBias(self.bias,  self.biasedLabel)
             self.basinLabels = self.ws.flood(labelValues, labelIndices)
 
             print self.basinLabels 

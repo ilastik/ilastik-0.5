@@ -60,7 +60,10 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         self.listWidget.setCurrentRow(j)
 
     def currentRowChanged(self, current):
-        c = self.currentSegmentor = self.segmentors[current]()
+        if self.segmentors[current] != self.previousSegmentor.__class__:
+            c = self.currentSegmentor = self.segmentors[current]()
+        else:
+            c = self.currentSegmentor = self.previousSegmentor
         self.name.setText(c.name)
         self.homepage.setText(c.homepage)
         self.description.setText(c.description)
@@ -74,9 +77,12 @@ class SegmentorSelectionDlg(QtGui.QDialog):
 
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
-            return  self.currentSegmentor
+            if self.currentSegmentor != self.previousSegmentor:
+                return  self.currentSegmentor
+            else:
+                return None
         else:
-            return self.previousSegmentor
+            return None #self.previousSegmentor
 
 def test():
     """Text editor demo"""
