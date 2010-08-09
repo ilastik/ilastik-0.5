@@ -53,9 +53,9 @@ import traceback
 import os, sys
 
 from enthought.mayavi import mlab
+from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
 from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
 
-from ilastic.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
 
 from enthought.traits.ui.api import View, Item, Group
 
@@ -202,11 +202,13 @@ class VolumeEditorList(QtCore.QObject):
                 self.emit(QtCore.SIGNAL('removed(int)'), index)
                 self.editors.__delitem__(index)
 
+        if len(self.data.shape) != len(tempShape):
+            self.data = self.data.reshape(tempShape)
+
+
 VolumeEditorList.editors = VolumeEditorList()
 
 
-        if len(self.data.shape) != len(tempShape):
-            self.data = self.data.reshape(tempShape)
 class PatchAccessor():
     def __init__(self, size_x,size_y, blockSize = 128):
         self.blockSize = blockSize

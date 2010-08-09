@@ -1,3 +1,5 @@
+import vigra
+
 class DataAccessor():
     """
     This class gives consistent access to data volumes, images channels etc.
@@ -41,8 +43,10 @@ class DataAccessor():
             
         if rgb:
             tempShape = tempShape + (1,)
-
-        self.data = self.data.reshape(tempShape)
+        
+        if len(self.data.shape) != 5:
+            self.data = self.data.reshape(tempShape)
+            
         self.channels = self.data.shape[-1]
 
         self.rgb = False
@@ -193,7 +197,12 @@ class VolumeLabels():
             h5G[name].attrs['name'] = tName
             h5G[name].attrs['number'] = tNumber
             
-    
+    def getLabelNames(self):
+        labelNames = []
+        for idx, it in enumerate(self.descriptions):
+            labelNames.append(it.name)
+        return labelNames    
+        
     @staticmethod    
     def deserialize(h5G, name ="labels"):
         if name in h5G.keys():
