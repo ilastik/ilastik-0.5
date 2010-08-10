@@ -1144,10 +1144,12 @@ class ClassificationInteractive(object):
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
+	self.parent.labelWidget.connect(self.parent.labelWidget,QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
+
         self.temp_cnt = 0
         self.start()
     
-    def updateThreadQueues(self):
+    def updateThreadQueues(self, a = 0, b = 0):
         if self.classificationInteractive is not None:
             self.myInteractionProgressBar.setVisible(True)
             self.classificationInteractive.dataPending.set()
