@@ -47,6 +47,7 @@ from ilastik.core.volume import Volume as Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
+
 import traceback
 import vigra
 at = vigra.arraytypes
@@ -271,8 +272,7 @@ class DataItemImage(DataItemBase):
         self.dataVol = None
         self.prediction = None
         self.trainingF = None        
-        self.features = [] #features is an array of arrays of arrays etc. like this
-                           #feature, channel, time
+        self.features = [] 
         self._featureM = None
         self.history = None
         self.featureCacheDS = None
@@ -286,15 +286,9 @@ class DataItemImage(DataItemBase):
             g = f['volume']
             self.deserialize(g)
         else:
-            self.data = DataImpex.loadImageData(self.fileName)
-            self.labels = None
-        #print "Shape after Loading and width",self.data.shape, self.data.width
-        if self.dataVol is None:
-            dataAcc = DataAccessor(self.data)
-            self.dataVol = Volume()
-            self.dataVol.data = dataAcc
-            self.dataVol.labels = self.labels
-        
+            data = DataImpex.loadImageData(self.fileName)
+            dataAcc = DataAccessor(data)
+            self.dataVol = Volume(dataAcc)        
    
     @classmethod
     def initFromArray(cls, dataArray, originalFileName):
@@ -350,7 +344,10 @@ class DataItemImage(DataItemBase):
             return None, None, None
             
     def updateTrainingMatrix(self, newLabels):
-        #TODO: this method is crazy, make it less crazy
+        """
+        This method updates the current training Matrix with new labels.
+        newlabels can contain completey new labels, changed labels and deleted labels
+        """
         for nl in newLabels:
             try:
                 if nl.erasing == False:
@@ -526,8 +523,7 @@ class DataMgr():
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
-                if have_qu:
-                    QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
+                QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
                 raise e
 
             alreadyLoaded = True

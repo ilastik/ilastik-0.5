@@ -35,6 +35,7 @@
 # p.sort_statsf('time').reverse_order().print_stats()
 # possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
 
+
 from OpenGL.GL import *
 try:
     from OpenGL.GLX import *
@@ -78,6 +79,8 @@ import getopt
 
 from ilastik.gui import volumeeditor as ve
 from ilastik.gui.shortcutmanager import *
+
+from ilastik.gui.labelWidget import LabelListWidget
 
 #make the program quit on Ctrl+C
 import signal
@@ -400,42 +403,9 @@ class MainWindow(QtGui.QMainWindow):
         tmp.exec_()
         
     def updateLabelWidgetOverlays(self):
-        #TODO: this whole method is so ugly, it should be forbidden !
-        
-        activeItem = self.project.dataMgr[self.activeImage]
-        self.labelWidget.overlayView.clearOverlays()
-
-        for imageIndex, imageItem in  enumerate(self.project.dataMgr):           
-            if imageIndex != self.activeImage:
-                if imageItem.dataVol.labels is None:
-                    imageItem.dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((imageItem.dataVol.data.shape[0:4]),'uint8')))
-                else:
-                    for ii, itemii in enumerate(activeItem.dataVol.labels.descriptions):
-                        if ii < len(imageItem.dataVol.labels.descriptions):
-                            if not (imageItem.dataVol.labels.descriptions[ii] ==  itemii):
-                                imageItem.dataVol.labels.descriptions[ii] = itemii.clone()
-                                imageItem.dataVol.labels.descriptions[ii].prediction = None
-                        else:
-                            imageItem.dataVol.labels.descriptions.append(itemii.clone())
-                            imageItem.dataVol.labels.descriptions[ii].prediction = None
-            else:
-                if imageItem.dataVol.labels.data is None:
-                    imageItem.dataVol.labels.data = ve.DataAccessor(numpy.zeros((imageItem.dataVol.data.shape[0:4]),'uint8'))
-
-        for imageIndex, imageItem in  enumerate(self.project.dataMgr):            
-            for p_i, item in enumerate(imageItem.dataVol.labels.descriptions):
-                if item.prediction is None:
-                   item.prediction = numpy.zeros(imageItem.dataVol.data.shape[0:-1],'uint8')
-                if imageIndex == self.activeImage:
-                    color = QtGui.QColor.fromRgb(long(item.color))
-                    self.labelWidget.addOverlay(True, item.prediction, item.name, color, 0.4)
-            
-            if imageItem.dataVol.uncertainty is None:
-                imageItem.dataVol.uncertainty = numpy.zeros( imageItem.dataVol.data.shape[0:-1] ,'uint8')
-
-            if imageIndex == self.activeImage: 
-                self.labelWidget.addOverlay(False, activeItem.dataVol.uncertainty, "Uncertainty", QtGui.QColor(255,0,0), 0.9)
-                  
+        #TODO: this method is not needed anymore
+	print "################ updateLabelWidgetOverlays"
+	pass
         
     def newFeatureDlg(self):
         self.newFeatureDlg = FeatureDlg(self)
@@ -460,17 +430,14 @@ class MainWindow(QtGui.QMainWindow):
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
-        self.labelWidget.labelView.labelPropertiesChanged_callback = self.updateLabelWidgetOverlays
 
         self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
         self.labelWidget.normalizeData = self.project.normalizeData
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
         self.labelWidget.setRgbMode(self.project.rgbData)
         
-        #self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)
-        self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
-        self.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.on_NewLabels)
-                
+        self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  dataVol.labels,  self.labelWidget))
+        
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
@@ -1502,6 +1469,9 @@ if __name__ == "__main__":
     if mainwindow.labelWidget is not None:
         del mainwindow.labelWidget
     del mainwindow
+
+
     del core.jobMachine.GLOBAL_WM
+
     
 

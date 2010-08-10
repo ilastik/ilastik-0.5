@@ -1,4 +1,4 @@
-import vigra
+import numpy, vigra
 
 class DataAccessor():
     """
@@ -147,11 +147,11 @@ class DataAccessor():
         return DataAccessor(data, channels = True)
         
 class VolumeLabelDescription():
-    def __init__(self, name,number, color):
+    def __init__(self, name,number, color,  prediction):
         self.number = number
         self.name = name
         self.color = color
-        self.prediction = None
+        self.prediction = prediction
 
         
     def __eq__(self, other):
@@ -180,7 +180,7 @@ class VolumeLabels():
 
         self.descriptions = [] #array of VolumeLabelDescriptions
         
-    def serialize(self, h5G, name = "labels"):
+    def serialize(self, h5G, name):
         self.data.serialize(h5G, name)
         
         tColor = []
@@ -204,7 +204,7 @@ class VolumeLabels():
         return labelNames    
         
     @staticmethod    
-    def deserialize(h5G, name ="labels"):
+    def deserialize(h5G,  name):
         if name in h5G.keys():
             data = DataAccessor.deserialize(h5G, name)
             colors = []
@@ -216,7 +216,7 @@ class VolumeLabels():
                 numbers = h5G[name].attrs['number']
             descriptions = []
             for index, item in enumerate(colors):
-                descriptions.append(VolumeLabelDescription(names[index], numbers[index], colors[index]))
+                descriptions.append(VolumeLabelDescription(names[index], numbers[index], colors[index],  numpy.zeros(data.shape[0:-1],  'uint8')))
     
             vl =  VolumeLabels(data)
             vl.descriptions = descriptions
@@ -225,25 +225,42 @@ class VolumeLabels():
             return None
         
 class Volume():
-    def __init__(self):
-        self.data = None
-        self.labels = None
-        self.uncertainty = None
-        self.segmentation = None
+    def __init__(self,  data,  labels = None,  seeds = None,  uncertainty = None,  segmentation = None):
+        self.data = data
+        self.labels = labels
+        self.seeds = seeds
+        self.uncertainty = uncertainty
+        self.segmentation = segmentation
         
+        if self.labels is None:
+            l = numpy.zeros(self.data.shape[0:-1] + (1, ),  'uint8')
+            self.labels = VolumeLabels(l)
+            
+        if self.seeds is None:
+            l = numpy.zeros(self.data.shape[0:-1] + (1, ),  'uint8')
+            self.seeds = VolumeLabels(l)
+
+        if self.uncertainty is None:
+            self.uncertainty = numpy.zeros(self.data.shape[0:-1],  'uint8')
+
+        if self.segmentation is None:
+            self.segmentation = numpy.zeros(self.data.shape[0:-1],  'uint8')
+
+
     def serialize(self, h5G):
         self.data.serialize(h5G, "data")
         if self.labels is not None:
             self.labels.serialize(h5G, "labels")
+        if self.seeds is not None:
+            self.labels.serialize(h5G, "seeds")
         
     @staticmethod
     def deserialize(h5G):
         #TODO: make nicer
         data = DataAccessor.deserialize(h5G)
-        labels = VolumeLabels.deserialize(h5G)
-        v =  Volume()
-        v.data = data
-        v.labels = labels
+        labels = VolumeLabels.deserialize(h5G,  "labels")
+        seeds = VolumeLabels.deserialize(h5G,  "seeds")
+        v =  Volume(data,  labels)
         return v
 
 

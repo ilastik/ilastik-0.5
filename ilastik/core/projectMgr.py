@@ -43,6 +43,7 @@ from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
 from ilastik.core import segmentors
+from ilastik.core import labelMgr
 
 class Project(object):
     """
@@ -68,6 +69,7 @@ class Project(object):
         self.trainingLabels = None
         self.trainingFeatureNames = None
         self.featureMgr = None
+        self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = segmentors.segmentorWS.SegmentorWS()
     
