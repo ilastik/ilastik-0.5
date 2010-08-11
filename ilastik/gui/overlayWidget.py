@@ -54,7 +54,7 @@ class OverlayGrp(dict):
         self.name = name
         
     def remove(self,  key):
-        self.pop(key,  None)
+        val = self.pop(key,  None)
           
         
         

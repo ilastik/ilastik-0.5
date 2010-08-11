@@ -288,7 +288,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
         self.connect(self.ribbon.tabDict['Projects'].itemDict['Options'], QtCore.SIGNAL('clicked()'), self.optionsDlg)
-        self.connect(self.ribbon.tabDict['Features'].itemDict['Select and Compute'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Select Features'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
@@ -331,7 +331,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setToolTip('Save the current Project')
-        self.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
         self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
@@ -408,7 +408,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        self.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
+        self.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
         self.project.dataMgr.activeImage = self.activeImage
         
     def optionsDlg(self):
@@ -1040,7 +1040,7 @@ class FeatureDlg(QtGui.QDialog):
         
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
-        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
         self.close()
@@ -1065,7 +1065,7 @@ class FeatureDlg(QtGui.QDialog):
 class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
-        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(False)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(False)
         self.featureCompute()
         
         
@@ -1106,7 +1106,7 @@ class FeatureComputation(object):
         if hasattr(self.parent, "classificationInteractive"):
             self.parent.classificationInteractive.updateThreadQueues()
             
-        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
                     

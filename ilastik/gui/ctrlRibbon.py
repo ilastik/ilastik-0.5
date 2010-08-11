@@ -163,7 +163,6 @@ class RibbonEntryGroup():
 def createRibbons():
     RibbonGroupObjects = {}
     RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
-    RibbonGroupObjects["Features"] = RibbonEntryGroup("Features", 1)   
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
     RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
     RibbonGroupObjects["Automate"] = RibbonEntryGroup("Automate", 4)
@@ -178,7 +177,7 @@ def createRibbons():
     RibbonGroupObjects["Projects"].append(RibbonEntry("", None, "", type=RibbonStretch))
     RibbonGroupObjects["Projects"].append(RibbonEntry("Options", ilastikIcons.Edit ,"Options"))
     
-    RibbonGroupObjects["Features"].append(RibbonEntry("Select and Compute", ilastikIcons.Select ,"Select & compute features"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Select Features", ilastikIcons.Select ,"Select and compute features"))
     
     RibbonGroupObjects["Classification"].append(RibbonEntry("Start Live Prediction", ilastikIcons.Play ,"Interactive prediction of visible image parts while drawing etc.",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and predict the whole image"))
