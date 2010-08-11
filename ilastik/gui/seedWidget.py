@@ -31,7 +31,7 @@ from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
         
-class LabelListItem(QtGui.QListWidgetItem):
+class SeedListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
         QtGui.QListWidgetItem.__init__(self, name)
         self.number = number
@@ -53,7 +53,7 @@ class LabelListItem(QtGui.QListWidgetItem):
         self.setIcon(icon)      
 
 
-class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
+class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
     def __init__(self,  labelMgr,  volumeLabels,  volumeEditor):
         QtGui.QWidget.__init__(self,  None)
         BaseLabelWidget.__init__(self,None)
@@ -61,7 +61,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
         self.listWidget = QtGui.QListWidget(self)
 
         #Label selector
-        self.addLabelButton = QtGui.QPushButton("Create Class")
+        self.addLabelButton = QtGui.QPushButton("Create Seed")
         self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
 
         self.layout().addWidget(self.addLabelButton)
@@ -87,7 +87,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):
-            li = LabelListItem(item.name,item.number, QtGui.QColor.fromRgb(long(item.color)))
+            li = SeedListItem(item.name,item.number, QtGui.QColor.fromRgb(long(item.color)))
             self.listWidget.addItem(li)
             self.items.append(li)
         self.buildColorTab()
@@ -99,7 +99,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
         self.volumeLabel.descriptions[self.currentRow()].name = text
         
     def createLabel(self):
-        name = "Label " + len(self.items).__str__()
+        name = "Seed " + len(self.items).__str__()
         number = len(self.items)
         if number > len(self.labelColorTable):
             color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
@@ -112,7 +112,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
     def addLabel(self, labelName, labelNumber, color):
         self.labelMgr.addLabel(labelName,  labelNumber,  color.rgb())
         
-        label =  LabelListItem(labelName, labelNumber, color)
+        label =  SeedListItem(labelName, labelNumber, color)
         self.items.append(label)
         self.listWidget.addItem(label)
         self.buildColorTab()
@@ -181,7 +181,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
             self.volumeEditor.repaint()
 
     def nextLabel(self):
-        print "next label"
+        print "next seed"
         i = self.listWidget.selectedIndexes()[0].row()
         if i+1 == self.listWidget.model().rowCount():
             i = self.listWidget.model().index(0,0)
@@ -190,7 +190,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
 
     def prevLabel(self):
-        print "prev label"
+        print "prev seed"
         i = self.listWidget.selectedIndexes()[0].row()
         if i >  0:
             i = self.listWidget.model().index(i-1,0)

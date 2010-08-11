@@ -81,6 +81,7 @@ from ilastik.gui import volumeeditor as ve
 from ilastik.gui.shortcutmanager import *
 
 from ilastik.gui.labelWidget import LabelListWidget
+from ilastik.gui.seedWidget import SeedListWidget
 
 #make the program quit on Ctrl+C
 import signal
@@ -343,6 +344,14 @@ class MainWindow(QtGui.QMainWindow):
         #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
         
         self.ribbon.setCurrentIndex (0)
+        self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
+
+
+    def tabChanged(self,  index):
+        if self.ribbon.tabText(index) == "Segmentation":
+            self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget))
+        elif self.labelWidget is not None:
+            self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget))
           
     def newProjectDlg(self):
         self.projectDlg = ProjectDlg(self)

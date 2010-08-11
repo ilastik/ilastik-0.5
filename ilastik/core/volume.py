@@ -168,7 +168,7 @@ class VolumeLabelDescription():
         return not(self.__eq__(other))
 
     def clone(self):
-        t = VolumeLabelDescription( self.name, self.number, self.color)
+        t = VolumeLabelDescription( self.name, self.number, self.color,  self.prediction)
         return t
     
 class VolumeLabels():
@@ -252,7 +252,7 @@ class Volume():
         if self.labels is not None:
             self.labels.serialize(h5G, "labels")
         if self.seeds is not None:
-            self.labels.serialize(h5G, "seeds")
+            self.seeds.serialize(h5G, "seeds")
         
     @staticmethod
     def deserialize(h5G):
@@ -260,7 +260,7 @@ class Volume():
         data = DataAccessor.deserialize(h5G)
         labels = VolumeLabels.deserialize(h5G,  "labels")
         seeds = VolumeLabels.deserialize(h5G,  "seeds")
-        v =  Volume(data,  labels)
+        v =  Volume(data,  labels = labels,  seeds = seeds)
         return v
 
 

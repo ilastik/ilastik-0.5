@@ -44,6 +44,7 @@ from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
 from ilastik.core import segmentors
 from ilastik.core import labelMgr
+from ilastik.core import seedMgr
 
 class Project(object):
     """
@@ -70,6 +71,7 @@ class Project(object):
         self.trainingFeatureNames = None
         self.featureMgr = None
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
+        self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = segmentors.segmentorWS.SegmentorWS()
     
@@ -107,9 +109,7 @@ class Project(object):
                 item.prediction.serialize(dk, 'prediction' )
             if item.history is not None:
                 item.history.serialize(dk)
-            
-        
-        
+
         # Save to hdf5 file
         fileHandle.close()
         print "Project %s saved to %s " % (self.name, fileName)
