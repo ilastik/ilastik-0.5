@@ -58,3 +58,5 @@ class SeedMgr(object):
             #TODO: also remove the labelNumber from the imageItem.labels and decrease the others -1
             #TODO: also update the seedItem history !
         
+    def newLabels(self,  newLabels):
+        self.dataMgr.updateSeeds(newLabels)

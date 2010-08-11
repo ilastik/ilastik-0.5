@@ -226,7 +226,8 @@ class MainWindow(QtGui.QMainWindow):
         if number != self.activeImage:
             self.project.dataMgr[self.activeImage].history = self.labelWidget.history
         self.activeImage = number
-
+        self.project.dataMgr.activeImage = number
+        
         self.destroyImageWindows()
 
         self.createImageWindows( self.project.dataMgr[number].dataVol)
@@ -352,7 +353,9 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget))
         elif self.labelWidget is not None:
             self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget))
-          
+        if self.labelWidget is not None:
+            self.labelWidget.repaint()
+            
     def newProjectDlg(self):
         self.projectDlg = ProjectDlg(self)
     
@@ -406,6 +409,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
         self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
         self.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
+        self.project.dataMgr.activeImage = self.activeImage
         
     def optionsDlg(self):
         tmp = ProjectSettingsDlg(self, self.project)
@@ -547,13 +551,6 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_segmentation_border(self):
         pass
-
-
-    def on_NewLabels(self):
-        newLabels = self.labelWidget.getPendingLabels()
-        if len(newLabels) > 0:
-            self.project.dataMgr.updateTrainingMatrix(self.activeImage, newLabels)
-
 
     def on_saveClassifier(self, fileName=None):
         
@@ -1129,7 +1126,7 @@ class ClassificationTrain(object):
         
         newLabels = self.parent.labelWidget.getPendingLabels()
         if len(newLabels) > 0:
-            self.parent.project.dataMgr.updateTrainingMatrix(self.parent.activeImage, newLabels)
+            self.parent.project.dataMgr.updateTrainingMatrix(newLabels)
         
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      

@@ -271,9 +271,16 @@ class DataItemImage(DataItemBase):
         self.overlayImage = None
         self.dataVol = None
         self.prediction = None
-        self.trainingF = None        
         self.features = [] 
         self._featureM = None
+        
+        self.trainingF = numpy.zeros((0), 'float32')      
+        self.trainingL = numpy.zeros((0, 1), 'uint8')
+        self.trainingIndices = numpy.zeros((0, 1), 'uint32')
+        
+        self.seedL = numpy.zeros((0, 1), 'uint8')
+        self.seedIndices = numpy.zeros((0, 1), 'uint32')
+        
         self.history = None
         self.featureCacheDS = None
         self.featureBlockAccessor = None
@@ -317,8 +324,6 @@ class DataItemImage(DataItemBase):
         return trainingF
         
     def getTrainingMatrixRef(self):
-        #TODO: time behaviour should be discussed !
-        #also adapt feature computation when doing this(4D??)!
         if self.trainingF is None and self._featureM is not None:
             tempF = []
             tempL = []
@@ -342,7 +347,23 @@ class DataItemImage(DataItemBase):
             return self.trainingL, self.trainingF, self.trainingIndices
         else:
             return None, None, None
-            
+    
+    def buildSeedsWhenNotThere(self):
+        if self.seedL is None:
+            tempL = []
+    
+            tempd =  self.dataVol.seeds.data[:, :, :, :, 0].ravel()
+            indices = numpy.nonzero(tempd)[0]
+            tempL = self.dataVol.seeds.data[:,:,:,:,0].ravel()[indices]
+            tempL.shape += (1,)
+                                   
+            self.seedIndices = indices
+            self.seedL = tempL
+    
+    def getSeeds(self):
+        self.buildSeedsWhenNotThere()
+        return self.seedL,  self.seedIndices
+        
     def updateTrainingMatrix(self, newLabels):
         """
         This method updates the current training Matrix with new labels.
@@ -455,7 +476,100 @@ class DataItemImage(DataItemBase):
                 print self.trainingF.shape
                 print nonzero
 
-        
+
+    def updateSeeds(self, newLabels):
+        """
+        This method updates the seedMatrix with new seeds.
+        newlabels can contain completey new labels, changed labels and deleted labels
+        """
+        for nl in newLabels:
+            try:
+                if nl.erasing == False:
+                    indic =  list(numpy.nonzero(nl.data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(self.dataVol.data.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
+
+                    if len(indices.shape) == 1:
+                        indices.shape = indices.shape + (1,)
+
+                    mask = numpy.setmember1d(self.seedIndices.ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        tt = numpy.delete(self.seedIndices,nonzero)
+                        if len(tt.shape) == 1:
+                            tt.shape = tt.shape + (1,)
+                        self.seedIndices = numpy.concatenate((tt,indices))
+                        tempI = numpy.nonzero(nl.data)
+                        tempL = nl.data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = numpy.delete(self.seedL,nonzero)
+                        temp2.shape += (1,)
+                        self.seedL = numpy.vstack((temp2,tempL))
+
+
+                    elif indices.shape[0] > 0: #no intersection, just add everything...
+                        if len(self.seedIndices.shape) == 1:
+                            self.seedIndices.shape = self.seedIndices.shape + (1,)
+                        self.seedIndices = numpy.concatenate((self.seedIndices,indices))
+
+                        tempI = numpy.nonzero(nl.data)
+                        tempL = nl.data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = self.seedL
+                        self.seedL = numpy.vstack((temp2,tempL))
+
+                else: #erasing == True
+                    indic =  list(numpy.nonzero(nl.data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(self.dataVol.data.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
+
+                    mask = numpy.setmember1d(self.seedIndices.ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        if self.seedIndices is not None:
+                            self.seedIndices = numpy.delete(self.seedIndices,nonzero)
+                            self.seedL  = numpy.delete(self.seedL,nonzero)
+                            self.seedL.shape += (1,) #needed because numpy.delete is stupid
+                    else: #no intersectoin, in erase mode just pass
+                        pass
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
+                print self.trainingIndices.shape
+                print indices.shape
+                print self.trainingF.shape
+                print nonzero
+                
+    def clearSeeds(self):
+        self.seedL = None
+        self.seedIndices = None
+
     def clearFeaturesAndTraining(self):
         self.trainingF = None
         self.trainingL = None
@@ -515,6 +629,7 @@ class DataMgr():
         self.trainingF = None
         self.featureCacheFile = featureCacheFile
         self.channels = -1
+        self.activeImage = 0
             
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
@@ -586,10 +701,12 @@ class DataMgr():
             return None, None
         
     
-    def updateTrainingMatrix(self, num, newLabels):
+    def updateTrainingMatrix(self, newLabels,  imageNr = None):
         if self.trainingF is None or len(self.trainingF) == 0 or self.trainingVersion < self.featureVersion:
             self.buildTrainingMatrix()        
-        self[num].updateTrainingMatrix(newLabels)
+        if imageNr is None:
+            imageNr = self.activeImage
+        self[imageNr].updateTrainingMatrix(newLabels)
 
 
 
@@ -606,6 +723,16 @@ class DataMgr():
         
         for index, item in enumerate(self):
             item.clearFeaturesAndTraining()
+            
+    def clearSeeds(self):
+        for index, item in enumerate(self):
+            item.clearSeeds()
+
+    def updateSeeds(self, newLabels,  imageNr = None):
+        if imageNr is None:
+            imageNr = self.activeImage
+        self[imageNr].updateSeeds(newLabels)
+        
 
     def removeLabel(self, number):
         self.featureLock.acquire()

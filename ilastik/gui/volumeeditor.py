@@ -872,6 +872,8 @@ class VolumeEditor(QtGui.QWidget):
 
         self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays, tempLabels, self.labelsAlpha)
 
+        newLabels = self.getPendingLabels()
+        self.labelWidget.labelMgr.newLabels(newLabels)
 
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
             
