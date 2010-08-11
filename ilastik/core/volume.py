@@ -229,6 +229,10 @@ class Volume():
         self.data = data
         self.labels = labels
         self.seeds = seeds
+        
+        self.seedOverlays = []
+        self.labelOverlays = []
+        
         self.uncertainty = uncertainty
         self.segmentation = segmentation
         

@@ -47,6 +47,7 @@ from ilastik.core.volume import Volume as Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
+from ilastik.core import overlayMgr
 
 import traceback
 import vigra
@@ -285,6 +286,8 @@ class DataItemImage(DataItemBase):
         self.featureCacheDS = None
         self.featureBlockAccessor = None
         self.segmentationWeights = None
+        
+        self.overlayMgr = overlayMgr.OverlayMgr()
         
     def loadData(self):
         fBase, fExt = os.path.splitext(self.fileName)

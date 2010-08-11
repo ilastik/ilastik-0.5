@@ -64,7 +64,6 @@ from enthought.mayavi.core.ui.api import MayaviScene, SceneEditor, MlabSceneMode
 
 from shortcutmanager import *
 
-from ilastik.core import overlayMgr
 from ilastik.gui.overlayWidget import OverlayListWidget
 from ilastik.gui.labelWidget import LabelListWidget
 
@@ -387,12 +386,19 @@ class DummyLabelWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self)
         self.volumeLabels = None
 
+class DummyOverlayListWidget(QtGui.QWidget):
+    def __init__(self,  parent):
+        QtGui.QWidget.__init__(self)
+        self.volumeEditor = parent
+        self.overlays = []
+
 
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
-    def __init__(self, image, name="", font=None,
-                 readonly=False, size=(400, 300), labels = None , opengl = True, openglOverview = True, embedded = False, parent = None):
+    def __init__(self, image, parent,  name="", font=None,
+                 readonly=False, size=(400, 300), opengl = True, openglOverview = True):
         QtGui.QWidget.__init__(self, parent)
+        self.ilastik = parent
         self.name = name
         title = name
         
@@ -423,7 +429,7 @@ class VolumeEditor(QtGui.QWidget):
             #print "Enabling OpenGL Overview rendering"
             pass
         
-        self.embedded = embedded
+        self.embedded = True
 
 
         QtGui.QPixmapCache.setCacheLimit(100000)
@@ -559,8 +565,8 @@ class VolumeEditor(QtGui.QWidget):
 
 
         #Overlay selector
-        self.overlayView = OverlayListWidget(self)
-        self.toolBoxLayout.addWidget( self.overlayView)
+        self.overlayWidget = DummyOverlayListWidget(self)
+        self.toolBoxLayout.addWidget( self.overlayWidget)
         self.toolBoxLayout.addStretch()
 
 
@@ -663,6 +669,10 @@ class VolumeEditor(QtGui.QWidget):
             for i in range(3):
                 self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
 
+    def onOverlaySelected(self, index):
+        if self.labelWidget.currentItem() is not None:
+            pass
+
     def focusNextPrevChild(self, forward = True):
         if forward is True:
             self.focusAxis += 1
@@ -684,13 +694,9 @@ class VolumeEditor(QtGui.QWidget):
     def togglePrediction(self):
         labelNames = self.labelWidget.volumeLabels.getLabelNames()
         state = None
-        for index in range(0,self.overlayView.count()):
-            item = self.overlayView.item(index)
-            if str(item.text()) in labelNames:
-                if state is None:
-                   state = not(item.visible)
-                item.visible = state
-                item.setCheckState(item.visible * 2)
+        for index,  item in enumerate(self.overlayWidget.overlays):
+            if item.name in labelNames:
+                self.overlayWidget.toggleVisible(index)
         self.repaint()
         
 
@@ -708,32 +714,29 @@ class VolumeEditor(QtGui.QWidget):
     def historyRedo(self):
         self.history.redo()
 
-    def clearOverlays(self):
-        self.overlayView.clearOverlays()
-
     def addOverlay(self, visible, data, name, color, alpha, colorTab = None):
         ov = VolumeOverlay(data,name, color, alpha, colorTab, visible)
-        self.overlayView.addOverlay(ov)
+        self.overlayWidget.addOverlay(ov)
 
     def addOverlayObject(self, ov):
-        self.overlayView.addOverlay(ov)
+        self.overlayWidget.addOverlay(ov)
         
     def repaint(self):
         for i in range(3):
             tempImage = None
             tempLabels = None
             tempoverlays = []   
-            for index, item in enumerate(self.overlayView.overlays):
+            for index, item in enumerate(self.overlayWidget.overlays):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
     
             tempImage = self.image.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
             
-            if self.labelWidget.volumeLabels is not None:
-                if self.labelWidget.volumeLabels.data is not None:
-                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
+#            if self.labelWidget.volumeLabels is not None:
+#                if self.labelWidget.volumeLabels.data is not None:
+#                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
     
-            self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, tempLabels, self.labelsAlpha, fastPreview = False)
+            self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
 
     def setLabelWidget(self,  widget):
         """
@@ -741,10 +744,23 @@ class VolumeEditor(QtGui.QWidget):
         """
         if self.labelWidget is not None:
             self.toolBoxLayout.removeWidget(self.labelWidget)
+            del self.labelWidget
         self.labelWidget = widget
         self.connect(self.labelWidget , QtCore.SIGNAL("selectedLabel(int)"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 3, self.labelWidget)        
+        self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
     
+    def setOverlayWidget(self,  widget):
+        """
+        Public interface function for setting the overlayWidget toolBox
+        """
+        if self.overlayWidget is not None:
+            self.toolBoxLayout.removeWidget(self.overlayWidget)
+            del self.overlayWidget
+        self.overlayWidget = widget
+        self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
+        self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
+        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr.widget = self.overlayWidget
+
 
     def get_copy(self):
         """Return modified text"""
@@ -806,19 +822,19 @@ class VolumeEditor(QtGui.QWidget):
         tempoverlays = []
         self.sliceSelectors[axis].setValue(num)
 
-        for index, item in enumerate(self.overlayView.overlays):
+        for index, item in enumerate(self.overlayWidget.overlays):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
 
         tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
 
-        if self.labelWidget.volumeLabels is not None:
-            if self.labelWidget.volumeLabels.data is not None:
-                tempLabels = self.labelWidget.volumeLabels.data.getSlice(num,axis, self.selectedTime, 0)
+#        if self.labelWidget.volumeLabels is not None:
+#            if self.labelWidget.volumeLabels.data is not None:
+#                tempLabels = self.labelWidget.volumeLabels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
         self.imageScenes[axis].sliceNumber = num
-        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, tempLabels, self.labelsAlpha, fastPreview = True)
+        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, fastPreview = True)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
@@ -861,7 +877,7 @@ class VolumeEditor(QtGui.QWidget):
         tempImage = None
         tempLabels = None
         tempoverlays = []
-        for index, item in enumerate(self.overlayView.overlays):
+        for index, item in enumerate(self.overlayWidget.overlays):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
@@ -870,7 +886,7 @@ class VolumeEditor(QtGui.QWidget):
         if self.labelWidget.volumeLabels.data is not None:
             tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[axis],axis, self.selectedTime, 0)
 
-        self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays, tempLabels, self.labelsAlpha)
+        self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays)
 
         newLabels = self.getPendingLabels()
         self.labelWidget.labelMgr.newLabels(newLabels)
@@ -1047,7 +1063,7 @@ class ImageSceneRenderThread(QtCore.QThread):
             while len(self.queue) > 0:
                 stuff = self.queue.pop()
                 if stuff is not None:
-                    nums, origimage, overlays , origlabels , labelsAlpha, min, max  = stuff
+                    nums, origimage, overlays , min, max  = stuff
                     for patchNr in nums:
                         if self.newerDataPending.isSet():
                             self.newerDataPending.clear()
@@ -1079,17 +1095,6 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 image0.fill(origitem.color.rgba())
                                 image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), False))
 
-                            p.drawImage(0,0, image0)
-                        if origlabels is not None:
-                            labels = origlabels[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-                            #p.setOpacity(item.alpha)
-
-                            p.setOpacity(labelsAlpha)
-                            image0 = qimage2ndarray.gray2qimage(labels.swapaxes(0,1), False)
-
-                            image0.setColorTable(self.volumeEditor.labelWidget.colorTab)
-                            mask = image0.createMaskFromColor(QtGui.QColor(0,0,0).rgb(),QtCore.Qt.MaskOutColor)
-                            image0.setAlphaChannel(mask)
                             p.drawImage(0,0, image0)
 
                         p.end()
@@ -1469,14 +1474,14 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.dataPending.set()
         self.thread.wait()
 
-    def updatePatches(self, patchNumbers ,image, overlays = [], labels = None, labelsAlpha = 1.0):
-        stuff = [patchNumbers,image, overlays, labels, labelsAlpha, self.min, self.max]
+    def updatePatches(self, patchNumbers ,image, overlays = []):
+        stuff = [patchNumbers,image, overlays, self.min, self.max]
         #print patchNumbers
         if patchNumbers is not None:
             self.thread.queue.append(stuff)
             self.thread.dataPending.set()
 
-    def displayNewSlice(self, image, overlays = [], labels = None, labelsAlpha = 1.0, fastPreview = True):
+    def displayNewSlice(self, image, overlays = [], fastPreview = True):
         self.thread.queue.clear()
         self.thread.newerDataPending.set()
 
@@ -1499,11 +1504,11 @@ class ImageScene( QtGui.QGraphicsView):
             self.min = 0
             self.max = 255
 
-            self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
+            self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 
-    def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
+    def display(self, image, overlays = []):
         self.thread.queue.clear()
-        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 
     def clearTempitems(self):
         #only proceed if htere is no new data already in the rendering thread queue

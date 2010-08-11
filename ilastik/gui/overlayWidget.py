@@ -31,70 +31,22 @@ from PyQt4 import QtCore, QtGui
 import vigra, numpy
 import sip
 
-#TODO:
-#QtGui.QListWidgetItem.__init__(self,name)
-
-
-
 from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
+from ilastik.core.overlayMgr import OverlayMgr,  OverlayItem, OverlaySlice
 
-class OverlaySlice():
-    """
-    Helper class to encapsulate the overlay slice and its drawing related settings
-    """
-    def __init__(self, data, color, alpha, colorTable):
-        self.colorTable = colorTable
-        self.color = color
-        self.alpha = alpha
-        self.alphaChannel = None
-        self.data = data
+class OverlayListWidgetItem(QtGui.QListWidgetItem):
+    def __init__(self, overlayItem):
+        QtGui.QListWidgetItem.__init__(self,overlayItem.name)
+        self.overlayItem = overlayItem
+        self.name = overlayItem.name
+        self.color = self.overlayItem.color
+        self.colorTab = self.overlayItem.colorTable
+        self.visible = True
 
-class OverlayGrp(dict):
-    def __init__(self,  name):
-        self.name = name
-        
-    def remove(self,  key):
-        val = self.pop(key,  None)
-          
-        
-        
-class OverlayItem(DataAccessor):
-    def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None, visible = True):
-        DataAccessor.__init__(self,data)
-        self.colorTable = colorTable
-        self.color = color
-        self.alpha = alpha
-        self.name = name
-        self.visible = visible
-        
-    def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)       
-        
+        s = QtCore.Qt.Checked
 
-
-
-class OverlayMgr(dict):
-    def __init__(self,  widget = None):
-        dict.__init__(self)
-        self.widget = widget
-        
-    def remove(self,  key):
-        self.pop(key,  None)
-        if self.widget != None:
-            self.widget.remove(key)
-            
-    def __setitem__(self,  key,  value):
-        dict.__setitem__(self,  key,  value)
-        if self.widget != None:
-            self.widget[key] = value
-            
-            
-    def __getitem__(self,  key):
-        #if the requested key does not exist, construct a group corresponding to the key
-        if self.has_key(key):
-            return dict.__getitem__(self,  key)
-        else:
-            self[key] = OverlayGrp(name)
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
+        self.setCheckState(s)
 
 
 class OverlayListWidget(QtGui.QListWidget):
@@ -108,22 +60,24 @@ class OverlayListWidget(QtGui.QListWidget):
             self.slider.setRange(min,max)
             self.slider.setValue(value)
 
-    def __init__(self,parent):
+    def __init__(self,parent, overlays):
         QtGui.QListWidget.__init__(self, parent)
         self.volumeEditor = parent
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.connect(self, QtCore.SIGNAL("clicked(QModelIndex)"), self.onItemClick)
         self.connect(self, QtCore.SIGNAL("doubleClicked(QModelIndex)"), self.onItemDoubleClick)
-        self.overlays = [] #array of VolumeOverlays
+        self.overlays = overlays  #array of VolumeOverlays
         self.currentItem = None
+        for overlay in self.overlays:
+            self.addItem(OverlayListWidgetItem(overlay))
 
     def onItemClick(self, itemIndex):
         item = self.itemFromIndex(itemIndex)
-        if (item.checkState() == QtCore.Qt.Checked and not item.visible) or (item.checkState() == QtCore.Qt.Unchecked and item.visible):
-            item.visible = not(item.visible)
+        if (item.checkState() == QtCore.Qt.Checked and not item.overlayItem.visible) or (item.checkState() == QtCore.Qt.Unchecked and item.overlayItem.visible):
+            item.overlayItem.visible = not(item.overlayItem.visible)
             s = None
-	    if item.visible:
+            if item.overlayItem.visible:
                 s = QtCore.Qt.Checked
             else:
                 s = QtCore.Qt.Unchecked
@@ -133,7 +87,7 @@ class OverlayListWidget(QtGui.QListWidget):
     def onItemDoubleClick(self, itemIndex):
         self.currentItem = item = self.itemFromIndex(itemIndex)
         if item.checkState() == item.visible * 2:
-            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.alpha*20))
+            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItem.alpha*20))
             dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
             dialog.exec_()
         else:
@@ -141,12 +95,12 @@ class OverlayListWidget(QtGui.QListWidget):
             
             
     def setCurrentItemAlpha(self, num):
-        self.currentItem.alpha = 1.0 * num / 20.0
+        self.currentItem.overlayItem.alpha = 1.0 * num / 20.0
         self.volumeEditor.repaint()
         
-    def clearOverlays(self):
-        self.clear()
-        self.overlays = []
+#    def clearOverlays(self):
+#        self.clear()
+#        self.overlays = []
 
     def removeOverlay(self, item):
         itemNr = None
@@ -166,7 +120,7 @@ class OverlayListWidget(QtGui.QListWidget):
 
     def addOverlay(self, overlay):
         self.overlays.append(overlay)
-        self.addItem(overlay)
+        self.addItem(OverlayListWidgetItem(overlay))
 
     def onContext(self, pos):
         index = self.indexAt(pos)
@@ -198,7 +152,13 @@ class OverlayListWidget(QtGui.QListWidget):
         for idx, it in enumerate(self.descriptions):
             labelNames.append(it.name)
         return labelNames
-        
+       
+      
+    def toggleVisible(self,  index):
+        state = not(item.overlayItem.visible)
+        item.overlayItem.visible = state
+        item.setCheckState(item.overlayItem.visible * 2)
+
     """
     Represents a data volume including labels etc.
     

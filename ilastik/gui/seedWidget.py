@@ -54,12 +54,13 @@ class SeedListItem(QtGui.QListWidgetItem):
 
 
 class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
-    def __init__(self,  labelMgr,  volumeLabels,  volumeEditor):
+    def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
         QtGui.QWidget.__init__(self,  None)
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)
-
+        self.overlayItem = overlayItem
+        
         #Label selector
         self.addLabelButton = QtGui.QPushButton("Create Seed")
         self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
@@ -87,7 +88,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):
-            li = SeedListItem(item.name,item.number, QtGui.QColor.fromRgb(long(item.color)))
+            li = SeedListItem(item.name,item.number, QtGui.QColor.fromRgba(long(item.color)))
             self.listWidget.addItem(li)
             self.items.append(li)
         self.buildColorTab()
@@ -110,7 +111,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
         self.buildColorTab()
         
     def addLabel(self, labelName, labelNumber, color):
-        self.labelMgr.addLabel(labelName,  labelNumber,  color.rgb())
+        self.labelMgr.addLabel(labelName,  labelNumber,  color.rgba())
         
         label =  SeedListItem(labelName, labelNumber, color)
         self.items.append(label)
@@ -139,11 +140,11 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
     def buildColorTab(self):
         self.colorTab = []
         for i in range(256):
-            self.colorTab.append(QtGui.QColor.fromRgb(0,0,0).rgb())
+            self.colorTab.append(QtGui.QColor(0,0,0, 0).rgba())
 
         for index,item in enumerate(self.items):
-            self.colorTab[item.number] = item.color.rgb()
-
+            self.colorTab[item.number] = item.color.rgba()
+        self.overlayItem.colorTable = self.colorTab
 
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)
@@ -172,7 +173,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
-            self.volumeLabel.descriptions[index.row()].color = color.rgb()
+            self.volumeLabel.descriptions[index.row()].color = color.rgba()
             
 #            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
             if self.labelPropertiesChanged_callback is not None:

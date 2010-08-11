@@ -46,6 +46,7 @@ from ilastik.core import segmentors
 from ilastik.core import labelMgr
 from ilastik.core import seedMgr
 
+
 class Project(object):
     """
     Import/Export for the whole project, including any data, settings, lables etc.

@@ -82,6 +82,8 @@ from ilastik.gui.shortcutmanager import *
 
 from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
+from ilastik.gui.overlayWidget import OverlayListWidget
+from ilastik.core.overlayMgr import OverlayItem
 
 #make the program quit on Ctrl+C
 import signal
@@ -349,10 +351,27 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def tabChanged(self,  index):
+
         if self.ribbon.tabText(index) == "Segmentation":
-            self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget))
+            self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
+            
+            #create SeedsOverlay
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, name = "Seeds", color = 0, alpha = 1.0, colorTable = self.labelWidget.labelWidget.colorTab, visible = True)
+            self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"] = ov
+
+            self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
+            
+            
         elif self.labelWidget is not None:
-            self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget))
+            self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
+            
+            #create LabelOverlay
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = self.labelWidget.labelWidget.colorTab, visible = True)
+            self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
+
+            self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
+
+            
         if self.labelWidget is not None:
             self.labelWidget.repaint()
             
@@ -442,14 +461,20 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.deleteLater()
                 
     def createImageWindows(self, dataVol):
-        self.labelWidget = ve.VolumeEditor(dataVol, embedded = True, opengl = self.opengl, openglOverview = self.openglOverview, parent = self)
+        self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
 
         self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
         self.labelWidget.normalizeData = self.project.normalizeData
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
         self.labelWidget.setRgbMode(self.project.rgbData)
         
-        self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  dataVol.labels,  self.labelWidget))
+        #setup sub-widgets
+        self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
+        #create LabelOverlay
+        ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = None, visible = True)
+        self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
+        self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
+        ov.colorTable = self.labelWidget.labelWidget.colorTab
         
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
