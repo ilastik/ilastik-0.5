@@ -302,9 +302,8 @@ class DataItemImage(DataItemBase):
    
     @classmethod
     def initFromArray(cls, dataArray, originalFileName):
-        obj = cls(originalFileName)
-        obj.dataVol = Volume()
-        obj.dataVol.data = DataAccessor(dataArray, True)
+        obj = DataItemImage(originalFileName)
+        obj.dataVol = Volume(DataAccessor(dataArray, True))
         return obj
         
         
@@ -327,7 +326,7 @@ class DataItemImage(DataItemBase):
         return trainingF
         
     def getTrainingMatrixRef(self):
-        if self.trainingF is None and self._featureM is not None:
+        if len(self.trainingF) == 0 and self._featureM is not None:
             tempF = []
             tempL = []
     
@@ -346,7 +345,7 @@ class DataItemImage(DataItemBase):
     
     def getTrainingMatrix(self):
         self.getTrainingMatrixRef()
-        if self.trainingF is not None:
+        if len(self.trainingF) != 0:
             return self.trainingL, self.trainingF, self.trainingIndices
         else:
             return None, None, None
@@ -574,10 +573,10 @@ class DataItemImage(DataItemBase):
         self.seedIndices = None
 
     def clearFeaturesAndTraining(self):
-        self.trainingF = None
-        self.trainingL = None
-        self.trainingIndices = None
-                
+        self.trainingF = numpy.zeros((0), 'float32')      
+        self.trainingL = numpy.zeros((0, 1), 'uint8')
+        self.trainingIndices = numpy.zeros((0, 1), 'uint32')
+        
     def getFeatureSlicesForViewState(self, vs):
         tempM = []
         if self._featureM is not None:
@@ -736,25 +735,6 @@ class DataMgr():
             imageNr = self.activeImage
         self[imageNr].updateSeeds(newLabels)
         
-
-    def removeSeed(self, number):
-        self.featureLock.acquire()
-        for index, item in enumerate(self):
-            ldnr = -1
-            for j, ld in enumerate(item.dataVol.seeds.descriptions):
-                if ld.number == number:
-                    ldnr = j
-            if ldnr != -1:
-                item.dataVol.seeds.descriptions.__delitem__(j)
-                for j, ld in enumerate(item.dataVol.seeds.descriptions):
-                    if ld.number > number:
-                        ld.number -= 1
-                temp = numpy.where(item.dataVol.seeds.data[:,:,:,:,:] == number, 0, item.dataVol.seeds.data[:,:,:,:,:])
-                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item.dataVol.seeds.data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item.history is not None:
-                    item.history.removeLabel(number)
-        self.featureLock.release()
 
 
     def getDataList(self):

@@ -180,6 +180,10 @@ class VolumeLabels():
 
         self.descriptions = [] #array of VolumeLabelDescriptions
         
+    def clear(self):
+        #TODO: clear the labvles
+        pass
+        
     def serialize(self, h5G, name):
         self.data.serialize(h5G, name)
         

@@ -84,6 +84,7 @@ from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.overlayWidget import OverlayListWidget
 from ilastik.core.overlayMgr import OverlayItem
+from ilastik.core.volume import DataAccessor,  Volume
 
 #make the program quit on Ctrl+C
 import signal
@@ -497,6 +498,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def seedRemoved(self, number):
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        self.project.dataMgr.removeSeed(number)
         if hasattr(self, "segmentationInteractive"):
             self.segmentatinoInteractive.updateThreadQueues()
 
@@ -528,32 +530,43 @@ class MainWindow(QtGui.QMainWindow):
             self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
 
     def on_segmentationWeights(self):
-        dialog = SegmentationWeightSelectionDlg()
-        dialog.configure_traits( kind = 'livemodal')
+        
+        list = self.project.dataMgr[self.activeImage].overlayMgr.keys()
+        selection = QtGui.QInputDialog.getItem(None, "Select Segmentation Weights",  "Weights",  list,  editable = False)
+        selection = str(selection[0])
+        
+        overlay = self.project.dataMgr[self.activeImage].overlayMgr[selection]
 
-        volume = self.project.dataMgr[self.activeImage].dataVol.data[0,:,:,:,0]
+        volume = overlay.data[0,:,:,:,0]
+        
+        print numpy.max(volume),  numpy.min(volume)
 
-        real_weights = numpy.zeros(volume.shape + (3,))
-
+        real_weights = numpy.zeros(volume.shape + (3,))        
+        
+        borderIndicator = QtGui.QInputDialog.getItem(None, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness",  "Gradient"],  editable = False)
+        borderIndicator = str(borderIndicator[0])
+        
+        sigma = 1.0
+        normalizePotential = True
         #TODO: this , until now, only supports gray scale !
-        if dialog.borderIndicator == "Brightness":
-            weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma)
+        if borderIndicator == "Brightness":
+            weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
             weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
             real_weights[:,:,:,0] = weights[:,:,:]
             real_weights[:,:,:,1] = weights[:,:,:]
             real_weights[:,:,:,2] = weights[:,:,:]
-        elif dialog.borderIndicator == "Darkness":
-            weights = vigra.filters.gaussianSmoothing((255 - volume[:,:,:]).swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma)
+        elif borderIndicator == "Darkness":
+            weights = vigra.filters.gaussianSmoothing((255 - volume[:,:,:]).swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
             weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
             real_weights[:,:,:,0] = weights[:,:,:]
             real_weights[:,:,:,1] = weights[:,:,:]
             real_weights[:,:,:,2] = weights[:,:,:]
-        elif dialog.borderIndicator == "Gradient":
-            weights = numpy.abs(vigra.filters.gaussianGradient(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), dialog.sigma))
+        elif borderIndicator == "Gradient":
+            weights = numpy.abs(vigra.filters.gaussianGradient(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma))
             weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
             real_weights[:] = weights[:]
 
-        if dialog.normalizePotential == True:
+        if normalizePotential == True:
             min = numpy.min(real_weights)
             max = numpy.max(real_weights)
             weights = (real_weights - min)*(255.0 / (max - min))
@@ -828,8 +841,11 @@ class ProjectDlg(QtGui.QDialog):
                 
             theDataItem = dataMgr.DataItemImage.initFromArray(imageData, "Image Stack")
             try:
+                print theDataItem.dataVol.labels
                 self.dataMgr.append(theDataItem, True)
+                print theDataItem.dataVol.labels
                 self.dataMgr.dataItemsLoaded[-1] = True
+                print theDataItem.dataVol.labels
 
                 theDataItem.hasLabels = True
                 theDataItem.isTraining = True
@@ -842,6 +858,7 @@ class ProjectDlg(QtGui.QDialog):
 
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(rowCount)
+                print theDataItem.dataVol.labels
 
                 theFlag = QtCore.Qt.ItemIsEnabled
                 flagON = ~theFlag | theFlag
@@ -858,6 +875,8 @@ class ProjectDlg(QtGui.QDialog):
                 r.setCheckState(QtCore.Qt.Unchecked)
 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+                print theDataItem.dataVol.labels
+                
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 print e
@@ -953,7 +972,7 @@ class ProjectDlg(QtGui.QDialog):
             
             theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
             if theDataItem.hasLabels == False:
-                theDataItem.dataVol.labels = None
+                theDataItem.dataVol.labels.clear()
                 
             contained = False
             for pr in theDataItem.projects:
@@ -1489,28 +1508,29 @@ class Segmentation(object):
         val = self.segmentation.count
         self.progressBar.setValue(val)
         if not self.segmentation.isRunning():
+            print "finalizing segmentation"
             self.timer.stop()
             self.segmentation.wait()
             self.finalize()
             self.terminateProgressBar()
-            self.addSegmentationOverlay()
 
     def finalize(self):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
         activeItem.dataVol.segmentation = self.segmentation.result
-        self.parent.labelWidget.repaint()
 
+        temp = activeItem.dataVol.segmentation[0, :, :, :, 0]
+        
+        print "kjlahdsk ",  numpy.max(temp),  numpy.min(temp)
 
-    def addSegmentationOverlay(self):
-        ov = self.ilastik.labelWidget.overlayView.removeOverlay("Segmentation")
-        activeItem = self.parent.project.dataMgr[self.parent.activeImage]
-        visible = True
-        alpha = 1.0
-        if ov is not None:
-            visible = ov.visible
-            alpha = ov.alpha
-        self.ilastik.labelWidget.addOverlay(visible, activeItem.dataVol.segmentation, "Segmentation", QtGui.QColor(255,126,255), alpha, self.ilastik.labelWidget.labelView.colorTab)
+        #create Overlay for segmentation:
+        if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"] is None:
+            ov = OverlayItem(activeItem.dataVol.segmentation, name = "Segmentation", color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, visible = True)
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"] = ov
+        else:
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"].data = DataAccessor(activeItem.dataVol.segmentation)
         self.ilastik.labelWidget.repaint()
+
+
         
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)

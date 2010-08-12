@@ -36,8 +36,7 @@ from ilastik.core.utilities import irange, debug
 from vigra import arraytypes as at
 from PyQt4 import QtGui
 
-from ilastik.gui.volumeeditor import DataAccessor as DataAccessor
-from ilastik.gui.volumeeditor import Volume as Volume
+from ilastik.core.volume import DataAccessor,  Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr

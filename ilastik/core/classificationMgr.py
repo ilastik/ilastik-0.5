@@ -264,7 +264,7 @@ class ClassifierInteractiveThread(ThreadBase):
                     activeImage = self.ilastik.activeImage
                     newLabels = self.ilastik.labelWidget.getPendingLabels()
                     if len(newLabels) > 0:
-                        self.ilastik.project.dataMgr.updateTrainingMatrix(activeImage, newLabels)
+                        self.ilastik.project.dataMgr.updateTrainingMatrix(newLabels,  activeImage)
                     #if len(newLabels) > 0 or self.ilastik.project.dataMgr.trainingVersion < self.ilastik.project.dataMgr.featureVersion:
                     features,labels = self.ilastik.project.dataMgr.getTrainingMatrix()
                     if features is not None:

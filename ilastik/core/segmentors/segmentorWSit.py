@@ -44,10 +44,7 @@ try:
     import vigra.tws
     ok = True
 except Exception, e:
-    print e
-    traceback.print_exc(file=sys.stdout)
-    print "propably the vigra.pws module was not found, please recompile vigra with PowerWaterShed support to enable the pws segmentation plugin"
-
+    pass
 
 if ok:
     class SegmentorWSiter(SegmentorBase):
