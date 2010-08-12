@@ -1,7 +1,7 @@
 
 from PyQt4 import QtCore, QtGui, uic
 
-import ilastik.core.classifiers
+import ilastik.core.classifiers as ilastikClassifiers
 
 class ClassifierSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastik):
@@ -16,7 +16,7 @@ class ClassifierSelectionDlg(QtGui.QDialog):
         self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)
         self.connect(self.settingsButton, QtCore.SIGNAL('pressed()'), self.classifierSettings)
 
-        self.classifiers = core.classifiers.classifierBase.ClassifierBase.__subclasses__()
+        self.classifiers = ilastikClassifiers.classifierBase.ClassifierBase.__subclasses__()
         j = 0
         for i, c in enumerate(self.classifiers):
             #qli = QtGui.QListWidgetItem(c.name)
