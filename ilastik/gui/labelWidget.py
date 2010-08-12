@@ -99,7 +99,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
 
 
     def changeText(self, text):
-        self.volumeLabel.descriptions[self.currentRow()].name = text
+        self.volumeLabels.descriptions[self.currentRow()].name = text
         
     def createLabel(self):
         name = "Label " + len(self.items).__str__()
@@ -128,25 +128,19 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
         self.labelMgr.removeLabel(item.number)
         
         self.volumeEditor.history.removeLabel(item.number)
+        self.items.remove(item)
+        it = self.listWidget.takeItem(index.row())
         for ii, it in enumerate(self.items):
             if it.number > item.number:
                 it.number -= 1
-        self.items.remove(item)
-        it = self.listWidget.takeItem(index.row())
         del it
         self.buildColorTab()
-        self.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
+        self.volumeEditor.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
         self.volumeEditor.repaint()
         
 
     def buildColorTab(self):
-        self.colorTab = []
-        for i in range(256):
-            self.colorTab.append(QtGui.QColor(0,0,0,0).rgba())
-
-        for index,item in enumerate(self.items):
-            self.colorTab[item.number] = item.color.rgba()
-        self.overlayItem.colorTable = self.colorTab
+        self.overlayItem.colorTable = self.colorTab = self.volumeLabels.getColorTab()
 
 
     def onContext(self, pos):

@@ -356,8 +356,9 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
             
             #create SeedsOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, name = "Seeds", color = 0, alpha = 1.0, colorTable = self.labelWidget.labelWidget.colorTab, visible = True)
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, name = "Seeds", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), visible = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"] = ov
+            ov = self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"]
 
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
             
@@ -366,8 +367,9 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
             
             #create LabelOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = self.labelWidget.labelWidget.colorTab, visible = True)
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), visible = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
+            ov = self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"]
 
             self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
 
@@ -480,6 +482,8 @@ class MainWindow(QtGui.QMainWindow):
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
 
+        self.connect(self.labelWidget, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
+        self.connect(self.labelWidget, QtCore.SIGNAL("seedRemoved(int)"),self.seedRemoved)
         
         area = QtCore.Qt.BottomDockWidgetArea
         self.addDockWidget(area, dock)
@@ -487,9 +491,15 @@ class MainWindow(QtGui.QMainWindow):
 
     def labelRemoved(self, number):
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
-        self.project.dataMgr.removeLabel(number)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
+
+
+    def seedRemoved(self, number):
+        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        if hasattr(self, "segmentationInteractive"):
+            self.segmentatinoInteractive.updateThreadQueues()
+
 
     def createFeatures(self):
         self.featureList = featureMgr.ilastikFeatures
@@ -1229,7 +1239,18 @@ class ClassificationInteractive(object):
         self.parent.statusBar().hide()
         
     def start(self):
-               
+        activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+        for p_i, descr in enumerate(activeItem.dataVol.labels.descriptions):
+            #create Overlay for prediction:
+            ov = OverlayItem(descr.prediction, name = "Prediction" + descr.name, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, visible = True)
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction" + descr.name] = ov
+
+        #create Overlay for uncertainty:
+        ov = OverlayItem(activeItem.dataVol.uncertainty, name = "Uncertainty", color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
+        self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Uncertainty"] = ov
+
+
+
         self.initInteractiveProgressBar()
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, classifier = self.parent.project.classifier)
 
@@ -1405,6 +1426,9 @@ class ClassificationPredict(object):
 #                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+                #create Overlay for prediction:
+                ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction, name = "Prediction" + activeItem.dataVol.labels.descriptions[p_num-1].name, color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, visible = True)
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
 
             all =  range(len(activeItem.dataVol.labels.descriptions))
             not_predicted = numpy.setdiff1d(all, self.parent.project.dataMgr.classifiers[0].unique_vals - 1)
@@ -1415,6 +1439,11 @@ class ClassificationPredict(object):
 
             margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
             activeItem.dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]
+
+            #create Overlay for uncertainty:
+            ov = OverlayItem(activeItem.dataVol.uncertainty, name = "Uncertainty", color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Uncertainty"] = ov
+
 
             self.parent.labelWidget.repaint()
         

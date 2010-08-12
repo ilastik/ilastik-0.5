@@ -40,7 +40,6 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         self.overlayItem = overlayItem
         self.name = overlayItem.name
         self.color = self.overlayItem.color
-        self.colorTab = self.overlayItem.colorTable
         self.visible = True
 
         s = QtCore.Qt.Checked

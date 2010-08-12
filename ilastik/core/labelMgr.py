@@ -88,12 +88,26 @@ class LabelMgr(object):
                 labelItem.number = label.number
                 labelItem.color = label.color
                 
-    def removeLabel(self,  index):
-        for imageIndex, imageItem in  enumerate(self.dataMgr):
-            descr = imageItem.dataVol.labels.descriptions.pop(index-1)
-            descr.prediction = None
-            #TODO: also remove the labelNumber from the imageItem.labels and decrease the others -1
-            #TODO: also update the imageItem history !
+    def removeLabel(self, number):
+        self.dataMgr.featureLock.acquire()
+        self.dataMgr.clearFeaturesAndTraining()
+        for index, item in enumerate(self.dataMgr):
+            ldnr = -1
+            for j, ld in enumerate(item.dataVol.labels.descriptions):
+                if ld.number == number:
+                    ldnr = j
+            if ldnr != -1:
+                item.dataVol.labels.descriptions.pop(ldnr)
+                for j, ld in enumerate(item.dataVol.labels.descriptions):
+                    if ld.number > number:
+                        ld.number -= 1
+                temp = numpy.where(item.dataVol.labels.data[:,:,:,:,:] == number, 0, item.dataVol.labels.data[:,:,:,:,:])
+                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
+                item.dataVol.labels.data[:,:,:,:,:] = temp[:,:,:,:,:]
+                if item.history is not None:
+                    item.history.removeLabel(number)
+                print "unique label numbers : ",  numpy.unique(item.dataVol.labels.data[:,:,:,:,:])
+        self.dataMgr.featureLock.release()
         
     def newLabels(self,  newLabels):
         self.dataMgr.updateTrainingMatrix(newLabels)

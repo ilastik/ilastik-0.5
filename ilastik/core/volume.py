@@ -203,6 +203,16 @@ class VolumeLabels():
             labelNames.append(it.name)
         return labelNames    
         
+        
+    def getColorTab(self):
+        colorTab = []
+        for i in range(256):
+            colorTab.append(long(0)) #QtGui.QColor(0,0,0,0).rgba()
+
+        for index,item in enumerate(self.descriptions):
+            colorTab[item.number] = long(item.color)
+        return colorTab
+        
     @staticmethod    
     def deserialize(h5G,  name):
         if name in h5G.keys():

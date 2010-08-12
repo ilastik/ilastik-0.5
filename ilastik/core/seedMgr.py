@@ -46,17 +46,30 @@ class SeedMgr(object):
 
     def changedLabel(self,  label):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
-            for labelIndex,  labelItem in enumerate(imageItem.dataVol.labels):
+            for labelIndex,  labelItem in enumerate(imageItem.dataVol.seeds):
                 labelItem.name = label.name
                 labelItem.number = label.number
                 labelItem.color = label.color
                 
-    def removeLabel(self,  index):
-        for imageIndex, imageItem in  enumerate(self.dataMgr):
-            descr = imageItem.dataVol.labels.descriptions.pop(index-1)
-            descr.prediction = None
-            #TODO: also remove the labelNumber from the imageItem.labels and decrease the others -1
-            #TODO: also update the seedItem history !
+    def removeLabel(self, number):
+        self.dataMgr.featureLock.acquire()
+        for index, item in enumerate(self.dataMgr):
+            ldnr = -1
+            for j, ld in enumerate(item.dataVol.seeds.descriptions):
+                if ld.number == number:
+                    ldnr = j
+            if ldnr != -1:
+                item.dataVol.seeds.descriptions.pop(ldnr)
+                for j, ld in enumerate(item.dataVol.seeds.descriptions):
+                    if ld.number > number:
+                        ld.number -= 1
+                temp = numpy.where(item.dataVol.seeds.data[:,:,:,:,:] == number, 0, item.dataVol.seeds.data[:,:,:,:,:])
+                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
+                item.dataVol.seeds.data[:,:,:,:,:] = temp[:,:,:,:,:]
+                if item.history is not None:
+                    item.history.removeLabel(number)
+        self.dataMgr.featureLock.release()
+
         
     def newLabels(self,  newLabels):
         self.dataMgr.updateSeeds(newLabels)

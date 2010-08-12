@@ -737,22 +737,21 @@ class DataMgr():
         self[imageNr].updateSeeds(newLabels)
         
 
-    def removeLabel(self, number):
+    def removeSeed(self, number):
         self.featureLock.acquire()
-        self.clearFeaturesAndTraining()
         for index, item in enumerate(self):
             ldnr = -1
-            for j, ld in enumerate(item.dataVol.labels.descriptions):
+            for j, ld in enumerate(item.dataVol.seeds.descriptions):
                 if ld.number == number:
                     ldnr = j
             if ldnr != -1:
-                item.dataVol.labels.descriptions.__delitem__(j)
-                for j, ld in enumerate(item.dataVol.labels.descriptions):
+                item.dataVol.seeds.descriptions.__delitem__(j)
+                for j, ld in enumerate(item.dataVol.seeds.descriptions):
                     if ld.number > number:
                         ld.number -= 1
-                temp = numpy.where(item.dataVol.labels.data[:,:,:,:,:] == number, 0, item.dataVol.labels.data[:,:,:,:,:])
+                temp = numpy.where(item.dataVol.seeds.data[:,:,:,:,:] == number, 0, item.dataVol.seeds.data[:,:,:,:,:])
                 temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item.dataVol.labels.data[:,:,:,:,:] = temp[:,:,:,:,:]
+                item.dataVol.seeds.data[:,:,:,:,:] = temp[:,:,:,:,:]
                 if item.history is not None:
                     item.history.removeLabel(number)
         self.featureLock.release()

@@ -133,18 +133,12 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
         it = self.listWidget.takeItem(index.row())
         del it
         self.buildColorTab()
-        self.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
+        self.volumeEditor.emit(QtCore.SIGNAL("seedRemoved(int)"), item.number)
         self.volumeEditor.repaint()
         
 
     def buildColorTab(self):
-        self.colorTab = []
-        for i in range(256):
-            self.colorTab.append(QtGui.QColor(0,0,0, 0).rgba())
-
-        for index,item in enumerate(self.items):
-            self.colorTab[item.number] = item.color.rgba()
-        self.overlayItem.colorTable = self.colorTab
+        self.overlayItem.colorTable = self.colorTab = self.volumeLabels.getColorTab()
 
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)
