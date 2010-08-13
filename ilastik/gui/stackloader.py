@@ -37,6 +37,32 @@ class StackLoader(QtGui.QDialog):
         self.layout.addWidget(QtGui.QLabel("Path to Image Stack:"))
         self.layout.addLayout(tempLayout)
 
+        tempLayout = QtGui.QHBoxLayout()
+        self.multiChannel = QtGui.QCheckBox("MultiChannel Data:")
+        self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
+        tempLayout.addWidget(self.multiChannel)
+        self.layout.addLayout(tempLayout) 
+        
+        self.multiChannelFrame = QtGui.QFrame()
+        tempLayout = QtGui.QVBoxLayout()
+        tempLayout1 = QtGui.QHBoxLayout()
+        tempLayout1.addWidget(QtGui.QLabel("Enter channel identifiers, e.g. GFP"))
+        tempLayout.addLayout(tempLayout1)
+        tempLayout2 = QtGui.QHBoxLayout()
+        self.redChannelId = QtGui.QLineEdit("")
+        self.blueChannelId = QtGui.QLineEdit("")
+        self.greenChannelId = QtGui.QLineEdit("")
+        tempLayout2.addWidget(QtGui.QLabel("Red:"))
+        tempLayout2.addWidget(self.redChannelId)
+        tempLayout2.addWidget(QtGui.QLabel("Blue:"))
+        tempLayout2.addWidget(self.blueChannelId)
+        tempLayout2.addWidget(QtGui.QLabel("Green:"))
+        tempLayout2.addWidget(self.greenChannelId)
+        tempLayout.addLayout(tempLayout2)
+        self.multiChannelFrame.setLayout(tempLayout)
+        self.multiChannelFrame.setVisible(False)
+        self.layout.addWidget(self.multiChannelFrame)        
+
 
         tempLayout = QtGui.QHBoxLayout()
         self.offsetX = QtGui.QSpinBox()
@@ -151,6 +177,11 @@ class StackLoader(QtGui.QDialog):
         else:
             self.downsampleFrame.setVisible(True)
 
+    def toggleMultiChannel(self, int):
+	    if self.multiChannel.checkState() == 0:
+	        self.multiChannelFrame.setVisible(False)
+	    else:
+	        self.multiChannelFrame.setVisible(True)
 
     def pathChanged(self, text):
         list = glob.glob(str(self.path.text()) )
