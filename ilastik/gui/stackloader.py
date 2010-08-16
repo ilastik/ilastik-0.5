@@ -31,6 +31,7 @@ class StackLoader(QtGui.QDialog):
         #internally, it's a list of lists of filenames
         #for each channel
         self.fileList = []
+        self.channels = []
 
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
@@ -81,7 +82,7 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget( self.offsetX)
         tempLayout.addWidget( self.offsetY)
         tempLayout.addWidget( self.offsetZ)
-        self.layout.addWidget(QtGui.QLabel("Sobvolume Offsets:"))
+        self.layout.addWidget(QtGui.QLabel("Subvolume Offsets:"))
         self.layout.addLayout(tempLayout)
         
         tempLayout = QtGui.QHBoxLayout()
@@ -214,23 +215,30 @@ class StackLoader(QtGui.QDialog):
 
     def pathChanged(self, text):
         self.fileList = []
+        self.channels = []
         if self.multiChannel.checkState() == 0:
-            self.fileList.append(glob.glob(str(self.path.text())))
+            pathone = str(self.path.text())
+            self.fileList.append(sorted(glob.glob(pathone), key=str.lower))
+            #self.fileList.append(glob.glob(str(self.path.text())))
+            self.channels.append(0)
         else:
             #not all channels have to be filled
             if (len(str(self.redChannelId.text()))>0):
                 pathred = str(self.path.text())+"*"+str(self.redChannelId.text())+"*"
-                self.fileList.append(glob.glob(pathred))
+                self.fileList.append(sorted(glob.glob(pathred), key=str.lower))
+                self.channels.append(0)
             else:
                 self.fileList.append([])    
             if (len(str(self.blueChannelId.text()))>0):
                 pathblue = str(self.path.text())+"*"+str(self.blueChannelId.text())+"*"
-                self.fileList.append(glob.glob(pathblue))
+                self.fileList.append(sorted(glob.glob(pathblue), key=str.lower))
+                self.channels.append(1)
             else:
                 self.fileList.append([])
             if (len(str(self.greenChannelId.text()))>0):
                 pathgreen = str(self.path.text())+"*"+str(self.greenChannelId.text())+"*"
-                self.fileList.append(glob.glob(pathgreen))
+                self.fileList.append(sorted(glob.glob(pathgreen), key=str.lower))
+                self.channels.append(2)
             else:
                 self.fileList.append([])
 
@@ -276,10 +284,6 @@ class StackLoader(QtGui.QDialog):
             self.fileListTable.setColumnCount(1)       
             for i in range(0, len(self.fileList[0])):
                 self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[0][i])))
-        #if (len(self.fileList)==2):
-         #   for i in range(0, nfiles):
-          #      self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[0][i])))
-           #     self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[1][i])))
         if (len(self.fileList)==3):
             #multichannel data
             nfiles = max([len(self.fileList[0]), len(self.fileList[1]), len(self.fileList[2])])
@@ -291,13 +295,15 @@ class StackLoader(QtGui.QDialog):
                 self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[1][i])))
             for i in range(0, len(self.fileList[2])):
                 self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[2][i])))
- 
-            #for i in range(0, nfiles):
-             #   self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[0][i])))
-              #  self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[1][i])))
-               # self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[2][i])))
 
     def slotLoad(self):
+        if self.multiChannel.checkState() > 0 and len(self.channels)>1:
+            if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):
+                QtGui.QErrorMessage.qtHandler().showMessage("Chosen channels don't have an equal number of files. Check with Preview files button")
+                #should it really reject?
+                self.reject()
+                return
+        
         offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
         shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
         destShape = None
@@ -314,9 +320,12 @@ class StackLoader(QtGui.QDialog):
     def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False, makegray = False):
         self.logger.clear()
         self.logger.setVisible(True)
-
+        if len(self.channels)>1:
+            nch = len(self.channels)
+        else:
+            nch = self.rgb
         try:
-            self.image = numpy.zeros(shape + (self.rgb,), 'float32')
+            self.image = numpy.zeros(shape + (nch,), 'float32')
         except Exception, e:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
             self.reject()
@@ -325,10 +334,20 @@ class StackLoader(QtGui.QDialog):
         #loop over provided images an put them in the hdf5
         z = 0
         allok = True
-        for filename in sorted(glob.glob(pattern), key = str.lower):
+        firstlist = self.fileList[self.channels[0]]
+        print len(firstlist)
+        img_data2 = None
+        img_data3 = None
+        for index, filename in enumerate(firstlist):
             if z >= offsets[2] and z < offsets[2] + shape[2]:
                 try:
+                    print filename
                     img_data = vigra.impex.readImage(filename)
+                    if self.multiChannel.checkState()>0:
+                        if (len(self.fileList[1]>0)):
+                            img_data2 = vigra.impex.readImage(self.fileList[1][index])
+                        if (len(self.fileList[2]>0)):
+                            img_data3 = vigra.impex.readImage(self.fileList[2][index])
                     if self.rgb > 1:
                         if invert is True:
                             self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
