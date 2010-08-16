@@ -343,21 +343,32 @@ class StackLoader(QtGui.QDialog):
                 try:
                     print filename
                     img_data = vigra.impex.readImage(filename)
-                    if self.multiChannel.checkState()>0:
-                        if (len(self.fileList[1]>0)):
-                            img_data2 = vigra.impex.readImage(self.fileList[1][index])
-                        if (len(self.fileList[2]>0)):
-                            img_data3 = vigra.impex.readImage(self.fileList[2][index])
+                    
                     if self.rgb > 1:
                         if invert is True:
                             self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                         else:
                             self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                     else:
+                                                  
                         if invert is True:
-                            self.image[:,:, z-offsets[2],0] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            self.image[:,:, z-offsets[2],self.channels[0]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            #load other channes if needed
+                            if (len(self.channels)>1):
+                                img_data2 = vigra.impex.readImage(self.fileList[1][index])
+                                self.image[:,:,z-offsets[2],self.channels[1]] = 255 - img_data2[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            if (len(self.channels)>2):
+                                img_data3 = vigra.impex.readImage(self.fileList[2][index])
+                                self.image[:,:,z-offsets[2],self.channels[2]] = 255 - img_data3[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                         else:
-                            self.image[:,:,z-offsets[2],0] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            self.image[:,:,z-offsets[2],self.channels[0]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            #load other channes if needed
+                            if (len(self.channels)>1):
+                                img_data2 = vigra.impex.readImage(self.fileList[1][index])
+                                self.image[:,:,z-offsets[2],self.channels[1]] = img_data2[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            if (len(self.channels)>2):
+                                img_data3 = vigra.impex.readImage(self.fileList[2][index])
+                                self.image[:,:,z-offsets[2],self.channels[2]] = img_data3[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                     self.logger.insertPlainText(".")
                 except Exception, e:
                     allok = False
