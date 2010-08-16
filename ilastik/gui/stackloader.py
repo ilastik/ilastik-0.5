@@ -27,6 +27,11 @@ class StackLoader(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
 
+        #a list of filenames
+        #internally, it's a list of lists of filenames
+        #for each channel
+        self.fileList = []
+
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
         self.connect(self.path, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
@@ -50,8 +55,11 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addLayout(tempLayout1)
         tempLayout2 = QtGui.QHBoxLayout()
         self.redChannelId = QtGui.QLineEdit("")
+        self.connect(self.redChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
         self.blueChannelId = QtGui.QLineEdit("")
+        self.connect(self.blueChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
         self.greenChannelId = QtGui.QLineEdit("")
+        self.connect(self.greenChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
         tempLayout2.addWidget(QtGui.QLabel("Red:"))
         tempLayout2.addWidget(self.redChannelId)
         tempLayout2.addWidget(QtGui.QLabel("Blue:"))
@@ -62,7 +70,6 @@ class StackLoader(QtGui.QDialog):
         self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
-
 
         tempLayout = QtGui.QHBoxLayout()
         self.offsetX = QtGui.QSpinBox()
@@ -146,13 +153,28 @@ class StackLoader(QtGui.QDialog):
         self.alsoSaveFrame.setVisible(False)
         self.layout.addWidget(self.alsoSaveFrame)        
         
-        
-        
         tempLayout = QtGui.QHBoxLayout()
-        self.cancelButton = QtGui.QPushButton("Cancel")
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
+        self.previewFiles = QtGui.QCheckBox("Preview or edit file list")
+        self.connect(self.previewFiles, QtCore.SIGNAL("stateChanged(int)"), self.togglePreviewFiles)
+        tempLayout.addWidget(self.previewFiles)
+        self.layout.addLayout(tempLayout)
+
+        self.previewFilesFrame = QtGui.QFrame()
+        tempLayout = QtGui.QHBoxLayout()
+        self.fileListTable = QtGui.QTableWidget()
+        #the table will be filled, when the frame is set to visible
+        tempLayout.addWidget(self.fileListTable)
+        self.previewFilesFrame.setLayout(tempLayout)
+        self.previewFilesFrame.setVisible(False)
+        self.layout.addWidget(self.previewFilesFrame)
+
+
+        tempLayout = QtGui.QHBoxLayout()
         self.loadButton = QtGui.QPushButton("Load")
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
+        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
+        
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
         tempLayout.addWidget(self.loadButton)
@@ -183,11 +205,38 @@ class StackLoader(QtGui.QDialog):
 	    else:
 	        self.multiChannelFrame.setVisible(True)
 
+    def togglePreviewFiles(self):
+        if self.previewFiles.checkState() == 0:
+            self.previewFilesFrame.setVisible(False)
+        else:
+            self.fillFileTable()
+            self.previewFilesFrame.setVisible(True)
+
     def pathChanged(self, text):
-        list = glob.glob(str(self.path.text()) )
-        self.sizeZ.setValue(len(list))
+        self.fileList = []
+        if self.multiChannel.checkState() == 0:
+            self.fileList.append(glob.glob(str(self.path.text())))
+        else:
+            #not all channels have to be filled
+            if (len(str(self.redChannelId.text()))>0):
+                pathred = str(self.path.text())+"*"+str(self.redChannelId.text())+"*"
+                self.fileList.append(glob.glob(pathred))
+            else:
+                self.fileList.append([])    
+            if (len(str(self.blueChannelId.text()))>0):
+                pathblue = str(self.path.text())+"*"+str(self.blueChannelId.text())+"*"
+                self.fileList.append(glob.glob(pathblue))
+            else:
+                self.fileList.append([])
+            if (len(str(self.greenChannelId.text()))>0):
+                pathgreen = str(self.path.text())+"*"+str(self.greenChannelId.text())+"*"
+                self.fileList.append(glob.glob(pathgreen))
+            else:
+                self.fileList.append([])
+
+        self.sizeZ.setValue(len(self.fileList[0]))
         try:
-            temp = vigra.impex.readImage(list[0])
+            temp = vigra.impex.readImage(self.fileList[0][0])
             self.sizeX.setValue(temp.shape[0])
             self.sizeY.setValue(temp.shape[1])
             if len(temp.shape) == 3:
@@ -208,6 +257,45 @@ class StackLoader(QtGui.QDialog):
     def slotFile(self):
         filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
         self.file.setText(filename)
+
+    def fillFileTable(self):
+        if (len(self.fileList)==0):
+            self.fileListTable.setRowCount(1)
+            self.fileListTable.setColumnCount(3)
+            self.fileListTable.setItem(0, 0, QtGui.QTableWidgetItem(QtCore.QString("file1")))
+            self.fileListTable.setItem(0, 1, QtGui.QTableWidgetItem(QtCore.QString("file2")))
+            self.fileListTable.setItem(0, 2, QtGui.QTableWidgetItem(QtCore.QString("file3")))
+            return
+        nfiles = len(self.fileList[0])
+        self.fileListTable.setRowCount(nfiles)
+        self.fileListTable.setColumnCount(len(self.fileList))
+        #it's so ugly... but i don't know how to fill a whole column by list slicing
+        if (len(self.fileList)==1):
+            #single channel data
+            self.fileListTable.setRowCount(len(self.fileList[0]))
+            self.fileListTable.setColumnCount(1)       
+            for i in range(0, len(self.fileList[0])):
+                self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[0][i])))
+        #if (len(self.fileList)==2):
+         #   for i in range(0, nfiles):
+          #      self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[0][i])))
+           #     self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[1][i])))
+        if (len(self.fileList)==3):
+            #multichannel data
+            nfiles = max([len(self.fileList[0]), len(self.fileList[1]), len(self.fileList[2])])
+            self.fileListTable.setRowCount(nfiles)
+            self.fileListTable.setColumnCount(3)
+            for i in range(0, len(self.fileList[0])):
+                self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[0][i])))
+            for i in range(0, len(self.fileList[1])):
+                self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[1][i])))
+            for i in range(0, len(self.fileList[2])):
+                self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[2][i])))
+ 
+            #for i in range(0, nfiles):
+             #   self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[0][i])))
+              #  self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[1][i])))
+               # self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(self.fileList[2][i])))
 
     def slotLoad(self):
         offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
