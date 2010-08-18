@@ -32,6 +32,7 @@ class StackLoader(QtGui.QDialog):
         #for each channel
         self.fileList = []
         self.channels = []
+        self.resolution = [1, 1, 1]
 
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
@@ -71,7 +72,7 @@ class StackLoader(QtGui.QDialog):
         self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
-
+    
         tempLayout = QtGui.QHBoxLayout()
         self.offsetX = QtGui.QSpinBox()
         self.offsetX.setRange(0,10000)
@@ -97,6 +98,35 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget( self.sizeZ)
         self.layout.addWidget(QtGui.QLabel("Subvolume Size:"))
         self.layout.addLayout(tempLayout)
+
+        tempLayout = QtGui.QHBoxLayout()
+        self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
+        self.connect(self.resCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleResolution)
+        tempLayout.addWidget(self.resCheck)
+        self.layout.addLayout(tempLayout) 
+        
+        self.resolutionFrame = QtGui.QFrame()
+        tempLayout = QtGui.QVBoxLayout()
+        tempLayout1 = QtGui.QHBoxLayout()
+        tempLayout1.addWidget(QtGui.QLabel("Enter relative resolution along x, y and z"))
+        tempLayout.addLayout(tempLayout1)
+        tempLayout2 = QtGui.QHBoxLayout()
+        self.resX = QtGui.QLineEdit("1")
+        self.connect(self.resX, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
+        self.resY = QtGui.QLineEdit("1")
+        self.connect(self.resY, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
+        self.resZ = QtGui.QLineEdit("1")
+        self.connect(self.resZ, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
+        tempLayout2.addWidget(QtGui.QLabel("X:"))
+        tempLayout2.addWidget(self.resX)
+        tempLayout2.addWidget(QtGui.QLabel("Y:"))
+        tempLayout2.addWidget(self.resY)
+        tempLayout2.addWidget(QtGui.QLabel("Z:"))
+        tempLayout2.addWidget(self.resZ)
+        tempLayout.addLayout(tempLayout2)
+        self.resolutionFrame.setLayout(tempLayout)
+        self.resolutionFrame.setVisible(False)
+        self.layout.addWidget(self.resolutionFrame)    
 
         tempLayout = QtGui.QHBoxLayout()
         self.invert = QtGui.QCheckBox("Invert Colors?")
@@ -192,6 +222,12 @@ class StackLoader(QtGui.QDialog):
 	    else:
 	        self.multiChannelFrame.setVisible(True)
 
+    def toggleResolution(self, int):
+        if self.resCheck.checkState() == 0:
+            self.resolutionFrame.setVisible(False)
+        else:
+            self.resolutionFrame.setVisible(True)
+
     def pathChanged(self, text):
         self.fileList = []
         self.channels = []
@@ -235,6 +271,13 @@ class StackLoader(QtGui.QDialog):
             self.sizeX.setValue(0)
             self.sizeY.setValue(0)
 
+    def resChanged(self):
+        try:
+            self.resolution[0] = float(str(self.resX.text()))
+            self.resolution[1] = float(str(self.resY.text()))
+            self.resolution[2] = float(str(self.resZ.text()))
+        except Exception as e:
+            self.resolution = [1,1,1]
 
     def slotDir(self):
         path = self.path.text()
