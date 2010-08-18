@@ -53,6 +53,8 @@ import traceback
 import numpy
 import time
 from PyQt4 import QtCore, QtGui, uic
+
+import ilastik
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from ilastik.gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
@@ -85,7 +87,6 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
-        self.iconPath = '../../icons/32x32/'
         
         #self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
@@ -179,6 +180,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
             self.activeImage = 0
             self.projectModified()
         
@@ -286,6 +288,7 @@ class MainWindow(QtGui.QMainWindow):
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
         
         self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(False)
         
         #TODO: reenable online classification sometime 
 #        # Make menu for online Classification
@@ -361,6 +364,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
             if hasattr(self, 'projectDlg'):
                 self.projectDlg.deleteLater()
             self.activeImage = 0
@@ -702,7 +706,9 @@ class ProjectDlg(QtGui.QDialog):
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
                     
     def initDlg(self):
-        uic.loadUi('gui/dlgProject.ui', self) 
+        #get the absolute path of the 'ilastik' module
+        ilastikPath = os.path.dirname(ilastik.__file__)
+        uic.loadUi(ilastikPath+'/gui/dlgProject.ui', self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setAlternatingRowColors(True)
@@ -897,6 +903,7 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
 
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
         
         self.parent.activeImage = 0
         self.parent.projectModified()
@@ -928,7 +935,9 @@ class FeatureDlg(QtGui.QDialog):
             if it.dataVol.data.shape[1] < min and it.dataVol.data.shape[1] > 1:
                 min = it.dataVol.data.shape[1]
         
-        uic.loadUi('gui/dlgFeature.ui', self) 
+        #get the absolute path of the 'ilastik' module
+        ilastikPath = os.path.dirname(ilastik.__file__)
+        uic.loadUi(ilastikPath+'/gui/dlgFeature.ui', self) 
         for featureItem in self.parent.featureList:
             self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
         
@@ -1135,10 +1144,12 @@ class ClassificationInteractive(object):
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
+	self.parent.labelWidget.connect(self.parent.labelWidget,QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
+
         self.temp_cnt = 0
         self.start()
     
-    def updateThreadQueues(self):
+    def updateThreadQueues(self, a = 0, b = 0):
         if self.classificationInteractive is not None:
             self.myInteractionProgressBar.setVisible(True)
             self.classificationInteractive.dataPending.set()

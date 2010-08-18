@@ -37,12 +37,18 @@ from ilastik.core import dataMgr
 import copy
 import traceback
 import threading
-from PyQt4 import QtCore
+
+try:
+    from PyQt4 import QtCore
+    ThreadBase = QtCore.QThread
+    have_qt = True
+except:
+    ThreadBase = threading.Thread
+    have_qt = False
+
 
 import vigra
 at = vigra.arraytypes
-
-from ilastik.gui.volumeeditor import VolumeEditor as VolumeEditor
 
 import ilastik.core.features
 
@@ -134,9 +140,9 @@ class FeatureMgr():
         # Delete This Instance for pickleling
         return {}     
                 
-class FeatureThread(QtCore.QThread):
+class FeatureThread(ThreadBase):
     def __init__(self, featureMgr, dataMgr):
-        QtCore.QThread.__init__(self)
+        ThreadBase.__init__(self)
         self.count = 0
         self.jobs = 0
         self.featureMgr = featureMgr

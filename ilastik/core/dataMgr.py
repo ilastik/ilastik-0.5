@@ -36,10 +36,14 @@ import threading
 import h5py
 import h5py as tables # TODO: exchange tables with h5py
 from utilities import irange, debug, irangeIfTrue
-from PyQt4 import QtGui
+try:
+    from PyQt4 import QtGui
+    have_qt = True
+except:
+    have_qt = False
 
-from ilastik.gui.volumeeditor import DataAccessor as DataAccessor
-from ilastik.gui.volumeeditor import Volume as Volume
+from ilastik.core.volume import DataAccessor as DataAccessor
+from ilastik.core.volume import Volume as Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
@@ -521,7 +525,8 @@ class DataMgr():
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
-                QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
+                if have_qu:
+                    QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
                 raise e
 
             alreadyLoaded = True
