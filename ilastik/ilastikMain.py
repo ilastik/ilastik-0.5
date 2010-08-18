@@ -785,7 +785,10 @@ class ProjectDlg(QtGui.QDialog):
                 flagOFF = ~theFlag
 
                 # file name
-                r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
+                path = str(sl.path.text())
+                
+                #r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
+                r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets X: ' + str(sl.offsetX.value()) + ', Y: ' + str(sl.offsetY.value()) + ', Z: ' + str(sl.offsetZ.value()))
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
 
 
