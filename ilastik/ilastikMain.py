@@ -461,6 +461,10 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
         self.labelWidget.normalizeData = self.project.normalizeData
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
+        ##############3
+        
+        print 'rgb= ', self.project.rgbData
+        ################
         self.labelWidget.setRgbMode(self.project.rgbData)
         
         #self.connect(self.labelWidget.labelView, QtCore.SIGNAL("labelPropertiesChanged()"),self.updateLabelWidgetOverlays)

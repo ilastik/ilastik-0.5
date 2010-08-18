@@ -154,14 +154,6 @@ class StackLoader(QtGui.QDialog):
         self.alsoSaveFrame.setVisible(False)
         self.layout.addWidget(self.alsoSaveFrame)        
         
-        #tempLayout = QtGui.QHBoxLayout()
-        #self.previewFilesButton = QtGui.QPushButton("Preview files")
-        #self.connect(self.previewFilesButton, QtCore.SIGNAL('clicked()'), self.slotPreviewFiles)
-        #tempLayout.addStretch()
-        #tempLayout.addWidget(self.previewFilesButton)
-        #tempLayout.addStretch()
-        #self.layout.addLayout(tempLayout)
-
         tempLayout = QtGui.QHBoxLayout()
         self.loadButton = QtGui.QPushButton("Load")
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
@@ -284,7 +276,8 @@ class StackLoader(QtGui.QDialog):
             nch = len(self.channels)
         else:
             nch = self.rgb
-        try:
+        try: 
+            print "nch=", nch
             self.image = numpy.zeros(shape + (nch,), 'float32')
         except Exception, e:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
@@ -295,7 +288,7 @@ class StackLoader(QtGui.QDialog):
         z = 0
         allok = True
         firstlist = self.fileList[self.channels[0]]
-        print len(firstlist)
+        print self.channels
         img_data2 = None
         img_data3 = None
         for index, filename in enumerate(firstlist):
@@ -310,10 +303,9 @@ class StackLoader(QtGui.QDialog):
                         else:
                             self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                     else:
-                                                  
                         if invert is True:
                             self.image[:,:, z-offsets[2],self.channels[0]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                            #load other channes if needed
+                            #load other channels if needed
                             if (len(self.channels)>1):
                                 img_data2 = vigra.impex.readImage(self.fileList[1][index])
                                 self.image[:,:,z-offsets[2],self.channels[1]] = 255 - img_data2[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
@@ -322,11 +314,13 @@ class StackLoader(QtGui.QDialog):
                                 self.image[:,:,z-offsets[2],self.channels[2]] = 255 - img_data3[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                         else:
                             self.image[:,:,z-offsets[2],self.channels[0]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                            #load other channes if needed
+                            #load other channels if needed
                             if (len(self.channels)>1):
+                                print self.fileList[1][index]
                                 img_data2 = vigra.impex.readImage(self.fileList[1][index])
                                 self.image[:,:,z-offsets[2],self.channels[1]] = img_data2[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                             if (len(self.channels)>2):
+                                print self.fileList[2][index]
                                 img_data3 = vigra.impex.readImage(self.fileList[2][index])
                                 self.image[:,:,z-offsets[2],self.channels[2]] = img_data3[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
                     self.logger.insertPlainText(".")
@@ -340,8 +334,8 @@ class StackLoader(QtGui.QDialog):
             z = z + 1
                  
         if destShape is not None:
-            result = numpy.zeros(destShape + (self.rgb,), 'float32')
-            for i in range(self.rgb):
+            result = numpy.zeros(destShape + (nch,), 'float32')
+            for i in range(nch):
                 cresult = vigra.sampling.resizeVolumeSplineInterpolation(self.image[:,:,:,i].view(vigra.Volume),destShape)
                 result[:,:,:,i] = cresult[:,:,:]
             self.image = result
@@ -361,7 +355,7 @@ class StackLoader(QtGui.QDialog):
             self.image = result.astype('uint8')
             self.image.reshape(self.image.shape + (1,))
         
-        self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],self.rgb)
+        self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],nch)
         
         try:
             if destfile != None :
