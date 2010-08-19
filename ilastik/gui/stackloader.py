@@ -336,46 +336,24 @@ class StackLoader(QtGui.QDialog):
                     img_data = vigra.impex.readImage(filename)
                     
                     if self.rgb > 1:
-                        if invert is True:
-                            self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
-                        else:
-                            self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
+                        self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                     else:
-                        if invert is True:
-                            self.image[:,:, z-offsets[2],self.channels[0]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                            #load other channels if needed
-                            if (len(self.channels)>1):
-                                img_data = vigra.impex.readImage(self.fileList[self.channels[1]][index])
-                                self.image[:,:,z-offsets[2],self.channels[1]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                                if (len(self.channels)>2):                                
-                                    img_data = vigra.impex.readImage(self.fileList[self.channels[2]][index])
-                                    self.image[:,:,z-offsets[2],self.channels[2]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                                else:
-                                    #only 2 channels are selected. Fill the 3d channel with zeros
-                                    #TODO: zeros create an unnecessary memory overhead in features
-                                    #change this logic to something better
-                                    ch = set([0,1,2])
-                                    not_filled = ch.difference(self.channels)
-                                    nf_ind = not_filled.pop()
-                                    self.image[:,:,z-offsets[2],nf_ind]=0 
-                                
-                        else:
-                            self.image[:,:,z-offsets[2],self.channels[0]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                            #load other channels if needed
-                            if (len(self.channels)>1):
-                                img_data = vigra.impex.readImage(self.fileList[self.channels[1]][index])
-                                self.image[:,:,z-offsets[2],self.channels[1]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                                if (len(self.channels)>2):
-                                    img_data = vigra.impex.readImage(self.fileList[self.channels[2]][index])
-                                    self.image[:,:,z-offsets[2],self.channels[2]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
-                                else:
-                                    #only 2 channels are selected. Fill the 3d channel with zeros
-                                    #TODO: zeros create an unnecessary memory overhead in features
-                                    #change this logic to something better
-                                    ch = set([0,1,2])
-                                    not_filled = ch.difference(self.channels)
-                                    nf_ind = not_filled.pop()
-                                    self.image[:,:,z-offsets[2],nf_ind]=0 
+                        self.image[:,:, z-offsets[2],self.channels[0]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                        #load other channels if needed
+                        if (len(self.channels)>1):
+                            img_data = vigra.impex.readImage(self.fileList[self.channels[1]][index])
+                            self.image[:,:,z-offsets[2],self.channels[1]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            if (len(self.channels)>2):                                
+                                img_data = vigra.impex.readImage(self.fileList[self.channels[2]][index])
+                                self.image[:,:,z-offsets[2],self.channels[2]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            else:
+                                #only 2 channels are selected. Fill the 3d channel with zeros
+                                #TODO: zeros create an unnecessary memory overhead in features
+                                #change this logic to something better
+                                ch = set([0,1,2])
+                                not_filled = ch.difference(self.channels)
+                                nf_ind = not_filled.pop()
+                                self.image[:,:,z-offsets[2],nf_ind]=0                           
                     self.logger.insertPlainText(".")
                 except Exception, e:
                     allok = False
@@ -385,6 +363,9 @@ class StackLoader(QtGui.QDialog):
                     self.logger.appendPlainText("")
                 self.logger.repaint()
             z = z + 1
+
+        if invert:
+            self.image = 255 - self.image             
                  
         if destShape is not None:
             result = numpy.zeros(destShape + (nch,), 'float32')
@@ -395,6 +376,7 @@ class StackLoader(QtGui.QDialog):
         else:
             destShape = shape
         
+
         if normalize:
             maximum = numpy.max(self.image)
             minimum = numpy.min(self.image)
