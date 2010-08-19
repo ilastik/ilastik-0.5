@@ -26,6 +26,7 @@ import ilastik.gui.volumeeditor as ve
 
 from ilastik.core import dataMgr, featureMgr
 from ilastik.core import classificationMgr as cm
+from ilastik.gui.iconMgr import ilastikIcons
 
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent):
@@ -38,9 +39,21 @@ class BatchProcess(QtGui.QDialog):
 
         self.filesView = QtGui.QListWidget()
         self.filesView.setMinimumHeight(300)
-        self.pathButton = QtGui.QPushButton("Select")
+        
+        self.pathButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel), "Add to selection")
+        self.clearSelectionBtn = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.RemSel), "Clear all")
+        
+        
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
-        self.layout.addWidget(self.pathButton)
+        self.connect(self.clearSelectionBtn, QtCore.SIGNAL('clicked()'), self.clearSelection)
+        
+        tempLayout = QtGui.QHBoxLayout()
+        
+        tempLayout.addWidget(self.pathButton)
+        tempLayout.addWidget(self.clearSelectionBtn)
+        tempLayout.addStretch()
+        
+        self.layout.addLayout(tempLayout)
         self.layout.addWidget(self.filesView)
 
 
@@ -79,10 +92,14 @@ class BatchProcess(QtGui.QDialog):
 
 
     def slotDir(self):
-        self.filenames = QtGui.QFileDialog.getOpenFileNames(self, "Image Files")
-        self.filesView.clear()
-        for f in self.filenames:
+        selection = QtGui.QFileDialog.getOpenFileNames(self, "Image Files")
+        self.filenames.extend(selection)
+        for f in selection:
             self.filesView.addItem(f)
+            
+    def clearSelection(self):
+        self.filenames = []
+        self.filesView.clear()
 
     def slotProcess(self):
         self.process(self.filenames)
