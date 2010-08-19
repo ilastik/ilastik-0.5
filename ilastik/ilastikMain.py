@@ -1039,9 +1039,7 @@ class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
         self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(False)
-        self.featureCompute()
-        
-        
+        self.featureCompute() 
     
     def featureCompute(self):
         self.parent.project.dataMgr.featureLock.acquire()
@@ -1068,8 +1066,7 @@ class FeatureComputation(object):
         if not self.parent.project.featureMgr.featureProcess.isRunning():
             self.myTimer.stop()
             self.terminateFeatureProgressBar()
-            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
-            
+            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)   
             
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)

@@ -52,6 +52,8 @@ class ilastikIcons(object):
     Select = iconPath + "actions/edit-select-all.png"
     Erase = iconPath + "actions/my_erase.png"
     Edit2 = iconPath + "actions/edit-find-replace.png"
+    AddSel = iconPath + "actions/list-add.png"
+    RemSel = iconPath + "actions/list-remove.png"
     Python = iconPath + ilastikPath+"/gui/pyc.ico"
     
     
