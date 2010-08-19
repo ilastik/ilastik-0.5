@@ -762,8 +762,11 @@ class ProjectDlg(QtGui.QDialog):
         imageData = sl.exec_()
         
         if imageData is not None:   
-                
-            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, "Image Stack")
+            # file name
+            path = str(sl.path.text())
+            dirname = os.path.basename(os.path.dirname(path))
+            offsetstr =  '(' + str(sl.offsetX.value()) + ', ' + str(sl.offsetY.value()) + ', ' + str(sl.offsetZ.value()) + ')'   
+            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
             try:
                 self.dataMgr.append(theDataItem, True)
                 self.dataMgr.dataItemsLoaded[-1] = True
@@ -783,14 +786,9 @@ class ProjectDlg(QtGui.QDialog):
                 theFlag = QtCore.Qt.ItemIsEnabled
                 flagON = ~theFlag | theFlag
                 flagOFF = ~theFlag
-
-                # file name
-                path = str(sl.path.text())
-                
-                #r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
-                r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets X: ' + str(sl.offsetX.value()) + ', Y: ' + str(sl.offsetY.value()) + ', Z: ' + str(sl.offsetZ.value()))
+               
+                r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets: ' + offsetstr)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-
 
                 # labels
                 r = QtGui.QTableWidgetItem()
