@@ -31,9 +31,10 @@ class DataImpex(object):
         try: 
             image = numpy.zeros(options.shape+(nch,), 'float32')
         except Exception, e:
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            #QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            #TODO: test if it really throws correctly
             print e
-            return None
+            raise MemoryError
         
         #loop over provided images
         z = 0

@@ -55,7 +55,7 @@ import time
 from PyQt4 import QtCore, QtGui, uic
 
 import ilastik
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex
 from ilastik.gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
 from collections import deque
@@ -759,8 +759,13 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader()
-        imageData = sl.exec_()
-        
+        #imageData = sl.exec_()
+        sl.exec_()
+        imageData = None
+        try:
+            imageData = dataImpex.DataImpex.loadStack(sl.fileList, sl.options)
+        except MemoryError:
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
         if imageData is not None:   
             # file name
             path = str(sl.path.text())

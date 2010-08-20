@@ -172,12 +172,13 @@ class LoadOptionsWidget(QtGui.QWidget):
 class loadOptions:
     def __init__(self):
         self.resulution = [1, 1, 1]
-        self.offsets = [0, 0, 0]
-        self.shape = [0, 0, 0]
+        self.offsets = (0, 0, 0)
+        self.shape = (0, 0, 0)
         self.channels = []
         self.destShape = None
         self.invert = False
         self.normalize = False
         self.grayscale = False
         self.destfile = None
+        self.rgb = 1
 

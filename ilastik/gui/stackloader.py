@@ -156,21 +156,22 @@ class StackLoader(QtGui.QDialog):
 
     def slotLoad(self):
         self.optionsWidget.fillOptions(self.options)
-        self.logger.clear()
-        self.logger.setVisible(True)
-        self.image = dataImpex.DataImpex.loadStack(self.fileList, self.options, self.logger)
+        self.accept()
+        #self.logger.clear()
+        #self.logger.setVisible(True)
+        #self.image = dataImpex.DataImpex.loadStack(self.fileList, self.options, self.logger)
       
-        if self.image is not None:
-            self.logger.appendPlainText("Slices loaded")
-            self.accept()
-        else :
-            self.reject()
+        #if self.image is not None:
+        #    self.logger.appendPlainText("Slices loaded")
+        #    self.accept()
+        #else :
+        #    self.reject()
             
-    def exec_(self):
-        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
-            return  self.image
-        else:
-            return None
+    #def exec_(self):
+    #    if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+    #        return  self.image
+    #    else:
+    #        return None
        
 def test():
     """Text editor demo"""
