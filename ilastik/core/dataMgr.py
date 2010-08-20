@@ -510,7 +510,7 @@ class DataMgr():
     def __init__(self, featureCacheFile=None):
         self.dataItems = []            
         self.classifiers = []
-        self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
+        self.featureLock = threading.Semaphore(1) #prevent chaining of activeImage during thread stuff
         self.trainingVersion = 0
         self.featureVersion = 0
         self.dataItemsLoaded = []

@@ -8,15 +8,12 @@ Created on Mon Mar 22 09:33:57 2010
 
 import os, glob
 import vigra
-import numpy
-
-import numpy
 import sys
-
-import vigra
 import getopt
 import h5py
-import glob
+import numpy
+
+import loadOptions
 
 from PyQt4 import QtCore, QtGui, uic
 
@@ -32,7 +29,7 @@ class StackLoader(QtGui.QDialog):
         #for each channel
         self.fileList = []
         self.channels = []
-        self.resolution = [1, 1, 1]
+        self.options = loadOptions.loadOptions()
 
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
@@ -72,118 +69,14 @@ class StackLoader(QtGui.QDialog):
         self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
-    
+
+        #####################################
         tempLayout = QtGui.QHBoxLayout()
-        self.offsetX = QtGui.QSpinBox()
-        self.offsetX.setRange(0,10000)
-        self.offsetY = QtGui.QSpinBox()
-        self.offsetY.setRange(0,10000)
-        self.offsetZ = QtGui.QSpinBox()
-        self.offsetZ.setRange(0,10000)
-        tempLayout.addWidget( self.offsetX)
-        tempLayout.addWidget( self.offsetY)
-        tempLayout.addWidget( self.offsetZ)
-        self.layout.addWidget(QtGui.QLabel("Subvolume Offsets:"))
+        self.optionsWidget = loadOptions.LoadOptionsWidget()
+        tempLayout.addWidget(self.optionsWidget)
         self.layout.addLayout(tempLayout)
-        
-        tempLayout = QtGui.QHBoxLayout()
-        self.sizeX = QtGui.QSpinBox()
-        self.sizeX.setRange(0,10000)
-        self.sizeY = QtGui.QSpinBox()
-        self.sizeY.setRange(0,10000)
-        self.sizeZ = QtGui.QSpinBox()
-        self.sizeZ.setRange(0,10000)
-        tempLayout.addWidget( self.sizeX)
-        tempLayout.addWidget( self.sizeY)
-        tempLayout.addWidget( self.sizeZ)
-        self.layout.addWidget(QtGui.QLabel("Subvolume Size:"))
-        self.layout.addLayout(tempLayout)
-
-        tempLayout = QtGui.QHBoxLayout()
-        self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
-        self.connect(self.resCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleResolution)
-        tempLayout.addWidget(self.resCheck)
-        self.layout.addLayout(tempLayout) 
-        
-        self.resolutionFrame = QtGui.QFrame()
-        tempLayout = QtGui.QVBoxLayout()
-        tempLayout1 = QtGui.QHBoxLayout()
-        tempLayout1.addWidget(QtGui.QLabel("Enter relative resolution along x, y and z"))
-        tempLayout.addLayout(tempLayout1)
-        tempLayout2 = QtGui.QHBoxLayout()
-        self.resX = QtGui.QLineEdit("1")
-        self.connect(self.resX, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
-        self.resY = QtGui.QLineEdit("1")
-        self.connect(self.resY, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
-        self.resZ = QtGui.QLineEdit("1")
-        self.connect(self.resZ, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
-        tempLayout2.addWidget(QtGui.QLabel("X:"))
-        tempLayout2.addWidget(self.resX)
-        tempLayout2.addWidget(QtGui.QLabel("Y:"))
-        tempLayout2.addWidget(self.resY)
-        tempLayout2.addWidget(QtGui.QLabel("Z:"))
-        tempLayout2.addWidget(self.resZ)
-        tempLayout.addLayout(tempLayout2)
-        self.resolutionFrame.setLayout(tempLayout)
-        self.resolutionFrame.setVisible(False)
-        self.layout.addWidget(self.resolutionFrame)    
-
-        tempLayout = QtGui.QHBoxLayout()
-        self.invert = QtGui.QCheckBox("Invert Colors?")
-        tempLayout.addWidget(self.invert)
-        self.layout.addLayout(tempLayout) 
-
-        tempLayout = QtGui.QHBoxLayout()
-        self.grayscale = QtGui.QCheckBox("Convert to Grayscale ?")
-        tempLayout.addWidget(self.grayscale)
-        self.layout.addLayout(tempLayout) 
-
-
-        tempLayout = QtGui.QHBoxLayout()
-        self.normalize = QtGui.QCheckBox("Normalize Data?")
-        tempLayout.addWidget(self.normalize)
-        self.layout.addLayout(tempLayout) 
-
-
-        tempLayout = QtGui.QHBoxLayout()
-        self.downsample = QtGui.QCheckBox("Downsample Subvolume to Size:")
-        self.connect(self.downsample, QtCore.SIGNAL("stateChanged(int)"), self.toggleDownsample)      
-        tempLayout.addWidget(self.downsample)
-        self.layout.addLayout(tempLayout)
-
-        self.downsampleFrame = QtGui.QFrame()
-        tempLayout = QtGui.QHBoxLayout()
-        self.downX = QtGui.QSpinBox()
-        self.downX.setRange(0,10000)
-        self.downY = QtGui.QSpinBox()
-        self.downY.setRange(0,10000)
-        self.downZ = QtGui.QSpinBox()
-        self.downZ.setRange(0,10000)
-        tempLayout.addWidget( self.downX)
-        tempLayout.addWidget( self.downY)
-        tempLayout.addWidget( self.downZ)
-        self.downsampleFrame.setLayout(tempLayout)
-        self.downsampleFrame.setVisible(False)
-        self.layout.addWidget(self.downsampleFrame)
-    
-        
-        tempLayout = QtGui.QHBoxLayout()
-        self.alsoSave = QtGui.QCheckBox("also save to Destination File:")
-        self.connect(self.alsoSave, QtCore.SIGNAL("stateChanged(int)"), self.toggleAlsoSave)
-        tempLayout.addWidget(self.alsoSave)
-        self.layout.addLayout(tempLayout) 
-
-        self.alsoSaveFrame = QtGui.QFrame()
-        tempLayout = QtGui.QHBoxLayout()
-        self.fileButton = QtGui.QPushButton("Select")
-        self.connect(self.fileButton, QtCore.SIGNAL('clicked()'), self.slotFile)
-        self.file = QtGui.QLineEdit("")
-        tempLayout.addWidget(self.file)
-        tempLayout.addWidget(self.fileButton)
-        self.alsoSaveFrame.setLayout(tempLayout)
-        self.alsoSaveFrame.setVisible(False)
-        self.layout.addWidget(self.alsoSaveFrame)        
-        
+        #####################################
+     
         tempLayout = QtGui.QHBoxLayout()
         self.loadButton = QtGui.QPushButton("Load")
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
@@ -204,29 +97,12 @@ class StackLoader(QtGui.QDialog):
         self.layout.addWidget(self.logger)        
         self.image = None
 
-    def toggleAlsoSave(self, int):
-        if self.alsoSave.checkState() == 0:
-            self.alsoSaveFrame.setVisible(False)
-        else:
-            self.alsoSaveFrame.setVisible(True)
-    
-    def toggleDownsample(self, int):
-        if self.downsample.checkState() == 0:
-            self.downsampleFrame.setVisible(False)
-        else:
-            self.downsampleFrame.setVisible(True)
-
     def toggleMultiChannel(self, int):
 	    if self.multiChannel.checkState() == 0:
 	        self.multiChannelFrame.setVisible(False)
 	    else:
 	        self.multiChannelFrame.setVisible(True)
 
-    def toggleResolution(self, int):
-        if self.resCheck.checkState() == 0:
-            self.resolutionFrame.setVisible(False)
-        else:
-            self.resolutionFrame.setVisible(True)
 
     def pathChanged(self, text):
         self.fileList = []
@@ -257,36 +133,25 @@ class StackLoader(QtGui.QDialog):
             else:
                 self.fileList.append([])
 
-        self.sizeZ.setValue(len(self.fileList[self.channels[0]]))
+        #self.sizeZ.setValue(len(self.fileList[self.channels[0]]))
+        self.optionsWidget.sizeZ.setValue(len(self.fileList[self.channels[0]]))
         try:
             temp = vigra.impex.readImage(self.fileList[self.channels[0]][0])
-            self.sizeX.setValue(temp.shape[0])
-            self.sizeY.setValue(temp.shape[1])
+            self.optionsWidget.sizeX.setValue(temp.shape[0])
+            self.optionsWidget.sizeY.setValue(temp.shape[1])
             if len(temp.shape) == 3:
                 self.rgb = temp.shape[2]
             else:
                 self.rgb = 1
         except Exception as e:
-            self.sizeZ.setValue(0)
-            self.sizeX.setValue(0)
-            self.sizeY.setValue(0)
-
-    def resChanged(self):
-        try:
-            self.resolution[0] = float(str(self.resX.text()))
-            self.resolution[1] = float(str(self.resY.text()))
-            self.resolution[2] = float(str(self.resZ.text()))
-        except Exception as e:
-            self.resolution = [1,1,1]
+            self.optionsWidget.sizeZ.setValue(0)
+            self.optionsWidget.sizeX.setValue(0)
+            self.optionsWidget.sizeY.setValue(0)
 
     def slotDir(self):
         path = self.path.text()
         filename = QtGui.QFileDialog.getExistingDirectory(self, "Image Stack Directory", path)
         self.path.setText(filename + "/*")
-
-    def slotFile(self):
-        filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
-        self.file.setText(filename)
 
     def slotPreviewFiles(self):
         self.fileTableWidget = previewTable(self)
@@ -299,20 +164,10 @@ class StackLoader(QtGui.QDialog):
                 self.reject()
                 return
         
-        offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
-        shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
-        destShape = None
-        if self.downsample.checkState() > 0:
-            destShape = (self.downX.value(),self.downY.value(),self.downZ.value())
-        filename = str(self.file.text())
-        if self.alsoSave.checkState() == 0:
-            filename = None
-        normalize = self.normalize.checkState() > 0
-        invert = self.invert.checkState() > 0
-        grayscale = self.grayscale.checkState() > 0
-        self.load(str(self.path.text()), offsets, shape, destShape, filename, normalize, invert, grayscale)
+        options = self.optionsWidget.fillOptions()
+        self.load(str(self.path.text()), options)
     
-    def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False, makegray = False):
+    def load(self, pattern, options):
         self.logger.clear()
         self.logger.setVisible(True)
         if len(self.channels)>1:
@@ -320,32 +175,33 @@ class StackLoader(QtGui.QDialog):
         else:
             nch = self.rgb
         try: 
-            self.image = numpy.zeros(shape + (nch,), 'float32')
+            self.image = numpy.zeros(options.shape+(nch,), 'float32')
         except Exception, e:
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            print e
             self.reject()
             return
         
-        #loop over provided images an put them in the hdf5
+        #loop over provided images
         z = 0
         allok = True
         firstlist = self.fileList[self.channels[0]]
         for index, filename in enumerate(firstlist):
-            if z >= offsets[2] and z < offsets[2] + shape[2]:
+            if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                 try:
                     img_data = vigra.impex.readImage(filename)
                     
                     if self.rgb > 1:
-                        self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
+                        self.image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:optoins.offsets[1]+options.shape[1],:]
                     else:
-                        self.image[:,:, z-offsets[2],self.channels[0]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                        self.image[:,:, z-options.offsets[2],self.channels[0]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                         #load other channels if needed
                         if (len(self.channels)>1):
                             img_data = vigra.impex.readImage(self.fileList[self.channels[1]][index])
-                            self.image[:,:,z-offsets[2],self.channels[1]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            self.image[:,:,z-options.offsets[2],self.channels[1]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             if (len(self.channels)>2):                                
                                 img_data = vigra.impex.readImage(self.fileList[self.channels[2]][index])
-                                self.image[:,:,z-offsets[2],self.channels[2]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                                self.image[:,:,z-options.offsets[2],self.channels[2]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             else:
                                 #only 2 channels are selected. Fill the 3d channel with zeros
                                 #TODO: zeros create an unnecessary memory overhead in features
@@ -353,7 +209,7 @@ class StackLoader(QtGui.QDialog):
                                 ch = set([0,1,2])
                                 not_filled = ch.difference(self.channels)
                                 nf_ind = not_filled.pop()
-                                self.image[:,:,z-offsets[2],nf_ind]=0                           
+                                self.image[:,:,z-options.offsets[2],nf_ind]=0                           
                     self.logger.insertPlainText(".")
                 except Exception, e:
                     allok = False
@@ -364,42 +220,42 @@ class StackLoader(QtGui.QDialog):
                 self.logger.repaint()
             z = z + 1
 
-        if invert:
+        if options.invert:
             self.image = 255 - self.image             
                  
-        if destShape is not None:
-            result = numpy.zeros(destShape + (nch,), 'float32')
+        if options.destShape is not None:
+            result = numpy.zeros(options.destShape + (nch,), 'float32')
             for i in range(nch):
-                cresult = vigra.sampling.resizeVolumeSplineInterpolation(self.image[:,:,:,i].view(vigra.Volume),destShape)
+                cresult = vigra.sampling.resizeVolumeSplineInterpolation(self.image[:,:,:,i].view(vigra.Volume),options.destShape)
                 result[:,:,:,i] = cresult[:,:,:]
             self.image = result
         else:
-            destShape = shape
+            options.destShape = options.shape
         
 
-        if normalize:
+        if options.normalize:
             maximum = numpy.max(self.image)
             minimum = numpy.min(self.image)
             self.image = self.image * (255.0 / (maximum - minimum)) - minimum
 
         
-        if makegray:
+        if options.grayscale:
             self.image = self.image.view(numpy.ndarray)
             result = numpy.average(self.image, axis = 3)
             self.rgb = 1
             self.image = result.astype('uint8')
             self.image.reshape(self.image.shape + (1,))
         
-        self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],nch)
+        self.image = self.image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
         
         try:
-            if destfile != None :
-                f = h5py.File(destfile, 'w')
+            if options.destfile != None :
+                f = h5py.File(options.destfile, 'w')
                 g = f.create_group("volume")        
                 g.create_dataset("data",data = self.image)
                 f.close()
         except:
-            print "######ERROR saving File ", destfile
+            print "######ERROR saving File ", options.destfile
             
         if allok:
             self.logger.appendPlainText("Slices loaded")

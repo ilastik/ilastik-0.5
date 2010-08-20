@@ -765,7 +765,7 @@ class ProjectDlg(QtGui.QDialog):
             # file name
             path = str(sl.path.text())
             dirname = os.path.basename(os.path.dirname(path))
-            offsetstr =  '(' + str(sl.offsetX.value()) + ', ' + str(sl.offsetY.value()) + ', ' + str(sl.offsetZ.value()) + ')'   
+            offsetstr =  '(' + str(sl.options.offsets[0]) + ', ' + str(sl.options.offsets[1]) + ', ' + str(sl.options.offsets[2]) + ')'   
             theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
             try:
                 self.dataMgr.append(theDataItem, True)
