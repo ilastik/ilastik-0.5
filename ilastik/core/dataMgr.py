@@ -47,6 +47,8 @@ from ilastik.core.volume import Volume as Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
+from ilastik.core import dataImpex
+
 import traceback
 import vigra
 at = vigra.arraytypes
@@ -285,7 +287,7 @@ class DataItemImage(DataItemBase):
             g = f['volume']
             self.deserialize(g)
         else:
-            self.data = DataImpex.loadImageData(self.fileName)
+            self.data = dataImpex.DataImpex.loadImageData(self.fileName)
             self.labels = None
         #print "Shape after Loading and width",self.data.shape, self.data.width
         if self.dataVol is None:
@@ -666,25 +668,6 @@ class DataMgr():
     def deserialize(self):
         pass
         
-        
-
-class DataImpex(object):
-    """
-    Data Import/Export class 
-    """
-        
-    @staticmethod
-    def loadVolumeFromGroup(h5grp):
-        di = DataItemImage
-
-    
-    @staticmethod
-    def loadImageData(fileName):
-        # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
-        # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
-        data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-        return data
-
         
         
         

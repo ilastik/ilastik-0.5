@@ -155,8 +155,7 @@ class LoadOptionsWidget(QtGui.QWidget):
         filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
         self.file.setText(filename)
 
-    def fillOptions(self):
-        options = loadOptions()
+    def fillOptions(self, options):
         options.offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
         options.shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
         destShape = None
@@ -168,7 +167,6 @@ class LoadOptionsWidget(QtGui.QWidget):
         options.normalize = self.normalize.checkState() > 0
         options.invert = self.invert.checkState() > 0
         options.grayscale = self.grayscale.checkState() > 0
-        return options
 
 
 class loadOptions:
@@ -176,6 +174,7 @@ class loadOptions:
         self.resulution = [1, 1, 1]
         self.offsets = [0, 0, 0]
         self.shape = [0, 0, 0]
+        self.channels = []
         self.destShape = None
         self.invert = False
         self.normalize = False
