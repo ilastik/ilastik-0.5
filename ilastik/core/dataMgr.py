@@ -47,7 +47,8 @@ from ilastik.core.volume import Volume as Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
-from ilastik.core import dataImpex
+
+#from ilastik.core import dataImpex
 
 import traceback
 import vigra
@@ -287,7 +288,7 @@ class DataItemImage(DataItemBase):
             g = f['volume']
             self.deserialize(g)
         else:
-            self.data = dataImpex.DataImpex.loadImageData(self.fileName)
+            #self.data = dataImpex.DataImpex.loadImageData(self.fileName)
             self.labels = None
         #print "Shape after Loading and width",self.data.shape, self.data.width
         if self.dataVol is None:

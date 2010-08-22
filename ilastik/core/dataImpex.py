@@ -1,8 +1,9 @@
 
 import numpy
 import vigra
-
-
+from ilastik.core import dataMgr
+from ilastik.core.volume import DataAccessor as DataAccessor
+from ilastik.core.volume import Volume as Volume
 
 class DataImpex(object):
     """
@@ -113,8 +114,12 @@ class DataImpex(object):
                 f.close()
         except:
             print "######ERROR saving File ", options.destfile
+            
         if allok:
-            return image
+            dataItem = dataMgr.DataItemImage("bla")
+            dataItem.dataVol = Volume()
+            dataItem.dataVol.data = DataAccessor(image, True)
+            return dataItem
 
 
 
