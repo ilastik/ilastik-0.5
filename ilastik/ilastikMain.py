@@ -55,7 +55,7 @@ import time
 from PyQt4 import QtCore, QtGui, uic
 
 import ilastik
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex
 from ilastik.gui import ctrlRibbon, stackloader, batchProcess
 from Queue import Queue as queue
 from collections import deque
@@ -759,14 +759,20 @@ class ProjectDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")     
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader()
-        imageData = sl.exec_()
-        
-        if imageData is not None:   
+        #imageData = sl.exec_()
+        sl.exec_()
+        theDataItem = None
+        try:  
+            theDataItem = dataImpex.DataImpex.loadStack(sl.fileList, sl.options)
+        except MemoryError:
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+        if theDataItem is not None:   
             # file name
             path = str(sl.path.text())
             dirname = os.path.basename(os.path.dirname(path))
-            offsetstr =  '(' + str(sl.options.offsets[0]) + ', ' + str(sl.options.offsets[1]) + ', ' + str(sl.options.offsets[2]) + ')'   
-            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
+            offsetstr =  '(' + str(sl.options.offsets[0]) + ', ' + str(sl.options.offsets[1]) + ', ' + str(sl.options.offsets[2]) + ')'
+            theDataItem.Name = dirname + ' ' + offsetstr   
+            #theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
             try:
                 self.dataMgr.append(theDataItem, True)
                 self.dataMgr.dataItemsLoaded[-1] = True

@@ -1,8 +1,9 @@
 
 import numpy
 import vigra
-
-
+from ilastik.core import dataMgr
+from ilastik.core.volume import DataAccessor as DataAccessor
+from ilastik.core.volume import Volume as Volume
 
 class DataImpex(object):
     """
@@ -31,9 +32,10 @@ class DataImpex(object):
         try: 
             image = numpy.zeros(options.shape+(nch,), 'float32')
         except Exception, e:
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            #QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            #TODO: test if it really throws correctly
             print e
-            return None
+            raise MemoryError
         
         #loop over provided images
         z = 0
@@ -112,8 +114,12 @@ class DataImpex(object):
                 f.close()
         except:
             print "######ERROR saving File ", options.destfile
+            
         if allok:
-            return image
+            dataItem = dataMgr.DataItemImage("bla")
+            dataItem.dataVol = Volume()
+            dataItem.dataVol.data = DataAccessor(image, True)
+            return dataItem
 
 
 
