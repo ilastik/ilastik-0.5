@@ -54,9 +54,9 @@ class LabelListItem(QtGui.QListWidgetItem):
         self.setIcon(icon)      
 
 
-class LabelListWidget(BaseLabelWidget,  QtGui.QWidget):
+class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
-        QtGui.QWidget.__init__(self,  None)
+        QtGui.QGroupBox.__init__(self,  "Labels")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)

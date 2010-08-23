@@ -172,16 +172,16 @@ class OverlayListWidget(QtGui.QListWidget):
             self.slider.setRange(min,max)
             self.slider.setValue(value)
 
-    def __init__(self,parent, overlays):
-        QtGui.QListWidget.__init__(self, parent)
-        self.volumeEditor = parent
+    def __init__(self,volumeEditor,  overlayWidget):
+        QtGui.QListWidget.__init__(self, overlayWidget)
+        self.volumeEditor = volumeEditor
+        self.overlayWidget = overlayWidget
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.connect(self, QtCore.SIGNAL("clicked(QModelIndex)"), self.onItemClick)
         self.connect(self, QtCore.SIGNAL("doubleClicked(QModelIndex)"), self.onItemDoubleClick)
-        self.overlays = overlays  #array of VolumeOverlays
         self.currentItem = None
-        for overlay in self.overlays:
+        for overlay in self.overlayWidget.overlays:
             self.addItem(OverlayListWidgetItem(overlay))
 
     def onItemClick(self, itemIndex):
@@ -212,26 +212,26 @@ class OverlayListWidget(QtGui.QListWidget):
         
 #    def clearOverlays(self):
 #        self.clear()
-#        self.overlays = []
+#        self.overlayWidget.overlays = []
 
     def removeOverlay(self, item):
         itemNr = None
         if isinstance(item, str):
-            for idx, it in enumerate(self.overlays):
+            for idx, it in enumerate(self.overlayWidget.overlays):
                 if it.name == item:
                     itemNr = idx
                     item = it
         else:
             itemNr = item
         if itemNr != None:
-            self.overlays.pop(itemNr)
+            self.overlayWidget.overlays.pop(itemNr)
             self.takeItem(itemNr)
             return item
         else:
             return None
 
     def addOverlay(self, overlay):
-        self.overlays.append(overlay)
+        self.overlayWidget.overlays.append(overlay)
         self.addItem(OverlayListWidgetItem(overlay))
 
     def onContext(self, pos):
@@ -253,11 +253,7 @@ class OverlayListWidget(QtGui.QListWidget):
 #            mlab.outline()
             my_model = MayaviQWidget(item.overlayItem.data[0,:,:,:,0], self.volumeEditor.image[0,:,:,:,0])
             my_model.show()
-    """
-    Class that manages the different labels (VolumeLabelDescriptions) for one Volume
 
-    can serialize and deserialize into a h5py group
-    """
 
     def getLabelNames(self):
         labelNames = []
@@ -271,8 +267,28 @@ class OverlayListWidget(QtGui.QListWidget):
         item.overlayItem.visible = state
         item.setCheckState(item.overlayItem.visible * 2)
 
-    """
-    Represents a data volume including labels etc.
-    
-    can serialize and deserialize into a h5py group
-    """
+
+class OverlayWidget(QtGui.QGroupBox):
+    def __init__(self,parent, overlays):
+        QtGui.QGroupBox.__init__(self,  "Overlays")
+        self.setLayout(QtGui.QVBoxLayout())
+        
+        self.overlays = overlays
+
+        self.overlayListWidget = OverlayListWidget(parent, self)
+       
+        self.layout().addWidget(self.overlayListWidget)
+        
+    def removeOverlay(self, item):
+        return self.overlayListWidget.removeOverlay(item)
+        
+    def addOverlay(self, overlay):
+        return self.overlayListWidget.addOverlay(overlay)
+
+    def getLabelNames(self):
+        return self.overlayListWidget.getLabelNames()
+       
+      
+    def toggleVisible(self,  index):
+        return self.overlayListWidget.toggleVisible(index)
+

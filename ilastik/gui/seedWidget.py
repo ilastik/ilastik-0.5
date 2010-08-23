@@ -53,9 +53,9 @@ class SeedListItem(QtGui.QListWidgetItem):
         self.setIcon(icon)      
 
 
-class SeedListWidget(BaseLabelWidget,  QtGui.QWidget):
+class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
-        QtGui.QWidget.__init__(self,  None)
+        QtGui.QGroupBox.__init__(self,  "Seeds")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)

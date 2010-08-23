@@ -449,14 +449,6 @@ class VolumeEditor(QtGui.QWidget):
             self.channelSpinLabel.setVisible(False)
         self.channelSpin.setRange(0,self.image.shape[-1] - 1)
 
-        if self.embedded == False:
-            self.addOverlayButton = QtGui.QPushButton("Add Overlay")
-            self.connect(self.addOverlayButton, QtCore.SIGNAL("pressed()"), self.addOverlayDialog)
-            self.toolBoxLayout.addWidget(self.addOverlayButton)
-        else:
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Overlays:"))
-
-
 
         #Overlay selector
         self.overlayWidget = DummyOverlayListWidget(self)
@@ -638,6 +630,7 @@ class VolumeEditor(QtGui.QWidget):
         """
         if self.labelWidget is not None:
             self.toolBoxLayout.removeWidget(self.labelWidget)
+            self.labelWidget.close()
             del self.labelWidget
         self.labelWidget = widget
         self.connect(self.labelWidget , QtCore.SIGNAL("selectedLabel(int)"), self.onLabelSelected)
@@ -649,6 +642,7 @@ class VolumeEditor(QtGui.QWidget):
         """
         if self.overlayWidget is not None:
             self.toolBoxLayout.removeWidget(self.overlayWidget)
+            self.overlayWidget.close()
             del self.overlayWidget
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)

@@ -82,7 +82,7 @@ from ilastik.gui.shortcutmanager import *
 
 from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
-from ilastik.gui.overlayWidget import OverlayListWidget
+from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor,  Volume
 
@@ -348,7 +348,10 @@ class MainWindow(QtGui.QMainWindow):
 
 
     def tabChanged(self,  index):
-
+        """
+        update the overlayWidget of the labelWidget and switch the history
+        between seeds and labels.
+        """
         if self.ribbon.tabText(index) == "Segmentation":
             if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
                 self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
@@ -359,7 +362,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.history.volumeEditor = self.labelWidget
 
 
-            self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
+            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
             
             #create SeedsOverlay
             ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, name = "Seeds", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), visible = True)
@@ -377,7 +380,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
             self.labelWidget.history.volumeEditor = self.labelWidget
     
-            self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
+            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
             
             #create LabelOverlay
             ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), visible = True)
@@ -490,7 +493,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.setRgbMode(self.project.rgbData)
         
         #setup sub-widgets
-        self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
+        self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
         #create LabelOverlay
         ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = None, visible = True)
         self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
