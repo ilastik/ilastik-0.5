@@ -107,8 +107,7 @@ class Project(object):
             item.dataVol.serialize(dk)
             if item.prediction is not None:
                 item.prediction.serialize(dk, 'prediction' )
-            if item.history is not None:
-                item.history.serialize(dk)
+
 
         # Save to hdf5 file
         fileHandle.close()

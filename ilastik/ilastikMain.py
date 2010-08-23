@@ -226,17 +226,13 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive = True
         if self.labelWidget is not None:
             self.labelWidget.history.volumeEditor = None
-        if number != self.activeImage:
-            self.project.dataMgr[self.activeImage].history = self.labelWidget.history
+
         self.activeImage = number
         self.project.dataMgr.activeImage = number
         
         self.destroyImageWindows()
 
         self.createImageWindows( self.project.dataMgr[number].dataVol)
-        if self.project.dataMgr[self.activeImage].history is not None:
-            self.labelWidget.history = self.project.dataMgr[self.activeImage].history
-            self.labelWidget.history.volumeEditor = self.labelWidget
         
         self.updateLabelWidgetOverlays()
         self.labelWidget.repaint() #for overlays
@@ -354,6 +350,15 @@ class MainWindow(QtGui.QMainWindow):
     def tabChanged(self,  index):
 
         if self.ribbon.tabText(index) == "Segmentation":
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
+                self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
+                
+            if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
+            
+            self.labelWidget.history.volumeEditor = self.labelWidget
+
+
             self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
             
             #create SeedsOverlay
@@ -365,6 +370,13 @@ class MainWindow(QtGui.QMainWindow):
             
             
         elif self.labelWidget is not None:
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
+                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
+            
+            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+            self.labelWidget.history.volumeEditor = self.labelWidget
+    
             self.labelWidget.setOverlayWidget(OverlayListWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
             
             #create LabelOverlay
@@ -465,6 +477,12 @@ class MainWindow(QtGui.QMainWindow):
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
+
+        if dataVol.labels.history is None:
+            dataVol.labels.history = ve.HistoryManager(self.labelWidget)
+
+        if dataVol.seeds.history is None:
+            dataVol.seeds.history = ve.HistoryManager(self.labelWidget)
 
         self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
         self.labelWidget.normalizeData = self.project.normalizeData

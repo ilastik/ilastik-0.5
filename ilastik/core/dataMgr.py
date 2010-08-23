@@ -282,7 +282,6 @@ class DataItemImage(DataItemBase):
         self.seedL = numpy.zeros((0, 1), 'uint8')
         self.seedIndices = numpy.zeros((0, 1), 'uint32')
         
-        self.history = None
         self.featureCacheDS = None
         self.featureBlockAccessor = None
         self.segmentationWeights = None

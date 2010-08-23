@@ -177,7 +177,7 @@ class VolumeLabels():
             self.data = data
         else:
             self.data = DataAccessor(data, channels = False)
-
+        self.history = None    #history of drawing operations
         self.descriptions = [] #array of VolumeLabelDescriptions
         
     def clear(self):
@@ -200,6 +200,9 @@ class VolumeLabels():
             h5G[name].attrs['color'] = tColor 
             h5G[name].attrs['name'] = tName
             h5G[name].attrs['number'] = tNumber
+            
+        if self.history is not None:
+            self.history.serialize(h5G)        
             
     def getLabelNames(self):
         labelNames = []
