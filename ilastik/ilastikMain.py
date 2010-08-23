@@ -1550,8 +1550,6 @@ class Segmentation(object):
 
         temp = activeItem.dataVol.segmentation[0, :, :, :, 0]
         
-        print "kjlahdsk ",  numpy.max(temp),  numpy.min(temp)
-
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"] is None:
             ov = OverlayItem(activeItem.dataVol.segmentation, name = "Segmentation", color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, visible = True)

@@ -41,9 +41,11 @@ from ilastik.core.volume import DataAccessor,  Volume
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
-from ilastik.core import segmentors
 from ilastik.core import labelMgr
 from ilastik.core import seedMgr
+
+from ilastik import core 
+import core.segmentors
 
 
 class Project(object):
@@ -73,7 +75,7 @@ class Project(object):
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
-        self.segmentor = segmentors.segmentorWS.SegmentorWS()
+        self.segmentor = core.segmentors.segmentorClasses[0]
     
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 
