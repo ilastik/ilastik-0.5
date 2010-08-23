@@ -52,9 +52,10 @@ class Ribbon(QtGui.QTabWidget):
     def moveEvent(self, event):
         QtGui.QTabWidget.moveEvent(self, event)
     
-    def addTab(self, w, s="TabName"):
+    def addTab(self, w, s="TabName",  enabled = True):
         self.tabDict[s] = w
-        QtGui.QTabWidget.addTab(self, w, s)              
+        if enabled is True:
+            QtGui.QTabWidget.addTab(self, w, s)              
 
 class RibbonBaseItem(QtGui.QWidget):
     def __init__(self,  ribbon_entry):

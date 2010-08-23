@@ -27,4 +27,33 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import segmentorBase, segmentorPW, segmentorWS, segmentorWSit
+import traceback,  os,  sys,  segmentorBase
+
+#
+#Import other segmentation plugins dynamically
+#
+load = False
+try:
+    test = segmentorClasses
+except Exception,  e:
+    load = True
+    
+
+if load:
+    pathext = os.path.dirname(__file__)
+    try:
+        for f in os.listdir(os.path.abspath(pathext)):
+            module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
+            if ext == '.py': # Important, ignore .pyc/other files.
+                module = __import__('core.segmentors.' + module_name)
+    except Exception, e:
+        #traceback.print_exc(file=sys.stdout)
+        pass
+
+    for i, c in enumerate(segmentorBase.SegmentorBase.__subclasses__()):
+        #print "loaded segmentor ",c, ': ',  c.name
+        pass
+        
+    segmentorClasses = segmentorBase.SegmentorBase.__subclasses__()
+    if len(segmentorClasses) == 0:
+        segmentorClasses = [segmentorBase.SegmentorBase]

@@ -86,6 +86,10 @@ from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor,  Volume
 
+
+from ilastik import core
+import core.segmentors
+
 #make the program quit on Ctrl+C
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -262,7 +266,12 @@ class MainWindow(QtGui.QMainWindow):
             for ribbon_group in ribbonDict.values():
                 if ribbon_group.position == k:
                     tabs = ribbon_group.makeTab()   
-                    self.ribbon.addTab(tabs, ribbon_group.name)
+                    enabled = True
+                    if ribbon_group.name == "Segmentation":
+                        num_segmentors = len(core.segmentors.segmentorBase.SegmentorBase.__subclasses__())
+                        if num_segmentors == 0:
+                            enabled = False
+                    self.ribbon.addTab(tabs, ribbon_group.name,  enabled)
                     print "Add tab", ribbon_group.name
         self.ribbonToolbar.addWidget(self.ribbon)
         

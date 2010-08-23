@@ -30,25 +30,10 @@
 import numpy, vigra, os, sys
 import traceback
 
-from  ilastik.core import segmentors
+import ilastik.core.segmentors
+
 from PyQt4 import QtCore
 from ilastik.core import jobMachine
-
-""" Import all segmentation plugins"""
-pathext = os.path.dirname(__file__)
-print "PATHEXT: ", pathext
-try:
-    for f in os.listdir(os.path.abspath(pathext + '/segmentors')):
-        module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
-        if ext == '.py': # Important, ignore .pyc/other files.
-            module = __import__('ilastik.core.segmentors.' + module_name)
-except Exception, e:
-    pass
-
-for i, c in enumerate(segmentors.segmentorBase.SegmentorBase.__subclasses__()):
-    print "loaded segmentor ", c.name
-
-    
 
    
 def LocallyDominantSegmentation(propmap, sigma = 2.0):
@@ -102,7 +87,7 @@ class ListOfNDArraysAsNDArray:
 
 
 class SegmentationThread(QtCore.QThread):
-    def __init__(self, dataMgr, image, segmentor = segmentors.segmentorPW.SegmentorPW, segmentorOptions = None):
+    def __init__(self, dataMgr, image, segmentor = ilastik.core.segmentors.segmentorClasses[0], segmentorOptions = None):
         QtCore.QThread.__init__(self, None)
         self.dataItem = image
         self.dataMgr = dataMgr
