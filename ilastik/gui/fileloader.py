@@ -28,7 +28,7 @@ class FileLoader(QtGui.QDialog):
         
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
-        self.connect(self.path, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
+        self.connect(self.path, QtCore.SIGNAL("textEdited(QString)"), self.pathChanged)
         self.pathButton = QtGui.QPushButton("Select")
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
         tempLayout.addWidget(self.path)
@@ -100,27 +100,48 @@ class FileLoader(QtGui.QDialog):
         else:
             self.optionsFrame.setVisible(True)
             #this call fills the shape
-            self.pathChanged("")
+            self.optionsWidget.setShapeInfo(self.fileList)
         
     def toggleMultiChannel(self, int):
-	    if self.multiChannel.checkState() == 0:
-	        self.multiChannelFrame.setVisible(False)
-	    else:
-	        self.multiChannelFrame.setVisible(True)
+        if self.multiChannel.checkState() == 0:
+            self.multiChannelFrame.setVisible(False)
+            templist = []
+            for item in self.fileList:
+                templist.extend(item)
+            self.updateFileList(templist)
+        else:
+            self.multiChannelFrame.setVisible(True)
             #this call fills the line edits with channel filenames
-            self.pathChanged("")    
+            if (len(self.fileList)>0):
+                templist = self.fileList[0]
+            self.updateFileList(templist)    
         
     def pathChanged(self, text):
-        self.fileList = []
         path = str(self.path.text())
         templist = sorted(glob.glob(path), key=str.lower)
+        self.updateFileList(templist)
+
+    def slotDir(self):
+        path = self.path.text()
+        templist1 = QtGui.QFileDialog.getOpenFileNames(self, "", path)
+        templist = []
+        for item in templist1:
+            templist.append(str(QtCore.QDir.convertSeparators(item)))
+        self.updateFileList(templist)
+        if (len(templist)>0):
+            path_to_display = templist[0]
+            if (len(templist)>1):
+                path_to_display = path_to_display + " ..."
+            self.path.setText(QtCore.QString(path_to_display))
+        
+    
+    def updateFileList(self, templist):
+        self.fileList = []    
         if (len(templist)>0):
             if self.multiChannel.checkState() == 0:
                 self.fileList.append(templist)
-                #self.fileList.append(glob.glob(str(self.path.text())))
                 self.options.channels.append(0)
             else:
-                print templist
                 self.fileList.append([templist[0]])
                 self.redPath.setText(QtCore.QString(self.fileList[0][0]))
                 self.options.channels.append(0)
@@ -132,15 +153,16 @@ class FileLoader(QtGui.QDialog):
                     self.fileList.append([templist[2]])
                     self.bluePath.setText(QtCore.QString(self.fileList[2][0]))
                     self.options.channels.append(2)
-            if self.optionCheck.checkState() != 0:
-                self.optionsWidget.setShapeInfo(self.fileList)
-            
-    
-    def slotLoad(self):
-        print "Empty"
-    
-    def slotDir(self):
-        print "Empty"
-    
+        #this call fills the shape
+        self.optionsWidget.setShapeInfo(self.fileList)
+
     def slotPreviewFiles(self):
-        print "Empty"    
+        self.fileTableWidget = loadOptions.previewTable(self.fileList)
+        self.fileTableWidget.exec_()
+                
+    def slotLoad(self):
+        self.optionsWidget.fillOptions(self.options)
+        self.accept()
+    
+    
+    

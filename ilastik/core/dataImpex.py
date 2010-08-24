@@ -19,11 +19,31 @@ class DataImpex(object):
     
     @staticmethod
     def importDataItem(filename, options):
+        #call this method when you expect to get a single data item back, such
+        #as when you load a stack from a directory
         if isinstance(filename, list):
-            return DataImpex.loadStack(filename, options)
+            image = DataImpex.loadStack(filename, options, None)
+            if image is not None:
+                #the name will be set in the calling function
+                theDataItem = DataImpex.initDataItemFromArray(image, "bla")
+                return theDataItem
         else:
+            #this is just added for backward compatibility with 'Add' button
+            #of the Project Dialog
             return DataImpex.loadFromFile(filename)
-
+    
+    @staticmethod
+    def importDataItems(fileList, options):
+        #call this method when you expect len(fileList[0]) items back, such as
+        #when you load images (even only one image) from files.
+        image = DataImpex.loadStack(fileList, options, None)
+        itemList = []
+        if image is not None:
+            for item in range(image.shape[3]):
+                theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[0][item])
+                itemList.append(theDataItem)
+        return itemList
+        
     @staticmethod
     def loadFromFile(fileName):
         # Load an image or a stack from a single file
@@ -70,8 +90,10 @@ class DataImpex(object):
         z = 0
         allok = True
         firstlist = fileList[options.channels[0]]
+        print "requested shape: ", options.shape
         for index, filename in enumerate(firstlist):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
+                print "z=", z
                 try:
                     img_data = vigra.impex.readImage(filename)
                     
@@ -147,8 +169,8 @@ class DataImpex(object):
             #dataItem.dataVol = Volume()
             #dataItem.dataVol.data = DataAccessor(image, True)
             print "Image shape", image.shape
-            dataItem = DataImpex.initDataItemFromArray(image, "bla")
-            return dataItem
+            #dataItem = DataImpex.initDataItemFromArray(image, "bla")
+            return image
 
     @staticmethod
     def initDataItemFromArray(image, name):

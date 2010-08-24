@@ -813,7 +813,34 @@ class ProjectDlg(QtGui.QDialog):
         fl = fileloader.FileLoader()
         #imageData = sl.exec_()
         fl.exec_()
-        theDataItem = None
+        try:
+            itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
+        except Exception, e:
+            traceback.print_exc(file=sys.stdout)
+            print e
+            QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+        for index, item in enumerate(itemList):
+            self.dataMgr.append(item, True)
+            rowCount = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(rowCount)
+
+            theFlag = QtCore.Qt.ItemIsEnabled
+            flagON = ~theFlag | theFlag
+            flagOFF = ~theFlag
+
+            # file name
+            r = QtGui.QTableWidgetItem(fl.fileList[0][index])
+            self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+            # labels
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(QtCore.Qt.Checked)
+
+
+            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+
+            self.initThumbnail(fl.fileList[0][index])
+            self.tableWidget.setCurrentCell(0, 0)
 
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
