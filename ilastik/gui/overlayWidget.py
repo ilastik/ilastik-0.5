@@ -317,10 +317,13 @@ class OverlayWidget(QtGui.QGroupBox):
     def buttonAddClicked(self):
         dlg = OverlaySelectionDialog(self.overlayMgr)
         answer = dlg.exec_()
-        self.addOverlay(answer[0])
+        for o in answer:
+            self.addOverlay(o)
+        self.overlayListWidget.volumeEditor.repaint()
         
     def buttonRemoveClicked(self):
         self.overlayListWidget.removeOverlay(self.overlayListWidget.currentRow())
+        self.overlayListWidget.volumeEditor.repaint()
         
     def removeOverlay(self, item):
         """
