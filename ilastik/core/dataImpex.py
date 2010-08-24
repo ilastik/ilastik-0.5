@@ -1,6 +1,9 @@
 
 import numpy
 import vigra
+import os
+import h5py
+
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.volume import Volume as Volume
@@ -13,18 +16,44 @@ class DataImpex(object):
     @staticmethod
     def loadVolumeFromGroup(h5grp):
         di = DataItemImage
-
     
     @staticmethod
-    def loadImageData(fileName):
-        # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
-        # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
-        data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-        return data
+    def importDataItem(filename, options):
+        if isinstance(filename, list):
+            return DataImpex.loadStack(filename, options)
+        else:
+            return DataImpex.loadFromFile(filename)
+
+    @staticmethod
+    def loadFromFile(fileName):
+        # Load an image or a stack from a single file
+        theDataItem = dataMgr.DataItemImage(fileName)
+        fBase, fExt = os.path.splitext(fileName)
+        if fExt == '.h5':
+            f = h5py.File(fileName, 'r')
+            g = f['volume']
+            theDataItem.deserialize(g)
+        else:
+            # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
+            # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
+            theDataItem.data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
+            #data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
+            theDataItem.labels = None
+
+        #if theDataItem.dataVol is None:
+            #print "dataItem.dataVol is None!!!"
+            dataAcc = DataAccessor(theDataItem.data)
+            theDataItem.dataVol = Volume()
+            theDataItem.dataVol.data = dataAcc
+            print "dataVol.data", theDataItem.dataVol.data.shape
+            theDataItem.dataVol.labels = theDataItem.labels
+        return theDataItem
 
     @staticmethod
     def loadStack(fileList, options, logger = None):
         #This method also exports the stack as .h5 file, if options.destfile is not None
+        if (len(fileList) == 0):
+            return None
         if len(options.channels)>1:
             nch = 3
         else:
@@ -90,13 +119,11 @@ class DataImpex(object):
         else:
             options.destShape = options.shape
         
-
         if options.normalize:
             maximum = numpy.max(image)
             minimum = numpy.min(image)
             image = image * (255.0 / (maximum - minimum)) - minimum
 
-        
         if options.grayscale:
             image = image.view(numpy.ndarray)
             result = numpy.average(image, axis = 3)
@@ -116,14 +143,52 @@ class DataImpex(object):
             print "######ERROR saving File ", options.destfile
             
         if allok:
-            dataItem = dataMgr.DataItemImage("bla")
-            dataItem.dataVol = Volume()
-            dataItem.dataVol.data = DataAccessor(image, True)
+            #dataItem = dataMgr.DataItemImage("bla")
+            #dataItem.dataVol = Volume()
+            #dataItem.dataVol.data = DataAccessor(image, True)
+            print "Image shape", image.shape
+            dataItem = DataImpex.initDataItemFromArray(image, "bla")
             return dataItem
 
+    @staticmethod
+    def initDataItemFromArray(image, name):
+        dataItem = dataMgr.DataItemImage(name)
+        dataItem.dataVol = Volume()
+        dataItem.dataVol.data = DataAccessor(image, True)
+        return dataItem
 
-
-
+    @staticmethod
+    def readShape(filename):
+        #read the shape of the dataset
+        #return as (x, y, z, c)
+        print "In readShape, filename: ", filename
+        fBase, fExt = os.path.splitext(filename)
+        print "fBase:", fBase, " , fExt:", fExt
+        if fExt == '.h5':
+            print "reading from h5"
+            f = h5py.File(filename, 'r')
+            shape = f["volume/data"].shape
+            if shape[1] == 1:
+                #2d data looks like (1, 1, x, y, c)
+                return (shape[2], shape[3], 1, shape[4])
+            else:
+                #3d data looks like (1, x, y, z, c)
+                return (shape[1], shape[2], shape[3], shape[4])
+        else :
+            print "reading from image"
+            try:
+                tempimage = vigra.impex.readImage(filename)
+            except Exception, e:
+                print e
+                raise
+            
+            print "tempimage.shape: ", tempimage.shape
+                
+            if (len(tempimage.shape)==3):
+                return (tempimage.shape[0], tempimage.shape[1], 1, tempimage.shape[2])
+            else:
+                return (tempimage.shape[0], tempimage.shape[1], 1, 1)
+        
 
      #           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
       #      if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):

@@ -281,29 +281,29 @@ class DataItemImage(DataItemBase):
         self.featureCacheDS = None
         self.featureBlockAccessor = None
         
-    def loadData(self):
-        fBase, fExt = os.path.splitext(self.fileName)
-        if fExt == '.h5':
-            f = h5py.File(self.fileName, 'r')
-            g = f['volume']
-            self.deserialize(g)
-        else:
-            #self.data = dataImpex.DataImpex.loadImageData(self.fileName)
-            self.labels = None
-        #print "Shape after Loading and width",self.data.shape, self.data.width
-        if self.dataVol is None:
-            dataAcc = DataAccessor(self.data)
-            self.dataVol = Volume()
-            self.dataVol.data = dataAcc
-            self.dataVol.labels = self.labels
-        
-   
-    @classmethod
-    def initFromArray(cls, dataArray, originalFileName):
-        obj = cls(originalFileName)
-        obj.dataVol = Volume()
-        obj.dataVol.data = DataAccessor(dataArray, True)
-        return obj
+#    def loadData(self):
+#        fBase, fExt = os.path.splitext(self.fileName)
+#        if fExt == '.h5':
+#            f = h5py.File(self.fileName, 'r')
+#            g = f['volume']
+#            self.deserialize(g)
+#        else:
+#            #self.data = dataImpex.DataImpex.loadImageData(self.fileName)
+#            self.labels = None
+#        #print "Shape after Loading and width",self.data.shape, self.data.width
+#        if self.dataVol is None:
+#            dataAcc = DataAccessor(self.data)
+#            self.dataVol = Volume()
+#            self.dataVol.data = dataAcc
+#            self.dataVol.labels = self.labels
+#        
+#   
+#    @classmethod
+#    def initFromArray(cls, dataArray, originalFileName):
+#        obj = cls(originalFileName)
+#        obj.dataVol = Volume()
+#        obj.dataVol.data = DataAccessor(dataArray, True)
+#        return obj
         
         
     def getTrainingMforInd(self, ind):
@@ -528,8 +528,7 @@ class DataMgr():
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
-                if have_qu:
-                    QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
+                QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
                 raise e
 
             alreadyLoaded = True

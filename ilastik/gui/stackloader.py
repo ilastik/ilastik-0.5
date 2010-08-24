@@ -88,8 +88,7 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget(self.loadButton)
         self.layout.addStretch()
         self.layout.addLayout(tempLayout)
-        
-        
+                
         self.logger = QtGui.QPlainTextEdit()
         self.logger.setVisible(False)
         self.layout.addWidget(self.logger)        
@@ -130,26 +129,17 @@ class StackLoader(QtGui.QDialog):
                 self.options.channels.append(2)
             else:
                 self.fileList.append([])
-
-        self.optionsWidget.sizeZ.setValue(len(self.fileList[self.options.channels[0]]))
-        try:
-            #TODO: all the loading should be done by dataImpex. But this is an exception
-            temp = vigra.impex.readImage(self.fileList[self.options.channels[0]][0])
-            self.optionsWidget.sizeX.setValue(temp.shape[0])
-            self.optionsWidget.sizeY.setValue(temp.shape[1])
-            if len(temp.shape) == 3:
-                self.options.rgb = temp.shape[2]
-            else:
-                self.options.rgb = 1
-        except Exception as e:
-            self.optionsWidget.sizeZ.setValue(0)
-            self.optionsWidget.sizeX.setValue(0)
-            self.optionsWidget.sizeY.setValue(0)
+        self.optionsWidget.setShapeInfo(self.fileList)
 
     def slotDir(self):
         path = self.path.text()
         filename = QtGui.QFileDialog.getExistingDirectory(self, "Image Stack Directory", path)
-        self.path.setText(filename + "/*")
+        tempname = filename + "/*"
+        #This is needed, because internally Qt always uses "/" separators,
+        #which is a problem on Windows, as we don't use QDir to open dirs
+        self.path.setText(str(QtCore.QDir.convertSeparators(tempname)))
+        print "new path: ", self.path.text()
+        
 
     def slotPreviewFiles(self):
         self.fileTableWidget = previewTable(self)

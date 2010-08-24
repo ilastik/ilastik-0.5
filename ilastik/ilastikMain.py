@@ -56,7 +56,7 @@ from PyQt4 import QtCore, QtGui, uic
 
 import ilastik
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex
-from ilastik.gui import ctrlRibbon, stackloader, batchProcess
+from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
 from Queue import Queue as queue
 from collections import deque
 from ilastik.gui.iconMgr import ilastikIcons
@@ -755,7 +755,7 @@ class ProjectDlg(QtGui.QDialog):
                
         self.exec_()
 
-    
+
     @QtCore.pyqtSignature("")     
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader()
@@ -763,7 +763,7 @@ class ProjectDlg(QtGui.QDialog):
         sl.exec_()
         theDataItem = None
         try:  
-            theDataItem = dataImpex.DataImpex.loadStack(sl.fileList, sl.options)
+            theDataItem = dataImpex.DataImpex.importDataItem(sl.fileList, sl.options)
         except MemoryError:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
         if theDataItem is not None:   
@@ -807,7 +807,14 @@ class ProjectDlg(QtGui.QDialog):
                 print e
                 QtGui.QErrorMessage.qtHandler().showMessage(str(e))
             
-                        
+    
+    @QtCore.pyqtSignature("")
+    def on_loadFileButton_clicked(self):
+        fl = fileloader.FileLoader()
+        #imageData = sl.exec_()
+        fl.exec_()
+        theDataItem = None
+
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         global LAST_DIRECTORY
@@ -819,8 +826,11 @@ class ProjectDlg(QtGui.QDialog):
                 try:
                     file_name = str(file_name)
 
-                    theDataItem = dataMgr.DataItemImage(file_name)
-                    self.dataMgr.append(theDataItem)
+                    #theDataItem = dataMgr.DataItemImage(file_name)
+                    theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
+                    if theDataItem is None:
+                        print "No data item loaded"
+                    self.dataMgr.append(theDataItem, True)
                     #self.dataMgr.dataItemsLoaded[-1] = True
 
                     rowCount = self.tableWidget.rowCount()

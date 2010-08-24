@@ -4,6 +4,7 @@ import sys
 import getopt
 import h5py
 
+from ilastik.core import dataImpex
 from PyQt4 import QtCore, QtGui, uic
 
 class LoadOptionsWidget(QtGui.QWidget):
@@ -12,6 +13,7 @@ class LoadOptionsWidget(QtGui.QWidget):
         #self.setMinimumWidth(400)
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
+        self.rgb = 1
 
         tempLayout = QtGui.QHBoxLayout()
         self.offsetX = QtGui.QSpinBox()
@@ -158,6 +160,7 @@ class LoadOptionsWidget(QtGui.QWidget):
     def fillOptions(self, options):
         options.offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
         options.shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
+        options.resolution = (int(str(self.resX.text())), int(str(self.resY.text())), int(str(self.resZ.text())))
         destShape = None
         if self.downsample.checkState() > 0:
             options.destShape = (self.downX.value(),self.downY.value(),self.downZ.value())
@@ -167,11 +170,32 @@ class LoadOptionsWidget(QtGui.QWidget):
         options.normalize = self.normalize.checkState() > 0
         options.invert = self.invert.checkState() > 0
         options.grayscale = self.grayscale.checkState() > 0
+        options.rgb = self.rgb
 
+    def setShapeInfo(self, fileList):
+        #read the shape information from the first file in the list
+        #TODO: this is calling the dataImpex - it's baaaaad, it shouldn't be done
+        try:
+            print "filelist: ", fileList[0][0]
+            shape = dataImpex.DataImpex.readShape(fileList[0][0])
+            print "shape returned:", shape
+            self.rgb = shape[3]
+            self.sizeX.setValue(shape[0])
+            self.sizeY.setValue(shape[1])
+            if shape[2] == 1: 
+                #2d data (1, 1, x, y, c)
+                self.sizeZ.setValue(len(fileList[0]))
+            else:
+                self.sizeZ.setValue(shape[2])
+        except Exception as e:
+            print e
+            self.sizeZ.setValue(0)
+            self.sizeX.setValue(0)
+            self.sizeY.setValue(0)
 
 class loadOptions:
     def __init__(self):
-        self.resulution = [1, 1, 1]
+        self.resolution = (1, 1, 1)
         self.offsets = (0, 0, 0)
         self.shape = (0, 0, 0)
         self.channels = []
