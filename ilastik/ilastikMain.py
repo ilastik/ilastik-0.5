@@ -371,7 +371,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.history.volumeEditor = self.labelWidget
 
 
-            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
+            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
             
             #create SeedsOverlay
             ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, name = "Seeds", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), visible = True)
@@ -389,7 +389,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
             self.labelWidget.history.volumeEditor = self.labelWidget
     
-            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
+            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
             
             #create LabelOverlay
             ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), visible = True)
@@ -502,7 +502,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.setRgbMode(self.project.rgbData)
         
         #setup sub-widgets
-        self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
+        self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
         #create LabelOverlay
         ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = None, visible = True)
         self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov

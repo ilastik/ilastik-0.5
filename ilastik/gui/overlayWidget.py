@@ -30,6 +30,9 @@
 from PyQt4 import QtCore, QtGui
 import vigra, numpy
 import sip
+import os
+from overlaySelectionDlg import OverlaySelectionDialog
+
 
 from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
 from ilastik.core.overlayMgr import OverlayMgr,  OverlayItem, OverlaySlice
@@ -269,17 +272,60 @@ class OverlayListWidget(QtGui.QListWidget):
 
 
 class OverlayWidget(QtGui.QGroupBox):
-    def __init__(self,parent, overlays):
+    def __init__(self,parent, overlayMgr,  overlays):
         QtGui.QGroupBox.__init__(self,  "Overlays")
-        self.setLayout(QtGui.QVBoxLayout())
+        self.setLayout(QtGui.QHBoxLayout())
+        
+        self.overlayMgr = overlayMgr
         
         self.overlays = overlays
 
         self.overlayListWidget = OverlayListWidget(parent, self)
        
-        self.layout().addWidget(self.overlayListWidget)
+        tl1 = QtGui.QVBoxLayout()
+        tl1.addWidget(self.overlayListWidget)
+
+        pathext = os.path.dirname(__file__)
+
+        tl2 = QtGui.QHBoxLayout()
+        self.buttonAdd = QtGui.QPushButton()
+        self.buttonAdd.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-add.png") )
+        self.connect(self.buttonAdd,  QtCore.SIGNAL('clicked()'),  self.buttonAddClicked)
+        self.buttonRemove = QtGui.QPushButton()
+        self.buttonRemove.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-remove.png"))
+        self.connect(self.buttonRemove,  QtCore.SIGNAL('clicked()'),  self.buttonRemoveClicked)
+        tl2.addWidget(self.buttonAdd)
+        tl2.addWidget(self.buttonRemove)
+        tl1.addLayout(tl2)
+        
+        
+        tl3 = QtGui.QVBoxLayout()
+        tl3.addStretch()
+        self.buttonUp = QtGui.QPushButton()
+        self.buttonUp.resize(10, 10)
+        self.buttonUp.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonDown = QtGui.QPushButton()
+        self.buttonDown.resize(10, 10)
+        self.buttonDown.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        tl3.addWidget(self.buttonUp)
+        tl3.addWidget(self.buttonDown)
+        tl3.addStretch()
+        
+        self.layout().addLayout(tl1)
+        #self.layout().addLayout(tl3)
+        
+    def buttonAddClicked(self):
+        dlg = OverlaySelectionDialog(self.overlayMgr)
+        answer = dlg.exec_()
+        self.addOverlay(answer[0])
+        
+    def buttonRemoveClicked(self):
+        self.overlayListWidget.removeOverlay(self.overlayListWidget.currentRow())
         
     def removeOverlay(self, item):
+        """
+        item can be a string, e.g. the item name, or a number
+        """
         return self.overlayListWidget.removeOverlay(item)
         
     def addOverlay(self, overlay):
@@ -288,7 +334,6 @@ class OverlayWidget(QtGui.QGroupBox):
     def getLabelNames(self):
         return self.overlayListWidget.getLabelNames()
        
-      
     def toggleVisible(self,  index):
         return self.overlayListWidget.toggleVisible(index)
 
