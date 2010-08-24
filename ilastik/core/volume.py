@@ -9,10 +9,10 @@ class DataAccessor():
     def __init__(self, data, channels = False):
         """
         data should be a numpy/vigra array that transformed to the [time, x, y, z, channel] access like this:
-            (a,b), b != 3 and channels = False  (0,0,a,b,0)
-            (a,b), b == 3 or channels = True:  (0,0,0,a,b)
-            (a,b,c), c != 3 and channels = False:  (0,a,b,c,0)
-            (a,b,c), c == 3 or channels = True:  (0,0,a,b,c)
+            1d: (a,b), b != 3 and channels = False  (0,0,a,b,0)
+            1d: (a,b), b == 3 or channels = True:  (0,0,0,a,b)
+            2d: (a,b,c), c != 3 and channels = False:  (0,a,b,c,0)
+            2d: (a,b,c), c == 3 or channels = True:  (0,0,a,b,c)
             etc.
         """
         if len(data.shape) == 5:

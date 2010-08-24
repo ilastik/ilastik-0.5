@@ -763,8 +763,11 @@ class ProjectDlg(QtGui.QDialog):
         imageData = sl.exec_()
         
         if imageData is not None:   
-                
-            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, "Image Stack")
+            # file name
+            path = str(sl.path.text())
+            dirname = os.path.basename(os.path.dirname(path))
+            offsetstr =  '(' + str(sl.offsetX.value()) + ', ' + str(sl.offsetY.value()) + ', ' + str(sl.offsetZ.value()) + ')'   
+            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
             try:
                 self.dataMgr.append(theDataItem, True)
                 self.dataMgr.dataItemsLoaded[-1] = True
@@ -784,11 +787,9 @@ class ProjectDlg(QtGui.QDialog):
                 theFlag = QtCore.Qt.ItemIsEnabled
                 flagON = ~theFlag | theFlag
                 flagOFF = ~theFlag
-
-                # file name
-                r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
+               
+                r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets: ' + offsetstr)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-
 
                 # labels
                 r = QtGui.QTableWidgetItem()
@@ -922,9 +923,7 @@ class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
         self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(False)
-        self.featureCompute()
-        
-        
+        self.featureCompute() 
     
     def featureCompute(self):
         self.parent.project.dataMgr.featureLock.acquire()
@@ -951,8 +950,7 @@ class FeatureComputation(object):
         if not self.parent.project.featureMgr.featureProcess.isRunning():
             self.myTimer.stop()
             self.terminateFeatureProgressBar()
-            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
-            
+            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)   
             
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)

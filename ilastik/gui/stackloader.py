@@ -27,6 +27,13 @@ class StackLoader(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
 
+        #a list of filenames
+        #internally, it's a list of lists of filenames
+        #for each channel
+        self.fileList = []
+        self.channels = []
+        self.resolution = [1, 1, 1]
+
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
         self.connect(self.path, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
@@ -37,7 +44,35 @@ class StackLoader(QtGui.QDialog):
         self.layout.addWidget(QtGui.QLabel("Path to Image Stack:"))
         self.layout.addLayout(tempLayout)
 
-
+        tempLayout = QtGui.QHBoxLayout()
+        self.multiChannel = QtGui.QCheckBox("MultiChannel Data:")
+        self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
+        tempLayout.addWidget(self.multiChannel)
+        self.layout.addLayout(tempLayout) 
+        
+        self.multiChannelFrame = QtGui.QFrame()
+        tempLayout = QtGui.QVBoxLayout()
+        tempLayout1 = QtGui.QHBoxLayout()
+        tempLayout1.addWidget(QtGui.QLabel("Enter channel identifiers, e.g. GFP"))
+        tempLayout.addLayout(tempLayout1)
+        tempLayout2 = QtGui.QHBoxLayout()
+        self.redChannelId = QtGui.QLineEdit("")
+        self.connect(self.redChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
+        self.blueChannelId = QtGui.QLineEdit("")
+        self.connect(self.blueChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
+        self.greenChannelId = QtGui.QLineEdit("")
+        self.connect(self.greenChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
+        tempLayout2.addWidget(QtGui.QLabel("Red:"))
+        tempLayout2.addWidget(self.redChannelId)
+        tempLayout2.addWidget(QtGui.QLabel("Green:"))
+        tempLayout2.addWidget(self.greenChannelId)
+        tempLayout2.addWidget(QtGui.QLabel("Blue:"))
+        tempLayout2.addWidget(self.blueChannelId)
+        tempLayout.addLayout(tempLayout2)
+        self.multiChannelFrame.setLayout(tempLayout)
+        self.multiChannelFrame.setVisible(False)
+        self.layout.addWidget(self.multiChannelFrame)        
+    
         tempLayout = QtGui.QHBoxLayout()
         self.offsetX = QtGui.QSpinBox()
         self.offsetX.setRange(0,10000)
@@ -48,7 +83,7 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget( self.offsetX)
         tempLayout.addWidget( self.offsetY)
         tempLayout.addWidget( self.offsetZ)
-        self.layout.addWidget(QtGui.QLabel("Sobvolume Offsets:"))
+        self.layout.addWidget(QtGui.QLabel("Subvolume Offsets:"))
         self.layout.addLayout(tempLayout)
         
         tempLayout = QtGui.QHBoxLayout()
@@ -63,6 +98,35 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget( self.sizeZ)
         self.layout.addWidget(QtGui.QLabel("Subvolume Size:"))
         self.layout.addLayout(tempLayout)
+
+        tempLayout = QtGui.QHBoxLayout()
+        self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
+        self.connect(self.resCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleResolution)
+        tempLayout.addWidget(self.resCheck)
+        self.layout.addLayout(tempLayout) 
+        
+        self.resolutionFrame = QtGui.QFrame()
+        tempLayout = QtGui.QVBoxLayout()
+        tempLayout1 = QtGui.QHBoxLayout()
+        tempLayout1.addWidget(QtGui.QLabel("Enter relative resolution along x, y and z"))
+        tempLayout.addLayout(tempLayout1)
+        tempLayout2 = QtGui.QHBoxLayout()
+        self.resX = QtGui.QLineEdit("1")
+        self.connect(self.resX, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
+        self.resY = QtGui.QLineEdit("1")
+        self.connect(self.resY, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
+        self.resZ = QtGui.QLineEdit("1")
+        self.connect(self.resZ, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
+        tempLayout2.addWidget(QtGui.QLabel("X:"))
+        tempLayout2.addWidget(self.resX)
+        tempLayout2.addWidget(QtGui.QLabel("Y:"))
+        tempLayout2.addWidget(self.resY)
+        tempLayout2.addWidget(QtGui.QLabel("Z:"))
+        tempLayout2.addWidget(self.resZ)
+        tempLayout.addLayout(tempLayout2)
+        self.resolutionFrame.setLayout(tempLayout)
+        self.resolutionFrame.setVisible(False)
+        self.layout.addWidget(self.resolutionFrame)    
 
         tempLayout = QtGui.QHBoxLayout()
         self.invert = QtGui.QCheckBox("Invert Colors?")
@@ -120,13 +184,14 @@ class StackLoader(QtGui.QDialog):
         self.alsoSaveFrame.setVisible(False)
         self.layout.addWidget(self.alsoSaveFrame)        
         
-        
-        
         tempLayout = QtGui.QHBoxLayout()
-        self.cancelButton = QtGui.QPushButton("Cancel")
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
         self.loadButton = QtGui.QPushButton("Load")
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
+        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
+        self.previewFilesButton = QtGui.QPushButton("Preview files")
+        self.connect(self.previewFilesButton, QtCore.SIGNAL('clicked()'), self.slotPreviewFiles)
+        tempLayout.addWidget(self.previewFilesButton)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
         tempLayout.addWidget(self.loadButton)
@@ -151,12 +216,50 @@ class StackLoader(QtGui.QDialog):
         else:
             self.downsampleFrame.setVisible(True)
 
+    def toggleMultiChannel(self, int):
+	    if self.multiChannel.checkState() == 0:
+	        self.multiChannelFrame.setVisible(False)
+	    else:
+	        self.multiChannelFrame.setVisible(True)
+
+    def toggleResolution(self, int):
+        if self.resCheck.checkState() == 0:
+            self.resolutionFrame.setVisible(False)
+        else:
+            self.resolutionFrame.setVisible(True)
 
     def pathChanged(self, text):
-        list = glob.glob(str(self.path.text()) )
-        self.sizeZ.setValue(len(list))
+        self.fileList = []
+        self.channels = []
+        if self.multiChannel.checkState() == 0:
+            pathone = str(self.path.text())
+            self.fileList.append(sorted(glob.glob(pathone), key=str.lower))
+            #self.fileList.append(glob.glob(str(self.path.text())))
+            self.channels.append(0)
+        else:
+            #not all channels have to be filled
+            if (len(str(self.redChannelId.text()))>0):
+                pathred = str(self.path.text())+"*"+str(self.redChannelId.text())+"*"
+                self.fileList.append(sorted(glob.glob(pathred), key=str.lower))
+                self.channels.append(0)
+            else:
+                self.fileList.append([])    
+            if (len(str(self.greenChannelId.text()))>0):
+                pathgreen = str(self.path.text())+"*"+str(self.greenChannelId.text())+"*"
+                self.fileList.append(sorted(glob.glob(pathgreen), key=str.lower))
+                self.channels.append(1)
+            else:
+                self.fileList.append([])
+            if (len(str(self.blueChannelId.text()))>0):
+                pathblue = str(self.path.text())+"*"+str(self.blueChannelId.text())+"*"
+                self.fileList.append(sorted(glob.glob(pathblue), key=str.lower))
+                self.channels.append(2)
+            else:
+                self.fileList.append([])
+
+        self.sizeZ.setValue(len(self.fileList[self.channels[0]]))
         try:
-            temp = vigra.impex.readImage(list[0])
+            temp = vigra.impex.readImage(self.fileList[self.channels[0]][0])
             self.sizeX.setValue(temp.shape[0])
             self.sizeY.setValue(temp.shape[1])
             if len(temp.shape) == 3:
@@ -168,6 +271,13 @@ class StackLoader(QtGui.QDialog):
             self.sizeX.setValue(0)
             self.sizeY.setValue(0)
 
+    def resChanged(self):
+        try:
+            self.resolution[0] = float(str(self.resX.text()))
+            self.resolution[1] = float(str(self.resY.text()))
+            self.resolution[2] = float(str(self.resZ.text()))
+        except Exception as e:
+            self.resolution = [1,1,1]
 
     def slotDir(self):
         path = self.path.text()
@@ -178,7 +288,17 @@ class StackLoader(QtGui.QDialog):
         filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
         self.file.setText(filename)
 
+    def slotPreviewFiles(self):
+        self.fileTableWidget = previewTable(self)
+
     def slotLoad(self):
+        if self.multiChannel.checkState() > 0 and len(self.channels)>1:
+            if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):
+                QtGui.QErrorMessage.qtHandler().showMessage("Chosen channels don't have an equal number of files. Check with Preview files button")
+                #should it really reject?
+                self.reject()
+                return
+        
         offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
         shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
         destShape = None
@@ -195,9 +315,12 @@ class StackLoader(QtGui.QDialog):
     def load(self, pattern,  offsets, shape, destShape = None, destfile = None, normalize = False, invert = False, makegray = False):
         self.logger.clear()
         self.logger.setVisible(True)
-
-        try:
-            self.image = numpy.zeros(shape + (self.rgb,), 'float32')
+        if len(self.channels)>1:
+            nch = 3
+        else:
+            nch = self.rgb
+        try: 
+            self.image = numpy.zeros(shape + (nch,), 'float32')
         except Exception, e:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
             self.reject()
@@ -206,10 +329,12 @@ class StackLoader(QtGui.QDialog):
         #loop over provided images an put them in the hdf5
         z = 0
         allok = True
-        for filename in sorted(glob.glob(pattern), key = str.lower):
+        firstlist = self.fileList[self.channels[0]]
+        for index, filename in enumerate(firstlist):
             if z >= offsets[2] and z < offsets[2] + shape[2]:
                 try:
                     img_data = vigra.impex.readImage(filename)
+                    
                     if self.rgb > 1:
                         if invert is True:
                             self.image[:,:, z-offsets[2],:] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
@@ -217,9 +342,40 @@ class StackLoader(QtGui.QDialog):
                             self.image[:,:,z-offsets[2],:] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1],:]
                     else:
                         if invert is True:
-                            self.image[:,:, z-offsets[2],0] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            self.image[:,:, z-offsets[2],self.channels[0]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            #load other channels if needed
+                            if (len(self.channels)>1):
+                                img_data = vigra.impex.readImage(self.fileList[self.channels[1]][index])
+                                self.image[:,:,z-offsets[2],self.channels[1]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                                if (len(self.channels)>2):                                
+                                    img_data = vigra.impex.readImage(self.fileList[self.channels[2]][index])
+                                    self.image[:,:,z-offsets[2],self.channels[2]] = 255 - img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                                else:
+                                    #only 2 channels are selected. Fill the 3d channel with zeros
+                                    #TODO: zeros create an unnecessary memory overhead in features
+                                    #change this logic to something better
+                                    ch = set([0,1,2])
+                                    not_filled = ch.difference(self.channels)
+                                    nf_ind = not_filled.pop()
+                                    self.image[:,:,z-offsets[2],nf_ind]=0 
+                                
                         else:
-                            self.image[:,:,z-offsets[2],0] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            self.image[:,:,z-offsets[2],self.channels[0]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                            #load other channels if needed
+                            if (len(self.channels)>1):
+                                img_data = vigra.impex.readImage(self.fileList[self.channels[1]][index])
+                                self.image[:,:,z-offsets[2],self.channels[1]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                                if (len(self.channels)>2):
+                                    img_data = vigra.impex.readImage(self.fileList[self.channels[2]][index])
+                                    self.image[:,:,z-offsets[2],self.channels[2]] = img_data[offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1]]
+                                else:
+                                    #only 2 channels are selected. Fill the 3d channel with zeros
+                                    #TODO: zeros create an unnecessary memory overhead in features
+                                    #change this logic to something better
+                                    ch = set([0,1,2])
+                                    not_filled = ch.difference(self.channels)
+                                    nf_ind = not_filled.pop()
+                                    self.image[:,:,z-offsets[2],nf_ind]=0 
                     self.logger.insertPlainText(".")
                 except Exception, e:
                     allok = False
@@ -231,8 +387,8 @@ class StackLoader(QtGui.QDialog):
             z = z + 1
                  
         if destShape is not None:
-            result = numpy.zeros(destShape + (self.rgb,), 'float32')
-            for i in range(self.rgb):
+            result = numpy.zeros(destShape + (nch,), 'float32')
+            for i in range(nch):
                 cresult = vigra.sampling.resizeVolumeSplineInterpolation(self.image[:,:,:,i].view(vigra.Volume),destShape)
                 result[:,:,:,i] = cresult[:,:,:]
             self.image = result
@@ -252,7 +408,7 @@ class StackLoader(QtGui.QDialog):
             self.image = result.astype('uint8')
             self.image.reshape(self.image.shape + (1,))
         
-        self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],self.rgb)
+        self.image = self.image.reshape(1,destShape[0],destShape[1],destShape[2],nch)
         
         try:
             if destfile != None :
@@ -286,3 +442,55 @@ def test():
 
 if __name__ == "__main__":
     test()
+
+class previewTable(QtGui.QDialog):
+    def __init__(self, parent=None, newProject = True):
+        QtGui.QWidget.__init__(self, parent)
+        self.stackloader = parent
+        self.layout = QtGui.QVBoxLayout()
+        self.setLayout(self.layout)
+
+        self.fileList = self.stackloader.fileList
+        self.fileListTable = QtGui.QTableWidget()
+        self.fillFileTable()        
+        self.fileListTable.setHorizontalHeaderLabels(["red", "green", "blue"])
+        self.fileListTable.resizeRowsToContents()
+        self.fileListTable.resizeColumnsToContents()
+        self.layout.addWidget(self.fileListTable)
+        self.show()
+
+    def fillFileTable(self):
+        if (len(self.fileList)==0):
+            self.fileListTable.setRowCount(1)
+            self.fileListTable.setColumnCount(3)
+            self.fileListTable.setItem(0, 0, QtGui.QTableWidgetItem(QtCore.QString("file1")))
+            self.fileListTable.setItem(0, 1, QtGui.QTableWidgetItem(QtCore.QString("file2")))
+            self.fileListTable.setItem(0, 2, QtGui.QTableWidgetItem(QtCore.QString("file3")))
+            return
+        nfiles = len(self.fileList[0])
+        self.fileListTable.setRowCount(nfiles)
+        self.fileListTable.setColumnCount(len(self.fileList))
+        #it's so ugly... but i don't know how to fill a whole column by list slicing
+        if (len(self.fileList)==1):
+            #single channel data
+            self.fileListTable.setRowCount(len(self.fileList[0]))
+            self.fileListTable.setColumnCount(1)       
+            for i in range(0, len(self.fileList[0])):
+                filename = os.path.basename(self.fileList[0][i])
+                self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+        if (len(self.fileList)==3):
+            #multichannel data
+            nfiles = max([len(self.fileList[0]), len(self.fileList[1]), len(self.fileList[2])])
+            self.fileListTable.setRowCount(nfiles)
+            self.fileListTable.setColumnCount(3)
+            for i in range(0, len(self.fileList[0])):
+                filename = os.path.basename(self.fileList[0][i])
+                self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+            for i in range(0, len(self.fileList[1])):
+                filename = os.path.basename(self.fileList[1][i])
+                self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+            for i in range(0, len(self.fileList[2])):
+                filename = os.path.basename(self.fileList[2][i])
+                self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+
+
