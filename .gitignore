@@ -2,3 +2,6 @@
 *.backup
 nbproject
 *~
+build/*
+.spyder*
+.gitig*
