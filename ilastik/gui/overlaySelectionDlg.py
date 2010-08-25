@@ -34,34 +34,32 @@ class MyTreeWidgetItem(QTreeWidgetItem):
 
 
 class OverlaySelectionDialog(QDialog):
-    def __init__(self, cdict, forbiddenItems=[], parent=None):
+    def __init__(self, cdict, forbiddenItems=[], singelSelection=True, parent=None):
         QWidget.__init__(self, parent)
         
         # init
         # ------------------------------------------------
         self.setMinimumWidth(600)
-        self.setWindowTitle("Select Dingsda")
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.layoutWidget = QWidget(self)
         self.selectedItemList = []
         self.christophsDict = cdict
         self.forbiddenItems = forbiddenItems
+        self.singelSelection = singelSelection
         
         # widgets and layouts
         # ------------------------------------------------
         
         GroupsLayout = QHBoxLayout()
-        treeGroupBoxLayout = QGroupBox("Tree")
+        treeGroupBoxLayout = QGroupBox("Overlays")
         treeAndButtonsLayout = QVBoxLayout()
         self.treeWidget = MyTreeWidget()
         self.connect(self.treeWidget, SIGNAL('spacePressed'), self.spacePressedTreewidget)
-        #self.treeWidget.setHeaderLabel("Titel")
-        #self.treeWidget.setItemsExpandable(True)
         self.treeWidget.header().close()
         self.treeWidget.setSortingEnabled(True)
-        self.treeWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.treeWidget.itemClicked.connect(self.clickOnTreeItem)
+        self.connect(self.treeWidget, SIGNAL('itemChanged(QTreeWidgetItem *,int)'), self.treeItemChanged)
 
         treeButtonsLayout = QHBoxLayout()
         self.expandAllButton = QPushButton("Expand All")
@@ -80,7 +78,7 @@ class OverlaySelectionDialog(QDialog):
         
         descLabelGroupBox = QGroupBox("Description")
         descLabelLayout = QVBoxLayout()
-        self.desc = QLabel('<i>Please click item</i>')
+        self.desc = QLabel()
         self.desc.setWordWrap(True)
         self.desc.setAlignment(Qt.AlignTop)
         self.desc.setMinimumWidth(200)
@@ -98,6 +96,16 @@ class OverlaySelectionDialog(QDialog):
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
         tempLayout.addWidget(self.addSelectedButton)
+        
+        if self.singelSelection == True:
+            self.setWindowTitle("Overlay Singel Selection")
+            self.desc.setText("<b>Singel Selection Mode</b> <br /><br />In singel selction mode it is possible to choose only one overlay.<br />For overlay-description select an overlay.<br />To (un)check an overlay please <br /> -click on a checkbox<br />-select overlay and press the spacebar")
+            self.checkAllButton.setEnabled(False)
+            self.uncheckAllButton.setEnabled(False)
+        else:
+            self.setWindowTitle("Overlay Multi Selection")
+            self.desc.setText("<b>Multi Selection Mode</b> <br /><br />In multi selction mode it is possible to choose several overlays.<br />For overlay-description select an overlay.<br />To (un)ckeck overlays please<br />-click on a checkbox<br />-slect several overlays with ctrl + mouse and press then the spacebar<br />-select several overlays with shift + click and press then the spacebar<br />")
+            self.treeWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         
         self.layout.addLayout(GroupsLayout)
         self.layout.addLayout(tempLayout)
@@ -162,6 +170,15 @@ class OverlaySelectionDialog(QDialog):
                                 testItem = newItem
                                 boolStat = True
 
+
+    def treeItemChanged(self, item, column):
+        currentItem = item
+        if self.singelSelection == True and currentItem.checkState(column) == 2:
+            it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.Checked)
+            while (it.value()):
+                if it.value() != currentItem:
+                    it.value().setCheckState(0, 0)
+                it.next()
 
                                 
     def clickOnTreeItem(self):
