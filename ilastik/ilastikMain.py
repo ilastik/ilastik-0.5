@@ -708,7 +708,8 @@ class ProjectDlg(QtGui.QDialog):
     def initDlg(self):
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(ilastik.__file__)
-        uic.loadUi(ilastikPath+'/gui/dlgProject.ui', self) 
+        #uic.loadUi(ilastikPath+'/gui/dlgProject.ui', self) 
+        uic.loadUi(os.path.join(ilastikPath,os.path.join("gui", "dlgProject.ui")), self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setAlternatingRowColors(True)
