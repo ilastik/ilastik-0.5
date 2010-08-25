@@ -1181,7 +1181,7 @@ class ClassificationInteractive(object):
         for p_i, descr in enumerate(activeItem.dataVol.labels.descriptions):
             #create Overlay for prediction:
             ov = OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, visible = True)
-            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction" + descr.name] = ov
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + descr.name] = ov
 
         #create Overlay for uncertainty:
         ov = OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
@@ -1366,7 +1366,7 @@ class ClassificationPredict(object):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
                 #create Overlay for prediction:
                 ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, visible = True)
-                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
 
             all =  range(len(activeItem.dataVol.labels.descriptions))
             not_predicted = numpy.setdiff1d(all, self.parent.project.dataMgr.classifiers[0].unique_vals - 1)
