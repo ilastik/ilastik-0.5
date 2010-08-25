@@ -106,7 +106,7 @@ class FeatureBase(object):
         _class = h5grp['class']
         _sigma = h5grp['sigma']
 
-        return eval('core.features.standardFeatures.' + _class.value + '(' + str(_sigma.value) + ')')
+        return eval('ilastik.core.features.standardFeatures.' + _class.value + '(' + str(_sigma.value) + ')')
 
     def __str__(self):
         return self.name

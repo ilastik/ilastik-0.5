@@ -525,7 +525,7 @@ class DataMgr():
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
-                if have_qu:
+                if have_qt:
                     QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
                 raise e
 
@@ -665,6 +665,33 @@ class DataMgr():
     @staticmethod
     def deserialize(self):
         pass
+    
+    def exportClassifiers(self, fileName):
+        if not hasattr(self, 'classifiers'):
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
+        
+        if len(self.classifiers) == 0:
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
+        
+        if not hasattr(self.classifiers[0],'serialize'):
+            raise RuntimeError("The selected classifier is not serializable and cannot be saved to file.")
+
+        # Make sure group 'classifiers' exist
+        h5file = h5py.File(str(fileName),'w')
+        h5file.create_group('classifiers')
+        h5file.close()
+        
+        for i, c in enumerate(self.classifiers):
+            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
+            print "Write Random Forest # %03d -> %d" % (i,tmp)          
+    
+    def importClassifiers(self, fileName):
+        hf = h5py.File(fileName,'r')
+        classifiers = []
+        from ilastik.core.classifiers.classifierRandomForestNew import ClassifierRandomForestNew
+        for cid in hf['classifiers']:
+            classifiers.append(ClassifierRandomForestNew.deserialize(fileName, 'classifiers/' + cid))   
+        self.classifiers = classifiers
         
         
 

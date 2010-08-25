@@ -2013,6 +2013,7 @@ class ImageScene( QtGui.QGraphicsView):
         else:
             toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
         
+        menu.addSeparator()
         labelList = []
         volumeLabel = self.volumeEditor.labelView.getVolumeLabelDescriptions()
         for index, item in enumerate(volumeLabel.descriptions):
