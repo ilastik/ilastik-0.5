@@ -112,14 +112,14 @@ class DataItemBase():
 class BlockAccessor():
     def __init__(self, data, blockSize = None):
         self.data = data
-	if blockSize is None:
-		max = int(numpy.max(self.data.shape[1:4]))
-		if max > 128:
-			self.blockSize = blockSize = 128
-		else:
-			self.blockSize = blockSize = max / 2
-	else:
-		self.blockSize = blockSize
+        if blockSize is None:
+            max = int(numpy.max(self.data.shape[1:4]))
+            if max > 128:
+                self.blockSize = blockSize = 128
+            else:
+                self.blockSize = blockSize = max / 2
+        else:
+            self.blockSize = blockSize
         
         self.cX = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
 
@@ -155,7 +155,6 @@ class BlockAccessor():
         else:
             self.fileBacked = True
         
-        
     def getBlockBounds(self, blockNum, overlap):
         z = int(numpy.floor(blockNum / (self.cX*self.cY)))
         rest = blockNum % (self.cX*self.cY)
@@ -176,7 +175,6 @@ class BlockAccessor():
         endz = min(self.data.shape[3], (z+1)*self.blockSize + overlap)
         if z+1 >= self.cZ:
             endz = self.data.shape[3]
-        
         return [startx,endx,starty,endy,startz,endz]
 
     def __getitem__(self, args):

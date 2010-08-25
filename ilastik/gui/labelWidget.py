@@ -141,7 +141,6 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
 
     def buildColorTab(self):
         self.overlayItem.colorTable = self.colorTab = self.volumeLabels.getColorTab()
-        print self.overlayItem.colorTable
 
 
     def onContext(self, pos):

@@ -45,15 +45,16 @@ class OverlayItemReference(object):
     def __init__(self, overlayItem):
         self.overlayItem = overlayItem
         self.name = self.overlayItem.name
-        self.visible = self.overlayItem.autoVisible
+        self.visible = True
         self.alpha = self.overlayItem.alpha
         self.color = self.overlayItem.color
         if self.overlayItem.linkColorTable is False:
             self.colorTable = self.overlayItem.colorTable
         self.key = self.overlayItem.key
+        self.channel = 0
 
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)       
+        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable)       
         
     def __getattr__(self,  name):
         if name == "colorTable":
@@ -65,7 +66,7 @@ class OverlayItemReference(object):
 
 
 class OverlayItem(object):
-    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, visible = True,  autoVisible = True,  linkColorTable = False):
+    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, visible = True, linkColorTable = False):
         self.data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
@@ -73,7 +74,7 @@ class OverlayItem(object):
         self.alpha = alpha
         self.name = "Unnamed Overlay"
         self.key = "Unknown Key"
-        self.autoVisible = autoVisible
+        self.autoVisible = visible
         self.references = []
                 
     def getRef(self):

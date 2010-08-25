@@ -34,7 +34,7 @@ class MyTreeWidgetItem(QTreeWidgetItem):
 
 
 class OverlaySelectionDialog(QDialog):
-    def __init__(self, cdict, forbiddenItems=[], singelSelection=True, parent=None):
+    def __init__(self, cdict, forbiddenItems=[], singleSelection=True, parent=None):
         QWidget.__init__(self, parent)
         
         # init
@@ -46,7 +46,7 @@ class OverlaySelectionDialog(QDialog):
         self.selectedItemList = []
         self.christophsDict = cdict
         self.forbiddenItems = forbiddenItems
-        self.singelSelection = singelSelection
+        self.singleSelection = singleSelection
         
         # widgets and layouts
         # ------------------------------------------------
@@ -97,7 +97,7 @@ class OverlaySelectionDialog(QDialog):
         tempLayout.addWidget(self.cancelButton)
         tempLayout.addWidget(self.addSelectedButton)
         
-        if self.singelSelection == True:
+        if self.singleSelection == True:
             self.setWindowTitle("Overlay Singel Selection")
             self.desc.setText("<b>Singel Selection Mode</b> <br /><br />In singel selction mode it is possible to choose only one overlay.<br />For overlay-description select an overlay.<br />To (un)check an overlay please <br /> -click on a checkbox<br />-select overlay and press the spacebar")
             self.checkAllButton.setEnabled(False)
@@ -173,7 +173,7 @@ class OverlaySelectionDialog(QDialog):
 
     def treeItemChanged(self, item, column):
         currentItem = item
-        if self.singelSelection == True and currentItem.checkState(column) == 2:
+        if self.singleSelection == True and currentItem.checkState(column) == 2:
             it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.Checked)
             while (it.value()):
                 if it.value() != currentItem:

@@ -319,7 +319,7 @@ class OverlayWidget(QtGui.QGroupBox):
         #self.layout().addLayout(tl3)
         
     def buttonAddClicked(self):
-        dlg = OverlaySelectionDialog(self.overlayMgr)
+        dlg = OverlaySelectionDialog(self.overlayMgr,  singleSelection = False)
         answer = dlg.exec_()
         for o in answer:
             self.addOverlayRef(o.getRef())

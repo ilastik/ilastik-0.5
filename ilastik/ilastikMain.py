@@ -1069,6 +1069,8 @@ class FeatureComputation(object):
             self.myTimer.stop()
             self.terminateFeatureProgressBar()
             self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)   
+            self.parent.project.createFeatureOverlays()
+
             
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)

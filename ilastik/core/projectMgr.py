@@ -32,6 +32,7 @@ import numpy
 import cPickle as pickle
 import h5py
 from ilastik.core.utilities import irange, debug
+from ilastik.core.overlayMgr import OverlayItem
 
 from vigra import arraytypes as at
 from PyQt4 import QtGui
@@ -157,3 +158,24 @@ class Project(object):
         # print "Project %s loaded from %s " % (p.name, fileName)
         return project
     
+    def createFeatureOverlays(self):
+        for index,  feature in enumerate(self.featureMgr.featureItems):
+            offset = self.featureMgr.featureOffsets[index]
+            size = self.featureMgr.featureSizes[index]
+
+            for index2,  di in enumerate(self.dataMgr):
+                #create Feature Overlay
+                for c in range(di._featureM.shape[4]):
+                    rawdata = di._featureM[:, :, :, :, c, offset:offset+size]
+                    rawdata.shape
+                    #TODO: the min/max stuff here is slow !!!
+                    #parallelize ??
+                    min = numpy.min(rawdata)
+                    max = numpy.max(rawdata)
+                    rawdata = (rawdata - min)*255/(max-min)
+                    data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
+                    ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  visible = False)
+                    di.overlayMgr["Classification/Features/Channel "+str(c)+"/"+feature.name + " " + str(feature.sigma)] = ov
+        
+  
+

@@ -35,12 +35,17 @@ from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificatio
 from ilastik.gui.iconMgr import ilastikIcons
 
 
+
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self)
         self.parent = parent
         self.ilastik = parent
         self.initDlg()
+        if self.parent.project.featureMgr is not None:
+            self.oldFeatureItems = self.parent.project.featureMgr.featureItems
+        else:
+            self.oldFeatureItems = []
 
 
     def initDlg(self):

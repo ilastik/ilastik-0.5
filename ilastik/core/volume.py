@@ -6,7 +6,7 @@ class DataAccessor():
     access is always of the form [time, x, y, z, channel]
     """
     
-    def __init__(self, data, channels = False):
+    def __init__(self, data, channels = False,  autoRgb = True):
         """
         data should be a numpy/vigra array that transformed to the [time, x, y, z, channel] access like this:
             1d: (a,b), b != 3 and channels = False  (0,0,a,b,0)
@@ -15,45 +15,53 @@ class DataAccessor():
             2d: (a,b,c), c == 3 or channels = True:  (0,0,a,b,c)
             etc.
         """
-        if len(data.shape) == 5:
-            channels = True
-            
-        if issubclass(data.__class__, DataAccessor):
-            data = data.data
-            channels = True
         
-        rgb = 1
-        if data.shape[-1] == 3 or channels:
-            rgb = 0
+        if issubclass(data.__class__,  DataAccessor):
+            self.data = data.data
+            self.rgb = data.rgb
+            self.shape = data.shape
+        else:
 
-        tempShape = data.shape
-
-        self.data = data
-
-        if issubclass(data.__class__, vigra.arraytypes._VigraArray):
-            for i in range(len(data.shape)/2):
-                #self.data = self.data.swapaxes(i,len(data.shape)-i)
-                pass
-            self.data = self.data.view(numpy.ndarray)
-            #self.data.reshape(tempShape)
-
-
-        for i in range(5 - (len(data.shape) + rgb)):
-            tempShape = (1,) + tempShape
+            if len(data.shape) == 5:
+                channels = True
+                
+            if issubclass(data.__class__, DataAccessor):
+                data = data.data
+                channels = True
             
-        if rgb:
-            tempShape = tempShape + (1,)
-        
-        if len(self.data.shape) != 5:
-            self.data = self.data.reshape(tempShape)
+            rgb = 1
+            if data.shape[-1] == 3 or channels:
+                rgb = 0
+
+            tempShape = data.shape
+
+            self.data = data
+
+            if issubclass(data.__class__, vigra.arraytypes._VigraArray):
+                for i in range(len(data.shape)/2):
+                    #self.data = self.data.swapaxes(i,len(data.shape)-i)
+                    pass
+                self.data = self.data.view(numpy.ndarray)
+                #self.data.reshape(tempShape)
+
+
+            for i in range(5 - (len(data.shape) + rgb)):
+                tempShape = (1,) + tempShape
+                
+            if rgb:
+                tempShape = tempShape + (1,)
             
-        self.channels = self.data.shape[-1]
+            if len(self.data.shape) != 5:
+                self.data = self.data.reshape(tempShape)
+                
+            self.channels = self.data.shape[-1]
 
-        self.rgb = False
-        if data.shape[-1] == 3:
-            self.rgb = True
+            self.rgb = False
+            if autoRgb:
+                if data.shape[-1] == 3:
+                    self.rgb = True
 
-        self.shape = self.data.shape
+            self.shape = self.data.shape
 
 
     def __getitem__(self, key):
