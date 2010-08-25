@@ -161,7 +161,7 @@ class LoadOptionsWidget(QtGui.QWidget):
         options.offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
         options.shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
         options.resolution = (int(str(self.resX.text())), int(str(self.resY.text())), int(str(self.resZ.text())))
-        destShape = None
+        options.destShape = None
         if self.downsample.checkState() > 0:
             options.destShape = (self.downX.value(),self.downY.value(),self.downZ.value())
         options.file_exp = str(self.file.text())
@@ -172,20 +172,23 @@ class LoadOptionsWidget(QtGui.QWidget):
         options.grayscale = self.grayscale.checkState() > 0
         options.rgb = self.rgb
 
-    def setShapeInfo(self, fileList):
+    def fillDefaultOptions(self, options):
+        #sizes might have been filled by setShapeInfo
+        options.shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
+
+    def setShapeInfo(self, fileList, channels):
         #read the shape information from the first file in the list
         #TODO: this is calling the dataImpex - it's baaaaad, it shouldn't be done
         
-        try:
-            print "filelist: ", fileList[0][0]
-            shape = dataImpex.DataImpex.readShape(fileList[0][0])
-            print "shape returned:", shape
+        try:            
+            shape = dataImpex.DataImpex.readShape(fileList[channels[0]][0])
+            print shape
             self.rgb = shape[3]
             self.sizeX.setValue(shape[0])
             self.sizeY.setValue(shape[1])
             if shape[2] == 1: 
                 #2d data (1, 1, x, y, c)
-                self.sizeZ.setValue(len(fileList[0]))
+                self.sizeZ.setValue(len(fileList[channels[0]]))
             else:
                 self.sizeZ.setValue(shape[2])
         except Exception as e:
@@ -210,11 +213,8 @@ class loadOptions:
 class previewTable(QtGui.QDialog):
     def __init__(self, fileList, parent=None, newProject = True):
         QtGui.QWidget.__init__(self, parent)
-        #self.stackloader = parent
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
-
-        #self.fileList = self.stackloader.fileList
         self.fileList = fileList
         self.fileListTable = QtGui.QTableWidget()
         self.fillFileTable()        
@@ -222,7 +222,6 @@ class previewTable(QtGui.QDialog):
         self.fileListTable.resizeRowsToContents()
         self.fileListTable.resizeColumnsToContents()
         self.layout.addWidget(self.fileListTable)
-        #self.show()
 
     def fillFileTable(self):
         if (len(self.fileList)==0):

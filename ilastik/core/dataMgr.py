@@ -491,10 +491,10 @@ class DataItemImage(DataItemBase):
         if self.prediction is not None:
             self.prediction.serialize(h5G, 'prediction')
             
-    def deserialize(self, h5G):
-        self.dataVol = Volume.deserialize(h5G)
+    def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
+        self.dataVol = Volume.deserialize(h5G, offsets, shape)
         if 'prediction' in h5G.keys():
-            self.prediction = DataAccessor.deserialize(h5G, 'prediction')
+            self.prediction = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
             for p_i, item in enumerate(self.dataVol.labels.descriptions):
                 item.prediction = (self.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 

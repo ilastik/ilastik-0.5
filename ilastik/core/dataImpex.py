@@ -36,12 +36,24 @@ class DataImpex(object):
     def importDataItems(fileList, options):
         #call this method when you expect len(fileList[0]) items back, such as
         #when you load images (even only one image) from files.
-        image = DataImpex.loadStack(fileList, options, None)
+        fileName = fileList[options.channels[0]][0]
+        print "fileName", fileName
         itemList = []
-        if image is not None:
-            for item in range(image.shape[3]):
-                theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[0][item])
-                itemList.append(theDataItem)
+        fBase, fExt = os.path.splitext(fileName)
+        if fExt == '.h5':
+            theDataItem = dataMgr.DataItemImage(fileName)
+            f = h5py.File(fileName, 'r')
+            g = f['volume']
+            theDataItem.deserialize(g, options.offsets, options.shape)
+            itemList.append(theDataItem)
+        else:
+            image = DataImpex.loadStack(fileList, options, None)
+            print "stack loaded"
+            if image is not None:
+                print image.shape
+                for item in range(image.shape[3]):
+                    theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[options.channels[0]][item])
+                    itemList.append(theDataItem)
         return itemList
         
     @staticmethod
@@ -60,8 +72,6 @@ class DataImpex(object):
             #data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
             theDataItem.labels = None
 
-        #if theDataItem.dataVol is None:
-            #print "dataItem.dataVol is None!!!"
             dataAcc = DataAccessor(theDataItem.data)
             theDataItem.dataVol = Volume()
             theDataItem.dataVol.data = dataAcc
@@ -165,11 +175,6 @@ class DataImpex(object):
             print "######ERROR saving File ", options.destfile
             
         if allok:
-            #dataItem = dataMgr.DataItemImage("bla")
-            #dataItem.dataVol = Volume()
-            #dataItem.dataVol.data = DataAccessor(image, True)
-            print "Image shape", image.shape
-            #dataItem = DataImpex.initDataItemFromArray(image, "bla")
             return image
 
     @staticmethod
@@ -183,11 +188,8 @@ class DataImpex(object):
     def readShape(filename):
         #read the shape of the dataset
         #return as (x, y, z, c)
-        print "In readShape, filename: ", filename
         fBase, fExt = os.path.splitext(filename)
-        print "fBase:", fBase, " , fExt:", fExt
         if fExt == '.h5':
-            print "reading from h5"
             f = h5py.File(filename, 'r')
             shape = f["volume/data"].shape
             if shape[1] == 1:
@@ -197,15 +199,11 @@ class DataImpex(object):
                 #3d data looks like (1, x, y, z, c)
                 return (shape[1], shape[2], shape[3], shape[4])
         else :
-            print "reading from image"
             try:
                 tempimage = vigra.impex.readImage(filename)
             except Exception, e:
                 print e
                 raise
-            
-            print "tempimage.shape: ", tempimage.shape
-                
             if (len(tempimage.shape)==3):
                 return (tempimage.shape[0], tempimage.shape[1], 1, tempimage.shape[2])
             else:

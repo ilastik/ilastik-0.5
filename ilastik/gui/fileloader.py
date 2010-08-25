@@ -46,19 +46,25 @@ class FileLoader(QtGui.QDialog):
         tempLayout = QtGui.QVBoxLayout()
         tempLayout1 = QtGui.QHBoxLayout()
         self.redPath = QtGui.QLineEdit("")
+        self.connect(self.redPath, QtCore.SIGNAL("textChanged(QString)"), self.redPathChanged)
         self.redButton = QtGui.QPushButton("Select")
+        self.connect(self.redButton, QtCore.SIGNAL('clicked()'), self.slotRedPath)
         tempLayout1.addWidget(self.redPath)
         tempLayout1.addWidget(self.redButton)
         tempLayout.addLayout(tempLayout1)
         tempLayout1 = QtGui.QHBoxLayout()
         self.greenPath = QtGui.QLineEdit("")
+        self.connect(self.greenPath, QtCore.SIGNAL("textChanged(QString)"), self.greenPathChanged)
         self.greenButton = QtGui.QPushButton("Select")
+        self.connect(self.greenButton, QtCore.SIGNAL('clicked()'), self.slotGreenPath)
         tempLayout1.addWidget(self.greenPath)
         tempLayout1.addWidget(self.greenButton)
         tempLayout.addLayout(tempLayout1)
         tempLayout1 = QtGui.QHBoxLayout()
         self.bluePath = QtGui.QLineEdit("")
+        self.connect(self.bluePath, QtCore.SIGNAL("textChanged(QString)"), self.bluePathChanged)
         self.blueButton = QtGui.QPushButton("Select")
+        self.connect(self.blueButton, QtCore.SIGNAL('clicked()'), self.slotBluePath)
         tempLayout1.addWidget(self.bluePath)
         tempLayout1.addWidget(self.blueButton)
         tempLayout.addLayout(tempLayout1)
@@ -99,8 +105,7 @@ class FileLoader(QtGui.QDialog):
             self.optionsFrame.setVisible(False)
         else:
             self.optionsFrame.setVisible(True)
-            #this call fills the shape
-            self.optionsWidget.setShapeInfo(self.fileList)
+            self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
         
     def toggleMultiChannel(self, int):
         if self.multiChannel.checkState() == 0:
@@ -114,13 +119,68 @@ class FileLoader(QtGui.QDialog):
             #this call fills the line edits with channel filenames
             if (len(self.fileList)>0):
                 templist = self.fileList[0]
-            self.updateFileList(templist)    
+                self.updateFileList(templist)    
         
     def pathChanged(self, text):
         path = str(self.path.text())
         templist = sorted(glob.glob(path), key=str.lower)
         self.updateFileList(templist)
-
+        
+    def redPathChanged(self, text):
+        path = str(self.redPath.text())
+        if (os.path.isfile(path)):
+            if len(self.fileList) == 0:
+                self.fileList.append([path])
+                self.fileList.append([])
+                self.fileList.append([])
+                self.options.channels.append(0)
+            else:
+                if len(self.fileList[0]) == 0:
+                    self.fileList[0] = [path]
+                    self.options.channels.append(0)
+                else:
+                    self.fileList[0] = [path]
+            if (self.optionCheck.checkState()==1):
+                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
+            
+    def greenPathChanged(self, text):
+        path = str(self.greenPath.text())
+        if (os.path.isfile(path)):
+            if len(self.fileList) == 0:
+                self.fileList.append([])
+                self.fileList.append([])
+                self.fileList.append([])
+            elif len(self.fileList) == 1:
+                self.fileList.append([])
+                self.fileList.append([])
+                
+            if len(self.fileList[1]) == 0:
+                self.fileList[1] = [path]
+                self.options.channels.append(1)
+            else:
+                self.fileList[1] = [path]
+            if (self.optionCheck.checkState()==1):
+                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
+            
+    def bluePathChanged(self, text):
+        path = str(self.bluePath.text())
+        if (os.path.isfile(path)):
+            if len(self.fileList) == 0:
+                self.fileList.append([])
+                self.fileList.append([])
+                self.fileList.append([])
+            elif len(self.fileList) == 1:
+                self.fileList.append([])
+                self.fileList.append([])
+                
+            if len(self.fileList[2]) == 0:
+                self.fileList[2] = [path]
+                self.options.channels.append(2)
+            else:
+                self.fileList[2] = [path]
+            if (self.optionCheck.checkState()==1):
+                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
+                
     def slotDir(self):
         path = self.path.text()
         templist1 = QtGui.QFileDialog.getOpenFileNames(self, "", path)
@@ -134,6 +194,23 @@ class FileLoader(QtGui.QDialog):
                 path_to_display = path_to_display + " ..."
             self.path.setText(QtCore.QString(path_to_display))
         
+    def slotRedPath(self):
+        path = self.redPath.text()
+        filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
+        self.redPath.setText(filename)
+        #self.redPathChanged(filename)
+        
+    def slotGreenPath(self):
+        path = self.greenPath.text()
+        filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
+        self.greenPath.setText(filename)
+        #self.greenPathChanged(filename)
+    
+    def slotBluePath(self):
+        path = self.bluePath.text()
+        filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
+        self.bluePath.setText(filename)
+        #self.bluePathChanged(filename)
     
     def updateFileList(self, templist):
         self.fileList = []    
@@ -153,15 +230,23 @@ class FileLoader(QtGui.QDialog):
                     self.fileList.append([templist[2]])
                     self.bluePath.setText(QtCore.QString(self.fileList[2][0]))
                     self.options.channels.append(2)
-        #this call fills the shape
-        self.optionsWidget.setShapeInfo(self.fileList)
+            #this call fills the shape
+            if (self.optionCheck.checkState()==1):
+                self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotPreviewFiles(self):
         self.fileTableWidget = loadOptions.previewTable(self.fileList)
         self.fileTableWidget.exec_()
                 
     def slotLoad(self):
-        self.optionsWidget.fillOptions(self.options)
+        if self.optionCheck.checkState() == 0:
+            self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
+            self.optionsWidget.fillDefaultOptions(self.options)
+        else:
+            #options widget is open, the shape should be filled already
+            #if self.options.shape == (0,0,0):
+                #self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
+            self.optionsWidget.fillOptions(self.options)
         self.accept()
     
     

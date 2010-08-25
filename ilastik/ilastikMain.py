@@ -829,7 +829,7 @@ class ProjectDlg(QtGui.QDialog):
             flagOFF = ~theFlag
 
             # file name
-            r = QtGui.QTableWidgetItem(fl.fileList[0][index])
+            r = QtGui.QTableWidgetItem(fl.fileList[fl.options.channels[0]][index])
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             # labels
             r = QtGui.QTableWidgetItem()
@@ -839,7 +839,7 @@ class ProjectDlg(QtGui.QDialog):
 
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
-            self.initThumbnail(fl.fileList[0][index])
+            self.initThumbnail(fl.fileList[fl.options.channels[0]][index])
             self.tableWidget.setCurrentCell(0, 0)
 
     @QtCore.pyqtSignature("")     

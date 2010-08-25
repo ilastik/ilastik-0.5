@@ -129,7 +129,7 @@ class StackLoader(QtGui.QDialog):
                 self.options.channels.append(2)
             else:
                 self.fileList.append([])
-        self.optionsWidget.setShapeInfo(self.fileList)
+        self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotDir(self):
         path = self.path.text()
@@ -148,15 +148,7 @@ class StackLoader(QtGui.QDialog):
     def slotLoad(self):
         self.optionsWidget.fillOptions(self.options)
         self.accept()
-        #self.logger.clear()
-        #self.logger.setVisible(True)
-        #self.image = dataImpex.DataImpex.loadStack(self.fileList, self.options, self.logger)
-      
-        #if self.image is not None:
-        #    self.logger.appendPlainText("Slices loaded")
-        #    self.accept()
-        #else :
-        #    self.reject()
+
             
     #def exec_(self):
     #    if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
