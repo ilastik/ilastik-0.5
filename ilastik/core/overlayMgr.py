@@ -113,6 +113,8 @@ class OverlayMgr(dict):
     """
     Keeps track of the different overlays
     supports the python dictionary interface
+    
+    mgr['Group1/Subgroup/itemname'] =  OverlayItem
     """
     def __init__(self,  widget = None):
         dict.__init__(self)
