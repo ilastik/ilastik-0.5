@@ -66,8 +66,8 @@ class SeedMgr(object):
                 temp = numpy.where(item.dataVol.seeds.data[:,:,:,:,:] == number, 0, item.dataVol.seeds.data[:,:,:,:,:])
                 temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
                 item.dataVol.seeds.data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item.history is not None:
-                    item.history.removeLabel(number)
+                if item.dataVol.seeds.history is not None:
+                    item.dataVol.seeds.history.removeLabel(number)
         self.dataMgr.featureLock.release()
 
         

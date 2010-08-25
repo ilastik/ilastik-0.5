@@ -358,8 +358,10 @@ class MainWindow(QtGui.QMainWindow):
 
     def tabChanged(self,  index):
         """
-        update the overlayWidget of the labelWidget and switch the history
-        between seeds and labels.
+        update the overlayWidget of the volumeEditor and switch the history
+        between seeds and labels, also make sure the 
+        seed/label widget has a reference to the overlay in the overlayWidget
+        they correspond to.
         """
         if self.ribbon.tabText(index) == "Segmentation":
             if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
@@ -370,11 +372,11 @@ class MainWindow(QtGui.QMainWindow):
             
             self.labelWidget.history.volumeEditor = self.labelWidget
 
-
-            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.seedOverlays))
+            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.seedOverlays)
+            self.labelWidget.setOverlayWidget(overlayWidget)
             
             #create SeedsOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, name = "Seeds", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), visible = True)
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), visible = True,  linkColorTable = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"] = ov
             ov = self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"]
 
@@ -388,14 +390,15 @@ class MainWindow(QtGui.QMainWindow):
             if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
             self.labelWidget.history.volumeEditor = self.labelWidget
-    
-            self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
+            
+            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays)
+            self.labelWidget.setOverlayWidget(overlayWidget)
             
             #create LabelOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), visible = True)
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), visible = True,  linkColorTable = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
             ov = self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"]
-
+            
             self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
 
             
@@ -504,7 +507,7 @@ class MainWindow(QtGui.QMainWindow):
         #setup sub-widgets
         self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
         #create LabelOverlay
-        ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, name = "Labels", color = 0, alpha = 1.0, colorTable = None, visible = True)
+        ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = None, visible = True,  linkColorTable = True)
         self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
         self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
         ov.colorTable = self.labelWidget.labelWidget.colorTab
@@ -1291,11 +1294,11 @@ class ClassificationInteractive(object):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
         for p_i, descr in enumerate(activeItem.dataVol.labels.descriptions):
             #create Overlay for prediction:
-            ov = OverlayItem(descr.prediction, name = "Prediction" + descr.name, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, visible = True)
+            ov = OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, visible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction" + descr.name] = ov
 
         #create Overlay for uncertainty:
-        ov = OverlayItem(activeItem.dataVol.uncertainty, name = "Uncertainty", color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
+        ov = OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
         self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Uncertainty"] = ov
 
 
@@ -1476,7 +1479,7 @@ class ClassificationPredict(object):
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
                 #create Overlay for prediction:
-                ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction, name = "Prediction" + activeItem.dataVol.labels.descriptions[p_num-1].name, color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, visible = True)
+                ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, visible = True)
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
 
             all =  range(len(activeItem.dataVol.labels.descriptions))
@@ -1490,7 +1493,7 @@ class ClassificationPredict(object):
             activeItem.dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]
 
             #create Overlay for uncertainty:
-            ov = OverlayItem(activeItem.dataVol.uncertainty, name = "Uncertainty", color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
+            ov = OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Uncertainty"] = ov
 
 
@@ -1552,7 +1555,7 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem.dataVol.segmentation, name = "Segmentation", color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, visible = True)
+            ov = OverlayItem(activeItem.dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, visible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"].data = DataAccessor(activeItem.dataVol.segmentation)

@@ -275,9 +275,7 @@ class DataItemImage(DataItemBase):
         self.features = [] 
         self._featureM = None
         
-        self.trainingF = numpy.zeros((0), 'float32')      
-        self.trainingL = numpy.zeros((0, 1), 'uint8')
-        self.trainingIndices = numpy.zeros((0, 1), 'uint32')
+        self.clearFeaturesAndTraining()
         
         self.seedL = numpy.zeros((0, 1), 'uint8')
         self.seedIndices = numpy.zeros((0, 1), 'uint32')
@@ -339,7 +337,7 @@ class DataItemImage(DataItemBase):
             if len(indices) > 0:
                 self.trainingF = self.getTrainingMforInd(indices)
             else:
-                self.trainingF = None
+                self.clearFeaturesAndTraining()
         return self.trainingL, self.trainingF, self.trainingIndices
     
     def getTrainingMatrix(self):

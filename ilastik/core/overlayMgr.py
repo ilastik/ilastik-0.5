@@ -40,20 +40,43 @@ class OverlaySlice():
         self.alphaChannel = None
         self.data = data
 
+
+class OverlayItemReference(object):
+    def __init__(self, overlayItem):
+        self.overlayItem = overlayItem
+        self.name = self.overlayItem.name
+        self.visible = self.overlayItem.autoVisible
+        self.alpha = self.overlayItem.alpha
+        self.color = self.overlayItem.color
+        if self.overlayItem.linkColorTable is False:
+            self.colorTable = self.overlayItem.colorTable
+        self.key = self.overlayItem.key
+
+    def getOverlaySlice(self, num, axis, time = 0, channel = 0):
+        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)       
         
+    def __getattr__(self,  name):
+        if name == "colorTable":
+            return self.overlayItem.colorTable
+
+
 class OverlayItem(object):
-    def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None, visible = True,  autoVisible = True):
+    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, visible = True,  autoVisible = True,  linkColorTable = False):
         self.data = DataAccessor(data)
+        self.linkColorTable = linkColorTable
         self.colorTable = colorTable
         self.color = color
         self.alpha = alpha
-        self.name = name
-        self.visible = visible
+        self.name = "Unnamed Overlay"
+        self.key = "Unknown Key"
         self.autoVisible = autoVisible
+                
+    def getRef(self):
+        return OverlayItemReference(self)
         
-    def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.data.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)       
         
+    def setData(self,  data):
+        self.overlayItem.data = data
 
 
 
@@ -80,20 +103,18 @@ class OverlayMgr(dict):
                 res = value
             else:
                 it = self[key]
-                it.colorTable = value.colorTable
-                it.color = value.color
-                it.data = it.data
+                it.data = value.data
                 res = it
-        
+            res.name = key.split('/')[-1]
+            res.key = key
         if addToWidget:
             self.addToWidget(res)
-            
         return res
         
     def addToWidget(self,  value):
         print "adding ",  value.name,  "to overlays"
         if self.widget != None and value.autoVisible is True:
-            self.widget.addOverlay(value)
+            self.widget.addOverlayRef(value.getRef())
             
             
     def __getitem__(self,  key):
