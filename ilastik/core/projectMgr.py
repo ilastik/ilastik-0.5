@@ -75,7 +75,7 @@ class Project(object):
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
-        self.segmentor = core.segmentors.segmentorClasses[0]
+        self.segmentor = core.segmentors.segmentorClasses[0]()
     
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 

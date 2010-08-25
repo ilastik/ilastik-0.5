@@ -58,6 +58,10 @@ class OverlayItemReference(object):
     def __getattr__(self,  name):
         if name == "colorTable":
             return self.overlayItem.colorTable
+        raise AttributeError,  name
+        
+    def remove(self):
+        self.overlayItem = None
 
 
 class OverlayItem(object):
@@ -70,11 +74,20 @@ class OverlayItem(object):
         self.name = "Unnamed Overlay"
         self.key = "Unknown Key"
         self.autoVisible = autoVisible
+        self.references = []
                 
     def getRef(self):
-        return OverlayItemReference(self)
+        ref = OverlayItemReference(self)
+        self.references.append(ref)
+        return ref
         
-        
+    def remove(self):
+        self.data = None
+        for r in self.references:
+            r.remove()
+        self.references = []
+
+
     def setData(self,  data):
         self.overlayItem.data = data
 
@@ -90,9 +103,11 @@ class OverlayMgr(dict):
         self.widget = widget
         
     def remove(self,  key):
-        self.pop(key,  None)
-        if self.widget != None:
-            self.widget.remove(key)
+        it = self.pop(key,  None)
+        if it != None:
+            it.remove()
+            if self.widget != None:
+                self.widget.remove(key)
             
     def __setitem__(self,  key,  value):
         addToWidget = False

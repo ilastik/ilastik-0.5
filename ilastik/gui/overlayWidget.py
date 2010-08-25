@@ -184,8 +184,13 @@ class OverlayListWidget(QtGui.QListWidget):
         self.connect(self, QtCore.SIGNAL("clicked(QModelIndex)"), self.onItemClick)
         self.connect(self, QtCore.SIGNAL("doubleClicked(QModelIndex)"), self.onItemDoubleClick)
         self.currentItem = None
+        #add the overlays to the gui
         for overlay in self.overlayWidget.overlays:
-            self.addItem(OverlayListWidgetItem(overlay))
+            if overlay.overlayItem != None:
+                self.addItem(OverlayListWidgetItem(overlay))
+            #dont forget to remove overlayreferences whose base overlayItem has been deleted from somewhere else by now:
+            else:
+                self.overlayWidget.overlays.remove(overlay)
 
     def onItemClick(self, itemIndex):
         item = self.itemFromIndex(itemIndex)
