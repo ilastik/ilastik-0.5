@@ -208,7 +208,7 @@ class FileLoader(QtGui.QDialog):
     
     def slotBluePath(self):
         path = self.bluePath.text()
-        filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
+        filename = QtGui.QFileDialog.getOpenFileName(self, "",path)
         self.bluePath.setText(filename)
         #self.bluePathChanged(filename)
     

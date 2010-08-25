@@ -36,9 +36,10 @@ class DataImpex(object):
     def importDataItems(fileList, options):
         #call this method when you expect len(fileList[0]) items back, such as
         #when you load images (even only one image) from files.
-        fileName = fileList[options.channels[0]][0]
-        print "fileName", fileName
         itemList = []
+        if len(fileList)==0:
+            return itemList
+        fileName = fileList[options.channels[0]][0]
         fBase, fExt = os.path.splitext(fileName)
         if fExt == '.h5':
             theDataItem = dataMgr.DataItemImage(fileName)
@@ -48,9 +49,7 @@ class DataImpex(object):
             itemList.append(theDataItem)
         else:
             image = DataImpex.loadStack(fileList, options, None)
-            print "stack loaded"
             if image is not None:
-                print image.shape
                 for item in range(image.shape[3]):
                     theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[options.channels[0]][item])
                     itemList.append(theDataItem)
@@ -100,10 +99,8 @@ class DataImpex(object):
         z = 0
         allok = True
         firstlist = fileList[options.channels[0]]
-        print "requested shape: ", options.shape
         for index, filename in enumerate(firstlist):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
-                print "z=", z
                 try:
                     img_data = vigra.impex.readImage(filename)
                     
