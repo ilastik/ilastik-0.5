@@ -182,7 +182,6 @@ class LoadOptionsWidget(QtGui.QWidget):
         
         try:            
             shape = dataImpex.DataImpex.readShape(fileList[channels[0]][0])
-            print shape
             self.rgb = shape[3]
             self.sizeX.setValue(shape[0])
             self.sizeY.setValue(shape[1])

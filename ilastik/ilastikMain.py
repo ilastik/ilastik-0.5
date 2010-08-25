@@ -814,6 +814,7 @@ class ProjectDlg(QtGui.QDialog):
         fl = fileloader.FileLoader()
         #imageData = sl.exec_()
         fl.exec_()
+        itemList = []
         try:
             itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
         except Exception, e:

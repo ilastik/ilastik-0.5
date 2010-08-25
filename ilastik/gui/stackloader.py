@@ -138,7 +138,6 @@ class StackLoader(QtGui.QDialog):
         #This is needed, because internally Qt always uses "/" separators,
         #which is a problem on Windows, as we don't use QDir to open dirs
         self.path.setText(str(QtCore.QDir.convertSeparators(tempname)))
-        print "new path: ", self.path.text()
         
 
     def slotPreviewFiles(self):
