@@ -52,7 +52,8 @@ class OverlayItemReference(object):
             self.colorTable = self.overlayItem.colorTable
         self.key = self.overlayItem.key
         self.channel = 0
-
+        self.numChannels = self.overlayItem.data.shape[4]
+        
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
         return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable)       
         
@@ -63,7 +64,21 @@ class OverlayItemReference(object):
         
     def remove(self):
         self.overlayItem = None
+        
+    def incChannel(self):
+        print self.overlayItem.data.shape
+        if self.channel < self.overlayItem.data.shape[4] - 1:
+            self.channel += 1
 
+    def decChannel(self):
+        if self.channel > 0:
+            self.channel -= 1
+            
+    def setChannel(self,  channel):
+        if channel > 0 and channel < self.numChannels -1 :
+            self.channel = channel
+        else:
+            raise Exception
 
 class OverlayItem(object):
     def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, visible = True, linkColorTable = False):

@@ -156,7 +156,7 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         self.overlayItem = overlayItem
         self.name = overlayItem.name
         self.color = self.overlayItem.color
-        self.visible = True
+        self.visible = overlayItem.visible
 
         s = QtCore.Qt.Checked
 
@@ -253,6 +253,13 @@ class OverlayListWidget(QtGui.QListWidget):
         menu = QtGui.QMenu(self)
 
         show3dAction = menu.addAction("Display 3D")
+        colorAction = menu.addAction("Change Color")
+
+        channelMenu = QtGui.QMenu("Select Channel", menu)
+        channelActions = []
+        for i in range(item.overlayItem.numChannels):
+            action = channelMenu.addAction(str(i))
+            channelActions.append(action)
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == show3dAction:
@@ -260,6 +267,17 @@ class OverlayListWidget(QtGui.QListWidget):
 #            mlab.outline()
             my_model = MayaviQWidget(item.overlayItem.data[0,:,:,:,0], self.volumeEditor.image[0,:,:,:,0])
             my_model.show()
+        elif action == colorAction:
+            color = QtGui.QColorDialog().getColor()
+            item.overlayItem.colorTable = None
+            item.overlayItem.color = color
+            self.volumeEditor.repaint()
+        else:
+            for index,  channelAct in enumerate(channelActions):
+                if action == channelAct:
+                    item.overlayItem.setChannel(index)
+
+
 
 
     def getLabelNames(self):
@@ -273,6 +291,18 @@ class OverlayListWidget(QtGui.QListWidget):
         state = not(item.overlayItem.visible)
         item.overlayItem.visible = state
         item.setCheckState(item.overlayItem.visible * 2)
+        
+        
+    def wheelEvent(self, event):
+        pos = event.pos()
+        item = self.itemAt(pos)
+        
+        if event.delta() > 0:
+            item.overlayItem.incChannel()
+        else:
+            item.overlayItem.decChannel()
+        self.volumeEditor.repaint()
+        
 
 
 class OverlayWidget(QtGui.QGroupBox):
