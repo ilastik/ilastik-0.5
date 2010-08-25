@@ -980,7 +980,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 image0.setColorTable(origitem.colorTable)
                             else:
                                 image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                image0.fill(origitem.color.rgba())
+                                if isinstance(origitem.color,  int):
+                                    image0.fill(origitem.color)
+                                else: #shold be QColor then !
+                                    image0.fill(origitem.color.rgba())
                                 image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), False))
 
                             p.drawImage(0,0, image0)

@@ -32,6 +32,7 @@ from PyQt4 import QtCore, QtGui
 class BaseLabelWidget(object):
     def __init__(self,  parent = None):
         self.colorTab = None
+        self.overlays = []
         
     def currentItem(self):
         return None

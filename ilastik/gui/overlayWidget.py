@@ -206,7 +206,7 @@ class OverlayListWidget(QtGui.QListWidget):
             dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
             dialog.exec_()
         else:
-            self.onItemClick(self,itemIndex)
+            self.onItemClick(itemIndex)
             
             
     def setCurrentItemAlpha(self, num):
@@ -233,9 +233,8 @@ class OverlayListWidget(QtGui.QListWidget):
         else:
             return None
 
-    def addOverlay(self, overlay):
-        self.overlayWidget.overlays.append(overlay)
-        self.addItem(OverlayListWidgetItem(overlay))
+    def addOverlayRef(self, overlayRef):
+        self.addItem(OverlayListWidgetItem(overlayRef))
 
     def onContext(self, pos):
         index = self.indexAt(pos)
@@ -318,7 +317,7 @@ class OverlayWidget(QtGui.QGroupBox):
         dlg = OverlaySelectionDialog(self.overlayMgr)
         answer = dlg.exec_()
         for o in answer:
-            self.addOverlay(o)
+            self.addOverlayRef(o.getRef())
         self.overlayListWidget.volumeEditor.repaint()
         
     def buttonRemoveClicked(self):
@@ -331,8 +330,9 @@ class OverlayWidget(QtGui.QGroupBox):
         """
         return self.overlayListWidget.removeOverlay(item)
         
-    def addOverlay(self, overlay):
-        return self.overlayListWidget.addOverlay(overlay)
+    def addOverlayRef(self, overlayRef):
+        self.overlays.append(overlayRef)
+        return self.overlayListWidget.addOverlayRef(overlayRef)
 
     def getLabelNames(self):
         return self.overlayListWidget.getLabelNames()
@@ -340,3 +340,12 @@ class OverlayWidget(QtGui.QGroupBox):
     def toggleVisible(self,  index):
         return self.overlayListWidget.toggleVisible(index)
 
+    def getOverlayRef(self,  key):
+        """
+        find a specific overlay via its key e.g. "Classification/Prediction" in the
+        current overlays of the widget
+        """
+        for o in self.overlays:
+            if o.key == key:
+                return o
+        return None
