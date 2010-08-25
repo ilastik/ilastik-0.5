@@ -63,6 +63,7 @@ import time
 from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from ilastik.gui import ctrlRibbon, stackloader, batchProcess
+from ilastik.gui.featureDlg import FeatureDlg
 from Queue import Queue as queue
 from collections import deque
 from ilastik.gui.iconMgr import ilastikIcons
@@ -871,8 +872,11 @@ class ProjectDlg(QtGui.QDialog):
         imageData = sl.exec_()
         
         if imageData is not None:   
-                
-            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, "Image Stack")
+            # file name
+            path = str(sl.path.text())
+            dirname = os.path.basename(os.path.dirname(path))
+            offsetstr =  '(' + str(sl.offsetX.value()) + ', ' + str(sl.offsetY.value()) + ', ' + str(sl.offsetZ.value()) + ')'   
+            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
             try:
                 print theDataItem.dataVol.labels
                 self.dataMgr.append(theDataItem, True)
@@ -896,11 +900,9 @@ class ProjectDlg(QtGui.QDialog):
                 theFlag = QtCore.Qt.ItemIsEnabled
                 flagON = ~theFlag | theFlag
                 flagOFF = ~theFlag
-
-                # file name
-                r = QtGui.QTableWidgetItem('Stack' + str(rowCount))
+               
+                r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets: ' + offsetstr)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-
 
                 # labels
                 r = QtGui.QTableWidgetItem()
@@ -1031,131 +1033,15 @@ class ProjectDlg(QtGui.QDialog):
 
         
 
-class FeatureDlg(QtGui.QDialog):
-    def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self)
-        self.parent = parent
-        self.ilastik = parent
-        self.initDlg()
-        
-    def initDlg(self):
-
-        #determine the minimum x,y,z of all images
-        min = self.ilastik.project.dataMgr[0].dataVol.data.shape[3]
-        for i, it in enumerate(self.ilastik.project.dataMgr):
-            if it.dataVol.data.shape[2] < min:
-                min = it.dataVol.data.shape[2]
-            if it.dataVol.data.shape[3] < min:
-                min = it.dataVol.data.shape[3]
-            if it.dataVol.data.shape[1] < min and it.dataVol.data.shape[1] > 1:
-                min = it.dataVol.data.shape[1]
-        
-        #get the absolute path of the 'ilastik' module
         pathext = os.path.dirname(__file__)
         uic.loadUi(pathext+'/gui/dlgFeature.ui', self)
-        for featureItem in self.parent.featureList:
-            self.featureList.insertItem(self.featureList.count() + 1, QtCore.QString(featureItem.__str__()))        
-        
-        for k, groupName in irange(featureMgr.ilastikFeatureGroups.groups.keys()):
-            rc = self.featureTable.rowCount()
-            self.featureTable.insertRow(rc)
-        self.featureTable.setVerticalHeaderLabels(featureMgr.ilastikFeatureGroups.groups.keys())
-       
-        
-        for k, scaleName in irange(featureMgr.ilastikFeatureGroups.groupScaleNames):
-            #only add features scales that fit within the minimum dimension of the smallest image
-            if featureMgr.ilastikFeatureGroups.groupScaleValues[k]*7 + 3< min:
-                rc = self.featureTable.columnCount()
-                self.featureTable.insertColumn(rc)
-            else:
-                print "Scale ", scaleName, " too large for image of size ", min
-        self.featureTable.setHorizontalHeaderLabels(featureMgr.ilastikFeatureGroups.groupScaleNames)
-        
-        #self.featureTable.resizeRowsToContents()
-        #self.featureTable.resizeColumnsToContents()
-        for c in range(self.featureTable.columnCount()):
-            self.featureTable.horizontalHeader().resizeSection(c, 54)#(0, QtGui.QHeaderView.Stretch)
-
-        #self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
-        self.featureTable.setShowGrid(False)
-        
-        
-        for r in range(self.featureTable.rowCount()):
-            for c in range(self.featureTable.columnCount()):
-                item = QtGui.QTableWidgetItem()
-                if featureMgr.ilastikFeatureGroups.selection[r][c]:
-                    item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
-                self.featureTable.setItem(r, c, item)
-        self.setStyleSheet("selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0.5, y2: 0.5, stop: 0 #BBBBDD, stop: 1 white)")
-        self.show()
-    
-    def on_featureTable_itemSelectionChanged(self):  
-        sel = self.featureTable.selectedItems()
-        sel_flag = False
-        for i in sel:
-            if i.icon().isNull():
-                sel_flag = True
-        
-        if sel_flag:
-            for i in sel:
-                icon = QtGui.QIcon(ilastikIcons.Preferences)
-                i.setIcon(icon)
-                featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = True  
-                           
-        else:
-            for i in sel:
-                icon = QtGui.QIcon()
-                i.setIcon(icon)   
-                featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = False     
-                
-        self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
-        
-    @QtCore.pyqtSignature("")     
-    def on_confirmButtons_accepted(self):  
-        self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
-        featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
-        res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
-        if res is True:
-            #print "features have maximum needed margin of:", self.parent.project.featureMgr.maxSigma*3
-            self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
-            self.computeMemoryRequirement(featureSelectionList)
-            self.close()
-            self.ilastik.featureCompute()
-        else:
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
-            return False
-        
-    @QtCore.pyqtSignature("")    
-    def on_confirmButtons_rejected(self):
         self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
-        self.close()
-        
-    def computeMemoryRequirement(self, featureSelectionList):
-        if featureSelectionList != []:
-            dataMgr = self.parent.project.dataMgr
-                
-            numOfChannels = dataMgr[0].dataVol.data.shape[-1]
-            numOfEffectiveFeatures =  0
-            for f in featureSelectionList:
-              numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0].dataVol.data.shape)
-            numOfEffectiveFeatures *= numOfChannels
-            numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
-            # 7 bytes per pixel overhead
-            memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
-            print "Total feature vector length is %d with aprox. memory demand of %8.2f MB" % (numOfEffectiveFeatures, memoryReq)
-        else:
-            print "No features selected"
-        # return memoryReq
 
 class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
         self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(False)
-        self.featureCompute()
-        
-        
+        self.featureCompute() 
     
     def featureCompute(self):
         self.parent.project.dataMgr.featureLock.acquire()
@@ -1182,8 +1068,7 @@ class FeatureComputation(object):
         if not self.parent.project.featureMgr.featureProcess.isRunning():
             self.myTimer.stop()
             self.terminateFeatureProgressBar()
-            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)
-            
+            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)   
             
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
@@ -1260,10 +1145,11 @@ class ClassificationInteractive(object):
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
+
         self.temp_cnt = 0
         self.start()
     
-    def updateThreadQueues(self, num = 0, axis=0):
+    def updateThreadQueues(self, a = 0, b = 0):
         if self.classificationInteractive is not None:
             self.myInteractionProgressBar.setVisible(True)
             self.classificationInteractive.dataPending.set()

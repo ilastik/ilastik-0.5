@@ -1,8 +1,9 @@
 
-from PyQt4 import QtCore, QtGui, uic
 
+from PyQt4 import QtCore, QtGui, uic
 import ilastik
-import ilastik.core.classifiers
+
+
 import os
 
 class ClassifierSelectionDlg(QtGui.QDialog):
@@ -65,4 +66,5 @@ def test():
 
 
 if __name__ == "__main__":
+    test()
     test()

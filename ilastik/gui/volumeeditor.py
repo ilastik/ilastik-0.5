@@ -150,6 +150,10 @@ class PatchAccessor():
         
         return nums
 
+        self.volumeLabel = None
+        
+    def getVolumeLabelDescriptions(self):
+        return self.volumeLabel
 
 #abstract base class for undo redo stuff
 class State():
@@ -853,6 +857,9 @@ class DrawManager(QtCore.QObject):
         self.penVis.setWidth(size)
         self.penDraw.setWidth(size)
         
+    def getBrushSize(self):
+        return self.brushSize
+        
     def setBrushColor(self, color):
         self.penVis.setColor(color)
         
@@ -1192,8 +1199,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.border = None
         self.allBorder = None
 
-	self.min = 0
-	self.max = 255
+        self.min = 0
+        self.max = 255
 
         self.openglWidget = None
         ##enable OpenGL acceleratino
@@ -1583,7 +1590,7 @@ class ImageScene( QtGui.QGraphicsView):
 
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
             #should we hide the cursor only when entering once ? performance?
-            self.setCursor(self.hiddenCursor)
+            #self.setCursor(self.hiddenCursor)
             
             self.crossHairCursor.showXYPosition(x,y)
             #self.crossHairCursor.setPos(x,y)
@@ -1635,31 +1642,50 @@ class ImageScene( QtGui.QGraphicsView):
             self.volumeEditor.changeSlice(y, 1)
 
     def onContext(self, pos):
-        menu = QtGui.QMenu(self)
-        labeling = menu.addMenu("Labeling")
+        menu = QtGui.QMenu('Labeling menu', self)
+        
         toggleEraseA = None
         if self.drawManager.erasing == True:
-            toggleEraseA = labeling.addAction("Enable Labelmode")
+            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
         else:
-            toggleEraseA = labeling.addAction("Enable Eraser")
+            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
+        
+        labelList = []
+        volumeLabel = self.volumeEditor.labelView.getVolumeLabelDescriptions()
+        for index, item in enumerate(volumeLabel.descriptions):
+            labelColor = QtGui.QColor.fromRgb(long(item.color))
+            labelIndex = item.number
+            labelName = item.name
+            pixmap = QtGui.QPixmap(16, 16)
+            pixmap.fill(labelColor)
+            icon = QtGui.QIcon(pixmap)
             
-        brushM = labeling.addMenu("Brush size")
-        brush1 = brushM.addAction("1")
-        brush3 = brushM.addAction("3")
-        brush5 = brushM.addAction("5")
-        brush10 = brushM.addAction("10")
+            act = QtGui.QAction(icon, labelName, menu)
+            i = self.volumeEditor.labelView.model().index(labelIndex-1,0)
+            # print self.volumeEditor.labelView.selectionModel()
+            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
+            labelList.append(menu.addAction(act))
+
+        menu.addSeparator()
+        # brushM = labeling.addMenu("Brush size")
+        brushGroup = QtGui.QActionGroup(self)
+        
+        defaultBrushSizes = [1,3,7,11,31]
+        brush = []
+        for ind, b in enumerate(defaultBrushSizes):
+            act = QtGui.QAction(str(b), brushGroup)
+            act.setCheckable(True)
+            self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
+            if b == self.drawManager.getBrushSize():
+                act.setChecked(True)
+            brush.append(menu.addAction(act))
+        
+        #menu.setTearOffEnabled(True)
 
         action = menu.exec_(QtGui.QCursor.pos())
-        if action == toggleEraseA:
-            self.drawManager.toggleErase()
-        elif action == brush1:
-            self.drawManager.setBrushSize(1)
-        elif action == brush3:
-            self.drawManager.setBrushSize(3)
-        elif action == brush5:
-            self.drawManager.setBrushSize(5)
-        elif action == brush10:
-            self.drawManager.setBrushSize(10)
+        #if action == toggleEraseA:
+            #
+
 
 
 class OverviewSceneDummy(QtGui.QWidget):
