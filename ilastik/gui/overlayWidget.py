@@ -151,12 +151,12 @@ class MayaviQWidget(QtGui.QWidget):
 
 
 class OverlayListWidgetItem(QtGui.QListWidgetItem):
-    def __init__(self, overlayItem):
-        QtGui.QListWidgetItem.__init__(self,overlayItem.name)
-        self.overlayItem = overlayItem
-        self.name = overlayItem.name
-        self.color = self.overlayItem.color
-        self.visible = overlayItem.visible
+    def __init__(self, overlayItemReference):
+        QtGui.QListWidgetItem.__init__(self,overlayItemReference.name)
+        self.overlayItemReference = overlayItemReference
+        self.name = overlayItemReference.name
+        self.color = self.overlayItemReference.color
+        self.visible = overlayItemReference.visible
 
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         
@@ -193,10 +193,10 @@ class OverlayListWidget(QtGui.QListWidget):
 
     def onItemClick(self, itemIndex):
         item = self.itemFromIndex(itemIndex)
-        if (item.checkState() == QtCore.Qt.Checked and not item.overlayItem.visible) or (item.checkState() == QtCore.Qt.Unchecked and item.overlayItem.visible):
-            item.overlayItem.visible = not(item.overlayItem.visible)
+        if (item.checkState() == QtCore.Qt.Checked and not item.overlayItemReference.visible) or (item.checkState() == QtCore.Qt.Unchecked and item.overlayItemReference.visible):
+            item.overlayItemReference.visible = not(item.overlayItemReference.visible)
             s = None
-            if item.overlayItem.visible:
+            if item.overlayItemReference.visible:
                 s = QtCore.Qt.Checked
             else:
                 s = QtCore.Qt.Unchecked
@@ -206,7 +206,7 @@ class OverlayListWidget(QtGui.QListWidget):
     def onItemDoubleClick(self, itemIndex):
         self.currentItem = item = self.itemFromIndex(itemIndex)
         if item.checkState() == item.visible * 2:
-            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItem.alpha*20))
+            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
             dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
             dialog.exec_()
         else:
@@ -256,7 +256,7 @@ class OverlayListWidget(QtGui.QListWidget):
 
         channelMenu = QtGui.QMenu("Select Channel", menu)
         channelActions = []
-        for i in range(item.overlayItem.numChannels):
+        for i in range(item.overlayItemReference.numChannels):
             action = channelMenu.addAction(str(i))
             channelActions.append(action)
 
@@ -264,17 +264,17 @@ class OverlayListWidget(QtGui.QListWidget):
         if action == show3dAction:
 #            mlab.contour3d(item.data[0,:,:,:,0], opacity=0.6)
 #            mlab.outline()
-            my_model = MayaviQWidget(item.overlayItem.data[0,:,:,:,0], self.volumeEditor.image[0,:,:,:,0])
-            my_model.show()
+            self.my_model = MayaviQWidget(item.overlayItemReference.data[0,:,:,:,0], self.volumeEditor.image[0,:,:,:,0])
+            self.my_model.show()
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
-            item.overlayItem.colorTable = None
-            item.overlayItem.color = color
+            item.overlayItemReference.colorTable = None
+            item.overlayItemReference.color = color
             self.volumeEditor.repaint()
         else:
             for index,  channelAct in enumerate(channelActions):
                 if action == channelAct:
-                    item.overlayItem.setChannel(index)
+                    item.overlayItemReference.setChannel(index)
 
 
 
@@ -287,9 +287,9 @@ class OverlayListWidget(QtGui.QListWidget):
        
       
     def toggleVisible(self,  index):
-        state = not(item.overlayItem.visible)
-        item.overlayItem.visible = state
-        item.setCheckState(item.overlayItem.visible * 2)
+        state = not(item.overlayItemReference.visible)
+        item.overlayItemReference.visible = state
+        item.setCheckState(item.overlayItemReference.visible * 2)
         
         
     def wheelEvent(self, event):
@@ -297,9 +297,9 @@ class OverlayListWidget(QtGui.QListWidget):
         item = self.itemAt(pos)
         
         if event.delta() > 0:
-            item.overlayItem.incChannel()
+            item.overlayItemReference.incChannel()
         else:
-            item.overlayItem.decChannel()
+            item.overlayItemReference.decChannel()
         self.volumeEditor.repaint()
         
 
@@ -355,8 +355,10 @@ class OverlayWidget(QtGui.QGroupBox):
         self.overlayListWidget.volumeEditor.repaint()
         
     def buttonRemoveClicked(self):
-        self.overlayListWidget.removeOverlay(self.overlayListWidget.currentRow())
-        self.overlayListWidget.volumeEditor.repaint()
+        number = self.overlayListWidget.currentRow()
+        if number >= 0:
+            self.overlayListWidget.removeOverlay(number)
+            self.overlayListWidget.volumeEditor.repaint()
         
     def removeOverlay(self, item):
         """
