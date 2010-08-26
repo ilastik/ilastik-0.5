@@ -150,10 +150,8 @@ class PatchAccessor():
         
         return nums
 
-        self.volumeLabel = None
         
-    def getVolumeLabelDescriptions(self):
-        return self.volumeLabel
+    
 
 #abstract base class for undo redo stuff
 class State():
@@ -1651,7 +1649,7 @@ class ImageScene( QtGui.QGraphicsView):
             toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
         
         labelList = []
-        volumeLabel = self.volumeEditor.labelView.getVolumeLabelDescriptions()
+        volumeLabel = self.volumeEditor.labelWidget.volumeLabels
         for index, item in enumerate(volumeLabel.descriptions):
             labelColor = QtGui.QColor.fromRgb(long(item.color))
             labelIndex = item.number
@@ -1661,7 +1659,7 @@ class ImageScene( QtGui.QGraphicsView):
             icon = QtGui.QIcon(pixmap)
             
             act = QtGui.QAction(icon, labelName, menu)
-            i = self.volumeEditor.labelView.model().index(labelIndex-1,0)
+            i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
             # print self.volumeEditor.labelView.selectionModel()
             self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
             labelList.append(menu.addAction(act))

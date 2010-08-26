@@ -204,20 +204,7 @@ class DifferenceOfGaussians(FeatureBase):
         result = self.applyToAllChannels(data, func, self.sigma) 
         return result
 
-
-##gaussianGradientMagnitude = LocalFeature('Gradient Magnitude', ['Sigma' ], (1, 1), vigra.filters.gaussianGradientMagnitude)
-##gaussianSmooth = LocalFeature('Gaussian', ['Sigma' ], (1, 1), vigra.filters.gaussianSmoothing)
-##structureTensor = LocalFeature('Structure Tensor', ['InnerScale', 'OuterScale'], (3, 6), vigra.filters.structureTensor)
-##hessianMatrixOfGaussian = LocalFeature('Hessian', ['Sigma' ], (3, 6), myHessianOfGaussian)
-##eigStructureTensor2d = LocalFeature('Eigenvalues of Structure Tensor', ['InnerScale', 'OuterScale'], (2, 3), myStructureTensorEigenvalues)
-##laplacianOfGaussian = LocalFeature('LoG', ['Sigma' ], (1, 1), vigra.filters.laplacianOfGaussian)
-##eigHessianTensor2d = LocalFeature('Eigenvalues of Hessian', ['Sigma' ], (2, 3), myHessianOfGaussianEigenvalues)
-
-
-
-
-#differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], (1, 1), lambda x, s: vigra.filters.gaussianSmoothing(x, s) - vigra.filters.gaussianSmoothing(x, s / 3 * 2))
-#cannyEdge = LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
+#LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
 #morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], (1, 1), lambda x, s: vigra.morphology.discOpening(x.astype(numpy.uint8), int(s * 1.5 + 1)))
 #morphologicalClosing = LocalFeature('Morph Colosing', ['Sigma' ], (1, 1), lambda x, s: vigra.morphology.discClosing(x.astype(numpy.uint8), int(s * 1.5 + 1)))
 

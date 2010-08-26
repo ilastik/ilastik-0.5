@@ -31,6 +31,7 @@ from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
 from ilastik.core.overlayMgr import OverlayItem
+import numpy
         
 class LabelListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
@@ -85,6 +86,8 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             
     def currentItem(self):
         return self.listWidget.currentItem()
+    
+    
     
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
