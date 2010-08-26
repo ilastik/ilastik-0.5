@@ -1661,7 +1661,7 @@ class ImageScene( QtGui.QGraphicsView):
             act = QtGui.QAction(icon, labelName, menu)
             i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
             # print self.volumeEditor.labelView.selectionModel()
-            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
+            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
             labelList.append(menu.addAction(act))
 
         menu.addSeparator()
