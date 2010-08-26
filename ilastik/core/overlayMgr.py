@@ -27,11 +27,27 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+"""
+This file is about Overlays. To understand how they are used in the GUI of the Program 
+please also have a look at :
+
+    gui/labelWidget.py
+    gui/overlayWidget.py
+    gui/seedWidget.py
+    gui/overlaySelectionDlg.py
+
+overlays seem to enjoy heavy usage in the gui part of the programm, 
+still i decided to put them here in the core part!?!
+
+"""
+
+
 from ilastik.core.volume import DataAccessor
 
 class OverlaySlice():
     """
     Helper class to encapsulate the overlay slice and its drawing related settings
+    for passing it around, mostly used in the volumeEditor (->move there ?)
     """
     def __init__(self, data, color, alpha, colorTable):
         self.colorTable = colorTable
@@ -42,6 +58,11 @@ class OverlaySlice():
 
 
 class OverlayItemReference(object):
+    """
+    Helper class that references a full fledged OverlayItem and inherits its drawing related settings upon creation.
+    the settings can be changed later on, what stays the same is the data. 
+    OverlayItemReferences get used in the overlayWidget.py file
+    """    
     def __init__(self, overlayItem):
         self.overlayItem = overlayItem
         self.name = self.overlayItem.name
@@ -81,7 +102,11 @@ class OverlayItemReference(object):
             raise Exception
 
 class OverlayItem(object):
-    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, visible = True, linkColorTable = False):
+    """
+    A Item that holds some scalar or multichannel data and their drawing related settings.
+    OverlayItems are held by the OverlayMgr
+    """
+    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False):
         self.data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
@@ -89,11 +114,13 @@ class OverlayItem(object):
         self.alpha = alpha
         self.name = "Unnamed Overlay"
         self.key = "Unknown Key"
-        self.autoVisible = visible
+        self.autoAdd = autoAdd
+        self.autoVisible = autoVisible
         self.references = []
                 
     def getRef(self):
         ref = OverlayItemReference(self)
+        ref.visible = self.autoVisible
         self.references.append(ref)
         return ref
         
@@ -111,10 +138,13 @@ class OverlayItem(object):
 
 class OverlayMgr(dict):
     """
-    Keeps track of the different overlays
-    supports the python dictionary interface
+    Keeps track of the different overlays and is instanced by each DataItem
+    supports the python dictionary interface for easy adding/updating of OverlayItems:
     
-    mgr['Group1/Subgroup/itemname'] =  OverlayItem
+        mgr['GroupName1/SubgroupName/Itemname'] =  OverlayItem
+
+    OverlayItems that have the autoAdd Property set to True are immediately added to the currently
+    visible overlayWidget
     """
     def __init__(self,  widget = None):
         dict.__init__(self)
@@ -138,7 +168,9 @@ class OverlayMgr(dict):
                 it = self[key]
                 it.data = value.data
                 res = it
+            #set the name of the overlayItem to the last part of the key
             res.name = key.split('/')[-1]
+            #update the key
             res.key = key
         if addToWidget:
             self.addToWidget(res)
@@ -146,7 +178,7 @@ class OverlayMgr(dict):
         
     def addToWidget(self,  value):
         print "adding ",  value.name,  "to overlays"
-        if self.widget != None and value.autoVisible is True:
+        if self.widget != None and value.autoAdd is True:
             self.widget.addOverlayRef(value.getRef())
             
             

@@ -177,17 +177,17 @@ class Project(object):
 
             for index2,  di in enumerate(self.dataMgr):
                 #create Feature Overlay
-                for c in range(di._featureM.shape[4]):
-                    rawdata = di._featureM[:, :, :, :, c, offset:offset+size]
-                    rawdata.shape
-                    #TODO: the min/max stuff here is slow !!!
-                    #parallelize ??
-                    min = numpy.min(rawdata)
-                    max = numpy.max(rawdata)
-                    rawdata = (rawdata - min)*255/(max-min)
-                    data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
-                    ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  visible = False)
-                    di.overlayMgr["Classification/Features/Channel "+str(c)+"/"+feature.name + " " + str(feature.sigma)] = ov
+                rawdata = di._featureM[:, :, :, :, offset:offset+size]
+                rawdata.shape
+                #TODO: the min/max stuff here is slow !!!
+                #parallelize ??
+                min = numpy.min(rawdata)
+                max = numpy.max(rawdata)
+                rawdata = (rawdata - min)*255/(max-min)
+                data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
+                
+                ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
+                di.overlayMgr["Classification/Features/" + feature.name + " " + str(feature.sigma)] = ov
         
   
 

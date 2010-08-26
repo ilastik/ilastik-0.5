@@ -103,9 +103,9 @@ class FeatureMgr():
             try:
                 for i, di in enumerate(self.dataMgr):
                     if di.featureCacheDS is None:
-                        di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,),'float32')
+                        di._featureM = numpy.zeros(di.dataVol.data.shape[0:-1] + (totalSize,),'float32')
                     else:
-                        di.featureCacheDS.resize(di.dataVol.data.shape + (totalSize,))
+                        di.featureCacheDS.resize(di.dataVol.data.shape[0:-1] + (totalSize,))
                         di._featureM = di.featureCacheDS
                     di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM)
 
@@ -175,38 +175,39 @@ class FeatureThread(ThreadBase):
 
     def calcFeature(self, image, offset, size, feature, blockNum):
         for t_ind in range(image.dataVol.data.shape[0]):
-            for c_ind in range(image.dataVol.data.shape[4]):
-                try:
-                    overlap = feature.minContext
-                    bounds = image.featureBlockAccessor.getBlockBounds(blockNum, overlap)
-                    result = feature.compute(image.dataVol.data[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], c_ind].astype('float32'))
-                    bounds1 = image.featureBlockAccessor.getBlockBounds(blockNum,0)
+            try:
+                overlap = feature.minContext
+                bounds = image.featureBlockAccessor.getBlockBounds(blockNum, overlap)
+                result = feature.compute(image.dataVol.data[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype('float32'))
+                bounds1 = image.featureBlockAccessor.getBlockBounds(blockNum,0)
 
-                    sx = bounds1[0]-bounds[0]
-                    ex = bounds[1]-bounds1[1]
-                    sy = bounds1[2]-bounds[2]
-                    ey = bounds[3]-bounds1[3]
-                    sz = bounds1[4]-bounds[4]
-                    ez = bounds[5]-bounds1[5]
+                sx = bounds1[0]-bounds[0]
+                ex = bounds[1]-bounds1[1]
+                sy = bounds1[2]-bounds[2]
+                ey = bounds[3]-bounds1[3]
+                sz = bounds1[4]-bounds[4]
+                ez = bounds[5]-bounds1[5]
 
-                    ex = result.shape[0] - ex
-                    ey = result.shape[1] - ey
-                    ez = result.shape[2] - ez
+                ex = result.shape[0] - ex
+                ey = result.shape[1] - ey
+                ez = result.shape[2] - ez
 
-                    tres = result[sx:ex,sy:ey,sz:ez]
-                    image.featureBlockAccessor[t_ind,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],c_ind,offset:offset+size] = tres
-                except Exception, e:
-                    print "########################## exception in FeatureThread ###################"
-                    print feature.__class__
-                    #print result.shape
-                    print bounds
-                    print bounds1
-                    print offset
-                    print size
-                    print e
-                    traceback.print_exc(file=sys.stdout)
-                self.count += 1
-                # print "Feature Job ", self.count, "/", self.jobs, " finished"
+                tres = result[sx:ex,sy:ey,sz:ez,:]
+                image.featureBlockAccessor[t_ind,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],offset:offset+size] = tres
+            except Exception, e:
+                self.printLock.acquire()
+                print "########################## exception in FeatureThread ###################"
+                print feature.__class__
+                #print result.shape
+                print bounds
+                #print bounds1
+                print offset
+                print size
+                print e
+                traceback.print_exc(file=sys.stdout)
+                self.printLock.release()
+            self.count += 1
+            # print "Feature Job ", self.count, "/", self.jobs, " finished"
         
     
     def run(self):

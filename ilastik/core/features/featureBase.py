@@ -90,9 +90,18 @@ class FeatureBase(object):
 
     def computeSizeForShape(self, shape):
         if shape[1] > 1:
-            return self.__class__.numOutputChannels3d
+            return self.__class__.numOutputChannels3d*shape[-1]
         else:
-            return self.__class__.numOutputChannels2d
+            return self.__class__.numOutputChannels2d*shape[-1]
+        
+    def applyToAllChannels(self, data, func, *args):
+        result = []
+        for channel in range(data.shape[-1]):
+            tres = func(data[...,channel], *args)
+            if len(tres.shape) != len(data.shape):
+                tres.shape = tres.shape + (1,)
+            result.append(tres)
+        return numpy.concatenate(result, axis=-1)
         
     def serialize(self, h5grp):
         h5grp.create_dataset('name',data=self.name)
