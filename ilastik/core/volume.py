@@ -140,8 +140,19 @@ class DataAccessor():
         h5G.create_dataset(name,data = self.data)
          
     @staticmethod
-    def deserialize(h5G, name = 'data'):
-        data = h5G[name].value
+    def deserialize(h5G, name = 'data', offsets=(0, 0, 0), shape=(0, 0, 0)):
+        if (h5G[name].value.shape[1]==1):
+            #2d data
+            if shape == (0,0,0):        
+                data = h5G[name].value[:,:,offsets[0]:, offsets[1]:, :]
+            else:
+                data = h5G[name].value[:,:,offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1], :]
+        else:
+            #3 and more d data:
+            if shape == (0,0,0):        
+                data = h5G[name].value[:,offsets[0]:, offsets[1]:, offsets[2]:, :]
+            else:
+                data = h5G[name].value[:,offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1], offsets[2]:offsets[2]+shape[2],:]
         return DataAccessor(data, channels = True)
         
 class VolumeLabelDescription():
@@ -197,9 +208,9 @@ class VolumeLabels():
             
     
     @staticmethod    
-    def deserialize(h5G, name ="labels"):
+    def deserialize(h5G, name ="labels", offsets = (0,0,0), shape=(0,0,0)):
         if name in h5G.keys():
-            data = DataAccessor.deserialize(h5G, name)
+            data = DataAccessor.deserialize(h5G, name, offsets, shape)
             colors = []
             names = []
             numbers = []
@@ -230,10 +241,10 @@ class Volume():
             self.labels.serialize(h5G, "labels")
         
     @staticmethod
-    def deserialize(h5G):
+    def deserialize(h5G, offsets = (0,0,0), shape=(0,0,0)):
         #TODO: make nicer
-        data = DataAccessor.deserialize(h5G)
-        labels = VolumeLabels.deserialize(h5G)
+        data = DataAccessor.deserialize(h5G, "data", offsets, shape)
+        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
         v =  Volume()
         v.data = data
         v.labels = labels

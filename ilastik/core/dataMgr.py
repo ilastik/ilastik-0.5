@@ -47,6 +47,9 @@ from ilastik.core.volume import Volume as Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
+
+#from ilastik.core import dataImpex
+
 import traceback
 import vigra
 at = vigra.arraytypes
@@ -278,29 +281,29 @@ class DataItemImage(DataItemBase):
         self.featureCacheDS = None
         self.featureBlockAccessor = None
         
-    def loadData(self):
-        fBase, fExt = os.path.splitext(self.fileName)
-        if fExt == '.h5':
-            f = h5py.File(self.fileName, 'r')
-            g = f['volume']
-            self.deserialize(g)
-        else:
-            self.data = DataImpex.loadImageData(self.fileName)
-            self.labels = None
-        #print "Shape after Loading and width",self.data.shape, self.data.width
-        if self.dataVol is None:
-            dataAcc = DataAccessor(self.data)
-            self.dataVol = Volume()
-            self.dataVol.data = dataAcc
-            self.dataVol.labels = self.labels
-        
-   
-    @classmethod
-    def initFromArray(cls, dataArray, originalFileName):
-        obj = cls(originalFileName)
-        obj.dataVol = Volume()
-        obj.dataVol.data = DataAccessor(dataArray, True)
-        return obj
+#    def loadData(self):
+#        fBase, fExt = os.path.splitext(self.fileName)
+#        if fExt == '.h5':
+#            f = h5py.File(self.fileName, 'r')
+#            g = f['volume']
+#            self.deserialize(g)
+#        else:
+#            #self.data = dataImpex.DataImpex.loadImageData(self.fileName)
+#            self.labels = None
+#        #print "Shape after Loading and width",self.data.shape, self.data.width
+#        if self.dataVol is None:
+#            dataAcc = DataAccessor(self.data)
+#            self.dataVol = Volume()
+#            self.dataVol.data = dataAcc
+#            self.dataVol.labels = self.labels
+#        
+#   
+#    @classmethod
+#    def initFromArray(cls, dataArray, originalFileName):
+#        obj = cls(originalFileName)
+#        obj.dataVol = Volume()
+#        obj.dataVol.data = DataAccessor(dataArray, True)
+#        return obj
         
         
     def getTrainingMforInd(self, ind):
@@ -488,10 +491,10 @@ class DataItemImage(DataItemBase):
         if self.prediction is not None:
             self.prediction.serialize(h5G, 'prediction')
             
-    def deserialize(self, h5G):
-        self.dataVol = Volume.deserialize(h5G)
+    def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
+        self.dataVol = Volume.deserialize(h5G, offsets, shape)
         if 'prediction' in h5G.keys():
-            self.prediction = DataAccessor.deserialize(h5G, 'prediction')
+            self.prediction = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
             for p_i, item in enumerate(self.dataVol.labels.descriptions):
                 item.prediction = (self.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 
@@ -510,7 +513,7 @@ class DataMgr():
     def __init__(self, featureCacheFile=None):
         self.dataItems = []            
         self.classifiers = []
-        self.featureLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
+        self.featureLock = threading.Semaphore(1) #prevent chaining of activeImage during thread stuff
         self.trainingVersion = 0
         self.featureVersion = 0
         self.dataItemsLoaded = []
@@ -525,8 +528,7 @@ class DataMgr():
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
-                if have_qt:
-                    QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
+                QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory to load this file !")
                 raise e
 
             alreadyLoaded = True
@@ -672,46 +674,6 @@ class DataMgr():
         
         if len(self.classifiers) == 0:
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
-        
-        if not hasattr(self.classifiers[0],'serialize'):
-            raise RuntimeError("The selected classifier is not serializable and cannot be saved to file.")
-
-        # Make sure group 'classifiers' exist
-        h5file = h5py.File(str(fileName),'w')
-        h5file.create_group('classifiers')
-        h5file.close()
-        
-        for i, c in enumerate(self.classifiers):
-            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
-            print "Write Random Forest # %03d -> %d" % (i,tmp)          
-    
-    def importClassifiers(self, fileName):
-        hf = h5py.File(fileName,'r')
-        classifiers = []
-        from ilastik.core.classifiers.classifierRandomForestNew import ClassifierRandomForestNew
-        for cid in hf['classifiers']:
-            classifiers.append(ClassifierRandomForestNew.deserialize(fileName, 'classifiers/' + cid))   
-        self.classifiers = classifiers
-        
-        
-
-class DataImpex(object):
-    """
-    Data Import/Export class 
-    """
-        
-    @staticmethod
-    def loadVolumeFromGroup(h5grp):
-        di = DataItemImage
-
-    
-    @staticmethod
-    def loadImageData(fileName):
-        # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
-        # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
-        data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-        return data
-
         
         
         

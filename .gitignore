@@ -1,3 +1,6 @@
 *.pyc
 *.backup
 *~
+build/*
+.spyder*
+.gitig*

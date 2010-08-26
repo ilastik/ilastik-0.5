@@ -55,8 +55,8 @@ import time
 from PyQt4 import QtCore, QtGui, uic
 
 import ilastik
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
-from ilastik.gui import ctrlRibbon, stackloader, batchProcess
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex
+from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
 from ilastik.gui.featureDlg import FeatureDlg
 from Queue import Queue as queue
 from collections import deque
@@ -704,7 +704,7 @@ class ProjectDlg(QtGui.QDialog):
     def initDlg(self):
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(ilastik.__file__)
-        uic.loadUi(ilastikPath+'/gui/dlgProject.ui', self) 
+        uic.loadUi(os.path.join(ilastikPath,os.path.join("gui", "dlgProject.ui")), self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setAlternatingRowColors(True)
@@ -751,18 +751,24 @@ class ProjectDlg(QtGui.QDialog):
                
         self.exec_()
 
-    
+
     @QtCore.pyqtSignature("")     
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader()
-        imageData = sl.exec_()
-        
-        if imageData is not None:   
+        #imageData = sl.exec_()
+        sl.exec_()
+        theDataItem = None
+        try:  
+            theDataItem = dataImpex.DataImpex.importDataItem(sl.fileList, sl.options)
+        except MemoryError:
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+        if theDataItem is not None:   
             # file name
             path = str(sl.path.text())
             dirname = os.path.basename(os.path.dirname(path))
-            offsetstr =  '(' + str(sl.offsetX.value()) + ', ' + str(sl.offsetY.value()) + ', ' + str(sl.offsetZ.value()) + ')'   
-            theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
+            offsetstr =  '(' + str(sl.options.offsets[0]) + ', ' + str(sl.options.offsets[1]) + ', ' + str(sl.options.offsets[2]) + ')'
+            theDataItem.Name = dirname + ' ' + offsetstr   
+            #theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
             try:
                 self.dataMgr.append(theDataItem, True)
                 self.dataMgr.dataItemsLoaded[-1] = True
@@ -797,7 +803,42 @@ class ProjectDlg(QtGui.QDialog):
                 print e
                 QtGui.QErrorMessage.qtHandler().showMessage(str(e))
             
-                        
+    
+    @QtCore.pyqtSignature("")
+    def on_loadFileButton_clicked(self):
+        fl = fileloader.FileLoader()
+        #imageData = sl.exec_()
+        fl.exec_()
+        itemList = []
+        try:
+            itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
+        except Exception, e:
+            traceback.print_exc(file=sys.stdout)
+            print e
+            QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+        for index, item in enumerate(itemList):
+            self.dataMgr.append(item, True)
+            rowCount = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(rowCount)
+
+            theFlag = QtCore.Qt.ItemIsEnabled
+            flagON = ~theFlag | theFlag
+            flagOFF = ~theFlag
+
+            # file name
+            r = QtGui.QTableWidgetItem(fl.fileList[fl.options.channels[0]][index])
+            self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+            # labels
+            r = QtGui.QTableWidgetItem()
+            r.data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(QtCore.Qt.Checked)
+
+
+            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+
+            self.initThumbnail(fl.fileList[fl.options.channels[0]][index])
+            self.tableWidget.setCurrentCell(0, 0)
+
     @QtCore.pyqtSignature("")     
     def on_addFile_clicked(self):
         global LAST_DIRECTORY
@@ -809,8 +850,11 @@ class ProjectDlg(QtGui.QDialog):
                 try:
                     file_name = str(file_name)
 
-                    theDataItem = dataMgr.DataItemImage(file_name)
-                    self.dataMgr.append(theDataItem)
+                    #theDataItem = dataMgr.DataItemImage(file_name)
+                    theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
+                    if theDataItem is None:
+                        print "No data item loaded"
+                    self.dataMgr.append(theDataItem, True)
                     #self.dataMgr.dataItemsLoaded[-1] = True
 
                     rowCount = self.tableWidget.rowCount()
