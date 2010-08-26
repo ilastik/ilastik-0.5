@@ -301,11 +301,14 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
 
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Classifier Options'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Choose Weights'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationWeights)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationSegment)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Save Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Export Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
+
+        self.connect(self.ribbon.tabDict['Object Processing'].itemDict['Select Input'], QtCore.SIGNAL('clicked(bool)'), self.on_objectProcSelect)
+        self.connect(self.ribbon.tabDict['Object Processing'].itemDict['CC'], QtCore.SIGNAL('clicked(bool)'), self.on_processObjects)
 
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
@@ -668,7 +671,11 @@ class MainWindow(QtGui.QMainWindow):
 
         QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
-        
+    def on_objectProcSelect(self):
+        print "Empty"
+    
+    def on_processObjects(self):
+        print "Empty"    
         
         
 

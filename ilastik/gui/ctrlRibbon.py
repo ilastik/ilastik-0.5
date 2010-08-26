@@ -166,7 +166,7 @@ def createRibbons():
     RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
     RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
-    RibbonGroupObjects["Object processing"] = RibbonEntryGroup("Objects Processing", 4)
+    RibbonGroupObjects["Object Processing"] = RibbonEntryGroup("Object Processing", 4)
     RibbonGroupObjects["Automate"] = RibbonEntryGroup("Automate", 5)
     RibbonGroupObjects["Help"] = RibbonEntryGroup("Help", 6)
 
@@ -185,15 +185,16 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and predict the whole image"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("", None, "", type=RibbonStretch))
 
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Save Classifier", ilastikIcons.System ,"Save current classifier and its feature settings"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Change Classifier", ilastikIcons.System ,"Select a classifier and change its settings"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Export Classifier", ilastikIcons.System ,"Save current classifier and its feature settings"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Classifier Options", ilastikIcons.System ,"Select a classifier and change its settings"))
 
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Choose Weights", ilastikIcons.System ,"Choose the edge weights for the segmentation task"))
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment the image into foreground/background"))
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("", None, "", type=RibbonStretch))
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Change Segmentation", ilastikIcons.System ,"Select a segmentation plugin and change settings"))
 
-    RibbonGroupObjects["Object processing"].append(RibbonEntry("CC", ilastikIcons.System, "Find connected components in the data"))
+    RibbonGroupObjects["Object Processing"].append(RibbonEntry("Select Input", ilastikIcons.Select, "Select the input layer"))
+    RibbonGroupObjects["Object Processing"].append(RibbonEntry("CC", ilastikIcons.System, "Find connected components in the data"))
 
     RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batchpredict files in a directory with the currently trained classifier"))
 
