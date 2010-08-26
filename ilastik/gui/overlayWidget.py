@@ -355,8 +355,10 @@ class OverlayWidget(QtGui.QGroupBox):
         self.overlayListWidget.volumeEditor.repaint()
         
     def buttonRemoveClicked(self):
-        self.overlayListWidget.removeOverlay(self.overlayListWidget.currentRow())
-        self.overlayListWidget.volumeEditor.repaint()
+        number = self.overlayListWidget.currentRow()
+        if number >= 0:
+            self.overlayListWidget.removeOverlay(number)
+            self.overlayListWidget.volumeEditor.repaint()
         
     def removeOverlay(self, item):
         """
