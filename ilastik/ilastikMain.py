@@ -268,10 +268,10 @@ class MainWindow(QtGui.QMainWindow):
                 if ribbon_group.position == k:
                     tabs = ribbon_group.makeTab()   
                     enabled = True
-                    if ribbon_group.name == "Segmentation":
-                        num_segmentors = len(core.segmentors.segmentorBase.SegmentorBase.__subclasses__())
-                        if num_segmentors == 0:
-                            enabled = False
+                    #if ribbon_group.name == "Segmentation":
+                     #   num_segmentors = len(core.segmentors.segmentorBase.SegmentorBase.__subclasses__())
+                     #   if num_segmentors == 0:
+                     #       enabled = False
                     self.ribbon.addTab(tabs, ribbon_group.name,  enabled)
                     print "Add tab", ribbon_group.name
         self.ribbonToolbar.addWidget(self.ribbon)

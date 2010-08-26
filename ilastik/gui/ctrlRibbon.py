@@ -166,8 +166,9 @@ def createRibbons():
     RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
     RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
     RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
-    RibbonGroupObjects["Automate"] = RibbonEntryGroup("Automate", 4)
-    RibbonGroupObjects["Help"] = RibbonEntryGroup("Help", 5)
+    RibbonGroupObjects["Object processing"] = RibbonEntryGroup("Objects Processing", 4)
+    RibbonGroupObjects["Automate"] = RibbonEntryGroup("Automate", 5)
+    RibbonGroupObjects["Help"] = RibbonEntryGroup("Help", 6)
 
     #RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)
     
@@ -190,6 +191,8 @@ def createRibbons():
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment the image into foreground/background"))
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("", None, "", type=RibbonStretch))
     RibbonGroupObjects["Segmentation"].append(RibbonEntry("Change Segmentation", ilastikIcons.System ,"Select a segmentation plugin and change settings"))
+
+    RibbonGroupObjects["Object processing"].append(RibbonEntry("CC", ilastikIcons.System, "Find connected components in the data"))
 
     RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batchpredict files in a directory with the currently trained classifier"))
 
