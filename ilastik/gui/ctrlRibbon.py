@@ -182,8 +182,11 @@ def createRibbons():
     RibbonGroupObjects["Classification"].append(RibbonEntry("Start Live Prediction", ilastikIcons.Play ,"Interactive prediction of visible image parts while drawing etc.",type=RibbonToggleButtonItem))
     RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and predict the whole image"))
     RibbonGroupObjects["Classification"].append(RibbonEntry("", None, "", type=RibbonStretch))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Save Classifier", ilastikIcons.System ,"Save current classifier and its feature settings"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Change Classifier", ilastikIcons.System ,"Select a classifier and change its settings"))
+    
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Import Classifier", ilastikIcons.System ,"Export current classifier and its feature settings"))
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Export Classifier", ilastikIcons.System ,"Import a classifier and its feature settings"))
+    
+    RibbonGroupObjects["Classification"].append(RibbonEntry("Classifier Options", ilastikIcons.System ,"Select a classifier and change its settings"))
     RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batchpredict files in a directory with the currently trained classifier"))
 
     RibbonGroupObjects["Help"].append(RibbonEntry("Shortcuts", ilastikIcons.System ,"Shortcuts"))

@@ -78,7 +78,6 @@ class Project(object):
             fileName = self.filename
             
         fileHandle = h5py.File(fileName,'w')
-        # pickle.dump(self, fileHandle, True)
         
         # get project settings
         projectG = fileHandle.create_group('Project') 
@@ -87,7 +86,15 @@ class Project(object):
         projectG.create_dataset('Name', data=str(self.name))
         projectG.create_dataset('Labeler', data=str(self.labeler))
         projectG.create_dataset('Description', data=str(self.description))
-                
+            
+        featureG = projectG.create_group('FeatureSelection')
+        
+        try:
+            self.featureMgr.exportFeatureItems(featureG)
+        except RuntimeError as e:
+            print 'saveToDisk(): No features where selected: ' , e
+            
+            
         # get number of images
         n = len(self.dataMgr)
         
@@ -107,7 +114,12 @@ class Project(object):
         
         
         # Save to hdf5 file
+        
+        
+        classifierG = projectG.create_group('Classifier')
         fileHandle.close()
+        
+        
         print "Project %s saved to %s " % (self.name, fileName)
     
     @staticmethod
