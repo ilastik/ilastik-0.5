@@ -221,8 +221,8 @@ class HistoryManager(QtCore.QObject):
             self.history[self.current + 1].restore(self.volumeEditor)
             self.current += 1
             
-    def serialize(self, grp):
-        histGrp= grp.create_group('history')
+    def serialize(self, grp, name='history'):
+        histGrp = grp.create_group(name)
         for i, hist in enumerate(self.history):
             histItemGrp = histGrp.create_group('%04d'%i)
             histItemGrp.create_dataset('labels',data=hist.labels)
