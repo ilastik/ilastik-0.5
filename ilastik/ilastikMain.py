@@ -377,7 +377,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.setOverlayWidget(overlayWidget)
             
             #create SeedsOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), visible = True,  linkColorTable = True)
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"] = ov
             ov = self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"]
 
@@ -396,7 +396,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.setOverlayWidget(overlayWidget)
             
             #create LabelOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), visible = True,  linkColorTable = True)
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
             ov = self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"]
             
@@ -508,7 +508,7 @@ class MainWindow(QtGui.QMainWindow):
         #setup sub-widgets
         self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
         #create LabelOverlay
-        ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = None, visible = True,  linkColorTable = True)
+        ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
         self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
         ov.colorTable = self.labelWidget.labelWidget.colorTab
@@ -1226,11 +1226,11 @@ class ClassificationInteractive(object):
         activeItem = self.parent.project.dataMgr[self.parent.activeImage]
         for p_i, descr in enumerate(activeItem.dataVol.labels.descriptions):
             #create Overlay for prediction:
-            ov = OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, visible = True)
+            ov = OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + descr.name] = ov
 
         #create Overlay for uncertainty:
-        ov = OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
+        ov = OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
         self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Uncertainty"] = ov
 
 
@@ -1411,7 +1411,7 @@ class ClassificationPredict(object):
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
                 #create Overlay for prediction:
-                ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, visible = True)
+                ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
 
             all =  range(len(activeItem.dataVol.labels.descriptions))
@@ -1425,7 +1425,7 @@ class ClassificationPredict(object):
             activeItem.dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]
 
             #create Overlay for uncertainty:
-            ov = OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, visible = True)
+            ov = OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Uncertainty"] = ov
 
 
@@ -1487,7 +1487,7 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem.dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, visible = True)
+            ov = OverlayItem(activeItem.dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Segmentation/Segmentation"].data = DataAccessor(activeItem.dataVol.segmentation)

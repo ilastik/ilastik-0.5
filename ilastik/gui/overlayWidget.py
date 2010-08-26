@@ -158,10 +158,9 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         self.color = self.overlayItem.color
         self.visible = overlayItem.visible
 
-        s = QtCore.Qt.Checked
-
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-        self.setCheckState(s)
+        
+        self.setCheckState(self.visible * 2)
 
 
 class OverlayListWidget(QtGui.QListWidget):
