@@ -1,4 +1,4 @@
-import numpy, vigra
+import numpy, vigra, h5py
 
 class DataAccessor():
     """
@@ -243,7 +243,11 @@ class VolumeLabels():
     @staticmethod    
     def deserialize(h5G, name ="labels", offsets = (0,0,0), shape=(0,0,0)):
         if name in h5G.keys():
-            data = DataAccessor.deserialize(h5G, name, offsets, shape)
+            t = h5G[name]
+            if isinstance(t,h5py.highlevel.Group):
+                data = DataAccessor.deserialize(t, 'data', offsets, shape)
+            else:
+                data = DataAccessor.deserialize(h5G, name, offsets, shape)
             colors = []
             names = []
             numbers = []
