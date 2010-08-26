@@ -144,7 +144,7 @@ class ClassifierPredictThread(ThreadBase):
         try:
             b = fm.getBlockBounds(bnr, 0)
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
-            tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4]*tfm.shape[5])
+            tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4])
 	    tpred = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             for num in range(len(self.dataMgr.classifiers)):
                 cf = self.dataMgr.classifiers[num]
@@ -174,8 +174,8 @@ class ClassifierPredictThread(ThreadBase):
                     #make a little test prediction to get the shape and see if it works:
                     tempPred = None
                     if item._featureM is not None:
-                        tfm = item._featureM[0,0,0,0,:,:]
-                        tfm.shape = (1,) + (tfm.shape[0]*tfm.shape[1],) 
+                        tfm = item._featureM[0,0,0,0,:]
+                        tfm.shape = (1,) + (tfm.shape[-1],) 
                         tempPred = self.dataMgr.classifiers[0].predict(tfm)
                                         
                     if tempPred is not None:
