@@ -817,6 +817,7 @@ class ProjectDlg(QtGui.QDialog):
         itemList = []
         try:
             itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
+            print "items returned: ", len(itemList)
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
             print e
