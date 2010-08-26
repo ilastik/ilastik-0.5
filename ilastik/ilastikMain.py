@@ -200,7 +200,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
+            self.ribbon.tabDict['Classification'].itemDict['Classifier Options'].setEnabled(True)
             self.activeImage = 0
             self.projectModified()
         
@@ -300,11 +300,13 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Select Features'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
+
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Choose Weights'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationWeights)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationSegment)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Save Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
         self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
+
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
         #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
@@ -312,8 +314,8 @@ class MainWindow(QtGui.QMainWindow):
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
         #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
         
-        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Export Classifier'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Classifier Options'].setEnabled(False)
         
         #TODO: reenable online classification sometime 
 #        # Make menu for online Classification
@@ -440,7 +442,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
             self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
+            self.ribbon.tabDict['Classification'].itemDict['Classifier Options'].setEnabled(True)
             if hasattr(self, 'projectDlg'):
                 self.projectDlg.deleteLater()
             self.activeImage = 0
@@ -475,7 +477,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
+        self.ribbon.tabDict['Classification'].itemDict['Export Classifier'].setEnabled(False)
         
     def newEditChannelsDlg(self):
         self.editChannelsDlg = editChannelsDlg(self)
@@ -636,43 +638,35 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_saveClassifier(self, fileName=None):
         
-        if not hasattr(self.project.dataMgr,'classifiers'):
-            reply = QtGui.QMessageBox.warning(self, 'Error', "No classifiers trained so far. Use Train and Predict to learn classifiers.", QtGui.QMessageBox.Ok)
-        classifiers = self.project.dataMgr.classifiers
+        hf = h5py.File(fileName,'r')
+        h5featGrp = hf['features']
+        self.project.featureMgr.importFeatureItems(h5featGrp)
+        hf.close()
         
-        if len(classifiers) == 0:
-            print "no classifiers"
-            reply = QtGui.QMessageBox.warning(self, 'Error', "No classifiers trained so far. Use Train and Predict to learn classifiers.", QtGui.QMessageBox.Ok)
+        self.project.dataMgr.importClassifiers(fileName)
+    
+    def on_exportClassifier(self):
+        global LAST_DIRECTORY
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
+        LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
-        if not hasattr(classifiers[0],'serialize'):
-            reply = QtGui.QMessageBox.warning(self, 'Error', "The selected classifier is not serializable and cannot be saved to file.", QtGui.QMessageBox.Ok)
+        try:
+            self.project.dataMgr.exportClassifiers(fileName)
+        except RuntimeError as e:
+            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
             return
-        
-        if fileName is not None:
-            global LAST_DIRECTORY
-            fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
-            LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
-        
-        # Make sure group 'classifiers' exist
-        h5file = h5py.File(str(fileName),'w')
-        h5file.create_group('classifiers')
+
+        try:
+            h5file = h5py.File(str(fileName),'a')
+            h5featGrp = h5file.create_group('features')
+            self.project.featureMgr.exportFeatureItems(h5featGrp)
+        except RuntimeError as e:
+            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            h5file.close()
+            return
         h5file.close()
-        
-        for i, c in enumerate(classifiers):
-            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
-            print "Write Random Forest # %03d -> %d" % (i,tmp)
-        
-        # Export user feature selection
-        h5file = h5py.File(str(fileName),'a')
-        h5featGrp = h5file.create_group('features')
-        
-        featureItems = self.project.featureMgr.featureItems
-        for k, feat in enumerate(featureItems):
-            itemGroup = h5featGrp.create_group('feature_%03d' % k)
-            feat.serialize(itemGroup)
-        h5file.close()
-        
-        reply = QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have be saved to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+
+        QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
         
         
@@ -932,6 +926,7 @@ class ProjectDlg(QtGui.QDialog):
         itemList = []
         try:
             itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
+            print "items returned: ", len(itemList)
         except Exception, e:
             traceback.print_exc(file=sys.stdout)
             print e
@@ -1064,7 +1059,7 @@ class ProjectDlg(QtGui.QDialog):
         self.parent.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
 
         self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Classifier Options'].setEnabled(True)
         
         self.parent.activeImage = 0
         self.parent.projectModified()
@@ -1190,6 +1185,7 @@ class ClassificationInteractive(object):
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
+
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
 
         self.temp_cnt = 0
@@ -1436,7 +1432,7 @@ class ClassificationPredict(object):
         self.parent.statusBar().hide()
         self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
         self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(True)
+        self.parent.ribbon.tabDict['Classification'].itemDict['Export Classifier'].setEnabled(True)
 
 
 

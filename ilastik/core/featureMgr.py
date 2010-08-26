@@ -29,7 +29,6 @@
 
 import numpy
 import time
-import sys
 from ilastik.core import jobMachine
 from collections import deque
 from ilastik.core.utilities import irange
@@ -51,7 +50,7 @@ import vigra
 at = vigra.arraytypes
 
 import ilastik.core.features
-
+from ilastik.core.features.featureBase import FeatureBase
 
 import os, sys
 
@@ -117,6 +116,25 @@ class FeatureMgr():
         else:
             print "setFeatureItems(): no features selected"
         return True
+    
+    def exportFeatureItems(self, h5featGrp):
+        if not hasattr(self, 'featureItems'):
+            raise RuntimeError("No features selected.")
+        
+        if len(self.featureItems) == 0:
+            raise RuntimeError("No features selected.")
+        
+        for k, feat in enumerate(self.featureItems):
+            itemGroup = h5featGrp.create_group('feature_%03d' % k)
+            feat.serialize(itemGroup)
+            
+    def importFeatureItems(self, h5featGrp):
+        featureItems = []
+        for fgrp in h5featGrp.values():
+            featureItems.append(FeatureBase.deserialize(fgrp))
+        
+        self.setFeatureItems(featureItems)
+
     
     def prepareCompute(self, dataMgr):
         self.dataMgr = dataMgr

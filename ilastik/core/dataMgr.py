@@ -776,7 +776,13 @@ class DataMgr():
     @staticmethod
     def deserialize(self):
         pass
+    
+    def exportClassifiers(self, fileName):
+        if not hasattr(self, 'classifiers'):
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
+        if len(self.classifiers) == 0:
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
         
         

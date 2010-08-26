@@ -175,11 +175,11 @@ class LoadOptionsWidget(QtGui.QWidget):
     def fillDefaultOptions(self, options):
         #sizes might have been filled by setShapeInfo
         options.shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
+        options.rgb = self.rgb
 
     def setShapeInfo(self, fileList, channels):
         #read the shape information from the first file in the list
-        #TODO: this is calling the dataImpex - it's baaaaad, it shouldn't be done
-        
+        #TODO: this is calling the dataImpex - it's baaaaad, it shouldn't be done        
         try:            
             shape = dataImpex.DataImpex.readShape(fileList[channels[0]][0])
             self.rgb = shape[3]
