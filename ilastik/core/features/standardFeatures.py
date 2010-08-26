@@ -41,11 +41,13 @@ class HessianOfGaussian(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.hessianOfGaussian2D(data, self.sigma)
+        func = vigra.filters.hessianOfGaussian2D
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.hessianOfGaussian3D(data, self.sigma)
+        func = vigra.filters.hessianOfGaussian3D
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
 
@@ -61,11 +63,17 @@ class HessianOfGaussianEigenvalues(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, self.sigma))
+        def hessianOfGaussianEigenvalues(data, sigma):
+            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, sigma))
+        func = hessianOfGaussianEigenvalues
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, self.sigma))
+        def hessianOfGaussianEigenvalues(data, sigma):
+            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, sigma))
+        func = hessianOfGaussianEigenvalues
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
 class StructureTensorEigenvalues(FeatureBase):
@@ -79,11 +87,13 @@ class StructureTensorEigenvalues(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.structureTensorEigenvalues(data, self.sigma, self.sigma / 2.0)
+        func = vigra.filters.structureTensorEigenvalues
+        result = self.applyToAllChannels(data, func,  self.sigma, self.sigma / 2.0)
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.structureTensorEigenvalues(data, self.sigma, self.sigma / 2.0)
+        func = vigra.filters.structureTensorEigenvalues
+        result = self.applyToAllChannels(data, func,  self.sigma, self.sigma / 2.0)
         return result
 
 
@@ -99,11 +109,13 @@ class GaussianGradientMagnitude(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.gaussianGradientMagnitude(data, self.sigma)
+        func = vigra.filters.gaussianGradientMagnitude
+        result = self.applyToAllChannels(data, func,  self.sigma)
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.gaussianGradientMagnitude(data, self.sigma)
+        func = vigra.filters.gaussianGradientMagnitude
+        result = self.applyToAllChannels(data, func,  self.sigma)
         return result
 
 
@@ -118,11 +130,13 @@ class GaussianSmoothing(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.gaussianSmoothing(data, self.sigma)
+        func = vigra.filters.gaussianSmoothing
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.gaussianSmoothing(data, self.sigma)
+        func = vigra.filters.gaussianSmoothing
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
 class StructureTensor(FeatureBase):
@@ -136,11 +150,13 @@ class StructureTensor(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.structureTensor(data, self.sigma, self.sigma)
+        func = vigra.filters.structureTensor
+        result = self.applyToAllChannels(data, func, self.sigma, self.sigma / 2.0)
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.structureTensor(data, self.sigma, self.sigma)
+        func = vigra.filters.structureTensor
+        result = self.applyToAllChannels(data, func, self.sigma, self.sigma / 2.0)
         return result
 
 class LaplacianOfGaussian(FeatureBase):
@@ -154,11 +170,13 @@ class LaplacianOfGaussian(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.laplacianOfGaussian(data, self.sigma)
+        func = vigra.filters.laplacianOfGaussian
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.laplacianOfGaussian(data, self.sigma)
+        func = vigra.filters.laplacianOfGaussian
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
 
@@ -173,27 +191,20 @@ class DifferenceOfGaussians(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        result = vigra.filters.gaussianSmoothing(data, self.sigma) - vigra.filters.gaussianSmoothing(data, self.sigma * 0.66)
+        def differenceOfGaussians(data, sigma):
+            return vigra.filters.gaussianSmoothing(data, sigma) - vigra.filters.gaussianSmoothing(data, sigma * 0.66)
+        func = differenceOfGaussians
+        result = self.applyToAllChannels(data, func, self.sigma) 
         return result
 
     def compute3d(self, data):
-        result = vigra.filters.gaussianSmoothing(data, self.sigma) - vigra.filters.gaussianSmoothing(data, self.sigma * 0.66)
+        def differenceOfGaussians(data, sigma):
+            return vigra.filters.gaussianSmoothing(data, sigma) - vigra.filters.gaussianSmoothing(data, sigma * 0.66)
+        func = differenceOfGaussians
+        result = self.applyToAllChannels(data, func, self.sigma) 
         return result
 
-
-##gaussianGradientMagnitude = LocalFeature('Gradient Magnitude', ['Sigma' ], (1, 1), vigra.filters.gaussianGradientMagnitude)
-##gaussianSmooth = LocalFeature('Gaussian', ['Sigma' ], (1, 1), vigra.filters.gaussianSmoothing)
-##structureTensor = LocalFeature('Structure Tensor', ['InnerScale', 'OuterScale'], (3, 6), vigra.filters.structureTensor)
-##hessianMatrixOfGaussian = LocalFeature('Hessian', ['Sigma' ], (3, 6), myHessianOfGaussian)
-##eigStructureTensor2d = LocalFeature('Eigenvalues of Structure Tensor', ['InnerScale', 'OuterScale'], (2, 3), myStructureTensorEigenvalues)
-##laplacianOfGaussian = LocalFeature('LoG', ['Sigma' ], (1, 1), vigra.filters.laplacianOfGaussian)
-##eigHessianTensor2d = LocalFeature('Eigenvalues of Hessian', ['Sigma' ], (2, 3), myHessianOfGaussianEigenvalues)
-
-
-
-
-#differenceOfGaussians = LocalFeature('DoG', ['Sigma' ], (1, 1), lambda x, s: vigra.filters.gaussianSmoothing(x, s) - vigra.filters.gaussianSmoothing(x, s / 3 * 2))
-#cannyEdge = LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
+#LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
 #morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], (1, 1), lambda x, s: vigra.morphology.discOpening(x.astype(numpy.uint8), int(s * 1.5 + 1)))
 #morphologicalClosing = LocalFeature('Morph Colosing', ['Sigma' ], (1, 1), lambda x, s: vigra.morphology.discClosing(x.astype(numpy.uint8), int(s * 1.5 + 1)))
 

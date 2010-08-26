@@ -324,10 +324,9 @@ class DataItemImage(DataItemBase):
         else:
             print ind.shape
             print self._featureM.shape
-            trainingF = numpy.zeros((ind.shape[0],) + (self._featureM.shape[4],self._featureM.shape[5],), 'float32')
+            trainingF = numpy.zeros((ind.shape[0],) + (self._featureM.shape[4],), 'float32')
             for i in range(URI.shape[0]): 
                 trainingF[i,:,:] = self._featureM[URI[i,0],URI[i,1],URI[i,2],URI[i,3],:]
-        trainingF.shape = (trainingF.shape[0],) + (trainingF.shape[1]*trainingF.shape[2],)
         return trainingF
         
     def getTrainingMatrixRef(self):
@@ -585,11 +584,11 @@ class DataItemImage(DataItemBase):
     def getFeatureSlicesForViewState(self, vs):
         tempM = []
         if self._featureM is not None:
-            tempM.append(self._featureM[vs[0],vs[1],:,:,:,:])
-            tempM.append(self._featureM[vs[0],:,vs[2],:,:,:])
-            tempM.append(self._featureM[vs[0],:,:,vs[3],:,:])
+            tempM.append(self._featureM[vs[0],vs[1],:,:,:])
+            tempM.append(self._featureM[vs[0],:,vs[2],:,:])
+            tempM.append(self._featureM[vs[0],:,:,vs[3],:])
             for i, f in enumerate(tempM):
-                tf = f.reshape((numpy.prod(f.shape[0:2]),) + (numpy.prod(f.shape[2:]),))
+                tf = f.reshape((numpy.prod(f.shape[0:2]),) + (f.shape[2],))
                 tempM[i] = tf
                 
             return tempM

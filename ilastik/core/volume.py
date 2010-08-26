@@ -204,7 +204,8 @@ class VolumeLabels():
         pass
         
     def serialize(self, h5G, name):
-        self.data.serialize(h5G, name)
+        group = h5G.create_group(name)
+        self.data.serialize(group, 'data')
         
         tColor = []
         tName = []
@@ -221,7 +222,7 @@ class VolumeLabels():
             h5G[name].attrs['number'] = tNumber
             
         if self.history is not None:
-            self.history.serialize(h5G)        
+            self.history.serialize(group, 'history')        
             
     def getLabelNames(self):
         labelNames = []
