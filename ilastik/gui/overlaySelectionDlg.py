@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import sys
 from ilastik.core.overlayMgr import OverlayItem
+import qimage2ndarray
 
 class MyTreeWidget(QTreeWidget):
     def __init__(self, *args):
@@ -83,7 +85,20 @@ class OverlaySelectionDialog(QDialog):
         self.desc.setAlignment(Qt.AlignTop)
         self.desc.setMinimumWidth(200)
         self.desc.setMaximumWidth(300)
+        self.overlayImage = QLabel("Overlay Image")
+        self.overlayImage.setScaledContents(True)
+        tempLayout = QHBoxLayout(self)
+        self.channelLabel = QLabel("Channel")
+        self.channelSpinbox = QSpinBox(self)
+        self.sliceLabel = QLabel("Slice")
+        self.sliceSpinbox = QSpinBox()
+        tempLayout.addWidget(self.channelLabel)
+        tempLayout.addWidget(self.channelSpinbox)
+        tempLayout.addWidget(self.sliceLabel)
+        tempLayout.addWidget(self.sliceSpinbox)
         descLabelLayout.addWidget(self.desc)
+        descLabelLayout.addWidget(self.overlayImage)
+        descLabelLayout.addLayout(tempLayout)
         descLabelGroupBox.setLayout(descLabelLayout)
         GroupsLayout.addWidget(treeGroupBoxLayout)
         GroupsLayout.addWidget(descLabelGroupBox)
@@ -99,12 +114,12 @@ class OverlaySelectionDialog(QDialog):
         
         if self.singleSelection == True:
             self.setWindowTitle("Overlay Singel Selection")
-            self.desc.setText("<b>Singel Selection Mode</b> <br /><br />In singel selction mode it is possible to choose only one overlay.<br />For overlay-description select an overlay.<br />To (un)check an overlay please <br /> -click on a checkbox<br />-select overlay and press the spacebar")
+            self.desc.setText("Singel Selection Mode")
             self.checkAllButton.setEnabled(False)
             self.uncheckAllButton.setEnabled(False)
         else:
             self.setWindowTitle("Overlay Multi Selection")
-            self.desc.setText("<b>Multi Selection Mode</b> <br /><br />In multi selction mode it is possible to choose several overlays.<br />For overlay-description select an overlay.<br />To (un)ckeck overlays please<br />-click on a checkbox<br />-slect several overlays with ctrl + mouse and press then the spacebar<br />-select several overlays with shift + click and press then the spacebar<br />")
+            self.desc.setText("Multi Selection Mode")
             self.treeWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         
         self.layout.addLayout(GroupsLayout)
@@ -186,9 +201,15 @@ class OverlaySelectionDialog(QDialog):
             child = self.treeWidget.currentItem()
             if child.parent():
                 parent = child.parent() 
-                self.desc.setText("<b>%s</b> <br /><br /> %s" % (parent.text(0), child.item.desc))
+                self.desc.setText("<b>%s</b> <br /><br /> %s" % (parent.text(0), child.item.key))
+                self.channelSpinbox.setMaximum(child.item.data.shape[-1])
+                self.sliceSpinbox.setMaximum(child.item.data.shape[-1])
+                imageArray = child.item.data[0, self.sliceSpinbox.value(), :, :, self.channelSpinbox.value()]
+                pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+                
+                self.overlayImage.setPixmap(pixmapImage)
             else: 
-                self.desc.setText("<b>%s</b> <br /><br /> %s" % ("No Group", child.item.desc))
+                self.desc.setText("<b>%s</b> <br /><br /> %s" % ("No Group", child.item.key))
         else:
             self.desc.setText(self.treeWidget.currentItem().text(0))
 
