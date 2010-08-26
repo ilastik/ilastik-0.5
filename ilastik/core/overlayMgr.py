@@ -81,6 +81,8 @@ class OverlayItemReference(object):
     def __getattr__(self,  name):
         if name == "colorTable":
             return self.overlayItem.colorTable
+        elif name == "data":
+            return self.overlayItem.data
         raise AttributeError,  name
         
     def remove(self):

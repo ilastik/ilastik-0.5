@@ -587,7 +587,7 @@ class MainWindow(QtGui.QMainWindow):
         
         sigma = 1.0
         normalizePotential = True
-        #TODO: this , until now, only supports gray scale !
+        #TODO: this , until now, only supports gray scale and 2D!
         if borderIndicator == "Brightness":
             weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
             weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
