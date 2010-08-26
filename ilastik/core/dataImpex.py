@@ -69,12 +69,10 @@ class DataImpex(object):
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
             data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
             #data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-            theDataItem.labels = None
 
             dataAcc = DataAccessor(data)
             theDataItem.dataVol = Volume(dataAcc)
             print "dataVol.data", theDataItem.dataVol.data.shape
-            theDataItem.dataVol.labels = theDataItem.labels
         return theDataItem
 
     @staticmethod
@@ -104,7 +102,7 @@ class DataImpex(object):
                     img_data = vigra.impex.readImage(filename)
                     
                     if options.rgb > 1:
-                        image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:optoins.offsets[1]+options.shape[1],:]
+                        image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
                     else:
                         image[:,:, z-options.offsets[2],options.channels[0]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                         #load other channels if needed
