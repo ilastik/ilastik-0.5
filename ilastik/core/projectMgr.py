@@ -45,6 +45,7 @@ from ilastik.core import classifiers
 from ilastik.core import labelMgr
 from ilastik.core import seedMgr
 from ilastik.core import overlayMgr 
+from ilastik.core import connectedComponents
 
 from ilastik import core 
 import core.segmentors
@@ -78,7 +79,7 @@ class Project(object):
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = core.segmentors.segmentorClasses[0]()
-    
+ 
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 
         and hdf5 file with ending ilp """

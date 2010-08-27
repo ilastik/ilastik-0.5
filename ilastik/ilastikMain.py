@@ -676,12 +676,18 @@ class MainWindow(QtGui.QMainWindow):
         keylist = sorted(keylist, key = str.lower)
         selection = QtGui.QInputDialog.getItem(None, "Layer",  "Select the input layer",  keylist,  editable = False)
         selection = str(selection[0])
+        #TODO: maybe it's not nice to initialize it here
+        #the rest of such classes are initialized only on their start button...
+        self.connComp = CC(self)
+        self.connComp.selection_key = selection
         print selection
-        overlay = self.project.dataMgr[self.activeImage].overlayMgr[selection]
+        #overlay = self.project.dataMgr[self.activeImage].overlayMgr[selection]
+        #volume = overlay.data[0,:,:,:,0]
+        #self.project.connector.inputData = volume
         
     
     def on_processObjects(self):
-        print "Empty"    
+        self.connComp.start()
         
         
 
@@ -1525,5 +1531,79 @@ if __name__ == "__main__":
 
     del core.jobMachine.GLOBAL_WM
 
+class CC(object):
+    #Connected components
     
+    def __init__(self, parent):
+        self.parent = parent
+        self.ilastik = parent
+        #self.start()
+
+    def start(self):
+        self.parent.ribbon.tabDict['Object Processing'].itemDict['CC'].setEnabled(False)
+        
+        self.timer = QtCore.QTimer()
+        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
+
+        self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, self.parent.project.dataMgr[self.ilastik.activeImage], self.ilastik.project.connector)
+        numberOfJobs = self.cc.numberOfJobs
+        self.initCCProgress(numberOfJobs)
+        self.cc.start()
+        self.timer.start(200)
+
+    def initCCProgress(self, numberOfJobs):
+        statusBar = self.parent.statusBar()
+        self.progressBar = QtGui.QProgressBar()
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(numberOfJobs)
+        self.progressBar.setFormat(' Connected Components... %p%')
+        statusBar.addWidget(self.progressBar)
+        statusBar.show()
+
+    def updateProgress(self):
+        val = self.cc.count
+        self.progressBar.setValue(val)
+        if not self.cc.isRunning():
+            print "finalizing connected components"
+            self.timer.stop()
+            self.cc.wait()
+            self.finalize()
+            self.terminateProgressBar()
+
+    def finalize(self):
+        activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+        activeItem.dataVol.cc = self.cc.result
+
+        #temp = activeItem.dataVol.segmentation[0, :, :, :, 0]
+        
+        #create Overlay for segmentation:
+        if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"] is None:
+            ov = OverlayItem(activeItem.dataVol.cc, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True)
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"] = ov
+        else:
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"].data = DataAccessor(activeItem.dataVol.segmentation)
+        self.ilastik.labelWidget.repaint()
+
+
+        
+    def terminateProgressBar(self):
+        self.parent.statusBar().removeWidget(self.progressBar)
+        self.parent.statusBar().hide()
+        self.parent.ribbon.tabDict['Object Processing'].itemDict['CC'].setEnabled(True)
+
+
+if __name__ == "__main__":
+    app = QtGui.QApplication.instance() #(sys.argv)
+    #app = QtGui.QApplication(sys.argv)
+    mainwindow = MainWindow(sys.argv)
+      
+    mainwindow.show() 
+    app.exec_()
+    print "cleaning up..."
+    if mainwindow.labelWidget is not None:
+        del mainwindow.labelWidget
+    del mainwindow
+
+
+    #del core.jobMachine.GLOBAL_WM    
 
