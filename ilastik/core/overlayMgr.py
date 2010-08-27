@@ -114,6 +114,7 @@ class OverlayItem(object):
         self.colorTable = colorTable
         self.color = color
         self.alpha = alpha
+        self.channel
         self.name = "Unnamed Overlay"
         self.key = "Unknown Key"
         self.autoAdd = autoAdd
