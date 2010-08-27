@@ -672,7 +672,13 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
     def on_objectProcSelect(self):
-        print "Empty"
+        keylist = self.project.dataMgr[self.activeImage].overlayMgr.keys()
+        keylist = sorted(keylist, key = str.lower)
+        selection = QtGui.QInputDialog.getItem(None, "Layer",  "Select the input layer",  keylist,  editable = False)
+        selection = str(selection[0])
+        print selection
+        overlay = self.project.dataMgr[self.activeImage].overlayMgr[selection]
+        
     
     def on_processObjects(self):
         print "Empty"    
