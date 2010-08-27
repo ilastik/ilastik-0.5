@@ -1,5 +1,16 @@
 import numpy, vigra, h5py
 
+
+"""
+helper function to prevent the creation of endless deep DataAccessor chains
+"""
+def createDataAccessor( data, channels = False,  autoRgb = True):
+        if issubclass(data.__class__,  DataAccessor):
+            return data
+        else:
+            return DataAccessor(data, channels, autoRgb)
+
+
 class DataAccessor():
     """
     This class gives consistent access to data volumes, images channels etc.
@@ -17,6 +28,7 @@ class DataAccessor():
         """
         
         if issubclass(data.__class__,  DataAccessor):
+            self = data
             self.data = data.data
             self.rgb = data.rgb
             self.shape = data.shape
