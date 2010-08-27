@@ -44,6 +44,7 @@ from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
 from ilastik.core import labelMgr
 from ilastik.core import seedMgr
+from ilastik.core import overlayMgr 
 
 from ilastik import core 
 import core.segmentors
@@ -150,15 +151,22 @@ class Project(object):
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
 
             if 'prediction' in fileHandle['DataSets'][name].keys():
-                prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], 'prediction' )
-                activeItem.prediction = prediction
+                activeItem.prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], 'prediction')
                 for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
                     item.prediction = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
     
                 margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
                 activeItem.dataVol.uncertainty = margin[:,:,:,:]
-                seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction[:,:,:,:,:], 1.0)
-                activeItem.dataVol.segmentation = seg[:,:,:,:]
+    
+                for p_i, descr in enumerate(activeItem.dataVol.labels.descriptions):
+                    #create Overlay for prediction:
+                    ov = overlayMgr.OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
+                    activeItem.overlayMgr["Classification/Prediction/" + descr.name] = ov
+        
+                #create Overlay for uncertainty:
+                ov = overlayMgr.OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+                activeItem.overlayMgr["Classification/Uncertainty"] = ov
+                
             dataMgr.append(activeItem,alreadyLoaded=True)
 
                

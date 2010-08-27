@@ -287,30 +287,6 @@ class DataItemImage(DataItemBase):
         
         self.overlayMgr = overlayMgr.OverlayMgr()
         
-#    def loadData(self):
-#        fBase, fExt = os.path.splitext(self.fileName)
-#        if fExt == '.h5':
-#            f = h5py.File(self.fileName, 'r')
-#            g = f['volume']
-#            self.deserialize(g)
-#        else:
-#            #self.data = dataImpex.DataImpex.loadImageData(self.fileName)
-#            self.labels = None
-#        #print "Shape after Loading and width",self.data.shape, self.data.width
-#        if self.dataVol is None:
-#            dataAcc = DataAccessor(self.data)
-#            self.dataVol = Volume()
-#            self.dataVol.data = dataAcc
-#            self.dataVol.labels = self.labels
-#        
-#   
-#    @classmethod
-#    def initFromArray(cls, dataArray, originalFileName):
-#        obj = cls(originalFileName)
-#        obj.dataVol = Volume()
-#        obj.dataVol.data = DataAccessor(dataArray, True)
-#        return obj
-        
         
     def getTrainingMforInd(self, ind):
 #                        featureShape = self._featureM.shape[0:4]
@@ -609,14 +585,23 @@ class DataItemImage(DataItemBase):
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
         self.dataVol = Volume.deserialize(h5G, offsets, shape)
         if 'prediction' in h5G.keys():
+            print "deserializing prediction..."
             self.prediction = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
             for p_i, item in enumerate(self.dataVol.labels.descriptions):
                 item.prediction = (self.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 
             margin = activeLearning.computeEnsembleMargin(self.prediction[:,:,:,:,:])*255.0
             self.dataVol.uncertainty = margin[:,:,:,:]
-            seg = segmentationMgr.LocallyDominantSegmentation(self.prediction[:,:,:,:,:], 1.0)
-            self.dataVol.segmentation = seg[:,:,:,:]
+
+            for p_i, descr in enumerate(self.dataVol.labels.descriptions):
+                #create Overlay for prediction:
+                ov = overlayMgr.OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
+                self.overlayMgr["Classification/Prediction/" + descr.name] = ov
+    
+            #create Overlay for uncertainty:
+            ov = overlayMgr.OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+            self.overlayMgr["Classification/Uncertainty"] = ov
+
             
 class DataMgr():
     """
