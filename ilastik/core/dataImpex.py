@@ -110,10 +110,10 @@ class DataImpex(object):
                         image[:,:, z-options.offsets[2],options.channels[0]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                         #load other channels if needed
                         if (len(options.channels)>1):
-                            img_data = vigra.impex.readImage(fileList[options.channels[1]][index])
+                            img_data = vigra.impex.readImage(fileList[options.channels[1]][index]).swapaxes(0,1)
                             image[:,:,z-options.offsets[2],options.channels[1]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             if (len(options.channels)>2):                                
-                                img_data = vigra.impex.readImage(fileList[options.channels[2]][index])
+                                img_data = vigra.impex.readImage(fileList[options.channels[2]][index]).swapaxes(0,1)
                                 image[:,:,z-options.offsets[2],options.channels[2]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             else:
                                 #only 2 channels are selected. Fill the 3d channel with zeros
