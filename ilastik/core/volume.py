@@ -28,7 +28,6 @@ class DataAccessor():
         """
         
         if issubclass(data.__class__,  DataAccessor):
-            self = data
             self.data = data.data
             self.rgb = data.rgb
             self.shape = data.shape
