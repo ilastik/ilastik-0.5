@@ -440,15 +440,27 @@ class VolumeEditor(QtGui.QWidget):
         self.selSlices.append(0)
         
         #Channel Selector Combo Box in right side toolbox
+        self.channelLayout = QtGui.QHBoxLayout()
+        
+        self.channelSpinLabel = QtGui.QLabel("Channel:")
+        
         self.channelSpin = QtGui.QSpinBox()
         self.channelSpin.setEnabled(True)
         self.connect(self.channelSpin, QtCore.SIGNAL("valueChanged(int)"), self.setChannel)
-        self.channelSpinLabel = QtGui.QLabel("Channel:")
+        
+        self.channelEditBtn = QtGui.QPushButton('Edit channels')
+        self.connect(self.channelEditBtn, QtCore.SIGNAL("clicked()"), self.on_editChannels)
+        
+        
         self.toolBoxLayout.addWidget(self.channelSpinLabel)
-        self.toolBoxLayout.addWidget(self.channelSpin)
+        self.channelLayout.addWidget(self.channelSpin)
+        self.channelLayout.addWidget(self.channelEditBtn)
+        self.toolBoxLayout.addLayout(self.channelLayout)
+        
         if self.image.shape[-1] == 1 or self.image.rgb is True: #only show when needed
             self.channelSpin.setVisible(False)
             self.channelSpinLabel.setVisible(False)
+            self.channelEditBtn.setVisible(False)
         self.channelSpin.setRange(0,self.image.shape[-1] - 1)
 
 
@@ -576,12 +588,19 @@ class VolumeEditor(QtGui.QWidget):
 
     def cleanUp(self):
         pass
-#        for i, item in enumerate(self.imageScenes):
-#            item.deleteLater()
+
+
+    def on_editChannels(self):
+        from ilastik.gui.channelEditDialog import EditChannelsDialog 
+        
+        dlg = EditChannelsDialog(self.ilastik.project.dataMgr.selectedChannels, self.ilastik.project.dataMgr[0].dataVol.data.shape[-1], self)
+        
+        result = dlg.exec_()
+        if result is not None:
+            self.ilastik.project.dataMgr.selectedChannels = result
 
     def togglePrediction(self):
         labelNames = self.labelWidget.volumeLabels.getLabelNames()
-        state = None
         for index,  item in enumerate(self.overlayWidget.overlays):
             if item.name in labelNames:
                 self.overlayWidget.toggleVisible(index)

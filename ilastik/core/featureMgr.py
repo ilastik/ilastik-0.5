@@ -81,7 +81,6 @@ class FeatureMgr():
             featureItems = []
         self.maxContext = 0
         self.setFeatureItems(featureItems)
-        self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
         self.child_conn = None
         
@@ -95,7 +94,7 @@ class FeatureMgr():
             totalSize = 0
             for i, f in enumerate(featureItems):
                 oldSize = totalSize
-                totalSize += f.computeSizeForShape(self.dataMgr[0].dataVol.data.shape)
+                totalSize += f.computeSizeForShape(self.dataMgr[0].dataVol.data.shape, self.dataMgr.selectedChannels)
                 if f.minContext > self.maxContext:
                     self.maxContext = f.minContext
 
@@ -160,7 +159,9 @@ class FeatureThread(ThreadBase):
             try:
                 overlap = feature.minContext
                 bounds = image.featureBlockAccessor.getBlockBounds(blockNum, overlap)
-                result = feature.compute(image.dataVol.data[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype('float32'))
+                dataInput = image.dataVol.data[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype('float32')
+                
+                result = feature.compute(dataInput[..., self.dataMgr.selectedChannels])
                 bounds1 = image.featureBlockAccessor.getBlockBounds(blockNum,0)
 
                 sx = bounds1[0]-bounds[0]
@@ -179,6 +180,7 @@ class FeatureThread(ThreadBase):
             except Exception, e:
                 self.printLock.acquire()
                 print "########################## exception in FeatureThread ###################"
+                print self.dataMgr.selectedChannels
                 print feature.__class__
                 #print result.shape
                 print bounds

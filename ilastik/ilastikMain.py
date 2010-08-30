@@ -477,8 +477,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
         
-    def newEditChannelsDlg(self):
-        self.editChannelsDlg = editChannelsDlg(self)
         
     def initImageWindows(self):
         self.labelDocks = []
