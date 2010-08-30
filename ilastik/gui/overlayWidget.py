@@ -98,7 +98,7 @@ class OverlayListWidget(QtGui.QListWidget):
             
             
     def setCurrentItemAlpha(self, num):
-        self.currentItem.overlayItem.alpha = 1.0 * num / 20.0
+        self.currentItem.overlayItemReference.alpha = 1.0 * num / 20.0
         self.volumeEditor.repaint()
         
 #    def clearOverlays(self):

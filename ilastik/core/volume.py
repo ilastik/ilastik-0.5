@@ -31,6 +31,7 @@ class DataAccessor():
             self.data = data.data
             self.rgb = data.rgb
             self.shape = data.shape
+            self.dtype = data.dtype
         else:
 
             if len(data.shape) == 5:
@@ -73,6 +74,7 @@ class DataAccessor():
                     self.rgb = True
 
             self.shape = self.data.shape
+            self.dtype = self.data.dtype
 
 
     def __getitem__(self, key):

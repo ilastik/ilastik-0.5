@@ -1406,11 +1406,19 @@ class ClassificationPredict(object):
         if activeItem.prediction is not None:
 #            for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
 #                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            foregrounds = []
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
                 #create Overlay for prediction:
                 ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
+                foregrounds.append(ov)
+
+            import ilastik.core.overlays.threshHoldOverlay as tho
+            
+            ov = tho.ThreshHoldOverlay(foregrounds, [])
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] = ov
+
 
             all =  range(len(activeItem.dataVol.labels.descriptions))
             not_predicted = numpy.setdiff1d(all, self.parent.project.dataMgr.classifiers[0].unique_vals - 1)
