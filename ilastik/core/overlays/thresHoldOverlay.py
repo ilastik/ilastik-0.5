@@ -28,7 +28,7 @@ class MultivariateThresholdAccessor(object):
         raise Exception('lkahsdhsad', 'oiazsdihasdkhaskd')
         
 
-class ThreshHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
+class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
     def __init__(self, foregrounds, backgrounds):
         overlayBase.OverlayBase.__init__(self)
 

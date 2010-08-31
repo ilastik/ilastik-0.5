@@ -1414,9 +1414,9 @@ class ClassificationPredict(object):
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
                 foregrounds.append(ov)
 
-            import ilastik.core.overlays.threshHoldOverlay as tho
+            import ilastik.core.overlays.thresHoldOverlay as tho
             
-            ov = tho.ThreshHoldOverlay(foregrounds, [])
+            ov = tho.ThresHoldOverlay(foregrounds, [])
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] = ov
 
 
