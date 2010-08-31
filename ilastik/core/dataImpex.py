@@ -158,9 +158,10 @@ class DataImpex(object):
             image.reshape(image.shape + (1,))
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
-        
+        print options.destfile
         try:
             if options.destfile != None :
+                print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
                 g = f.create_group("volume")        
                 g.create_dataset("data",data = image)
