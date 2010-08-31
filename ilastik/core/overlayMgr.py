@@ -171,15 +171,16 @@ class OverlayMgr(dict):
         addToWidget = False
         if issubclass(value.__class__,  OverlayItem):
             if not self.has_key(key):
+                #set the name of the overlayItem to the last part of the key
+                value.name = key.split('/')[-1]
                 addToWidget = True
                 dict.__setitem__(self,  key,  value)
                 res = value
             else:
                 it = self[key]
+                it.name = value.name = key.split('/')[-1]
                 it.data = value.data
                 res = it
-            #set the name of the overlayItem to the last part of the key
-            res.name = key.split('/')[-1]
             #update the key
             res.key = key
         if addToWidget:

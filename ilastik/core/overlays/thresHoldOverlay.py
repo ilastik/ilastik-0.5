@@ -19,9 +19,6 @@ class MultivariateThresholdAccessor(object):
             current_guess = numpy.where(self.probabilities[current_guess].data[key] / (self.probabilities[current_guess].data[key]+self.probabilities[next_guess].data[key]) >  (self.thresholds[current_guess]/(self.thresholds[current_guess]+self.thresholds[next_guess])), current_guess, next_guess)
         answer = current_guess + 1
         return answer
-
-    def setThresholds(self, thresholds):
-        self.thresholds = thresholds
     
     def __setitem__(self, key, data):
         raise Exception('lkahsdhsad', 'oiazsdihasdkhaskd')
@@ -40,10 +37,10 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
                 background += b[:]
             foregrounds.append(background)
         
-        thresholds = numpy.zeros((len(foregrounds),),'float32' )
-        thresholds[:] = 1.0 / len(foregrounds)
+        self.thresholds = numpy.zeros((len(foregrounds),),'float32' )
+        self.thresholds[:] = 1.0 / len(foregrounds)
         
-        accessor = MultivariateThresholdAccessor(foregrounds, thresholds)
+        accessor = MultivariateThresholdAccessor(foregrounds, self.thresholds)
         
         colorTab = []
         for i in range(256):
@@ -57,4 +54,4 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
 
 
     def setThresholds(self, thresholds):
-        self.data.setThresholds(thresholds)        
+        self.thresholds = self.data.data.thresholds = thresholds        
