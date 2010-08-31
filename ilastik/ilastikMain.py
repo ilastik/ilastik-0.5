@@ -61,7 +61,7 @@ import time
 
 
 from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex, objectProcessingMgr
 from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
 from ilastik.gui.featureDlg import FeatureDlg
 from Queue import Queue as queue
@@ -676,6 +676,7 @@ class MainWindow(QtGui.QMainWindow):
         keylist = sorted(keylist, key = str.lower)
         selection = QtGui.QInputDialog.getItem(None, "Layer",  "Select the input layer",  keylist,  editable = False)
         selection = str(selection[0])
+        
         #TODO: maybe it's not nice to initialize it here
         #the rest of such classes are initialized only on their start button...
         self.connComp = CC(self)
@@ -1516,21 +1517,6 @@ class Segmentation(object):
         self.parent.ribbon.tabDict['Segmentation'].itemDict['Segment'].setEnabled(True)
 
 
-if __name__ == "__main__":
-    app = QtGui.QApplication.instance() #(sys.argv)
-    #app = QtGui.QApplication(sys.argv)
-    mainwindow = MainWindow(sys.argv)
-      
-    mainwindow.show() 
-    app.exec_()
-    print "cleaning up..."
-    if mainwindow.labelWidget is not None:
-        del mainwindow.labelWidget
-    del mainwindow
-
-
-    del core.jobMachine.GLOBAL_WM
-
 class CC(object):
     #Connected components
     
@@ -1544,8 +1530,9 @@ class CC(object):
         
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
-
-        self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, self.parent.project.dataMgr[self.ilastik.activeImage], self.ilastik.project.connector)
+        overlay = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr[self.selection_key]
+        print self.selection_key
+        self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data)
         numberOfJobs = self.cc.numberOfJobs
         self.initCCProgress(numberOfJobs)
         self.cc.start()
@@ -1571,19 +1558,19 @@ class CC(object):
             self.terminateProgressBar()
 
     def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent.activeImage]
-        activeItem.dataVol.cc = self.cc.result
+        #activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+        #activeItem.dataVol.cc = self.cc.result
 
         #temp = activeItem.dataVol.segmentation[0, :, :, :, 0]
         
-        #create Overlay for segmentation:
+        #create Overlay for connected components:
         if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"] is None:
-            ov = OverlayItem(activeItem.dataVol.cc, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True)
+            ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"] = ov
         else:
-            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"].data = DataAccessor(activeItem.dataVol.segmentation)
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"].data = DataAccessor(self.cc.result)
         self.ilastik.labelWidget.repaint()
-
+       
 
         
     def terminateProgressBar(self):
@@ -1605,5 +1592,5 @@ if __name__ == "__main__":
     del mainwindow
 
 
-    #del core.jobMachine.GLOBAL_WM    
+    del core.jobMachine.GLOBAL_WM    
 

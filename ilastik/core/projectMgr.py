@@ -79,6 +79,7 @@ class Project(object):
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = core.segmentors.segmentorClasses[0]()
+        self.connector = connectedComponents.ConnectedComponents()
  
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 

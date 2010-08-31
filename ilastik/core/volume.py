@@ -291,6 +291,10 @@ class Volume():
         if self.segmentation is None:
             self.segmentation = numpy.zeros(self.data.shape[0:-1],  'uint8')
 
+        #TODO: There should probably be an argument for that in the __init__ to enable reading from file
+        #do this along with serialize/deserialize
+        self.selectedObjects = {}
+        self.selectedObjectsOverlay = None
 
     def serialize(self, h5G):
         self.data.serialize(h5G, "data")
