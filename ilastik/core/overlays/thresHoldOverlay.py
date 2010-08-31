@@ -18,7 +18,6 @@ class MultivariateThresholdAccessor(object):
             next_guess[:] = i
             current_guess = numpy.where(self.probabilities[current_guess].data[key] / (self.probabilities[current_guess].data[key]+self.probabilities[next_guess].data[key]) >  (self.thresholds[current_guess]/(self.thresholds[current_guess]+self.thresholds[next_guess])), current_guess, next_guess)
         answer = current_guess + 1
-        print answer.dtype, answer.shape
         return answer
 
     def setThresholds(self, thresholds):

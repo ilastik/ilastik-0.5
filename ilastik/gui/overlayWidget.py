@@ -32,7 +32,7 @@ import vigra, numpy
 import sip
 import os
 from overlaySelectionDlg import OverlaySelectionDialog
-
+import ilastik.gui.overlayDialogs as overlayDialogs
 
 class OverlayListWidgetItem(QtGui.QListWidgetItem):
     def __init__(self, overlayItemReference):
@@ -143,6 +143,17 @@ class OverlayListWidget(QtGui.QListWidget):
         for i in range(item.overlayItemReference.numChannels):
             action = channelMenu.addAction(str(i))
             channelActions.append(action)
+            if item.overlayItemReference.channel == i:
+                channelMenu.setActiveAction(action)
+            
+        menu.addMenu(channelMenu)
+        
+
+        configureDialogAction = None
+        
+        c = item.overlayItemReference.overlayItem.__class__
+        if overlayDialogs.overlayClassDialogs.has_key(c.__module__ + '.' + c.__name__):
+            configureDialogAction = menu.addAction("Configure")
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == show3dAction:
@@ -158,10 +169,15 @@ class OverlayListWidget(QtGui.QListWidget):
             item.overlayItemReference.colorTable = None
             item.overlayItemReference.color = color
             self.volumeEditor.repaint()
+        elif action == configureDialogAction:
+            c = item.overlayItemReference.overlayItem.__class__
+            configDialog = overlayDialogs.overlayClassDialogs[c.__module__ + '.' + c.__name__](item.overlayItemReference.overlayItem)
+            configDialog.exec_()            
         else:
             for index,  channelAct in enumerate(channelActions):
                 if action == channelAct:
                     item.overlayItemReference.setChannel(index)
+                    self.volumeEditor.repaint()
 
 
 

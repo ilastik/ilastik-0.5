@@ -95,7 +95,6 @@ class OverlayItemReference(object):
         self.overlayItem = None
         
     def incChannel(self):
-        print self.overlayItem.data.shape
         if self.channel < self.overlayItem.data.shape[4] - 1:
             self.channel += 1
 
@@ -104,7 +103,7 @@ class OverlayItemReference(object):
             self.channel -= 1
             
     def setChannel(self,  channel):
-        if channel > 0 and channel < self.numChannels -1 :
+        if channel >= 0 and channel < self.numChannels :
             self.channel = channel
         else:
             raise Exception
