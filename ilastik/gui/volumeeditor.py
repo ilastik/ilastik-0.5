@@ -1008,7 +1008,11 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     image0.fill(origitem.color)
                                 else: #shold be QColor then !
                                     image0.fill(origitem.color.rgba())
-                                image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), False))
+                                if origitem.min is not None and origitem.max is not None:
+                                    normalize = (origitem.min, origitem.max)
+                                else:
+                                    normalize = False
+                                image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize))
 
                             p.drawImage(0,0, image0)
 
