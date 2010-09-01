@@ -28,14 +28,6 @@
 #    or implied, of their employers.
 
 
-# profile with python -m cProfile ilastikMain.py
-# python -m cProfile -o profiling.prf  ilastikMain.py
-# import pstats
-# p = pstats.StaPATHts('fooprof')
-# p.sort_statsf('time').reverse_order().print_stats()
-# possible sort order: "stdname" "calls" "time" "cumulative". more in p.sort_arg_dic
-
-
 from OpenGL.GL import *
 try:
     from OpenGL.GLX import *
@@ -45,66 +37,49 @@ except:
 
 import sys
 import os
-from PyQt4 import QtCore, QtGui, uic
 
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import vigra
-from vigra import arraytypes as at
-
+import h5py
 
 import threading
 import traceback
 import numpy
 import time
-
-import ilastik.gui
-from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex
-from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
-from ilastik.gui.featureDlg import FeatureDlg
+import copy
 from Queue import Queue as queue
 from collections import deque
+
+import ilastik.gui
+from ilastik.core import projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning
+from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
-from ilastik.core.utilities import irange, debug
-from ilastik.gui.classifierSelectionDialog import ClassifierSelectionDlg
-from ilastik.gui.segmentorSelectionDlg import SegmentorSelectionDlg
 from ilastik.gui.ribbons.ribbonBase import IlastikTabBase
-from ilastik.gui.projectDialog import ProjectDlg
-import copy
-import h5py
 
-from OpenGL.GL import *
 
-from PyQt4 import QtCore, QtGui, QtOpenGL
+from PyQt4 import QtCore, QtGui, uic, QtOpenGL
 import getopt
 
 from ilastik.gui import volumeeditor as ve
+
+# Please no import *
 from ilastik.gui.shortcutmanager import *
 
 from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
-from ilastik.core.volume import DataAccessor,  Volume
+from ilastik.core.volume import DataAccessor
 
-
-from ilastik import core
-import core.segmentors
 
 #make the program quit on Ctrl+C
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-#bad bad bad
-#LAST_DIRECTORY = os.path.expanduser("~")
-
-
-
 
 class MainWindow(QtGui.QMainWindow):
-    #global LAST_DIRECTORY
     def __init__(self, parent=None):
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
@@ -747,112 +722,7 @@ class ClassificationInteractive(object):
         self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
         
-#class ClassificationOnline(object):
-#    def __init__(self, parent):
-#        print "Online Classification initialized"
-#        self.parent = parent
-#        
-#        self.OnlineThread = None
-#        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'), self.updateTrainingData)
-#        self.parent.connect(self.parent, QtCore.SIGNAL('newPredictionsPending'), self.updatePredictionData)
-#
-#    def __del__(self):
-#        self.parent.labelWidget.disconnect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending'))
-#        self.parent.disconnect(self.parent,self.QtCore.SIGNAL('newPredictionsPending'))
-#        
-#    def start(self,name):
-#        print "Online Classification starting"
-#
-#        #self.parent.generateTrainingData()
-#        
-#        features = self.parent.project.trainingMatrix
-#        labels = self.parent.project.trainingLabels  
-#
-#        self.parent.labelWidget.labelForImage[0].DrawManagers[0].createBrushQueue('onlineLearning')
-#        predictionList = self.parent.project.dataMgr.buildFeatureMatrix()
-#        ids = numpy.zeros((len(labels),)).astype(numpy.int32)
-#
-#        self.OnlineThread = classificationMgr.ClassifierOnlineThread(name, features, labels.astype(numpy.int32), ids, predictionList, self.predictionUpdatedCallBack)
-#        self.OnlineThread.start()
-#        
-#    def stop(self):
-#        print "Online Classification stopped"
-#        self.OnlineThread.stopped = True
-#        self.OnlineThread.commandQueue.put((None, None, None, 'stop'))
-#        print "Joining thread"
-#        self.OnlineThread.wait()
-#        print "Thread stopped"
-#        self.OnlineThread = None
-#        self.parent.labelWidget.labelForImage[0].DrawManagers[0].deleteBrushQueue('onlineLearning')
-#    
-#    def predictionUpdatedCallBack(self):
-#        self.parent.emit(QtCore.SIGNAL('newPredictionsPending'))
-#
-#    def updatePredictionData(self):
-#        print "Updating prediction data"
-#        tic = time.time()
-#        if self.OnlineThread == None:
-#            return
-#        new_pred=self.OnlineThread.predictions[self.parent.labelWidget.activeImage].pop()
-#        #self.preds=numpy.zeros((new_pred.shape[0],2))
-#        #for i in xrange(len(new_pred)):
-#        #    self.preds[i,0]=1.0-new_pred[i]
-#        #    self.preds[i,1]=new_pred[i]
-#        print new_pred.shape
-#
-#        tmp = {}
-#        print new_pred.shape
-#        tmp[self.parent.labelWidget.activeImage] = new_pred
-#        self.parent.labelWidget.OverlayMgr.updatePredictionsPixmaps(tmp)
-#        self.parent.labelWidget.OverlayMgr.setOverlayState('Prediction')
-#        
-#        
-#        print "Done updating prediction data: %f secs" % (time.time() - tic)
-#        #self.parent.labelWidget.OverlayMgr.showOverlayPixmapByState()
-#        
-#    
-#    def updateTrainingData(self):
-#        active_image=self.parent.labelWidget.activeImage
-#        print active_image
-#        Labels=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].labelmngr.labelArray
-#        queue=self.parent.labelWidget.labelForImage[active_image].DrawManagers[0].BrushQueues['onlineLearning']
-#
-#        #TODO: make as many as there are images
-#        labelArrays=[numpy.array([0])] * (active_image+1)
-#
-#        while(True):
-#            labelArrays[active_image]=numpy.zeros(Labels.shape,Labels.dtype)
-#            try:
-#                step=queue.pop()
-#            except IndexError:
-#                break
-#            #decompose step, start by removing data
-#            remove_data=[]
-#
-#            for i in xrange(len(step.oldValues)):
-#                if step.oldValues[i]!=0 or step.isUndo:
-#                    remove_data.append(step.positions[i])
-#            remove_data=numpy.array(remove_data).astype(numpy.float32)
-#            self.OnlineThread.commandQueue.put((None,None,remove_data,'remove'))
-#
-#            #add new data
-#            add_indexes=[]
-#            for i in xrange(len(step.oldValues)):
-#                if (not step.isUndo and step.newLabel!=0) or (step.isUndo and step.oldValues[i]!=0): 
-#                    add_indexes.append(step.positions[i])
-#                    labelArrays[active_image][step.positions[i]]=Labels[step.positions[i]]
-#            #create the new features
-#            #self.parent.generateTrainingData(labelArrays)
-#            add_indexes=numpy.array(add_indexes)
-#
-#            print "*************************************"
-#            print "************* SENDING ***************"
-#            print "*************************************"
-#            self.OnlineThread.commandQueue.put((self.parent.project.trainingMatrix,
-#                                                self.parent.project.trainingLabels.astype(numpy.int32),
-#                                                numpy.array(add_indexes).astype(numpy.int32),'learn'))
-        
-    
+
 class ClassificationPredict(object):
     def __init__(self, parent):
         self.parent = parent
