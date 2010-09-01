@@ -5,9 +5,10 @@ class IlastikTabBase(object):
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
-    def __init__(self, name='', desc='', icon='', parent=None):
-        self.name = name
-        self.desc = desc
-        self.icon = icon
+    def __init__(self, parent=None):
         self.parent = parent
+    
+    def on_activation(self):
+        print "Tab changed: on_activation() not implementated by this tab"
+        
 

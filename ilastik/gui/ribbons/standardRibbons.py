@@ -14,11 +14,14 @@ from ilastik.gui.shortcutmanager import shortcutManager
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
     name = 'Project'
     def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, 'Project', 'Project Tab', '', parent)
+        IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
+        
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -34,9 +37,6 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.btnSave.setToolTip('Save current project to file')
         self.btnEdit.setToolTip('Edit current project')
         self.btnOptions.setToolTip('Edit ilastik options')
-        
-        #self.btnSave.setEnabled(False)
-        #self.btnEdit.setEnabled(False)
         
         tl.addWidget(self.btnNew)
         tl.addWidget(self.btnOpen)
@@ -101,11 +101,14 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
 class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Classification'
     def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, 'Project', 'Project Tab', '', parent)
+        IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
+        
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -158,11 +161,14 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
 class SegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Segmentation'
     def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, 'Project', 'Project Tab', '', parent)
+        IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
+        
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -204,11 +210,14 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
 class AutomateTab(IlastikTabBase, QtGui.QWidget):
     name = 'Automate'
     def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, 'Project', 'Project Tab', '', parent)
+        IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
+    
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
         
     def _initContent(self):
         
@@ -231,11 +240,14 @@ class AutomateTab(IlastikTabBase, QtGui.QWidget):
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Help'
     def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, 'Project', 'Project Tab', '', parent)
+        IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
+        
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
         
     def _initContent(self):
 

@@ -199,7 +199,7 @@ class MainWindow(QtGui.QMainWindow):
 
         if project != None:
             self.project = projectMgr.Project.loadFromDisk(project, self.featureCache)
-            #self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
+            self.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
             self.activeImage = 0
             self.projectModified()
         
@@ -262,31 +262,12 @@ class MainWindow(QtGui.QMainWindow):
         
         self.ribbonToolbar.addWidget(self.ribbon)
         
-        #self.projectTab = ProjectRibbon()
-        
-        #self.ribbon.addTab(self.projectTab, 'Project')
-    
         self.ribbonsTabs = IlastikTabBase.__subclasses__()
 
-        for i, c in enumerate(self.ribbonsTabs):
-            self.ribbon.addTab(c(self), c.name)
+        for tab in self.ribbonsTabs:
+            self.ribbon.addTab(tab(self), tab.name)
         
-#        ribbonDict = ctrlRibbon.createRibbons()
-#        
-#        for k in range(10):
-#            for ribbon_group in ribbonDict.values():
-#                if ribbon_group.position == k:
-#                    tabs = ribbon_group.makeTab()   
-#                    enabled = True
-#                    if ribbon_group.name == "Segmentation":
-#                        num_segmentors = len(core.segmentors.segmentorBase.SegmentorBase.__subclasses__())
-#                        if num_segmentors == 0:
-#                            enabled = False
-#                    self.ribbon.addTab(tabs, ribbon_group.name,  enabled)
-#                    print "Add tab", ribbon_group.name
-#        self.ribbonToolbar.addWidget(self.ribbon)
-#        
-#        
+   
         self.fileSelectorList = QtGui.QComboBox()
         widget = QtGui.QWidget()
         self.fileSelectorList.setMinimumWidth(140)
@@ -298,73 +279,9 @@ class MainWindow(QtGui.QMainWindow):
         widget.setLayout(layout)
         self.ribbonToolbar.addWidget(widget)
         self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
-#                
-#        # Wee, this is really ugly... anybody have better ideas for connecting 
-#        # the signals. This way has no future and is just a workaround
-#        
-#        self.connect(self.ribbon.tabDict['Projects'].itemDict['New'], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
-#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Save'], QtCore.SIGNAL('clicked()'), self.saveProjectDlg)
-#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
-#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
-#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Options'], QtCore.SIGNAL('clicked()'), self.optionsDlg)
-#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Select Features'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
-#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
-#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
-#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
-#        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Choose Weights'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationWeights)
-#        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationSegment)
-#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Save Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
-#        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
-#        self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
-#        self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
-#        #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
-#
-#        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-#        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
-#        
-#        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
-#        self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(False)
-#        
-#        #TODO: reenable online classification sometime 
-##        # Make menu for online Classification
-##        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
-##        btnOnlineToggle.myMenu = QtGui.QMenu();
-##        btnOnlineToggle.onlineRfAction = btnOnlineToggle.myMenu.addAction('Online RF')
-##        btnOnlineToggle.onlineSVMAction = btnOnlineToggle.myMenu.addAction('Online SVM')
-##        btnOnlineToggle.onlineStopAction = btnOnlineToggle.myMenu.addAction('Stop')
-##        btnOnlineToggle.onlineStopAction.setEnabled(False)
-##        btnOnlineToggle.setMenu(btnOnlineToggle.myMenu)
-#        
-##        # Connect online classification Actions to slots
-##        self.connect(btnOnlineToggle.onlineRfAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online RF'))
-##        self.connect(btnOnlineToggle.onlineSVMAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online laSvm'))
-##        self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
-#        
-#        # make Label and View Tab invisible (this tabs are not helpful so far)
-#             
-#        
-##        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
-#        
-#        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
-#        self.ribbon.tabDict['Projects'].itemDict['Edit'].setToolTip('Add and Remove files from the current project')
-#        self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(False)
-#        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
-#        self.ribbon.tabDict['Projects'].itemDict['Save'].setToolTip('Save the current Project')
-#        self.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(False)
-#        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
-#        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
-#        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
-#        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setToolTip('Train the RandomForest classifier while drawing labels and browsing through the file. \nThe currently visible part of the image gets predicted on the fly.')
-#        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
-#        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setToolTip('Batchprocess a list of files with the currently trained classifier.\n The processed files and their prediction are stored with the file extension "_processed.h5" ')
-#
-##        self.ribbon.tabDict['Export'].itemDict['Export'].setEnabled(False)
-#        
-#        #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
-#        #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
-#        
-#        self.ribbon.setCurrentIndex (0)
-#        self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
+  
+        self.ribbon.setCurrentIndex (0)
+        self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
 
 
     def tabChanged(self,  index):
@@ -374,6 +291,9 @@ class MainWindow(QtGui.QMainWindow):
         seed/label widget has a reference to the overlay in the overlayWidget
         they correspond to.
         """
+        
+        self.ribbon.widget(index).on_activation()
+        
         if self.ribbon.tabText(index) == "Segmentation":
             if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
                 self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
@@ -482,13 +402,13 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks.append(dock)
 
     def labelRemoved(self, number):
-        #self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        self.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
 
 
     def seedRemoved(self, number):
-        #self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        self.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         self.project.dataMgr.removeSeed(number)
         if hasattr(self, "segmentationInteractive"):
             self.segmentatinoInteractive.updateThreadQueues()
@@ -580,12 +500,12 @@ class MainWindow(QtGui.QMainWindow):
     
     def on_classificationInteractive(self, state):
         if state:
-	    #self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Stop Live Prediction')
+            self.ribbon.getTab('Classification').btnStartLive.setText('Stop Live Prediction')
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
             del self.classificationInteractive
-	    #self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Start Live Prediction')
+            self.ribbon.getTab('Classification').btnStartLive.setText('Start Live Prediction')
 
 
     def on_segmentation_border(self):
