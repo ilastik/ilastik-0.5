@@ -51,9 +51,16 @@ class FeatureDlg(QtGui.QDialog):
         else:
             self.oldFeatureItems = []
 
+        circle = QtGui.QGraphicsEllipseItem(48, 48, 5, 5)
+        circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
+        
+        self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+        self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.grscene = QtGui.QGraphicsScene()
         pixmapImage = QtGui.QPixmap(qimage2ndarray.gray2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
+        self.grscene.addItem(circle)
         self.graphicsView.setScene(self.grscene)
 
 
@@ -189,8 +196,7 @@ class FeatureDlg(QtGui.QDialog):
                 self.deselectAllTableItems()
                 self.boolSelection = False
         if event.type() == QtCore.QEvent.HoverMove:
-            #self.label.setText(str(self.featureTable.horizontalHeader().logicalIndexAt(event.pos())))
-            pass
+            self.label.setText("Size: " + str(self.featureTable.horizontalHeader().logicalIndexAt(event.pos())))
         return False
 
 

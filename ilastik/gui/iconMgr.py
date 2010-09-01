@@ -55,6 +55,8 @@ class ilastikIcons(object):
     AddSel = iconPath + "actions/list-add.png"
     RemSel = iconPath + "actions/list-remove.png"
     Python = iconPath + ilastikPath+"/gui/pyc.ico"
+    ZoomIn = iconPath + 'actions/zoom-in.png'
+    ZoomOut = iconPath + 'actions/zoom-out.png'
     
     
     

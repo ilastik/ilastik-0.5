@@ -5,6 +5,7 @@ import sys
 from ilastik.core.overlayMgr import OverlayItem
 import qimage2ndarray
 from PyQt4.QtOpenGL import QGLWidget
+from ilastik.gui.iconMgr import ilastikIcons
 
 class ExtendedQLabel(QLabel):
 
@@ -45,7 +46,7 @@ class MyTreeWidgetItem(QTreeWidgetItem):
 
 
 class OverlaySelectionDialog(QDialog):
-    def __init__(self, cdict, forbiddenItems=[], singleSelection=True, parent=None):
+    def __init__(self, cdict, forbiddenItems=[], singleSelection=True, selectedItems=[], parent=None):
         QWidget.__init__(self, parent)
         
         # init
@@ -57,6 +58,7 @@ class OverlaySelectionDialog(QDialog):
         self.selectedItemList = []
         self.christophsDict = cdict
         self.forbiddenItems = forbiddenItems
+        self.selectedItems = selectedItems
         self.singleSelection = singleSelection
         
         # widgets and layouts
@@ -98,13 +100,13 @@ class OverlaySelectionDialog(QDialog):
         self.grview.setDragMode(QGraphicsView.ScrollHandDrag)
         self.grscene = QGraphicsScene()
         tempLayoutZoom = QHBoxLayout(self)
-        self.min = QPushButton("min")
-        textWidth = self.min.fontMetrics().boundingRect(self.min.text()).width()
-        self.min.setMaximumWidth(textWidth+15)
+        self.min = ExtendedQLabel()
+        self.min.setPixmap(QPixmap(ilastikIcons.ZoomOut))
         self.connect(self.min, SIGNAL('clicked()'), self.scaleDown)
         self.zoomScaleLabel = ExtendedQLabel("100%")
         self.connect(self.zoomScaleLabel, SIGNAL('clicked()'), self.clickOnLabel)
-        self.max = QPushButton("max")
+        self.max = ExtendedQLabel()
+        self.max.setPixmap(QPixmap(ilastikIcons.ZoomIn))
         self.connect(self.max, SIGNAL('clicked()'), self.scaleUp)
         tempLayoutZoom.addStretch()
         tempLayoutZoom.addWidget(self.min)
@@ -169,14 +171,20 @@ class OverlaySelectionDialog(QDialog):
             for i in range(len(split)):
                 if len(split) == 1:
                     newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
-                    newItemsChild.setCheckState(0, 0)
-                    self.treeWidget.addTopLevelItem(newItem)                   
+                    self.treeWidget.addTopLevelItem(newItemsChild)                   
                     boolStat = False
+                    if self.christophsDict[keys] in self.selectedItems:
+                        newItemsChild.setCheckState(0, 2)
+                    else:
+                        newItemsChild.setCheckState(0, 0)
                     
                 elif i+1 == len(split) and len(split) > 1:
                     newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
-                    newItemsChild.setCheckState(0, 0)
                     testItem.addChild(newItemsChild)
+                    if self.christophsDict[keys] in self.selectedItems:
+                        newItemsChild.setCheckState(0, 2)
+                    else:
+                        newItemsChild.setCheckState(0, 0)
                     
                 elif self.treeWidget.topLevelItemCount() == 0 and i+1 < len(split):
                     newItem = QTreeWidgetItem([split[i]])
