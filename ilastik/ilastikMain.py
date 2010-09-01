@@ -471,7 +471,8 @@ class MainWindow(QtGui.QMainWindow):
 	pass
         
     def newFeatureDlg(self):
-        self.newFeatureDlg = FeatureDlg(self)
+        previewImage = self.project.dataMgr[self.activeImage].dataVol.data[0, 0, :, :, 0]
+        self.newFeatureDlg = FeatureDlg(self, previewImage)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
