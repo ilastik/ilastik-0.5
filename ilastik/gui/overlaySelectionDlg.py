@@ -4,6 +4,15 @@ from PyQt4.QtGui import *
 import sys
 from ilastik.core.overlayMgr import OverlayItem
 import qimage2ndarray
+from PyQt4.QtOpenGL import QGLWidget
+
+class ExtendedQLabel(QLabel):
+
+    def __init(self, parent):
+        QLabel.__init__(self, parent)
+
+    def mouseReleaseEvent(self, ev):
+        self.emit(SIGNAL('clicked()'))
 
 class MyTreeWidget(QTreeWidget):
     def __init__(self, *args):
@@ -85,19 +94,39 @@ class OverlaySelectionDialog(QDialog):
         self.desc.setAlignment(Qt.AlignTop)
         self.desc.setMinimumWidth(200)
         self.desc.setMaximumWidth(300)
-        self.overlayImage = QLabel("Overlay Image")
-        self.overlayImage.setScaledContents(True)
+        self.grview = QGraphicsView()
+        self.grview.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.grscene = QGraphicsScene()
+        tempLayoutZoom = QHBoxLayout(self)
+        self.min = QPushButton("min")
+        textWidth = self.min.fontMetrics().boundingRect(self.min.text()).width()
+        self.min.setMaximumWidth(textWidth+15)
+        self.connect(self.min, SIGNAL('clicked()'), self.scaleDown)
+        self.zoomScaleLabel = ExtendedQLabel("100%")
+        self.connect(self.zoomScaleLabel, SIGNAL('clicked()'), self.clickOnLabel)
+        self.max = QPushButton("max")
+        self.connect(self.max, SIGNAL('clicked()'), self.scaleUp)
+        tempLayoutZoom.addStretch()
+        tempLayoutZoom.addWidget(self.min)
+        tempLayoutZoom.addWidget(self.zoomScaleLabel)
+        tempLayoutZoom.addWidget(self.max)
+        tempLayoutZoom.addStretch()
         tempLayout = QHBoxLayout(self)
         self.channelLabel = QLabel("Channel")
         self.channelSpinbox = QSpinBox(self)
+        self.connect(self.channelSpinbox, SIGNAL('valueChanged(int)'), self.channelSpinboxValueChanged)
         self.sliceLabel = QLabel("Slice")
-        self.sliceSpinbox = QSpinBox()
+        self.sliceSpinbox = QSpinBox(self)
+        self.sliceValue = 0
+        self.connect(self.sliceSpinbox, SIGNAL('valueChanged(int)'), self.sliceSpinboxValueChanged)
         tempLayout.addWidget(self.channelLabel)
         tempLayout.addWidget(self.channelSpinbox)
+        tempLayout.addStretch()
         tempLayout.addWidget(self.sliceLabel)
         tempLayout.addWidget(self.sliceSpinbox)
         descLabelLayout.addWidget(self.desc)
-        descLabelLayout.addWidget(self.overlayImage)
+        descLabelLayout.addWidget(self.grview)
+        descLabelLayout.addLayout(tempLayoutZoom)
         descLabelLayout.addLayout(tempLayout)
         descLabelGroupBox.setLayout(descLabelLayout)
         GroupsLayout.addWidget(treeGroupBoxLayout)
@@ -200,19 +229,53 @@ class OverlaySelectionDialog(QDialog):
         if self.treeWidget.currentItem().childCount() == 0:
             child = self.treeWidget.currentItem()
             if child.parent():
-                parent = child.parent() 
-                self.desc.setText("<b>%s</b> <br /><br /> %s" % (parent.text(0), child.item.key))
-                self.channelSpinbox.setMaximum(child.item.data.shape[-1])
-                self.sliceSpinbox.setMaximum(child.item.data.shape[-1])
-                imageArray = child.item.data[0, self.sliceSpinbox.value(), :, :, self.channelSpinbox.value()]
+                parent = child.parent()
+                self.desc.setText(child.item.key)
+                self.channelSpinbox.setMaximum(child.item.data.shape[-1]-1)
+                self.sliceSpinbox.setMaximum(child.item.data.shape[1]-1)
+                imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
                 pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
-                
-                self.overlayImage.setPixmap(pixmapImage)
-            else: 
-                self.desc.setText("<b>%s</b> <br /><br /> %s" % ("No Group", child.item.key))
+                self.grscene.addPixmap(pixmapImage)
+                self.grview.setScene(self.grscene)
+                self.channelSpinbox.setValue(child.item.channel)
+            else:
+                self.desc.setText(child.item.key)
+                self.channelSpinbox.setMaximum(child.item.data.shape[-1]-1)
+                self.sliceSpinbox.setMaximum(child.item.data.shape[1]-1)
+                imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
+                pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+                self.grscene.addPixmap(pixmapImage)
+                self.grview.setScene(self.grscene)
         else:
             self.desc.setText(self.treeWidget.currentItem().text(0))
 
+
+    def scaleUp(self):
+        self.grview.scale(1.5, 1.5)
+
+    def clickOnLabel(self):
+        pass
+    
+
+    def scaleDown(self):
+        print self.grview.size()
+        self.grview.scale(.5, .5)
+
+    def channelSpinboxValueChanged(self, value):
+        child = self.treeWidget.currentItem()
+        imageArray = child.item.data[0, self.sliceValue, :, :, value]
+        pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+        self.grscene.addPixmap(pixmapImage)
+        self.grview.setScene(self.grscene)
+        child.item.channel = value
+
+    def sliceSpinboxValueChanged(self, value):
+        child = self.treeWidget.currentItem()
+        imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
+        pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+        self.grscene.addPixmap(pixmapImage)
+        self.grview.setScene(self.grscene)
+        self.sliceValue = value
 
     def expandAll(self):
         it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.HasChildren)
