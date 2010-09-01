@@ -99,7 +99,7 @@ class DataImpex(object):
         for index, filename in enumerate(firstlist):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                 try:
-                    img_data = vigra.impex.readImage(filename)
+                    img_data = vigra.impex.readImage(filename).swapaxes(0,1)
                     
                     if options.rgb > 1:
                         image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
@@ -107,10 +107,10 @@ class DataImpex(object):
                         image[:,:, z-options.offsets[2],options.channels[0]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                         #load other channels if needed
                         if (len(options.channels)>1):
-                            img_data = vigra.impex.readImage(fileList[options.channels[1]][index])
+                            img_data = vigra.impex.readImage(fileList[options.channels[1]][index]).swapaxes(0,1)
                             image[:,:,z-options.offsets[2],options.channels[1]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             if (len(options.channels)>2):                                
-                                img_data = vigra.impex.readImage(fileList[options.channels[2]][index])
+                                img_data = vigra.impex.readImage(fileList[options.channels[2]][index]).swapaxes(0,1)
                                 image[:,:,z-options.offsets[2],options.channels[2]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             else:
                                 #only 2 channels are selected. Fill the 3d channel with zeros
@@ -158,9 +158,10 @@ class DataImpex(object):
             image.reshape(image.shape + (1,))
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
-        
+        print options.destfile
         try:
             if options.destfile != None :
+                print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
                 g = f.create_group("volume")        
                 g.create_dataset("data",data = image)
@@ -193,7 +194,7 @@ class DataImpex(object):
                 return (shape[1], shape[2], shape[3], shape[4])
         else :
             try:
-                tempimage = vigra.impex.readImage(filename)
+                tempimage = vigra.impex.readImage(filename).swapaxes(0,1)
             except Exception, e:
                 print e
                 raise

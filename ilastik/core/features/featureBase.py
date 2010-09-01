@@ -88,11 +88,16 @@ class FeatureBase(object):
         pass
 
 
-    def computeSizeForShape(self, shape):
-        if shape[1] > 1:
-            return self.__class__.numOutputChannels3d*shape[-1]
+    def computeSizeForShape(self, shape, selectedChannels=None):
+        if selectedChannels is None:
+            numChannels = shape[-1]
         else:
-            return self.__class__.numOutputChannels2d*shape[-1]
+            numChannels = len(selectedChannels)
+        
+        if shape[1] > 1:
+            return self.__class__.numOutputChannels3d * numChannels
+        else:
+            return self.__class__.numOutputChannels2d * numChannels
         
     def applyToAllChannels(self, data, func, *args):
         result = []
