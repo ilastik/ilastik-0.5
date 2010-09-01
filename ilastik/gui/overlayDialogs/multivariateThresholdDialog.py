@@ -1,5 +1,6 @@
 from PyQt4 import QtCore, QtGui
 import overlayDialogBase
+import ilastik.gui.overlaySelectionDlg
 
 class SliderReceiver(QtCore.QObject):
     def __init__(self, dialog, index, oldValue):
@@ -18,12 +19,30 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
 
             
     
-    def __init__(self, instance, volumeEditor):
+    def __init__(self, instance, ilastik):
         QtGui.QDialog.__init__(self)
         self.overlayItem = instance
-        self.volumeEditor = volumeEditor
+        self.volumeEditor = ilastik.labelWidget
+        self.project = ilastik.project
+        self.ilastik = ilastik
+        self.mainlayout = QtGui.QVBoxLayout()
+        self.setLayout(self.mainlayout)
+        self.mainwidget = QtGui.QWidget()
+        self.mainlayout.addWidget(self.mainwidget)
+        self.hbox = None
+        
+        self.buildDialog()
+        
+    def buildDialog(self):
+        self.mainwidget.hide()
+        self.mainlayout.removeWidget(self.mainwidget)
+        self.mainwidget.close()
+        del self.mainwidget
+        self.mainwidget = QtGui.QWidget()
+        self.mainlayout.addWidget(self.mainwidget)      
         self.hbox = QtGui.QHBoxLayout()
-        self.setLayout(self.hbox)
+        self.mainwidget.setLayout(self.hbox)
+        
         self.sliders = []
         self.sliderReceivers = []
         self.previousValues = []
@@ -31,6 +50,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         
         for index, t in enumerate(self.overlayItem.foregrounds):
             l = QtGui.QVBoxLayout()
+            print t.name
             self.sliderReceivers.append(SliderReceiver(self,index,self.overlayItem.thresholds[index] * 1000))
             
             w = QtGui.QSlider(QtCore.Qt.Vertical)
@@ -47,7 +67,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             
         if len(self.overlayItem.backgrounds) > 0:
             l = QtGui.QVBoxLayout()
-            self.sliderReceivers.append(SliderReceiver(self,len(self.sliders),self.overlayItem.thresholds[index] * 1000))
+            self.sliderReceivers.append(SliderReceiver(self,len(self.sliders),self.overlayItem.thresholds[-1] * 1000))
             
             w = QtGui.QSlider(QtCore.Qt.Vertical)
             w.setRange(0,1000)
@@ -56,11 +76,35 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             l.addWidget(w)
             label = QtGui.QLabel('Background')
             l.addWidget(label)
-            self.sliderReceivers[-1].connect(w, QtCore.SIGNAL('sliderMoved(int)'), self.sliderReceivers[-1].valueChanged)
+            self.sliderReceivers[-1].connect(w, QtCore.SIGNAL('sliderMoved(int)'), self.sliderReceivers[-1].sliderMoved)
             self.sliders.append(w)
             
             self.hbox.addLayout(l)
-            
+
+        l = QtGui.QVBoxLayout()
+        w = QtGui.QPushButton("Select Forground")
+        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectForegrounds)
+        l.addWidget(w)
+        w = QtGui.QPushButton("Select Background")
+        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectBackgrounds)
+        l.addWidget(w)
+        self.hbox.addLayout(l)
+
+        
+    
+    def selectForegrounds(self):
+        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.project.dataMgr[self.ilastik.activeImage].overlayMgr, singleSelection = False)
+        o = d.exec_()
+        if len(o) > 0:
+            self.overlayItem.setForegrounds(o)
+        self.buildDialog()
+    
+    def selectBackgrounds(self):
+        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.project.dataMgr[self.ilastik.activeImage].overlayMgr, singleSelection = False)
+        o = d.exec_()
+        self.overlayItem.setBackgrounds(o)
+        self.buildDialog()
+
     
     def sliderMoved(self, index, value, oldValue):
         self.sliders[index].setValue(value)

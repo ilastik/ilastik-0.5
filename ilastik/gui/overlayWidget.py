@@ -171,7 +171,7 @@ class OverlayListWidget(QtGui.QListWidget):
             self.volumeEditor.repaint()
         elif action == configureDialogAction:
             c = item.overlayItemReference.overlayItem.__class__
-            configDialog = overlayDialogs.overlayClassDialogs[c.__module__ + '.' + c.__name__](item.overlayItemReference.overlayItem, self.volumeEditor)
+            configDialog = overlayDialogs.overlayClassDialogs[c.__module__ + '.' + c.__name__](item.overlayItemReference.overlayItem, self.volumeEditor.ilastik)
             configDialog.exec_()
         else:
             for index,  channelAct in enumerate(channelActions):
