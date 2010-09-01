@@ -965,6 +965,12 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.newerDataPending = threading.Event()
         self.newerDataPending.clear()
         self.stopped = False
+        if self.imageScene.openglWidget is not None:
+            self.contextPixmap = QtGui.QPixmap(2,2)
+            self.context = QtOpenGL.QGLContext(self.imageScene.openglWidget.context().format(), self.contextPixmap)
+            self.context.create(self.imageScene.openglWidget.context())
+        else:
+            self.context = None
         
             
     def run(self):
@@ -990,10 +996,11 @@ class ImageSceneRenderThread(QtCore.QThread):
 
                         temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
 
-                        
-                        #p = QtGui.QPainter(self.imageScene.scene.image)
-                        #p.translate(bounds[0],bounds[2])
-                        p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
+                        if self.imageScene.openglWidget is None:
+                            p = QtGui.QPainter(self.imageScene.scene.image)
+                            p.translate(bounds[0],bounds[2])
+                        else:
+                            p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
                         
                         
                         p.drawImage(0,0,temp_image)
@@ -1023,21 +1030,15 @@ class ImageSceneRenderThread(QtCore.QThread):
                         p.end()
                         self.outQueue.append(patchNr)
                         
-                        #self.imagePatches[patchNr] = temp_image
+#                        if self.imageScene.scene.tex > -1:
+#                            self.context.makeCurrent()    
+#                            glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
+#                            b = self.imageScene.patchAccessor.getPatchBounds(patchNr,0)
+#                            glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imageScene.imagePatches[patchNr].bits().__int__()))
+#                            
+#                        self.outQueue.clear()
+                                       
 
-#                        #draw the patch result to complete image
-#                        p = QtGui.QPainter(self.imageScene.scene.image)
-#                        p.drawImage(bounds[0],bounds[2],self.imagePatches[patchNr])
-#                        p.end()
-
-    #                    #this code would be cool, but unfortunately glTexSubimage doesnt work ??
-    #                    glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
-    #                    pixels = qimage2ndarray.byte_view(temp_image)
-    #                    print pixels.shape
-    #                    glTexSubImage2D(GL_TEXTURE_2D,0,bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2],GL_RGBA,GL_UNSIGNED_BYTE, pixels )
-
-                        #This signal is not needed anymore for now
-                        #self.emit(QtCore.SIGNAL("finishedPatch(int)"),patchNr)
             self.dataPending.clear()
             self.emit(QtCore.SIGNAL('finishedQueue()'))
 
@@ -1231,9 +1232,17 @@ class ImageScene( QtGui.QGraphicsView):
             self.openglWidget = QtOpenGL.QGLWidget()
             self.setViewport(self.openglWidget)
             self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
+            
 
 
         self.scene = CustomGraphicsScene(self, self.openglWidget, self.image)
+        
+        if self.openglWidget is not None:
+            self.openglWidget.context().makeCurrent()
+            self.scene.tex = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+            
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
@@ -1414,10 +1423,10 @@ class ImageScene( QtGui.QGraphicsView):
             if not t > -1:
                 self.scene.tex = glGenTextures(1)
                 glBindTexture(GL_TEXTURE_2D,self.scene.tex)
-                glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+                glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
             else:
                 glBindTexture(GL_TEXTURE_2D,self.scene.tex)
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
             
             self.viewport().repaint()
 
