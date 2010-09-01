@@ -54,7 +54,8 @@ class ilastikIcons(object):
     Edit2 = iconPath + "actions/edit-find-replace.png"
     AddSel = iconPath + "actions/list-add.png"
     RemSel = iconPath + "actions/list-remove.png"
-    Python = iconPath + ilastikPath+"/gui/pyc.ico"
+    Python = iconPath + ilastikPath +"/gui/pyc.ico"
+    Help = iconPath + "status/weather-storm.png"
     
     
     

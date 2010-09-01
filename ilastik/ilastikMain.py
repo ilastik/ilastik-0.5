@@ -59,7 +59,7 @@ import traceback
 import numpy
 import time
 
-
+import ilastik.gui
 from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex
 from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
@@ -70,6 +70,8 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.core.utilities import irange, debug
 from ilastik.gui.classifierSelectionDialog import ClassifierSelectionDlg
 from ilastik.gui.segmentorSelectionDlg import SegmentorSelectionDlg
+from ilastik.gui.ribbons.ribbonBase import IlastikTabBase
+from ilastik.gui.projectDialog import ProjectDlg
 import copy
 import h5py
 
@@ -96,13 +98,13 @@ import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 #bad bad bad
-LAST_DIRECTORY = os.path.expanduser("~")
+#LAST_DIRECTORY = os.path.expanduser("~")
 
 
 
 
 class MainWindow(QtGui.QMainWindow):
-    global LAST_DIRECTORY
+    #global LAST_DIRECTORY
     def __init__(self, parent=None):
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
@@ -197,10 +199,7 @@ class MainWindow(QtGui.QMainWindow):
 
         if project != None:
             self.project = projectMgr.Project.loadFromDisk(project, self.featureCache)
-            self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-            self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
-            self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
+            #self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
             self.activeImage = 0
             self.projectModified()
         
@@ -218,7 +217,7 @@ class MainWindow(QtGui.QMainWindow):
         self.fileSelectorList.blockSignals(True)
         self.fileSelectorList.clear()
         self.fileSelectorList.blockSignals(False)
-        for index, item in enumerate(self.project.dataMgr):
+        for item in self.project.dataMgr:
             self.fileSelectorList.addItem(item.Name)
     
     def changeImage(self, number):
@@ -239,7 +238,6 @@ class MainWindow(QtGui.QMainWindow):
 
         self.createImageWindows( self.project.dataMgr[number].dataVol)
         
-        self.updateLabelWidgetOverlays()
         self.labelWidget.repaint() #for overlays
         self.activeImageLock.release()
         if hasattr(self, "classificationInteractive"):
@@ -256,27 +254,39 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.historyRedo
     
     def createRibbons(self):                     
-      
+        from ilastik.gui.ribbons.standardRibbons import ProjectTab
+        
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
         
-        self.ribbon = ctrlRibbon.Ribbon(self.ribbonToolbar)
+        self.ribbon = ctrlRibbon.IlastikTabWidget(self.ribbonToolbar)
         
-        ribbonDict = ctrlRibbon.createRibbons()
-        
-        for k in range(10):
-            for ribbon_group in ribbonDict.values():
-                if ribbon_group.position == k:
-                    tabs = ribbon_group.makeTab()   
-                    enabled = True
-                    if ribbon_group.name == "Segmentation":
-                        num_segmentors = len(core.segmentors.segmentorBase.SegmentorBase.__subclasses__())
-                        if num_segmentors == 0:
-                            enabled = False
-                    self.ribbon.addTab(tabs, ribbon_group.name,  enabled)
-                    print "Add tab", ribbon_group.name
         self.ribbonToolbar.addWidget(self.ribbon)
         
+        #self.projectTab = ProjectRibbon()
         
+        #self.ribbon.addTab(self.projectTab, 'Project')
+    
+        self.ribbonsTabs = IlastikTabBase.__subclasses__()
+
+        for i, c in enumerate(self.ribbonsTabs):
+            self.ribbon.addTab(c(self), c.name)
+        
+#        ribbonDict = ctrlRibbon.createRibbons()
+#        
+#        for k in range(10):
+#            for ribbon_group in ribbonDict.values():
+#                if ribbon_group.position == k:
+#                    tabs = ribbon_group.makeTab()   
+#                    enabled = True
+#                    if ribbon_group.name == "Segmentation":
+#                        num_segmentors = len(core.segmentors.segmentorBase.SegmentorBase.__subclasses__())
+#                        if num_segmentors == 0:
+#                            enabled = False
+#                    self.ribbon.addTab(tabs, ribbon_group.name,  enabled)
+#                    print "Add tab", ribbon_group.name
+#        self.ribbonToolbar.addWidget(self.ribbon)
+#        
+#        
         self.fileSelectorList = QtGui.QComboBox()
         widget = QtGui.QWidget()
         self.fileSelectorList.setMinimumWidth(140)
@@ -288,73 +298,73 @@ class MainWindow(QtGui.QMainWindow):
         widget.setLayout(layout)
         self.ribbonToolbar.addWidget(widget)
         self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
-                
-        # Wee, this is really ugly... anybody have better ideas for connecting 
-        # the signals. This way has no future and is just a workaround
-        
-        self.connect(self.ribbon.tabDict['Projects'].itemDict['New'], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
-        self.connect(self.ribbon.tabDict['Projects'].itemDict['Save'], QtCore.SIGNAL('clicked()'), self.saveProjectDlg)
-        self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
-        self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
-        self.connect(self.ribbon.tabDict['Projects'].itemDict['Options'], QtCore.SIGNAL('clicked()'), self.optionsDlg)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Select Features'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
-        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Choose Weights'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationWeights)
-        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationSegment)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Save Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
-        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
-        self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
-        self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
-        #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
-
-        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
-        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
-        
-        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(False)
-        
-        #TODO: reenable online classification sometime 
-#        # Make menu for online Classification
-#        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
-#        btnOnlineToggle.myMenu = QtGui.QMenu();
-#        btnOnlineToggle.onlineRfAction = btnOnlineToggle.myMenu.addAction('Online RF')
-#        btnOnlineToggle.onlineSVMAction = btnOnlineToggle.myMenu.addAction('Online SVM')
-#        btnOnlineToggle.onlineStopAction = btnOnlineToggle.myMenu.addAction('Stop')
-#        btnOnlineToggle.onlineStopAction.setEnabled(False)
-#        btnOnlineToggle.setMenu(btnOnlineToggle.myMenu)
-        
-#        # Connect online classification Actions to slots
-#        self.connect(btnOnlineToggle.onlineRfAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online RF'))
-#        self.connect(btnOnlineToggle.onlineSVMAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online laSvm'))
-#        self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
-        
-        # make Label and View Tab invisible (this tabs are not helpful so far)
-             
-        
-#        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
-        
-        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
-        self.ribbon.tabDict['Projects'].itemDict['Edit'].setToolTip('Add and Remove files from the current project')
-        self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(False)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setToolTip('Save the current Project')
-        self.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
-        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setToolTip('Train the RandomForest classifier while drawing labels and browsing through the file. \nThe currently visible part of the image gets predicted on the fly.')
-        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
-        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setToolTip('Batchprocess a list of files with the currently trained classifier.\n The processed files and their prediction are stored with the file extension "_processed.h5" ')
-
-#        self.ribbon.tabDict['Export'].itemDict['Export'].setEnabled(False)
-        
-        #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
-        #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
-        
-        self.ribbon.setCurrentIndex (0)
-        self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
+#                
+#        # Wee, this is really ugly... anybody have better ideas for connecting 
+#        # the signals. This way has no future and is just a workaround
+#        
+#        self.connect(self.ribbon.tabDict['Projects'].itemDict['New'], QtCore.SIGNAL('clicked()'), self.newProjectDlg)
+#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Save'], QtCore.SIGNAL('clicked()'), self.saveProjectDlg)
+#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Open'], QtCore.SIGNAL('clicked()'), self.loadProjectDlg)
+#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Edit'], QtCore.SIGNAL('clicked()'), self.editProjectDlg)
+#        self.connect(self.ribbon.tabDict['Projects'].itemDict['Options'], QtCore.SIGNAL('clicked()'), self.optionsDlg)
+#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Select Features'], QtCore.SIGNAL('clicked()'), self.newFeatureDlg)
+#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
+#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
+#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Change Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
+#        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Choose Weights'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationWeights)
+#        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentationSegment)
+#        self.connect(self.ribbon.tabDict['Classification'].itemDict['Save Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_saveClassifier)
+#        self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Change Segmentation'], QtCore.SIGNAL('clicked(bool)'), self.on_changeSegmentor)
+#        self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
+#        self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
+#        #self.connect(self.ribbon.tabDict['Classification'].itemDict['Online'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationOnline)
+#
+#        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['Segment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation)
+#        #self.connect(self.ribbon.tabDict['Segmentation'].itemDict['BorderSegment'], QtCore.SIGNAL('clicked(bool)'), self.on_segmentation_border)
+#        
+#        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
+#        self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(False)
+#        
+#        #TODO: reenable online classification sometime 
+##        # Make menu for online Classification
+##        btnOnlineToggle = self.ribbon.tabDict['Classification'].itemDict['Online']
+##        btnOnlineToggle.myMenu = QtGui.QMenu();
+##        btnOnlineToggle.onlineRfAction = btnOnlineToggle.myMenu.addAction('Online RF')
+##        btnOnlineToggle.onlineSVMAction = btnOnlineToggle.myMenu.addAction('Online SVM')
+##        btnOnlineToggle.onlineStopAction = btnOnlineToggle.myMenu.addAction('Stop')
+##        btnOnlineToggle.onlineStopAction.setEnabled(False)
+##        btnOnlineToggle.setMenu(btnOnlineToggle.myMenu)
+#        
+##        # Connect online classification Actions to slots
+##        self.connect(btnOnlineToggle.onlineRfAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online RF'))
+##        self.connect(btnOnlineToggle.onlineSVMAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('online laSvm'))
+##        self.connect(btnOnlineToggle.onlineStopAction, QtCore.SIGNAL('triggered()'), lambda : self.on_classificationOnline('stop'))
+#        
+#        # make Label and View Tab invisible (this tabs are not helpful so far)
+#             
+#        
+##        self.connect(self.ribbon.tabDict['Export'].itemDict['Export'], QtCore.SIGNAL('clicked()'), self.export2Hdf5)
+#        
+#        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(False)
+#        self.ribbon.tabDict['Projects'].itemDict['Edit'].setToolTip('Add and Remove files from the current project')
+#        self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(False)
+#        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(False)
+#        self.ribbon.tabDict['Projects'].itemDict['Save'].setToolTip('Save the current Project')
+#        self.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(False)
+#        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
+#        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setToolTip('Train the RandomForest classifier with the computed features and the provided labels.')
+#        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
+#        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setToolTip('Train the RandomForest classifier while drawing labels and browsing through the file. \nThe currently visible part of the image gets predicted on the fly.')
+#        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+#        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setToolTip('Batchprocess a list of files with the currently trained classifier.\n The processed files and their prediction are stored with the file extension "_processed.h5" ')
+#
+##        self.ribbon.tabDict['Export'].itemDict['Export'].setEnabled(False)
+#        
+#        #self.ribbon.tabDict['Features'].itemDict['Compute'].setEnabled(False)
+#        #self.ribbon.tabDict['Classification'].itemDict['Compute'].setEnabled(False)
+#        
+#        self.ribbon.setCurrentIndex (0)
+#        self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
 
 
     def tabChanged(self,  index):
@@ -404,23 +414,7 @@ class MainWindow(QtGui.QMainWindow):
 
             
         if self.labelWidget is not None:
-            self.labelWidget.repaint()
-            
-    def newProjectDlg(self):
-        self.projectDlg = ProjectDlg(self)
-    
-    def saveProjectDlg(self):
-        global LAST_DIRECTORY
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", LAST_DIRECTORY, "Project Files (*.ilp)")
-        fn = str(fileName)
-        if len(fn) > 4:
-            if fn[-4:] != '.ilp':
-                fn = fn + '.ilp'
-            self.project.saveToDisk(fn)
-            LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
-            
-
-                
+            self.labelWidget.repaint()     
             
     def saveProject(self):
         if hasattr(self,'project'):
@@ -429,53 +423,18 @@ class MainWindow(QtGui.QMainWindow):
             else:
                 self.saveProjectDlg()
             print "saved Project to ", self.project.filename
-        
-    def loadProjectDlg(self):
-        global LAST_DIRECTORY
-        print LAST_DIRECTORY
-        fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", LAST_DIRECTORY, "Project Files (*.ilp)")
-        if str(fileName) != "":
-            LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
-            self.project = projectMgr.Project.loadFromDisk(str(fileName), self.featureCache)
-            self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-            self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
-            self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-            self.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
-            if hasattr(self, 'projectDlg'):
-                self.projectDlg.deleteLater()
-            self.activeImage = 0
-            self.projectModified()
-        
-    def editProjectDlg(self):
-        self.projectDlg = ProjectDlg(self, False)
-        self.projectDlg.updateDlg(self.project)
-        self.projectModified()
             
         
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
-        #self.changeImage(self.activeImage)
-        self.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
-        self.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        self.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
         self.project.dataMgr.activeImage = self.activeImage
-        
-    def optionsDlg(self):
-        tmp = ProjectSettingsDlg(self, self.project)
-        tmp.exec_()
-        
-    def updateLabelWidgetOverlays(self):
-        #TODO: this method is not needed anymore
-	print "################ updateLabelWidgetOverlays"
-	pass
-        
-    def newFeatureDlg(self):
-        self.newFeatureDlg = FeatureDlg(self)
-        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
-        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
-        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
+          
+#    def newFeatureDlg(self):
+#        self.newFeatureDlg = FeatureDlg(self)
+#        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
+#        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
+#        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+#        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
         
         
     def initImageWindows(self):
@@ -523,13 +482,13 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks.append(dock)
 
     def labelRemoved(self, number):
-        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        #self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
 
 
     def seedRemoved(self, number):
-        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        #self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         self.project.dataMgr.removeSeed(number)
         if hasattr(self, "segmentationInteractive"):
             self.segmentatinoInteractive.updateThreadQueues()
@@ -545,21 +504,21 @@ class MainWindow(QtGui.QMainWindow):
     def on_shortcutsDlg(self):
         shortcutManager.showDialog()
 
-    def on_batchProcess(self):
-        dialog = batchProcess.BatchProcess(self)
-        result = dialog.exec_()
+#    def on_batchProcess(self):
+#        dialog = batchProcess.BatchProcess(self)
+#        result = dialog.exec_()
     
-    def on_changeClassifier(self):
-        dialog = ClassifierSelectionDlg(self)
-        self.project.classifier = dialog.exec_()
-        print self.project.classifier
+#    def on_changeClassifier(self):
+#        dialog = ClassifierSelectionDlg(self)
+#        self.project.classifier = dialog.exec_()
+#        print self.project.classifier
 
-    def on_changeSegmentor(self):
-        dialog = SegmentorSelectionDlg(self)
-        answer = dialog.exec_()
-        if answer != None:
-            self.project.segmentor = answer
-            self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
+#    def on_changeSegmentor(self):
+#        dialog = SegmentorSelectionDlg(self)
+#        answer = dialog.exec_()
+#        if answer != None:
+#            self.project.segmentor = answer
+#            self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
 
     def on_segmentationWeights(self):
         
@@ -621,12 +580,12 @@ class MainWindow(QtGui.QMainWindow):
     
     def on_classificationInteractive(self, state):
         if state:
-	    self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Stop Live Prediction')
+	    #self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Stop Live Prediction')
             self.classificationInteractive = ClassificationInteractive(self)
         else:
             self.classificationInteractive.stop()
             del self.classificationInteractive
-	    self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Start Live Prediction')
+	    #self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setText('Start Live Prediction')
 
 
     def on_segmentation_border(self):
@@ -647,9 +606,9 @@ class MainWindow(QtGui.QMainWindow):
             return
         
         if fileName is not None:
-            global LAST_DIRECTORY
-            fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
-            LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+            # global LAST_DIRECTORY
+            fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
+            ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
         # Make sure group 'classifiers' exist
         h5file = h5py.File(str(fileName),'w')
@@ -686,403 +645,13 @@ class MainWindow(QtGui.QMainWindow):
         else:
             event.ignore()
             
-class ProjectSettingsDlg(QtGui.QDialog):
-    def __init__(self, ilastik = None, project=None):
-        QtGui.QWidget.__init__(self, ilastik)
-
-        self.project = project
-        self.ilastik = ilastik
-
-
-        self.layout = QtGui.QVBoxLayout()
-        self.setLayout(self.layout)
-
-        self.drawUpdateIntervalCheckbox = QtGui.QCheckBox("Train&Predict during brush strokes in Interactive Mode")
-        self.drawUpdateIntervalCheckbox.setCheckState((self.project.drawUpdateInterval > 0)  * 2)
-        self.connect(self.drawUpdateIntervalCheckbox, QtCore.SIGNAL("stateChanged(int)"), self.toggleUpdateInterval)
-        self.layout.addWidget(self.drawUpdateIntervalCheckbox)
-
-        self.drawUpdateIntervalFrame = QtGui.QFrame()
-        tempLayout = QtGui.QHBoxLayout()
-        self.drawUpdateIntervalSpin = QtGui.QSpinBox()
-        self.drawUpdateIntervalSpin.setRange(0,1000)
-        self.drawUpdateIntervalSpin.setSuffix("ms")
-        self.drawUpdateIntervalSpin.setValue(self.project.drawUpdateInterval)
-        tempLayout.addWidget(QtGui.QLabel(" "))
-        tempLayout.addWidget(self.drawUpdateIntervalSpin)
-        tempLayout.addStretch()
-        self.drawUpdateIntervalFrame.setLayout(tempLayout)
-        self.layout.addWidget(self.drawUpdateIntervalFrame)
-        if self.project.drawUpdateInterval == 0:
-            self.drawUpdateIntervalFrame.setVisible(False)
-            self.drawUpdateIntervalSpin.setValue(300)
-        
-        self.normalizeCheckbox = QtGui.QCheckBox("normalize Data for display in each SliceView seperately")
-        self.normalizeCheckbox.setCheckState(self.project.normalizeData * 2)
-        self.layout.addWidget(self.normalizeCheckbox)
-
-        self.rgbDataCheckbox = QtGui.QCheckBox("interpret 3-Channel files as RGB Data")
-        self.rgbDataCheckbox.setCheckState(self.project.rgbData * 2)
-        self.layout.addWidget(self.rgbDataCheckbox)
-
-        self.borderMarginCheckbox = QtGui.QCheckBox("show border margin indicator")
-        self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin * 2)
-        self.layout.addWidget(self.borderMarginCheckbox)
-
-        self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)
-        self.normalizeCheckbox.setCheckState(self.project.normalizeData*2)
-
-        tempLayout = QtGui.QHBoxLayout()
-        self.cancelButton = QtGui.QPushButton("Cancel")
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-        self.okButton = QtGui.QPushButton("Ok")
-        self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
-        tempLayout.addStretch()
-        tempLayout.addWidget(self.cancelButton)
-        tempLayout.addWidget(self.okButton)
-        self.layout.addLayout(tempLayout)
-
-        self.layout.addStretch()
-
-    def toggleUpdateInterval(self, state):
-        state = self.drawUpdateIntervalCheckbox.checkState()
-        self.project.drawUpdateInterval = int(self.drawUpdateIntervalSpin.value())
-        if state > 0:
-            self.drawUpdateIntervalFrame.setVisible(True)
-        else:
-            self.drawUpdateIntervalFrame.setVisible(False)
-            self.project.drawUpdateInterval = 0
-
-
-    def ok(self):
-        self.project.useBorderMargin = False
-        self.project.normalizeData = False
-        self.project.rgbData = False
-        if self.normalizeCheckbox.checkState() == QtCore.Qt.Checked:
-            self.project.normalizeData = True
-        if self.borderMarginCheckbox.checkState() == QtCore.Qt.Checked:
-            self.project.useBorderMargin = True
-        if self.rgbDataCheckbox.checkState() == QtCore.Qt.Checked:
-            self.project.rgbData = True
-        if self.ilastik.labelWidget is not None:
-            self.ilastik.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
-            self.ilastik.labelWidget.normalizeData = self.project.normalizeData
-            self.ilastik.labelWidget.setRgbMode(self.project.rgbData)
-            self.ilastik.labelWidget.setUseBorderMargin(self.project.useBorderMargin)
-            self.ilastik.labelWidget.repaint()
-            
-        self.close()
-
-    def cancel(self):
-        self.close()
-
-class ProjectDlg(QtGui.QDialog):
-    def __init__(self, parent=None, newProject = True):
-        QtGui.QWidget.__init__(self, parent)
-        
-        self.ilastik = parent
-        self.newProject = newProject
-
-        self.labelCounter = 2
-        self.columnPos = {}
-        self.labelColor = { 1:QtGui.QColor(QtCore.Qt.red), 2:QtGui.QColor(QtCore.Qt.green), 3:QtGui.QColor(QtCore.Qt.yellow), 4:QtGui.QColor(QtCore.Qt.blue), 5:QtGui.QColor(QtCore.Qt.magenta) , 6:QtGui.QColor(QtCore.Qt.darkYellow), 7:QtGui.QColor(QtCore.Qt.lightGray) }
-        self.parent = parent
-        self.fileList = []
-        self.thumbList = []        
-        self.initDlg()
-        for i in xrange(self.tableWidget.columnCount()):
-            self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
-        self.defaultLabelColors = {}
-
-        projectName = self.projectName
-        labeler = self.labeler
-        description = self.description
-
-        # New project or edited project? if edited, reuse parts of old dataMgr
-        if hasattr(self.ilastik,'project') and (not self.newProject):
-            self.dataMgr = self.ilastik.project.dataMgr
-            self.project = self.ilastik.project
-        else:
-            if self.ilastik.featureCache is not None:
-                if 'tempF' in self.ilastik.featureCache.keys():
-                    grp = self.ilastik.featureCache['tempF']
-                else:
-                    grp = self.ilastik.featureCache.create_group('tempF')
-            else:
-                grp = None
-            self.dataMgr = dataMgr.DataMgr(grp)
-            self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
-                    
-    def initDlg(self):
-        #get the absolute path of the 'ilastik' module
-        ilastikPath = os.path.dirname(__file__)
-        uic.loadUi(os.path.join(ilastikPath,os.path.join("gui", "dlgProject.ui")), self) 
-        self.tableWidget.resizeRowsToContents()
-        self.tableWidget.resizeColumnsToContents()
-        self.tableWidget.setAlternatingRowColors(True)
-        self.tableWidget.setShowGrid(False)
-        self.tableWidget.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
-        self.tableWidget.verticalHeader().hide()
-        self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
-        #self.on_cmbLabelName_currentIndexChanged(0)
-        self.show()
-        
 
 
 
-    @QtCore.pyqtSignature("")
-    def updateDlg(self, project):
-        self.project = project
-        self.dataMgr = project.dataMgr        
-        self.projectName.setText(project.name)
-        self.labeler.setText(project.labeler)
-        self.description.setText(project.description)
-        
-        theFlag = QtCore.Qt.ItemIsEnabled
-        flagON = ~theFlag | theFlag 
-        flagOFF = ~theFlag
-            
-        for d in project.dataMgr.dataItems:
-            rowCount = self.tableWidget.rowCount()
-            self.tableWidget.insertRow(rowCount)
-            
-            # File Name
-            r = QtGui.QTableWidgetItem(d.fileName)
-            self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-                       
-            # Here comes the cool python "checker" use it for if_than_else in lambdas
-            checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
-            
-            # labels
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(checker(d.dataVol.labels.data != None))
-            #r.setFlags(r.flags() & flagOFF);
-            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-            
-               
-        self.exec_()
-
-
-    @QtCore.pyqtSignature("")     
-    def on_loadStack_clicked(self):
-        sl = stackloader.StackLoader()
-        #imageData = sl.exec_()
-        sl.exec_()
-        theDataItem = None
-        try:  
-            theDataItem = dataImpex.DataImpex.importDataItem(sl.fileList, sl.options)
-        except MemoryError:
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
-        if theDataItem is not None:   
-            # file name
-            path = str(sl.path.text())
-            dirname = os.path.basename(os.path.dirname(path))
-            offsetstr =  '(' + str(sl.options.offsets[0]) + ', ' + str(sl.options.offsets[1]) + ', ' + str(sl.options.offsets[2]) + ')'
-            theDataItem.Name = dirname + ' ' + offsetstr   
-            #theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
-            try:
-                print theDataItem.dataVol.labels
-                self.dataMgr.append(theDataItem, True)
-                print theDataItem.dataVol.labels
-                self.dataMgr.dataItemsLoaded[-1] = True
-                print theDataItem.dataVol.labels
-
-                theDataItem.hasLabels = True
-                theDataItem.isTraining = True
-                theDataItem.isTesting = True
-
-                self.ilastik.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-                self.ilastik.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
-
-                self.ilastik.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-
-                rowCount = self.tableWidget.rowCount()
-                self.tableWidget.insertRow(rowCount)
-                print theDataItem.dataVol.labels
-
-                theFlag = QtCore.Qt.ItemIsEnabled
-                flagON = ~theFlag | theFlag
-                flagOFF = ~theFlag
-               
-                r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets: ' + offsetstr)
-                self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-
-                # labels
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Unchecked)
-
-                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-                print theDataItem.dataVol.labels
-                
-            except Exception, e:
-                traceback.print_exc(file=sys.stdout)
-                print e
-                QtGui.QErrorMessage.qtHandler().showMessage(str(e))
-            
-    
-    @QtCore.pyqtSignature("")
-    def on_loadFileButton_clicked(self):
-        fl = fileloader.FileLoader()
-        #imageData = sl.exec_()
-        fl.exec_()
-        itemList = []
-        try:
-            itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
-        except Exception, e:
-            traceback.print_exc(file=sys.stdout)
-            print e
-            QtGui.QErrorMessage.qtHandler().showMessage(str(e))
-        for index, item in enumerate(itemList):
-            self.dataMgr.append(item, True)
-            rowCount = self.tableWidget.rowCount()
-            self.tableWidget.insertRow(rowCount)
-
-            theFlag = QtCore.Qt.ItemIsEnabled
-            flagON = ~theFlag | theFlag
-            flagOFF = ~theFlag
-
-            # file name
-            r = QtGui.QTableWidgetItem(fl.fileList[fl.options.channels[0]][index])
-            self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-            # labels
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Checked)
-
-
-            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-
-            self.initThumbnail(fl.fileList[fl.options.channels[0]][index])
-            self.tableWidget.setCurrentCell(0, 0)
-
-    @QtCore.pyqtSignature("")     
-    def on_addFile_clicked(self):
-        global LAST_DIRECTORY
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.gif *.h5)")
-        fileNames.sort()
-        if fileNames:
-            for file_name in fileNames:
-                LAST_DIRECTORY = QtCore.QFileInfo(file_name).path()
-                try:
-                    file_name = str(file_name)
-
-                    #theDataItem = dataMgr.DataItemImage(file_name)
-                    theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
-                    if theDataItem is None:
-                        print "No data item loaded"
-                    self.dataMgr.append(theDataItem, True)
-                    #self.dataMgr.dataItemsLoaded[-1] = True
-
-                    rowCount = self.tableWidget.rowCount()
-                    self.tableWidget.insertRow(rowCount)
-
-                    theFlag = QtCore.Qt.ItemIsEnabled
-                    flagON = ~theFlag | theFlag
-                    flagOFF = ~theFlag
-
-                    # file name
-                    r = QtGui.QTableWidgetItem(file_name)
-                    self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-                    # labels
-                    r = QtGui.QTableWidgetItem()
-                    r.data(QtCore.Qt.CheckStateRole)
-                    r.setCheckState(QtCore.Qt.Checked)
-
-
-                    self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-
-                    self.initThumbnail(file_name)
-                    self.tableWidget.setCurrentCell(0, 0)
-                except Exception, e:
-                    traceback.print_exc(file=sys.stdout)
-                    print e
-                    QtGui.QErrorMessage.qtHandler().showMessage(str(e))
-
-                    
-    @QtCore.pyqtSignature("")   
-    def on_removeFile_clicked(self):
-        # Get row and fileName to remove
-        row = self.tableWidget.currentRow()
-        fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
-        print "remvoe Filename in row: ", fileName, " -- ", row
-        self.dataMgr.remove(row)
-        print "Remove loaded File"
-
-        # Remove Row from display Table
-        
-        self.tableWidget.removeRow(row)
-        try:
-            del self.thumbList[row]
-        except IndexError:
-            pass
-        
-        
-        
-    def initThumbnail(self, file_name):
-        thumb = QtGui.QPixmap(str(file_name))
-        thumb = thumb.scaledToWidth(128)
-        self.thumbList.append(thumb)
-        self.thumbnailImage.setPixmap(self.thumbList[0])
-                    
-    def updateThumbnail(self, row=0, col=0):
-        try:
-            self.thumbnailImage.setPixmap(self.thumbList[row]) 
-        except IndexError:
-            pass
-    
-    @QtCore.pyqtSignature("")     
-    def on_confirmButtons_accepted(self):
-        projectName = self.projectName
-        labeler = self.labeler
-        description = self.description
-               
-        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
-
-            
-        # Go through the rows of the table and add files if needed
-        rowCount = self.tableWidget.rowCount()
-               
-        for k in range(0, rowCount):               
-            theDataItem = self.dataMgr[k]
-            
-            theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
-            if theDataItem.hasLabels == False:
-                theDataItem.dataVol.labels.clear()
-                
-            contained = False
-            for pr in theDataItem.projects:
-                if pr == self.parent.project:
-                    contained = true
-            if not contained:
-                theDataItem.projects.append(self.parent.project)
-        
-        self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        self.parent.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
-
-        self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
-        
-        self.parent.activeImage = 0
-        self.parent.projectModified()
-        self.close()
-        
-    
-    @QtCore.pyqtSignature("")    
-    def on_confirmButtons_rejected(self):
-        self.close()
-
-        
-
-        pathext = os.path.dirname(__file__)
-        uic.loadUi(pathext+'/gui/dlgFeature.ui', self)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
 
 class FeatureComputation(object):
     def __init__(self, parent):
         self.parent = parent
-        self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(False)
         self.featureCompute() 
     
     def featureCompute(self):
@@ -1122,9 +691,9 @@ class FeatureComputation(object):
         if hasattr(self.parent, "classificationInteractive"):
             self.parent.classificationInteractive.updateThreadQueues()
             
-        self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Select Features'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
                     
     def featureShow(self, item):
         pass
@@ -1137,8 +706,8 @@ class ClassificationTrain(object):
         
     def start(self):
         #process all unaccounted label changes
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
-        self.parent.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
+        #self.parent.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         
         newLabels = self.parent.labelWidget.getPendingLabels()
         if len(newLabels) > 0:
@@ -1177,15 +746,15 @@ class ClassificationTrain(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(True)
         
 
 class ClassificationInteractive(object):
     def __init__(self, parent):
         self.parent = parent
         self.stopped = False
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
@@ -1253,7 +822,7 @@ class ClassificationInteractive(object):
         self.terminateClassificationProgressBar()
     
     def finalize(self):
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
         
         self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
@@ -1370,8 +939,8 @@ class ClassificationPredict(object):
         self.start()
     
     def start(self):       
-        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
           
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
@@ -1432,9 +1001,9 @@ class ClassificationPredict(object):
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
-        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(True)
 
 
 
@@ -1447,7 +1016,7 @@ class Segmentation(object):
         self.start()
 
     def start(self):
-        self.parent.ribbon.tabDict['Segmentation'].itemDict['Segment'].setEnabled(False)
+        #self.parent.ribbon.tabDict['Segmentation'].itemDict['Segment'].setEnabled(False)
         
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
@@ -1496,7 +1065,7 @@ class Segmentation(object):
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)
         self.parent.statusBar().hide()
-        self.parent.ribbon.tabDict['Segmentation'].itemDict['Segment'].setEnabled(True)
+        #self.parent.ribbon.tabDict['Segmentation'].itemDict['Segment'].setEnabled(True)
 
 
 if __name__ == "__main__":
