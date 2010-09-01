@@ -32,6 +32,7 @@ Dataset Editor Dialog based on PyQt4
 """
 import qimage2ndarray.qimageview
 import math
+import ctypes 
 
 try:
     from OpenGL.GL import *
@@ -958,13 +959,13 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.volumeEditor = parent.volumeEditor
         #self.queue = deque(maxlen=1) #python 2.6
         self.queue = deque() #python 2.5
-
+        self.outQueue = deque()
         self.dataPending = threading.Event()
         self.dataPending.clear()
         self.newerDataPending = threading.Event()
         self.newerDataPending.clear()
         self.stopped = False
-        self.imagePatches = range(self.patchAccessor.patchCount)
+        
             
     def run(self):
         #self.context.makeCurrent()
@@ -989,9 +990,12 @@ class ImageSceneRenderThread(QtCore.QThread):
 
                         temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
 
-                        p = QtGui.QPainter(self.imageScene.scene.image)
-                        p.translate(bounds[0],bounds[2])
-                        #p = QtGui.QPainter(temp_image)
+                        
+                        #p = QtGui.QPainter(self.imageScene.scene.image)
+                        #p.translate(bounds[0],bounds[2])
+                        p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
+                        
+                        
                         p.drawImage(0,0,temp_image)
 
                         #add overlays
@@ -1017,7 +1021,8 @@ class ImageSceneRenderThread(QtCore.QThread):
                             p.drawImage(0,0, image0)
 
                         p.end()
-
+                        self.outQueue.append(patchNr)
+                        
                         #self.imagePatches[patchNr] = temp_image
 
 #                        #draw the patch result to complete image
@@ -1133,6 +1138,7 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
         self.widget = widget
         self.imageScene = parent
         self.image = image
+        self.images = []
         self.bgColor = QtGui.QColor(QtCore.Qt.black)
         self.tex = -1
 
@@ -1152,6 +1158,12 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
 
                 rect = QtCore.QRectF(self.image.rect())
+                tl = rect.topLeft()
+                br = rect.bottomRight()
+                
+                #flip coordinates since the texture is flipped
+                #this is due to qimage having another representation thatn OpenGL
+                rect.setCoords(tl.x(),br.y(),br.x(),tl.y())
                 
                 #switch corrdinates if qt version is small
                 painter.beginNativePainting()
@@ -1159,16 +1171,6 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
                 dc.drawTexture(rect,self.tex)
                 painter.endNativePainting()
-
-#            rect = rect.intersected(QtCore.QRectF(self.image.rect()))
-#
-#            patches =  self.imageScene.patchAccessor.getPatchesForRect(rect.x(),rect.y(),rect.x()+rect.width(),rect.y()+rect.height())
-#            #print self.imageScene.patchAccessor.patchCount
-#            #print patches
-#            for i in patches:
-#                bounds = self.imageScene.patchAccessor.getPatchBounds(i)
-#                if self.imageScene.textures[i] >= 0:
-#                    self.widget.drawTexture(QtCore.QRectF(QtCore.QRect(bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2])), self.imageScene.textures[i] )
 
         else:
             painter.setClipRect(rect)
@@ -1216,7 +1218,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.sliceExtent = imShape[2]
         self.drawing = False
         self.view = self
-        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_ARGB32)
+        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_RGB888) #Format_ARGB32
         self.border = None
         self.allBorder = None
 
@@ -1246,13 +1248,11 @@ class ImageScene( QtGui.QGraphicsView):
 
         self.patchAccessor = PatchAccessor(imShape[0],imShape[1],64)
         print "PatchCount :", self.patchAccessor.patchCount
-        self.imagePatchItems = []
-        self.pixmapPatches = []
-        self.textures = []
-        for i in range(self.patchAccessor.patchCount + 1):
-            self.imagePatchItems.append(None)
-            self.pixmapPatches.append(None)
-            self.textures.append(-1)
+
+        self.imagePatches = range(self.patchAccessor.patchCount)
+        for i,p in enumerate(self.imagePatches):
+            b = self.patchAccessor.getPatchBounds(i, 0)
+            self.imagePatches[i] = QtGui.QImage(b[1]-b[0], b[3] -b[2], QtGui.QImage.Format_RGB888)
 
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
@@ -1409,11 +1409,16 @@ class ImageScene( QtGui.QGraphicsView):
         if fastPreview is True and self.openglWidget is not None and len(image.shape) == 2:
             self.openglWidget.context().makeCurrent()
             t = self.scene.tex
-            self.scene.tex = -1
-            if t > -1:
-                self.openglWidget.deleteTexture(t)
             ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
-            self.scene.tex = self.openglWidget.bindTexture(ti, GL_TEXTURE_2D, GL_RGB)
+
+            if not t > -1:
+                self.scene.tex = glGenTextures(1)
+                glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+            else:
+                glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+            
             self.viewport().repaint()
 
         if self.volumeEditor.normalizeData:
@@ -1439,12 +1444,23 @@ class ImageScene( QtGui.QGraphicsView):
             #if we are in opengl 2d render mode, update the texture
             if self.openglWidget is not None:
                 self.openglWidget.context().makeCurrent()
-                t = self.scene.tex
-                self.scene.tex = -1
-                if t > -1:
-                    self.openglWidget.deleteTexture(t)
-                self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
-
+                for patchNr in self.thread.outQueue:
+                    t = self.scene.tex
+                    #self.scene.tex = -1
+                    if t > -1:
+                        #self.openglWidget.deleteTexture(t)
+                        pass
+                    else:
+                        #self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+                        self.scene.tex = glGenTextures(1)
+                        glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                        
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    b = self.patchAccessor.getPatchBounds(patchNr,0)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imagePatches[patchNr].bits().__int__()))
+                    
+                self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
             if self.thread.queue.__len__() == 0:
                 for index, item in enumerate(self.tempImageItems):
