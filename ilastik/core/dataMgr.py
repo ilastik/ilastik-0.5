@@ -547,7 +547,13 @@ class DataItemImage(DataItemBase):
                 print indices.shape
                 print self.trainingF.shape
                 print nonzero
-                
+    
+    def updateBackground(self, newLabels):
+        """
+        This function returns the classes which correspond to background
+        """
+        
+
     def clearSeeds(self):
         self.seedL = None
         self.seedIndices = None
@@ -724,7 +730,10 @@ class DataMgr():
             imageNr = self.activeImage
         self[imageNr].updateSeeds(newLabels)
         
-
+    def updateBackground(self, newLabels, imageNr = None):
+        if imageNr is None:
+            imageNr = self.activeImage
+        self[imageNr].updateBackground(newLabels)
 
     def getDataList(self):
         return self.dataItems

@@ -83,6 +83,7 @@ from ilastik.gui.shortcutmanager import *
 
 from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
+from ilastik.gui.backgroundWidget import BackgroundWidget
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor,  Volume
@@ -388,7 +389,21 @@ class MainWindow(QtGui.QMainWindow):
 
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
             
-            
+        elif self.ribbon.tabText(index) == "Object Processing":
+            #move out the history
+            #TODO: it won't work this way once the objects have history too
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
+                self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
+            else:
+                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
+                
+            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.backgroundOverlays)
+            self.labelWidget.setOverlayWidget(overlayWidget)    
+            #create background overlay
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True)
+            self.project.dataMgr[self.activeImage].overlayMgr["Connected Components/Background"] = ov
+            self.labelWidget.setLabelWidget(BackgroundWidget(self.project.backgroundMgr, self.project.dataMgr[self.activeImage].dataVol.background, self.labelWidget, ov))    
+#                
         elif self.labelWidget is not None:
             if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
                 self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history

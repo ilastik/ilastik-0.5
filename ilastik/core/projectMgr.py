@@ -44,6 +44,7 @@ from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
 from ilastik.core import labelMgr
 from ilastik.core import seedMgr
+from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr 
 from ilastik.core import connectedComponents
 
@@ -77,6 +78,7 @@ class Project(object):
         self.featureMgr = None
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
+        self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = core.segmentors.segmentorClasses[0]()
         self.connector = connectedComponents.ConnectedComponents()
