@@ -1413,12 +1413,17 @@ class ClassificationPredict(object):
                 #create Overlay for prediction:
                 ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
+                ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name]
                 foregrounds.append(ov)
 
             import ilastik.core.overlays.thresHoldOverlay as tho
             
             ov = tho.ThresHoldOverlay(foregrounds, [])
-            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] = ov
+            if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] is None:
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] = ov
+            else:
+                ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"]
+                ov.setForegrounds(foregrounds)
 
 
             all =  range(len(activeItem.dataVol.labels.descriptions))

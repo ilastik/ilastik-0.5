@@ -51,6 +51,8 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         for index, t in enumerate(self.overlayItem.foregrounds):
             l = QtGui.QVBoxLayout()
             print t.name
+            print len(self.overlayItem.thresholds)
+            print index
             self.sliderReceivers.append(SliderReceiver(self,index,self.overlayItem.thresholds[index] * 1000))
             
             w = QtGui.QSlider(QtCore.Qt.Vertical)

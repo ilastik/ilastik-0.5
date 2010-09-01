@@ -52,7 +52,7 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         self.generateColorTab()
         
-        overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, colorTable = self.colorTab, autoAdd = True, autoVisible = True,  linkColorTable = True)        
+        overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, colorTable = self.colorTable, autoAdd = True, autoVisible = True,  linkColorTable = True)        
 
     def generateColorTab(self):
         colorTab = []
@@ -62,7 +62,7 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         for index,item in enumerate(self.foregrounds):
             colorTab[index+1] = long(item.color.rgba())
 
-        self.colorTab = colorTab
+        self.colorTable = colorTab
         
 
     
@@ -95,14 +95,8 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
             background = numpy.zeros(backgrounds[0].data.shape, backgrounds[0].data.dtype)
             for b in backgrounds:
                 background += b.data[:,:,:,:,:]
-            if len(self.backgrounds) > 0:
-                dsets.pop()
-            else:
-                dsets.append(background)
-        else:
-            if len(self.backgrounds) > 0:
-                dsets.pop()
-                           
+            dsets.append(background)
+                          
         
         self.backgrounds = backgrounds
         self.calculateDsets(dsets)
@@ -110,7 +104,7 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.generateColorTab()     
 
     def calculateDsets(self, dsets):
-        self.dsets = numpy.array(dsets)
+        self.dsets = dsets
 
 
     def recalculateThresholds(self):
