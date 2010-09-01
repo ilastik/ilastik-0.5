@@ -49,12 +49,14 @@ class OverlaySlice():
     Helper class to encapsulate the overlay slice and its drawing related settings
     for passing it around, mostly used in the volumeEditor (->move there ?)
     """
-    def __init__(self, data, color, alpha, colorTable):
+    def __init__(self, data, color, alpha, colorTable, min = None, max = None):
         self.colorTable = colorTable
         self.color = color
         self.alpha = alpha
         self.alphaChannel = None
         self.data = data
+        self.min = min
+        self.max = max
 
 
 class OverlayItemReference(object):
@@ -76,20 +78,23 @@ class OverlayItemReference(object):
         self.numChannels = self.overlayItem.data.shape[4]
         
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable)       
+        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable, self.overlayItem.min, self.overlayItem.max)       
         
     def __getattr__(self,  name):
         if name == "colorTable":
             return self.overlayItem.colorTable
         elif name == "data":
             return self.overlayItem.data
+        elif name == "min":
+            return self.overlayItem.min
+        elif name == "max":
+            return self.overlayItem.max
         raise AttributeError,  name
         
     def remove(self):
         self.overlayItem = None
         
     def incChannel(self):
-        print self.overlayItem.data.shape
         if self.channel < self.overlayItem.data.shape[4] - 1:
             self.channel += 1
 
@@ -98,7 +103,7 @@ class OverlayItemReference(object):
             self.channel -= 1
             
     def setChannel(self,  channel):
-        if channel > 0 and channel < self.numChannels -1 :
+        if channel >= 0 and channel < self.numChannels :
             self.channel = channel
         else:
             raise Exception
@@ -120,6 +125,8 @@ class OverlayItem(object):
         self.autoAdd = autoAdd
         self.autoVisible = autoVisible
         self.references = []
+        self.min = None
+        self.max = None
                 
     def getRef(self):
         ref = OverlayItemReference(self)
@@ -164,15 +171,16 @@ class OverlayMgr(dict):
         addToWidget = False
         if issubclass(value.__class__,  OverlayItem):
             if not self.has_key(key):
+                #set the name of the overlayItem to the last part of the key
+                value.name = key.split('/')[-1]
                 addToWidget = True
                 dict.__setitem__(self,  key,  value)
                 res = value
             else:
                 it = self[key]
+                it.name = value.name = key.split('/')[-1]
                 it.data = value.data
                 res = it
-            #set the name of the overlayItem to the last part of the key
-            res.name = key.split('/')[-1]
             #update the key
             res.key = key
         if addToWidget:

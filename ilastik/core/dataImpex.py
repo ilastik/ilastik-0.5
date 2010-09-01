@@ -100,7 +100,6 @@ class DataImpex(object):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                 try:
                     img_data = vigra.impex.readImage(filename).swapaxes(0,1)
-
                     if options.rgb > 1:
                         image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
                     else:
@@ -158,9 +157,10 @@ class DataImpex(object):
             image.reshape(image.shape + (1,))
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
-        
+        print options.destfile
         try:
             if options.destfile != None :
+                print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
                 g = f.create_group("volume")        
                 g.create_dataset("data",data = image)

@@ -491,14 +491,13 @@ class MainWindow(QtGui.QMainWindow):
 	pass
         
     def newFeatureDlg(self):
-        self.newFeatureDlg = FeatureDlg(self)
+        previewImage = self.project.dataMgr[self.activeImage].dataVol.data[0, 0, :, :, 0]
+        self.newFeatureDlg = FeatureDlg(self, previewImage)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Export Classifier'].setEnabled(False)
         
-    def newEditChannelsDlg(self):
-        self.editChannelsDlg = editChannelsDlg(self)
         
     def initImageWindows(self):
         self.labelDocks = []
@@ -1439,11 +1438,24 @@ class ClassificationPredict(object):
         if activeItem.prediction is not None:
 #            for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
 #                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            foregrounds = []
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
                 #create Overlay for prediction:
                 ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
+                ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name]
+                foregrounds.append(ov)
+
+            import ilastik.core.overlays.thresHoldOverlay as tho
+            
+            ov = tho.ThresHoldOverlay(foregrounds, [])
+            if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] is None:
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] = ov
+            else:
+                ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"]
+                ov.setForegrounds(foregrounds)
+
 
             all =  range(len(activeItem.dataVol.labels.descriptions))
             not_predicted = numpy.setdiff1d(all, self.parent.project.dataMgr.classifiers[0].unique_vals - 1)

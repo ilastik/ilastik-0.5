@@ -190,15 +190,15 @@ class Project(object):
             for index2,  di in enumerate(self.dataMgr):
                 #create Feature Overlay
                 rawdata = di._featureM[:, :, :, :, offset:offset+size]
-                rawdata.shape
                 #TODO: the min/max stuff here is slow !!!
                 #parallelize ??
                 min = numpy.min(rawdata)
                 max = numpy.max(rawdata)
-                rawdata = (rawdata - min)*255/(max-min)
                 data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
                 
                 ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
+                ov.min = min
+                ov.max = max
                 di.overlayMgr["Classification/Features/" + feature.name + " " + str(feature.sigma)] = ov
         
   

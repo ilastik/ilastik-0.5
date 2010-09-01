@@ -626,6 +626,7 @@ class DataMgr():
         self.trainingF = None
         self.featureCacheFile = featureCacheFile
         self.channels = -1
+        self.selectedChannels = None
         self.activeImage = 0
             
     def append(self, dataItem, alreadyLoaded=False):
@@ -642,6 +643,9 @@ class DataMgr():
             
         if self.channels == -1 or dataItem.dataVol.data.shape[-1] == self.channels:
             self.channels = dataItem.dataVol.data.shape[-1]
+            
+            self.selectedChannels = range(self.channels)
+            
             if self.featureCacheFile is not None:
                 cx = 1
                 cy = 32

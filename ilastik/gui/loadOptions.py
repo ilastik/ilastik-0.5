@@ -164,9 +164,9 @@ class LoadOptionsWidget(QtGui.QWidget):
         options.destShape = None
         if self.downsample.checkState() > 0:
             options.destShape = (self.downX.value(),self.downY.value(),self.downZ.value())
-        options.file_exp = str(self.file.text())
+        options.destfile = str(self.file.text())
         if self.alsoSave.checkState() == 0:
-            options.file_exp = None
+            options.destfile = None
         options.normalize = self.normalize.checkState() > 0
         options.invert = self.invert.checkState() > 0
         options.grayscale = self.grayscale.checkState() > 0

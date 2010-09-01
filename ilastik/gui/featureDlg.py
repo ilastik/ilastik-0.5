@@ -33,19 +33,35 @@ import ilastik
 from ilastik.core.utilities import irange, debug
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from ilastik.gui.iconMgr import ilastikIcons
-
+import qimage2ndarray
 
 
 class FeatureDlg(QtGui.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, previewImage=None):
         QtGui.QWidget.__init__(self)
         self.parent = parent
         self.ilastik = parent
         self.initDlg()
+        #self.grscene = QtGui.QGraphicsScene()
+        #pixmapImage = QtGui.QPixmap(qimage2ndarray.gray2qimage(previewImage))
+        #self.grscene.addPixmap(pixmapImage)
+        #self.graphicsView.setScene(self.grscene)
         if self.parent.project.featureMgr is not None:
             self.oldFeatureItems = self.parent.project.featureMgr.featureItems
         else:
             self.oldFeatureItems = []
+
+        circle = QtGui.QGraphicsEllipseItem(48, 48, 5, 5)
+        circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
+        
+        self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+        self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.grscene = QtGui.QGraphicsScene()
+        pixmapImage = QtGui.QPixmap(qimage2ndarray.gray2qimage(previewImage))
+        self.grscene.addPixmap(pixmapImage)
+        self.grscene.addItem(circle)
+        self.graphicsView.setScene(self.grscene)
 
 
     def initDlg(self):
@@ -101,6 +117,9 @@ class FeatureDlg(QtGui.QDialog):
         self.setStyleSheet("selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0.5, y2: 0.5, stop: 0 #BBBBDD, stop: 1 white)")
         self.show()
 
+        self.featureTable.horizontalHeader().setMouseTracking(1)
+        self.featureTable.horizontalHeader().installEventFilter(self)
+
         self.featureTableList = []
         self.selectedItemList = []
         self.boolSelection = False
@@ -110,6 +129,9 @@ class FeatureDlg(QtGui.QDialog):
             item = self.featureTable.horizontalHeaderItem(i)
             size = len(item.text()) * 11
             self.featureTable.setColumnWidth(i, size)
+
+    def drawCircle(self):
+        pass
 
     def on_featureTable_itemSelectionChanged(self):
         tempItemSelectedList = []
@@ -173,6 +195,8 @@ class FeatureDlg(QtGui.QDialog):
                 self.selectedItemList = []
                 self.deselectAllTableItems()
                 self.boolSelection = False
+        if event.type() == QtCore.QEvent.HoverMove:
+            self.label.setText("Size: " + str(self.featureTable.horizontalHeader().logicalIndexAt(event.pos())))
         return False
 
 
