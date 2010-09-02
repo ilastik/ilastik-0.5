@@ -27,12 +27,10 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui
-import sys
-from ilastik.gui.iconMgr import ilastikIcons
 
-class Ribbon(QtGui.QTabWidget):
+class IlastikTabWidget(QtGui.QTabWidget):
     def __init__(self, parent=None):
-        QtGui.QTabBar.__init__(self, parent)
+        QtGui.QTabWidget.__init__(self, parent)
         self.tabDict = {}
         if parent:     
             self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
@@ -42,166 +40,21 @@ class Ribbon(QtGui.QTabWidget):
             self.setTabPosition(self.North)            
         if orientation == QtCore.Qt.Vertical: 
             self.setTabPosition(self.West)
-        for name, tab in self.tabDict.items():
+        for tab in self.tabDict.values():
             lo = tab.layout()
             if orientation == 1:
                 orientation = 0
             lo.setDirection(lo.Direction(orientation))
-
-            
+          
     def moveEvent(self, event):
         QtGui.QTabWidget.moveEvent(self, event)
     
-    def addTab(self, w, s="TabName",  enabled = True):
-        self.tabDict[s] = w
-        if enabled is True:
-            QtGui.QTabWidget.addTab(self, w, s)              
-
-class RibbonBaseItem(QtGui.QWidget):
-    def __init__(self,  ribbon_entry):
-        QtGui.QPushButton.__init__(self)
-        self.name = ribbon_entry.name
-        self.setToolTip(ribbon_entry.tool_tip)
+    def addTab(self, page, tabName):
+        self.tabDict[tabName] = page
+        QtGui.QTabWidget.addTab(self, page, tabName)  
         
-class RibbonButtonItem(QtGui.QPushButton,RibbonBaseItem):
-    def __init__(self,  ribbon_entry):
-        QtGui.QPushButton.__init__(self)
-        RibbonBaseItem.__init__(self,  ribbon_entry)
-        self.setIcon(ribbon_entry.icon)   
-        self.setText(ribbon_entry.name)
-
-class RibbonToggleButtonItem(QtGui.QToolButton, RibbonBaseItem):
-    def __init__(self,  ribbon_entry):
-        QtGui.QToolButton.__init__(self)
-        RibbonBaseItem.__init__(self,  ribbon_entry)
-        action = QtGui.QAction(self)
-        action.setIcon(ribbon_entry.icon)
-        action.setCheckable(True)
-        action.setIconText(ribbon_entry.name)
-        self.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
-        self.setDefaultAction(action)
-        self.setPopupMode(QtGui.QToolButton.InstantPopup)
-    
-class RibbonSlider(QtGui.QSlider,RibbonBaseItem):
-    def __init__(self, ribbon_entry):
-        QtGui.QSlider.__init__(self)
-        RibbonBaseItem.__init__(self, ribbon_entry)
-        self.setMinimum(1)
-        self.setMaximum(6)
-        self.setSliderPosition(1)
-        
-class RibbonStretch(RibbonBaseItem):
-    def __init__(self, ribbon_entry):
-        QtGui.QSlider.__init__(self)
-        RibbonBaseItem.__init__(self, ribbon_entry)
-
-class RibbonDropButtonItem(QtGui.QToolButton,RibbonBaseItem):
-    def __init__(self,  ribbon_entry):
-        QtGui.QToolButton.__init__(self)
-        RibbonBaseItem.__init__(self,  ribbon_entry)
-        action = QtGui.QAction(self)
-        action.setIcon(ribbon_entry.icon)   
-        self.setIconSize(ribbon_entry.size)
-        action.setIconText(ribbon_entry.name)
-        self.setCheckable(True)
-        self.setToolButtonStyle(2)
-        self.setDefaultAction(action)
-
-class RibbonListItem(QtGui.QListWidget, RibbonBaseItem):
-    def __init__(self,  ribbon_entry):
-        QtGui.QListWidget.__init__(self)
-        RibbonBaseItem.__init__(self, ribbon_entry)
-
-
-class RibbonTabContainer(QtGui.QWidget):
-    def __init__(self, position, parent=None, ):
-        QtGui.QWidget.__init__(self)
-        layout = QtGui.QBoxLayout(QtGui.QBoxLayout.LeftToRight)
-        layout.setAlignment(QtCore.Qt.AlignLeft)
-        layout.setAlignment(QtCore.Qt.AlignTop)
-        self.position = position
-        self.setLayout(layout)
-        self.itemDict = {}
-        self.signalList = []
-        
-    def addItem(self, item):
-	if item.__class__ is not RibbonStretch:
-	    self.itemDict[item.name] = item
-            self.layout().addWidget(item)
-	else:
-	    self.layout().addStretch()
-
-class RibbonEntry():
-    def __init__(self, name, icon_file=None, tool_tip=None, type=RibbonButtonItem, callback=None):
-        self.name = name
-        self.icon_file = icon_file
-        self.tool_tip = tool_tip
-        self.callback = callback
-        self.icon = QtGui.QIcon(str(self.icon_file)) 
-        self.type = type
-    
-class RibbonEntryGroup():
-    def __init__(self, name, position):
-        self.name = name
-        self.entries = []
-        self.position = position
-        
-    def append(self, entry):
-        self.entries.append(entry)
-        
-    def makeTab(self):
-        self.tabs = RibbonTabContainer(self.position)
-	stretched = False
-        for rib in self.entries:
-            item = rib.type(rib)
-	    if rib.type is RibbonStretch:
-		    stretched = True
-            self.tabs.addItem(item)
-	if not stretched:
-		self.tabs.layout().addStretch()
-        return self.tabs   
-
-def createRibbons():
-    RibbonGroupObjects = {}
-    RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
-    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
-    RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
-    RibbonGroupObjects["Automate"] = RibbonEntryGroup("Automate", 4)
-    RibbonGroupObjects["Help"] = RibbonEntryGroup("Help", 5)
-
-    #RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)
-    
-    RibbonGroupObjects["Projects"].append(RibbonEntry("New", ilastikIcons.New ,"New"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Open", ilastikIcons.Open ,"Open"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Save", ilastikIcons.Save,"Save"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", ilastikIcons.Edit ,"Edit"))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("", None, "", type=RibbonStretch))
-    RibbonGroupObjects["Projects"].append(RibbonEntry("Options", ilastikIcons.Edit ,"Options"))
-    
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Select Features", ilastikIcons.Select ,"Select and compute features"))
-    
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Start Live Prediction", ilastikIcons.Play ,"Interactive prediction of visible image parts while drawing etc.",type=RibbonToggleButtonItem))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and predict the whole image"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("", None, "", type=RibbonStretch))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Save Classifier", ilastikIcons.System ,"Save current classifier and its feature settings"))
-    RibbonGroupObjects["Classification"].append(RibbonEntry("Change Classifier", ilastikIcons.System ,"Select a classifier and change its settings"))
-
-
-
-
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Choose Weights", ilastikIcons.System ,"Choose the edge weights for the segmentation task"))
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment the image into foreground/background"))
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("", None, "", type=RibbonStretch))
-    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Change Segmentation", ilastikIcons.System ,"Select a segmentation plugin and change settings"))
-
-    RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batchpredict files in a directory with the currently trained classifier"))
-
-    RibbonGroupObjects["Help"].append(RibbonEntry("Shortcuts", ilastikIcons.System ,"Shortcuts"))
-
-    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment Foreground/Background"))
-    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("BorderSegment", ilastikIcons.Play ,"Segment Foreground/Background with Border"))
-
-    #RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
-    return RibbonGroupObjects   
+    def getTab(self, tabName):
+        return self.tabDict[tabName] 
+                   
         
         

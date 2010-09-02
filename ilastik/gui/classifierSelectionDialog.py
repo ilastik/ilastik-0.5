@@ -51,7 +51,7 @@ class ClassifierSelectionDlg(QtGui.QDialog):
 
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
-            return  self.currentClassifier
+            return self.currentClassifier
         else:
             return self.previousClassifier
 
