@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui
 import overlayDialogBase
 import ilastik.gui.overlaySelectionDlg
+from ilastik.core.overlays.thresHoldOverlay import ThresHoldOverlay 
 
 class SliderReceiver(QtCore.QObject):
     def __init__(self, dialog, index, oldValue):
@@ -19,12 +20,19 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
 
             
     
-    def __init__(self, instance, ilastik):
+    def __init__(self, ilastik, instance = None):
         QtGui.QDialog.__init__(self)
-        self.overlayItem = instance
+        self.ilastik = ilastik
+        if instance != None:
+            self.overlayItem = instance
+        else:
+            ovm = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr
+            k = ovm.keys()[0]
+            ov = ovm[k]
+            self.overlayItem = ThresHoldOverlay([ov], [])
+
         self.volumeEditor = ilastik.labelWidget
         self.project = ilastik.project
-        self.ilastik = ilastik
         self.mainlayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainlayout)
         self.mainwidget = QtGui.QWidget()
