@@ -219,6 +219,8 @@ class MainWindow(QtGui.QMainWindow):
             self.classificationInteractive = ClassificationInteractive(self)
             #self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
             self.classificationInteractive.updateThreadQueues()
+        # Notify tabs
+        self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
             
     def historyUndo(self):
         if self.labelWidget is not None:
@@ -266,6 +268,8 @@ class MainWindow(QtGui.QMainWindow):
         seed/label widget has a reference to the overlay in the overlayWidget
         they correspond to.
         """
+        self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
+        self.ribbon.currentTabNumber = index
         
         self.ribbon.widget(index).on_activation()
         

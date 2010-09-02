@@ -32,6 +32,7 @@ class IlastikTabWidget(QtGui.QTabWidget):
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self, parent)
         self.tabDict = {}
+        self.currentTabNumber = 0
         if parent:     
             self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
 
