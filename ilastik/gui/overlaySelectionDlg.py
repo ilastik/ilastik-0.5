@@ -35,9 +35,10 @@ class OverlayCreateSelectionDlg(QDialog):
         j = 0
         for i, o in enumerate(self.overlayDialogs):
             self.listWidget.addItem(MyListWidgetItem(o))
-        self.listWidget.setCurrentRow(0)
 
         self.connect(self.listWidget, SIGNAL('currentRowChanged(int)'), self.currentRowChanged)
+
+        self.listWidget.setCurrentRow(0)
         
         
         self.settingsButton.setVisible(False)
@@ -202,7 +203,7 @@ class OverlaySelectionDialog(QDialog):
             self.setWindowTitle("Overlay Singel Selection")
             self.desc.setText("Singel Selection Mode")
             self.checkAllButton.setEnabled(False)
-            self.uncheckAllButton.setEnabled(False)
+            #self.uncheckAllButton.setEnabled(False)
         else:
             self.setWindowTitle("Overlay Multi Selection")
             self.desc.setText("Multi Selection Mode")
