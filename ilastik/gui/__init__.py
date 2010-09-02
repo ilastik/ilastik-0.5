@@ -27,4 +27,6 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+import os
 print "Load Ilastik GUI"
+LAST_DIRECTORY = os.path.expanduser("~")

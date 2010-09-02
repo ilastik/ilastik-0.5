@@ -221,10 +221,10 @@ class FeatureDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def on_confirmButtons_rejected(self):
-        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
-        self.close()
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
+        self.reject()
 
     def computeMemoryRequirement(self, featureSelectionList):
         if featureSelectionList != []:

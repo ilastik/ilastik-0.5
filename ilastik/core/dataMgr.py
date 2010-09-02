@@ -414,10 +414,9 @@ class DataItemImage(DataItemBase):
 
                         if self._featureM is not None and len(indices) > 0:
                             if self.trainingF is not None:
-                                if len(self.trainingF.shape) == 1:
-                                    self.trainingF.shape += (1,)
-
                                 tempfm = self.getTrainingMforInd(indices)
+                                if len(self.trainingF.shape) == 1:
+                                    self.trainingF.shape = (0,tempfm.shape[1])
                                 self.trainingF = numpy.vstack((self.trainingF,tempfm))
                             else:
                                 self.trainingF = self.getTrainingMforInd(indices)

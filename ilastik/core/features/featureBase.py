@@ -116,7 +116,7 @@ class FeatureBase(object):
 
     @classmethod
     def deserialize(cls, h5grp):
-        _name = h5grp['name']
+        # _name = h5grp['name']
         _class = h5grp['class']
         _sigma = h5grp['sigma']
 

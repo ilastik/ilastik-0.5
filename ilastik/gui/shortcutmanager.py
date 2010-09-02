@@ -1,5 +1,4 @@
 from PyQt4 import QtGui
-import sip
 
 class ShortcutManager():
     def __init__(self):

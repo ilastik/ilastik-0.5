@@ -171,7 +171,7 @@ class OverlayListWidget(QtGui.QListWidget):
             self.volumeEditor.repaint()
         elif action == configureDialogAction:
             c = item.overlayItemReference.overlayItem.__class__
-            configDialog = overlayDialogs.overlayClassDialogs[c.__module__ + '.' + c.__name__](item.overlayItemReference.overlayItem, self.volumeEditor.ilastik)
+            configDialog = overlayDialogs.overlayClassDialogs[c.__module__ + '.' + c.__name__](self.volumeEditor.ilastik, item.overlayItemReference.overlayItem)
             configDialog.exec_()
         else:
             for index,  channelAct in enumerate(channelActions):
@@ -211,7 +211,7 @@ class OverlayWidget(QtGui.QGroupBox):
     def __init__(self,parent, overlayMgr,  overlays):
         QtGui.QGroupBox.__init__(self,  "Overlays")
         self.setLayout(QtGui.QHBoxLayout())
-        
+        self.volumeEditor = parent
         self.overlayMgr = overlayMgr
         
         self.overlays = overlays
@@ -251,7 +251,7 @@ class OverlayWidget(QtGui.QGroupBox):
         #self.layout().addLayout(tl3)
         
     def buttonAddClicked(self):
-        dlg = OverlaySelectionDialog(self.overlayMgr,  singleSelection = False)
+        dlg = OverlaySelectionDialog(self.volumeEditor.ilastik,  singleSelection = False)
         answer = dlg.exec_()
         for o in answer:
             self.addOverlayRef(o.getRef())

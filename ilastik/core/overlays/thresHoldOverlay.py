@@ -23,10 +23,11 @@ class MultivariateThresholdAccessor(object):
         for i in range(2,len(self.probabilities)):
             next_guess = numpy.zeros(current_guess.shape, current_guess.dtype)
             next_guess[:] = i
-            quota_k = current_best / (current_best+self.probabilities[i][key])
-            quota_other = self.thresholds[current_guess]/(self.thresholds[current_guess]+self.thresholds[next_guess])
+            quota_k = 1.0 * current_best / (current_best+self.probabilities[i][key])
+            quota_other = 1.0 * self.thresholds[current_guess]/(self.thresholds[current_guess]+self.thresholds[next_guess])
             current_guess = numpy.where( quota_k >  quota_other, current_guess, next_guess)
-            current_best = numpy.where(current_guess < i, current_best, self.probabilities[i][key])
+            next_best = numpy.where(current_guess < i, current_best, self.probabilities[i][key])
+            current_best = next_best
             
         answer = current_guess + 1
         return answer
