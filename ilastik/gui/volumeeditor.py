@@ -360,6 +360,14 @@ class VolumeEditor(QtGui.QWidget):
         self.drawManager = DrawManager(self)
 
         self.imageScenes = []
+
+        if self.openglOverview is True:
+            self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
+            self.overview = OverviewScene(self, self.image.shape[1:4])
+        else:
+            self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
+            
+        self.grid.addWidget(self.overview, 1, 1)
         
         self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
         self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
@@ -369,12 +377,6 @@ class VolumeEditor(QtGui.QWidget):
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
 
-        if self.openglOverview is True:
-            self.overview = OverviewScene(self, self.image.shape[1:4])
-        else:
-            self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
-            
-        self.grid.addWidget(self.overview, 1, 1)
 
         if self.image.shape[1] == 1:
             self.imageScenes[1].setVisible(False)
@@ -1229,7 +1231,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.openglWidget = None
         ##enable OpenGL acceleratino
         if self.volumeEditor.opengl is True:
-            self.openglWidget = QtOpenGL.QGLWidget()
+            self.openglWidget = QtOpenGL.QGLWidget(shareWidget = self.volumeEditor.sharedOpenGLWidget)
             self.setViewport(self.openglWidget)
             self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
             
@@ -1747,7 +1749,7 @@ class OverviewSceneDummy(QtGui.QWidget):
     
 class OverviewScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
-        QtOpenGL.QGLWidget.__init__(self)
+        QtOpenGL.QGLWidget.__init__(self, shareWidget = parent.sharedOpenGLWidget)
         self.sceneShape = shape
         self.volumeEditor = parent
         self.images = parent.imageScenes
@@ -1765,8 +1767,6 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 #self.initializeGL()
                 self.makeCurrent()
-                if self.tex[axis] > -1:
-                    self.deleteTexture(self.tex[axis])
                 self.paintGL(axis)
                 self.swapBuffers()
             
@@ -1775,8 +1775,6 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 for i in range(3):
                     self.makeCurrent()
-                    if self.tex[i] > -1:
-                        self.deleteTexture(self.tex[i])
                     self.paintGL(i)
                 self.swapBuffers()        
 
@@ -1856,9 +1854,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
             curCenter = -(( 1.0 * self.volumeEditor.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
             if axis is 2:
-                if self.tex[2] != -1:
-                    self.deleteTexture(self.tex[2])
-                self.tex[2] = self.bindTexture(self.images[2].scene.image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[2] = self.images[2].scene.tex
             if self.tex[2] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[2])
                 
@@ -1868,13 +1864,13 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
                 glBegin(GL_QUADS) #horizontal quad (e.g. first axis)
                 glColor3f(1.0,1.0,1.0)            # Set The Color To White
-                glTexCoord2d(0.0, 1.0)
-                glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
-                glTexCoord2d(1.0, 1.0)
-                glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
-                glTexCoord2d(1.0, 0.0)
-                glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
                 glTexCoord2d(0.0, 0.0)
+                glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
+                glTexCoord2d(1.0, 0.0)
+                glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
+                glTexCoord2d(1.0, 1.0)
+                glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
+                glTexCoord2d(0.0, 1.0)
                 glVertex3f( -ratio2w,curCenter, + ratio2h)        # Bottom Right Of The Quad
                 glEnd()
 
@@ -1899,9 +1895,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
             curCenter = (( (1.0 * self.volumeEditor.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
     
             if axis is 0:
-                if self.tex[0] != -1:
-                    self.deleteTexture(self.tex[0])
-                self.tex[0] = self.bindTexture(self.images[0].scene.image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[0] = self.images[0].scene.tex
             if self.tex[0] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[0])
 
@@ -1912,13 +1906,13 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
                 glBegin(GL_QUADS)
                 glColor3f(0.8,0.8,0.8)            # Set The Color To White
-                glTexCoord2d(1.0, 1.0)
-                glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
-                glTexCoord2d(0.0, 1.0)
-                glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
-                glTexCoord2d(0.0, 0.0)
-                glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
                 glTexCoord2d(1.0, 0.0)
+                glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
+                glTexCoord2d(0.0, 0.0)
+                glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
+                glTexCoord2d(0.0, 1.0)
+                glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
+                glTexCoord2d(1.0, 1.0)
                 glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
                 glEnd()
 
@@ -1938,9 +1932,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
     
             if axis is 1:
-                if self.tex[1] != -1:
-                    self.deleteTexture(self.tex[1])
-                self.tex[1] = self.bindTexture(self.images[1].scene.image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[1] = self.images[1].scene.tex
             if self.tex[1] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[1])
     
@@ -1950,13 +1942,13 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
                 glBegin(GL_QUADS)
                 glColor3f(0.6,0.6,0.6)            # Set The Color To White
-                glTexCoord2d(1.0, 1.0)
-                glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
-                glTexCoord2d(0.0, 1.0)
-                glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
-                glTexCoord2d(0.0, 0.0)
-                glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
                 glTexCoord2d(1.0, 0.0)
+                glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
+                glTexCoord2d(0.0, 0.0)
+                glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
+                glTexCoord2d(0.0, 1.0)
+                glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
+                glTexCoord2d(1.0, 1.0)
                 glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
                 glEnd()
 
