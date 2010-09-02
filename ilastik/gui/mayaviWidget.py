@@ -70,10 +70,10 @@ class Maya3DScene(HasTraits):
     plot = Instance(PipelineBase)
 
 
-    def __init__(self, volumeEditor, item, raw):
+    def __init__(self, volumeEditor, overlayItemReference, raw):
         HasTraits.__init__(self)
         self.volumeEditor = volumeEditor
-        self.item = item
+        self.overlayItemReference = overlayItemReference
         self.raw = raw
         #print self.item.shape, self.item.dtype
 
@@ -85,7 +85,7 @@ class Maya3DScene(HasTraits):
     @on_trait_change('scene.activated')
     def update_plot(self):
         if self.plot is None:
-            self.dataField = self.scene.mlab.pipeline.scalar_field(self.item)
+            self.dataField = self.scene.mlab.pipeline.scalar_field(self.overlayItemReference.data[0,:,:,:,self.overlayItemReference.channel])
             self.rawField = self.scene.mlab.pipeline.scalar_field(self.raw)
 
 
@@ -121,8 +121,36 @@ class Maya3DScene(HasTraits):
 #                print self.zp.ipw.slice_position
 #
 #            self.zp.ipw.add_observer('EndInteractionEvent', move_slicez)
+            
+            self.plot = self.scene.mlab.pipeline.iso_surface(self.dataField, contours=[2,3,4,5,6,7]) #opacity=0.4
+            cm = numpy.zeros((256,4),'uint8')#self.plot.module_manager.scalar_lut_manager.lut.table.to_array()
+            
+            cm[:,3] = 255
+            
+            for index in range(0,255):
+                c = self.overlayItemReference.colorTable[index]
+                c = QtGui.QColor.fromRgba(c)
+                print index, " ", c.red(), " ", c.green()
+                cm[index,0] = c.red()
+                cm[index,1] = c.green()
+                cm[index,2] = c.blue()
+            
+            mlab.colorbar(title="LUT", orientation="vertical")
 
-            self.plot = self.scene.mlab.pipeline.iso_surface(self.dataField, opacity=0.4, contours=[2, 3, 4, 5, 6, 7])
+            self.plot.module_manager.scalar_lut_manager.lut.number_of_colors = 256 
+            self.plot.module_manager.scalar_lut_manager.lut.table_range = (0,255)
+            self.plot.module_manager.scalar_lut_manager.lut.range = (0,255)
+            self.plot.module_manager.scalar_lut_manager.lut.value_range = (0,255)
+            self.plot.module_manager.scalar_lut_manager.lut.vector_mode  = 'magnitude'
+            self.plot.module_manager.scalar_lut_manager.lut.table = cm
+            
+            
+            print self.plot
+            
+            print self.plot.module_manager.scalar_lut_manager.lut
+            
+            #print "fucking shape ", lut.shape, lut.dtype
+
             
             #self.scene.mlab.pipeline.volume(self.scene.mlab.pipeline.scalar_field(self.item.data[0,:,:,:,0]), vmin=0.5, vmax=1.5)
             #self.scene.mlab.outline()
@@ -168,13 +196,14 @@ class Maya3DScene(HasTraits):
 ################################################################################
 # The QWidget containing the visualization, this is pure PyQt4 code.
 class MayaviQWidget(QtGui.QWidget):
-    def __init__(self, volumeEditor, item, raw):
+    def __init__(self, volumeEditor, overlayItemReference, raw):
         QtGui.QWidget.__init__(self)
         self.volumeEditor = volumeEditor
+        self.overlayItemReference = overlayItemReference
         layout = QtGui.QVBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
-        self.visualization = Maya3DScene(self.volumeEditor, item, raw)
+        self.visualization = Maya3DScene(self.volumeEditor, self.overlayItemReference, raw)
 
         # If you want to debug, beware that you need to remove the Qt
         # input hook.

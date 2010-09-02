@@ -162,7 +162,7 @@ class OverlayListWidget(QtGui.QListWidget):
             print "vtk running marching cubes..."
 #            mlab.contour3d(item.data[0,:,:,:,0], opacity=0.6)
 #            mlab.outline()
-            self.my_model = MayaviQWidget(self.volumeEditor, item.overlayItemReference.data[0,:,:,:,0], self.volumeEditor.image[0,:,:,:,0])
+            self.my_model = MayaviQWidget(self.volumeEditor, item.overlayItemReference, self.volumeEditor.image[0,:,:,:,0])
             self.my_model.show()
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
