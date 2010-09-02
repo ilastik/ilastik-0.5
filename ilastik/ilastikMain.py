@@ -57,6 +57,7 @@ from ilastik.core import projectMgr, featureMgr, classificationMgr, segmentation
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+import ilastik.core.jobMachine
 
 
 from PyQt4 import QtCore, QtGui, uic, QtOpenGL
@@ -892,7 +893,7 @@ if __name__ == "__main__":
     del mainwindow
 
 
-    del core.jobMachine.GLOBAL_WM
+    del ilastik.core.jobMachine.GLOBAL_WM
 
     
 
