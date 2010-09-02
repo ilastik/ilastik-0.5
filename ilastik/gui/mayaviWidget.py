@@ -18,6 +18,49 @@ from enthought.mayavi.core.api import PipelineBase
 from enthought.mayavi.core.ui.api import MayaviScene, SceneEditor, MlabSceneModel
 
 
+
+
+################################################################################
+# Some logic to select 'mesh' and the data index when picking.
+from enthought.tvtk.api import tvtk
+
+
+
+################################################################################
+# Some logic to pick on click but no move
+class MvtPicker(object):
+    mouse_mvt = False
+
+    def __init__(self, picker, scene):
+        self.picker = picker
+        self.scene = scene
+        self.lastX = 0
+        self.lastY = 0
+        self.mouse_mvt = True
+
+    def on_button_press(self, obj, evt):
+        """
+        picking on double click
+        """
+        x, y = obj.GetEventPosition()
+        if not self.mouse_mvt and x == self.lastX and y == self.lastY:
+            self.picker.pick((x, y, 0), self.scene.renderer)
+        self.lastX = x
+        self.lastY = y
+        self.mouse_mvt = False
+
+    def on_mouse_move(self, obj, evt):
+        self.mouse_mvt = True
+
+    def on_button_release(self, obj, evt):
+        pass
+        
+
+
+
+
+
+
 ################################################################################
 #The actual visualization
 class Maya3DScene(HasTraits):
@@ -27,12 +70,14 @@ class Maya3DScene(HasTraits):
     plot = Instance(PipelineBase)
 
 
-    def __init__(self, item, raw):
+    def __init__(self, volumeEditor, item, raw):
         HasTraits.__init__(self)
-        
+        self.volumeEditor = volumeEditor
         self.item = item
         self.raw = raw
-        print self.item.shape, self.item.dtype
+        #print self.item.shape, self.item.dtype
+
+
         
 
     # When the scene is activated, or when the parameters are changed, we
@@ -83,6 +128,33 @@ class Maya3DScene(HasTraits):
             #self.scene.mlab.outline()
         else:
             self.plot.mlab_source.set(self.item.data[0,:,:,:,0])
+            
+        az, elev, dist, focal = self.scene.mlab.view()
+        
+        self.scene.mlab.view(-90, 175, dist, focal)  # <- top view
+        
+        self.scene.picker.pointpicker.add_observer('EndPickEvent', self.picker_callback)
+
+        self.mvt_picker = MvtPicker(self.scene.picker.pointpicker, self.scene)
+        
+        self.scene.interactor.add_observer('LeftButtonPressEvent', 
+                                        self.mvt_picker.on_button_press)
+        self.scene.interactor.add_observer('MouseMoveEvent', 
+                                        self.mvt_picker.on_mouse_move)
+        self.scene.interactor.add_observer('LeftButtonReleaseEvent', 
+                                        self.mvt_picker.on_button_release)
+
+    def picker_callback(self,picker_obj, evt):
+        print self.scene.mlab.view()
+        picker_obj = tvtk.to_tvtk(picker_obj)
+        position =  picker_obj.pick_position
+        self.volumeEditor.changeSlice(int(position[0]-1),0)
+        self.volumeEditor.changeSlice(int(position[1]-1),1)
+        self.volumeEditor.changeSlice(int(position[2]-1),2)
+        
+
+
+
 
 
     # The layout of the dialog created
@@ -96,12 +168,13 @@ class Maya3DScene(HasTraits):
 ################################################################################
 # The QWidget containing the visualization, this is pure PyQt4 code.
 class MayaviQWidget(QtGui.QWidget):
-    def __init__(self, item, raw):
+    def __init__(self, volumeEditor, item, raw):
         QtGui.QWidget.__init__(self)
+        self.volumeEditor = volumeEditor
         layout = QtGui.QVBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
-        self.visualization = Maya3DScene(item, raw)
+        self.visualization = Maya3DScene(self.volumeEditor, item, raw)
 
         # If you want to debug, beware that you need to remove the Qt
         # input hook.

@@ -179,9 +179,9 @@ class MainWindow(QtGui.QMainWindow):
 
             help_text = "Normally the default option should work for you\nhowever, in some cases it might be beneficial to try to use another rendering method:"
             if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview', 'Software without Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
             elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['Software + OpenGL Overview', 'Software without Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
             else:
                 dl = []
                 dl.append("")
@@ -471,7 +471,8 @@ class MainWindow(QtGui.QMainWindow):
 	pass
         
     def newFeatureDlg(self):
-        self.newFeatureDlg = FeatureDlg(self)
+        previewImage = self.project.dataMgr[self.activeImage].dataVol.data[0, 0, :, :, 0]
+        self.newFeatureDlg = FeatureDlg(self, previewImage)
         self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
         self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
         self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
@@ -1406,11 +1407,24 @@ class ClassificationPredict(object):
         if activeItem.prediction is not None:
 #            for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
 #                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            foregrounds = []
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
                 #create Overlay for prediction:
                 ov = OverlayItem(activeItem.dataVol.labels.descriptions[p_num-1].prediction,  color = QtGui.QColor.fromRgba(long(activeItem.dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name] = ov
+                ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Prediction/" + activeItem.dataVol.labels.descriptions[p_num-1].name]
+                foregrounds.append(ov)
+
+            import ilastik.core.overlays.thresHoldOverlay as tho
+            
+            ov = tho.ThresHoldOverlay(foregrounds, [])
+            if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] is None:
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"] = ov
+            else:
+                ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Classification/Segmentation"]
+                ov.setForegrounds(foregrounds)
+
 
             all =  range(len(activeItem.dataVol.labels.descriptions))
             not_predicted = numpy.setdiff1d(all, self.parent.project.dataMgr.classifiers[0].unique_vals - 1)

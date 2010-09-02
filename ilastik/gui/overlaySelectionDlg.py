@@ -1,7 +1,19 @@
+# -*- coding: utf-8 -*-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import sys
 from ilastik.core.overlayMgr import OverlayItem
+import qimage2ndarray
+from PyQt4.QtOpenGL import QGLWidget
+from ilastik.gui.iconMgr import ilastikIcons
+
+class ExtendedQLabel(QLabel):
+
+    def __init(self, parent):
+        QLabel.__init__(self, parent)
+
+    def mouseReleaseEvent(self, ev):
+        self.emit(SIGNAL('clicked()'))
 
 class MyTreeWidget(QTreeWidget):
     def __init__(self, *args):
@@ -34,7 +46,7 @@ class MyTreeWidgetItem(QTreeWidgetItem):
 
 
 class OverlaySelectionDialog(QDialog):
-    def __init__(self, cdict, forbiddenItems=[], singleSelection=True, parent=None):
+    def __init__(self, cdict, forbiddenItems=[], singleSelection=True, selectedItems=[], parent=None):
         QWidget.__init__(self, parent)
         
         # init
@@ -46,6 +58,7 @@ class OverlaySelectionDialog(QDialog):
         self.selectedItemList = []
         self.christophsDict = cdict
         self.forbiddenItems = forbiddenItems
+        self.selectedItems = selectedItems
         self.singleSelection = singleSelection
         
         # widgets and layouts
@@ -83,7 +96,40 @@ class OverlaySelectionDialog(QDialog):
         self.desc.setAlignment(Qt.AlignTop)
         self.desc.setMinimumWidth(200)
         self.desc.setMaximumWidth(300)
+        self.grview = QGraphicsView()
+        self.grview.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.grscene = QGraphicsScene()
+        tempLayoutZoom = QHBoxLayout(self)
+        self.min = ExtendedQLabel()
+        self.min.setPixmap(QPixmap(ilastikIcons.ZoomOut))
+        self.connect(self.min, SIGNAL('clicked()'), self.scaleDown)
+        self.zoomScaleLabel = ExtendedQLabel("100%")
+        self.connect(self.zoomScaleLabel, SIGNAL('clicked()'), self.clickOnLabel)
+        self.max = ExtendedQLabel()
+        self.max.setPixmap(QPixmap(ilastikIcons.ZoomIn))
+        self.connect(self.max, SIGNAL('clicked()'), self.scaleUp)
+        tempLayoutZoom.addStretch()
+        tempLayoutZoom.addWidget(self.min)
+        tempLayoutZoom.addWidget(self.zoomScaleLabel)
+        tempLayoutZoom.addWidget(self.max)
+        tempLayoutZoom.addStretch()
+        tempLayout = QHBoxLayout(self)
+        self.channelLabel = QLabel("Channel")
+        self.channelSpinbox = QSpinBox(self)
+        self.connect(self.channelSpinbox, SIGNAL('valueChanged(int)'), self.channelSpinboxValueChanged)
+        self.sliceLabel = QLabel("Slice")
+        self.sliceSpinbox = QSpinBox(self)
+        self.sliceValue = 0
+        self.connect(self.sliceSpinbox, SIGNAL('valueChanged(int)'), self.sliceSpinboxValueChanged)
+        tempLayout.addWidget(self.channelLabel)
+        tempLayout.addWidget(self.channelSpinbox)
+        tempLayout.addStretch()
+        tempLayout.addWidget(self.sliceLabel)
+        tempLayout.addWidget(self.sliceSpinbox)
         descLabelLayout.addWidget(self.desc)
+        descLabelLayout.addWidget(self.grview)
+        descLabelLayout.addLayout(tempLayoutZoom)
+        descLabelLayout.addLayout(tempLayout)
         descLabelGroupBox.setLayout(descLabelLayout)
         GroupsLayout.addWidget(treeGroupBoxLayout)
         GroupsLayout.addWidget(descLabelGroupBox)
@@ -99,12 +145,12 @@ class OverlaySelectionDialog(QDialog):
         
         if self.singleSelection == True:
             self.setWindowTitle("Overlay Singel Selection")
-            self.desc.setText("<b>Singel Selection Mode</b> <br /><br />In singel selction mode it is possible to choose only one overlay.<br />For overlay-description select an overlay.<br />To (un)check an overlay please <br /> -click on a checkbox<br />-select overlay and press the spacebar")
+            self.desc.setText("Singel Selection Mode")
             self.checkAllButton.setEnabled(False)
             self.uncheckAllButton.setEnabled(False)
         else:
             self.setWindowTitle("Overlay Multi Selection")
-            self.desc.setText("<b>Multi Selection Mode</b> <br /><br />In multi selction mode it is possible to choose several overlays.<br />For overlay-description select an overlay.<br />To (un)ckeck overlays please<br />-click on a checkbox<br />-slect several overlays with ctrl + mouse and press then the spacebar<br />-select several overlays with shift + click and press then the spacebar<br />")
+            self.desc.setText("Multi Selection Mode")
             self.treeWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
         
         self.layout.addLayout(GroupsLayout)
@@ -125,14 +171,20 @@ class OverlaySelectionDialog(QDialog):
             for i in range(len(split)):
                 if len(split) == 1:
                     newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
-                    newItemsChild.setCheckState(0, 0)
-                    self.treeWidget.addTopLevelItem(newItem)                   
+                    self.treeWidget.addTopLevelItem(newItemsChild)                   
                     boolStat = False
+                    if self.christophsDict[keys] in self.selectedItems:
+                        newItemsChild.setCheckState(0, 2)
+                    else:
+                        newItemsChild.setCheckState(0, 0)
                     
                 elif i+1 == len(split) and len(split) > 1:
                     newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
-                    newItemsChild.setCheckState(0, 0)
                     testItem.addChild(newItemsChild)
+                    if self.christophsDict[keys] in self.selectedItems:
+                        newItemsChild.setCheckState(0, 2)
+                    else:
+                        newItemsChild.setCheckState(0, 0)
                     
                 elif self.treeWidget.topLevelItemCount() == 0 and i+1 < len(split):
                     newItem = QTreeWidgetItem([split[i]])
@@ -185,13 +237,53 @@ class OverlaySelectionDialog(QDialog):
         if self.treeWidget.currentItem().childCount() == 0:
             child = self.treeWidget.currentItem()
             if child.parent():
-                parent = child.parent() 
-                self.desc.setText("<b>%s</b> <br /><br /> %s" % (parent.text(0), child.item.desc))
-            else: 
-                self.desc.setText("<b>%s</b> <br /><br /> %s" % ("No Group", child.item.desc))
+                parent = child.parent()
+                self.desc.setText(child.item.key)
+                self.channelSpinbox.setMaximum(child.item.data.shape[-1]-1)
+                self.sliceSpinbox.setMaximum(child.item.data.shape[1]-1)
+                imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
+                pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+                self.grscene.addPixmap(pixmapImage)
+                self.grview.setScene(self.grscene)
+                self.channelSpinbox.setValue(child.item.channel)
+            else:
+                self.desc.setText(child.item.key)
+                self.channelSpinbox.setMaximum(child.item.data.shape[-1]-1)
+                self.sliceSpinbox.setMaximum(child.item.data.shape[1]-1)
+                imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
+                pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+                self.grscene.addPixmap(pixmapImage)
+                self.grview.setScene(self.grscene)
         else:
             self.desc.setText(self.treeWidget.currentItem().text(0))
 
+
+    def scaleUp(self):
+        self.grview.scale(1.5, 1.5)
+
+    def clickOnLabel(self):
+        pass
+    
+
+    def scaleDown(self):
+        print self.grview.size()
+        self.grview.scale(.5, .5)
+
+    def channelSpinboxValueChanged(self, value):
+        child = self.treeWidget.currentItem()
+        imageArray = child.item.data[0, self.sliceValue, :, :, value]
+        pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+        self.grscene.addPixmap(pixmapImage)
+        self.grview.setScene(self.grscene)
+        child.item.channel = value
+
+    def sliceSpinboxValueChanged(self, value):
+        child = self.treeWidget.currentItem()
+        imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
+        pixmapImage = QPixmap(qimage2ndarray.gray2qimage(imageArray))
+        self.grscene.addPixmap(pixmapImage)
+        self.grview.setScene(self.grscene)
+        self.sliceValue = value
 
     def expandAll(self):
         it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.HasChildren)

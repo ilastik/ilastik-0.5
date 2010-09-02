@@ -32,6 +32,7 @@ Dataset Editor Dialog based on PyQt4
 """
 import qimage2ndarray.qimageview
 import math
+import ctypes 
 
 try:
     from OpenGL.GL import *
@@ -359,6 +360,14 @@ class VolumeEditor(QtGui.QWidget):
         self.drawManager = DrawManager(self)
 
         self.imageScenes = []
+
+        if self.openglOverview is True:
+            self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
+            self.overview = OverviewScene(self, self.image.shape[1:4])
+        else:
+            self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
+            
+        self.grid.addWidget(self.overview, 1, 1)
         
         self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
         self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
@@ -368,12 +377,6 @@ class VolumeEditor(QtGui.QWidget):
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
 
-        if self.openglOverview is True:
-            self.overview = OverviewScene(self, self.image.shape[1:4])
-        else:
-            self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
-            
-        self.grid.addWidget(self.overview, 1, 1)
 
         if self.image.shape[1] == 1:
             self.imageScenes[1].setVisible(False)
@@ -958,13 +961,19 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.volumeEditor = parent.volumeEditor
         #self.queue = deque(maxlen=1) #python 2.6
         self.queue = deque() #python 2.5
-
+        self.outQueue = deque()
         self.dataPending = threading.Event()
         self.dataPending.clear()
         self.newerDataPending = threading.Event()
         self.newerDataPending.clear()
         self.stopped = False
-        self.imagePatches = range(self.patchAccessor.patchCount)
+        if self.imageScene.openglWidget is not None:
+            self.contextPixmap = QtGui.QPixmap(2,2)
+            self.context = QtOpenGL.QGLContext(self.imageScene.openglWidget.context().format(), self.contextPixmap)
+            self.context.create(self.imageScene.openglWidget.context())
+        else:
+            self.context = None
+        
             
     def run(self):
         #self.context.makeCurrent()
@@ -989,9 +998,13 @@ class ImageSceneRenderThread(QtCore.QThread):
 
                         temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
 
-                        p = QtGui.QPainter(self.imageScene.scene.image)
-                        p.translate(bounds[0],bounds[2])
-                        #p = QtGui.QPainter(temp_image)
+                        if self.imageScene.openglWidget is None:
+                            p = QtGui.QPainter(self.imageScene.scene.image)
+                            p.translate(bounds[0],bounds[2])
+                        else:
+                            p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
+                        
+                        
                         p.drawImage(0,0,temp_image)
 
                         #add overlays
@@ -1008,27 +1021,26 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     image0.fill(origitem.color)
                                 else: #shold be QColor then !
                                     image0.fill(origitem.color.rgba())
-                                image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), False))
+                                if origitem.min is not None and origitem.max is not None:
+                                    normalize = (origitem.min, origitem.max)
+                                else:
+                                    normalize = False
+                                image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize))
 
                             p.drawImage(0,0, image0)
 
                         p.end()
+                        self.outQueue.append(patchNr)
+                        
+#                        if self.imageScene.scene.tex > -1:
+#                            self.context.makeCurrent()    
+#                            glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
+#                            b = self.imageScene.patchAccessor.getPatchBounds(patchNr,0)
+#                            glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imageScene.imagePatches[patchNr].bits().__int__()))
+#                            
+#                        self.outQueue.clear()
+                                       
 
-                        #self.imagePatches[patchNr] = temp_image
-
-#                        #draw the patch result to complete image
-#                        p = QtGui.QPainter(self.imageScene.scene.image)
-#                        p.drawImage(bounds[0],bounds[2],self.imagePatches[patchNr])
-#                        p.end()
-
-    #                    #this code would be cool, but unfortunately glTexSubimage doesnt work ??
-    #                    glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
-    #                    pixels = qimage2ndarray.byte_view(temp_image)
-    #                    print pixels.shape
-    #                    glTexSubImage2D(GL_TEXTURE_2D,0,bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2],GL_RGBA,GL_UNSIGNED_BYTE, pixels )
-
-                        #This signal is not needed anymore for now
-                        #self.emit(QtCore.SIGNAL("finishedPatch(int)"),patchNr)
             self.dataPending.clear()
             self.emit(QtCore.SIGNAL('finishedQueue()'))
 
@@ -1129,6 +1141,7 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
         self.widget = widget
         self.imageScene = parent
         self.image = image
+        self.images = []
         self.bgColor = QtGui.QColor(QtCore.Qt.black)
         self.tex = -1
 
@@ -1148,6 +1161,12 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
 
                 rect = QtCore.QRectF(self.image.rect())
+                tl = rect.topLeft()
+                br = rect.bottomRight()
+                
+                #flip coordinates since the texture is flipped
+                #this is due to qimage having another representation thatn OpenGL
+                rect.setCoords(tl.x(),br.y(),br.x(),tl.y())
                 
                 #switch corrdinates if qt version is small
                 painter.beginNativePainting()
@@ -1155,16 +1174,6 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
                 dc.drawTexture(rect,self.tex)
                 painter.endNativePainting()
-
-#            rect = rect.intersected(QtCore.QRectF(self.image.rect()))
-#
-#            patches =  self.imageScene.patchAccessor.getPatchesForRect(rect.x(),rect.y(),rect.x()+rect.width(),rect.y()+rect.height())
-#            #print self.imageScene.patchAccessor.patchCount
-#            #print patches
-#            for i in patches:
-#                bounds = self.imageScene.patchAccessor.getPatchBounds(i)
-#                if self.imageScene.textures[i] >= 0:
-#                    self.widget.drawTexture(QtCore.QRectF(QtCore.QRect(bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2])), self.imageScene.textures[i] )
 
         else:
             painter.setClipRect(rect)
@@ -1212,7 +1221,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.sliceExtent = imShape[2]
         self.drawing = False
         self.view = self
-        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_ARGB32)
+        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_RGB888) #Format_ARGB32
         self.border = None
         self.allBorder = None
 
@@ -1222,12 +1231,20 @@ class ImageScene( QtGui.QGraphicsView):
         self.openglWidget = None
         ##enable OpenGL acceleratino
         if self.volumeEditor.opengl is True:
-            self.openglWidget = QtOpenGL.QGLWidget()
+            self.openglWidget = QtOpenGL.QGLWidget(shareWidget = self.volumeEditor.sharedOpenGLWidget)
             self.setViewport(self.openglWidget)
             self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
+            
 
 
         self.scene = CustomGraphicsScene(self, self.openglWidget, self.image)
+        
+        if self.openglWidget is not None:
+            self.openglWidget.context().makeCurrent()
+            self.scene.tex = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+            
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
@@ -1242,13 +1259,11 @@ class ImageScene( QtGui.QGraphicsView):
 
         self.patchAccessor = PatchAccessor(imShape[0],imShape[1],64)
         print "PatchCount :", self.patchAccessor.patchCount
-        self.imagePatchItems = []
-        self.pixmapPatches = []
-        self.textures = []
-        for i in range(self.patchAccessor.patchCount + 1):
-            self.imagePatchItems.append(None)
-            self.pixmapPatches.append(None)
-            self.textures.append(-1)
+
+        self.imagePatches = range(self.patchAccessor.patchCount)
+        for i,p in enumerate(self.imagePatches):
+            b = self.patchAccessor.getPatchBounds(i, 0)
+            self.imagePatches[i] = QtGui.QImage(b[1]-b[0], b[3] -b[2], QtGui.QImage.Format_RGB888)
 
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
@@ -1402,14 +1417,19 @@ class ImageScene( QtGui.QGraphicsView):
 
         #if we are in opengl 2d render mode, quickly update the texture without any overlays
         #to get a fast update on slice change
-        if fastPreview is True and self.openglWidget is not None and len(image.shape) == 2:
-            self.openglWidget.context().makeCurrent()
+        if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
+            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
             t = self.scene.tex
-            self.scene.tex = -1
-            if t > -1:
-                self.openglWidget.deleteTexture(t)
             ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
-            self.scene.tex = self.openglWidget.bindTexture(ti, GL_TEXTURE_2D, GL_RGB)
+
+            if not t > -1:
+                self.scene.tex = glGenTextures(1)
+                glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+            else:
+                glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+            
             self.viewport().repaint()
 
         if self.volumeEditor.normalizeData:
@@ -1433,14 +1453,39 @@ class ImageScene( QtGui.QGraphicsView):
             self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
 
             #if we are in opengl 2d render mode, update the texture
+            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
             if self.openglWidget is not None:
-                self.openglWidget.context().makeCurrent()
-                t = self.scene.tex
-                self.scene.tex = -1
-                if t > -1:
-                    self.openglWidget.deleteTexture(t)
-                self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
-
+                for patchNr in self.thread.outQueue:
+                    t = self.scene.tex
+                    #self.scene.tex = -1
+                    if t > -1:
+                        #self.openglWidget.deleteTexture(t)
+                        pass
+                    else:
+                        #self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+                        self.scene.tex = glGenTextures(1)
+                        glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                        
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    b = self.patchAccessor.getPatchBounds(patchNr,0)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imagePatches[patchNr].bits().__int__()))
+            else:
+                    t = self.scene.tex
+                    #self.scene.tex = -1
+                    if t > -1:
+                        #self.openglWidget.deleteTexture(t)
+                        pass
+                    else:
+                        #self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+                        self.scene.tex = glGenTextures(1)
+                        glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                        
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, self.scene.image.width(), self.scene.image.height(), GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                    
+            self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
             if self.thread.queue.__len__() == 0:
                 for index, item in enumerate(self.tempImageItems):
@@ -1718,7 +1763,7 @@ class OverviewSceneDummy(QtGui.QWidget):
     
 class OverviewScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
-        QtOpenGL.QGLWidget.__init__(self)
+        QtOpenGL.QGLWidget.__init__(self, shareWidget = parent.sharedOpenGLWidget)
         self.sceneShape = shape
         self.volumeEditor = parent
         self.images = parent.imageScenes
@@ -1736,8 +1781,6 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 #self.initializeGL()
                 self.makeCurrent()
-                if self.tex[axis] > -1:
-                    self.deleteTexture(self.tex[axis])
                 self.paintGL(axis)
                 self.swapBuffers()
             
@@ -1746,8 +1789,6 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 for i in range(3):
                     self.makeCurrent()
-                    if self.tex[i] > -1:
-                        self.deleteTexture(self.tex[i])
                     self.paintGL(i)
                 self.swapBuffers()        
 
@@ -1827,9 +1868,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
             curCenter = -(( 1.0 * self.volumeEditor.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
             if axis is 2:
-                if self.tex[2] != -1:
-                    self.deleteTexture(self.tex[2])
-                self.tex[2] = self.bindTexture(self.images[2].scene.image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[2] = self.images[2].scene.tex
             if self.tex[2] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[2])
                 
@@ -1839,13 +1878,13 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
                 glBegin(GL_QUADS) #horizontal quad (e.g. first axis)
                 glColor3f(1.0,1.0,1.0)            # Set The Color To White
-                glTexCoord2d(0.0, 1.0)
-                glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
-                glTexCoord2d(1.0, 1.0)
-                glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
-                glTexCoord2d(1.0, 0.0)
-                glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
                 glTexCoord2d(0.0, 0.0)
+                glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
+                glTexCoord2d(1.0, 0.0)
+                glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
+                glTexCoord2d(1.0, 1.0)
+                glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
+                glTexCoord2d(0.0, 1.0)
                 glVertex3f( -ratio2w,curCenter, + ratio2h)        # Bottom Right Of The Quad
                 glEnd()
 
@@ -1870,9 +1909,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
             curCenter = (( (1.0 * self.volumeEditor.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
     
             if axis is 0:
-                if self.tex[0] != -1:
-                    self.deleteTexture(self.tex[0])
-                self.tex[0] = self.bindTexture(self.images[0].scene.image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[0] = self.images[0].scene.tex
             if self.tex[0] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[0])
 
@@ -1883,13 +1920,13 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
                 glBegin(GL_QUADS)
                 glColor3f(0.8,0.8,0.8)            # Set The Color To White
-                glTexCoord2d(1.0, 1.0)
-                glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
-                glTexCoord2d(0.0, 1.0)
-                glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
-                glTexCoord2d(0.0, 0.0)
-                glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
                 glTexCoord2d(1.0, 0.0)
+                glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
+                glTexCoord2d(0.0, 0.0)
+                glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
+                glTexCoord2d(0.0, 1.0)
+                glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
+                glTexCoord2d(1.0, 1.0)
                 glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
                 glEnd()
 
@@ -1909,9 +1946,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
     
             if axis is 1:
-                if self.tex[1] != -1:
-                    self.deleteTexture(self.tex[1])
-                self.tex[1] = self.bindTexture(self.images[1].scene.image, GL_TEXTURE_2D, GL_RGB)
+                self.tex[1] = self.images[1].scene.tex
             if self.tex[1] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[1])
     
@@ -1921,13 +1956,13 @@ class OverviewScene(QtOpenGL.QGLWidget):
 
                 glBegin(GL_QUADS)
                 glColor3f(0.6,0.6,0.6)            # Set The Color To White
-                glTexCoord2d(1.0, 1.0)
-                glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
-                glTexCoord2d(0.0, 1.0)
-                glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
-                glTexCoord2d(0.0, 0.0)
-                glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
                 glTexCoord2d(1.0, 0.0)
+                glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
+                glTexCoord2d(0.0, 0.0)
+                glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
+                glTexCoord2d(0.0, 1.0)
+                glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
+                glTexCoord2d(1.0, 1.0)
                 glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
                 glEnd()
 
