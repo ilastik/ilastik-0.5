@@ -1,11 +1,65 @@
 # -*- coding: utf-8 -*-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-import sys
+from PyQt4 import uic
+import sys, os
 from ilastik.core.overlayMgr import OverlayItem
 import qimage2ndarray
 from PyQt4.QtOpenGL import QGLWidget
 from ilastik.gui.iconMgr import ilastikIcons
+import ilastik.gui.overlayDialogs as overlayDialogs
+import ilastik
+
+class MyListWidgetItem(QListWidgetItem):
+    def __init__(self, item):
+        QListWidgetItem.__init__(self, item.name)
+        self.origItem = item
+
+class OverlayCreateSelectionDlg(QDialog):
+    def __init__(self, ilastikMain):
+        QWidget.__init__(self, ilastikMain)
+        self.ilastik = ilastikMain
+
+        #get the absolute path of the 'ilastik' module
+        ilastikPath = os.path.dirname(ilastik.__file__)
+        uic.loadUi(ilastikPath+'/gui/classifierSelectionDlg.ui', self)
+
+        self.connect(self.buttonBox, SIGNAL('accepted()'), self.accept)
+        self.connect(self.buttonBox, SIGNAL('rejected()'), self.reject)
+        #self.connect(self.settingsButton, SIGNAL('pressed()'), self.classifierSettings)
+
+        self.overlayDialogs = overlayDialogs.overlayClassDialogs.values()
+        
+        self.currentOverlay = self.overlayDialogs[0]
+        
+        j = 0
+        for i, o in enumerate(self.overlayDialogs):
+            self.listWidget.addItem(MyListWidgetItem(o))
+        self.listWidget.setCurrentRow(0)
+
+        self.connect(self.listWidget, SIGNAL('currentRowChanged(int)'), self.currentRowChanged)
+        
+        
+        self.settingsButton.setVisible(False)
+
+    def currentRowChanged(self, current):
+        o = self.currentOverlay = self.overlayDialogs[current]
+        
+        self.name.setText(o.name)
+        self.homepage.setText(o.homepage)
+        self.description.setText(o.description)
+        self.author.setText(o.author)
+
+
+    def exec_(self):
+        if QDialog.exec_(self) == QDialog.Accepted:
+            return self.currentOverlay
+        else:
+            return None
+
+
+
+
 
 class ExtendedQLabel(QLabel):
 
@@ -46,7 +100,7 @@ class MyTreeWidgetItem(QTreeWidgetItem):
 
 
 class OverlaySelectionDialog(QDialog):
-    def __init__(self, cdict, forbiddenItems=[], singleSelection=True, selectedItems=[], parent=None):
+    def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[], parent=None):
         QWidget.__init__(self, parent)
         
         # init
@@ -56,7 +110,8 @@ class OverlaySelectionDialog(QDialog):
         self.setLayout(self.layout)
         self.layoutWidget = QWidget(self)
         self.selectedItemList = []
-        self.christophsDict = cdict
+        self.ilastik = ilastik
+        self.christophsDict = cdict = ilastik.project.dataMgr[ilastik.activeImage].overlayMgr 
         self.forbiddenItems = forbiddenItems
         self.selectedItems = selectedItems
         self.singleSelection = singleSelection
@@ -77,13 +132,13 @@ class OverlaySelectionDialog(QDialog):
         treeButtonsLayout = QHBoxLayout()
         self.expandAllButton = QPushButton("Expand All")
         self.connect(self.expandAllButton, SIGNAL('clicked()'), self.expandAll)
-        self.checkAllButton = QPushButton("Check All")
+        self.checkAllButton = QPushButton("Create New")
         self.connect(self.checkAllButton, SIGNAL('clicked()'), self.checkAll)
-        self.uncheckAllButton = QPushButton("Uncheck All")
-        self.connect(self.uncheckAllButton, SIGNAL('clicked()'), self.uncheckAll)
+        #self.uncheckAllButton = QPushButton("Uncheck All")
+        #self.connect(self.uncheckAllButton, SIGNAL('clicked()'), self.uncheckAll)
         treeButtonsLayout.addWidget(self.expandAllButton)
         treeButtonsLayout.addWidget(self.checkAllButton)
-        treeButtonsLayout.addWidget(self.uncheckAllButton)
+        #treeButtonsLayout.addWidget(self.uncheckAllButton)
         treeButtonsLayout.addStretch()
         treeAndButtonsLayout.addWidget(self.treeWidget)
         treeAndButtonsLayout.addLayout(treeButtonsLayout)
@@ -293,15 +348,16 @@ class OverlaySelectionDialog(QDialog):
 
 
     def checkAll(self):
-        it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.NoChildren)
-        while (it.value()):
-            it.value().setCheckState(0, 2)
-            it.next()
-        it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.HasChildren)
-        while (it.value()):
-            it.value().setExpanded(True)
-            it.next()
-
+        dlg = OverlayCreateSelectionDlg(self.ilastik)
+        answer = dlg.exec_()
+        if answer is not None:
+            dlg_creation = answer(self.ilastik)
+            answer = dlg_creation.exec_()
+            if answer is not None:
+                name = QInputDialog.getText(self,"Edit Name", "Please Enter the name of the new Overlay:", text = "Custom Overlays/My Overlay" )
+                name = str(name[0])
+                self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr[name] = answer
+                self.cancel()
 
     def uncheckAll(self):
         it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.Checked)

@@ -416,7 +416,7 @@ class MainWindow(QtGui.QMainWindow):
 #            self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
 
     def on_segmentationWeights(self):
-        dlg = OverlaySelectionDialog(self.project.dataMgr[self.activeImage].overlayMgr,  singleSelection = True)
+        dlg = OverlaySelectionDialog(self,  singleSelection = True)
         answer = dlg.exec_()
         
         if len(answer) > 0:

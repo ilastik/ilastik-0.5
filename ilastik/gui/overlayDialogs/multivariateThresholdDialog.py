@@ -41,13 +41,17 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         
         self.buildDialog()
         
+        self.acceptButton = QtGui.QPushButton("Ok")
+        self.connect(self.acceptButton, QtCore.SIGNAL('clicked()'), self.accept)
+        self.mainlayout.addWidget(self.acceptButton)
+        
     def buildDialog(self):
         self.mainwidget.hide()
         self.mainlayout.removeWidget(self.mainwidget)
         self.mainwidget.close()
         del self.mainwidget
         self.mainwidget = QtGui.QWidget()
-        self.mainlayout.addWidget(self.mainwidget)      
+        self.mainlayout.insertWidget(0, self.mainwidget)      
         self.hbox = QtGui.QHBoxLayout()
         self.mainwidget.setLayout(self.hbox)
         
@@ -103,14 +107,14 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         
     
     def selectForegrounds(self):
-        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.project.dataMgr[self.ilastik.activeImage].overlayMgr, singleSelection = False)
+        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.ilastik, singleSelection = False)
         o = d.exec_()
         if len(o) > 0:
             self.overlayItem.setForegrounds(o)
         self.buildDialog()
     
     def selectBackgrounds(self):
-        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.project.dataMgr[self.ilastik.activeImage].overlayMgr, singleSelection = False)
+        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.ilastik, singleSelection = False)
         o = d.exec_()
         self.overlayItem.setBackgrounds(o)
         self.buildDialog()
@@ -129,3 +133,10 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         self.overlayItem.setThresholds(thresholds)
         self.volumeEditor.repaint()
         
+        
+        
+    def exec_(self):
+        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+            return self.overlayItem
+        else:
+            return None        
