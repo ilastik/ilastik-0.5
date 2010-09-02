@@ -120,10 +120,9 @@ class ProjectDlg(QtGui.QDialog):
                 theDataItem.isTraining = True
                 theDataItem.isTesting = True
 
-                self.ilastik.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-                self.ilastik.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
-
-                self.ilastik.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
+                #self.ilastik.ribbon.getTab('Projects').btnEdit.setEnabled(True)
+                #self.ilastik.ribbon.getTab('Projects').btnOptions.setEnabled(True)
+                #self.ilastik.ribbon.getTab('Projects').btnSave.setEnabled(True)
 
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(rowCount)
@@ -286,12 +285,6 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem.projects.append(self.parent.project)
         
-        #self.parent.ribbon.tabDict['Projects'].itemDict['Edit'].setEnabled(True)
-        #self.parent.ribbon.tabDict['Projects'].itemDict['Options'].setEnabled(True)
-
-        #self.parent.ribbon.tabDict['Projects'].itemDict['Save'].setEnabled(True)
-        #self.parent.ribbon.tabDict['Classification'].itemDict['Change Classifier'].setEnabled(True)
-
         self.accept()
 
         

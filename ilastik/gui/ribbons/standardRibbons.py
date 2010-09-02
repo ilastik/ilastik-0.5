@@ -1,4 +1,4 @@
-from ilastik.gui.ribbons.ribbonBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
 from ilastik.gui.iconMgr import ilastikIcons
 
@@ -125,6 +125,12 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnTrainPredict.setToolTip('Train and predict all images offline; this step is necessary for automation')
         self.btnExportClassifier.setToolTip('Save current classifier and its feature settings')
         self.btnClassifierOptions.setToolTip('Select a classifier and change its settings')
+        
+        self.btnSelectFeatures.setEnabled(True)
+        self.btnStartLive.setEnabled(False)
+        self.btnTrainPredict.setEnabled(False)
+        self.btnExportClassifier.setEnabled(False)
+        self.btnClassifierOptions.setEnabled(True)
         
         tl.addWidget(self.btnSelectFeatures)
         tl.addWidget(self.btnStartLive)
