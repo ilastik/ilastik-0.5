@@ -16,7 +16,10 @@ class SliderReceiver(QtCore.QObject):
 
 class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
     configuresClass = "ilastik.core.overlays.thresHoldOverlay.ThresHoldOverlay"
-    
+    name = "Thresholding Overlay"
+    author = "C. N. S."
+    homepage = "hci"
+    description = "lazy evaluation thresholding"    
 
             
     
