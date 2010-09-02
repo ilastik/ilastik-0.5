@@ -590,11 +590,8 @@ class MainWindow(QtGui.QMainWindow):
         
     
     def on_processObjects(self):
-        if self.connComp is not None:
-            self.connComp.start()
-        else:
-            text = "Select an overlay to connect first"
-            QtGui.QMessageBox.warning(self, 'Error', text, QtGui.QMessageBox.Ok)
+        self.connComp.start()
+        
         
         
 
@@ -955,7 +952,10 @@ class CC(object):
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
         overlay = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr[self.selection_key]
-        self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data)
+        if background==False:
+            self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data)
+        else:
+            self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data, self.parent.project.dataMgr.connCompBackgroundClasses)
         numberOfJobs = self.cc.numberOfJobs
         self.initCCProgress(numberOfJobs)
         self.cc.start()

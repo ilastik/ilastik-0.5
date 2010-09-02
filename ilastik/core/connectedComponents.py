@@ -6,6 +6,7 @@ Created on Fri Aug 27 15:31:09 2010
 """
 
 import numpy, vigra
+import random
 
 class ConnectedComponents():
     def __init__(self):
@@ -13,11 +14,16 @@ class ConnectedComponents():
         self.backgroundSet = set()
         
     def connect(self, inputData, background):
-        vol = self.transformToVigra(inputData, background)
-        res = vigra.analysis.labelVolume(vol)
-        res = res.swapaxes(0,2).view(vigra.ScalarVolume)
-        #res = vol
-        return res.reshape(res.shape + (1,))
+        vol, back_value = self.transformToVigra(inputData, background)
+        print back_value
+        res = None
+        if back_value is not None:
+            res = vigra.analysis.labelVolumeWithBackground(inputData, 6, back_value)
+        else:
+            res = vigra.analysis.labelVolume(vol)
+        if res is not None:
+            res = res.swapaxes(0,2).view(vigra.ScalarVolume)
+            return res.reshape(res.shape + (1,))
         
     def transformToVigra(self, vol, background):
         #if self.inputData is not None:
@@ -28,7 +34,14 @@ class ConnectedComponents():
         #vol = numpy.round(vol)
         if len(background)==0:
             print "Empty set"
-            return vigra.ScalarVolume(vol)
+            return vigra.ScalarVolume(vol), None
         else:
-            print "non empty set", len(background)
+            print "non empty set ", background
+            vol_merged = vol
+            back_value = random(background, 1)
+            for i in range(len(background)):
+                back_value_temp = background.pop()
+                ind = numpy.where(vol_merged==back_value_temp)
+                vol_merged[ind]=back_value
+            return vol_merged, back_value
         #return vol
