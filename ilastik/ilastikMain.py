@@ -398,10 +398,13 @@ class MainWindow(QtGui.QMainWindow):
                 self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
                 
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.backgroundOverlays)
-            self.labelWidget.setOverlayWidget(overlayWidget)    
+            self.labelWidget.setOverlayWidget(overlayWidget)
+            
             #create background overlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True)
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Connected Components/Background"] = ov
+            ov = self.project.dataMgr[self.activeImage].overlayMgr["Connected Components/Background"]
+            
             self.labelWidget.setLabelWidget(BackgroundWidget(self.project.backgroundMgr, self.project.dataMgr[self.activeImage].dataVol.background, self.labelWidget, ov))    
 #                
         elif self.labelWidget is not None:
@@ -695,6 +698,7 @@ class MainWindow(QtGui.QMainWindow):
         #the rest of such classes are initialized only on their start button...
         self.connComp = CC(self)
         self.connComp.selection_key = selection
+        self.project.dataMgr.connCompBackgroundKey = selection
         print selection
         #overlay = self.project.dataMgr[self.activeImage].overlayMgr[selection]
         #volume = overlay.data[0,:,:,:,0]

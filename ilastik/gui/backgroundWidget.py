@@ -76,23 +76,23 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.volumeLabels = volumeLabels
         self.colorTab = []
         self.volumeEditor = volumeEditor
-        self.labelColorTable = [QtGui.QColor(QtCore.Qt.black), QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
+        self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
         #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
         self.labelPropertiesChanged_callback = None
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         if len(volumeLabels.descriptions)>0:
             self.initFromVolumeLabels(volumeLabels)
         else:
-            self.addLabel("Background", 0, self.labelColorTable[0])
+            self.addLabel("Background", 1, self.labelColorTable[0])
             
     def currentItem(self):
         return self.listWidget.currentItem()
     
     def initFromVolumeLabels(self, volumelabel):
-        self.volumeLabel = volumelabel
-        if len(volumelabel.descriptions)>0:
-        #for index, item in enumerate(volumelabel.descriptions):
-            item = volumelabel.descriptions[0]
+        self.volumeLabels = volumelabel
+        #if len(volumelabel.descriptions)>0:
+        for index, item in enumerate(volumelabel.descriptions):
+            #item = volumelabel.descriptions[0]
             
             li = BackgroundItem(item.name,item.number, QtGui.QColor.fromRgba(long(item.color)))
             self.listWidget.addItem(li)
