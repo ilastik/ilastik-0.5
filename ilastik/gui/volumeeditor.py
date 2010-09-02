@@ -1417,8 +1417,8 @@ class ImageScene( QtGui.QGraphicsView):
 
         #if we are in opengl 2d render mode, quickly update the texture without any overlays
         #to get a fast update on slice change
-        if fastPreview is True and self.openglWidget is not None and len(image.shape) == 2:
-            self.openglWidget.context().makeCurrent()
+        if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
+            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
             t = self.scene.tex
             ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
 
@@ -1453,8 +1453,8 @@ class ImageScene( QtGui.QGraphicsView):
             self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
 
             #if we are in opengl 2d render mode, update the texture
+            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
             if self.openglWidget is not None:
-                self.openglWidget.context().makeCurrent()
                 for patchNr in self.thread.outQueue:
                     t = self.scene.tex
                     #self.scene.tex = -1
@@ -1470,8 +1470,22 @@ class ImageScene( QtGui.QGraphicsView):
                     glBindTexture(GL_TEXTURE_2D,self.scene.tex)
                     b = self.patchAccessor.getPatchBounds(patchNr,0)
                     glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imagePatches[patchNr].bits().__int__()))
+            else:
+                    t = self.scene.tex
+                    #self.scene.tex = -1
+                    if t > -1:
+                        #self.openglWidget.deleteTexture(t)
+                        pass
+                    else:
+                        #self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+                        self.scene.tex = glGenTextures(1)
+                        glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                        
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, self.scene.image.width(), self.scene.image.height(), GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
                     
-                self.thread.outQueue.clear()
+            self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
             if self.thread.queue.__len__() == 0:
                 for index, item in enumerate(self.tempImageItems):
