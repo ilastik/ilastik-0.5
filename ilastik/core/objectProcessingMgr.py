@@ -15,9 +15,10 @@ from PyQt4 import QtCore
 from ilastik.core import jobMachine
 
 class ConnectedComponentsThread(QtCore.QThread):
-    def __init__(self, dataMgr, image, connector = connectedComponents.ConnectedComponents(), connectorOptions = None):
+    def __init__(self, dataMgr, image, background=set(), connector = connectedComponents.ConnectedComponents(), connectorOptions = None):
         QtCore.QThread.__init__(self, None)
         self.data = image
+        self.backgroundSet = background
         self.dataMgr = dataMgr
         self.count = 0
         self.numberOfJobs = self.data.shape[0]
@@ -26,8 +27,8 @@ class ConnectedComponentsThread(QtCore.QThread):
         self.connectorOptions = connectorOptions
         self.jobMachine = jobMachine.JobMachine()
 
-    def connect(self, i, data):
-        self.result[i] = self.connector.connect(data)
+    def connect(self, i, data, backgroundSet):
+        self.result[i] = self.connector.connect(data, backgroundSet)
         self.count += 1
 
     def run(self):
@@ -39,7 +40,7 @@ class ConnectedComponentsThread(QtCore.QThread):
             self.result = range(0,self.data.shape[0])
             jobs = []
             for i in range(self.data.shape[0]):
-                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, self.data[i,:,:,:,0]])
+                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, self.data[i,:,:,:,0], self.backgroundSet])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)
@@ -55,3 +56,4 @@ class ConnectedComponentsThread(QtCore.QThread):
             print e
             traceback.print_exc(file=sys.stdout)
             self.dataMgr.featureLock.release()
+            

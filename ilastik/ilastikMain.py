@@ -242,6 +242,7 @@ class MainWindow(QtGui.QMainWindow):
     
     def createRibbons(self):                     
         from ilastik.gui.ribbons.standardRibbons import ProjectTab
+        from ilastik.gui.ribbons import connectedComponentsTab
         
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
         
@@ -252,6 +253,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbonsTabs = IlastikTabBase.__subclasses__()
 
         for tab in self.ribbonsTabs:
+            print "Adding tab ", tab.name
             self.ribbon.addTab(tab(self), tab.name)
         
    
@@ -302,7 +304,7 @@ class MainWindow(QtGui.QMainWindow):
 
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
             
-        elif self.ribbon.tabText(index) == "Object Processing":
+        elif self.ribbon.tabText(index) == "Connected Components":
             #move out the history
             #TODO: it won't work this way once the objects have history too
             if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
@@ -588,7 +590,11 @@ class MainWindow(QtGui.QMainWindow):
         
     
     def on_processObjects(self):
-        self.connComp.start()
+        if self.connComp is not None:
+            self.connComp.start()
+        else:
+            text = "Select an overlay to connect first"
+            QtGui.QMessageBox.warning(self, 'Error', text, QtGui.QMessageBox.Ok)
         
         
 
@@ -943,19 +949,18 @@ class CC(object):
         self.ilastik = parent
         #self.start()
 
-    def start(self):
-        self.parent.ribbon.tabDict['Object Processing'].itemDict['CC'].setEnabled(False)
-        
+    def start(self, background = False):
+        self.parent.ribbon.getTab('Connected Components').btnCC.setEnabled(False)
+        self.parent.ribbon.getTab('Connected Components').btnCCBack.setEnabled(False)
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
         overlay = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr[self.selection_key]
-        print self.selection_key
         self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data)
         numberOfJobs = self.cc.numberOfJobs
         self.initCCProgress(numberOfJobs)
         self.cc.start()
         self.timer.start(200)
-
+        
     def initCCProgress(self, numberOfJobs):
         statusBar = self.parent.statusBar()
         self.progressBar = QtGui.QProgressBar()
@@ -982,11 +987,11 @@ class CC(object):
         #temp = activeItem.dataVol.segmentation[0, :, :, :, 0]
         
         #create Overlay for connected components:
-        if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"] is None:
+        if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] is None:
             ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"] = ov
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] = ov
         else:
-            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Object Processing/CC"].data = DataAccessor(self.cc.result)
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"].data = DataAccessor(self.cc.result)
         self.ilastik.labelWidget.repaint()
        
 
@@ -994,7 +999,8 @@ class CC(object):
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)
         self.parent.statusBar().hide()
-        self.parent.ribbon.tabDict['Object Processing'].itemDict['CC'].setEnabled(True)
+        self.parent.ribbon.tabDict['Connected Components'].btnCC.setEnabled(True)
+        self.parent.ribbon.tabDict['Connected Components'].btnCCBack.setEnabled(True)
 
 
 if __name__ == "__main__":
