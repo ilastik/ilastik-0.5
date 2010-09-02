@@ -22,6 +22,9 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         print 'Changed to Tab: ', self.__class__.name
+    
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -109,6 +112,9 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         print 'Changed to Tab: ', self.__class__.name
+    
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -175,6 +181,9 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         print 'Changed to Tab: ', self.__class__.name
+    
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -225,6 +234,9 @@ class AutomateTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         print 'Changed to Tab: ', self.__class__.name
         
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
+        
     def _initContent(self):
         
         tl = QtGui.QHBoxLayout()      
@@ -254,6 +266,9 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         print 'Changed to Tab: ', self.__class__.name
+        
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
         
     def _initContent(self):
 
