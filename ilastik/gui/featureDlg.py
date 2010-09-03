@@ -50,18 +50,19 @@ class FeatureDlg(QtGui.QDialog):
             self.oldFeatureItems = self.parent.project.featureMgr.featureItems
         else:
             self.oldFeatureItems = []
-
-        circle = QtGui.QGraphicsEllipseItem(48, 48, 5, 5)
-        circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
-        
-        self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
-        self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.grscene = QtGui.QGraphicsScene()
-        pixmapImage = QtGui.QPixmap(qimage2ndarray.gray2qimage(previewImage))
-        self.grscene.addPixmap(pixmapImage)
-        self.grscene.addItem(circle)
-        self.graphicsView.setScene(self.grscene)
+            
+        if previewImage is not None:
+            circle = QtGui.QGraphicsEllipseItem(48, 48, 5, 5)
+            circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
+            
+            self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+            self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+            self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+            self.grscene = QtGui.QGraphicsScene()
+            pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
+            self.grscene.addPixmap(pixmapImage)
+            self.grscene.addItem(circle)
+            self.graphicsView.setScene(self.grscene)
 
 
     def initDlg(self):
