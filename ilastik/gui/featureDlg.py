@@ -34,7 +34,7 @@ from ilastik.core.utilities import irange, debug
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
-#from ilastik.core.featureMgr import FeatureGroups
+from ilastik.core.featureMgr import FeatureGroups
 
 
 class FeatureDlg(QtGui.QDialog):
