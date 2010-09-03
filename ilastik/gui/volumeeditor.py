@@ -1024,6 +1024,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
                                     elif olditemdata.dtype == 'uint64':
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+                                    elif olditemdata.dtype == 'int32':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+                                    elif olditemdata.dtype == 'int64':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
                                     elif olditemdata.dtype == 'uint16':
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
                                     else:
