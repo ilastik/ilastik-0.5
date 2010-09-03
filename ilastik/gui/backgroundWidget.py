@@ -170,7 +170,7 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
-            self.volumeLabel.descriptions[index.row()].color = color.rgba()
+            self.volumeLabels.descriptions[index.row()].color = color.rgba()
             
 #            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
             if self.labelPropertiesChanged_callback is not None:

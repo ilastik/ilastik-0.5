@@ -18,7 +18,7 @@ class ConnectedComponents():
         print back_value
         res = None
         if back_value is not None:
-            res = vigra.analysis.labelVolumeWithBackground(inputData, 6, back_value)
+            res = vigra.analysis.labelVolumeWithBackground(vol, 6, float(back_value))
         else:
             res = vigra.analysis.labelVolume(vol)
         if res is not None:
@@ -38,10 +38,10 @@ class ConnectedComponents():
         else:
             print "non empty set ", background
             vol_merged = vol
-            back_value = random(background, 1)
+            back_value = random.sample(background, 1)
             for i in range(len(background)):
                 back_value_temp = background.pop()
                 ind = numpy.where(vol_merged==back_value_temp)
-                vol_merged[ind]=back_value
-            return vol_merged, back_value
+                vol_merged[ind]=float(back_value[0])
+                return vigra.ScalarVolume(vol_merged), back_value[0]
         #return vol
