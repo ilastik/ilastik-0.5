@@ -215,6 +215,7 @@ class FeatureGroups(object):
     def __init__(self):
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
         self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
+        self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.groups = {}
         self.createGroups()
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]

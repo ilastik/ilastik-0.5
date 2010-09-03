@@ -32,6 +32,10 @@ import vigra, numpy
 from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
 
 class SeedMgr(object):
+    """
+    manages the seeds of all dataItems and stuff.
+    seeds (as labels) should be synchronized across all dataItems because it is a good idead.
+    """
     def __init__(self,  dataMgr):
         self.dataMgr = dataMgr
         
