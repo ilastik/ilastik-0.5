@@ -61,6 +61,14 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.parent.connComp.start(False)
         
     def on_btnCCBack_clicked(self):
-        self.parent.connComp.start(True)    
+        self.parent.connComp.start(True)
+    
+class CCColorTable(object):
+    def __init__(self):
+        pass
+    
+    def __getitem__(self, key):
+        col = key%256
+        return col
     
             

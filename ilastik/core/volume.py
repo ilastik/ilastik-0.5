@@ -251,7 +251,6 @@ class VolumeLabels():
 
         for index,item in enumerate(self.descriptions):
             colorTab[item.number] = long(item.color)
-            print item.name, item.color, item.number
         return colorTab
         
     @staticmethod    

@@ -44,7 +44,8 @@ class ConnectedComponentsThread(QtCore.QThread):
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)
-            
+            #for i in range(50):
+            #    print self.result[0, i, i, 24, 0]
             #for i in range(10):
             #if self.data[0,i,i,0,0] != self.result[0,i,i,0,0]:
             #        print "not equal at", i

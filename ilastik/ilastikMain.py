@@ -242,7 +242,6 @@ class MainWindow(QtGui.QMainWindow):
     
     def createRibbons(self):                     
         from ilastik.gui.ribbons.standardRibbons import ProjectTab
-        from ilastik.gui.ribbons import connectedComponentsTab
         
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
         
@@ -988,19 +987,26 @@ class CC(object):
         
         #create Overlay for connected components:
         if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] is None:
-            ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
+            colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
+            ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] = ov
         else:
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"].data = DataAccessor(self.cc.result)
         self.ilastik.labelWidget.repaint()
        
-
-        
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)
         self.parent.statusBar().hide()
         self.parent.ribbon.tabDict['Connected Components'].btnCC.setEnabled(True)
         self.parent.ribbon.tabDict['Connected Components'].btnCCBack.setEnabled(True)
+    
+    class CCColorTable(object):
+        def __init__(self):
+            pass
+    
+        def __getitem__(self, key):
+            col = key%256
+            return col
 
 
 if __name__ == "__main__":
