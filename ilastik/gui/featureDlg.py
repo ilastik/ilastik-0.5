@@ -34,6 +34,7 @@ from ilastik.core.utilities import irange, debug
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
+#from ilastik.core.featureMgr import FeatureGroups
 
 
 class FeatureDlg(QtGui.QDialog):
@@ -42,27 +43,25 @@ class FeatureDlg(QtGui.QDialog):
         self.parent = parent
         self.ilastik = parent
         self.initDlg()
-        #self.grscene = QtGui.QGraphicsScene()
-        #pixmapImage = QtGui.QPixmap(qimage2ndarray.gray2qimage(previewImage))
-        #self.grscene.addPixmap(pixmapImage)
-        #self.graphicsView.setScene(self.grscene)
+
         if self.parent.project.featureMgr is not None:
             self.oldFeatureItems = self.parent.project.featureMgr.featureItems
         else:
             self.oldFeatureItems = []
 
-        circle = QtGui.QGraphicsEllipseItem(48, 48, 5, 5)
-        circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
-        
+        #self.groupMaskSizesList = FeatureGroups.groupMaskSizes
         self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.grscene = QtGui.QGraphicsScene()
         pixmapImage = QtGui.QPixmap(qimage2ndarray.gray2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
-        self.grscene.addItem(circle)
+        self.circle = self.grscene.addEllipse(48, 48, 10, 10)
+        self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
         self.graphicsView.setScene(self.grscene)
-
+        self.graphicsView.viewport().installEventFilter(self)
+        self.graphicsView.setViewportUpdateMode(0)
+        self.size
 
     def initDlg(self):
 
@@ -130,8 +129,10 @@ class FeatureDlg(QtGui.QDialog):
             size = len(item.text()) * 11
             self.featureTable.setColumnWidth(i, size)
 
-    def drawCircle(self):
-        pass
+
+    def testSome(self):
+        print "moving"
+
 
     def on_featureTable_itemSelectionChanged(self):
         tempItemSelectedList = []
@@ -196,7 +197,15 @@ class FeatureDlg(QtGui.QDialog):
                 self.deselectAllTableItems()
                 self.boolSelection = False
         if event.type() == QtCore.QEvent.HoverMove:
-            self.label.setText("Size: " + str(self.featureTable.horizontalHeader().logicalIndexAt(event.pos())))
+            self.size = self.featureTable.horizontalHeader().logicalIndexAt(event.pos()) *10
+            self.label.setText("Size: " + str(self.size))
+            self.grscene.removeItem(self.circle)
+            self.circle = self.grscene.addEllipse(48 - (self.size/2), 48 - (self.size/2), self.size, self.size)
+            self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+            self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
+        if event.type() == QtCore.QEvent.MouseMove:
+            self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+
         return False
 
 
