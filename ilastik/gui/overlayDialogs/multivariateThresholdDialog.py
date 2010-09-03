@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui
 import overlayDialogBase
 import ilastik.gui.overlaySelectionDlg
+from ilastik.core.overlays.thresHoldOverlay import ThresHoldOverlay 
 
 class SliderReceiver(QtCore.QObject):
     def __init__(self, dialog, index, oldValue):
@@ -15,16 +16,26 @@ class SliderReceiver(QtCore.QObject):
 
 class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
     configuresClass = "ilastik.core.overlays.thresHoldOverlay.ThresHoldOverlay"
-    
+    name = "Thresholding Overlay"
+    author = "C. N. S."
+    homepage = "hci"
+    description = "lazy evaluation thresholding"    
 
             
     
-    def __init__(self, instance, ilastik):
+    def __init__(self, ilastik, instance = None):
         QtGui.QDialog.__init__(self)
-        self.overlayItem = instance
+        self.ilastik = ilastik
+        if instance != None:
+            self.overlayItem = instance
+        else:
+            ovm = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr
+            k = ovm.keys()[0]
+            ov = ovm[k]
+            self.overlayItem = ThresHoldOverlay([ov], [])
+
         self.volumeEditor = ilastik.labelWidget
         self.project = ilastik.project
-        self.ilastik = ilastik
         self.mainlayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainlayout)
         self.mainwidget = QtGui.QWidget()
@@ -33,13 +44,17 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         
         self.buildDialog()
         
+        self.acceptButton = QtGui.QPushButton("Ok")
+        self.connect(self.acceptButton, QtCore.SIGNAL('clicked()'), self.accept)
+        self.mainlayout.addWidget(self.acceptButton)
+        
     def buildDialog(self):
         self.mainwidget.hide()
         self.mainlayout.removeWidget(self.mainwidget)
         self.mainwidget.close()
         del self.mainwidget
         self.mainwidget = QtGui.QWidget()
-        self.mainlayout.addWidget(self.mainwidget)      
+        self.mainlayout.insertWidget(0, self.mainwidget)      
         self.hbox = QtGui.QHBoxLayout()
         self.mainwidget.setLayout(self.hbox)
         
@@ -95,14 +110,14 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         
     
     def selectForegrounds(self):
-        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.project.dataMgr[self.ilastik.activeImage].overlayMgr, singleSelection = False)
+        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.ilastik, singleSelection = False)
         o = d.exec_()
         if len(o) > 0:
             self.overlayItem.setForegrounds(o)
         self.buildDialog()
     
     def selectBackgrounds(self):
-        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.project.dataMgr[self.ilastik.activeImage].overlayMgr, singleSelection = False)
+        d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.ilastik, singleSelection = False)
         o = d.exec_()
         self.overlayItem.setBackgrounds(o)
         self.buildDialog()
@@ -121,3 +136,10 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         self.overlayItem.setThresholds(thresholds)
         self.volumeEditor.repaint()
         
+        
+        
+    def exec_(self):
+        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+            return self.overlayItem
+        else:
+            return None        
