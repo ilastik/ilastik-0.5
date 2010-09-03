@@ -1014,6 +1014,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                             itemdata = origitem.data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                             if origitem.colorTable != None:         
                                 if itemdata.dtype != 'uint8':
+                                    """
+                                    if the item is larger we take the values module 256
+                                    since QImage supports only 8Bit Indexed images
+                                    """
                                     olditemdata = itemdata              
                                     itemdata = numpy.ndarray(olditemdata.shape, 'uint8')
                                     if olditemdata.dtype == 'uint32':
