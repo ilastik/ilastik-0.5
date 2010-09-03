@@ -34,7 +34,7 @@ from ilastik.core.utilities import irange, debug
 from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
-from ilastik.core.featureMgr import FeatureGroups
+from ilastik.core.featureMgr import ilastikFeatureGroups
 
 
 class FeatureDlg(QtGui.QDialog):
@@ -49,12 +49,12 @@ class FeatureDlg(QtGui.QDialog):
         else:
             self.oldFeatureItems = []
             
-        #self.groupMaskSizesList = FeatureGroups.groupMaskSizes
+        self.groupMaskSizesList = ilastikFeatureGroups.groupMaskSizes
         self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.grscene = QtGui.QGraphicsScene()
-        pixmapImage = QtGui.QPixmap(qimage2ndarray.gray2qimage(previewImage))
+        pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
         self.circle = self.grscene.addEllipse(48, 48, 10, 10)
         self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
@@ -197,7 +197,7 @@ class FeatureDlg(QtGui.QDialog):
                 self.deselectAllTableItems()
                 self.boolSelection = False
         if event.type() == QtCore.QEvent.HoverMove:
-            self.size = self.featureTable.horizontalHeader().logicalIndexAt(event.pos()) *10
+            self.size = self.groupMaskSizesList[self.featureTable.horizontalHeader().logicalIndexAt(event.pos())]
             self.label.setText("Size: " + str(self.size))
             self.grscene.removeItem(self.circle)
             self.circle = self.grscene.addEllipse(48 - (self.size/2), 48 - (self.size/2), self.size, self.size)
