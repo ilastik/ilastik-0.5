@@ -56,9 +56,10 @@ class FeatureDlg(QtGui.QDialog):
         self.grscene = QtGui.QGraphicsScene()
         pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
-        self.circle = self.grscene.addEllipse(48, 48, 10, 10)
+        self.circle = self.grscene.addEllipse(96, 96, 0, 0)
         self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
         self.graphicsView.setScene(self.grscene)
+        self.graphicsView.scale(2, 2)
         self.graphicsView.viewport().installEventFilter(self)
         self.graphicsView.setViewportUpdateMode(0)
         self.size
