@@ -48,7 +48,7 @@ class FeatureDlg(QtGui.QDialog):
             self.oldFeatureItems = self.parent.project.featureMgr.featureItems
         else:
             self.oldFeatureItems = []
-
+            
         #self.groupMaskSizesList = FeatureGroups.groupMaskSizes
         self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
