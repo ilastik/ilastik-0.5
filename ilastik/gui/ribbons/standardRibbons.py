@@ -155,7 +155,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnClassifierOptions, QtCore.SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
         
     def on_btnSelectFeatures_clicked(self):
-        self.parent.newFeatureDlg = FeatureDlg(self.parent)
+        preview = self.parent.project.dataMgr[0].dataVol.data[0,0,:,:,0:3]
+        self.parent.newFeatureDlg = FeatureDlg(self.parent, preview)
         
     def on_btnStartLive_clicked(self, state):
         self.parent.on_classificationInteractive(state)

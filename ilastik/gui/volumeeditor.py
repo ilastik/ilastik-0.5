@@ -1016,9 +1016,27 @@ class ImageSceneRenderThread(QtCore.QThread):
                             p.setOpacity(origitem.alpha)
                             itemcolorTable = origitem.colorTable
                             itemdata = origitem.data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-                            if origitem.colorTable != None:
+                            if origitem.colorTable != None:         
+                                if itemdata.dtype != 'uint8':
+                                    """
+                                    if the item is larger we take the values module 256
+                                    since QImage supports only 8Bit Indexed images
+                                    """
+                                    olditemdata = itemdata              
+                                    itemdata = numpy.ndarray(olditemdata.shape, 'uint8')
+                                    if olditemdata.dtype == 'uint32':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+                                    elif olditemdata.dtype == 'uint64':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+                                    elif olditemdata.dtype == 'uint16':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
+                                    else:
+                                        raise TypeError(str(olditemdata.dtype) + ' <- unsupported image data type (in the rendering thread, you know) ')
+                                   
+                                       
                                 image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                image0.setColorTable(origitem.colorTable)
+                                image0.setColorTable(origitem.colorTable[:])
+                                
                             else:
                                 image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
                                 if isinstance(origitem.color,  int):

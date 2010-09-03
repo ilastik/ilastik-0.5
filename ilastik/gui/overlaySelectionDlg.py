@@ -318,7 +318,7 @@ class OverlaySelectionDialog(QDialog):
         self.grview.scale(1.5, 1.5)
 
     def clickOnLabel(self):
-        pass
+        self.grview.scale(1, 1)
     
 
     def scaleDown(self):
