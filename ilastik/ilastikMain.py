@@ -1027,7 +1027,8 @@ class CC(object):
         
         #create Overlay for connected components:
         if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] is None:
-            colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
+            #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
+            colortab = self.makeColorTab()
             ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] = ov
         else:
@@ -1040,14 +1041,34 @@ class CC(object):
         self.parent.ribbon.tabDict['Connected Components'].btnCC.setEnabled(True)
         self.parent.ribbon.tabDict['Connected Components'].btnCCBack.setEnabled(True)
     
-    class CCColorTable(object):
-        def __init__(self):
-            pass
-    
-        def __getitem__(self, key):
-            col = key%256
-            return col
-
+    def makeColorTab(self):
+        sublist = []
+        sublist.append(QtGui.qRgb(0, 0, 0))
+        sublist.append(QtGui.qRgb(255, 255, 255))
+        sublist.append(QtGui.qRgb(255, 0, 0))
+        sublist.append(QtGui.qRgb(0, 255, 0))
+        sublist.append(QtGui.qRgb(0, 0, 255))
+        
+        sublist.append(QtGui.qRgb(255, 255, 0))
+        sublist.append(QtGui.qRgb(0, 255, 255))
+        sublist.append(QtGui.qRgb(255, 0, 255))
+        sublist.append(QtGui.qRgb(255, 105, 180)) #hot pink!
+        
+        sublist.append(QtGui.qRgb(102, 205, 170)) #dark aquamarine
+        sublist.append(QtGui.qRgb(165,  42,  42)) #brown        
+        sublist.append(QtGui.qRgb(0, 0, 128)) #navy
+        sublist.append(QtGui.qRgb(255, 165, 0)) #orange
+        
+        sublist.append(QtGui.qRgb(173, 255,  47)) #green-yellow
+        sublist.append(QtGui.qRgb(128,0, 128)) #purple
+        sublist.append(QtGui.qRgb(192, 192, 192)) #silver
+        #sublist.append(QtGui.qRgb(240, 230, 140)) #khaki
+        colorlist = []
+        for i in range(0, 16):
+            colorlist.extend(sublist)
+        print len(colorlist)
+        return colorlist
+        
 
 if __name__ == "__main__":
     app = QtGui.QApplication.instance() #(sys.argv)
