@@ -268,12 +268,13 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         
         if len(answer) > 0:
             import ilastik.core.overlays.selectionOverlay
-            ov = ilastik.core.overlays.selectionOverlay.SelectionOverlay(answer[0].data, color = long(QtGui.QColor(255,0,0).rgba()))
+            ov = ilastik.core.overlays.selectionOverlay.SelectionOverlay(answer[0].data, color = long(QtGui.QColor(0,255,255).rgba()))
             self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Objects/Selection Result"] = ov
             ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Objects/Selection Result"]
             
-            
-            self.parent.labelWidget.overlayWidget.addOverlayRef(answer[0].getRef())
+            ref = answer[0].getRef()
+            ref.setAlpha(0.4)
+            self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
             
             self.parent.project.objectMgr.setInputData(answer[0].data)
             
