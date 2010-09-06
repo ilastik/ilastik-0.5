@@ -1280,6 +1280,7 @@ class ClassificationPredict(object):
     def updateClassificationProgress(self):
         val = self.classificationPredict.count
         self.myClassificationProgressBar.setValue(val)
+        self.parent.statusBar().show()
         if not self.classificationPredict.isRunning():
             self.classificationTimer.stop()
 
