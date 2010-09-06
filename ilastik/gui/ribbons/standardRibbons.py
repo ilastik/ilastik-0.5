@@ -10,6 +10,8 @@ from ilastik.gui.featureDlg import FeatureDlg
 from ilastik.gui.segmentorSelectionDlg import SegmentorSelectionDlg
 from ilastik.gui.batchProcess import BatchProcess
 from ilastik.gui.shortcutmanager import shortcutManager
+import ilastik.core.overlays
+from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
     name = 'Project'
@@ -223,6 +225,61 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
             self.parent.project.segmentor = answer
             self.parent.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
 
+
+class ObjectsTab(IlastikTabBase, QtGui.QWidget):
+    name = 'Objects'
+    
+    def __init__(self, parent=None):
+        IlastikTabBase.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
+        
+        self._initContent()
+        self._initConnects()
+        
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
+    
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
+        
+    def _initContent(self):
+        tl = QtGui.QHBoxLayout()
+        
+        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Weights')
+        self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'3D')
+        
+        self.btnChooseWeights.setToolTip('Choose the edge weights for the segmentation task')
+        self.btnSegment.setToolTip('Segment the image into foreground/background')
+        
+        tl.addWidget(self.btnChooseWeights)
+        tl.addWidget(self.btnSegment)
+        tl.addStretch()
+        
+        self.setLayout(tl)
+        
+    def _initConnects(self):
+        self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
+        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
+        
+        
+    def on_btnChooseWeights_clicked(self):
+        dlg = OverlaySelectionDialog(self.parent,  singleSelection = True)
+        answer = dlg.exec_()
+        
+        if len(answer) > 0:
+            import ilastik.core.overlays.selectionOverlay
+            ov = ilastik.core.overlays.selectionOverlay.SelectionOverlay(answer[0].data, color = long(QtGui.QColor(255,0,0).rgba()))
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Objects/Selection Result"] = ov
+            ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Objects/Selection Result"]
+            self.parent.labelWidget.overlayWidget.addOverlayRef(answer[0].getRef())
+            self.parent.project.objectMgr.setInputData(answer[0].data)
+                
+            self.parent.labelWidget.repaint()
+
+    def on_btnSegment_clicked(self):
+        pass
+                    
+
 class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     name = "Connected Components"
     def __init__(self, parent=None):
@@ -281,8 +338,10 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnCCBack_clicked(self):
         self.parent.connComp.start(True)
+        
     
 
+            
 class AutomateTab(IlastikTabBase, QtGui.QWidget):
     name = 'Automate'
     def __init__(self, parent=None):

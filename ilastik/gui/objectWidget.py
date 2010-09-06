@@ -34,10 +34,9 @@ from ilastik.core.overlayMgr import OverlayItem
 import numpy
         
 class ObjectListItem(QtGui.QListWidgetItem):
-    def __init__(self, name, key, color):
-        #there used to be number, don't see what it's for
+    def __init__(self, name , number, color):
         QtGui.QListWidgetItem.__init__(self, name)
-        self.key = key
+        self.number = number
         self.visible = True
         self.setColor(color)
         #self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
@@ -57,70 +56,66 @@ class ObjectListItem(QtGui.QListWidgetItem):
 
 
 class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
-    def __init__(self,  objectMgr,  volumeLabels,  volumeEditor,  overlayItem):
+    def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
         QtGui.QGroupBox.__init__(self,  "Objects")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)
         self.overlayItem = overlayItem
 
-        #Object selector
-        self.addObjectButton = QtGui.QPushButton("Add an Object")
-        self.addObjectButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createObject)
+        #Label selector
+        self.addLabelButton = QtGui.QPushButton("Create Object")
+        self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
 
-        self.layout().addWidget(self.addObjectButton)
+        self.layout().addWidget(self.addLabelButton)
         self.layout().addWidget(self.listWidget)
         
         self.volumeEditor = volumeEditor
-        self.objectMgr = objectMgr
+        self.labelMgr = labelMgr
         self.listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.listWidget.connect(self.listWidget, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.volumeLabels = volumeLabels
         self.colorTab = []
         self.items = []
         self.volumeEditor = volumeEditor
-        self.objectColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
+        self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
         #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
-        self.objectPropertiesChanged_callback = None
+        self.labelPropertiesChanged_callback = None
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.initFromVolumeLabels(volumeLabels)
-            
+    
     def currentItem(self):
         return self.listWidget.currentItem()
     
-    def initFromObjectDict(self, objectdict):
-        #objects are stored as a dict, with key being the object number in the overlay and the
-        #value being object properties (for now just name and color)
-        self.objectDict = objectdict
-        for k, v in self.objectDict.iteritems():
-            li = ObjectListItem(v[0], k, v[1])
+    def initFromVolumeLabels(self, volumelabel):
+        self.volumeLabel = volumelabel
+        for index, item in enumerate(volumelabel.descriptions):
+            li = ObjectListItem(item.name,item.number, QtGui.QColor.fromRgba(long(item.color)))
             self.listWidget.addItem(li)
             self.items.append(li)
         self.buildColorTab()
         
         #just select the first item in the list so we have some selection
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(0,0), QtGui.QItemSelectionModel.ClearAndSelect)
-
-
-    def changeText(self, text):
-        key = self.currentItem().key
-        self.objectdict[key] = (text, self.currentItem().color)
         
-    def createObject(self):
-        name = "Object " + len(self.items).__str__()
+    def changeText(self, text):
+        self.volumeLabel.descriptions[self.currentRow()].name = text
+        
+    def createLabel(self):
+        name = "Seed " + len(self.items).__str__()
         number = len(self.items)
-        if number > len(self.objectColorTable):
+        if number > len(self.labelColorTable):
             color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
         else:
-            color = self.objectColorTable[number]
-        #number +=1
-        self.addLabel(name, None, color)
+            color = self.labelColorTable[number]
+        number +=1
+        self.addLabel(name, number, color)
         self.buildColorTab()
         
-    def addObject(self, objectName, objectNumber, color):
-        self.objectMgr.addObject(objectName,  objectNumber,  color.rgba())
+    def addLabel(self, labelName, labelNumber, color):
+        self.labelMgr.addLabel(labelName,  labelNumber,  color.rgba())
         
-        object =  ObjectListItem(objectName, objectNumber, color)
+        label =  ObjectListItem(labelName, labelNumber, color)
         self.items.append(label)
         self.listWidget.addItem(label)
         self.buildColorTab()
@@ -128,25 +123,23 @@ class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         #select the last item in the last
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(self.listWidget.model().rowCount()-1,0), QtGui.QItemSelectionModel.ClearAndSelect)
         
+    def removeLabel(self, item,  index):
+        self.labelMgr.removeLabel(item.number)
         
-    def removeObject(self, item,  index):
-        self.objectMgr.removeObject(item.key)
-        #TODO: objects are not in history yet?
-        #self.volumeEditor.history.removeLabel(item.number)
+        self.volumeEditor.history.removeLabel(item.number)
+        for ii, it in enumerate(self.items):
+            if it.number > item.number:
+                it.number -= 1
         self.items.remove(item)
-        #it = self.listWidget.takeItem(index.row())
-        #for ii, it in enumerate(self.items):
-        #    if it.number > item.number:
-        #        it.number -= 1
-        #del it
+        it = self.listWidget.takeItem(index.row())
+        del it
         self.buildColorTab()
-        self.volumeEditor.emit(QtCore.SIGNAL("objectRemoved(int)"), item.key)
+        self.volumeEditor.emit(QtCore.SIGNAL("objectRemoved(int)"), item.number)
         self.volumeEditor.repaint()
         
 
     def buildColorTab(self):
         self.overlayItem.colorTable = self.colorTab = self.volumeLabels.getColorTab()
-
 
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)
@@ -168,23 +161,22 @@ class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
-            self.removeObject(item,  index)
+            self.removeLabel(item,  index)
         elif action == toggleHideAction:
             self.buildColorTab()
             item.toggleVisible()
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
-            #self.volumeLabel.descriptions[index.row()].color = color.rgba()
-            self.objectdict[self.currentItem().key] = (self.currentItem().name, color.rgba())
+            self.volumeLabel.descriptions[index.row()].color = color.rgba()
+            
 #            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
-            if self.objectPropertiesChanged_callback is not None:
-                self.objectPropertiesChanged_callback()
+            if self.labelPropertiesChanged_callback is not None:
+                self.labelPropertiesChanged_callback()
             self.buildColorTab()
             self.volumeEditor.repaint()
 
-    def nextObject(self):
-        print "next object"
+    def nextLabel(self):
         i = self.listWidget.selectedIndexes()[0].row()
         if i+1 == self.listWidget.model().rowCount():
             i = self.listWidget.model().index(0,0)
@@ -192,8 +184,7 @@ class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             i = self.listWidget.model().index(i+1,0)
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
 
-    def prevObject(self):
-        print "prev object"
+    def prevLabel(self):
         i = self.listWidget.selectedIndexes()[0].row()
         if i >  0:
             i = self.listWidget.model().index(i-1,0)

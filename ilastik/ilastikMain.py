@@ -78,6 +78,7 @@ from ilastik.gui.shortcutmanager import *
 
 from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
+from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
@@ -99,6 +100,8 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
+        
+        self.previousTabText = ""
         
         self.labelWidget = None
         self.activeImage = 0
@@ -284,13 +287,36 @@ class MainWindow(QtGui.QMainWindow):
         
         self.ribbon.widget(index).on_activation()
         
-        if self.ribbon.tabText(index) == "Segmentation":
-            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
+        
+        if self.previousTabText == "Classification":
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
                 self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
+
+            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
                 
+        elif self.previousTabText == "Segmentation":
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
+                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
+            
             if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
+        elif self.previousTabText == "Connected Components":
+            self.project.dataMgr[self.activeImage].dataVol.background.history = self.labelWidget.history
+
+            if self.project.dataMgr[self.activeImage].dataVol.background.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.background.history
+                    
+        elif self.previousTabText == "Objects":
+            self.project.dataMgr[self.activeImage].dataVol.objects.history = self.labelWidget.history
             
+            if self.project.dataMgr[self.activeImage].dataVol.objects.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.objects.history
+            
+                
+            
+        
+        if self.ribbon.tabText(index) == "Segmentation":
             self.labelWidget.history.volumeEditor = self.labelWidget
 
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.seedOverlays)
@@ -302,17 +328,32 @@ class MainWindow(QtGui.QMainWindow):
             ov = self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"]
 
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
+    
+    
+    
+    
+        elif self.ribbon.tabText(index) == "Objects":
+
+            self.labelWidget.history.volumeEditor = self.labelWidget
+
+            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.objectOverlays)
+            self.labelWidget.setOverlayWidget(overlayWidget)
+            
+            
+            #create ObjectsOverlay
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.objects.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+            self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"] = ov
+            ov = self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"]
+            
+            self.labelWidget.setLabelWidget(ObjectListWidget(self.project.objectMgr,  self.project.dataMgr[self.activeImage].dataVol.objects,  self.labelWidget,  ov))
+
             
         elif self.ribbon.tabText(index) == "Connected Components":
-            #move out the history
-            #TODO: it won't work this way once the objects have history too
-            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
-                self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
-            else:
-                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
+
                 
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.backgroundOverlays)
             self.labelWidget.setOverlayWidget(overlayWidget)
+            
             
             #create background overlay
             ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
@@ -322,11 +363,7 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.setLabelWidget(BackgroundWidget(self.project.backgroundMgr, self.project.dataMgr[self.activeImage].dataVol.background, self.labelWidget, ov))    
 #                
         elif self.labelWidget is not None:
-            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
-                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
-            
-            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+
             self.labelWidget.history.volumeEditor = self.labelWidget
             
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays)
@@ -342,7 +379,10 @@ class MainWindow(QtGui.QMainWindow):
             
         if self.labelWidget is not None:
             self.labelWidget.repaint()     
-            
+        
+        
+        self.previousTabText = str(self.ribbon.tabText(index))
+        
     def saveProject(self):
         if hasattr(self,'project'):
             if self.project.filename is not None:
