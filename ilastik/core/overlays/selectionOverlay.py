@@ -52,7 +52,7 @@ class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
             colorTab.append(long(0))
 
         for index,item in enumerate(self.selectedNumbers):
-                colorTab[item] = self.color
+                colorTab[item % 256] = self.color
 
         self.colorTable = colorTab
         

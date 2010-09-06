@@ -83,7 +83,7 @@ class ObjectMgr(object):
         self.inputData = data
         
     def newLabels(self,  newLabels):
-        #self.dataMgr.updateSeeds(newLabels)
+        repaint = False
         if self.inputData is not None:
             try:
                for nl in newLabels:
@@ -97,9 +97,11 @@ class ObjectMgr(object):
                     selector = [indic[0][index],indic[1][index],indic[2][index],indic[3][index],indic[4][index]]
                     if nl.erasing == False:
                         if not self.inputData[selector] in self.selectedObjects:
+                            repaint = True
                             self.selectedObjects.append(self.inputData[selector])
                     else:
                         if self.inputData[selector] in self.selectedObjects:
+                            repaint = True
                             self.selectedObjects.remove(self.inputData[selector])
             except Exception, e:
                 print e
