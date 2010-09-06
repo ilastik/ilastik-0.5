@@ -280,7 +280,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Train and Predict'], QtCore.SIGNAL('clicked()'), self.on_classificationTrain)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'], QtCore.SIGNAL('clicked(bool)'), self.on_classificationInteractive)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Classifier Options'], QtCore.SIGNAL('clicked(bool)'), self.on_changeClassifier)
-        self.connect(self.ribbon.tabDict['Classification'].itemDict['Import Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_importClassifier)
+        self.connect(self.ribbon.tabDict['Classification'].itemDict['Apply Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_importClassifier)
         self.connect(self.ribbon.tabDict['Classification'].itemDict['Export Classifier'], QtCore.SIGNAL('clicked(bool)'), self.on_exportClassifier)
         self.connect(self.ribbon.tabDict['Automate'].itemDict['Batchprocess'], QtCore.SIGNAL('clicked(bool)'), self.on_batchProcess)
         self.connect(self.ribbon.tabDict['Help'].itemDict['Shortcuts'], QtCore.SIGNAL('clicked(bool)'), self.on_shortcutsDlg)
@@ -530,12 +530,31 @@ class MainWindow(QtGui.QMainWindow):
         global LAST_DIRECTORY
         fileName = str(QtGui.QFileDialog.getOpenFileName(self, "Import Classifier", LAST_DIRECTORY, "Classifier File (*.h5 *.ilc)"))
         
-        hf = h5py.File(fileName,'r')
-        h5featGrp = hf['features']
-        self.project.featureMgr.importFeatureItems(h5featGrp)
-        hf.close()
+        if not hasattr(self.project, 'featureMgr'):
+            self.project.featureMgr = featureMgr.FeatureMgr(self.project.dataMgr)
+            
+        if self.project.featureMgr is None:
+            self.project.featureMgr = featureMgr.FeatureMgr(self.project.dataMgr)
         
-        self.project.dataMgr.importClassifiers(fileName)
+        try:
+            hf = h5py.File(fileName,'r')
+            h5featGrp = hf['features']
+            self.project.featureMgr.importFeatureItems(h5featGrp)
+            hf.close()
+            
+            self.featureCompute()
+        except Exception as e:
+            QtGui.QMessageBox.warning(self, 'Error', 'Import of features failed: ' + str(e), QtGui.QMessageBox.Ok)
+            raise e
+        
+        
+        try: 
+            self.project.dataMgr.importClassifiers(fileName)
+        except Exception as e:
+            QtGui.QMessageBox.warning(self, 'Error', 'Import of classifier failed: ' + str(e), QtGui.QMessageBox.Ok)
+            raise e
+            
+        self.on_classificationPredict()
     
     def on_exportClassifier(self):
         global LAST_DIRECTORY
@@ -1273,6 +1292,7 @@ class ClassificationPredict(object):
         if activeItem.prediction is not None:
 #            for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
 #                item.prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            print self.parent.project.dataMgr.classifiers[0].unique_vals
             for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
                 activeItem.dataVol.labels.descriptions[p_num-1].prediction[:,:,:,:] = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
 

@@ -47,7 +47,7 @@ from ilastik.core.volume import Volume as Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
-
+from ilastik.core.classifiers.classifierRandomForest import ClassifierRandomForest
 #from ilastik.core import dataImpex
 
 import traceback
@@ -674,6 +674,22 @@ class DataMgr():
         
         if len(self.classifiers) == 0:
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
+        
+        
+        h5file = h5py.File(str(fileName),'w')
+        h5file.create_group('classifiers')
+        h5file.close()
+        
+        for i, c in enumerate(self.classifiers):
+            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
+            print "Write Random Forest # %03d -> %d" % (i,tmp)
+            
+    def importClassifiers(self, fileName):
+        hf = h5py.File(fileName,'r')
+        classifiers = []
+        for cid in hf['classifiers']:
+            classifiers.append(ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
+        self.classifiers = classifiers
         
         
         

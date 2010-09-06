@@ -1,4 +1,5 @@
 from classifierBase import *
+import h5py
 
 class ClassifierRandomForest(ClassifierBase):
     #human readable information
@@ -59,6 +60,11 @@ class ClassifierRandomForest(ClassifierBase):
         classifier = cls()
         classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
         classifier.treeCount = classifier.RF.treeCount
+        
+        fh = h5py.File(fileName,'r')
+        unique_vals = fh['classifiers']['rf_000']['_ext_param']['labels'].value
+        classifier.unique_vals = unique_vals
+        fh.close
         return classifier
 
 
