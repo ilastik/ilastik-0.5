@@ -91,6 +91,14 @@ class OverlayItemReference(object):
             return self.overlayItem.max
         raise AttributeError,  name
         
+        
+    def setAlpha(self, alpha):
+        self.alpha = alpha
+        
+        
+    def setColor(self, color):
+        self.color = color
+        
     def remove(self):
         self.overlayItem = None
         

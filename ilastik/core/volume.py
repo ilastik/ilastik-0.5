@@ -64,7 +64,7 @@ class DataAccessor():
                 tempShape = tempShape + (1,)
             
             if len(self.data.shape) != 5:
-                self.data = self.data.reshape(tempShape)
+                self.data.shape = tempShape #self.data.reshape(tempShape)
                 
             self.channels = self.data.shape[-1]
 
@@ -279,13 +279,15 @@ class VolumeLabels():
             return None
         
 class Volume():
-    def __init__(self,  data,  labels = None,  seeds = None,  uncertainty = None,  segmentation = None):
+    def __init__(self,  data,  labels = None,  seeds = None,  uncertainty = None,  segmentation = None, objects = None):
         self.data = data
         self.labels = labels
         self.seeds = seeds
+        self.objects = objects
         
         self.seedOverlays = []
         self.labelOverlays = []
+        self.objectOverlays = []
         
         self.uncertainty = uncertainty
         self.segmentation = segmentation
@@ -297,6 +299,10 @@ class Volume():
         if self.seeds is None:
             l = numpy.zeros(self.data.shape[0:-1] + (1, ),  'uint8')
             self.seeds = VolumeLabels(l)
+
+        if self.objects is None:
+            l = numpy.zeros(self.data.shape[0:-1] + (1, ),  'uint8')
+            self.objects = VolumeLabels(l)
 
         if self.uncertainty is None:
             self.uncertainty = numpy.zeros(self.data.shape[0:-1],  'uint8')

@@ -70,6 +70,7 @@ from ilastik.gui.shortcutmanager import *
 
 from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
+from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor
@@ -90,6 +91,8 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of activeImage during thread stuff
+        
+        self.previousTabText = ""
         
         self.labelWidget = None
         self.activeImage = 0
@@ -274,13 +277,31 @@ class MainWindow(QtGui.QMainWindow):
         
         self.ribbon.widget(index).on_activation()
         
-        if self.ribbon.tabText(index) == "Segmentation":
+        
+        if self.previousTabText == "Classification":
             if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
                 self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
                 
+        elif self.previousTabText == "Segmentation":
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
+                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
+            
+            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+            
+        elif self.previousTabText == "Objects":
+            self.project.dataMgr[self.activeImage].dataVol.objects.history = self.labelWidget.history
+            
+            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+            
+                
+            
+        
+        if self.ribbon.tabText(index) == "Segmentation":
             if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
-            
+
             self.labelWidget.history.volumeEditor = self.labelWidget
 
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.seedOverlays)
@@ -293,13 +314,26 @@ class MainWindow(QtGui.QMainWindow):
 
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
             
+        elif self.ribbon.tabText(index) == "Objects":
+            if self.project.dataMgr[self.activeImage].dataVol.objects.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.objects.history
+
+            self.labelWidget.history.volumeEditor = self.labelWidget
+
+            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.objectOverlays)
+            self.labelWidget.setOverlayWidget(overlayWidget)
+            
+            #create SeedsOverlay
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.objects.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+            self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"] = ov
+            ov = self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"]
+            
+            self.labelWidget.setLabelWidget(ObjectListWidget(self.project.objectMgr,  self.project.dataMgr[self.activeImage].dataVol.objects,  self.labelWidget,  ov))
             
         elif self.labelWidget is not None:
-            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
-                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
-            
             if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+                
             self.labelWidget.history.volumeEditor = self.labelWidget
             
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays)
@@ -315,7 +349,10 @@ class MainWindow(QtGui.QMainWindow):
             
         if self.labelWidget is not None:
             self.labelWidget.repaint()     
-            
+        
+        
+        self.previousTabText = str(self.ribbon.tabText(index))
+        
     def saveProject(self):
         if hasattr(self,'project'):
             if self.project.filename is not None:
@@ -431,39 +468,41 @@ class MainWindow(QtGui.QMainWindow):
             
             print numpy.max(volume),  numpy.min(volume)
     
-            real_weights = numpy.zeros(volume.shape + (3,))        
+            #real_weights = numpy.zeros(volume.shape + (3,))        
             
-            borderIndicator = QtGui.QInputDialog.getItem(None, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness",  "Gradient"],  editable = False)
+            borderIndicator = QtGui.QInputDialog.getItem(None, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness"],  editable = False)
             borderIndicator = str(borderIndicator[0])
             
             sigma = 1.0
             normalizePotential = True
             #TODO: this , until now, only supports gray scale and 2D!
             if borderIndicator == "Brightness":
-                weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                real_weights[:,:,:,0] = weights[:,:,:]
-                real_weights[:,:,:,1] = weights[:,:,:]
-                real_weights[:,:,:,2] = weights[:,:,:]
+                weights = volume[:,:,:].view(vigra.ScalarVolume)
+                #weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
+                #weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
+                #real_weights[:,:,:,0] = weights[:,:,:]
+                #eal_weights[:,:,:,1] = weights[:,:,:]
+                #real_weights[:,:,:,2] = weights[:,:,:]
             elif borderIndicator == "Darkness":
-                weights = vigra.filters.gaussianSmoothing((255 - volume[:,:,:]).swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                real_weights[:,:,:,0] = weights[:,:,:]
-                real_weights[:,:,:,1] = weights[:,:,:]
-                real_weights[:,:,:,2] = weights[:,:,:]
+                weights = (255 - volume[:,:,:]).view(vigra.ScalarVolume)
+                #weights = vigra.filters.gaussianSmoothing((255 - volume[:,:,:]).swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
+                #weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
+                #real_weights[:,:,:,0] = weights[:,:,:]
+                #real_weights[:,:,:,1] = weights[:,:,:]
+                #real_weights[:,:,:,2] = weights[:,:,:]
             elif borderIndicator == "Gradient":
-                weights = numpy.abs(vigra.filters.gaussianGradient(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma))
+                weights = vigra.filters.gaussianGradientMagnitude(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
                 weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                real_weights[:] = weights[:]
+                #real_weights[:] = weights[:]
     
             if normalizePotential == True:
-                min = numpy.min(real_weights)
-                max = numpy.max(real_weights)
-                weights = (real_weights - min)*(255.0 / (max - min))
-                real_weights[:] = weights[:]
+                min = numpy.min(weights)
+                max = numpy.max(weights)
+                weights = (weights - min)*(255.0 / (max - min))
+                #real_weights[:] = weights[:]
     
-            self.project.segmentor.setupWeights(real_weights)
-            self.project.dataMgr[self.activeImage].segmentationWeights = real_weights
+            self.project.segmentor.setupWeights(weights)
+            self.project.dataMgr[self.activeImage].segmentationWeights = weights
             
 
 

@@ -106,4 +106,5 @@ if ok:
             return labelVolume
 
         def setupWeights(self, weights):
-            self.weights = (255 - numpy.average(weights, axis = 3)).astype(numpy.uint8).swapaxes(0,2).view(vigra.ScalarVolume)
+            #self.weights = (255 - numpy.average(weights, axis = 3)).astype(numpy.uint8).swapaxes(0,2).view(vigra.ScalarVolume)
+            self.weights = (255 - weights).astype(numpy.uint8).view(vigra.ScalarVolume)
