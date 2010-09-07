@@ -38,10 +38,11 @@ class ConnectedComponents():
         else:
             print "non empty set ", background
             vol_merged = vol
-            back_value = random.sample(background, 1)
-            for i in range(len(background)):
+            back_value = background.pop()
+            #for i in range(len(background)):
+            while len(background)>0:
                 back_value_temp = background.pop()
                 ind = numpy.where(vol_merged==back_value_temp)
-                vol_merged[ind]=float(back_value[0])
-                return vigra.ScalarVolume(vol_merged), back_value[0]
+                vol_merged[ind]=float(back_value)
+            return vigra.ScalarVolume(vol_merged), back_value
         #return vol
