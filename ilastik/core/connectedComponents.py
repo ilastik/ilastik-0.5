@@ -26,14 +26,7 @@ class ConnectedComponents():
             return res.reshape(res.shape + (1,))
         
     def transformToVigra(self, vol, background):
-        #if self.inputData is not None:
-            #that's just for the time until segmentation is there
-            #and the testing has to be done on prediction
-            #TODO: REMOVE IT BEFORE PUSHING TO ILASTIK!!!
-        #vol = vol/255.    
-        #vol = numpy.round(vol)
         if len(background)==0:
-            print "Empty set"
             return vigra.ScalarVolume(vol), None
         else:
             print "non empty set ", background

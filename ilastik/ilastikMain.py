@@ -51,7 +51,7 @@ import time
 
 
 from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex, objectProcessingMgr
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
 from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
 from ilastik.gui.featureDlg import FeatureDlg
 
@@ -994,9 +994,9 @@ class CC(object):
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
         overlay = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr[self.selection_key]
         if background==False:
-            self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data)
+            self.cc = connectedComponentsMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data)
         else:
-            self.cc = objectProcessingMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data, self.parent.project.dataMgr.connCompBackgroundClasses)
+            self.cc = connectedComponentsMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data, self.parent.project.dataMgr.connCompBackgroundClasses)
         numberOfJobs = self.cc.numberOfJobs
         self.initCCProgress(numberOfJobs)
         self.cc.start()
