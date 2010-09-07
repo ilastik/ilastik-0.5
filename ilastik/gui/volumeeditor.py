@@ -385,7 +385,11 @@ class VolumeEditor(QtGui.QWidget):
 
         self.gridWidget = QtGui.QWidget()
         self.gridWidget.setLayout(self.grid)
-        self.layout.addWidget(self.gridWidget)
+        tempLayout = QtGui.QVBoxLayout(self)
+        tempLayout.addWidget(self.gridWidget)
+        self.posLabel = QtGui.QLabel("Mouse")
+        tempLayout.addWidget(self.posLabel)
+        self.layout.addLayout(tempLayout)
 
         #right side toolbox
         self.toolBox = QtGui.QWidget()
@@ -1649,8 +1653,12 @@ class ImageScene( QtGui.QGraphicsView):
         self.mousePos = mousePos = self.mousePos = self.mapToScene(event.pos())
         x = mousePos.x()
         y = mousePos.y()
+        posX = 0
+        posY = 0
+        posZ = 0
 
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
+            
             #should we hide the cursor only when entering once ? performance?
             #self.setCursor(self.hiddenCursor)
             
@@ -1658,6 +1666,10 @@ class ImageScene( QtGui.QGraphicsView):
             #self.crossHairCursor.setPos(x,y)
             
             if self.axis == 0:
+                posY = y
+                posZ = x
+                posX = self.volumeEditor.selSlices[0]
+                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
                 
@@ -1665,12 +1677,20 @@ class ImageScene( QtGui.QGraphicsView):
                 zView.showYPosition(x)
                 
             elif self.axis == 1:
+                posY = posX = self.volumeEditor.selSlices[1]
+                posZ = y
+                posX = x
+                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
                 
                 zView.showXPosition(x)
                 xView.setVisible(False)
             else:
+                posY = y
+                posZ = posX = self.volumeEditor.selSlices[2]
+                posX = x
+                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 
