@@ -58,6 +58,9 @@ class FeatureDlg(QtGui.QDialog):
         self.grscene.addPixmap(pixmapImage)
         self.circle = self.grscene.addEllipse(96, 96, 0, 0)
         self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
+        self.sizeText = self.grscene.addText("")
+        self.sizeText.setDefaultTextColor(QtGui.QColor(255,0,0))
+        self.sizeText.scale(.5, .5)
         self.graphicsView.setScene(self.grscene)
         self.graphicsView.scale(2, 2)
         self.graphicsView.viewport().installEventFilter(self)
@@ -198,14 +201,17 @@ class FeatureDlg(QtGui.QDialog):
                 self.deselectAllTableItems()
                 self.boolSelection = False
         if event.type() == QtCore.QEvent.HoverMove:
-            self.size = self.groupMaskSizesList[self.featureTable.horizontalHeader().logicalIndexAt(event.pos())]
-            self.label.setText("Size: " + str(self.size))
+            i = self.featureTable.horizontalHeader().logicalIndexAt(event.pos())
+            self.size = self.groupMaskSizesList[i]
             self.grscene.removeItem(self.circle)
             self.circle = self.grscene.addEllipse(48 - (self.size/2), 48 - (self.size/2), self.size, self.size)
             self.circle.setPos(self.graphicsView.mapToScene(0, 0))
             self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
+            self.sizeText.setPlainText("Size: " + str(self.size))
+            self.sizeText.setPos(self.graphicsView.mapToScene(0, 0))
         if event.type() == QtCore.QEvent.MouseMove:
             self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+            self.sizeText.setPos(self.graphicsView.mapToScene(0, 0))
 
         return False
 
