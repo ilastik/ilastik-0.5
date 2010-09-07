@@ -223,7 +223,7 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         answer = dialog.exec_()
         if answer != None:
             self.parent.project.segmentor = answer
-            self.parent.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
+            self.parent.project.segmentor.setupWeights(self.parent.project.dataMgr[self.parent.activeImage].segmentationWeights)
 
 
 class ObjectsTab(IlastikTabBase, QtGui.QWidget):

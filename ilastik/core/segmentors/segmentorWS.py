@@ -76,4 +76,5 @@ if ok:
 
 
         def setupWeights(self, weights):
-            self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)
+            #self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)
+            self.weights = weights.astype(numpy.uint8)

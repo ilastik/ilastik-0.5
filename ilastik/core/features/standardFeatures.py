@@ -100,7 +100,7 @@ class StructureTensorEigenvalues(FeatureBase):
 
 class GaussianGradientMagnitude(FeatureBase):
     name = "Gradient Magnitude of Gaussian"
-    groups = ['Texture']
+    groups = ['Edge']
     numOutputChannels2d = 1
     numOutputChannels3d = 1
 
