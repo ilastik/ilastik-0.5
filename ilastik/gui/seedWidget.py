@@ -82,6 +82,9 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.initFromVolumeLabels(volumeLabels)
     
+        if self.listWidget.model().rowCount() == 0:
+            self.addLabel("Background", 1, QtGui.QColor(255,0,0))   
+    
     def currentItem(self):
         return self.listWidget.currentItem()
     

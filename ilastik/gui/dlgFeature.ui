@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>758</width>
-    <height>347</height>
+    <width>782</width>
+    <height>285</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -86,16 +86,6 @@ p, li { white-space: pre-wrap; }
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="label">
-          <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
-          </property>
-          <property name="text">
-           <string>Size</string>
-          </property>
-         </widget>
         </item>
        </layout>
       </widget>

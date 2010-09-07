@@ -54,7 +54,9 @@ if ok:
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         bias = Float(0.8)
-        biasedLabel = Int(2)
+        biasedLabel = Int(1)
+        
+        view = View( Item('bias'),  Item('biasedLabel'), buttons = ['OK', 'Cancel'],  )        
         
         class IndexedAccessor:
             """
@@ -90,8 +92,8 @@ if ok:
 
         def setupWeights(self, weights):
             print "Incoming weights :", weights.shape
-            self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)#
-
+            #self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)#
+            self.weights = weights.astype(numpy.uint8)
 #            self.weights = numpy.zeros(weights.shape[0:-1], 'uint8')
 #            self.weights[:] = 3
 #            self.weights[:,:,0::4] = 10
