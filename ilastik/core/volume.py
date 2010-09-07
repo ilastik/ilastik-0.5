@@ -64,7 +64,7 @@ class DataAccessor():
                 tempShape = tempShape + (1,)
             
             if len(self.data.shape) != 5:
-                self.data.shape = tempShape #self.data.reshape(tempShape)
+                self.data.shape = tempShape#self.data.reshape(tempShape)
                 
             self.channels = self.data.shape[-1]
 

@@ -54,7 +54,9 @@ if ok:
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         bias = Float(0.8)
-        biasedLabel = Int(2)
+        biasedLabel = Int(1)
+        
+        view = View( Item('bias'),  Item('biasedLabel'), buttons = ['OK', 'Cancel'],  )        
         
         class IndexedAccessor:
             """
