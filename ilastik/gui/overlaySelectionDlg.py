@@ -311,7 +311,10 @@ class OverlaySelectionDialog(QDialog):
                 self.channelSpinbox.setMaximum(child.item.data.shape[-1]-1)
                 self.sliceSpinbox.setMaximum(child.item.data.shape[1]-1)
                 imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
-                self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (child.item.min, child.item.max))))
+                if child.item.min is not None: 
+                    self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (child.item.min, child.item.max))))
+                else:
+                    self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray)))
                 self.grview.setScene(self.grscene)
                 self.channelSpinbox.setValue(child.item.channel)
             else:
@@ -319,7 +322,10 @@ class OverlaySelectionDialog(QDialog):
                 self.channelSpinbox.setMaximum(child.item.data.shape[-1]-1)
                 self.sliceSpinbox.setMaximum(child.item.data.shape[1]-1)
                 imageArray = child.item.data[0, self.sliceValue, :, :, child.item.channel]
-                self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (child.item.min, child.item.max))))
+                if child.item.min is not None: 
+                    self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (child.item.min, child.item.max))))
+                else:
+                    self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray)))
                 self.grview.setScene(self.grscene)
                 self.channelSpinbox.setValue(child.item.channel)
         else:

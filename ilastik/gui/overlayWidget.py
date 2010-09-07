@@ -31,7 +31,7 @@ from PyQt4 import QtCore, QtGui
 import vigra, numpy
 import sip
 import os
-from overlaySelectionDlg import OverlaySelectionDialog
+from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
 import ilastik.gui.overlayDialogs as overlayDialogs
 
 class OverlayListWidgetItem(QtGui.QListWidgetItem):
@@ -234,6 +234,16 @@ class OverlayWidget(QtGui.QGroupBox):
         tl2.addWidget(self.buttonRemove)
         tl1.addLayout(tl2)
         
+
+        tl2 = QtGui.QHBoxLayout()
+        self.buttonCreate = QtGui.QPushButton()
+        self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
+        self.connect(self.buttonCreate,  QtCore.SIGNAL('clicked()'),  self.buttonCreateClicked)
+        tl2.addWidget(self.buttonCreate)
+        tl1.addLayout(tl2)
+
+
+
         
         tl3 = QtGui.QVBoxLayout()
         tl3.addStretch()
@@ -249,6 +259,19 @@ class OverlayWidget(QtGui.QGroupBox):
         
         self.layout().addLayout(tl1)
         #self.layout().addLayout(tl3)
+        
+    def buttonCreateClicked(self):
+        dlg = OverlayCreateSelectionDlg(self.volumeEditor.ilastik)
+        answer = dlg.exec_()
+        if answer is not None:
+            dlg_creation = answer(self.volumeEditor.ilastik)
+            answer = dlg_creation.exec_()
+            if answer is not None:
+                name = QtGui.QInputDialog.getText(self,"Edit Name", "Please Enter the name of the new Overlay:", text = "Custom Overlays/My Overlay" )
+                name = str(name[0])
+                self.volumeEditor.ilastik.project.dataMgr[self.volumeEditor.ilastik.activeImage].overlayMgr[name] = answer
+                self.volumeEditor.repaint()
+        
         
     def buttonAddClicked(self):
         dlg = OverlaySelectionDialog(self.volumeEditor.ilastik,  singleSelection = False)
