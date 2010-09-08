@@ -122,7 +122,7 @@ class Maya3DScene(HasTraits):
 #
 #            self.zp.ipw.add_observer('EndInteractionEvent', move_slicez)
             
-            self.plot = self.scene.mlab.pipeline.iso_surface(self.dataField, contours=[2,3,4,5,6,7]) #opacity=0.4
+            self.plot = self.scene.mlab.pipeline.iso_surface(self.dataField, contours=[1]) #opacity=0.4
             cm = numpy.zeros((256,4),'uint8')#self.plot.module_manager.scalar_lut_manager.lut.table.to_array()
             
             cm[:,3] = 255

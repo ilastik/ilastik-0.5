@@ -619,6 +619,10 @@ class VolumeEditor(QtGui.QWidget):
         
     def getPendingLabels(self):
         temp = self.pendingLabels
+        #print "len pending labels: ", len(self.pendingLabels)
+        #print "pending labels[0].data", len(self.pendingLabels[0].data)
+        #print self.pendingLabels[0]
+        #print self.pendingLabels[0].data
         self.pendingLabels = []
         return temp
 
@@ -932,7 +936,7 @@ class DrawManager(QtCore.QObject):
         return res
 
 
-    def moveTo(self, pos):      
+    def moveTo(self, pos):    
         lineVis = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         lineVis.setPen(self.penVis)
         
@@ -1556,7 +1560,7 @@ class ImageScene( QtGui.QGraphicsView):
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor.history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
-
+        
     
     def beginDraw(self, pos):
         self.mousePos = pos
@@ -1754,6 +1758,7 @@ class ImageScene( QtGui.QGraphicsView):
         else:
             toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
         
+        menu.addSeparator()
         labelList = []
         volumeLabel = self.volumeEditor.labelWidget.volumeLabels
         for index, item in enumerate(volumeLabel.descriptions):

@@ -360,7 +360,7 @@ class DataItemImage(DataItemBase):
                     indic[2] += nl.offsets[2]
                     indic[3] += nl.offsets[3]
                     indic[4] += nl.offsets[4]
-
+                    print indic[:][0]
                     loopc = 2
                     count = 1
                     indices = indic[-loopc]*count
@@ -473,6 +473,7 @@ class DataItemImage(DataItemBase):
                     indic[3] += nl.offsets[3]
                     indic[4] += nl.offsets[4]
 
+
                     loopc = 2
                     count = 1
                     indices = indic[-loopc]*count
@@ -546,7 +547,35 @@ class DataItemImage(DataItemBase):
                 print indices.shape
                 print self.trainingF.shape
                 print nonzero
-                
+
+
+    def updateBackground(self, newLabels, key):
+        """
+        This function returns the classes which correspond to background
+        """
+        setAdd = set()
+        setRemove = set()
+        for nl in newLabels:
+            try:
+                indic =  list(numpy.nonzero(nl.data))
+                indic[0] = indic[0] + nl.offsets[0]
+                indic[1] += nl.offsets[1]
+                indic[2] += nl.offsets[2]
+                indic[3] += nl.offsets[3]
+                indic[4] += nl.offsets[4]
+                for i in range(0, len(indic[0])):
+                    backclass = self.overlayMgr[key].data[(indic[0][i],indic[1][i],indic[2][i],indic[3][i],indic[4][i])]
+                    if nl.erasing == False:
+                        setAdd.add(backclass)
+                    else:
+                        setRemove.add(backclass)
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
+        
+        return setAdd, setRemove
+
+
     def clearSeeds(self):
         self.seedL = None
         self.seedIndices = None
@@ -621,7 +650,10 @@ class DataMgr():
         self.channels = -1
         self.selectedChannels = None
         self.activeImage = 0
-            
+        #TODO: Maybe it shouldn't be here...
+        self.connCompBackgroundKey = ""    
+        self.connCompBackgroundClasses = set()
+        
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
             try:
@@ -727,7 +759,16 @@ class DataMgr():
             imageNr = self.activeImage
         self[imageNr].updateSeeds(newLabels)
         
-
+    def updateBackground(self, newLabels, imageNr = None):
+        if self.connCompBackgroundKey == "":
+            #TODO: make a real error message
+            print "Select an overlay first!"
+            return
+        if imageNr is None:
+            imageNr = self.activeImage
+        setAdd, setRemove = self[imageNr].updateBackground(newLabels, self.connCompBackgroundKey)
+        self.connCompBackgroundClasses = self.connCompBackgroundClasses.union(setAdd)
+        self.connCompBackgroundClasses = self.connCompBackgroundClasses.difference(setRemove)
 
     def getDataList(self):
         return self.dataItems
@@ -763,7 +804,13 @@ class DataMgr():
     @staticmethod
     def deserialize(self):
         pass
+    
+    def exportClassifiers(self, fileName):
+        if not hasattr(self, 'classifiers'):
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
+        if len(self.classifiers) == 0:
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
         
         
