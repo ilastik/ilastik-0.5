@@ -116,6 +116,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         print 'Changed to Tab: ', self.__class__.name
     
     def on_deActivation(self):
+        if hasattr(self.parent, "classificationInteractive"):
+            self.btnStartLive.click()
         print 'Left Tab ', self.__class__.name
         
     def _initContent(self):
