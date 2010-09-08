@@ -1469,7 +1469,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.min = 0
             self.max = 255
 
-            self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 
     def display(self, image, overlays = []):
         self.thread.queue.clear()
