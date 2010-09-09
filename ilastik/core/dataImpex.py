@@ -218,6 +218,7 @@ class DataImpex(object):
                             fn = fn + ("_channel%03i" %(c+channelOffset))
                         fn = fn + "." + format
                         vigra.impex.writeImage(data, fn)
+                        print "Exported file ", fn
         else:
             for t in range(overlayItemReference.data.shape[0]):
                 for c in range(overlayItemReference.data.shape[-1]):
@@ -229,6 +230,7 @@ class DataImpex(object):
                         fn = fn + ("_channel%03i" %(c+channelOffset))
                     fn = fn + "." + format
                     vigra.impex.writeImage(data.swapaxes(0,1), fn)
+                    print "Exported file ", fn
 
     @staticmethod
     def exportFormatList():

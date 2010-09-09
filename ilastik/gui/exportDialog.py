@@ -52,7 +52,10 @@ class ExportDialog(QtGui.QDialog):
         self.formatBox.addItems(self.formatList)
         #this is just setting the default to .tiff. Yes, it's ugly and depends on
         #the current vigra format list
-        self.formatBox.setCurrentIndex(12)
+        if len(self.formatList)>13:
+            self.formatBox.setCurrentIndex(12)
+        else:
+            self.formatBox.setCurrentIndex(0)
         l.addWidget(self.formatBox)        
         layout.addLayout(l)
         

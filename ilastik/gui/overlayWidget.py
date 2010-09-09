@@ -182,9 +182,12 @@ class OverlayListWidget(QtGui.QListWidget):
             formatList = dataImpex.DataImpex.exportFormatList()
             expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset)
             expdlg.exec_()
-            tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
-            filename = str(QtCore.QDir.convertSeparators(tempname))
-            dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
+            try:
+                tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
+                filename = str(QtCore.QDir.convertSeparators(tempname))
+                dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
+            except:
+                pass
         else:
             for index,  channelAct in enumerate(channelActions):
                 if action == channelAct:
