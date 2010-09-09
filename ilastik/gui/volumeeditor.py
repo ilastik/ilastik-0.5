@@ -474,6 +474,12 @@ class VolumeEditor(QtGui.QWidget):
         #Overlay selector
         self.overlayWidget = DummyOverlayListWidget(self)
         self.toolBoxLayout.addWidget( self.overlayWidget)
+
+        #Save the current images button
+        self.saveAsImageBtn = QtGui.QPushButton('Export Images')
+        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
+        self.toolBoxLayout.addWidget(self.saveAsImageBtn)
+        
         self.toolBoxLayout.addStretch()
 
 
@@ -655,6 +661,19 @@ class VolumeEditor(QtGui.QWidget):
 #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
     
             self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
+
+    def on_saveAsImage(self):
+        #only save the first image scene, let's hope it's the correct projection
+        tempImage = None
+        tempoverlays = []
+        i=2
+        for index, item in enumerate(self.overlayWidget.overlays):
+            if item.visible:
+                tempoverlays.append(item.getOverlaySlice(self.selSlices[i], i, self.selectedTime, 0))
+                
+        tempImage = self.image.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
+        filename = "C:\\Users\\Anna_2\\Pictures\\test_images\\slice.png"
+        self.imageScenes[i].saveSlice(QtCore.QString(filename), tempImage, tempoverlays)
 
     def setLabelWidget(self,  widget):
         """
@@ -1074,6 +1093,7 @@ class ImageSceneRenderThread(QtCore.QThread):
             self.dataPending.clear()
             self.emit(QtCore.SIGNAL('finishedQueue()'))
 
+
 class CrossHairCursor(QtGui.QGraphicsItem) :
     modeYPosition  = 0
     modeXPosition  = 1
@@ -1469,7 +1489,28 @@ class ImageScene( QtGui.QGraphicsView):
             self.min = 0
             self.max = 255
 
-            self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
+
+    def saveSlice(self, filename, image, overlays = []):
+        self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.saveCurrentImage)
+        self.filename = filename
+        self.displayNewSlice(image, overlays, False)
+        
+        
+    def saveCurrentImage(self):
+        print "Saving in ", self.filename
+        
+        result_image = QtGui.QImage(self.scene.image.size(), self.scene.image.format())
+        p = QtGui.QPainter(result_image)
+        for patchNr in range(self.patchAccessor.patchCount):
+            bounds = self.patchAccessor.getPatchBounds(patchNr)
+            if self.openglWidget is None:
+                p.drawImage(0, 0, self.scene.image)
+            else:
+                p.drawImage(bounds[0], bounds[2], self.imagePatches[patchNr])
+        p.end()
+        result_image.save(self.filename)
+        self.disconnect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.saveCurrentImage)
 
     def display(self, image, overlays = []):
         self.thread.queue.clear()

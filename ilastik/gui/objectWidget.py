@@ -62,9 +62,8 @@ class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)
         self.overlayItem = overlayItem
-
         self.layout().addWidget(self.listWidget)
-        
+
         self.volumeEditor = volumeEditor
         self.labelMgr = labelMgr
         self.listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -155,4 +154,3 @@ class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         else:
             i = self.listWidget.model().index(self.listWidget.model().rowCount()-1,0)
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
-
