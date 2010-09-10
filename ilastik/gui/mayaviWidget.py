@@ -123,31 +123,31 @@ class Maya3DScene(HasTraits):
 #            self.zp.ipw.add_observer('EndInteractionEvent', move_slicez)
             
             self.plot = self.scene.mlab.pipeline.iso_surface(self.dataField, contours=[1]) #opacity=0.4
-            cm = numpy.zeros((256,4),'uint8')#self.plot.module_manager.scalar_lut_manager.lut.table.to_array()
-            
-            cm[:,3] = 255
-            
-            for index in range(0,255):
-                c = self.overlayItemReference.colorTable[index]
-                c = QtGui.QColor.fromRgba(c)
-                print index, " ", c.red(), " ", c.green()
-                cm[index,0] = c.red()
-                cm[index,1] = c.green()
-                cm[index,2] = c.blue()
-            
-            mlab.colorbar(title="LUT", orientation="vertical")
-
-            self.plot.module_manager.scalar_lut_manager.lut.number_of_colors = 256 
-            self.plot.module_manager.scalar_lut_manager.lut.table_range = (0,255)
-            self.plot.module_manager.scalar_lut_manager.lut.range = (0,255)
-            self.plot.module_manager.scalar_lut_manager.lut.value_range = (0,255)
-            self.plot.module_manager.scalar_lut_manager.lut.vector_mode  = 'magnitude'
-            self.plot.module_manager.scalar_lut_manager.lut.table = cm
-            
-            
-            print self.plot
-            
-            print self.plot.module_manager.scalar_lut_manager.lut
+#            cm = numpy.zeros((256,4),'uint8')#self.plot.module_manager.scalar_lut_manager.lut.table.to_array()
+#            
+#            cm[:,3] = 255
+#            
+#            for index in range(0,255):
+#                c = self.overlayItemReference.colorTable[index]
+#                c = QtGui.QColor.fromRgba(c)
+#                print index, " ", c.red(), " ", c.green()
+#                cm[index,0] = c.red()
+#                cm[index,1] = c.green()
+#                cm[index,2] = c.blue()
+#            
+#            mlab.colorbar(title="LUT", orientation="vertical")
+#
+#            self.plot.module_manager.scalar_lut_manager.lut.number_of_colors = 256 
+#            self.plot.module_manager.scalar_lut_manager.lut.table_range = (0,255)
+#            self.plot.module_manager.scalar_lut_manager.lut.range = (0,255)
+#            self.plot.module_manager.scalar_lut_manager.lut.value_range = (0,255)
+#            self.plot.module_manager.scalar_lut_manager.lut.vector_mode  = 'magnitude'
+#            self.plot.module_manager.scalar_lut_manager.lut.table = cm
+#            
+#            
+#            print self.plot
+#            
+#            print self.plot.module_manager.scalar_lut_manager.lut
             
             #print "fucking shape ", lut.shape, lut.dtype
 

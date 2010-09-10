@@ -547,7 +547,7 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutRedo2.setEnabled(True)
         self.togglePredictionSC.setEnabled(True)
         
-        self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
+        self.connect(self, QtCore.SIGNAL("destroyed()"), self.widgetDestroyed)
         
         self.focusAxis =  0
 
@@ -599,9 +599,16 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes[self.focusAxis].setFocus()
         return True
         
+    def widgetDestroyed(self):
+        print "yippeah, volumeeditor deleted"
 
     def cleanUp(self):
-        pass
+        print "VolumeEditor: cleaning up"
+        for index, s in enumerate( self.imageScenes ):
+            s.cleanUp()
+            s.close()
+            s.deleteLater()
+        self.imageScenes = []
 
 
     def on_editChannels(self):
@@ -1512,6 +1519,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.stopped = True
         self.thread.dataPending.set()
         self.thread.wait()
+        print "finished thread"
 
     def updatePatches(self, patchNumbers ,image, overlays = []):
         stuff = [patchNumbers,image, overlays, self.min, self.max]

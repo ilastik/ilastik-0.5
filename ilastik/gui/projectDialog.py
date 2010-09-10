@@ -4,6 +4,7 @@ import ilastik.gui
 from ilastik.gui import stackloader, fileloader
 import os, sys
 import traceback
+import gc
 
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None, newProject = True):
@@ -281,7 +282,7 @@ class ProjectDlg(QtGui.QDialog):
                     contained = True
             if not contained:
                 theDataItem.projects.append(self.parent.project)
-        
+        gc.collect()
         self.accept()
 
         

@@ -185,6 +185,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.opengl = False
                 self.openglOverview = True
 
+        self.project = None
         if project != None:
             self.project = projectMgr.Project.loadFromDisk(project, self.featureCache)
             self.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
@@ -412,8 +413,11 @@ class MainWindow(QtGui.QMainWindow):
             self.removeDockWidget(dock)
         self.labelDocks = []
         if self.labelWidget is not None:
+            self.labelWidget.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            self.labelWidget.cleanUp()
             self.labelWidget.close()
             self.labelWidget.deleteLater()
+
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
