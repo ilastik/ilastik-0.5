@@ -16,6 +16,7 @@ from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core.overlays
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.core.overlayMgr import OverlayItem
+from ilastik.core.volume import DataAccessor
 import gc, weakref
 
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
