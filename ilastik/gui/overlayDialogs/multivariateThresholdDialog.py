@@ -105,8 +105,31 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         w = QtGui.QPushButton("Select Background")
         self.connect(w, QtCore.SIGNAL("clicked()"), self.selectBackgrounds)
         l.addWidget(w)
+        
+        l2 = QtGui.QHBoxLayout()
+        self.smoothing = QtGui.QCheckBox("Smooth")
+        self.smoothing.setCheckState(self.overlayItem.smoothing * 2)
+        self.connect(self.smoothing, QtCore.SIGNAL("stateChanged(int)"), self.smoothingChanged)
+        self.sigma = QtGui.QLineEdit(str(self.overlayItem.sigma))
+        l2.addWidget(self.smoothing)
+        l2.addWidget(self.sigma)
+        l.addLayout(l2)
+    
         self.hbox.addLayout(l)
-
+        
+    def smoothingChanged(self, state):
+        sigma = self.overlayItem.sigma
+        try:
+            sigma = float(self.sigma.text())
+        except:
+            pass
+        self.overlayItem.sigma = sigma
+        if state == QtCore.Qt.Checked:
+            self.overlayItem.smoothing = True
+        else:
+            self.overlayItem.smoothing = False
+        self.overlayItem.setForegrounds(self.overlayItem.foregrounds)
+        self.volumeEditor.repaint()
         
     
     def selectForegrounds(self):

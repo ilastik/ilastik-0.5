@@ -16,6 +16,7 @@ from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core.overlays
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.core.overlayMgr import OverlayItem
+import gc, weakref
 
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
     name = 'Project'
@@ -89,6 +90,9 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
     def on_btnOpen_clicked(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
         if str(fileName) != "":
+            labelWidget = None
+            if self.parent.project is not None:
+                labelWidget = weakref.ref(self.parent.project.dataMgr[0])#.featureBlockAccessor)
             self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
             self.btnSave.setEnabled(True)
             self.btnEdit.setEnabled(True)
@@ -97,6 +101,14 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.parent.changeImage(0)
             
             ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+            gc.collect()
+            if labelWidget is not None:
+                if labelWidget() is not None:
+                    refs =  gc.get_referrers(labelWidget())
+                    for i,r in enumerate(refs):
+                        print type(r)
+                        print "##################################################################"
+                        print r
    
     def on_btnEdit_clicked(self):
         self.parent.pareprojectDlg = ProjectDlg(self, False)

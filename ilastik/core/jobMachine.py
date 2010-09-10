@@ -68,6 +68,9 @@ class JobMachineWorker(ThreadBase):
                     
                 self.machine.workers.append(self) #reappend me to the deque of available workers, IlastikJob popped me at the beginning
                 self.machine.sem.release() # the semaphore is required in the JobMachine, we release it here when finished
+                del result
+                del self.args
+                del self.target
         self.quit()
                     
     def process(self, target, args, machine):
