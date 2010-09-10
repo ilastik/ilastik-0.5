@@ -389,7 +389,7 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         print 'Changed to Tab: ', self.__class__.name
-        
+       
     def on_deActivation(self):
         print 'Left Tab ', self.__class__.name
         
@@ -404,11 +404,12 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         tl.addStretch()
         
         self.setLayout(tl)
+        #self.shortcutManager = shortcutManager()
         
     def _initConnects(self):
         self.connect(self.btnShortcuts, QtCore.SIGNAL('clicked()'), self.on_btnShortcuts_clicked)
         
-    def on_btnShortcuts_clicked(self): 
+    def on_btnShortcuts_clicked(self):
         shortcutManager.showDialog()
         
         
