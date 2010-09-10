@@ -13,14 +13,15 @@ class ShortcutManager():
 class ShortcutManagerDlg(QtGui.QDialog):
     def __init__(self, s):
         QtGui.QDialog.__init__(self)
-        l = QtGui.QGridLayout(self)
         
+        l = QtGui.QGridLayout(self)
+    
         for i, sc in enumerate(s.shortcuts):
             desc = s.shortcuts[sc]
-            
+        
             l.addWidget(QtGui.QLabel(str(sc)), i,0)
             l.addWidget(QtGui.QLabel(desc), i,1)
-        self.setLayout(l)
+            self.setLayout(l)
         self.exec_()
 
 shortcutManager = ShortcutManager()
