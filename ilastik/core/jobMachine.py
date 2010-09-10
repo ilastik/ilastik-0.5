@@ -39,9 +39,7 @@ class IlastikJob():
         
     def run(self, machine):
         worker = machine.workers.pop()
-        worker.process(self.target, self.args, machine)
-        self.target = None
-        self.args = None
+        worker.process(self, machine)
 
 
 class JobMachineWorker(ThreadBase):
@@ -57,24 +55,26 @@ class JobMachineWorker(ThreadBase):
     def run(self):
         while self.stopped is False:
             self.event.wait()
-            self.event.clear()
             if self.stopped is False:
                 try:
-                    result = self.target(*self.args)
+                    result = self.job.target(*(self.job.args))
                     self.machine.results.append(result)
+                    del result
                 except Exception, e:
                     print e
                     traceback.print_exc(file=sys.stdout)
                     
+                if hasattr(self, "job"):
+                    del self.job
+                self.event.clear()
                 self.machine.workers.append(self) #reappend me to the deque of available workers, IlastikJob popped me at the beginning
                 self.machine.sem.release() # the semaphore is required in the JobMachine, we release it here when finished
         self.quit()
                     
-    def process(self, target, args, machine):
+    def process(self, job,  machine):
         #this function gets called from outside the thread and is non blocking
+        self.job = job
         self.machine = machine
-        self.target = target
-        self.args = args
         self.event.set()
 
 class JobMachineWorkerUnthreaded(object):

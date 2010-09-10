@@ -1,7 +1,7 @@
-import numpy
+import numpy, vigra
 import overlayBase
 import ilastik.core.overlayMgr as overlayMgr
-
+from ilastik.core.volume import DataAccessor
 
 class MultivariateThresholdAccessor(object):
     def __init__(self, thresholdOverlay):
@@ -46,6 +46,8 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         overlayBase.OverlayBase.__init__(self)
         
         self.data = None
+        self.sigma = 1.5
+        self.smoothing = False
         
         self.dsets = []
         self.foregrounds = []
@@ -113,8 +115,28 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.generateColorTab()     
 
     def calculateDsets(self, dsets):
-        self.dsets = dsets
-
+        """
+        eventually smooth the dataSets before doing the threshold. sad sad world.
+        """
+        if self.smoothing is True:            
+            dsets_new = []
+            for index, d in enumerate(dsets):
+                data = numpy.ndarray(d.shape, 'float32')
+                for t in range(d.shape[0]):
+                    for c in range(d.shape[-1]):
+                        if d.shape[1] > 1:                   
+                            dRaw = d[t,:,:,:,c].astype('float32').view(vigra.ScalarVolume)           
+                            data[t,:,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
+                        else:
+                            dRaw = d[t,0,:,:,c].astype('float32').view(vigra.ScalarImage)           
+                            data[t,0,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma) 
+    
+                dataAcc = DataAccessor(data)
+                dsets_new.append(dataAcc)
+                
+            self.dsets = dsets_new
+        else:
+            self.dsets = dsets
 
     def recalculateThresholds(self):
         thres = []

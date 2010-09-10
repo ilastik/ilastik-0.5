@@ -360,7 +360,6 @@ class DataItemImage(DataItemBase):
                     indic[2] += nl.offsets[2]
                     indic[3] += nl.offsets[3]
                     indic[4] += nl.offsets[4]
-                    print indic[:][0]
                     loopc = 2
                     count = 1
                     indices = indic[-loopc]*count
