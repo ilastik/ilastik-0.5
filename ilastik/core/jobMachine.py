@@ -62,13 +62,13 @@ class JobMachineWorker(ThreadBase):
                 try:
                     result = self.target(*self.args)
                     self.machine.results.append(result)
+                    del result
                 except Exception, e:
                     print e
                     traceback.print_exc(file=sys.stdout)
                     
                 self.machine.workers.append(self) #reappend me to the deque of available workers, IlastikJob popped me at the beginning
                 self.machine.sem.release() # the semaphore is required in the JobMachine, we release it here when finished
-                del result
                 del self.args
                 del self.target
         self.quit()
