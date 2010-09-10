@@ -4,4 +4,5 @@ nbproject
 *~
 build/*
 .spyder*
-.gitig*
+*.orig
+*.ilp

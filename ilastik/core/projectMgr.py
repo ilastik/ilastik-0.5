@@ -45,7 +45,9 @@ from ilastik.core import classifiers
 from ilastik.core import labelMgr
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
+from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr 
+from ilastik.core import connectedComponents
 
 from ilastik import core 
 import core.segmentors
@@ -78,9 +80,11 @@ class Project(object):
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)
+        self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = core.segmentors.segmentorClasses[0]()
-    
+        self.connector = connectedComponents.ConnectedComponents()
+ 
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
@@ -90,7 +94,6 @@ class Project(object):
             fileName = self.filename
             
         fileHandle = h5py.File(fileName,'w')
-        # pickle.dump(self, fileHandle, True)
         
         # get project settings
         projectG = fileHandle.create_group('Project') 
@@ -99,7 +102,15 @@ class Project(object):
         projectG.create_dataset('Name', data=str(self.name))
         projectG.create_dataset('Labeler', data=str(self.labeler))
         projectG.create_dataset('Description', data=str(self.description))
-                
+            
+        featureG = projectG.create_group('FeatureSelection')
+        
+        try:
+            self.featureMgr.exportFeatureItems(featureG)
+        except RuntimeError as e:
+            print 'saveToDisk(): No features where selected: ' , e
+            
+            
         # get number of images
         n = len(self.dataMgr)
         
@@ -116,7 +127,12 @@ class Project(object):
 
 
         # Save to hdf5 file
+        
+        
+        classifierG = projectG.create_group('Classifier')
         fileHandle.close()
+        
+        
         print "Project %s saved to %s " % (self.name, fileName)
     
     @staticmethod

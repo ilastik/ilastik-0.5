@@ -279,7 +279,7 @@ class VolumeLabels():
             return None
         
 class Volume():
-    def __init__(self,  data,  labels = None,  seeds = None,  uncertainty = None,  segmentation = None, objects = None):
+    def __init__(self,  data,  labels = None,  seeds = None,  uncertainty = None,  segmentation = None, background = None, objects = None):
         self.data = data
         self.labels = labels
         self.seeds = seeds
@@ -288,9 +288,11 @@ class Volume():
         self.seedOverlays = []
         self.labelOverlays = []
         self.objectOverlays = []
+        self.backgroundOverlays = []
         
         self.uncertainty = uncertainty
         self.segmentation = segmentation
+        self.background = background
         
         if self.labels is None:
             l = numpy.zeros(self.data.shape[0:-1] + (1, ),  'uint8')
@@ -310,6 +312,14 @@ class Volume():
         if self.segmentation is None:
             self.segmentation = numpy.zeros(self.data.shape[0:-1],  'uint8')
 
+        if self.background is None:
+            l = numpy.zeros(self.data.shape[0:-1], 'uint8')
+            self.background = VolumeLabels(l)
+    
+        #TODO: There should probably be an argument for that in the __init__ to enable reading from file
+        #do this along with serialize/deserialize
+        #self.selectedObjects = {}
+        #self.selectedObjectsOverlay = None
 
     def serialize(self, h5G):
         self.data.serialize(h5G, "data")

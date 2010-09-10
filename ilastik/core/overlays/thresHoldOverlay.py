@@ -1,7 +1,7 @@
-import numpy
+import numpy, vigra
 import overlayBase
 import ilastik.core.overlayMgr as overlayMgr
-
+from ilastik.core.volume import DataAccessor
 
 class MultivariateThresholdAccessor(object):
     def __init__(self, thresholdOverlay):
@@ -22,9 +22,14 @@ class MultivariateThresholdAccessor(object):
         current_best = numpy.where(current_guess < 1, current_best, self.probabilities[1][key])
         for i in range(2,len(self.probabilities)):
             next_guess = numpy.zeros(current_guess.shape, current_guess.dtype)
-            next_guess[:] = i
-            quota_k = 1.0 * current_best / (current_best+self.probabilities[i][key]+ 1e-15)
-            quota_other = 1.0 * self.thresholds[current_guess]/(self.thresholds[current_guess]+self.thresholds[next_guess]+ 1e-15)
+            if len(next_guess.shape) != 0:
+                next_guess[:] = i
+                quota_k = 1.0 * current_best / (current_best+self.probabilities[i][key]+ 1e-15)
+                quota_other = 1.0 * self.thresholds[current_guess]/(self.thresholds[current_guess]+self.thresholds[next_guess]+ 1e-15)
+            else:
+                next_guess = i
+                quota_k = 1.0 * current_best / (current_best+self.probabilities[i][key]+ 1e-15)
+                quota_other = 1.0 * self.thresholds[current_guess]/(self.thresholds[current_guess]+self.thresholds[next_guess]+ 1e-15)
             current_guess = numpy.where( quota_k >  quota_other, current_guess, next_guess)
             next_best = numpy.where(current_guess < i, current_best, self.probabilities[i][key])
             current_best = next_best
@@ -41,6 +46,8 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         overlayBase.OverlayBase.__init__(self)
         
         self.data = None
+        self.sigma = 1.5
+        self.smoothing = False
         
         self.dsets = []
         self.foregrounds = []
@@ -62,7 +69,7 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
 
         for index,item in enumerate(self.foregrounds):
             if isinstance(item.color, int) or isinstance(item.color, long):
-                colorTab[index+1] = color
+                colorTab[index+1] = item.color
             else:
                 colorTab[index+1] = long(item.color.rgba())
 
@@ -108,8 +115,28 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.generateColorTab()     
 
     def calculateDsets(self, dsets):
-        self.dsets = dsets
-
+        """
+        eventually smooth the dataSets before doing the threshold. sad sad world.
+        """
+        if self.smoothing is True:            
+            dsets_new = []
+            for index, d in enumerate(dsets):
+                data = numpy.ndarray(d.shape, 'float32')
+                for t in range(d.shape[0]):
+                    for c in range(d.shape[-1]):
+                        if d.shape[1] > 1:                   
+                            dRaw = d[t,:,:,:,c].astype('float32').view(vigra.ScalarVolume)           
+                            data[t,:,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
+                        else:
+                            dRaw = d[t,0,:,:,c].astype('float32').view(vigra.ScalarImage)           
+                            data[t,0,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma) 
+    
+                dataAcc = DataAccessor(data)
+                dsets_new.append(dataAcc)
+                
+            self.dsets = dsets_new
+        else:
+            self.dsets = dsets
 
     def recalculateThresholds(self):
         thres = []

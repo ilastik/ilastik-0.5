@@ -1,3 +1,6 @@
+import numpy,vigra
+import random
+
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
 from ilastik.gui.iconMgr import ilastikIcons
@@ -12,6 +15,9 @@ from ilastik.gui.batchProcess import BatchProcess
 from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core.overlays
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
+from ilastik.core.overlayMgr import OverlayItem
+from ilastik.core.volume import DataAccessor
+import gc, weakref
 
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
     name = 'Project'
@@ -85,6 +91,9 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
     def on_btnOpen_clicked(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
         if str(fileName) != "":
+            labelWidget = None
+            if self.parent.project is not None:
+                labelWidget = weakref.ref(self.parent.project.dataMgr[0])#.featureBlockAccessor)
             self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
             self.btnSave.setEnabled(True)
             self.btnEdit.setEnabled(True)
@@ -93,6 +102,14 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.parent.changeImage(0)
             
             ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+            gc.collect()
+            if labelWidget is not None:
+                if labelWidget() is not None:
+                    refs =  gc.get_referrers(labelWidget())
+                    for i,r in enumerate(refs):
+                        print type(r)
+                        print "##################################################################"
+                        print r
    
     def on_btnEdit_clicked(self):
         self.parent.pareprojectDlg = ProjectDlg(self, False)
@@ -116,6 +133,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         print 'Changed to Tab: ', self.__class__.name
     
     def on_deActivation(self):
+        if hasattr(self.parent, "classificationInteractive"):
+            self.btnStartLive.click()
         print 'Left Tab ', self.__class__.name
         
     def _initContent(self):
@@ -172,6 +191,95 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_btnClassifierOptions_clicked(self):
         dialog = ClassifierSelectionDlg(self.parent)
         self.parent.project.classifier = dialog.exec_()
+
+class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
+    name = 'Auto Segmentation'
+    def __init__(self, parent=None):
+        IlastikTabBase.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
+        
+        self._initContent()
+        self._initConnects()
+        self.weightsOverlay = None
+        
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
+    
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
+        
+    def _initContent(self):
+        tl = QtGui.QHBoxLayout()
+        
+        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Border Indicator')
+        self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
+        #self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Segmentors Options')
+        
+        self.btnChooseWeights.setToolTip('Choose the border indicator for the segmentation task')
+        self.btnSegment.setToolTip('Segment the image')
+        #self.btnSegmentorsOptions.setToolTip('Select a segmentation plugin and change settings')
+        
+        tl.addWidget(self.btnChooseWeights)
+        tl.addWidget(self.btnSegment)
+        tl.addStretch()
+        #tl.addWidget(self.btnSegmentorsOptions)
+        
+        self.setLayout(tl)
+        
+    def _initConnects(self):
+        self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
+        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
+        #self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
+        
+        
+    def on_btnChooseWeights_clicked(self):
+        dlg = OverlaySelectionDialog(self.parent,  singleSelection = True)
+        answer = dlg.exec_()
+        
+        if len(answer) > 0:
+            self.weightsOverlay = answer[0] 
+                
+        
+    def on_btnSegment_clicked(self):
+        if self.weightsOverlay is not None:
+            activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+    
+            result = numpy.ndarray(self.weightsOverlay.data.shape[:-1] + (1,), 'int32')
+            
+            for t in range(self.weightsOverlay.data.shape[0]):
+                if self.weightsOverlay.data.shape[1] > 1:
+                    data = self.weightsOverlay.data[t,:,:,:,self.weightsOverlay.channel]
+                    data = data.astype('float32')                   
+                    res = vigra.analysis.watersheds(data, neighborhood = 6)
+                    result[t,:,:,:,0] = res[0][:]
+                else:
+                    data = self.weightsOverlay.data[t,0,:,:,self.weightsOverlay.channel]
+                    data = data.astype('float32')                    
+                    res = vigra.analysis.watersheds(data, neighborhood = 4)
+                    result[t,0,:,:,0] = res[0][:]
+            
+            colortable = []
+            for i in range(256):
+                color = QtGui.QColor(random.randint(0,255),random.randint(0,255),random.randint(0,255))
+                colortable.append(color.rgba())
+            
+            #create Overlay for segmentation:
+            if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"] is None:
+                ov = OverlayItem(result, color = 0, alpha = 1.0, colorTable = colortable, autoAdd = True, autoVisible = True)
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"] = ov
+            else:
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"].data = DataAccessor(result)
+            self.parent.labelWidget.repaint()
+        
+    def on_btnSegmentorsOptions_clicked(self):
+        pass
+        #dialog = AutoSegmentorSelectionDlg(self.parent)
+        #answer = dialog.exec_()
+        #if answer != None:
+        #    self.parent.project.autoSegmentor = answer
+        #    self.parent.project.autoSegmentor.setupWeights(self.parent.project.dataMgr[self.parent.activeImage].autoSegmentationWeights)
+
+
         
 class SegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Segmentation'
@@ -225,7 +333,66 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
             self.parent.project.segmentor = answer
             self.parent.project.segmentor.setupWeights(self.parent.project.dataMgr[self.parent.activeImage].segmentationWeights)
 
-
+class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
+    name = "Connected Components"
+    def __init__(self, parent=None):
+        IlastikTabBase.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
+        
+        self._initContent()
+        self._initConnects()
+        
+    def on_activation(self):
+        print 'Changed to Tab: ', self.__class__.name
+    
+    def on_deActivation(self):
+        print 'Left Tab ', self.__class__.name
+        
+    def _initContent(self):
+        tl = QtGui.QHBoxLayout()
+        
+        self.btnInputOverlay = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Overlay')
+        self.btnCC = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'CC')
+        self.btnCCBack = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'CC with background')
+        self.btnCCOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'Options')
+        
+        self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
+        self.btnCC.setToolTip('Run connected componets on the selected overlay')
+        self.btnCCBack.setToolTip('Run connected components with background')
+        self.btnCCOptions.setToolTip('Set options')
+        
+        self.btnInputOverlay.setEnabled(True)
+        self.btnCC.setEnabled(False)
+        self.btnCCBack.setEnabled(False)
+        self.btnCCOptions.setEnabled(True)
+        
+        tl.addWidget(self.btnInputOverlay)
+        tl.addWidget(self.btnCC)
+        tl.addWidget(self.btnCCBack)
+        tl.addStretch()
+        tl.addWidget(self.btnCCOptions)
+        
+        self.setLayout(tl)
+        
+    def _initConnects(self):
+        self.connect(self.btnInputOverlay, QtCore.SIGNAL('clicked()'), self.on_btnInputOverlay_clicked)
+        self.connect(self.btnCC, QtCore.SIGNAL('clicked()'), self.on_btnCC_clicked)
+        self.connect(self.btnCCBack, QtCore.SIGNAL('clicked()'), self.on_btnCCBack_clicked)
+        #self.connect(self.btnCCOptions, QtCore.SIGNAL('clicked()'), self.on_btnCCOptions_clicked)
+        
+        
+    def on_btnInputOverlay_clicked(self):
+        self.parent.on_objectProcSelect()
+        self.btnCC.setEnabled(True)
+        self.btnCCBack.setEnabled(True)
+        
+    def on_btnCC_clicked(self):
+        self.parent.connComp.start(False)
+        
+    def on_btnCCBack_clicked(self):
+        self.parent.connComp.start(True)
+        
+    
 class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     name = 'Objects'
     
@@ -277,12 +444,13 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
             self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
             
             self.parent.project.objectMgr.setInputData(answer[0].data)
-            
+                
             self.parent.labelWidget.repaint()
-            
+
     def on_btnSegment_clicked(self):
         pass
-        
+                    
+
 
             
 class AutomateTab(IlastikTabBase, QtGui.QWidget):
@@ -329,7 +497,7 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         print 'Changed to Tab: ', self.__class__.name
-        
+       
     def on_deActivation(self):
         print 'Left Tab ', self.__class__.name
         
@@ -344,11 +512,12 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         tl.addStretch()
         
         self.setLayout(tl)
+        #self.shortcutManager = shortcutManager()
         
     def _initConnects(self):
         self.connect(self.btnShortcuts, QtCore.SIGNAL('clicked()'), self.on_btnShortcuts_clicked)
         
-    def on_btnShortcuts_clicked(self): 
+    def on_btnShortcuts_clicked(self):
         shortcutManager.showDialog()
         
         

@@ -540,7 +540,7 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutRedo2.setEnabled(True)
         self.togglePredictionSC.setEnabled(True)
         
-        self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
+        self.connect(self, QtCore.SIGNAL("destroyed()"), self.widgetDestroyed)
         
         self.focusAxis =  0
 
@@ -592,9 +592,16 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes[self.focusAxis].setFocus()
         return True
         
+    def widgetDestroyed(self):
+        print "yippeah, volumeeditor deleted"
 
     def cleanUp(self):
-        pass
+        print "VolumeEditor: cleaning up"
+        for index, s in enumerate( self.imageScenes ):
+            s.cleanUp()
+            s.close()
+            s.deleteLater()
+        self.imageScenes = []
 
 
     def on_editChannels(self):
@@ -619,6 +626,10 @@ class VolumeEditor(QtGui.QWidget):
         
     def getPendingLabels(self):
         temp = self.pendingLabels
+        #print "len pending labels: ", len(self.pendingLabels)
+        #print "pending labels[0].data", len(self.pendingLabels[0].data)
+        #print self.pendingLabels[0]
+        #print self.pendingLabels[0].data
         self.pendingLabels = []
         return temp
 
@@ -932,7 +943,7 @@ class DrawManager(QtCore.QObject):
         return res
 
 
-    def moveTo(self, pos):      
+    def moveTo(self, pos):    
         lineVis = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         lineVis.setPen(self.penVis)
         
@@ -1429,6 +1440,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.stopped = True
         self.thread.dataPending.set()
         self.thread.wait()
+        print "finished thread"
 
     def updatePatches(self, patchNumbers ,image, overlays = []):
         stuff = [patchNumbers,image, overlays, self.min, self.max]
@@ -1465,7 +1477,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.min = 0
             self.max = 255
 
-            self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 
     def display(self, image, overlays = []):
         self.thread.queue.clear()
@@ -1556,7 +1568,7 @@ class ImageScene( QtGui.QGraphicsView):
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor.history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
-
+        
     
     def beginDraw(self, pos):
         self.mousePos = pos
@@ -1754,6 +1766,7 @@ class ImageScene( QtGui.QGraphicsView):
         else:
             toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
         
+        menu.addSeparator()
         labelList = []
         volumeLabel = self.volumeEditor.labelWidget.volumeLabels
         for index, item in enumerate(volumeLabel.descriptions):

@@ -48,7 +48,15 @@ import threading
 import traceback
 import numpy
 import time
+
+
+from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
+from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
+from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
+from ilastik.gui.featureDlg import FeatureDlg
+
 import copy
+
 from Queue import Queue as queue
 from collections import deque
 
@@ -71,6 +79,7 @@ from ilastik.gui.shortcutmanager import *
 from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
+from ilastik.gui.backgroundWidget import BackgroundWidget
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor
@@ -176,6 +185,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.opengl = False
                 self.openglOverview = True
 
+        self.project = None
         if project != None:
             self.project = projectMgr.Project.loadFromDisk(project, self.featureCache)
             self.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
@@ -246,6 +256,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbonsTabs = IlastikTabBase.__subclasses__()
 
         for tab in self.ribbonsTabs:
+            print "Adding tab ", tab.name
             self.ribbon.addTab(tab(self), tab.name)
         
    
@@ -260,7 +271,7 @@ class MainWindow(QtGui.QMainWindow):
         widget.setLayout(layout)
         self.ribbonToolbar.addWidget(widget)
         self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
-  
+
         self.ribbon.setCurrentIndex (0)
         self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
 
@@ -279,29 +290,34 @@ class MainWindow(QtGui.QMainWindow):
         
         
         if self.previousTabText == "Classification":
-            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
-                self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
-                
-        elif self.previousTabText == "Segmentation":
             if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
-                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
-            
+                self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
+
             if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+                
+        elif self.previousTabText == "Segmentation":
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
+                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
             
+            if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
+        elif self.previousTabText == "Connected Components":
+            self.project.dataMgr[self.activeImage].dataVol.background.history = self.labelWidget.history
+
+            if self.project.dataMgr[self.activeImage].dataVol.background.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.background.history
+                    
         elif self.previousTabText == "Objects":
             self.project.dataMgr[self.activeImage].dataVol.objects.history = self.labelWidget.history
             
-            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+            if self.project.dataMgr[self.activeImage].dataVol.objects.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.objects.history
             
                 
             
         
         if self.ribbon.tabText(index) == "Segmentation":
-            if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
-
             self.labelWidget.history.volumeEditor = self.labelWidget
 
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.seedOverlays)
@@ -313,27 +329,42 @@ class MainWindow(QtGui.QMainWindow):
             ov = self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"]
 
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
-            
+    
+    
+    
+    
         elif self.ribbon.tabText(index) == "Objects":
-            if self.project.dataMgr[self.activeImage].dataVol.objects.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.objects.history
 
             self.labelWidget.history.volumeEditor = self.labelWidget
 
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.objectOverlays)
             self.labelWidget.setOverlayWidget(overlayWidget)
             
-            #create SeedsOverlay
+            
+            #create ObjectsOverlay
             ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.objects.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
             self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"] = ov
             ov = self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"]
             
             self.labelWidget.setLabelWidget(ObjectListWidget(self.project.objectMgr,  self.project.dataMgr[self.activeImage].dataVol.objects,  self.labelWidget,  ov))
+
             
-        elif self.labelWidget is not None:
-            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
+        elif self.ribbon.tabText(index) == "Connected Components":
+
                 
+            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.backgroundOverlays)
+            self.labelWidget.setOverlayWidget(overlayWidget)
+            
+            
+            #create background overlay
+            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
+            self.project.dataMgr[self.activeImage].overlayMgr["Connected Components/Background"] = ov
+            ov = self.project.dataMgr[self.activeImage].overlayMgr["Connected Components/Background"]
+            
+            self.labelWidget.setLabelWidget(BackgroundWidget(self.project.backgroundMgr, self.project.dataMgr[self.activeImage].dataVol.background, self.labelWidget, ov))    
+#                
+        elif self.labelWidget is not None:
+
             self.labelWidget.history.volumeEditor = self.labelWidget
             
             overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays)
@@ -360,11 +391,11 @@ class MainWindow(QtGui.QMainWindow):
             else:
                 self.saveProjectDlg()
             print "saved Project to ", self.project.filename
-            
-        
+                    
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
         self.project.dataMgr.activeImage = self.activeImage
+
           
 #    def newFeatureDlg(self):
 #        self.newFeatureDlg = FeatureDlg(self)
@@ -382,8 +413,11 @@ class MainWindow(QtGui.QMainWindow):
             self.removeDockWidget(dock)
         self.labelDocks = []
         if self.labelWidget is not None:
+            self.labelWidget.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            self.labelWidget.cleanUp()
             self.labelWidget.close()
             self.labelWidget.deleteLater()
+
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
@@ -530,16 +564,31 @@ class MainWindow(QtGui.QMainWindow):
 
     def on_saveClassifier(self, fileName=None):
         
-        if not hasattr(self.project.dataMgr,'classifiers'):
-            reply = QtGui.QMessageBox.warning(self, 'Error', "No classifiers trained so far. Use Train and Predict to learn classifiers.", QtGui.QMessageBox.Ok)
-        classifiers = self.project.dataMgr.classifiers
+        hf = h5py.File(fileName,'r')
+        h5featGrp = hf['features']
+        self.project.featureMgr.importFeatureItems(h5featGrp)
+        hf.close()
         
-        if len(classifiers) == 0:
-            print "no classifiers"
-            reply = QtGui.QMessageBox.warning(self, 'Error', "No classifiers trained so far. Use Train and Predict to learn classifiers.", QtGui.QMessageBox.Ok)
+        self.project.dataMgr.importClassifiers(fileName)
+    
+    def on_exportClassifier(self):
+        global LAST_DIRECTORY
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
+        LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
-        if not hasattr(classifiers[0],'serialize'):
-            reply = QtGui.QMessageBox.warning(self, 'Error', "The selected classifier is not serializable and cannot be saved to file.", QtGui.QMessageBox.Ok)
+        try:
+            self.project.dataMgr.exportClassifiers(fileName)
+        except RuntimeError as e:
+            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            return
+
+        try:
+            h5file = h5py.File(str(fileName),'a')
+            h5featGrp = h5file.create_group('features')
+            self.project.featureMgr.exportFeatureItems(h5featGrp)
+        except RuntimeError as e:
+            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            h5file.close()
             return
         
         if fileName is not None:
@@ -565,9 +614,28 @@ class MainWindow(QtGui.QMainWindow):
             itemGroup = h5featGrp.create_group('feature_%03d' % k)
             feat.serialize(itemGroup)
         h5file.close()
+
+        QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
-        reply = QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have be saved to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+    def on_objectProcSelect(self):
+        keylist = self.project.dataMgr[self.activeImage].overlayMgr.keys()
+        keylist = sorted(keylist, key = str.lower)
+        selection = QtGui.QInputDialog.getItem(None, "Layer",  "Select the input layer",  keylist,  editable = False)
+        selection = str(selection[0])
         
+        #TODO: maybe it's not nice to initialize it here
+        #the rest of such classes are initialized only on their start button...
+        self.connComp = CC(self)
+        self.connComp.selection_key = selection
+        self.project.dataMgr.connCompBackgroundKey = selection
+        print selection
+        #overlay = self.project.dataMgr[self.activeImage].overlayMgr[selection]
+        #volume = overlay.data[0,:,:,:,0]
+        #self.project.connector.inputData = volume
+        
+    
+    def on_processObjects(self):
+        self.connComp.start()
         
         
         
@@ -582,9 +650,6 @@ class MainWindow(QtGui.QMainWindow):
         else:
             event.ignore()
             
-
-
-
 
 class FeatureComputation(object):
     def __init__(self, parent):
@@ -698,6 +763,7 @@ class ClassificationInteractive(object):
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
+
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
 
         self.temp_cnt = 0
@@ -917,6 +983,99 @@ class Segmentation(object):
         self.parent.ribbon.getTab('Segmentation').btnSegment.setEnabled(True)
 
 
+class CC(object):
+    #Connected components
+    
+    def __init__(self, parent):
+        self.parent = parent
+        self.ilastik = parent
+        #self.start()
+
+    def start(self, background = False):
+        self.parent.ribbon.getTab('Connected Components').btnCC.setEnabled(False)
+        self.parent.ribbon.getTab('Connected Components').btnCCBack.setEnabled(False)
+        self.timer = QtCore.QTimer()
+        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
+        overlay = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr[self.selection_key]
+        if background==False:
+            self.cc = connectedComponentsMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data)
+        else:
+            self.cc = connectedComponentsMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay.data, self.parent.project.dataMgr.connCompBackgroundClasses)
+        numberOfJobs = self.cc.numberOfJobs
+        self.initCCProgress(numberOfJobs)
+        self.cc.start()
+        self.timer.start(200)
+        
+    def initCCProgress(self, numberOfJobs):
+        statusBar = self.parent.statusBar()
+        self.progressBar = QtGui.QProgressBar()
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(numberOfJobs)
+        self.progressBar.setFormat(' Connected Components... %p%')
+        statusBar.addWidget(self.progressBar)
+        statusBar.show()
+
+    def updateProgress(self):
+        val = self.cc.count
+        self.progressBar.setValue(val)
+        if not self.cc.isRunning():
+            print "finalizing connected components"
+            self.timer.stop()
+            self.cc.wait()
+            self.finalize()
+            self.terminateProgressBar()
+
+    def finalize(self):
+        #activeItem = self.parent.project.dataMgr[self.parent.activeImage]
+        #activeItem.dataVol.cc = self.cc.result
+
+        #temp = activeItem.dataVol.segmentation[0, :, :, :, 0]
+        
+        #create Overlay for connected components:
+        if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] is None:
+            #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
+            colortab = self.makeColorTab()
+            ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"] = ov
+        else:
+            self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Connected Components/CC"].data = DataAccessor(self.cc.result)
+        self.ilastik.labelWidget.repaint()
+       
+    def terminateProgressBar(self):
+        self.parent.statusBar().removeWidget(self.progressBar)
+        self.parent.statusBar().hide()
+        self.parent.ribbon.tabDict['Connected Components'].btnCC.setEnabled(True)
+        self.parent.ribbon.tabDict['Connected Components'].btnCCBack.setEnabled(True)
+    
+    def makeColorTab(self):
+        sublist = []
+        sublist.append(QtGui.qRgb(0, 0, 0))
+        sublist.append(QtGui.qRgb(255, 255, 255))
+        sublist.append(QtGui.qRgb(255, 0, 0))
+        sublist.append(QtGui.qRgb(0, 255, 0))
+        sublist.append(QtGui.qRgb(0, 0, 255))
+        
+        sublist.append(QtGui.qRgb(255, 255, 0))
+        sublist.append(QtGui.qRgb(0, 255, 255))
+        sublist.append(QtGui.qRgb(255, 0, 255))
+        sublist.append(QtGui.qRgb(255, 105, 180)) #hot pink!
+        
+        sublist.append(QtGui.qRgb(102, 205, 170)) #dark aquamarine
+        sublist.append(QtGui.qRgb(165,  42,  42)) #brown        
+        sublist.append(QtGui.qRgb(0, 0, 128)) #navy
+        sublist.append(QtGui.qRgb(255, 165, 0)) #orange
+        
+        sublist.append(QtGui.qRgb(173, 255,  47)) #green-yellow
+        sublist.append(QtGui.qRgb(128,0, 128)) #purple
+        sublist.append(QtGui.qRgb(192, 192, 192)) #silver
+        #sublist.append(QtGui.qRgb(240, 230, 140)) #khaki
+        colorlist = []
+        for i in range(0, 16):
+            colorlist.extend(sublist)
+        print len(colorlist)
+        return colorlist
+        
+
 if __name__ == "__main__":
     app = QtGui.QApplication.instance() #(sys.argv)
     #app = QtGui.QApplication(sys.argv)
@@ -928,6 +1087,7 @@ if __name__ == "__main__":
     if mainwindow.labelWidget is not None:
         del mainwindow.labelWidget
     del mainwindow
+
 
 
     del ilastik.core.jobMachine.GLOBAL_WM
