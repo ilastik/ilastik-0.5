@@ -609,6 +609,10 @@ class VolumeEditor(QtGui.QWidget):
             s.close()
             s.deleteLater()
         self.imageScenes = []
+        self.save_thread.stopped = True
+        self.save_thread.imagePending.set()
+        self.save_thread.wait()
+        print "finished saving thread"
 
 
     def on_editChannels(self):
@@ -684,7 +688,7 @@ class VolumeEditor(QtGui.QWidget):
             
         except:
             pass
-
+        
     def setLabelWidget(self,  widget):
         """
         Public interface function for setting the labelWidget toolBox
@@ -1050,6 +1054,7 @@ class ImageSaveThread(QtCore.QThread):
                             self.ve.imageScenes[axis].saveSlice(self.filename)
             self.imageSaved.set()
             self.imagePending.clear()
+            
 
 class ImageSceneRenderThread(QtCore.QThread):
     def __init__(self, parent):
