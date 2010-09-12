@@ -340,8 +340,8 @@ class VolumeEditor(QtGui.QWidget):
         else:
             self.image = DataAccessor(image)
 
-       
-
+        self.save_thread = ImageSaveThread(self)
+              
         self.selectedTime = 0
         self.selectedChannel = 0
 
@@ -663,13 +663,10 @@ class VolumeEditor(QtGui.QWidget):
 #            if self.labelWidget.volumeLabels is not None:
 #                if self.labelWidget.volumeLabels.data is not None:
 #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
-    
+            print "displayNewSlice calling from repaint"
             self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
 
     def on_saveAsImage(self):
-        tempImage = None
-        tempoverlays = []
-        axis=0
         sliceOffsetCheck = False
         if self.image.shape[1]>1:
             #stack z-view is stored in imageScenes[2], for no apparent reason
@@ -680,62 +677,19 @@ class VolumeEditor(QtGui.QWidget):
         formatList = QtGui.QImageWriter.supportedImageFormats()
         expdlg = exportDialog.ExportDialog(formatList, timeOffsetCheck, sliceOffsetCheck, channelOffsetCheck)
         expdlg.exec_()
+        #self.currentlySaving.set()
         try:
             tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
             filename = str(QtCore.QDir.convertSeparators(tempname))
-            if self.image.shape[1]>1:
-                for t in range(self.image.shape[0]):
-                    for z in range(self.image.shape[3]):                   
-                        for c in range(self.image.shape[-1]):
-                            self.filename = filename
-                            if (self.image.shape[0]>1):
-                                self.filename = self.filename + ("_time%03i" %(t+expdlg.timeOffset))
-                            self.filename = self.filename + ("_z%05i" %(z+expdlg.sliceOffset))
-                            if self.image.shape[-1]>1:
-                                self.filename = self.filename + ("_channel%03i" %(c+expdlg.channelOffset))
-                            self.filename = self.filename + "." + expdlg.format
-                            self.connect(self.imageScenes[axis].thread, QtCore.SIGNAL('finishedQueue()'), self.saveSlice)
-                            #only change the z slice display
-                            self.setTimeChannelSlice(t, c, z, axis)
-            else:
-                for t in range(self.image.shape[0]):
-                    for c in range(self.image.shape[-1]):
-                        if (self.image.shape[0]>1):
-                            self.filename = self.filename + ("_time%03i" %(t+expdlg.timeOffset))
-                        if self.image.shape[-1]>1:
-                            self.filename = self.filename + ("_channel%03i" %(c+expdlg.channelOffset))
-                        self.filename = self.filename + "." + expdlg.format
-                        self.connect(self.imageScenes[axis].thread, QtCore.SIGNAL('finishedQueue()'), self.saveSlice)
-                        #only update the display of imageScene[0] - the image itself
-                        self.setTimeChannelSlices(t, c, self.selSlices[0], axis)
-            #self.disconnect(self.imageScenes[axis].thread, QtCore.SIGNAL('finishedQueue()'), self.saveSlice)
+            self.save_thread.start()
+            print filename
+            stuff = (filename, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset, expdlg.format)
+            self.save_thread.queue.append(stuff)
+            self.save_thread.imagePending.set()
             
         except:
             pass
-        #self.filename = "C:\\Users\\Anna_2\\Pictures\\test_images\\slice.png"
-        #self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.saveSlice)
-        #self.changeSlice(0, i)
-        
-#        for index, item in enumerate(self.overlayWidget.overlays):
-#            if item.visible:
-#                tempoverlays.append(item.getOverlaySlice(self.selSlices[i], i, self.selectedTime, 0))
-#                
-#        tempImage = self.image.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
-        
-#        self.imageScenes[i].saveSlice(QtCore.QString(filename), tempImage, tempoverlays)
 
-    def saveSlice(self):
-        #saves the current z slice or image
-        #if self.image.shape[1]>1 and axis != 2:
-        #    return
-        #if self.image.shape[1]==1 and axis != 0:
-        #    return
-        print "in save slice"
-        axis = 2 if self.image.shape[1]>1 else 0
-            
-        self.imageScenes[axis].saveSlice(self.filename)
-        self.disconnect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.saveSlice)
-        
     def setLabelWidget(self,  widget):
         """
         Public interface function for setting the labelWidget toolBox
@@ -816,9 +770,35 @@ class VolumeEditor(QtGui.QWidget):
 
     def setTimeChannelSlice(self, time, channel, num, axis):
         print time, channel, num, axis
-        self.selectedTime = time
+        #self.selectedTime = time
         self.selectedChannel = channel
-        self.changeSlice(num, axis)
+        
+        tempImage = None
+        tempLabels = None
+        tempoverlays = []
+        self.imageScenes[axis].thread.freeQueue.clear()
+        if self.sliceSelectors[axis].value() != num:
+            print "different num value", self.sliceSelectors[axis].value(), num
+            self.sliceSelectors[axis].setValue(num)
+        elif self.selectedTime!=time:
+            print "different times", self.selectedTime, time
+            self.selectedTime = time
+            self.changeSlice(num, axis)
+        else:
+            #no need to update, just save the current image
+            print "nothing different, reset the Event"
+            self.imageScenes[axis].thread.freeQueue.set()
+#        for index, item in enumerate(self.overlayWidget.overlays):
+#            if item.visible:
+#                tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
+#
+#        tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+#
+#        self.selSlices[axis] = num
+#        self.imageScenes[axis].sliceNumber = num
+#        print "display new Slice calling from setTimeChannelSlice", num, axis
+#        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
+#        self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 
     def changeSlice(self, num, axis):
         self.selSlices[axis] = num
@@ -839,7 +819,8 @@ class VolumeEditor(QtGui.QWidget):
 
         self.selSlices[axis] = num
         self.imageScenes[axis].sliceNumber = num
-        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, fastPreview = True)
+        print "display new Slice calling from changeSlice", num, axis
+        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
@@ -1043,8 +1024,93 @@ class DrawManager(QtCore.QObject):
             self.topMost = y
         return lineVis
 
-
-    
+class ImageSaveThread(QtCore.QThread):
+    def __init__(self, parent):
+        QtCore.QThread.__init__(self, None)
+        self.ve = parent
+        self.queue = deque()
+        self.imageSaved = threading.Event()
+        self.imageSaved.clear()
+        self.imagePending = threading.Event()
+        self.imagePending.clear()
+        self.stopped = False
+        
+    def run(self):
+        while not self.stopped:
+            #print "image pending: ", self.imagePending.isSet()
+            self.imagePending.wait()
+            print "saving thread: got an image"
+            while len(self.queue)>0:
+                stuff = self.queue.pop()
+                #print stuff
+                if stuff is not None:
+                    filename, timeOffset, sliceOffset, channelOffset, format = stuff
+                    if self.ve.image.shape[1]>1:
+                        axis = 2
+                        for t in range(self.ve.image.shape[0]):
+                            for z in range(self.ve.image.shape[3]):                   
+                                for c in range(self.ve.image.shape[-1]):
+                                    self.filename = filename
+                                    if (self.ve.image.shape[0]>1):
+                                        self.filename = self.filename + ("_time%03i" %(t+timeOffset))
+                                    self.filename = self.filename + ("_z%05i" %(z+sliceOffset))
+                                    if self.ve.image.shape[-1]>1:
+                                        self.filename = self.filename + ("_channel%03i" %(c+channelOffset))
+                                    self.filename = self.filename + "." + format
+                            
+                                    #only change the z slice display
+                                    #self.save_thread.imageSaved.clear()
+                                    self.ve.imageScenes[axis].thread.queue.clear()
+                                    self.ve.imageScenes[axis].thread.freeQueue.wait()
+                                    self.ve.setTimeChannelSlice(t, c, z, axis)
+                                    
+                                    
+                                    self.ve.imageScenes[axis].thread.freeQueue.wait()
+            
+                                    self.ve.imageScenes[axis].saveSlice(self.filename)
+                            #self.save_thread.imageSaved.wait()
+                            
+                    else:
+                        axis = 0
+                        print "saving 2d image"
+                        for t in range(self.ve.image.shape[0]):                 
+                            for c in range(self.ve.image.shape[-1]):
+                                self.filename = filename
+                                if (self.ve.image.shape[0]>1):
+                                    self.filename = self.filename + ("_time%03i" %(t+timeOffset))
+                                if self.ve.image.shape[-1]>1:
+                                    self.filename = self.filename + ("_channel%03i" %(c+channelOffset))
+                                self.filename = self.filename + "." + format
+                                print self.filename
+                                self.ve.imageScenes[axis].thread.queue.clear()
+                                self.ve.imageScenes[axis].thread.freeQueue.wait()
+#                                self.ve.changeSlice(self.selSlices[0], axis)
+                                self.ve.setTimeChannelSlice(t, c, self.ve.selSlices[0], axis)
+                                    
+                                    
+                                self.ve.imageScenes[axis].thread.freeQueue.wait()
+            
+                                self.ve.imageScenes[axis].saveSlice(self.filename)
+                        #for t in range(ve.image.shape[0]):
+                            #for c in range(ve.image.shape[-1]):
+                             #   if (ve.image.shape[0]>1):
+                              #      ve.filename = self.filename + ("_time%03i" %(t+expdlg.timeOffset))
+                               # if ve.image.shape[-1]>1:
+                                #    ve.filename = self.filename + ("_channel%03i" %(c+expdlg.channelOffset))
+                                #ve.filename = self.filename + "." + expdlg.format
+                                #self.connect(self.imageScenes[axis].thread, QtCore.SIGNAL('finishedQueue()'), self.saveSlice)
+                                #only update the display of imageScene[0] - the image itself
+                                #self.setTimeChannelSlice(t, c, self.selSlices[0], axis)
+                        
+                
+            
+            
+                
+                #if stuff is not None:
+                #    axis = 2 if self.image.shape[1]>1 else 0
+                #    self.ve.imageScenes[axis].saveSlice(filename)
+            self.imageSaved.set()
+            self.imagePending.clear()
 
 class ImageSceneRenderThread(QtCore.QThread):
     def __init__(self, parent):
@@ -1059,6 +1125,8 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.dataPending.clear()
         self.newerDataPending = threading.Event()
         self.newerDataPending.clear()
+        self.freeQueue = threading.Event()
+        self.freeQueue.clear()
         self.stopped = False
         if self.imageScene.openglWidget is not None:
             self.contextPixmap = QtGui.QPixmap(2,2)
@@ -1074,6 +1142,7 @@ class ImageSceneRenderThread(QtCore.QThread):
         while not self.stopped:
             self.dataPending.wait()
             self.newerDataPending.clear()
+            self.freeQueue.clear()
             while len(self.queue) > 0:
                 stuff = self.queue.pop()
                 if stuff is not None:
@@ -1157,7 +1226,9 @@ class ImageSceneRenderThread(QtCore.QThread):
                                        
 
             self.dataPending.clear()
+            #self.freeQueue.set()
             self.emit(QtCore.SIGNAL('finishedQueue()'))
+            print "finished Queue"
 
 
 class CrossHairCursor(QtGui.QGraphicsItem) :
@@ -1555,7 +1626,8 @@ class ImageScene( QtGui.QGraphicsView):
         else:
             self.min = 0
             self.max = 255
-
+        ###########
+        print "in displayNewSlice"        
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
         
     def saveSlice(self, filename):
@@ -1572,6 +1644,7 @@ class ImageScene( QtGui.QGraphicsView):
                 p.drawImage(bounds[0], bounds[2], self.imagePatches[patchNr])
         p.end()
         result_image.save(QtCore.QString(filename))
+        print "image saved"
         #self.disconnect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.saveCurrentImage)
 
     def display(self, image, overlays = []):
@@ -1629,6 +1702,8 @@ class ImageScene( QtGui.QGraphicsView):
         #print "updating slice view ", self.axis
         self.viewport().repaint() #update(QtCore.QRectF(self.image.rect()))
         self.volumeEditor.overview.display(self.axis)
+        print "tempItems cleared"
+        self.thread.freeQueue.set()
         
     def redrawPatch(self, patchNr):
         if self.thread.stopped is False:

@@ -99,7 +99,7 @@ class ExportDialog(QtGui.QDialog):
     def export(self):
         self.timeOffset = self.timeOffsetBox.value() if self.timeOffsetBox else 0
         self.sliceOffset = self.sliceOffsetBox.value() if self.sliceOffsetBox else 0
-        self.channelOffset = self.timeOffsetBox.value() if self.channelOffsetBox else 0
+        self.channelOffset = self.channelOffsetBox.value() if self.channelOffsetBox else 0
         self.format = self.formatList[self.formatBox.currentIndex()]
         self.accept()
 
