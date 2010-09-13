@@ -123,7 +123,7 @@ class OverlayItem(object):
     A Item that holds some scalar or multichannel data and their drawing related settings.
     OverlayItems are held by the OverlayMgr
     """
-    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = False):
+    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True):
         self.data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable

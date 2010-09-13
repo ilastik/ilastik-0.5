@@ -1120,8 +1120,8 @@ class ImageSceneRenderThread(QtCore.QThread):
                             p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
                         
                         
-                        #p.drawImage(0,0,temp_image)
-                        p.eraseRect(0,0,temp_image.width(),temp_image.height())
+                        p.drawImage(0,0,temp_image)
+                        #p.eraseRect(0,0,temp_image.width(),temp_image.height())
 
                         #add overlays
                         for index, origitem in enumerate(overlays):
@@ -1158,6 +1158,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     normalize = (origitem.min, origitem.max)
                                 else:
                                     normalize = False
+                                    
                                 if origitem.autoAlphaChannel:
                                     image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
                                     if isinstance(origitem.color,  int):
