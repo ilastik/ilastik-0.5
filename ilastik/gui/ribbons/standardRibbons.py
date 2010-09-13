@@ -187,7 +187,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.parent.on_classificationTrain()
         
     def on_btnExportClassifier_clicked(self):
-        self.parent.on_saveClassifier()
+        self.parent.on_exportClassifier()
         
     def on_btnClassifierOptions_clicked(self):
         dialog = ClassifierSelectionDlg(self.parent)

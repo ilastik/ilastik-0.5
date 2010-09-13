@@ -573,7 +573,7 @@ class MainWindow(QtGui.QMainWindow):
     
     def on_exportClassifier(self):
         global LAST_DIRECTORY
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
         LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
         try:
@@ -591,31 +591,32 @@ class MainWindow(QtGui.QMainWindow):
             h5file.close()
             return
         
-        if fileName is not None:
+        #if fileName is not None:
             # global LAST_DIRECTORY
-            fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
-            ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+            #fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
+            #ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
         # Make sure group 'classifiers' exist
-        h5file = h5py.File(str(fileName),'w')
+        print fileName
+        h5file = h5py.File(str(fileName),'a')
         h5file.create_group('classifiers')
         h5file.close()
         
-        for i, c in enumerate(classifiers):
+        for i, c in enumerate(self.project.dataMgr.classifiers):
             tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
             print "Write Random Forest # %03d -> %d" % (i,tmp)
         
         # Export user feature selection
-        h5file = h5py.File(str(fileName),'a')
-        h5featGrp = h5file.create_group('features')
-        
-        featureItems = self.project.featureMgr.featureItems
-        for k, feat in enumerate(featureItems):
-            itemGroup = h5featGrp.create_group('feature_%03d' % k)
-            feat.serialize(itemGroup)
+#        h5file = h5py.File(str(fileName),'a')
+#        h5featGrp = h5file.create_group('features')
+#        
+#        featureItems = self.project.featureMgr.featureItems
+#        for k, feat in enumerate(featureItems):
+#            itemGroup = h5featGrp.create_group('feature_%03d' % k)
+#            feat.serialize(itemGroup)
         h5file.close()
 
-        QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
     def on_objectProcSelect(self):
         keylist = self.project.dataMgr[self.activeImage].overlayMgr.keys()
