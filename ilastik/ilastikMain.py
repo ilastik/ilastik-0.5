@@ -620,7 +620,7 @@ class MainWindow(QtGui.QMainWindow):
         h5file.close()
         
         for i, c in enumerate(self.project.dataMgr.classifiers):
-            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
+            tmp = c.serialize(str(fileName), "classifiers/rf_%03d" % i)
             print "Write Random Forest # %03d -> %d" % (i,tmp)
         
         # Export user feature selection

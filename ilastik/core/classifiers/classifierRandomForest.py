@@ -18,10 +18,11 @@ class ClassifierRandomForest(ClassifierBase):
         self.treeCount = treeCount
         
 
-    def train(self, features, labels):
+    def train(self, features, labels, isInteractive):
+        if features is None:
+            return
         if features.shape[0] != labels.shape[0]:
             print " 3, 2 ,1 ... BOOOM!! #features != # labels"
-
         if not labels.dtype == numpy.uint32:
             labels = labels.astype(numpy.uint32)
         if not features.dtype == numpy.float32:
