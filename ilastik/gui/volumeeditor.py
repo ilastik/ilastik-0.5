@@ -283,6 +283,9 @@ class DummyLabelWidget(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.volumeLabels = None
+        
+    def currentItem(self):
+        return None
 
 class DummyOverlayListWidget(QtGui.QWidget):
     def __init__(self,  parent):

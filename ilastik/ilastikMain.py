@@ -302,6 +302,13 @@ class MainWindow(QtGui.QMainWindow):
             
             if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
                 self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
+        elif self.previousTabText == "Auto Segmentation":
+            #dont use own history, use the history of the interactive segmentation tab
+            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
+                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
+            
+            if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
+                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
         elif self.previousTabText == "Connected Components":
             self.project.dataMgr[self.activeImage].dataVol.background.history = self.labelWidget.history
 
@@ -330,6 +337,15 @@ class MainWindow(QtGui.QMainWindow):
 
             self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
     
+
+        
+        elif self.ribbon.tabText(index) == "Auto Segmentation":
+            self.labelWidget.history.volumeEditor = self.labelWidget
+
+            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.autosegOverlays)
+            self.labelWidget.setOverlayWidget(overlayWidget)
+            
+            self.labelWidget.setLabelWidget(ve.DummyLabelWidget())
     
     
     
