@@ -85,7 +85,10 @@ class Maya3DScene(HasTraits):
     @on_trait_change('scene.activated')
     def update_plot(self):
         if self.plot is None:
-            self.dataField = self.scene.mlab.pipeline.scalar_field(self.overlayItemReference.data[0,:,:,:,self.overlayItemReference.channel])
+            stuff = self.overlayItemReference.data[0,:,:,:,self.overlayItemReference.channel]
+            print stuff.__class__
+            print stuff.shape, stuff.dtype
+            self.dataField = self.scene.mlab.pipeline.scalar_field(stuff)
             self.rawField = self.scene.mlab.pipeline.scalar_field(self.raw)
 
 
