@@ -43,6 +43,7 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         self.name = overlayItemReference.name
         self.color = self.overlayItemReference.color
         self.visible = overlayItemReference.visible
+        self.setToolTip(self.overlayItemReference.key)
 
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         
