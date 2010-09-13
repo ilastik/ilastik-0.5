@@ -49,11 +49,12 @@ class OverlaySlice():
     Helper class to encapsulate the overlay slice and its drawing related settings
     for passing it around, mostly used in the volumeEditor (->move there ?)
     """
-    def __init__(self, data, color, alpha, colorTable, min = None, max = None):
+    def __init__(self, data, color, alpha, colorTable, min = None, max = None, autoAlphaChannel = True):
         self.colorTable = colorTable
         self.color = color
         self.alpha = alpha
         self.alphaChannel = None
+        self.autoAlphaChannel = autoAlphaChannel
         self.data = data
         self.min = min
         self.max = max
@@ -71,6 +72,7 @@ class OverlayItemReference(object):
         self.visible = True
         self.alpha = self.overlayItem.alpha
         self.color = self.overlayItem.color
+        self.autoAlphaChannel = self.overlayItem.autoAlphaChannel
         if self.overlayItem.linkColorTable is False:
             self.colorTable = self.overlayItem.colorTable
         self.key = self.overlayItem.key
@@ -78,7 +80,7 @@ class OverlayItemReference(object):
         self.numChannels = self.overlayItem.data.shape[4]
         
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable, self.overlayItem.min, self.overlayItem.max)       
+        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable, self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
         
     def __getattr__(self,  name):
         if name == "colorTable":
@@ -121,12 +123,13 @@ class OverlayItem(object):
     A Item that holds some scalar or multichannel data and their drawing related settings.
     OverlayItems are held by the OverlayMgr
     """
-    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False):
+    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True):
         self.data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
         self.color = color
         self.alpha = alpha
+        self.autoAlphaChannel = autoAlphaChannel 
         self.channel = 0
         self.name = "Unnamed Overlay"
         self.key = "Unknown Key"

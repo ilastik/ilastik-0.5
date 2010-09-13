@@ -72,6 +72,7 @@ class DataImpex(object):
 
             dataAcc = DataAccessor(data)
             theDataItem.dataVol = Volume(dataAcc)
+        theDataItem.updateOverlays()
         return theDataItem
 
     @staticmethod
@@ -174,6 +175,7 @@ class DataImpex(object):
     def initDataItemFromArray(image, name):
         dataItem = dataMgr.DataItemImage(name)
         dataItem.dataVol = Volume(DataAccessor(image, True))
+        dataItem.updateOverlays()
         return dataItem
 
     @staticmethod

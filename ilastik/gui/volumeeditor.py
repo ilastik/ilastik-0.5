@@ -803,7 +803,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.selSlices[axis] = num
         self.imageScenes[axis].sliceNumber = num
-        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, fastPreview = True)
+        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
@@ -1121,6 +1121,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                         
                         
                         p.drawImage(0,0,temp_image)
+                        #p.eraseRect(0,0,temp_image.width(),temp_image.height())
 
                         #add overlays
                         for index, origitem in enumerate(overlays):
@@ -1153,16 +1154,20 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 image0.setColorTable(origitem.colorTable[:])
                                 
                             else:
-                                image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                if isinstance(origitem.color,  int):
-                                    image0.fill(origitem.color)
-                                else: #shold be QColor then !
-                                    image0.fill(origitem.color.rgba())
                                 if origitem.min is not None and origitem.max is not None:
                                     normalize = (origitem.min, origitem.max)
                                 else:
                                     normalize = False
-                                image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize))
+                                    
+                                if origitem.autoAlphaChannel:
+                                    image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                    if isinstance(origitem.color,  int):
+                                        image0.fill(origitem.color)
+                                    else: #shold be QColor then !
+                                        image0.fill(origitem.color.rgba())
+                                    image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize))
+                                else:
+                                    image0 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=normalize)
 
                             p.drawImage(0,0, image0)
 

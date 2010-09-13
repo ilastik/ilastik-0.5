@@ -43,6 +43,7 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         self.name = overlayItemReference.name
         self.color = self.overlayItemReference.color
         self.visible = overlayItemReference.visible
+        self.setToolTip(self.overlayItemReference.key)
 
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         
@@ -148,7 +149,10 @@ class OverlayListWidget(QtGui.QListWidget):
         menu = QtGui.QMenu(self)
 
         show3dAction = menu.addAction("Display 3D")
-        colorAction = menu.addAction("Change Color")
+        if item.overlayItemReference.colorTable is None:
+            colorAction = menu.addAction("Change Color")
+        else:
+            colorAction = -3
 
         channelMenu = QtGui.QMenu("Select Channel", menu)
         channelActions = []
@@ -161,7 +165,7 @@ class OverlayListWidget(QtGui.QListWidget):
         menu.addMenu(channelMenu)
         exportAction = menu.addAction("Export")        
 
-        configureDialogAction = None
+        configureDialogAction = -3
         
         c = item.overlayItemReference.overlayItem.__class__
         if overlayDialogs.overlayClassDialogs.has_key(c.__module__ + '.' + c.__name__):
