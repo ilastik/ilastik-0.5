@@ -18,7 +18,7 @@ class ClassifierRandomForestNew(ClassifierBase):
         self.treeCount = treeCount
         
 
-    def train(self, features, labels):
+    def train(self, features, labels, isInteractive):
         if features.shape[0] != labels.shape[0]:
             print " 3, 2 ,1 ... BOOOM!! #features != # labels"
 
