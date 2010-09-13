@@ -16,7 +16,14 @@ from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core.overlays
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.core.overlayMgr import OverlayItem
+from ilastik.gui.overlayWidget import OverlayWidget
+from ilastik.gui import volumeeditor as ve
 from ilastik.core.volume import DataAccessor
+from ilastik.gui.labelWidget import LabelListWidget
+from ilastik.gui.seedWidget import SeedListWidget
+from ilastik.gui.objectWidget import ObjectListWidget
+from ilastik.gui.backgroundWidget import BackgroundWidget
+
 import gc, weakref
 
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
@@ -131,12 +138,26 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
+        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+        
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labelOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        #create LabelOverlay
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Classification/Labels"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Classification/Labels"]
+        
+        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels,  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
         if hasattr(self.parent, "classificationInteractive"):
             self.btnStartLive.click()
-        print 'Left Tab ', self.__class__.name
+        if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
+            self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
+
+        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history is not None:
+            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -204,10 +225,20 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.weightsOverlay = None
         
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
+        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.autosegOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
     
     def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
+        #dont use own history, use the history of the interactive segmentation tab
+        if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history:
+            self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history = self.ilastik.labelWidget.history
+        
+        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history is not None:
+            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -292,10 +323,26 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
+        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seedOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        #create SeedsOverlay
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Segmentation/Seeds"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Segmentation/Seeds"]
+
+        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.seedMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds,  self.ilastik.labelWidget,  ov))
+
+
     
     def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
+        if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history:
+            self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history = self.ilastik.labelWidget.history
+        
+        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history is not None:
+            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -344,10 +391,22 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.backgroundOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        
+        #create background overlay
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Connected Components/Background"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Connected Components/Background"]
+        
+        self.ilastik.labelWidget.setLabelWidget(BackgroundWidget(self.ilastik.project.backgroundMgr, self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background, self.ilastik.labelWidget, ov))    
     
     def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
+        self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history = self.ilastik.labelWidget.history
+
+        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history is not None:
+            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -405,10 +464,24 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
+        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objectOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        
+        #create ObjectsOverlay
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Objects/Selection"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Objects/Selection"]
+        
+        self.ilastik.labelWidget.setLabelWidget(ObjectListWidget(self.ilastik.project.objectMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects,  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
+        self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history = self.ilastik.labelWidget.history
+        
+        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history is not None:
+            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
