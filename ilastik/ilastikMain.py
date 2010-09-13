@@ -602,6 +602,7 @@ class MainWindow(QtGui.QMainWindow):
             h5file = h5py.File(str(fileName),'a')
             h5featGrp = h5file.create_group('features')
             self.project.featureMgr.exportFeatureItems(h5featGrp)
+            h5file.close()
         except RuntimeError as e:
             QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
             h5file.close()
@@ -630,7 +631,7 @@ class MainWindow(QtGui.QMainWindow):
 #        for k, feat in enumerate(featureItems):
 #            itemGroup = h5featGrp.create_group('feature_%03d' % k)
 #            feat.serialize(itemGroup)
-        h5file.close()
+#        h5file.close()
 
         QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
