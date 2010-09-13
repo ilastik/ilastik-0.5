@@ -396,8 +396,8 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
         self.toolBox.setLayout(self.toolBoxLayout)
-        self.toolBox.setMaximumWidth(150)
-        self.toolBox.setMinimumWidth(150)
+        self.toolBox.setMaximumWidth(190)
+        self.toolBox.setMinimumWidth(190)
 
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())

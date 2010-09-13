@@ -107,6 +107,16 @@ class OverlayListWidget(QtGui.QListWidget):
 #        self.clear()
 #        self.overlayWidget.overlays = []
 
+    def moveUp(self, row):
+        item = self.takeItem(row)
+        self.insertItem(row - 1, item)
+        self.setCurrentRow(row - 1)    
+    
+    def moveDown(self, row):
+        item = self.takeItem(row)
+        self.insertItem(row + 1, item)
+        self.setCurrentRow(row + 1)
+
     def removeOverlay(self, item):
         itemNr = None
         if isinstance(item, str):
@@ -261,19 +271,42 @@ class OverlayWidget(QtGui.QGroupBox):
 
         
         tl3 = QtGui.QVBoxLayout()
-        tl3.addStretch()
+        #tl3.addStretch()
         self.buttonUp = QtGui.QPushButton()
-        self.buttonUp.resize(10, 10)
         self.buttonUp.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonUp.resize(11, 22)        
+        self.buttonUp.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-up_thin.png") )
+        self.connect(self.buttonUp,  QtCore.SIGNAL('clicked()'),  self.buttonUpClicked)
         self.buttonDown = QtGui.QPushButton()
-        self.buttonDown.resize(10, 10)
+        
         self.buttonDown.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonDown.resize(11, 22)
+        self.buttonDown.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-down_thin.png") )
+        self.connect(self.buttonDown,  QtCore.SIGNAL('clicked()'),  self.buttonDownClicked)
         tl3.addWidget(self.buttonUp)
         tl3.addWidget(self.buttonDown)
         tl3.addStretch()
         
         self.layout().addLayout(tl1)
-        #self.layout().addLayout(tl3)
+        self.layout().addLayout(tl3)
+        
+        
+    def buttonUpClicked(self):
+        number = self.overlayListWidget.currentRow()
+        if number > 0:
+            self.overlayListWidget.moveUp(number)
+            item = self.overlays.pop(number)
+            self.overlays.insert(number - 1, item)
+            self.overlayListWidget.volumeEditor.repaint()    
+    
+    def buttonDownClicked(self):
+        number = self.overlayListWidget.currentRow()
+        if number < len(self.overlays) - 1:
+            self.overlayListWidget.moveDown(number)
+            item = self.overlays.pop(number)
+            self.overlays.insert(number + 1, item)
+            self.overlayListWidget.volumeEditor.repaint()    
+        
         
     def buttonCreateClicked(self):
         dlg = OverlayCreateSelectionDlg(self.volumeEditor.ilastik)
