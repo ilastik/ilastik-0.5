@@ -93,7 +93,8 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         if str(fileName) != "":
             labelWidget = None
             if self.parent.project is not None:
-                labelWidget = weakref.ref(self.parent.project.dataMgr[0])#.featureBlockAccessor)
+                if len(self.parent.project.dataMgr) > self.parent.activeImage:
+                    labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent.activeImage])#.featureBlockAccessor)
             self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
             self.btnSave.setEnabled(True)
             self.btnEdit.setEnabled(True)

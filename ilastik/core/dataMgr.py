@@ -29,6 +29,7 @@
 
 import numpy
 import sys
+import gc
 from Queue import Queue as queue
 from copy import copy
 import os
@@ -87,7 +88,6 @@ class DataItemBase():
         self.projects = []
         
         self.data = None
-        self.labels = None
         self.dataKind = None
         self.dataType = []
         self.dataDimensions = 0
@@ -682,10 +682,10 @@ class DataMgr():
         else:
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         
-    def clearDataList(self):
+    def clearAll(self):
+        self.clearFeaturesAndTraining()
         self.dataItems = []
-        self.dataFeatures = []
-        self.labels = {}
+        gc.collect()
         
     
     def buildTrainingMatrix(self, sigma = 0):
