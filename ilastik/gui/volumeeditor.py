@@ -676,7 +676,7 @@ class VolumeEditor(QtGui.QWidget):
             sliceOffsetCheck = True
         timeOffsetCheck = self.image.shape[0]>1
         formatList = QtGui.QImageWriter.supportedImageFormats()
-        expdlg = exportDialog.ExportDialog(formatList, timeOffsetCheck, sliceOffsetCheck)
+        expdlg = exportDialog.ExportDialog(formatList, timeOffsetCheck, sliceOffsetCheck, None)
         expdlg.exec_()
         try:
             tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
@@ -785,6 +785,7 @@ class VolumeEditor(QtGui.QWidget):
         tempImage = None
         tempLabels = None
         tempoverlays = []
+        #This bloody call is recursive, be careful!
         self.sliceSelectors[axis].setValue(num)
 
         for index, item in enumerate(self.overlayWidget.overlays):
@@ -799,7 +800,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.selSlices[axis] = num
         self.imageScenes[axis].sliceNumber = num
-        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
+        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, fastPreview = True)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
@@ -1013,6 +1014,7 @@ class ImageSaveThread(QtCore.QThread):
         self.imagePending = threading.Event()
         self.imagePending.clear()
         self.stopped = False
+        self.previousSlice = None
         
     def run(self):
         while not self.stopped:
@@ -1023,6 +1025,7 @@ class ImageSaveThread(QtCore.QThread):
                     filename, timeOffset, sliceOffset, format = stuff
                     if self.ve.image.shape[1]>1:
                         axis = 2
+                        self.previousSlice = self.ve.sliceSelectors[axis].value()
                         for t in range(self.ve.image.shape[0]):
                             for z in range(self.ve.image.shape[3]):                   
                                 self.filename = filename
@@ -1054,6 +1057,9 @@ class ImageSaveThread(QtCore.QThread):
                             self.ve.imageScenes[axis].saveSlice(self.filename)
             self.imageSaved.set()
             self.imagePending.clear()
+            if self.previousSlice is not None:
+                self.ve.sliceSelectors[axis].setValue(self.previousSlice)
+                self.previousSlice = None
             
 
 class ImageSceneRenderThread(QtCore.QThread):

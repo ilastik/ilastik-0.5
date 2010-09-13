@@ -30,7 +30,7 @@
 from PyQt4 import QtCore, QtGui
 
 class ExportDialog(QtGui.QDialog):
-    def __init__(self, formatList, timeOffset, sliceOffset):
+    def __init__(self, formatList, timeOffset, sliceOffset, channelOffset):
         QtGui.QDialog.__init__(self)
         layout = QtGui.QVBoxLayout()
             
@@ -63,6 +63,7 @@ class ExportDialog(QtGui.QDialog):
         l = QtGui.QHBoxLayout()
         self.timeOffsetBox = None
         self.sliceOffsetBox = None
+        self.channelOffsetBox = None
         if timeOffset == True:
             self.timeOffsetBox = QtGui.QSpinBox()
             l.addWidget(QtGui.QLabel("Time Offset"))
@@ -71,7 +72,11 @@ class ExportDialog(QtGui.QDialog):
             self.sliceOffsetBox = QtGui.QSpinBox()
             l.addWidget(QtGui.QLabel("Slice Offset"))
             l.addWidget(self.sliceOffsetBox)
-        if self.timeOffsetBox is not None or self.sliceOffsetBox is not None:
+        if channelOffset == True:
+            self.channelOffsetBox = QtGui.QSpinBox()
+            l.addWidget(QtGui.QLabel("Channel Offset"))
+            l.addWidget(self.channelOffsetBox)
+        if self.timeOffsetBox is not None or self.sliceOffsetBox is not None or self.channelOffsetBox is not None:
             layout.addLayout(l)
             
         l = QtGui.QHBoxLayout()
@@ -94,6 +99,7 @@ class ExportDialog(QtGui.QDialog):
     def export(self):
         self.timeOffset = self.timeOffsetBox.value() if self.timeOffsetBox else 0
         self.sliceOffset = self.sliceOffsetBox.value() if self.sliceOffsetBox else 0
+        self.channelOffset = self.channelOffsetBox.value() if self.channelOffsetBox else 0
         self.format = self.formatList[self.formatBox.currentIndex()]
         self.accept()
 
