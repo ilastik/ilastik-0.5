@@ -6,7 +6,7 @@ class IlastikTabBase(object):
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
     def __init__(self, parent=None):
-        self.parent = parent
+        self.ilastik = self.parent = parent
     
     def on_activation(self):
         print "Tab changed: on_activation() not implementated by this tab"

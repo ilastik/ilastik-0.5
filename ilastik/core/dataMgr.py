@@ -29,6 +29,7 @@
 
 import numpy
 import sys
+import gc
 from Queue import Queue as queue
 from copy import copy
 import os
@@ -87,7 +88,6 @@ class DataItemBase():
         self.projects = []
         
         self.data = None
-        self.labels = None
         self.dataKind = None
         self.dataType = []
         self.dataDimensions = 0
@@ -609,8 +609,27 @@ class DataItemImage(DataItemBase):
         if self.prediction is not None:
             self.prediction.serialize(h5G, 'prediction')
             
+    
+    def updateOverlays(self):
+        #create Overlay for uncertainty:
+        ov = overlayMgr.OverlayItem(self.dataVol.data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False)
+        self.overlayMgr["Raw Data"] = ov
+
+        if self.dataVol.labels is not None:
+            for p_i, descr in enumerate(self.dataVol.labels.descriptions):
+                #create Overlay for prediction:
+                ov = overlayMgr.OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
+                self.overlayMgr["Classification/Prediction/" + descr.name] = ov
+
+        if self.dataVol.uncertainty is not None:
+            #create Overlay for uncertainty:
+            ov = overlayMgr.OverlayItem(self.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+            self.overlayMgr["Classification/Uncertainty"] = ov
+
+            
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
         self.dataVol = Volume.deserialize(h5G, offsets, shape)
+        
         if 'prediction' in h5G.keys():
             print "deserializing prediction..."
             self.prediction = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
@@ -619,16 +638,8 @@ class DataItemImage(DataItemBase):
 
             margin = activeLearning.computeEnsembleMargin(self.prediction[:,:,:,:,:])*255.0
             self.dataVol.uncertainty = margin[:,:,:,:]
-
-            for p_i, descr in enumerate(self.dataVol.labels.descriptions):
-                #create Overlay for prediction:
-                ov = overlayMgr.OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-                self.overlayMgr["Classification/Prediction/" + descr.name] = ov
-    
-            #create Overlay for uncertainty:
-            ov = overlayMgr.OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-            self.overlayMgr["Classification/Uncertainty"] = ov
-
+        self.updateOverlays()
+        
             
 class DataMgr():
     """
@@ -682,10 +693,10 @@ class DataMgr():
         else:
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         
-    def clearDataList(self):
+    def clearAll(self):
+        self.clearFeaturesAndTraining()
         self.dataItems = []
-        self.dataFeatures = []
-        self.labels = {}
+        gc.collect()
         
     
     def buildTrainingMatrix(self, sigma = 0):

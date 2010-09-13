@@ -289,6 +289,7 @@ class Volume():
         self.labelOverlays = []
         self.objectOverlays = []
         self.backgroundOverlays = []
+        self.autosegOverlays = []
         
         self.uncertainty = uncertainty
         self.segmentation = segmentation

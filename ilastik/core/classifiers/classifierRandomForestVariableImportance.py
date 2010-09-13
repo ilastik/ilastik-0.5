@@ -1,9 +1,10 @@
 from classifierBase import *
+import h5py
 
-class ClassifierRandomForest(ClassifierBase):
+class ClassifierRandomForestVariableImportance(ClassifierBase):
     #human readable information
-    name = "RandomForest classifier New" 
-    description = "Basic RandomForest classifier with extensions"
+    name = "RandomForest classifier with variable importance" 
+    description = "Basic RandomForest classifier with computation of variable importance"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
@@ -16,13 +17,13 @@ class ClassifierRandomForest(ClassifierBase):
     def __init__(self, treeCount = 10):
         ClassifierBase.__init__(self)
         self.treeCount = treeCount
-        
+        self.oob = 0
+        self.variableImportance = numpy.zeros( (1, ) )
 
     def train(self, features, labels, isInteractive):
-        if features is None:
-            return
         if features.shape[0] != labels.shape[0]:
             print " 3, 2 ,1 ... BOOOM!! #features != # labels"
+
         if not labels.dtype == numpy.uint32:
             labels = labels.astype(numpy.uint32)
         if not features.dtype == numpy.float32:
@@ -37,9 +38,11 @@ class ClassifierRandomForest(ClassifierBase):
         mtry = max(1,int(numpy.sqrt(features.shape[1]))+1) 
         
         self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
-        
-        oob = self.RF.learnRF(features, labels)
-        print "Out-of-bag error %f" % oob
+        if isInteractive:
+            self.oob = self.RF.learnRF(features, labels)
+            self.variableImportance = numpy.zeros( (1, ) )
+        else:
+            self.oob, self.variableImportance = self.RF.learnRFWithFeatureSelection(features, labels)
         
     def predict(self, features):
         #3d: check that only 1D data arrives here
@@ -51,9 +54,14 @@ class ClassifierRandomForest(ClassifierBase):
             return None
         
     def serialize(self, fileName, pathInFile):
-        # cannot serilaze into grp because can not pass h5py handle to vigra yet
+        # cannot serialize into group because can not pass h5py handle to vigra yet
         # works only with new RF version
-        self.RF.writeHDF5(fileName, pathInFile, True)
+        tmp = self.RF.writeHDF5(fileName, pathInFile, True)
+        f = h5py.File(fileName, 'r+')
+        f.create_dataset(pathInFile+'/Variable importance', data=self.variableImportance)
+        f.create_dataset(pathInFile+'/OOB', data=self.oob)
+        f.close()
+        return tmp
 
     @classmethod
     def deserialize(cls, fileName, pathInFile):
@@ -63,5 +71,4 @@ class ClassifierRandomForest(ClassifierBase):
         return classifier
 
 
-#NEW RandomForest from Raoul: (reenable when new RF performance bug is fixed) :
 

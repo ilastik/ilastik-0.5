@@ -23,7 +23,7 @@ class ClassifierBase(object):
     def __init__(self):
         pass
 
-    def train(self, labels, features):
+    def train(self, labels, features, isInteractive):
         pass
 
     def predict(self, features):

@@ -163,16 +163,9 @@ class Project(object):
     
                 margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
                 activeItem.dataVol.uncertainty = margin[:,:,:,:]
-    
-                for p_i, descr in enumerate(activeItem.dataVol.labels.descriptions):
-                    #create Overlay for prediction:
-                    ov = overlayMgr.OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-                    activeItem.overlayMgr["Classification/Prediction/" + descr.name] = ov
-        
-                #create Overlay for uncertainty:
-                ov = overlayMgr.OverlayItem(activeItem.dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-                activeItem.overlayMgr["Classification/Uncertainty"] = ov
-                
+            
+            activeItem.updateOverlays()
+                            
             dataMgr.append(activeItem,alreadyLoaded=True)
 
                
