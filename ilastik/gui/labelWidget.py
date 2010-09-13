@@ -159,17 +159,10 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
 
         removeAction = menu.addAction("Remove")
         colorAction = menu.addAction("Change Color")
-        if item.visible is True:
-            toggleHideAction = menu.addAction("Hide")
-        else:
-            toggleHideAction = menu.addAction("Show")
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
             self.removeLabel(item,  index)
-        elif action == toggleHideAction:
-            self.buildColorTab()
-            item.toggleVisible()
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
