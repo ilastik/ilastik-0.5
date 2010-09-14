@@ -486,7 +486,7 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
         
-        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Weights')
+        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'3D')
         
         self.btnChooseWeights.setToolTip('Choose the edge weights for the segmentation task')

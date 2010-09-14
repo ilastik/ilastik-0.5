@@ -99,7 +99,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             self.hbox.addLayout(l)
 
         l = QtGui.QVBoxLayout()
-        w = QtGui.QPushButton("Select Forground")
+        w = QtGui.QPushButton("Select Foreground")
         self.connect(w, QtCore.SIGNAL("clicked()"), self.selectForegrounds)
         l.addWidget(w)
         w = QtGui.QPushButton("Select Background")
