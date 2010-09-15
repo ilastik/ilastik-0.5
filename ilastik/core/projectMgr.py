@@ -183,18 +183,19 @@ class Project(object):
             size = self.featureMgr.featureSizes[index]
 
             for index2,  di in enumerate(self.dataMgr):
-                #create Feature Overlay
-                rawdata = di._featureM[:, :, :, :, offset:offset+size]
-                #TODO: the min/max stuff here is slow !!!
-                #parallelize ??
-                min = numpy.min(rawdata)
-                max = numpy.max(rawdata)
-                data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
-                
-                ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
-                ov.min = min
-                ov.max = max
-                di.overlayMgr["Classification/Features/" + feature.name + " " + str(feature.sigma)] = ov
+                #create Feature Overlays
+                for c in range(0,size):
+                    rawdata = di._featureM[:, :, :, :, offset+c:offset+c+1]
+                    #TODO: the min/max stuff here is slow !!!
+                    #parallelize ??
+                    min = numpy.min(rawdata)
+                    max = numpy.max(rawdata)
+                    data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
+                    
+                    ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
+                    ov.min = min
+                    ov.max = max
+                    di.overlayMgr["Classification/Features/" + feature.name + " Sigma " + str(feature.sigma) + "/" + feature.name + " Sigma " + str(feature.sigma) + "Channel " + str(c)] = ov
         
   
 
