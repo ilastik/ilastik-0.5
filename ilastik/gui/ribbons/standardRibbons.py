@@ -155,6 +155,12 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labelOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+                        
         self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
         
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labelOverlays)
@@ -242,6 +248,12 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.weights = None
         
     def on_activation(self):
+        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.autosegOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+                        
         self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.autosegOverlays)
@@ -357,6 +369,12 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seedOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+                        
         self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seedOverlays)
@@ -473,6 +491,12 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.backgroundOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+                        
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.backgroundOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
@@ -546,6 +570,12 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objectOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())        
+        
         self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objectOverlays)
@@ -620,10 +650,10 @@ class AutomateTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
     
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
-        
+        pass
+                        
     def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
+        pass
         
     def _initContent(self):
         
