@@ -288,9 +288,14 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         self.ribbon.currentTabNumber = index
         
+        templist = self.labelWidget.overlayWidget.overlays
+        
         self.ribbon.widget(index).on_activation()
 
         if self.labelWidget is not None:
+            for item in templist:
+                if item.visible:
+                    self.labelWidget.overlayWidget.addOverlayRef(item)
             self.labelWidget.repaint()     
         
         

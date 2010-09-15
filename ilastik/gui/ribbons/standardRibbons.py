@@ -525,6 +525,14 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnInputOverlay_clicked(self):
         self.parent.on_objectProcSelect()
+#        dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
+#        answer = dlg.exec_()
+#        
+#        if len(answer) > 0:
+#            overlay = answer[0]
+#            self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
+            
+            
         self.btnCC.setEnabled(True)
         self.btnCCBack.setEnabled(True)
         
