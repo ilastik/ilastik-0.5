@@ -58,10 +58,6 @@ class OverlayCreateSelectionDlg(QDialog):
         else:
             return None
 
-
-
-
-
 class MyQLabel(QLabel):
     def __init(self, parent):
         QLabel.__init__(self, parent)
@@ -69,7 +65,6 @@ class MyQLabel(QLabel):
     def mouseReleaseEvent(self, ev):
         self.emit(SIGNAL('clicked()'))
         
-
 class MyTreeWidget(QTreeWidget):
     def __init__(self, *args):
         QTreeWidget.__init__(self, *args)
@@ -79,7 +74,6 @@ class MyTreeWidget(QTreeWidget):
             self.emit(SIGNAL("spacePressed"))
             return True
         return QTreeWidget.event(self, event)
-
 
 class MyQTreeWidgetIter(QTreeWidgetItemIterator):
     def __init__(self, *args):
@@ -92,12 +86,10 @@ class MyQTreeWidgetIter(QTreeWidgetItemIterator):
         else:
             return False
 
-
 class MyTreeWidgetItem(QTreeWidgetItem):
     def __init__(self, item):
         QTreeWidgetItem.__init__(self, [item.name])
         self.item = item
-
 
 class OverlaySelectionDialog(QDialog):
     def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[], parent=None):
@@ -109,17 +101,17 @@ class OverlaySelectionDialog(QDialog):
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.layoutWidget = QWidget(self)
-        self.selectedItemList = []
+        self.selectedOverlaysList = []
         self.ilastik = ilastik
-        self.christophsDict = cdict = ilastik.project.dataMgr[ilastik.activeImage].overlayMgr 
-        self.forbiddenItems = forbiddenItems
-        self.selectedItems = selectedItems
-        self.singleSelection = singleSelection
+        self.christophsDict = ilastik.project.dataMgr[ilastik.activeImage].overlayMgr
+        self.forbiddenOverlays = forbiddenItems
+        self.preSelectedOverlays = selectedItems
+        self.singleOverlaySelection = singleSelection
         self.scaleList = [0.1, 0.125, 0.17, 0.25, 0.33, 0.50, 0.67, 1, 2, 3, 4, 5, 6, 7, 8]
         self.scalePrev = 0.67
         self.scaleNext = 2
         self.scaleIndex = 7
-        self.onClickBool = True
+        
         # widgets and layouts
         # ------------------------------------------------
         
@@ -132,8 +124,17 @@ class OverlaySelectionDialog(QDialog):
         self.connect(self.treeWidget, SIGNAL('spacePressed'), self.spacePressedTreewidget)
         self.treeWidget.header().close()
         self.treeWidget.setSortingEnabled(True)
-        self.treeWidget.itemClicked.connect(self.clickOnTreeItem)
+        self.treeWidget.installEventFilter(self)
+        #self.treeWidget.itemClicked.connect(self.treeItemSelectionChanged)
+        self.treeWidget.itemSelectionChanged.connect(self.treeItemSelectionChanged)
         self.connect(self.treeWidget, SIGNAL('itemChanged(QTreeWidgetItem *,int)'), self.treeItemChanged)
+
+        #self.treeWidget ContextMenu
+        self.treeWidget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.connect(self.treeWidget, SIGNAL("customContextMenuRequested(QPoint)"), self.contextMenuTree)
+        #self.treeWidget.customContextMenuRequested.connect(self.contextMenuTree)
+
+        
 
         treeButtonsLayout = QHBoxLayout()
         self.expandAllButton = QPushButton("Expand All")
@@ -153,33 +154,37 @@ class OverlaySelectionDialog(QDialog):
         self.grview = QGraphicsView()
         self.grview.setMinimumWidth(350)
         self.grview.setMinimumHeight(300)
-        self.grview.setMaximumWidth(350)
-        self.grview.setMaximumHeight(300)
         self.grview.setDragMode(QGraphicsView.ScrollHandDrag)
         self.grview.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.grview.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.grscene = QGraphicsScene()
 
-        tempLayoutZoom = QHBoxLayout(self)
+        grviewHudLayout = QVBoxLayout(self.grview)
+        grviewHudLayout.addStretch()
+        grviewHudZoomElementsLayout = QHBoxLayout()
         self.min = MyQLabel()
-        self.min.setPixmap(QPixmap(ilastikIcons.ZoomOut))
+        self.min.setPixmap(QPixmap(ilastikIcons.RemSelx16))
         self.connect(self.min, SIGNAL('clicked()'), self.scaleDown)
         self.zoomScaleLabel = MyQLabel("100%")
+        #self.zoomScaleLabel.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        self.zoomScaleLabel.setStyleSheet("color: lightGray; font-weight:bold;")
         self.connect(self.zoomScaleLabel, SIGNAL('clicked()'), self.clickOnLabel)
         self.max = MyQLabel()
-        self.max.setPixmap(QPixmap(ilastikIcons.ZoomIn))
+        self.max.setPixmap(QPixmap(ilastikIcons.AddSelx16))
         self.connect(self.max, SIGNAL('clicked()'), self.scaleUp)
-        tempLayoutZoom.addStretch()
-        tempLayoutZoom.addWidget(self.min)
-        tempLayoutZoom.addWidget(self.zoomScaleLabel)
-        tempLayoutZoom.addWidget(self.max)
-        tempLayoutZoom.addStretch()
-        tempLayout = QHBoxLayout(self)
-        self.channelLabel = QLabel("Channel")
+        grviewHudZoomElementsLayout.addStretch()
+        grviewHudZoomElementsLayout.addWidget(self.min)
+        grviewHudZoomElementsLayout.addWidget(self.zoomScaleLabel)
+        grviewHudZoomElementsLayout.addWidget(self.max)
+        grviewHudZoomElementsLayout.addStretch()
+        grviewHudLayout.addLayout(grviewHudZoomElementsLayout)
+        
+        grviewSpinboxLayout = QHBoxLayout(self)
+        self.channelSpinboxLabel = QLabel("Channel")
         self.channelSpinbox = QSpinBox(self)
         self.channelSpinbox.setEnabled(False)
         self.connect(self.channelSpinbox, SIGNAL('valueChanged(int)'), self.channelSpinboxValueChanged)
-        self.sliceLabel = QLabel("Slice")
+        self.sliceSpinboxLabel = QLabel("Slice")
         self.sliceSpinbox = QSpinBox(self)
         self.sliceSpinbox.setEnabled(False)
         sliceItem = MyTreeWidgetItem(self.christophsDict[self.christophsDict.keys()[0]])
@@ -187,15 +192,14 @@ class OverlaySelectionDialog(QDialog):
         self.sliceSpinbox.setMaximum(sliceItem.item.data.shape[1]-1)
         self.sliceSpinbox.setValue(self.sliceValue)
         self.connect(self.sliceSpinbox, SIGNAL('valueChanged(int)'), self.sliceSpinboxValueChanged)
-        tempLayout.addWidget(self.channelLabel)
-        tempLayout.addWidget(self.channelSpinbox)
-        tempLayout.addStretch()
-        tempLayout.addWidget(self.sliceLabel)
-        tempLayout.addWidget(self.sliceSpinbox)
-        tempLayout.addStretch()
+        grviewSpinboxLayout.addWidget(self.channelSpinboxLabel)
+        grviewSpinboxLayout.addWidget(self.channelSpinbox)
+        grviewSpinboxLayout.addStretch()
+        grviewSpinboxLayout.addWidget(self.sliceSpinboxLabel)
+        grviewSpinboxLayout.addWidget(self.sliceSpinbox)
+        grviewSpinboxLayout.addStretch()
         previewLayout.addWidget(self.grview)
-        previewLayout.addLayout(tempLayoutZoom)
-        previewLayout.addLayout(tempLayout)
+        previewLayout.addLayout(grviewSpinboxLayout)
         previewGroupBox.setLayout(previewLayout)
 
         infoGroupBox = QGroupBox("Information")
@@ -230,7 +234,7 @@ class OverlaySelectionDialog(QDialog):
         tempLayout.addWidget(self.cancelButton)
         tempLayout.addWidget(self.addSelectedButton)
         
-        if self.singleSelection == True:
+        if self.singleOverlaySelection == True:
             self.setWindowTitle("Overlay Singel Selection")
             self.overlayItemLabel.setText("Singel Selection Mode")
         else:
@@ -241,18 +245,41 @@ class OverlaySelectionDialog(QDialog):
         self.layout.addLayout(GroupsLayout)
         self.layout.addLayout(tempLayout)
         
-        self.addItemsToTree()
+        self.addOverlaysToTreeWidget()
         
     # methods
     # ------------------------------------------------
 
-    def test(self):
-        print "### test ###"
+    def wheelEvent(self, event):
+        if event.delta() > 0:
+            self.sliceSpinbox.setValue(self.sliceSpinbox.value() + 1)
+        elif event.delta() < 0:
+            self.sliceSpinbox.setValue(self.sliceSpinbox.value() - 1)
+            
+
+    def contextMenuTree(self, position):
+        menu = QMenu(self.treeWidget)
+        addOverlay = menu.addAction("add new overlay")
+        printOverlayName = menu.addAction("print overlay's name")
+        action = menu.exec_(self.treeWidget.mapToGlobal(position))
+        if action == addOverlay:
+            self.createNew()
+        elif action == printOverlayName:
+            if self.treeWidget.itemAt(position):
+                item = self.treeWidget.itemAt(position)
+                print item.text(0)
+        
+
+    def eventFilter(self, obj, event):
+        if(event.type() == QEvent.ContextMenu):
+            self.contextMenuTree(event.pos())
+        return False
+
     
-    def addItemsToTree(self):
+    def addOverlaysToTreeWidget(self):
         testItem = QTreeWidgetItem("a")
         for keys in self.christophsDict.keys():
-            if self.christophsDict[keys] in self.forbiddenItems:
+            if self.christophsDict[keys] in self.forbiddenOverlays:
                 continue
             else:
                 boolStat = False
@@ -262,7 +289,7 @@ class OverlaySelectionDialog(QDialog):
                     newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
                     self.treeWidget.addTopLevelItem(newItemsChild)                   
                     boolStat = False
-                    if self.christophsDict[keys] in self.selectedItems:
+                    if self.christophsDict[keys] in self.preSelectedOverlays:
                         newItemsChild.setCheckState(0, 2)
                     else:
                         newItemsChild.setCheckState(0, 0)
@@ -270,7 +297,7 @@ class OverlaySelectionDialog(QDialog):
                 elif i+1 == len(split) and len(split) > 1:
                     newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
                     testItem.addChild(newItemsChild)
-                    if self.christophsDict[keys] in self.selectedItems:
+                    if self.christophsDict[keys] in self.preSelectedOverlays:
                         newItemsChild.setCheckState(0, 2)
                     else:
                         newItemsChild.setCheckState(0, 0)
@@ -317,7 +344,7 @@ class OverlaySelectionDialog(QDialog):
         it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.Checked)
         i = 0
         while (it.value()):
-            if self.singleSelection == True and currentItem.checkState(column) == 2:
+            if self.singleOverlaySelection == True and currentItem.checkState(column) == 2:
                 if it.value() != currentItem:
                     it.value().setCheckState(0, 0)
             it.next()
@@ -338,8 +365,8 @@ class OverlaySelectionDialog(QDialog):
                 self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray)))
             self.grview.setScene(self.grscene)
 
-    def clickOnTreeItem(self):
-        self.onClickBool = True
+
+    def treeItemSelectionChanged(self):
         currentItem = self.treeWidget.currentItem()
         if isinstance(currentItem, MyTreeWidgetItem):
             self.overlayItemLabel.setText(currentItem.item.key)
@@ -351,7 +378,6 @@ class OverlaySelectionDialog(QDialog):
             self.channelSpinbox.setEnabled(False)
             self.sliceSpinbox.setEnabled(False)
             self.overlayItemLabel.setText(self.treeWidget.currentItem().text(0))
-        self.onClickBool = False
 
 
     def scaleUp(self):
@@ -369,12 +395,14 @@ class OverlaySelectionDialog(QDialog):
             self.scaleIndex +=1
             self.scaleNext = self.scaleList[self.scaleIndex+1]
 
+
     def clickOnLabel(self):
         self.grview.resetTransform()
         self.zoomScaleLabel.setText("100%")
         self.scaleIndex = 7
         self.scalePrev = self.scaleList[self.scaleIndex-1]
         self.scaleNext = self.scaleList[self.scaleIndex+1]
+
 
     def scaleDown(self):
         if self.scalePrev == 0.1:
@@ -399,6 +427,7 @@ class OverlaySelectionDialog(QDialog):
             self.drawPreview()
         else:
             self.channelSpinbox.setValue(currentItem.item.data.shape[-1]-1)
+
 
     def sliceSpinboxValueChanged(self, value):
         self.sliceValue = value
@@ -425,22 +454,18 @@ class OverlaySelectionDialog(QDialog):
                 self.cancel()
 
 
-    def uncheckAll(self):
-        it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.Checked)
-        while (it.value()):
-            it.value().setCheckState(0, 0)
-            it.next()
-
 
     def cancel(self):
         self.reject()
 
+
     def addSelected(self):
         it = MyQTreeWidgetIter(self.treeWidget, QTreeWidgetItemIterator.Checked)
         while (it.value()):
-            self.selectedItemList.append(it.value().item)
+            self.selectedOverlaysList.append(it.value().item)
             it.next()
         self.accept()
+
 
     def spacePressedTreewidget(self):
         for item in self.treeWidget.selectedItems():
@@ -449,9 +474,10 @@ class OverlaySelectionDialog(QDialog):
                     item.setCheckState(0, 2)
                 else: 
                     item.setCheckState(0, 0)
-                    
+
+
     def exec_(self):
         if QDialog.exec_(self) == QDialog.Accepted:
-            return  self.selectedItemList
+            return  self.selectedOverlaysList
         else:
             return []
