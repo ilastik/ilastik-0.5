@@ -55,7 +55,7 @@ class OverlayListWidget(QtGui.QListWidget):
     class QAlphaSliderDialog(QtGui.QDialog):
         def __init__(self, min, max, value):
             QtGui.QDialog.__init__(self)
-            self.setWindowTitle('Change Alpha')
+            self.setWindowTitle('Change Opacity')
             self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
             self.slider.setGeometry(20, 30, 140, 20)
             self.slider.setRange(min,max)
@@ -137,7 +137,7 @@ class OverlayListWidget(QtGui.QListWidget):
             return None
 
     def addOverlayRef(self, overlayRef):
-        self.addItem(OverlayListWidgetItem(overlayRef))
+        self.insertItem(0,OverlayListWidgetItem(overlayRef))
 
     def onContext(self, pos):
         index = self.indexAt(pos)
@@ -161,7 +161,7 @@ class OverlayListWidget(QtGui.QListWidget):
             colorAction = -3
             alphaChannelAction = -3
 
-        configureTransparencyAction = menu.addAction("Change Transparency")
+        configureTransparencyAction = menu.addAction("Change Opacity")
 
         channelMenu = QtGui.QMenu("Select Channel", menu)
         channelActions = []
@@ -265,11 +265,13 @@ class OverlayWidget(QtGui.QGroupBox):
 
         self.overlayListWidget = OverlayListWidget(parent, self)
        
+        tl0 = QtGui.QHBoxLayout()
         tl1 = QtGui.QVBoxLayout()
         tl1.addWidget(self.overlayListWidget)
 
         pathext = os.path.dirname(__file__)
 
+        tl4 = QtGui.QVBoxLayout()
         tl2 = QtGui.QHBoxLayout()
         self.buttonAdd = QtGui.QPushButton()
         self.buttonAdd.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-add.png") )
@@ -279,7 +281,7 @@ class OverlayWidget(QtGui.QGroupBox):
         self.connect(self.buttonRemove,  QtCore.SIGNAL('clicked()'),  self.buttonRemoveClicked)
         tl2.addWidget(self.buttonAdd)
         tl2.addWidget(self.buttonRemove)
-        tl1.addLayout(tl2)
+        tl4.addLayout(tl2)
         
 
         tl2 = QtGui.QHBoxLayout()
@@ -287,11 +289,8 @@ class OverlayWidget(QtGui.QGroupBox):
         self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
         self.connect(self.buttonCreate,  QtCore.SIGNAL('clicked()'),  self.buttonCreateClicked)
         tl2.addWidget(self.buttonCreate)
-        tl1.addLayout(tl2)
+        tl4.addLayout(tl2)
 
-
-
-        
         tl3 = QtGui.QVBoxLayout()
         #tl3.addStretch()
         self.buttonUp = QtGui.QPushButton()
@@ -309,9 +308,11 @@ class OverlayWidget(QtGui.QGroupBox):
         tl3.addWidget(self.buttonDown)
         tl3.addStretch()
         
-        self.layout().addLayout(tl1)
-        self.layout().addLayout(tl3)
+        tl0.addLayout(tl4)
+        tl0.addLayout(tl3)
         
+        tl1.addLayout(tl0)
+        self.layout().addLayout(tl1)
         
     def buttonUpClicked(self):
         number = self.overlayListWidget.currentRow()
@@ -323,7 +324,7 @@ class OverlayWidget(QtGui.QGroupBox):
     
     def buttonDownClicked(self):
         number = self.overlayListWidget.currentRow()
-        if number < len(self.overlays) - 1:
+        if number >= 0 and number < len(self.overlays) - 1:
             self.overlayListWidget.moveDown(number)
             item = self.overlays.pop(number)
             self.overlays.insert(number+1, item)
@@ -371,7 +372,7 @@ class OverlayWidget(QtGui.QGroupBox):
                     break
         
         if overlayRef is not None:    
-            self.overlays.append(overlayRef)
+            self.overlays.insert(0,overlayRef)
             answer = self.overlayListWidget.addOverlayRef(overlayRef)
             self.volumeEditor.repaint()
             return answer
