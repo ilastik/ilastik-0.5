@@ -251,11 +251,12 @@ class OverlaySelectionDialog(QDialog):
     # ------------------------------------------------
 
     def wheelEvent(self, event):
-        if event.delta() > 0:
-            self.sliceSpinbox.setValue(self.sliceSpinbox.value() + 1)
-        elif event.delta() < 0:
-            self.sliceSpinbox.setValue(self.sliceSpinbox.value() - 1)
-            
+        if self.grview.underMouse():
+            if event.delta() > 0:
+                self.sliceSpinbox.setValue(self.sliceSpinbox.value() + 1)
+            elif event.delta() < 0:
+                self.sliceSpinbox.setValue(self.sliceSpinbox.value() - 1)
+                
 
     def contextMenuTree(self, position):
         menu = QMenu(self.treeWidget)
