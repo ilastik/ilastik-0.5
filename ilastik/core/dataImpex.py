@@ -205,7 +205,6 @@ class DataImpex(object):
         
     @staticmethod
     def exportOverlay(filename, format, overlayItemReference, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
-        #TODO: We should allow any type here, not only tiff
         if overlayItemReference.data.shape[1]>1:
             #3d data
             for t in range(overlayItemReference.data.shape[0]):

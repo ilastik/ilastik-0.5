@@ -36,6 +36,8 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        if self.ilastik.project is None:
+            return
         ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays
         if len(ovs) == 0:
             raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
@@ -155,6 +157,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        if self.ilastik.project is None:
+            return
         ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labelOverlays
         if len(ovs) == 0:
             raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
@@ -174,6 +178,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels,  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
+        if self.ilastik.project is None:
+            return
         if hasattr(self.parent, "classificationInteractive"):
             self.btnStartLive.click()
         if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
@@ -248,6 +254,8 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.weights = None
         
     def on_activation(self):
+        if self.ilastik.project is None:
+            return
         ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.autosegOverlays
         if len(ovs) == 0:
             raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
@@ -369,6 +377,8 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        if self.ilastik.project is None:
+            return
         ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seedOverlays
         if len(ovs) == 0:
             raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
@@ -390,6 +400,8 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
 
     
     def on_deActivation(self):
+        if self.ilastik.project is None:
+            return
         if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history:
             self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history = self.ilastik.labelWidget.history
         
@@ -491,6 +503,8 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        if self.ilastik.project is None:
+            return
         ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.backgroundOverlays
         if len(ovs) == 0:
             raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
@@ -509,6 +523,8 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setLabelWidget(BackgroundWidget(self.ilastik.project.backgroundMgr, self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background, self.ilastik.labelWidget, ov))    
     
     def on_deActivation(self):
+        if self.ilastik.project is None:
+            return
         self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history = self.ilastik.labelWidget.history
 
         if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history is not None:
@@ -577,6 +593,8 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        if self.ilastik.project is None:
+            return
         ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objectOverlays
         if len(ovs) == 0:
             raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
@@ -597,6 +615,8 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setLabelWidget(ObjectListWidget(self.ilastik.project.objectMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects,  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
+        if self.ilastik.project is None:
+            return
         self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history = self.ilastik.labelWidget.history
         
         if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history is not None:
