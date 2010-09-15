@@ -661,7 +661,7 @@ class VolumeEditor(QtGui.QWidget):
             tempImage = None
             tempLabels = None
             tempoverlays = []   
-            for index, item in enumerate(self.overlayWidget.overlays):
+            for index, item in reversed(self.overlayWidget.overlays):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
     
@@ -791,7 +791,7 @@ class VolumeEditor(QtGui.QWidget):
         #This bloody call is recursive, be careful!
         self.sliceSelectors[axis].setValue(num)
 
-        for index, item in enumerate(self.overlayWidget.overlays):
+        for index, item in reversed(self.overlayWidget.overlays):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
 
@@ -846,7 +846,7 @@ class VolumeEditor(QtGui.QWidget):
         tempImage = None
         tempLabels = None
         tempoverlays = []
-        for index, item in enumerate(self.overlayWidget.overlays):
+        for index, item in reversed(self.overlayWidget.overlays):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
