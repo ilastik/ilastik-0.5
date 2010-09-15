@@ -234,7 +234,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self._initContent()
         self._initConnects()
-        self.weightsOverlay = None
+        self.weights = None
         
     def on_activation(self):
         self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
@@ -272,30 +272,51 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         
     def on_btnChooseWeights_clicked(self):
-        dlg = OverlaySelectionDialog(self.parent,  singleSelection = True)
+        dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
         answer = dlg.exec_()
         
         if len(answer) > 0:
-            self.weightsOverlay = answer[0] 
+            overlay = answer[0]
+    
+            volume = overlay.data[0,:,:,:,0]
+            
+            print numpy.max(volume),  numpy.min(volume)
+    
+            #real_weights = numpy.zeros(volume.shape + (3,))        
+            
+            borderIndicator = QtGui.QInputDialog.getItem(None, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness"],  editable = False)
+            borderIndicator = str(borderIndicator[0])
+            
+            sigma = 1.0
+            normalizePotential = True
+            #TODO: this , until now, only supports gray scale and 2D!
+            if borderIndicator == "Brightness":
+                weights = volume[:,:,:]
+            elif borderIndicator == "Darkness":
+                weights = (255 - volume[:,:,:])
+    
+            if normalizePotential == True:
+                min = numpy.min(weights)
+                max = numpy.max(weights)
+                weights = (weights - min)*(255.0 / (max - min))
+                #real_weights[:] = weights[:]
+
+            data = numpy.ndarray(weights.shape, 'float32')
+            data[:] = weights[:]
+                    
+            self.weights = data
                 
         
     def on_btnSegment_clicked(self):
-        if self.weightsOverlay is not None:
-            activeItem = self.parent.project.dataMgr[self.parent.activeImage]
-    
-            result = numpy.ndarray(self.weightsOverlay.data.shape[:-1] + (1,), 'int32')
-            
-            for t in range(self.weightsOverlay.data.shape[0]):
-                if self.weightsOverlay.data.shape[1] > 1:
-                    data = self.weightsOverlay.data[t,:,:,:,self.weightsOverlay.channel]
-                    data = data.astype('float32')                   
-                    res = vigra.analysis.watersheds(data, neighborhood = 6)
-                    result[t,:,:,:,0] = res[0][:]
-                else:
-                    data = self.weightsOverlay.data[t,0,:,:,self.weightsOverlay.channel]
-                    data = data.astype('float32')                    
-                    res = vigra.analysis.watersheds(data, neighborhood = 4)
-                    result[t,0,:,:,0] = res[0][:]
+        
+        if self.weights is not None:
+            res = numpy.ndarray((1,) + self.weights.shape + (1,), 'int32')
+            if self.weights.shape[0] > 1:
+                data = self.weights.view(vigra.ScalarVolume)
+                res[0,:,:,:,0] = vigra.analysis.watersheds(data, neighborhood = 6)[0]
+            else:
+                data = self.weights[0,:,:].view(vigra.ScalarImage)
+                res[0,0,:,:,0] = vigra.analysis.watersheds(data, neighborhood = 4)[0]
             
             colortable = []
             for i in range(256):
@@ -304,10 +325,10 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
             
             #create Overlay for segmentation:
             if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"] is None:
-                ov = OverlayItem(result, color = 0, alpha = 1.0, colorTable = colortable, autoAdd = True, autoVisible = True)
+                ov = OverlayItem(res, color = 0, alpha = 1.0, colorTable = colortable, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"] = ov
             else:
-                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"].data = DataAccessor(result)
+                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"].data = DataAccessor(res)
             self.parent.labelWidget.repaint()
         
     def on_btnSegmentorsOptions_clicked(self):
