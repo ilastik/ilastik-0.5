@@ -235,8 +235,8 @@ class OverlaySelectionDialog(QDialog):
         tempLayout.addWidget(self.addSelectedButton)
         
         if self.singleOverlaySelection == True:
-            self.setWindowTitle("Overlay Singel Selection")
-            self.overlayItemLabel.setText("Singel Selection Mode")
+            self.setWindowTitle("Overlay Single Selection")
+            self.overlayItemLabel.setText("Single Selection Mode")
         else:
             self.setWindowTitle("Overlay Multi Selection")
             self.overlayItemLabel.setText("Multi Selection Mode")

@@ -6,3 +6,6 @@ build/*
 .spyder*
 *.orig
 *.ilp
+*.project
+*.pydevproject
+*.settings

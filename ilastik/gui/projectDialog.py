@@ -55,9 +55,6 @@ class ProjectDlg(QtGui.QDialog):
         self.tableWidget.verticalHeader().hide()
         self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
 
-        
-
-
 
     @QtCore.pyqtSignature("")
     def updateDlg(self, project):

@@ -99,7 +99,7 @@ class ClassifierTrainThread(ThreadBase):
 
     def trainClassifier(self, F, L):
         classifier = self.classifier(*self.classifierOptions)
-        classifier.train(F, L)
+        classifier.train(F, L, False) # not interactive
         self.count += 1
         self.classifiers.append(classifier)
         
@@ -235,7 +235,7 @@ class ClassifierInteractiveThread(ThreadBase):
     
     def trainClassifier(self, F, L):
         classifier = self.classifier(*self.classifierOptions)
-        classifier.train(F, L)
+        classifier.train(F, L, True) # is interactive
         self.classifiers.append(classifier)
 
 

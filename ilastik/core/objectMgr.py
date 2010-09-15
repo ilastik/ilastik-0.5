@@ -35,7 +35,6 @@ from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelD
 class ObjectMgr(object):
     """
     manages the objects of all dataItems and stuff.
-    seeds (as labels) should be synchronized across all dataItems because it is a good idead.
     """
     def __init__(self,  dataMgr):
         self.dataMgr = dataMgr
@@ -111,4 +110,6 @@ class ObjectMgr(object):
         
         if ov is not None:
             ov.setSelectedNumbers(self.selectedObjects)
-        
+    
+    
+    

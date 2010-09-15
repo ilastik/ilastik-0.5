@@ -285,10 +285,12 @@ class Volume():
         self.seeds = seeds
         self.objects = objects
         
+        self.projectOverlays = []
         self.seedOverlays = []
         self.labelOverlays = []
         self.objectOverlays = []
         self.backgroundOverlays = []
+        self.autosegOverlays = []
         
         self.uncertainty = uncertainty
         self.segmentation = segmentation

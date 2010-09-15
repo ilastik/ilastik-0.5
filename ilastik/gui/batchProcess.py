@@ -149,7 +149,7 @@ class BatchProcess(QtGui.QDialog):
                 self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
                 self.logger.appendPlainText("")                
             
-            self.dataMgr.clearDataList()
+            self.dataMgr.clearAll()
             #self.logger.update()
             self.logger.repaint()
             

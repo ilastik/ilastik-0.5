@@ -72,7 +72,7 @@ class DataImpex(object):
 
             dataAcc = DataAccessor(data)
             theDataItem.dataVol = Volume(dataAcc)
-            print "dataVol.data", theDataItem.dataVol.data.shape
+        theDataItem.updateOverlays()
         return theDataItem
 
     @staticmethod
@@ -175,6 +175,7 @@ class DataImpex(object):
     def initDataItemFromArray(image, name):
         dataItem = dataMgr.DataItemImage(name)
         dataItem.dataVol = Volume(DataAccessor(image, True))
+        dataItem.updateOverlays()
         return dataItem
 
     @staticmethod
@@ -202,8 +203,42 @@ class DataImpex(object):
             else:
                 return (tempimage.shape[0], tempimage.shape[1], 1, 1)
         
+    @staticmethod
+    def exportOverlay(filename, format, overlayItemReference, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
+        #TODO: We should allow any type here, not only tiff
+        if overlayItemReference.data.shape[1]>1:
+            #3d data
+            for t in range(overlayItemReference.data.shape[0]):
+                for z in range(overlayItemReference.data.shape[3]):
+                    for c in range(overlayItemReference.data.shape[-1]):
+                        fn = filename
+                        data = overlayItemReference.data[t,:,:,z,c]
+                        if overlayItemReference.data.shape[0]>1:
+                            fn = fn + ("_time%03i" %(t+timeOffset))
+                        fn = fn + ("_z%05i" %(z+sliceOffset))
+                        if overlayItemReference.data.shape[-1]>1:
+                            fn = fn + ("_channel%03i" %(c+channelOffset))
+                        fn = fn + "." + format
+                        vigra.impex.writeImage(data, fn)
+                        print "Exported file ", fn
+        else:
+            for t in range(overlayItemReference.data.shape[0]):
+                for c in range(overlayItemReference.data.shape[-1]):
+                    fn = filename
+                    data = overlayItemReference.data[t, 0, :, :, c]
+                    if overlayItemReference.data.shape[0]>1:
+                        fn = fn + ("_time%03i" %(t+timeOffset))
+                    if overlayItemReference.data.shape[-1]>1:
+                        fn = fn + ("_channel%03i" %(c+channelOffset))
+                    fn = fn + "." + format
+                    vigra.impex.writeImage(data.swapaxes(0,1), fn)
+                    print "Exported file ", fn
 
-     #           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
+    @staticmethod
+    def exportFormatList():
+        return vigra.impex.listExtensions().split(' ')
+
+#           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
       #      if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):
        #         QtGui.QErrorMessage.qtHandler().showMessage("Chosen channels don't have an equal number of files. Check with Preview files button")
                 #should it really reject?

@@ -23,7 +23,8 @@ class ConnectedComponents():
             res = vigra.analysis.labelVolume(vol)
         if res is not None:
             res = res.swapaxes(0,2).view(vigra.ScalarVolume)
-            return res.reshape(res.shape + (1,))
+            res = res.reshape(res.shape + (1,))
+            return numpy.array(res)
         
     def transformToVigra(self, vol, background):
         if len(background)==0:

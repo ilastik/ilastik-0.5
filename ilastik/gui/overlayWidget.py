@@ -33,60 +33,8 @@ import sip
 import os
 from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
 import ilastik.gui.overlayDialogs as overlayDialogs
-
-
-class ExportDialog(QtGui.QDialog):
-    def __init__(self, overlayItemReference):
-        QtGui.QDialog.__init__(self)
-        self.overlayItemReference = overlayItemReference
-        layout = QtGui.QVBoxLayout()
-
-        l = QtGui.QHBoxLayout()
-
-        self.path = QtGui.QLineEdit("Path")
-        l.addWidget(self.path)
-        self.pathButton = QtGui.QPushButton("Select")
-        l.addWidget(self.pathButton)
-        self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
-        layout.addLayout(l)
-        
-        self.prefix = QtGui.QLineEdit("Filename Prefix")
-        layout.addWidget(self.prefix)
-        
-        l = QtGui.QHBoxLayout()
-        l.addStretch()
-        b = QtGui.QPushButton("Ok")
-        self.connect(b, QtCore.SIGNAL("clicked()"), self.export)
-        l.addWidget(b)
-        b = QtGui.QPushButton("Cancel")
-        self.connect(b, QtCore.SIGNAL("clicked()"), self.reject)
-        l.addWidget(b)
-        layout.addLayout(l)
-        self.setLayout(layout)
-    
-    
-    def slotDir(self):
-        path = self.path.text()
-        dir = QtGui.QFileDialog.getExistingDirectory(self, "", path)
-        self.path.setText(dir)
-            
-    def export(self):
-        prefix = str(self.path.text()) + "/" + str(self.prefix.text())
-        for t in range(self.overlayItemReference.data.shape[0]):
-            for z in range(self.overlayItemReference.data.shape[1]):
-                for c in range(self.overlayItemReference.data.shape[-1]):
-                    data = self.overlayItemReference.data[t,z,:,:,c]
-                    vigra.impex.writeImage(data,"%s_time%03i_slice%05i_channel%03i.tiff" %(prefix,t,z,c))
-        self.accept()
-
-    def exec_(self):
-        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
-            return None
-        else:
-            return None
-
-
-
+import ilastik.gui.exportDialog as exportDialog
+from ilastik.core import dataImpex
 
 class OverlayListWidgetItem(QtGui.QListWidgetItem):
     def __init__(self, overlayItemReference):
@@ -95,6 +43,7 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         self.name = overlayItemReference.name
         self.color = self.overlayItemReference.color
         self.visible = overlayItemReference.visible
+        self.setToolTip(self.overlayItemReference.key)
 
         self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         
@@ -143,13 +92,15 @@ class OverlayListWidget(QtGui.QListWidget):
             
     def onItemDoubleClick(self, itemIndex):
         self.currentItem = item = self.itemFromIndex(itemIndex)
-        if item.checkState() == item.visible * 2:
+        if item.checkState() == 2:
             dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
             dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
             dialog.exec_()
         else:
             self.onItemClick(itemIndex)
-            
+    
+    
+    
             
     def setCurrentItemAlpha(self, num):
         self.currentItem.overlayItemReference.alpha = 1.0 * num / 20.0
@@ -158,6 +109,16 @@ class OverlayListWidget(QtGui.QListWidget):
 #    def clearOverlays(self):
 #        self.clear()
 #        self.overlayWidget.overlays = []
+
+    def moveUp(self, row):
+        item = self.takeItem(row)
+        self.insertItem(row - 1, item)
+        self.setCurrentRow(row - 1)    
+    
+    def moveDown(self, row):
+        item = self.takeItem(row)
+        self.insertItem(row + 1, item)
+        self.setCurrentRow(row + 1)
 
     def removeOverlay(self, item):
         itemNr = None
@@ -190,7 +151,17 @@ class OverlayListWidget(QtGui.QListWidget):
         menu = QtGui.QMenu(self)
 
         show3dAction = menu.addAction("Display 3D")
-        colorAction = menu.addAction("Change Color")
+        if item.overlayItemReference.colorTable is None:
+            colorAction = menu.addAction("Change Color")
+            if item.overlayItemReference.autoAlphaChannel:
+                alphaChannelAction = menu.addAction("Disable intensity blending")
+            else:
+                alphaChannelAction = menu.addAction("Enable intensity blending")
+        else:
+            colorAction = -3
+            alphaChannelAction = -3
+
+        configureTransparencyAction = menu.addAction("Change Transparency")
 
         channelMenu = QtGui.QMenu("Select Channel", menu)
         channelActions = []
@@ -201,9 +172,9 @@ class OverlayListWidget(QtGui.QListWidget):
                 channelMenu.setActiveAction(action)
             
         menu.addMenu(channelMenu)
-        exportAction = menu.addAction("Export as TIFF Stack")        
+        exportAction = menu.addAction("Export")        
 
-        configureDialogAction = None
+        configureDialogAction = -3
         
         c = item.overlayItemReference.overlayItem.__class__
         if overlayDialogs.overlayClassDialogs.has_key(c.__module__ + '.' + c.__name__):
@@ -223,13 +194,32 @@ class OverlayListWidget(QtGui.QListWidget):
             item.overlayItemReference.colorTable = None
             item.overlayItemReference.color = color
             self.volumeEditor.repaint()
+        elif action == alphaChannelAction:
+            item.overlayItemReference.autoAlphaChannel = not(item.overlayItemReference.autoAlphaChannel)
+            self.volumeEditor.repaint()
         elif action == configureDialogAction:
             c = item.overlayItemReference.overlayItem.__class__
             configDialog = overlayDialogs.overlayClassDialogs[c.__module__ + '.' + c.__name__](self.volumeEditor.ilastik, item.overlayItemReference.overlayItem)
             configDialog.exec_()
+        elif action == configureTransparencyAction:
+            self.currentItem = item
+            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
+            dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
+            dialog.exec_()
+            
         elif action == exportAction:
-            dlg = ExportDialog(item.overlayItemReference)
-            dlg.exec_()
+            timeOffset = item.overlayItemReference.data.shape[0]>1
+            sliceOffset = item.overlayItemReference.data.shape[1]>1
+            channelOffset = item.overlayItemReference.data.shape[-1]>1
+            formatList = dataImpex.DataImpex.exportFormatList()
+            expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset)
+            expdlg.exec_()
+            try:
+                tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
+                filename = str(QtCore.QDir.convertSeparators(tempname))
+                dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
+            except:
+                pass
         else:
             for index,  channelAct in enumerate(channelActions):
                 if action == channelAct:
@@ -303,19 +293,42 @@ class OverlayWidget(QtGui.QGroupBox):
 
         
         tl3 = QtGui.QVBoxLayout()
-        tl3.addStretch()
+        #tl3.addStretch()
         self.buttonUp = QtGui.QPushButton()
-        self.buttonUp.resize(10, 10)
         self.buttonUp.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonUp.resize(11, 22)        
+        self.buttonUp.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-up_thin.png") )
+        self.connect(self.buttonUp,  QtCore.SIGNAL('clicked()'),  self.buttonUpClicked)
         self.buttonDown = QtGui.QPushButton()
-        self.buttonDown.resize(10, 10)
+        
         self.buttonDown.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonDown.resize(11, 22)
+        self.buttonDown.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-down_thin.png") )
+        self.connect(self.buttonDown,  QtCore.SIGNAL('clicked()'),  self.buttonDownClicked)
         tl3.addWidget(self.buttonUp)
         tl3.addWidget(self.buttonDown)
         tl3.addStretch()
         
         self.layout().addLayout(tl1)
-        #self.layout().addLayout(tl3)
+        self.layout().addLayout(tl3)
+        
+        
+    def buttonUpClicked(self):
+        number = self.overlayListWidget.currentRow()
+        if number > 0:
+            self.overlayListWidget.moveUp(number)
+            item = self.overlays.pop(number)
+            self.overlays.insert(number - 1, item)
+            self.overlayListWidget.volumeEditor.repaint()    
+    
+    def buttonDownClicked(self):
+        number = self.overlayListWidget.currentRow()
+        if number < len(self.overlays) - 1:
+            self.overlayListWidget.moveDown(number)
+            item = self.overlays.pop(number)
+            self.overlays.insert(number + 1, item)
+            self.overlayListWidget.volumeEditor.repaint()    
+        
         
     def buttonCreateClicked(self):
         dlg = OverlayCreateSelectionDlg(self.volumeEditor.ilastik)

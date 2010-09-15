@@ -42,7 +42,7 @@ class StackLoader(QtGui.QDialog):
         self.layout.addLayout(tempLayout)
 
         tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("MultiChannel Data:")
+        self.multiChannel = QtGui.QCheckBox("Load MultiChannel data as one image:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout) 

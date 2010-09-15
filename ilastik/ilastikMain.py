@@ -220,11 +220,13 @@ class MainWindow(QtGui.QMainWindow):
         if self.labelWidget is not None:
             self.labelWidget.history.volumeEditor = None
 
+
+        
+        self.destroyImageWindows()
+        
         self.activeImage = number
         self.project.dataMgr.activeImage = number
         
-        self.destroyImageWindows()
-
         self.createImageWindows( self.project.dataMgr[number].dataVol)
         
         self.labelWidget.repaint() #for overlays
@@ -287,102 +289,10 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.currentTabNumber = index
         
         self.ribbon.widget(index).on_activation()
-        
-        
-        if self.previousTabText == "Classification":
-            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.labels.history:
-                self.project.dataMgr[self.activeImage].dataVol.labels.history = self.labelWidget.history
 
-            if self.project.dataMgr[self.activeImage].dataVol.labels.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.labels.history
-                
-        elif self.previousTabText == "Segmentation":
-            if self.labelWidget.history != self.project.dataMgr[self.activeImage].dataVol.seeds.history:
-                self.project.dataMgr[self.activeImage].dataVol.seeds.history = self.labelWidget.history
-            
-            if self.project.dataMgr[self.activeImage].dataVol.seeds.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.seeds.history
-        elif self.previousTabText == "Connected Components":
-            self.project.dataMgr[self.activeImage].dataVol.background.history = self.labelWidget.history
-
-            if self.project.dataMgr[self.activeImage].dataVol.background.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.background.history
-                    
-        elif self.previousTabText == "Objects":
-            self.project.dataMgr[self.activeImage].dataVol.objects.history = self.labelWidget.history
-            
-            if self.project.dataMgr[self.activeImage].dataVol.objects.history is not None:
-                self.labelWidget.history = self.project.dataMgr[self.activeImage].dataVol.objects.history
-            
-                
-            
-        
-        if self.ribbon.tabText(index) == "Segmentation":
-            self.labelWidget.history.volumeEditor = self.labelWidget
-
-            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.seedOverlays)
-            self.labelWidget.setOverlayWidget(overlayWidget)
-            
-            #create SeedsOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.seeds.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-            self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"] = ov
-            ov = self.project.dataMgr[self.activeImage].overlayMgr["Segmentation/Seeds"]
-
-            self.labelWidget.setLabelWidget(SeedListWidget(self.project.seedMgr,  self.project.dataMgr[self.activeImage].dataVol.seeds,  self.labelWidget,  ov))
-    
-    
-    
-    
-        elif self.ribbon.tabText(index) == "Objects":
-
-            self.labelWidget.history.volumeEditor = self.labelWidget
-
-            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.objectOverlays)
-            self.labelWidget.setOverlayWidget(overlayWidget)
-            
-            
-            #create ObjectsOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.objects.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-            self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"] = ov
-            ov = self.project.dataMgr[self.activeImage].overlayMgr["Objects/Selection"]
-            
-            self.labelWidget.setLabelWidget(ObjectListWidget(self.project.objectMgr,  self.project.dataMgr[self.activeImage].dataVol.objects,  self.labelWidget,  ov))
-
-            
-        elif self.ribbon.tabText(index) == "Connected Components":
-
-                
-            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.backgroundOverlays)
-            self.labelWidget.setOverlayWidget(overlayWidget)
-            
-            
-            #create background overlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
-            self.project.dataMgr[self.activeImage].overlayMgr["Connected Components/Background"] = ov
-            ov = self.project.dataMgr[self.activeImage].overlayMgr["Connected Components/Background"]
-            
-            self.labelWidget.setLabelWidget(BackgroundWidget(self.project.backgroundMgr, self.project.dataMgr[self.activeImage].dataVol.background, self.labelWidget, ov))    
-#                
-        elif self.labelWidget is not None:
-
-            self.labelWidget.history.volumeEditor = self.labelWidget
-            
-            overlayWidget = OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays)
-            self.labelWidget.setOverlayWidget(overlayWidget)
-            
-            #create LabelOverlay
-            ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = self.project.dataMgr[self.activeImage].dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-            self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
-            ov = self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"]
-            
-            self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
-
-            
         if self.labelWidget is not None:
             self.labelWidget.repaint()     
         
-        
-        self.previousTabText = str(self.ribbon.tabText(index))
         
     def saveProject(self):
         if hasattr(self,'project'):
@@ -409,6 +319,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks = []
         
     def destroyImageWindows(self):
+        self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         for dock in self.labelDocks:
             self.removeDockWidget(dock)
         self.labelDocks = []
@@ -422,24 +333,12 @@ class MainWindow(QtGui.QMainWindow):
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
 
-        if dataVol.labels.history is None:
-            dataVol.labels.history = ve.HistoryManager(self.labelWidget)
-
-        if dataVol.seeds.history is None:
-            dataVol.seeds.history = ve.HistoryManager(self.labelWidget)
+        self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()
 
         self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
         self.labelWidget.normalizeData = self.project.normalizeData
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
         self.labelWidget.setRgbMode(self.project.rgbData)
-        
-        #setup sub-widgets
-        self.labelWidget.setOverlayWidget(OverlayWidget(self.labelWidget, self.project.dataMgr[self.activeImage].overlayMgr,  self.project.dataMgr[self.activeImage].dataVol.labelOverlays))
-        #create LabelOverlay
-        ov = OverlayItem(self.project.dataMgr[self.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.project.dataMgr[self.activeImage].overlayMgr["Classification/Labels"] = ov
-        self.labelWidget.setLabelWidget(LabelListWidget(self.project.labelMgr,  self.project.dataMgr[self.activeImage].dataVol.labels,  self.labelWidget,  ov))
-        ov.colorTable = self.labelWidget.labelWidget.colorTab
         
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
@@ -573,7 +472,7 @@ class MainWindow(QtGui.QMainWindow):
     
     def on_exportClassifier(self):
         global LAST_DIRECTORY
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", LAST_DIRECTORY, "HDF5 Files (*.h5)")
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
         LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
         try:
@@ -586,36 +485,38 @@ class MainWindow(QtGui.QMainWindow):
             h5file = h5py.File(str(fileName),'a')
             h5featGrp = h5file.create_group('features')
             self.project.featureMgr.exportFeatureItems(h5featGrp)
+            h5file.close()
         except RuntimeError as e:
             QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
             h5file.close()
             return
         
-        if fileName is not None:
+        #if fileName is not None:
             # global LAST_DIRECTORY
-            fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
-            ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+            #fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
+            #ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
         # Make sure group 'classifiers' exist
-        h5file = h5py.File(str(fileName),'w')
+        print fileName
+        h5file = h5py.File(str(fileName),'a')
         h5file.create_group('classifiers')
         h5file.close()
         
-        for i, c in enumerate(classifiers):
-            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
+        for i, c in enumerate(self.project.dataMgr.classifiers):
+            tmp = c.serialize(str(fileName), "classifiers/rf_%03d" % i)
             print "Write Random Forest # %03d -> %d" % (i,tmp)
         
         # Export user feature selection
-        h5file = h5py.File(str(fileName),'a')
-        h5featGrp = h5file.create_group('features')
-        
-        featureItems = self.project.featureMgr.featureItems
-        for k, feat in enumerate(featureItems):
-            itemGroup = h5featGrp.create_group('feature_%03d' % k)
-            feat.serialize(itemGroup)
-        h5file.close()
+#        h5file = h5py.File(str(fileName),'a')
+#        h5featGrp = h5file.create_group('features')
+#        
+#        featureItems = self.project.featureMgr.featureItems
+#        for k, feat in enumerate(featureItems):
+#            itemGroup = h5featGrp.create_group('feature_%03d' % k)
+#            feat.serialize(itemGroup)
+#        h5file.close()
 
-        QtGui.QMessageBox.information(self, 'Sucess', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+        QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
     def on_objectProcSelect(self):
         keylist = self.project.dataMgr[self.activeImage].overlayMgr.keys()
