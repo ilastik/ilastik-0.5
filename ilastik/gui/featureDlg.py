@@ -48,7 +48,10 @@ class FeatureDlg(QtGui.QDialog):
             self.oldFeatureItems = self.parent.project.featureMgr.featureItems
         else:
             self.oldFeatureItems = []
-            
+
+
+
+        self.hudColor = QtGui.QColor("red")
         self.groupMaskSizesList = ilastikFeatureGroups.groupMaskSizes
         self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -57,15 +60,27 @@ class FeatureDlg(QtGui.QDialog):
         pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
         self.circle = self.grscene.addEllipse(96, 96, 0, 0)
-        self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
-        self.sizeText = self.grscene.addText("")
-        self.sizeText.setDefaultTextColor(QtGui.QColor(255,0,0))
-        self.sizeText.scale(.5, .5)
+        self.circle.setPen(QtGui.QPen(self.hudColor))
         self.graphicsView.setScene(self.grscene)
         self.graphicsView.scale(2, 2)
         self.graphicsView.viewport().installEventFilter(self)
         self.graphicsView.setViewportUpdateMode(0)
-        self.size
+        self.graphicsView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.size = None
+        self.zoom = 2
+        self.horizontalHeaderIndex = None
+        print "###size###", self.size
+
+        tempLayoutZoomV = QtGui.QVBoxLayout(self.graphicsView)
+        tempLayoutZoom = QtGui.QHBoxLayout()
+        self.sizeText = QtGui.QLabel()
+        self.sizeText.setStyleSheet("color: red; font-weight:bold;")
+        self.sizeText.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
+        tempLayoutZoom.addWidget(self.sizeText)
+        tempLayoutZoom.addStretch()
+        tempLayoutZoomV.addLayout(tempLayoutZoom)
+        tempLayoutZoomV.addStretch()
+
 
     def initDlg(self):
 
@@ -82,6 +97,7 @@ class FeatureDlg(QtGui.QDialog):
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(ilastik.__file__)
         uic.loadUi(ilastikPath+'/gui/dlgFeature.ui', self)
+        self.featureTable.setMouseTracking(1)
         self.featureTable.viewport().installEventFilter(self)
 
         for featureItem in self.parent.featureList:
@@ -133,7 +149,7 @@ class FeatureDlg(QtGui.QDialog):
             size = len(item.text()) * 11
             self.featureTable.setColumnWidth(i, size)
 
-
+    #oli todo
     def testSome(self):
         print "moving"
 
@@ -190,7 +206,55 @@ class FeatureDlg(QtGui.QDialog):
             for j in range(iColumn):
                 self.featureTable.item(i, j).setSelected(False)
 
-
+    #oli todo
+    def contextMenuGraphicsView(self, position):
+        menu = QtGui.QMenu(self.graphicsView)
+        menuChangeColor = QtGui.QMenu("change HUD color", menu)
+        red = menuChangeColor.addAction("red")
+        green = menuChangeColor.addAction("green")
+        blue = menuChangeColor.addAction("blue")
+        menu.addMenu(menuChangeColor)
+        zoomMenu = QtGui.QMenu("change zoom", menu)
+        zoomx1 = zoomMenu.addAction("x1")
+        zoomx2 = zoomMenu.addAction("x2")
+        if self.zoom == 1:
+            zoomx1.setDisabled(True)
+            zoomx2.setDisabled(False)
+        else:
+            zoomx1.setDisabled(False)
+            zoomx2.setDisabled(True)
+        menu.addMenu(zoomMenu)
+        action = menu.exec_(self.graphicsView.mapToGlobal(position))
+        if action == red:
+            self.hudColor = QtGui.QColor("red")
+            self.sizeText.setStyleSheet("color: red")
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+        elif action == green:
+            self.hudColor = QtGui.QColor("green")
+            self.sizeText.setStyleSheet("color: green")
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+        elif action == blue:
+            self.hudColor = QtGui.QColor("blue")
+            self.sizeText.setStyleSheet("color: blue")
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+        elif action == zoomx1:
+            self.zoom = 1
+            self.graphicsView.scale(.5, .5)
+            self.drawPreview()
+        elif action == zoomx2:
+            self.zoom = 2
+            self.graphicsView.scale(2, 2)
+            self.drawPreview()
+    #oli todo
+    def drawPreview(self):
+        self.size = self.groupMaskSizesList[self.horizontalHeaderIndex]
+        self.grscene.removeItem(self.circle)
+        self.circle = self.grscene.addEllipse(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
+        self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+        self.circle.setPen(QtGui.QPen(self.hudColor))
+        self.sizeText.setText("Size: " + str(self.size))
+        
+    #oli todo
     def eventFilter(self, obj, event):
         if(event.type()==QtCore.QEvent.MouseButtonPress):
             if event.button() == QtCore.Qt.LeftButton:
@@ -201,17 +265,16 @@ class FeatureDlg(QtGui.QDialog):
                 self.deselectAllTableItems()
                 self.boolSelection = False
         if event.type() == QtCore.QEvent.HoverMove:
-            i = self.featureTable.horizontalHeader().logicalIndexAt(event.pos())
-            self.size = self.groupMaskSizesList[i]
-            self.grscene.removeItem(self.circle)
-            self.circle = self.grscene.addEllipse(48 - (self.size/2), 48 - (self.size/2), self.size, self.size)
-            self.circle.setPos(self.graphicsView.mapToScene(0, 0))
-            self.circle.setPen(QtGui.QPen(QtGui.QColor(255,0,0)))
-            self.sizeText.setPlainText("Size: " + str(self.size))
-            self.sizeText.setPos(self.graphicsView.mapToScene(0, 0))
+            self.horizontalHeaderIndex = self.featureTable.horizontalHeader().logicalIndexAt(event.pos())
+            self.drawPreview()
         if event.type() == QtCore.QEvent.MouseMove:
             self.circle.setPos(self.graphicsView.mapToScene(0, 0))
-            self.sizeText.setPos(self.graphicsView.mapToScene(0, 0))
+            if self.featureTable.itemAt(event.pos()) and self.featureTable.underMouse():
+                item = self.featureTable.itemAt(event.pos())
+                self.horizontalHeaderIndex = item.column()
+                self.drawPreview()
+        if(event.type() == QtCore.QEvent.ContextMenu and self.graphicsView.underMouse()):
+            self.contextMenuGraphicsView(event.pos())
 
         return False
 
