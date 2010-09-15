@@ -661,12 +661,14 @@ class VolumeEditor(QtGui.QWidget):
             tempImage = None
             tempLabels = None
             tempoverlays = []   
-            for index, item in reversed(self.overlayWidget.overlays):
+            for index, item in enumerate(reversed(self.overlayWidget.overlays)):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
     
-            tempImage = self.image.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
-            
+            if len(self.overlayWidget.overlays) > 0:
+                tempImage = self.overlayWidget.overlays[-1].data.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
+            else:
+                tempImage = None
 #            if self.labelWidget.volumeLabels is not None:
 #                if self.labelWidget.volumeLabels.data is not None:
 #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
@@ -791,11 +793,15 @@ class VolumeEditor(QtGui.QWidget):
         #This bloody call is recursive, be careful!
         self.sliceSelectors[axis].setValue(num)
 
-        for index, item in reversed(self.overlayWidget.overlays):
+        for index, item in enumerate(reversed(self.overlayWidget.overlays)):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
-
-        tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+        
+        if len(self.overlayWidget.overlays) > 0:
+            tempImage = self.overlayWidget.overlays[-1].data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+        else:
+            tempImage = None            
+        #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
 
 #        if self.labelWidget.volumeLabels is not None:
 #            if self.labelWidget.volumeLabels.data is not None:
@@ -846,14 +852,14 @@ class VolumeEditor(QtGui.QWidget):
         tempImage = None
         tempLabels = None
         tempoverlays = []
-        for index, item in reversed(self.overlayWidget.overlays):
+        for index, item in enumerate(reversed(self.overlayWidget.overlays)):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
-        tempImage = self.image.getSlice(self.selSlices[axis], axis, self.selectedTime, self.selectedChannel)
-
-        if self.labelWidget.volumeLabels.data is not None:
-            tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[axis],axis, self.selectedTime, 0)
+        if len(self.overlayWidget.overlays) > 0:
+            tempImage = self.overlayWidget.overlays[-1].data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+        else:
+            tempImage = None            
 
         self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays)
 
@@ -1106,22 +1112,22 @@ class ImageSceneRenderThread(QtCore.QThread):
                             break
                         bounds = self.patchAccessor.getPatchBounds(patchNr)
 
-                        image = origimage[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-
-                        if image.dtype == 'uint16':
-                            image = (image / 255).astype(numpy.uint8)
-
-                        temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
-
                         if self.imageScene.openglWidget is None:
                             p = QtGui.QPainter(self.imageScene.scene.image)
                             p.translate(bounds[0],bounds[2])
                         else:
                             p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
                         
-                        
-                        p.drawImage(0,0,temp_image)
-                        #p.eraseRect(0,0,temp_image.width(),temp_image.height())
+#                        if origimage is not None:
+#                            image = origimage[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+#    
+#                            if image.dtype == 'uint16':
+#                                image = (image / 255).astype(numpy.uint8)
+#    
+#                            temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
+#                            p.drawImage(0,0,temp_image)
+#                        else:
+                        p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
 
                         #add overlays
                         for index, origitem in enumerate(overlays):
@@ -1159,16 +1165,16 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 else:
                                     normalize = False
                                 
-                                
-                                image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)                                
                                 if origitem.autoAlphaChannel is False:
-                                    p.eraseRect(0,0, image0.width(), image0.height())
-                                if isinstance(origitem.color,  int):
-                                    image0.fill(origitem.color)
-                                else: #shold be QColor then !
-                                    image0.fill(origitem.color.rgba())
-                                image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize))
-
+                                    image0 = image1
+                                else:
+                                    image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                    if isinstance(origitem.color,  int):
+                                        image0.fill(origitem.color)
+                                    else: #shold be QColor then !
+                                        image0.fill(origitem.color.rgba())
+                                    image0.setAlphaChannel(image1)
                             p.drawImage(0,0, image0)
 
                         p.end()
@@ -1562,27 +1568,28 @@ class ImageScene( QtGui.QGraphicsView):
 
         #if we are in opengl 2d render mode, quickly update the texture without any overlays
         #to get a fast update on slice change
-        if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
-            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
-            t = self.scene.tex
-            ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
-
-            if not t > -1:
-                self.scene.tex = glGenTextures(1)
-                glBindTexture(GL_TEXTURE_2D,self.scene.tex)
-                glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+        if image is not None:
+            if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
+                self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
+                t = self.scene.tex
+                ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
+    
+                if not t > -1:
+                    self.scene.tex = glGenTextures(1)
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+                else:
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+                
+                self.viewport().repaint()
+    
+            if self.volumeEditor.normalizeData:
+                self.min = numpy.min(image)
+                self.max = numpy.max(image)
             else:
-                glBindTexture(GL_TEXTURE_2D,self.scene.tex)
-                glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
-            
-            self.viewport().repaint()
-
-        if self.volumeEditor.normalizeData:
-            self.min = numpy.min(image)
-            self.max = numpy.max(image)
-        else:
-            self.min = 0
-            self.max = 255
+                self.min = 0
+                self.max = 255
         ########### 
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
         
