@@ -14,8 +14,10 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
         self.rgb = 1
-
-        tempLayout = QtGui.QHBoxLayout()
+        self.layout.addWidget(QtGui.QLabel("Select a subvolume:"))
+        tempForm = QtGui.QFormLayout()
+        
+        tempLayout = QtGui.QHBoxLayout()        
         self.offsetX = QtGui.QSpinBox()
         self.offsetX.setRange(0,10000)
         self.connect(self.offsetX, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
@@ -25,11 +27,15 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.offsetZ = QtGui.QSpinBox()
         self.offsetZ.setRange(0,10000)
         self.connect(self.offsetZ, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
+        tempLayout.addWidget(QtGui.QLabel("  X"))
         tempLayout.addWidget( self.offsetX)
+        tempLayout.addWidget(QtGui.QLabel("  Y"))
         tempLayout.addWidget( self.offsetY)
+        tempLayout.addWidget(QtGui.QLabel("  Z"))
         tempLayout.addWidget( self.offsetZ)
-        self.layout.addWidget(QtGui.QLabel("Subvolume Start Offsets:"))
-        self.layout.addLayout(tempLayout)
+        
+        #self.layout.addLayout(tempLayout)
+        tempForm.addRow(QtGui.QLabel("From:"), tempLayout)
         
         tempLayout = QtGui.QHBoxLayout()
         self.sizeX = QtGui.QSpinBox()
@@ -41,12 +47,18 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.sizeZ = QtGui.QSpinBox()
         self.sizeZ.setRange(0,10000)
         self.connect(self.sizeZ, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
+        tempLayout.addWidget(QtGui.QLabel("  X"))
         tempLayout.addWidget( self.sizeX)
+        tempLayout.addWidget(QtGui.QLabel("  Y"))
         tempLayout.addWidget( self.sizeY)
+        tempLayout.addWidget(QtGui.QLabel("  Z"))
         tempLayout.addWidget( self.sizeZ)
-        self.layout.addWidget(QtGui.QLabel("Subvolume End Offsets:"))
-        self.layout.addLayout(tempLayout)
+        #self.layout.addWidget(QtGui.QLabel("Subvolume End Offsets:"))
+        #self.layout.addLayout(tempLayout)
 
+        tempForm.addRow(QtGui.QLabel("To:"), tempLayout)
+        self.layout.addLayout(tempForm)
+        
         tempLayout = QtGui.QHBoxLayout()
         self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
         self.connect(self.resCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleResolution)
