@@ -36,13 +36,18 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+        
         self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
-
     
     def on_deActivation(self):
         if self.ilastik.labelWidget is not None:
