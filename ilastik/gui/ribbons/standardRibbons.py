@@ -282,7 +282,8 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         if len(answer) > 0:
             overlay = answer[0]
-    
+            self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
+            
             volume = overlay.data[0,:,:,:,0]
             
             print numpy.max(volume),  numpy.min(volume)
@@ -407,8 +408,10 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         answer = dlg.exec_()
         
         if len(answer) > 0:
+            
             overlay = answer[0]
-    
+            self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
+            
             volume = overlay.data[0,:,:,:,0]
             
             print numpy.max(volume),  numpy.min(volume)

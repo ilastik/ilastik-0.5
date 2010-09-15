@@ -362,9 +362,21 @@ class OverlayWidget(QtGui.QGroupBox):
         """
         return self.overlayListWidget.removeOverlay(item)
         
-    def addOverlayRef(self, overlayRef):
-        self.overlays.append(overlayRef)
-        return self.overlayListWidget.addOverlayRef(overlayRef)
+    def addOverlayRef(self, overlayRef, duplicateAllowed = False):
+        
+        if duplicateAllowed is False:
+            for o in self.overlays:
+                if o.key == overlayRef.key:
+                    overlayRef = None
+                    break
+        
+        if overlayRef is not None:    
+            self.overlays.append(overlayRef)
+            answer = self.overlayListWidget.addOverlayRef(overlayRef)
+            self.volumeEditor.repaint()
+            return answer
+        else:
+            return None
 
     def getLabelNames(self):
         return self.overlayListWidget.getLabelNames()
