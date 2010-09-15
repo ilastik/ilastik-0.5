@@ -265,11 +265,13 @@ class OverlayWidget(QtGui.QGroupBox):
 
         self.overlayListWidget = OverlayListWidget(parent, self)
        
+        tl0 = QtGui.QHBoxLayout()
         tl1 = QtGui.QVBoxLayout()
         tl1.addWidget(self.overlayListWidget)
 
         pathext = os.path.dirname(__file__)
 
+        tl4 = QtGui.QVBoxLayout()
         tl2 = QtGui.QHBoxLayout()
         self.buttonAdd = QtGui.QPushButton()
         self.buttonAdd.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-add.png") )
@@ -279,7 +281,7 @@ class OverlayWidget(QtGui.QGroupBox):
         self.connect(self.buttonRemove,  QtCore.SIGNAL('clicked()'),  self.buttonRemoveClicked)
         tl2.addWidget(self.buttonAdd)
         tl2.addWidget(self.buttonRemove)
-        tl1.addLayout(tl2)
+        tl4.addLayout(tl2)
         
 
         tl2 = QtGui.QHBoxLayout()
@@ -287,11 +289,8 @@ class OverlayWidget(QtGui.QGroupBox):
         self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
         self.connect(self.buttonCreate,  QtCore.SIGNAL('clicked()'),  self.buttonCreateClicked)
         tl2.addWidget(self.buttonCreate)
-        tl1.addLayout(tl2)
+        tl4.addLayout(tl2)
 
-
-
-        
         tl3 = QtGui.QVBoxLayout()
         #tl3.addStretch()
         self.buttonUp = QtGui.QPushButton()
@@ -309,8 +308,11 @@ class OverlayWidget(QtGui.QGroupBox):
         tl3.addWidget(self.buttonDown)
         tl3.addStretch()
         
+        tl0.addLayout(tl4)
+        tl0.addLayout(tl3)
+        
+        tl1.addLayout(tl0)
         self.layout().addLayout(tl1)
-        self.layout().addLayout(tl3)
         
     def buttonUpClicked(self):
         number = self.overlayListWidget.currentRow()
