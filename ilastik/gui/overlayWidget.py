@@ -55,7 +55,7 @@ class OverlayListWidget(QtGui.QListWidget):
     class QAlphaSliderDialog(QtGui.QDialog):
         def __init__(self, min, max, value):
             QtGui.QDialog.__init__(self)
-            self.setWindowTitle('Change Alpha')
+            self.setWindowTitle('Change Opacity')
             self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
             self.slider.setGeometry(20, 30, 140, 20)
             self.slider.setRange(min,max)
@@ -161,7 +161,7 @@ class OverlayListWidget(QtGui.QListWidget):
             colorAction = -3
             alphaChannelAction = -3
 
-        configureTransparencyAction = menu.addAction("Change Transparency")
+        configureTransparencyAction = menu.addAction("Change Opacity")
 
         channelMenu = QtGui.QMenu("Select Channel", menu)
         channelActions = []
