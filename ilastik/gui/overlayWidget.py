@@ -318,7 +318,7 @@ class OverlayWidget(QtGui.QGroupBox):
         if number > 0:
             self.overlayListWidget.moveUp(number)
             item = self.overlays.pop(number)
-            self.overlays.insert(number - 1, item)
+            self.overlays.insert(number-1, item)
             self.overlayListWidget.volumeEditor.repaint()    
     
     def buttonDownClicked(self):
@@ -326,7 +326,7 @@ class OverlayWidget(QtGui.QGroupBox):
         if number < len(self.overlays) - 1:
             self.overlayListWidget.moveDown(number)
             item = self.overlays.pop(number)
-            self.overlays.insert(number + 1, item)
+            self.overlays.insert(number+1, item)
             self.overlayListWidget.volumeEditor.repaint()    
         
         
