@@ -137,7 +137,7 @@ class OverlayListWidget(QtGui.QListWidget):
             return None
 
     def addOverlayRef(self, overlayRef):
-        self.addItem(OverlayListWidgetItem(overlayRef))
+        self.insertItem(0,OverlayListWidgetItem(overlayRef))
 
     def onContext(self, pos):
         index = self.indexAt(pos)
@@ -312,7 +312,6 @@ class OverlayWidget(QtGui.QGroupBox):
         self.layout().addLayout(tl1)
         self.layout().addLayout(tl3)
         
-        
     def buttonUpClicked(self):
         number = self.overlayListWidget.currentRow()
         if number > 0:
@@ -323,7 +322,7 @@ class OverlayWidget(QtGui.QGroupBox):
     
     def buttonDownClicked(self):
         number = self.overlayListWidget.currentRow()
-        if number < len(self.overlays) - 1:
+        if number >= 0 and number < len(self.overlays) - 1:
             self.overlayListWidget.moveDown(number)
             item = self.overlays.pop(number)
             self.overlays.insert(number+1, item)
@@ -371,7 +370,7 @@ class OverlayWidget(QtGui.QGroupBox):
                     break
         
         if overlayRef is not None:    
-            self.overlays.append(overlayRef)
+            self.overlays.insert(0,overlayRef)
             answer = self.overlayListWidget.addOverlayRef(overlayRef)
             self.volumeEditor.repaint()
             return answer
