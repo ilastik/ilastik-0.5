@@ -285,6 +285,7 @@ class Volume():
         self.seeds = seeds
         self.objects = objects
         
+        self.projectOverlays = []
         self.seedOverlays = []
         self.labelOverlays = []
         self.objectOverlays = []

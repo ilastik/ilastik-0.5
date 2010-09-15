@@ -36,10 +36,22 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
+        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+
     
     def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
+        if self.ilastik.labelWidget is not None:
+            if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
+                self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
+    
+            if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history is not None:
+                self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history
+
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -233,13 +245,8 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
     
     def on_deActivation(self):
-        #dont use own history, use the history of the interactive segmentation tab
-        if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history:
-            self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history = self.ilastik.labelWidget.history
-        
-        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history is not None:
-            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history
-        
+        pass
+    
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
         
