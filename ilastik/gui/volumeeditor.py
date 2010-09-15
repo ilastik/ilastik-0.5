@@ -60,6 +60,7 @@ from shortcutmanager import *
 from ilastik.gui.overlayWidget import OverlayListWidget
 from ilastik.gui.labelWidget import LabelListWidget
 
+from ilastik.gui.iconMgr import ilastikIcons # oli todo
 # Local import
 #from spyderlib.config import get_icon, get_font
 
@@ -82,8 +83,14 @@ def rgb(r, g, b):
 
 
 
-
-
+# oli todo
+class MyQLabel(QtGui.QLabel):
+    def __init(self, parent):
+        QtGui.QLabel.__init__(self, parent)
+    #enabling clicked signal for QLable
+    def mouseReleaseEvent(self, ev):
+        self.emit(QtCore.SIGNAL('clicked()'))
+        
 
 class PatchAccessor():
     def __init__(self, size_x,size_y, blockSize = 128):
@@ -554,15 +561,18 @@ class VolumeEditor(QtGui.QWidget):
         self.maximizeSliceView(2, self.imageScenes[1].isVisible())
 
     def maximizeSliceView(self, axis, maximize):
-        a = range(3)
-        if maximize:
-            for i in a:
-                self.imageScenes[i].setVisible(i == axis)
-        else:
-            for i in range(3):
-                self.imageScenes[i].setVisible(True)
+        if self.image.shape[1] > 1:
+            a = range(3)
+            if maximize:
+                for i in a:
+                    self.imageScenes[i].setVisible(i == axis)
+            else:
+                for i in range(3):
+                    self.imageScenes[i].setVisible(True)
         
-        self.imageScenes[axis].setFocus()
+            self.imageScenes[axis].setFocus()
+            for i in a:
+                self.imageScenes[i].setImageSceneFullScreenLabel()
     
     def nextLabel(self):
         self.labelWidget.nextLabel()
@@ -1275,6 +1285,21 @@ class ImageScene( QtGui.QGraphicsView):
 
 
         self.scene = CustomGraphicsScene(self, self.openglWidget, self.image)
+
+        # oli todo
+        if self.volumeEditor.image.shape[1] > 1:
+            grviewHudLayout = QtGui.QVBoxLayout(self)
+            tempLayout = QtGui.QHBoxLayout()
+            #self.fullSceenButton = QtGui.QPushButton("+")
+            self.fullSceenButton = MyQLabel()
+            self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.AddSelx22))
+            self.fullSceenButton.setStyleSheet("border: none")
+            self.connect(self.fullSceenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
+            tempLayout.addStretch()
+            tempLayout.addWidget(self.fullSceenButton)
+            grviewHudLayout.addLayout(tempLayout)
+            grviewHudLayout.addStretch()
+        
         
         if self.openglWidget is not None:
             self.openglWidget.context().makeCurrent()
@@ -1400,6 +1425,27 @@ class ImageScene( QtGui.QGraphicsView):
 
         self.tempErase = False
 
+    def imageSceneFullScreen(self): #oli todo
+        if self.volumeEditor.imageScenes[0] == self.fullSceenButton.parent():
+            self.volumeEditor.toggleFullscreenX()
+        if self.volumeEditor.imageScenes[1] == self.fullSceenButton.parent():
+            self.volumeEditor.toggleFullscreenY()
+        if self.volumeEditor.imageScenes[2] == self.fullSceenButton.parent():
+            self.volumeEditor.toggleFullscreenZ()
+
+    def setImageSceneFullScreenLabel(self): #oli todo
+        self.allVisible = True
+        a = range(3)
+        for i in a:
+            if not self.volumeEditor.imageScenes[i].isVisible():
+                self.allVisible = False
+                break
+        if self.allVisible:
+            self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.AddSelx22))
+        else:
+            self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.RemSelx22))
+
+        
     def changeSlice(self, delta):
         if self.drawing == True:
             self.endDraw(self.mousePos)
