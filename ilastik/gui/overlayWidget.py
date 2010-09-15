@@ -212,6 +212,7 @@ class OverlayListWidget(QtGui.QListWidget):
             sliceOffset = item.overlayItemReference.data.shape[1]>1
             channelOffset = item.overlayItemReference.data.shape[-1]>1
             formatList = dataImpex.DataImpex.exportFormatList()
+            formatList.append("h5")
             expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset)
             expdlg.exec_()
             try:
