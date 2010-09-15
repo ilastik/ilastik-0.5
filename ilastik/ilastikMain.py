@@ -390,54 +390,6 @@ class MainWindow(QtGui.QMainWindow):
 #            self.project.segmentor = answer
 #            self.project.segmentor.setupWeights(self.project.dataMgr[self.activeImage].segmentationWeights)
 
-    def on_segmentationWeights(self):
-        dlg = OverlaySelectionDialog(self,  singleSelection = True)
-        answer = dlg.exec_()
-        
-        if len(answer) > 0:
-            overlay = answer[0]
-    
-            volume = overlay.data[0,:,:,:,0]
-            
-            print numpy.max(volume),  numpy.min(volume)
-    
-            #real_weights = numpy.zeros(volume.shape + (3,))        
-            
-            borderIndicator = QtGui.QInputDialog.getItem(None, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness"],  editable = False)
-            borderIndicator = str(borderIndicator[0])
-            
-            sigma = 1.0
-            normalizePotential = True
-            #TODO: this , until now, only supports gray scale and 2D!
-            if borderIndicator == "Brightness":
-                weights = volume[:,:,:].view(vigra.ScalarVolume)
-                #weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                #weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                #real_weights[:,:,:,0] = weights[:,:,:]
-                #eal_weights[:,:,:,1] = weights[:,:,:]
-                #real_weights[:,:,:,2] = weights[:,:,:]
-            elif borderIndicator == "Darkness":
-                weights = (255 - volume[:,:,:]).view(vigra.ScalarVolume)
-                #weights = vigra.filters.gaussianSmoothing((255 - volume[:,:,:]).swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                #weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                #real_weights[:,:,:,0] = weights[:,:,:]
-                #real_weights[:,:,:,1] = weights[:,:,:]
-                #real_weights[:,:,:,2] = weights[:,:,:]
-            elif borderIndicator == "Gradient":
-                weights = vigra.filters.gaussianGradientMagnitude(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                #real_weights[:] = weights[:]
-    
-            if normalizePotential == True:
-                min = numpy.min(weights)
-                max = numpy.max(weights)
-                weights = (weights - min)*(255.0 / (max - min))
-                #real_weights[:] = weights[:]
-    
-            self.project.segmentor.setupWeights(weights)
-            self.project.dataMgr[self.activeImage].segmentationWeights = weights
-            
-
 
     def on_segmentationSegment(self):
         self.segmentationSegment = Segmentation(self)
