@@ -37,13 +37,13 @@ class FileLoader(QtGui.QDialog):
         self.layout.addLayout(tempLayout)
         
         tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("MultiChannel Data:")
+        self.multiChannel = QtGui.QCheckBox("Load Multichannel data as one image:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout)
        
         self.multiChannelFrame = QtGui.QFrame()
-        tempLayout = QtGui.QVBoxLayout()
+        tempLayout = QtGui.QFormLayout()
         tempLayout1 = QtGui.QHBoxLayout()
         self.redPath = QtGui.QLineEdit("")
         self.connect(self.redPath, QtCore.SIGNAL("textChanged(QString)"), self.redPathChanged)
@@ -51,7 +51,8 @@ class FileLoader(QtGui.QDialog):
         self.connect(self.redButton, QtCore.SIGNAL('clicked()'), self.slotRedPath)
         tempLayout1.addWidget(self.redPath)
         tempLayout1.addWidget(self.redButton)
-        tempLayout.addLayout(tempLayout1)
+        tempLayout.addRow(QtGui.QLabel("red:"), tempLayout1)
+        
         tempLayout1 = QtGui.QHBoxLayout()
         self.greenPath = QtGui.QLineEdit("")
         self.connect(self.greenPath, QtCore.SIGNAL("textChanged(QString)"), self.greenPathChanged)
@@ -59,7 +60,8 @@ class FileLoader(QtGui.QDialog):
         self.connect(self.greenButton, QtCore.SIGNAL('clicked()'), self.slotGreenPath)
         tempLayout1.addWidget(self.greenPath)
         tempLayout1.addWidget(self.greenButton)
-        tempLayout.addLayout(tempLayout1)
+        tempLayout.addRow(QtGui.QLabel("green:"), tempLayout1)
+        
         tempLayout1 = QtGui.QHBoxLayout()
         self.bluePath = QtGui.QLineEdit("")
         self.connect(self.bluePath, QtCore.SIGNAL("textChanged(QString)"), self.bluePathChanged)
@@ -67,7 +69,8 @@ class FileLoader(QtGui.QDialog):
         self.connect(self.blueButton, QtCore.SIGNAL('clicked()'), self.slotBluePath)
         tempLayout1.addWidget(self.bluePath)
         tempLayout1.addWidget(self.blueButton)
-        tempLayout.addLayout(tempLayout1)
+        tempLayout.addRow(QtGui.QLabel("blue:"), tempLayout1)
+        
         self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
