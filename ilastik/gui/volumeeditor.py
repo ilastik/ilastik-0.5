@@ -1628,7 +1628,7 @@ class ImageScene( QtGui.QGraphicsView):
             if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
                 self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
                 t = self.scene.tex
-                ti = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
+                ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
     
                 if not t > -1:
                     self.scene.tex = glGenTextures(1)
