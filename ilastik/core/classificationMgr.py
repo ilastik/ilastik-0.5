@@ -145,7 +145,7 @@ class ClassifierPredictThread(ThreadBase):
             b = fm.getBlockBounds(bnr, 0)
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4])
-	    tpred = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
+            tpred = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             for num in range(len(self.dataMgr.classifiers)):
                 cf = self.dataMgr.classifiers[num]
                 pred = cf.predict(tfm2)

@@ -1175,10 +1175,20 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 else:
                                     normalize = False
                                 
-                                image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)                                
+                                                                
                                 if origitem.autoAlphaChannel is False:
-                                    image0 = image1
+                                    if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
+                                        image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+                                        image0 = image1
+                                    else:
+                                        tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'uint8')
+                                        tempdat[:,:,0] = origitem.color.redF()*itemdata[:]
+                                        tempdat[:,:,1] = origitem.color.greenF()*itemdata[:]
+                                        tempdat[:,:,2] = origitem.color.blueF()*itemdata[:]
+                                        image1 = qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
+                                        image0 = image1
                                 else:
+                                    image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
                                     image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
                                     if isinstance(origitem.color,  int):
                                         image0.fill(origitem.color)

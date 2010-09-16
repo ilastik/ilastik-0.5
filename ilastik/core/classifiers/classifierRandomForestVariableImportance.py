@@ -21,8 +21,10 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
         self.variableImportance = numpy.zeros( (1, ) )
 
     def train(self, features, labels, isInteractive):
+        self.RF = None
         if features.shape[0] != labels.shape[0]:
-            print " 3, 2 ,1 ... BOOOM!! #features != # labels"
+            # #features != # labels"
+            return
 
         if not labels.dtype == numpy.uint32:
             labels = labels.astype(numpy.uint32)
@@ -46,7 +48,7 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
         
     def predict(self, features):
         #3d: check that only 1D data arrives here
-        if self.RF is not None and features is not None:
+        if self.RF is not None and features is not None and len(self.unique_vals) > 1:
             if not features.dtype == numpy.float32:
                 features = numpy.array(features, dtype=numpy.float32)
             return self.RF.predictProbabilities(features)

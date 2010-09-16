@@ -106,7 +106,7 @@ class FeatureMgr():
                     else:
                         di.featureCacheDS.resize(di.dataVol.data.shape[0:-1] + (totalSize,))
                         di._featureM = di.featureCacheDS
-                    di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM)
+                    di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM, 64)
 
             except Exception, e:
                 print e
