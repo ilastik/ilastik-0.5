@@ -94,25 +94,22 @@ class ProjectDlg(QtGui.QDialog):
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader()
         #imageData = sl.exec_()
-        sl.exec_()
+        path, fileList, options = sl.exec_()
+        if path is None:
+            return
         theDataItem = None
         try:  
-            theDataItem = dataImpex.DataImpex.importDataItem(sl.fileList, sl.options)
+            theDataItem = dataImpex.DataImpex.importDataItem(fileList, options)
         except MemoryError:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
         if theDataItem is not None:   
             # file name
-            path = str(sl.path.text())
             dirname = os.path.basename(os.path.dirname(path))
-            offsetstr =  '(' + str(sl.options.offsets[0]) + ', ' + str(sl.options.offsets[1]) + ', ' + str(sl.options.offsets[2]) + ')'
+            offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')'
             theDataItem.Name = dirname + ' ' + offsetstr   
-            #theDataItem = dataMgr.DataItemImage.initFromArray(imageData, dirname + ' ' +offsetstr)
             try:
-                print theDataItem.dataVol.labels
                 self.dataMgr.append(theDataItem, True)
-                print theDataItem.dataVol.labels
                 self.dataMgr.dataItemsLoaded[-1] = True
-                print theDataItem.dataVol.labels
 
                 theDataItem.hasLabels = True
                 theDataItem.isTraining = True
@@ -124,8 +121,6 @@ class ProjectDlg(QtGui.QDialog):
 
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(rowCount)
-                print theDataItem.dataVol.labels
-
                 theFlag = QtCore.Qt.ItemIsEnabled
                 flagON = ~theFlag | theFlag
                 flagOFF = ~theFlag
