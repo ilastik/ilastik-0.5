@@ -128,7 +128,7 @@ class BlockAccessor():
 
         #last blocks can be very small -> merge them with the secondlast one
         self.cXend = data.shape[1] % self.blockSize
-        if self.cXend < self.blockSize / 3 and self.cX > 1:
+        if self.cXend > 0 and self.cXend < self.blockSize / 3 and self.cX > 1:
             self.cX -= 1
         else:
             self.cXend = 0
@@ -137,7 +137,7 @@ class BlockAccessor():
 
         #last blocks can be very small -> merge them with the secondlast one
         self.cYend = data.shape[2] % self.blockSize
-        if self.cYend < self.blockSize / 3 and self.cY > 1:
+        if self.cYend > 0 and self.cYend < self.blockSize / 3 and self.cY > 1:
             self.cY -= 1
         else:
             self.cYend = 0
@@ -146,7 +146,7 @@ class BlockAccessor():
 
         #last blocks can be very small -> merge them with the secondlast one
         self.cZend = data.shape[3] % self.blockSize
-        if self.cZend < self.blockSize / 3 and self.cZ > 1:
+        if self.cZend > 0 and self.cZend < self.blockSize / 3 and self.cZ > 1:
             self.cZ -= 1
         else:
             self.cZend = 0
