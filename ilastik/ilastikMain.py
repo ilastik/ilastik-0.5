@@ -287,7 +287,7 @@ class MainWindow(QtGui.QMainWindow):
         """
         self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         self.ribbon.currentTabNumber = index
-        
+
         self.ribbon.widget(index).on_activation()
 
         if self.labelWidget is not None:
@@ -470,28 +470,11 @@ class MainWindow(QtGui.QMainWindow):
 
         QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
-    def on_objectProcSelect(self):
-        keylist = self.project.dataMgr[self.activeImage].overlayMgr.keys()
-        keylist = sorted(keylist, key = str.lower)
-        selection = QtGui.QInputDialog.getItem(None, "Layer",  "Select the input layer",  keylist,  editable = False)
-        selection = str(selection[0])
-        
-        #TODO: maybe it's not nice to initialize it here
-        #the rest of such classes are initialized only on their start button...
-        self.connComp = CC(self)
-        self.connComp.selection_key = selection
-        self.project.dataMgr.connCompBackgroundKey = selection
-        print selection
-        #overlay = self.project.dataMgr[self.activeImage].overlayMgr[selection]
-        #volume = overlay.data[0,:,:,:,0]
-        #self.project.connector.inputData = volume
-        
     
-    def on_processObjects(self):
-        self.connComp.start()
-        
-        
-        
+    def on_connectComponents(self, background = False):
+        self.connComp = CC(self)
+        self.connComp.selection_key = self.project.dataMgr.connCompBackgroundKey
+        self.connComp.start(background)
 
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No, QtGui.QMessageBox.Cancel)

@@ -205,7 +205,22 @@ class DataImpex(object):
         
     @staticmethod
     def exportOverlay(filename, format, overlayItemReference, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
-        #TODO: We should allow any type here, not only tiff
+        if format == "h5":
+            filename = filename + "." + format
+            f = h5py.File(filename, 'a')
+            path = overlayItemReference.key
+            pathparts = path.split("/")
+            pathparts.pop()
+            prevgr = f.create_group(pathparts.pop(0))
+            for item in pathparts:
+                prevgr = prevgr.create_group(item)
+            try:
+                dataset = prevgr.create_dataset(overlayItemReference.name, data=overlayItemReference.overlayItem.data[:,:,:,:,:])
+            except Exception, e:
+                print e
+            f.close()
+            return
+        
         if overlayItemReference.data.shape[1]>1:
             #3d data
             for t in range(overlayItemReference.data.shape[0]):
