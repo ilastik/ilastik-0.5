@@ -280,8 +280,15 @@ class OverlayWidget(QtGui.QGroupBox):
         self.buttonRemove = QtGui.QPushButton()
         self.buttonRemove.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-remove.png"))
         self.connect(self.buttonRemove,  QtCore.SIGNAL('clicked()'),  self.buttonRemoveClicked)
+        
+        self.buttonUp = QtGui.QPushButton()
+        self.buttonUp.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonUp.resize(11, 22)        
+        self.buttonUp.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-up_thin.png") )
+        self.connect(self.buttonUp,  QtCore.SIGNAL('clicked()'),  self.buttonUpClicked)
         tl2.addWidget(self.buttonAdd)
         tl2.addWidget(self.buttonRemove)
+        tl2.addWidget(self.buttonUp)
         tl4.addLayout(tl2)
         
 
@@ -290,27 +297,16 @@ class OverlayWidget(QtGui.QGroupBox):
         self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
         self.connect(self.buttonCreate,  QtCore.SIGNAL('clicked()'),  self.buttonCreateClicked)
         tl2.addWidget(self.buttonCreate)
-        tl4.addLayout(tl2)
-
-        tl3 = QtGui.QVBoxLayout()
-        #tl3.addStretch()
-        self.buttonUp = QtGui.QPushButton()
-        self.buttonUp.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
-        self.buttonUp.resize(11, 22)        
-        self.buttonUp.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-up_thin.png") )
-        self.connect(self.buttonUp,  QtCore.SIGNAL('clicked()'),  self.buttonUpClicked)
         self.buttonDown = QtGui.QPushButton()
-        
         self.buttonDown.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
         self.buttonDown.resize(11, 22)
         self.buttonDown.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-down_thin.png") )
         self.connect(self.buttonDown,  QtCore.SIGNAL('clicked()'),  self.buttonDownClicked)
-        tl3.addWidget(self.buttonUp)
-        tl3.addWidget(self.buttonDown)
-        tl3.addStretch()
+        tl2.addWidget(self.buttonDown)
+        tl4.addLayout(tl2)
         
         tl0.addLayout(tl4)
-        tl0.addLayout(tl3)
+        #tl0.addLayout(tl3)
         
         tl1.addLayout(tl0)
         self.layout().addLayout(tl1)
