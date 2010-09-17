@@ -21,7 +21,7 @@ from enthought.mayavi.core.ui.api import MayaviScene, SceneEditor, MlabSceneMode
 
 
 ################################################################################
-# Some logic to select 'mesh' and the data index when picking.
+# Some logic to select 'mesh' and the _data index when picking.
 from enthought.tvtk.api import tvtk
 
 
@@ -85,7 +85,7 @@ class Maya3DScene(HasTraits):
     @on_trait_change('scene.activated')
     def update_plot(self):
         if self.plot is None:
-            stuff = self.overlayItemReference.data[0,:,:,:,self.overlayItemReference.channel]
+            stuff = self.overlayItemReference._data[0,:,:,:,self.overlayItemReference.channel]
             print stuff.__class__
             print stuff.shape, stuff.dtype
             self.dataField = self.scene.mlab.pipeline.scalar_field(stuff)
@@ -155,10 +155,10 @@ class Maya3DScene(HasTraits):
             #print "fucking shape ", lut.shape, lut.dtype
 
             
-            #self.scene.mlab.pipeline.volume(self.scene.mlab.pipeline.scalar_field(self.item.data[0,:,:,:,0]), vmin=0.5, vmax=1.5)
+            #self.scene.mlab.pipeline.volume(self.scene.mlab.pipeline.scalar_field(self.item._data[0,:,:,:,0]), vmin=0.5, vmax=1.5)
             #self.scene.mlab.outline()
         else:
-            self.plot.mlab_source.set(self.item.data[0,:,:,:,0])
+            self.plot.mlab_source.set(self.item._data[0,:,:,:,0])
             
         az, elev, dist, focal = self.scene.mlab.view()
         

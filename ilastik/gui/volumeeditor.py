@@ -95,67 +95,67 @@ class MyQLabel(QtGui.QLabel):
 
 class PatchAccessor():
     def __init__(self, size_x,size_y, blockSize = 128):
-        self.blockSize = blockSize
+        self._blockSize = blockSize
         self.size_x = size_x
         self.size_y = size_y
 
-        self.cX = int(numpy.ceil(1.0 * size_x / self.blockSize))
+        self._cX = int(numpy.ceil(1.0 * size_x / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cXend = size_x % self.blockSize
-        if self.cXend < self.blockSize / 3 and self.cXend != 0 and self.cX > 1:
-            self.cX -= 1
+        self._cXend = size_x % self._blockSize
+        if self._cXend < self._blockSize / 3 and self._cXend != 0 and self._cX > 1:
+            self._cX -= 1
         else:
-            self.cXend = 0
+            self._cXend = 0
 
-        self.cY = int(numpy.ceil(1.0 * size_y / self.blockSize))
+        self._cY = int(numpy.ceil(1.0 * size_y / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cYend = size_y % self.blockSize
-        if self.cYend < self.blockSize / 3 and self.cYend != 0 and self.cY > 1:
-            self.cY -= 1
+        self._cYend = size_y % self._blockSize
+        if self._cYend < self._blockSize / 3 and self._cYend != 0 and self._cY > 1:
+            self._cY -= 1
         else:
-            self.cYend = 0
+            self._cYend = 0
 
 
-        self.patchCount = self.cX * self.cY
+        self.patchCount = self._cX * self._cY
 
 
     def getPatchBounds(self, blockNum, overlap = 0):
-        z = int(numpy.floor(blockNum / (self.cX*self.cY)))
-        rest = blockNum % (self.cX*self.cY)
-        y = int(numpy.floor(rest / self.cX))
-        x = rest % self.cX
+        z = int(numpy.floor(blockNum / (self._cX*self._cY)))
+        rest = blockNum % (self._cX*self._cY)
+        y = int(numpy.floor(rest / self._cX))
+        x = rest % self._cX
 
-        startx = max(0, x*self.blockSize - overlap)
-        endx = min(self.size_x, (x+1)*self.blockSize + overlap)
-        if x+1 >= self.cX:
+        startx = max(0, x*self._blockSize - overlap)
+        endx = min(self.size_x, (x+1)*self._blockSize + overlap)
+        if x+1 >= self._cX:
             endx = self.size_x
 
-        starty = max(0, y*self.blockSize - overlap)
-        endy = min(self.size_y, (y+1)*self.blockSize + overlap)
-        if y+1 >= self.cY:
+        starty = max(0, y*self._blockSize - overlap)
+        endy = min(self.size_y, (y+1)*self._blockSize + overlap)
+        if y+1 >= self._cY:
             endy = self.size_y
 
 
         return [startx,endx,starty,endy]
 
     def getPatchesForRect(self,startx,starty,endx,endy):
-        sx = int(numpy.floor(1.0 * startx / self.blockSize))
-        ex = int(numpy.ceil(1.0 * endx / self.blockSize))
-        sy = int(numpy.floor(1.0 * starty / self.blockSize))
-        ey = int(numpy.ceil(1.0 * endy / self.blockSize))
+        sx = int(numpy.floor(1.0 * startx / self._blockSize))
+        ex = int(numpy.ceil(1.0 * endx / self._blockSize))
+        sy = int(numpy.floor(1.0 * starty / self._blockSize))
+        ey = int(numpy.ceil(1.0 * endy / self._blockSize))
         
         
-        if ey > self.cY:
-            ey = self.cY
+        if ey > self._cY:
+            ey = self._cY
 
-        if ex > self.cX :
-            ex = self.cX
+        if ex > self._cX :
+            ex = self._cX
 
         nums = []
         for y in range(sy,ey):
-            nums += range(y*self.cX+sx,y*self.cX+ex)
+            nums += range(y*self._cX+sx,y*self._cX+ex)
         
         return nums
 
@@ -181,15 +181,15 @@ class LabelState(State):
         self.erasing = erasing
         self.labelNumber = labelNumber
         self.labels = labels
-        self.dataBefore = volumeEditor.labelWidget.volumeLabels.data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        self.dataBefore = volumeEditor.labelWidget.volumeLabels._data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         
     def restore(self, volumeEditor):
-        temp = volumeEditor.labelWidget.volumeLabels.data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        temp = volumeEditor.labelWidget.volumeLabels._data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         restore  = numpy.where(self.labels > 0, self.dataBefore, 0)
         stuff = numpy.where(self.labels > 0, self.dataBefore + 1, 0)
         erase = numpy.where(stuff == 1, 1, 0)
         self.dataBefore = temp
-        #volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
+        #volumeEditor.labels._data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
         volumeEditor.setLabels(self.offsets, self.axis, self.num, restore, False)
         volumeEditor.setLabels(self.offsets, self.axis, self.num, erase, True)
         if volumeEditor.sliceSelectors[self.axis].value() != self.num:
@@ -207,32 +207,32 @@ class HistoryManager(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.volumeEditor = parent
         self.maxSize = maxSize
-        self.history = []
+        self._history = []
         self.current = -1
 
     def append(self, state):
-        if self.current + 1 < len(self.history):
-            self.history = self.history[0:self.current+1]
-        self.history.append(state)
+        if self.current + 1 < len(self._history):
+            self._history = self._history[0:self.current+1]
+        self._history.append(state)
 
-        if len(self.history) > self.maxSize:
-            self.history = self.history[len(self.history)-self.maxSize:len(self.history)]
+        if len(self._history) > self.maxSize:
+            self._history = self._history[len(self._history)-self.maxSize:len(self._history)]
         
-        self.current = len(self.history) - 1
+        self.current = len(self._history) - 1
 
     def undo(self):
         if self.current >= 0:
-            self.history[self.current].restore(self.volumeEditor)
+            self._history[self.current].restore(self.volumeEditor)
             self.current -= 1
 
     def redo(self):
-        if self.current < len(self.history) - 1:
-            self.history[self.current + 1].restore(self.volumeEditor)
+        if self.current < len(self._history) - 1:
+            self._history[self.current + 1].restore(self.volumeEditor)
             self.current += 1
             
-    def serialize(self, grp, name='history'):
+    def serialize(self, grp, name='_history'):
         histGrp = grp.create_group(name)
-        for i, hist in enumerate(self.history):
+        for i, hist in enumerate(self._history):
             histItemGrp = histGrp.create_group('%04d'%i)
             histItemGrp.create_dataset('labels',data=hist.labels)
             histItemGrp.create_dataset('axis',data=hist.axis)
@@ -245,7 +245,7 @@ class HistoryManager(QtCore.QObject):
 
     def removeLabel(self, number):
         tobedeleted = []
-        for index, item in enumerate(self.history):
+        for index, item in enumerate(self._history):
             if item.labelNumber != number:
                 item.dataBefore = numpy.where(item.dataBefore == number, 0, item.dataBefore)
                 item.dataBefore = numpy.where(item.dataBefore > number, item.dataBefore - 1, item.dataBefore)
@@ -259,14 +259,14 @@ class HistoryManager(QtCore.QObject):
                     self.current -= 1
 
         for val in tobedeleted:
-            it = self.history[val]
-            self.history.__delitem__(val)
+            it = self._history[val]
+            self._history.__delitem__(val)
             del it
 
 class VolumeUpdate():
     def __init__(self, data, offsets, sizes, erasing):
         self.offsets = offsets
-        self.data = data
+        self._data = data
         self.sizes = sizes
         self.erasing = erasing
     
@@ -277,9 +277,9 @@ class VolumeUpdate():
         tempData = dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]].copy()
 
         if self.erasing == True:
-            tempData = numpy.where(self.data > 0, 0, tempData)
+            tempData = numpy.where(self._data > 0, 0, tempData)
         else:
-            tempData = numpy.where(self.data > 0, self.data, tempData)
+            tempData = numpy.where(self._data > 0, self._data, tempData)
         
         dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]] = tempData  
 
@@ -318,7 +318,7 @@ class VolumeEditor(QtGui.QWidget):
         self.borderMargin = 0
 
 
-        #this setting controls the rescaling of the displayed data to the full 0-255 range
+        #this setting controls the rescaling of the displayed _data to the full 0-255 range
         self.normalizeData = False
 
         #this settings controls the timer interval during interactive mode
@@ -346,7 +346,7 @@ class VolumeEditor(QtGui.QWidget):
         if issubclass(image.__class__, DataAccessor):
             self.image = image
         elif issubclass(image.__class__, Volume):
-            self.image = image.data
+            self.image = image._data
         else:
             self.image = DataAccessor(image)
 
@@ -360,7 +360,7 @@ class VolumeEditor(QtGui.QWidget):
         #self.setAccessibleName(self.name)
 
 
-        self.history = HistoryManager(self)
+        self._history = HistoryManager(self)
 
         self.layout = QtGui.QHBoxLayout()
         self.setLayout(self.layout)
@@ -516,13 +516,13 @@ class VolumeEditor(QtGui.QWidget):
 
         ##undo/redo and other shortcuts
         self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo, context = QtCore.Qt.WidgetShortcut) 
-        shortcutManager.register(self.shortcutUndo, "history undo")
+        shortcutManager.register(self.shortcutUndo, "_history undo")
         
         self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutRedo, "history redo")
+        shortcutManager.register(self.shortcutRedo, "_history redo")
         
         self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutRedo2, "history redo")
+        shortcutManager.register(self.shortcutRedo2, "_history redo")
         
         self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.togglePredictionSC, "toggle prediction overlays")
@@ -625,7 +625,7 @@ class VolumeEditor(QtGui.QWidget):
     def on_editChannels(self):
         from ilastik.gui.channelEditDialog import EditChannelsDialog 
         
-        dlg = EditChannelsDialog(self.ilastik.project.dataMgr.selectedChannels, self.ilastik.project.dataMgr[0].dataVol.data.shape[-1], self)
+        dlg = EditChannelsDialog(self.ilastik.project.dataMgr.selectedChannels, self.ilastik.project.dataMgr[0]._dataVol._data.shape[-1], self)
         
         result = dlg.exec_()
         if result is not None:
@@ -648,10 +648,10 @@ class VolumeEditor(QtGui.QWidget):
         return temp
 
     def historyUndo(self):
-        self.history.undo()
+        self._history.undo()
 
     def historyRedo(self):
-        self.history.redo()
+        self._history.redo()
 
     def addOverlay(self, visible, data, name, color, alpha, colorTab = None):
         ov = VolumeOverlay(data,name, color, alpha, colorTab, visible)
@@ -670,7 +670,7 @@ class VolumeEditor(QtGui.QWidget):
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
     
             if len(self.overlayWidget.overlays) > 0:
-                tempImage = self.overlayWidget.overlays[-1].data.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
+                tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
             else:
                 tempImage = None
 #            if self.labelWidget.volumeLabels is not None:
@@ -721,7 +721,7 @@ class VolumeEditor(QtGui.QWidget):
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
         self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
-        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr.widget = self.overlayWidget
+        self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr._widget = self.overlayWidget
 
 
     def get_copy(self):
@@ -802,7 +802,7 @@ class VolumeEditor(QtGui.QWidget):
                 tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
         
         if len(self.overlayWidget.overlays) > 0:
-            tempImage = self.overlayWidget.overlays[-1].data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
         #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
@@ -848,7 +848,7 @@ class VolumeEditor(QtGui.QWidget):
             sizes5 = (1,labels.shape[0], labels.shape[1],1,1)
         
         vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
-        vu.applyTo(self.labelWidget.volumeLabels.data)
+        vu.applyTo(self.labelWidget.volumeLabels._data)
         self.pendingLabels.append(vu)
 
         patches = self.imageScenes[axis].patchAccessor.getPatchesForRect(offsets[0], offsets[1],offsets[0]+labels.shape[0], offsets[1]+labels.shape[1])
@@ -861,7 +861,7 @@ class VolumeEditor(QtGui.QWidget):
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
         if len(self.overlayWidget.overlays) > 0:
-            tempImage = self.overlayWidget.overlays[-1].data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
 
@@ -1137,7 +1137,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                         for index, origitem in enumerate(overlays):
                             p.setOpacity(origitem.alpha)
                             itemcolorTable = origitem.colorTable
-                            itemdata = origitem.data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+                            itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                             if origitem.colorTable != None:         
                                 if itemdata.dtype != 'uint8':
                                     """
@@ -1157,7 +1157,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     elif olditemdata.dtype == 'uint16':
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
                                     else:
-                                        raise TypeError(str(olditemdata.dtype) + ' <- unsupported image data type (in the rendering thread, you know) ')
+                                        raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
                                    
                                        
                                 image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
@@ -1302,7 +1302,7 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
     def __init__(self,parent,widget,image):
         QtGui.QGraphicsScene.__init__(self)
         #QtOpenGL.QGLWidget.__init__(self)
-        self.widget = widget
+        self._widget = widget
         self.imageScene = parent
         self.image = image
         self.images = []
@@ -1312,15 +1312,15 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
             
     def drawBackground(self, painter, rect):
         #painter.fillRect(rect,self.bgBrush)
-        if self.widget != None:
+        if self._widget != None:
 
-            self.widget.context().makeCurrent()
+            self._widget.context().makeCurrent()
             
             glClearColor(self.bgColor.redF(),self.bgColor.greenF(),self.bgColor.blueF(),1.0)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             if self.tex > -1:
-                #self.widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
+                #self._widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
                 d = painter.device()
                 dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
 
@@ -1654,7 +1654,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 
     def clearTempitems(self):
-        #only proceed if htere is no new data already in the rendering thread queue
+        #only proceed if htere is no new _data already in the rendering thread queue
         if not self.thread.dataPending.isSet():
             #if, in slicing direction, we are within the margin of the image border
             #we set the border overlay indicator to visible
@@ -1737,7 +1737,7 @@ class ImageScene( QtGui.QGraphicsView):
         number = self.volumeEditor.labelWidget.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
-        self.volumeEditor.history.append(ls)        
+        self.volumeEditor._history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
         
     
@@ -1762,7 +1762,7 @@ class ImageScene( QtGui.QGraphicsView):
         number = self.volumeEditor.labelWidget.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
-        self.volumeEditor.history.append(ls)        
+        self.volumeEditor._history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
         self.drawing = False
 

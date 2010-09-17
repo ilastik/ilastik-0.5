@@ -103,7 +103,7 @@ class OverlaySelectionDialog(QDialog):
         self.layoutWidget = QWidget(self)
         self.selectedOverlaysList = []
         self.ilastik = ilastik
-        self.christophsDict = ilastik.project.dataMgr[ilastik.activeImage].overlayMgr
+        self.christophsDict = ilastik.project.dataMgr[ilastik._activeImage].overlayMgr
         self.forbiddenOverlays = forbiddenItems
         self.preSelectedOverlays = selectedItems
         self.singleOverlaySelection = singleSelection
@@ -188,8 +188,8 @@ class OverlaySelectionDialog(QDialog):
         self.sliceSpinbox = QSpinBox(self)
         self.sliceSpinbox.setEnabled(False)
         sliceItem = MyTreeWidgetItem(self.christophsDict[self.christophsDict.keys()[0]])
-        self.sliceValue = (sliceItem.item.data.shape[1]-1)/2
-        self.sliceSpinbox.setMaximum(sliceItem.item.data.shape[1]-1)
+        self.sliceValue = (sliceItem.item._data.shape[1]-1)/2
+        self.sliceSpinbox.setMaximum(sliceItem.item._data.shape[1]-1)
         self.sliceSpinbox.setValue(self.sliceValue)
         self.connect(self.sliceSpinbox, SIGNAL('valueChanged(int)'), self.sliceSpinboxValueChanged)
         grviewSpinboxLayout.addWidget(self.channelSpinboxLabel)
@@ -359,7 +359,7 @@ class OverlaySelectionDialog(QDialog):
     def drawPreview(self):
         currentItem = self.treeWidget.currentItem()
         if isinstance(currentItem, MyTreeWidgetItem):
-            imageArray = currentItem.item.data[0, self.sliceValue, :, :, currentItem.item.channel]
+            imageArray = currentItem.item._data[0, self.sliceValue, :, :, currentItem.item.channel]
             if currentItem.item.min is not None:
                 self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (currentItem.item.min, currentItem.item.max))))
             else:
@@ -423,11 +423,11 @@ class OverlaySelectionDialog(QDialog):
 
     def channelSpinboxValueChanged(self, value):
         currentItem = self.treeWidget.currentItem()
-        if currentItem.item.data.shape[-1]-1 >= value:
+        if currentItem.item._data.shape[-1]-1 >= value:
             self.treeWidget.currentItem().item.channel = value
             self.drawPreview()
         else:
-            self.channelSpinbox.setValue(currentItem.item.data.shape[-1]-1)
+            self.channelSpinbox.setValue(currentItem.item._data.shape[-1]-1)
 
 
     def sliceSpinboxValueChanged(self, value):
@@ -451,7 +451,7 @@ class OverlaySelectionDialog(QDialog):
             if answer is not None:
                 name = QInputDialog.getText(self,"Edit Name", "Please Enter the name of the new Overlay:", text = "Custom Overlays/My Overlay" )
                 name = str(name[0])
-                self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr[name] = answer
+                self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr[name] = answer
                 self.cancel()
 
 

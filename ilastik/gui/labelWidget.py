@@ -130,7 +130,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def removeLabel(self, item,  index):
         self.labelMgr.removeLabel(item.number)
         
-        self.volumeEditor.history.removeLabel(item.number)
+        self.volumeEditor._history.removeLabel(item.number)
         self.items.remove(item)
         it = self.listWidget.takeItem(index.row())
         for ii, it in enumerate(self.items):

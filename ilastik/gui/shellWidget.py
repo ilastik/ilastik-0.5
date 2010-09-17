@@ -151,10 +151,10 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
         self.inRawMode = False
         self.echoInput = True
             
-        # Initialize history
+        # Initialize _history
         self.historyLists = {}
         self.maxHistoryEntries = 30
-        self.history = []
+        self._history = []
         self.histidx = -1
         
         self.reading = 0
@@ -331,9 +331,9 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
 
         if not cmd:  cmd = ''
         else:
-            if len(self.history) == self.maxHistoryEntries:
-                del self.history[0]
-            self.history.append(QtCore.QString(cmd))
+            if len(self._history) == self.maxHistoryEntries:
+                del self._history[0]
+            self._history.append(QtCore.QString(cmd))
             self.histidx = -1
 
         if(cmd.endswith('?')):
@@ -596,7 +596,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
                         self.__useHistory()
             else:
                 if self.histidx < 0:
-                    self.histidx = len(self.history)
+                    self.histidx = len(self._history)
                 if self.histidx > 0:
                     self.histidx = self.histidx - 1
                     self.__useHistory()
@@ -624,17 +624,17 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
                         self.incrementalSearchString = buf
                         self.__useHistory()
             else:
-                if self.histidx >= 0 and self.histidx < len(self.history):
+                if self.histidx >= 0 and self.histidx < len(self._history):
                     self.histidx += 1
                     self.__useHistory()
   
 
     def __useHistory(self):
         """
-        Private method to display a command from the history.
+        Private method to display a command from the _history.
         """
-        if self.histidx < len(self.history):
-            cmd = self.history[self.histidx]
+        if self.histidx < len(self._history):
+            cmd = self._history[self.histidx]
         else:
             cmd = QtCore.QString()
             self.incrementalSearchString = ""
@@ -649,7 +649,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
         
     def __searchHistory(self, txt, startIdx = -1):
         """
-        Private method used to search the history.
+        Private method used to search the _history.
         
         @param txt text to match at the beginning (string or QString)
         @param startIdx index to start search from (integer)
@@ -659,26 +659,26 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
             idx = 0
         else:
             idx = startIdx + 1
-        while idx < len(self.history) and \
-              not self.history[idx].startsWith(txt):
+        while idx < len(self._history) and \
+              not self._history[idx].startsWith(txt):
             idx += 1
         return idx
     
         
     def __rsearchHistory(self, txt, startIdx = -1):
         """
-        Private method used to reverse search the history.
+        Private method used to reverse search the _history.
         
         @param txt text to match at the beginning (string or QString)
         @param startIdx index to start search from (integer)
         @return index of 
         """
         if startIdx == -1:
-            idx = len(self.history) - 1
+            idx = len(self._history) - 1
         else:
             idx = startIdx - 1
         while idx >= 0 and \
-              not self.history[idx].startsWith(txt):
+              not self._history[idx].startsWith(txt):
             idx -= 1
         return idx
 
@@ -733,12 +733,18 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
         except : pass
         
 
-    def __showCompletions(self, completions, text):
+    def __showCompletions(self, tcompletions, text):
         """
         Private method to display the possible completions.
         """
-        if len(completions) == 0:
+        if len(tcompletions) == 0:
             return
+        
+        completions = []
+        
+        for i, c in enumerate(tcompletions):
+            if c[0] != "_":
+                completions.append(c)
         
         if len(completions) > 1:
             completions.sort()

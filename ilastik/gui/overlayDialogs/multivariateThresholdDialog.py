@@ -29,7 +29,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         if instance != None:
             self.overlayItem = instance
         else:
-            ovm = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr
+            ovm = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr
             k = ovm.keys()[0]
             ov = ovm[k]
             self.overlayItem = ThresHoldOverlay([ov], [])

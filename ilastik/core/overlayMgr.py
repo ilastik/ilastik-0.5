@@ -55,7 +55,7 @@ class OverlaySlice():
         self.alpha = alpha
         self.alphaChannel = None
         self.autoAlphaChannel = autoAlphaChannel
-        self.data = data
+        self._data = data
         self.min = min
         self.max = max
 
@@ -63,7 +63,7 @@ class OverlaySlice():
 class OverlayItemReference(object):
     """
     Helper class that references a full fledged OverlayItem and inherits its drawing related settings upon creation.
-    the settings can be changed later on, what stays the same is the data. 
+    the settings can be changed later on, what stays the same is the _data. 
     OverlayItemReferences get used in the overlayWidget.py file
     """    
     def __init__(self, overlayItem):
@@ -77,16 +77,16 @@ class OverlayItemReference(object):
             self.colorTable = self.overlayItem.colorTable
         self.key = self.overlayItem.key
         self.channel = 0
-        self.numChannels = self.overlayItem.data.shape[4]
+        self.numChannels = self.overlayItem._data.shape[4]
         
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.overlayItem.data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable, self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
+        return OverlaySlice(self.overlayItem._data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable, self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
         
     def __getattr__(self,  name):
         if name == "colorTable":
             return self.overlayItem.colorTable
-        elif name == "data":
-            return self.overlayItem.data
+        elif name == "_data":
+            return self.overlayItem._data
         elif name == "min":
             return self.overlayItem.min
         elif name == "max":
@@ -105,7 +105,7 @@ class OverlayItemReference(object):
         self.overlayItem = None
         
     def incChannel(self):
-        if self.channel < self.overlayItem.data.shape[4] - 1:
+        if self.channel < self.overlayItem._data.shape[4] - 1:
             self.channel += 1
 
     def decChannel(self):
@@ -120,11 +120,11 @@ class OverlayItemReference(object):
 
 class OverlayItem(object):
     """
-    A Item that holds some scalar or multichannel data and their drawing related settings.
+    A Item that holds some scalar or multichannel _data and their drawing related settings.
     OverlayItems are held by the OverlayMgr
     """
     def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True):
-        self.data = DataAccessor(data)
+        self._data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
         self.color = color
@@ -146,18 +146,18 @@ class OverlayItem(object):
         return ref
         
     def remove(self):
-        self.data = None
+        self._data = None
         for r in self.references:
             r.remove()
         self.references = []
 
 
     def setData(self,  data):
-        self.overlayItem.data = data
+        self.overlayItem._data = data
 
 
 
-class OverlayMgr(dict):
+class OverlayMgr():
     """
     Keeps track of the different overlays and is instanced by each DataItem
     supports the python dictionary interface for easy adding/updating of OverlayItems:
@@ -168,45 +168,51 @@ class OverlayMgr(dict):
     visible overlayWidget
     """
     def __init__(self,  widget = None):
-        dict.__init__(self)
-        self.widget = widget
+        self._dict = {}
+        self._widget = widget
         
     def remove(self,  key):
         it = self.pop(key,  None)
         if it != None:
             it.remove()
-            if self.widget != None:
-                self.widget.remove(key)
+            if self._widget != None:
+                self._widget.remove(key)
             
     def __setitem__(self,  key,  value):
         addToWidget = False
         if issubclass(value.__class__,  OverlayItem):
-            if not self.has_key(key):
+            if not self._dict.has_key(key):
                 #set the name of the overlayItem to the last part of the key
                 value.name = key.split('/')[-1]
                 addToWidget = True
-                dict.__setitem__(self,  key,  value)
+                self._dict.__setitem__( key,  value)
                 res = value
             else:
-                it = self[key]
+                it = self._dict[key]
                 it.name = value.name = key.split('/')[-1]
-                it.data = value.data
+                it._data = value._data
                 res = it
             #update the key
             res.key = key
         if addToWidget:
-            self.addToWidget(res)
+            self._addToWidget(res)
         return res
-        
-    def addToWidget(self,  value):
+    
+    def keys(self):
+        return self._dict.keys()
+    
+    def values(self):
+        return self._dict.values()
+
+    def _addToWidget(self,  value):
         print "adding ",  value.name,  "to overlays"
-        if self.widget != None and value.autoAdd is True:
-            self.widget.addOverlayRef(value.getRef())
+        if self._widget != None and value.autoAdd is True:
+            self._widget.addOverlayRef(value.getRef())
             
             
     def __getitem__(self,  key):
         #if the requested key does not exist, construct a group corresponding to the key
-        if self.has_key(key):
-            return dict.__getitem__(self,  key)
+        if self._dict.has_key(key):
+            return self._dict.__getitem__( key)
         else:
             return None

@@ -26,7 +26,7 @@ class SelectionAccessor(object):
         return answer
     
     def __setitem__(self, key, data):
-        raise Exception('yeah sure', 'no setting of SelectionAccessor data')
+        raise Exception('yeah sure', 'no setting of SelectionAccessor _data')
         
 
 class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
@@ -35,7 +35,7 @@ class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         self.color = color
         
-        self.data = None
+        self._data = None
 
         self.inputData = inputData
         self.selectedNumbers = []

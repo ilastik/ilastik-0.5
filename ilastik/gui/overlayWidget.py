@@ -185,7 +185,7 @@ class OverlayListWidget(QtGui.QListWidget):
             print "loading vtk ..."
             from mayaviWidget import *
             print "vtk running marching cubes..."
-#            mlab.contour3d(item.data[0,:,:,:,0], opacity=0.6)
+#            mlab.contour3d(item._data[0,:,:,:,0], opacity=0.6)
 #            mlab.outline()
             self.my_model = MayaviQWidget(self.volumeEditor, item.overlayItemReference, self.volumeEditor.image[0,:,:,:,0])
             self.my_model.show()
@@ -208,9 +208,9 @@ class OverlayListWidget(QtGui.QListWidget):
             dialog.exec_()
             
         elif action == exportAction:
-            timeOffset = item.overlayItemReference.data.shape[0]>1
-            sliceOffset = item.overlayItemReference.data.shape[1]>1
-            channelOffset = item.overlayItemReference.data.shape[-1]>1
+            timeOffset = item.overlayItemReference._data.shape[0]>1
+            sliceOffset = item.overlayItemReference._data.shape[1]>1
+            channelOffset = item.overlayItemReference._data.shape[-1]>1
             formatList = dataImpex.DataImpex.exportFormatList()
             formatList.append("h5")
             expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset)
@@ -337,7 +337,7 @@ class OverlayWidget(QtGui.QGroupBox):
             if answer is not None:
                 name = QtGui.QInputDialog.getText(self,"Edit Name", "Please Enter the name of the new Overlay:", text = "Custom Overlays/My Overlay" )
                 name = str(name[0])
-                self.volumeEditor.ilastik.project.dataMgr[self.volumeEditor.ilastik.activeImage].overlayMgr[name] = answer
+                self.volumeEditor.ilastik.project.dataMgr[self.volumeEditor.ilastik._activeImage].overlayMgr[name] = answer
                 self.volumeEditor.repaint()
         
         

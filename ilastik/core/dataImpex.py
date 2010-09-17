@@ -19,7 +19,7 @@ class DataImpex(object):
     
     @staticmethod
     def importDataItem(filename, options):
-        #call this method when you expect to get a single data item back, such
+        #call this method when you expect to get a single _data item back, such
         #as when you load a stack from a directory
         if isinstance(filename, list):
             image = DataImpex.loadStack(filename, options, None)
@@ -68,10 +68,10 @@ class DataImpex(object):
             # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
             data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-            #data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
+            #_data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
 
             dataAcc = DataAccessor(data)
-            theDataItem.dataVol = Volume(dataAcc)
+            theDataItem._dataVol = Volume(dataAcc)
         theDataItem.updateOverlays()
         return theDataItem
 
@@ -163,7 +163,7 @@ class DataImpex(object):
                 print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
                 g = f.create_group("volume")        
-                g.create_dataset("data",data = image)
+                g.create_dataset("_data",data = image)
                 f.close()
         except:
             print "######ERROR saving File ", options.destfile
@@ -174,7 +174,7 @@ class DataImpex(object):
     @staticmethod
     def initDataItemFromArray(image, name):
         dataItem = dataMgr.DataItemImage(name)
-        dataItem.dataVol = Volume(DataAccessor(image, True))
+        dataItem._dataVol = Volume(DataAccessor(image, True))
         dataItem.updateOverlays()
         return dataItem
 
@@ -185,9 +185,9 @@ class DataImpex(object):
         fBase, fExt = os.path.splitext(filename)
         if fExt == '.h5':
             f = h5py.File(filename, 'r')
-            shape = f["volume/data"].shape
+            shape = f["volume/_data"].shape
             if shape[1] == 1:
-                #2d data looks like (1, 1, x, y, c)
+                #2d _data looks like (1, 1, x, y, c)
                 return (shape[2], shape[3], 1, shape[4])
             else:
                 #3d data looks like (1, x, y, z, c)
@@ -215,35 +215,35 @@ class DataImpex(object):
             for item in pathparts:
                 prevgr = prevgr.create_group(item)
             try:
-                dataset = prevgr.create_dataset(overlayItemReference.name, data=overlayItemReference.overlayItem.data[:,:,:,:,:])
+                dataset = prevgr.create_dataset(overlayItemReference.name, data=overlayItemReference.overlayItem._data[:,:,:,:,:])
             except Exception, e:
                 print e
             f.close()
             return
         
-        if overlayItemReference.data.shape[1]>1:
-            #3d data
-            for t in range(overlayItemReference.data.shape[0]):
-                for z in range(overlayItemReference.data.shape[3]):
-                    for c in range(overlayItemReference.data.shape[-1]):
+        if overlayItemReference._data.shape[1]>1:
+            #3d _data
+            for t in range(overlayItemReference._data.shape[0]):
+                for z in range(overlayItemReference._data.shape[3]):
+                    for c in range(overlayItemReference._data.shape[-1]):
                         fn = filename
-                        data = overlayItemReference.data[t,:,:,z,c]
-                        if overlayItemReference.data.shape[0]>1:
+                        data = overlayItemReference._data[t,:,:,z,c]
+                        if overlayItemReference._data.shape[0]>1:
                             fn = fn + ("_time%03i" %(t+timeOffset))
                         fn = fn + ("_z%05i" %(z+sliceOffset))
-                        if overlayItemReference.data.shape[-1]>1:
+                        if overlayItemReference._data.shape[-1]>1:
                             fn = fn + ("_channel%03i" %(c+channelOffset))
                         fn = fn + "." + format
                         vigra.impex.writeImage(data, fn)
                         print "Exported file ", fn
         else:
-            for t in range(overlayItemReference.data.shape[0]):
-                for c in range(overlayItemReference.data.shape[-1]):
+            for t in range(overlayItemReference._data.shape[0]):
+                for c in range(overlayItemReference._data.shape[-1]):
                     fn = filename
-                    data = overlayItemReference.data[t, 0, :, :, c]
-                    if overlayItemReference.data.shape[0]>1:
+                    data = overlayItemReference._data[t, 0, :, :, c]
+                    if overlayItemReference._data.shape[0]>1:
                         fn = fn + ("_time%03i" %(t+timeOffset))
-                    if overlayItemReference.data.shape[-1]>1:
+                    if overlayItemReference._data.shape[-1]>1:
                         fn = fn + ("_channel%03i" %(c+channelOffset))
                     fn = fn + "." + format
                     vigra.impex.writeImage(data.swapaxes(0,1), fn)
