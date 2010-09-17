@@ -107,8 +107,8 @@ class Project(object):
         
         try:
             self.featureMgr.exportFeatureItems(featureG)
-        except RuntimeError as e:
-            print 'saveToDisk(): No features where selected: ' , e
+        except:
+            print 'saveToDisk(): No features where selected: '
             
             
         # get number of images
