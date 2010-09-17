@@ -146,10 +146,10 @@ class OverlayItem(object):
         return ref
         
     def remove(self):
-        self._data = None
         for r in self.references:
             r.remove()
         self.references = []
+        self._data = None
 
 
     def setData(self,  data):
@@ -172,11 +172,11 @@ class OverlayMgr():
         self._widget = widget
         
     def remove(self,  key):
-        it = self.pop(key,  None)
+        it = self._dict.pop(key,  None)
         if it != None:
             it.remove()
-            if self._widget != None:
-                self._widget.remove(key)
+            #if self._widget != None:
+            #    self._widget.remove(key)
             
     def __setitem__(self,  key,  value):
         addToWidget = False

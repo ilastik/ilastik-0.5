@@ -373,6 +373,7 @@ class MainWindow(QtGui.QMainWindow):
         
     def featureCompute(self):
         if self.project.featureMgr is not None:
+            self.project.deleteFeatureOverlays()
             self.featureComputation = FeatureComputation(self)
 
     def on_shortcutsDlg(self):

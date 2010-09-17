@@ -176,6 +176,14 @@ class Project(object):
         project.filename = fileName
         # print "Project %s loaded from %s " % (p.name, fileName)
         return project
+
+    def deleteFeatureOverlays(self):
+        for index2,  di in enumerate(self.dataMgr):
+            keys = di.overlayMgr.keys()
+            for k in keys:
+                if k.startswith("Classification/Features/"):
+                    di.overlayMgr.remove(k)
+    
     
     def createFeatureOverlays(self):
         for index,  feature in enumerate(self.featureMgr.featureItems):
@@ -195,7 +203,7 @@ class Project(object):
                     ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
                     ov.min = min
                     ov.max = max
-                    di.overlayMgr["Classification/Features/" + feature.name + " Sigma " + str(feature.sigma) + "/" + feature.name + " Sigma " + str(feature.sigma) + "Channel " + str(c)] = ov
+                    di.overlayMgr[ feature.getKey(c)] = ov
         
   
 
