@@ -1,5 +1,6 @@
 import numpy,vigra
 import random
+import code
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
@@ -23,6 +24,7 @@ from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
+from ilastik.gui.shellWidget import SciShell
 
 import gc, weakref
 
@@ -146,6 +148,58 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
     def on_btnOptions_clicked(self):
         tmp = ProjectSettingsDlg(self, self.parent.project)
         tmp.exec_()
+
+
+
+        
+class ConsoleTab(IlastikTabBase, QtGui.QWidget):
+    name = 'Interactive Console'
+    def __init__(self, parent=None):
+        IlastikTabBase.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
+        
+        self.consoleWidget = None
+        
+        self._initContent()
+        self._initConnects()
+        
+    def on_activation(self):
+        self.volumeEditorVisible = self.ilastik.labelWidget.isVisible()
+        #self.ilastik.labelWidget.setVisible(False)
+        
+        if self.consoleWidget is None:
+            locals = {}
+            locals["activeImage"] = self.ilastik.project.dataMgr[self.ilastik.activeImage]
+            locals["dataMgr"] = self.ilastik.project.dataMgr
+            self.interpreter = code.InteractiveInterpreter(locals)
+            self.consoleWidget = SciShell(self.interpreter)
+            
+            dock = QtGui.QDockWidget("Ilastik Interactive Console", self.ilastik)
+            dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
+            dock.setWidget(self.consoleWidget)
+            
+            self.consoleDock = dock
+    
+           
+            area = QtCore.Qt.BottomDockWidgetArea
+            self.ilastik.addDockWidget(area, dock)        
+
+        self.consoleDock.setVisible(True)            
+        self.consoleDock.show()
+        
+    
+    def on_deActivation(self):
+        self.consoleDock.setVisible(False)
+        #self.ilastik.labelWidget.setVisible(self.volumeEditorVisible)
+        
+    def _initContent(self):
+        pass
+    
+    def _initConnects(self):
+        pass
+    
+
+
         
 class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Classification'

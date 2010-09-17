@@ -319,6 +319,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks = []
         
     def destroyImageWindows(self):
+        self.volumeEditorDock = None
         self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         for dock in self.labelDocks:
             self.removeDockWidget(dock)
@@ -340,9 +341,12 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
         self.labelWidget.setRgbMode(self.project.rgbData)
         
+        
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
+        
+        self.volumeEditorDock = dock
 
         self.connect(self.labelWidget, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
         self.connect(self.labelWidget, QtCore.SIGNAL("seedRemoved(int)"),self.seedRemoved)
