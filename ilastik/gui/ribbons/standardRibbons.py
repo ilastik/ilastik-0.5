@@ -24,7 +24,7 @@ from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
-from ilastik.gui.shellWidget import SciShell
+
 
 import gc, weakref
 
@@ -150,78 +150,79 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         tmp.exec_()
 
 
-
-        
-class ConsoleTab(IlastikTabBase, QtGui.QWidget):
-    name = 'Interactive Console'
-    def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, parent)
-        QtGui.QWidget.__init__(self, parent)
-        
-        self.consoleWidget = None
-        
-        self._initContent()
-        self._initConnects()
-        
-    def on_activation(self):
-        if self.ilastik.project is None:
-            return
-        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays
-        if len(ovs) == 0:
-            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
-            if raw is not None:
-                ovs.append(raw.getRef())
-        
-        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
-
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays)
-        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
-        
-        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
-        
-        
-        self.volumeEditorVisible = self.ilastik.volumeEditorDock.isVisible()
-        #self.ilastik.volumeEditorDock.setVisible(False)
-        
-        if self.consoleWidget is None:
-            locals = {}
-            locals["activeImage"] = self.ilastik.project.dataMgr[self.ilastik.activeImage]
-            locals["dataMgr"] = self.ilastik.project.dataMgr
-            self.interpreter = code.InteractiveInterpreter(locals)
-            self.consoleWidget = SciShell(self.interpreter)
+try:
+    from ilastik.gui.shellWidget import SciShell
             
-            dock = QtGui.QDockWidget("Ilastik Interactive Console", self.ilastik)
-            dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
-            dock.setWidget(self.consoleWidget)
+    class ConsoleTab(IlastikTabBase, QtGui.QWidget):
+        name = 'Interactive Console'
+        def __init__(self, parent=None):
+            IlastikTabBase.__init__(self, parent)
+            QtGui.QWidget.__init__(self, parent)
             
-            self.consoleDock = dock
+            self.consoleWidget = None
+            
+            self._initContent()
+            self._initConnects()
+            
+        def on_activation(self):
+            if self.ilastik.project is None:
+                return
+            ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays
+            if len(ovs) == 0:
+                raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+                if raw is not None:
+                    ovs.append(raw.getRef())
+            
+            self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
     
-           
-            area = QtCore.Qt.BottomDockWidgetArea
-            self.ilastik.addDockWidget(area, dock)        
-
-        self.consoleDock.show()
-        self.consoleWidget.setFocus()            
-        self.consoleWidget.grabKeyboard()
+            overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays)
+            self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+            
+            self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+            
+            
+            self.volumeEditorVisible = self.ilastik.volumeEditorDock.isVisible()
+            #self.ilastik.volumeEditorDock.setVisible(False)
+            
+            if self.consoleWidget is None:
+                locals = {}
+                locals["activeImage"] = self.ilastik.project.dataMgr[self.ilastik.activeImage]
+                locals["dataMgr"] = self.ilastik.project.dataMgr
+                self.interpreter = code.InteractiveInterpreter(locals)
+                self.consoleWidget = SciShell(self.interpreter)
+                
+                dock = QtGui.QDockWidget("Ilastik Interactive Console", self.ilastik)
+                dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
+                dock.setWidget(self.consoleWidget)
+                
+                self.consoleDock = dock
         
-    
-    def on_deActivation(self):
-        self.consoleWidget.releaseKeyboard()
-        self.consoleDock.setVisible(False)
-        #self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
-        if self.ilastik.labelWidget is not None:
-            if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
-                self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
-    
-            if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history is not None:
-                self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history
+               
+                area = QtCore.Qt.BottomDockWidgetArea
+                self.ilastik.addDockWidget(area, dock)
+            self.ilastik.labelWidget.clearFocus()
+            self.consoleDock.setFocus()
+            self.consoleDock.grabKeyboard()
+            
         
-    def _initContent(self):
-        pass
-    
-    def _initConnects(self):
-        pass
-    
+        def on_deActivation(self):
+            self.consoleWidget.releaseKeyboard()
+            self.consoleDock.setVisible(False)
+            #self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
+            if self.ilastik.labelWidget is not None:
+                if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
+                    self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
+        
+                if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history is not None:
+                    self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history
+            
+        def _initContent(self):
+            pass
+        
+        def _initConnects(self):
+            pass
+except:
+    pass    
 
 
         

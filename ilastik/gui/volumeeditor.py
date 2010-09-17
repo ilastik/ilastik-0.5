@@ -607,7 +607,7 @@ class VolumeEditor(QtGui.QWidget):
         return True
         
     def widgetDestroyed(self):
-        print "yippeah, volumeeditor deleted"
+        print "volumeeditor destroyed"
 
     def cleanUp(self):
         print "VolumeEditor: cleaning up"
