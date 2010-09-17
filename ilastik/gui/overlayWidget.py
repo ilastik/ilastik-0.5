@@ -124,7 +124,7 @@ class OverlayListWidget(QtGui.QListWidget):
         itemNr = None
         if isinstance(item, str):
             for idx, it in enumerate(self.overlayWidget.overlays):
-                if it.name == item:
+                if it.key == item:
                     itemNr = idx
                     item = it
         else:

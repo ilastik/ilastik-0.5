@@ -175,8 +175,8 @@ class OverlayMgr():
         it = self._dict.pop(key,  None)
         if it != None:
             it.remove()
-            #if self._widget != None:
-            #    self._widget.remove(key)
+            if self._widget != None:
+                self._widget.removeOverlay(key)
             
     def __setitem__(self,  key,  value):
         addToWidget = False
