@@ -164,8 +164,24 @@ class ConsoleTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        if self.ilastik.project is None:
+            return
+        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+        
+        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+        
+        
         self.volumeEditorVisible = self.ilastik.volumeEditorDock.isVisible()
-        self.ilastik.volumeEditorDock.setVisible(False)
+        #self.ilastik.volumeEditorDock.setVisible(False)
         
         if self.consoleWidget is None:
             locals = {}
@@ -191,7 +207,13 @@ class ConsoleTab(IlastikTabBase, QtGui.QWidget):
     
     def on_deActivation(self):
         self.consoleDock.setVisible(False)
-        self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
+        #self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
+        if self.ilastik.labelWidget is not None:
+            if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
+                self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
+    
+            if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history is not None:
+                self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history
         
     def _initContent(self):
         pass
