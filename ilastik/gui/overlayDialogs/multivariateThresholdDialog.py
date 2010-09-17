@@ -129,6 +129,16 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         else:
             self.overlayItem.smoothing = False
         self.overlayItem.setForegrounds(self.overlayItem.foregrounds)
+        
+        thresholds = []
+        for i,s in enumerate(self.sliders):
+            if s.value() > 0:
+                thresholds.append(s.value() / 1000.0)
+            else:
+                thresholds.append(-1 / 1000.0)
+                    
+        self.overlayItem.setThresholds(thresholds)    
+            
         self.volumeEditor.repaint()
         
     
