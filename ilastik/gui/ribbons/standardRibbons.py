@@ -200,9 +200,7 @@ try:
                
                 area = QtCore.Qt.BottomDockWidgetArea
                 self.ilastik.addDockWidget(area, dock)
-            self.ilastik.labelWidget.clearFocus()
             self.consoleDock.setFocus()
-            self.consoleDock.grabKeyboard()
             
         
         def on_deActivation(self):
