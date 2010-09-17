@@ -164,8 +164,8 @@ class ConsoleTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        self.volumeEditorVisible = self.ilastik.labelWidget.isVisible()
-        #self.ilastik.labelWidget.setVisible(False)
+        self.volumeEditorVisible = self.ilastik.volumeEditorDock.isVisible()
+        self.ilastik.volumeEditorDock.setVisible(False)
         
         if self.consoleWidget is None:
             locals = {}
@@ -184,13 +184,14 @@ class ConsoleTab(IlastikTabBase, QtGui.QWidget):
             area = QtCore.Qt.BottomDockWidgetArea
             self.ilastik.addDockWidget(area, dock)        
 
-        self.consoleDock.setVisible(True)            
+        self.consoleDock.setVisible(True)
+        self.consoleWidget.setFocus()            
         self.consoleDock.show()
         
     
     def on_deActivation(self):
         self.consoleDock.setVisible(False)
-        #self.ilastik.labelWidget.setVisible(self.volumeEditorVisible)
+        self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
         
     def _initContent(self):
         pass
