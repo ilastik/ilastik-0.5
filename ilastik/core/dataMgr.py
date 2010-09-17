@@ -616,6 +616,9 @@ class DataItemImage(DataItemBase):
         self.overlayMgr["Raw Data"] = ov
 
         if self.dataVol.labels is not None:
+            #create an overlay for labels
+            ov = overlayMgr.OverlayItem(self.dataVol.labels.data, color = 0, alpha = 1.0, colorTable = self.dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+            self.overlayMgr["Classification/Labels"] = ov
             for p_i, descr in enumerate(self.dataVol.labels.descriptions):
                 #create Overlay for prediction:
                 ov = overlayMgr.OverlayItem(descr.prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
