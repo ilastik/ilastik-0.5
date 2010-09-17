@@ -200,12 +200,13 @@ class ConsoleTab(IlastikTabBase, QtGui.QWidget):
             area = QtCore.Qt.BottomDockWidgetArea
             self.ilastik.addDockWidget(area, dock)        
 
-        self.consoleDock.setVisible(True)
-        self.consoleWidget.setFocus()            
         self.consoleDock.show()
+        self.consoleWidget.setFocus()            
+        self.consoleWidget.grabKeyboard()
         
     
     def on_deActivation(self):
+        self.consoleWidget.releaseKeyboard()
         self.consoleDock.setVisible(False)
         #self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
         if self.ilastik.labelWidget is not None:
