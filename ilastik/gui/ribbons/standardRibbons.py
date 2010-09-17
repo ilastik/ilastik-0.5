@@ -182,7 +182,7 @@ try:
             
             
             self.volumeEditorVisible = self.ilastik.volumeEditorDock.isVisible()
-            #self.ilastik.volumeEditorDock.setVisible(False)
+            self.ilastik.volumeEditorDock.setVisible(False)
             
             if self.consoleWidget is None:
                 locals = {}
@@ -208,7 +208,7 @@ try:
         def on_deActivation(self):
             self.consoleWidget.releaseKeyboard()
             self.consoleDock.setVisible(False)
-            #self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
+            self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
             if self.ilastik.labelWidget is not None:
                 if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
                     self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
