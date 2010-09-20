@@ -130,7 +130,7 @@ class ProjectDlg(QtGui.QDialog):
 
                 # labels
                 r = QtGui.QTableWidgetItem()
-                r._data(QtCore.Qt.CheckStateRole)
+                r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Unchecked)
 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
