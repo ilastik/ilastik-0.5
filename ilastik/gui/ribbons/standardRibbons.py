@@ -200,10 +200,13 @@ try:
                
                 area = QtCore.Qt.BottomDockWidgetArea
                 self.ilastik.addDockWidget(area, dock)
+            self.consoleDock.setVisible(True)
             self.consoleDock.setFocus()
+            self.consoleWidget.multipleRedirection(True)
             
         
         def on_deActivation(self):
+            self.consoleWidget.multipleRedirection(False)
             self.consoleWidget.releaseKeyboard()
             self.consoleDock.setVisible(False)
             self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)

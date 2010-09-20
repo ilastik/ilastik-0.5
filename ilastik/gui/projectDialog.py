@@ -207,7 +207,7 @@ class ProjectDlg(QtGui.QDialog):
                     self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                     # labels
                     r = QtGui.QTableWidgetItem()
-                    r._data(QtCore.Qt.CheckStateRole)
+                    r.data(QtCore.Qt.CheckStateRole)
                     r.setCheckState(QtCore.Qt.Checked)
 
 

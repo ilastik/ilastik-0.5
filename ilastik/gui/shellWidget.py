@@ -99,19 +99,24 @@ class GraphicalStreamRedirection:
         if event.type() == RedirectionEventId:
             self.write(event.txt)
             
+    def multipleRedirection(self, enabled):
+        self.multipleStdErrRedirection(enabled)
+        self.multipleStdOutRedirection(enabled)
+            
+            
     def multipleStdOutRedirection(self,enabled = True):
         """ make multiple (sys.stdout/pyconsole) or single (pyconsole) redirection of stdout """
         if enabled:
             sys.stdout   = MultipleRedirection(sys_stdout, ThreadedRedirection(self))
         else:
-            sys.stdout   = ThreadedRedirection(self)
+            sys.stdout   = sys_stdout
         
     def multipleStdErrRedirection(self,enabled = True):
         """ make multiple (sys.stderr/pyconsole) or single (pyconsole) redirection of stderr """
         if enabled:
             sys.stderr   = MultipleRedirection(sys_stderr, ThreadedRedirection(self))
         else:
-            sys.stderr   = ThreadedRedirection(self)
+            sys.stderr   = sys_stderr
             
 
 class SciShell(QsciScintilla,GraphicalStreamRedirection):
@@ -205,6 +210,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
                      self.__completionListSelected)
 
         self.setFocus()
+
 
     def customEvent(self,event):
         GraphicalStreamRedirection.customEvent(self,event)
