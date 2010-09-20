@@ -128,6 +128,11 @@ class OverlayItemReference(object):
         else:
             raise Exception
 
+class OverlayReferenceMgr(list):
+    def __init__(self):
+        list.__init__(self)
+    
+
 class OverlayItem(object):
     """
     A Item that holds some scalar or multichannel _data and their drawing related settings.
@@ -161,7 +166,13 @@ class OverlayItem(object):
         elif name == "shape":
             return self._data.shape
         else:
-            raise AttributeError
+            raise AttributeError, name
+    def getSubSlice(self, offsets, sizes, num, axis, time = 0, channel = 0):
+        return self._data.getSubSlice(offsets, sizes, num, axis, time, channel)
+
+        
+    def setSubSlice(self, offsets, data, num, axis, time = 0, channel = 0):
+        self._data.setSubSlice(offsets, data, num, axis, time, channel)
                             
     def getRef(self):
         ref = OverlayItemReference(self)

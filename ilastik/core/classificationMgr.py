@@ -47,10 +47,11 @@ import onlineClassifcator
 import dataMgr as DM
 import activeLearning, segmentationMgr
 import classifiers
-from ilastik.core.volume import DataAccessor as DataAccessor
+from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr
 import jobMachine
 import sys, traceback
 import ilastik.core.classifiers.classifierRandomForest
+from ilastik.core.dataMgr import PropertyMgr, BlockAccessor
 
 import numpy
 
@@ -80,9 +81,273 @@ try:
 except ImportError:
     sys.exit("vigra module not found!")
 
+
+def unravelIndices(indices, shape):
+    if len(indices.shape) == 1:
+        indices.shape = indices.shape + (1,)
+    try:
+        ti =  numpy.apply_along_axis(numpy.unravel_index, 1, indices , shape)
+    except Exception, e:
+        print e
+        print indices
+        print shape
+    return ti    
+
+
 class ClassificationMgr(object):
-    def __init__(self):
-        pass         
+    def __init__(self, dataMgr):
+        self.dataMgr = dataMgr         
+        self._trainingVersion = 0
+        self._featureVersion = 0
+        self._trainingF = None
+        self.classifiers = []
+        
+        if self.dataMgr.properties["Classification"] is None:
+            self.dataMgr.properties["Classification"] = PropertyMgr()
+            
+        self.dataMgr.properties["Classification"]["classificationMgr"] = self
+        self.dataMgr.properties["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
+        
+        for i, im in enumerate(self.dataMgr):
+            self.clearFeaturesAndTrainingForImage(im)
+
+    def getTrainingMforIndForImage(self, ind, dataItemImage):
+#                        featureShape = prop["featureM"].shape[0:4]
+#                        URI =  unravelIndices(indices, featureShape)
+#                        tempfm = prop["featureM"][URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
+#                        tempfm.shape = (tempfm.shape[0],) + (tempfm.shape[1]*tempfm.shape[2],)
+        prop = dataItemImage.properties["Classification"]
+        featureShape = prop["featureM"].shape[0:4]
+        URI =  unravelIndices(ind, featureShape)
+        if issubclass(prop["featureM"].__class__,numpy.ndarray): 
+            trainingF = prop["featureM"][URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
+        else:
+            print ind.shape
+            print prop["featureM"].shape
+            trainingF = numpy.zeros((ind.shape[0],) + (prop["featureM"].shape[4],), 'float32')
+            for i in range(URI.shape[0]): 
+                trainingF[i,:,:] = prop["featureM"][URI[i,0],URI[i,1],URI[i,2],URI[i,3],:]
+        return trainingF
+        
+    def getTrainingMatrixRefForImage(self, dataItemImage):
+        prop = dataItemImage.properties["Classification"]
+        if len(prop["trainingF"]) == 0 and prop["featureM"] is not None:
+            tempF = []
+            tempL = []
+    
+            tempd =  dataItemImage.overlayMgr["Classification/Labels"][:, :, :, :, 0].ravel()
+            indices = numpy.nonzero(tempd)[0]
+            tempL = dataItemImage.overlayMgr["Classification/Labels"][:,:,:,:,0].ravel()[indices]
+            tempL.shape += (1,)
+                                   
+            prop["trainingIndices"] = indices
+            prop["trainingL"] = tempL
+            if len(indices) > 0:
+                prop["trainingF"] = self.getTrainingMforIndForImage(indices, dataItemImage)
+            else:
+                self.clearFeaturesAndTraining()
+        return prop["trainingL"], prop["trainingF"], prop["trainingIndices"]
+    
+    def getTrainingMatrixForImage(self, dataItemImage):
+        self.getTrainingMatrixRefForImage(dataItemImage)
+        prop = dataItemImage.properties["Classification"]
+        if len(prop["trainingF"]) != 0:
+            return prop["trainingL"], prop["trainingF"], prop["trainingIndices"]
+        else:
+            return None, None, None
+
+    def updateTrainingMatrixForImage(self, newLabels, dataItemImage):
+        """
+        This method updates the current training Matrix with new labels.
+        newlabels can contain completey new labels, changed labels and deleted labels
+        """
+        prop = dataItemImage.properties["Classification"]
+        for nl in newLabels:
+            try:
+                if nl.erasing == False:
+                    indic =  list(numpy.nonzero(nl._data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(dataItemImage.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
+
+                    if len(indices.shape) == 1:
+                        indices.shape = indices.shape + (1,)
+
+                    mask = numpy.setmember1d(prop["trainingIndices"].ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        tt = numpy.delete(prop["trainingIndices"],nonzero)
+                        if len(tt.shape) == 1:
+                            tt.shape = tt.shape + (1,)
+                        prop["trainingIndices"] = numpy.concatenate((tt,indices))
+                        tempI = numpy.nonzero(nl._data)
+                        tempL = nl._data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = numpy.delete(prop["trainingL"],nonzero)
+                        temp2.shape += (1,)
+                        prop["trainingL"] = numpy.vstack((temp2,tempL))
+
+
+                        temp2 = numpy.delete(prop["trainingF"],nonzero, axis = 0)
+
+                        if prop["featureM"] is not None and len(indices) > 0:
+                            tempfm = self.getTrainingMforIndForImage(indices, dataItemImage)
+
+                            if len(temp2.shape) == 1:
+                                temp2.shape += (1,)
+
+                            prop["trainingF"] = numpy.vstack((temp2,tempfm))
+                        else:
+                            prop["trainingF"] = temp2
+
+                    elif indices.shape[0] > 0: #no intersection, just add everything...
+                        if len(prop["trainingIndices"].shape) == 1:
+                            prop["trainingIndices"].shape = prop["trainingIndices"].shape + (1,)
+                        prop["trainingIndices"] = numpy.concatenate((prop["trainingIndices"],indices))
+
+                        tempI = numpy.nonzero(nl._data)
+                        tempL = nl._data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = prop["trainingL"]
+                        prop["trainingL"] = numpy.vstack((temp2,tempL))
+
+                        if prop["featureM"] is not None and len(indices) > 0:
+                            if prop["trainingF"] is not None:
+                                tempfm = self.getTrainingMforIndForImage(indices, dataItemImage)
+                                if len(prop["trainingF"].shape) == 1:
+                                    prop["trainingF"].shape = (0,tempfm.shape[1])
+                                prop["trainingF"] = numpy.vstack((prop["trainingF"],tempfm))
+                            else:
+                                prop["trainingF"] = self.getTrainingMforIndForImage(indices, dataItemImage)
+
+                else: #erasing == True
+                    indic =  list(numpy.nonzero(nl._data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(dataItemImage.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
+
+                    mask = numpy.setmember1d(prop["trainingIndices"].ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        if prop["trainingF"] is not None:
+                            prop["trainingIndices"] = numpy.delete(prop["trainingIndices"],nonzero)
+                            prop["trainingL"]  = numpy.delete(prop["trainingL"],nonzero)
+                            prop["trainingL"].shape += (1,) #needed because numpy.delete is stupid
+                            prop["trainingF"] = numpy.delete(prop["trainingF"],nonzero, axis = 0)
+                    else: #no intersectoin, in erase mode just pass
+                        pass
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
+
+    def clearFeaturesAndTrainingForImage(self, dataItemImage):
+        if dataItemImage.properties["Classification"] is None:
+            dataItemImage.properties["Classification"] = PropertyMgr()
+        prop = dataItemImage.properties["Classification"]
+        prop["trainingF"] = numpy.zeros((0), 'float32')      
+        prop["trainingL"] = numpy.zeros((0, 1), 'uint8')
+        prop["trainingIndices"] = numpy.zeros((0, 1), 'uint32')
+        
+    def getFeatureSlicesForViewStateForImage(self, vs, dataItemImage):
+        prop = dataItemImage.properties["Classification"]
+        tempM = []
+        if prop["featureM"] is not None:
+            tempM.append(prop["featureM"][vs[0],vs[1],:,:,:])
+            tempM.append(prop["featureM"][vs[0],:,vs[2],:,:])
+            tempM.append(prop["featureM"][vs[0],:,:,vs[3],:])
+            for i, f in enumerate(tempM):
+                tf = f.reshape((numpy.prod(f.shape[0:2]),) + (f.shape[2],))
+                tempM[i] = tf
+            return tempM
+        else:
+            return None
+
+
+    def buildTrainingMatrix(self, sigma = 0):
+        trainingF = []
+        trainingL = []
+        indices = []
+        for item in self.dataMgr:
+            trainingLabels, trainingFeatures, indic = self.getTrainingMatrixRefForImage(item)
+            if trainingFeatures is not None:
+                indices.append(indic)
+                trainingL.append(trainingLabels)
+                trainingF.append(trainingFeatures)
+            
+        self._trainingL = trainingL
+        self._trainingF = trainingF
+        self._trainingIndices = indices     
+    
+    def getTrainingMatrix(self, sigma = 0):
+        """
+        sigma: trainig _data that is within sigma to the image borders is not considered to prevent
+        border artifacts in training
+        """
+        if self._trainingVersion < self._featureVersion:
+            self.clearFeaturesAndTraining()
+        self.buildTrainingMatrix()
+        self._trainingVersion =  self._featureVersion
+            
+        if len(self._trainingF) == 0:
+            self.buildTrainingMatrix()
+        
+        if len(self._trainingF) > 0:
+            trainingF = numpy.vstack(self._trainingF)
+            trainingL = numpy.vstack(self._trainingL)
+        
+            return trainingF, trainingL
+        else:
+            print "######### empty Training Matrix ##########"
+            return None, None
+        
+    
+    def updateTrainingMatrix(self, newLabels,  dataItemImage = None):
+        if self._trainingF is None or len(self._trainingF) == 0 or self._trainingVersion < self._featureVersion:
+            self.buildTrainingMatrix()        
+        if dataItemImage is None:
+            dataItemImage = self.dataMgr[self.dataMgr._activeImageNumber]
+        self.updateTrainingMatrixForImage(newLabels, dataItemImage)
+
+                    
+    def clearFeaturesAndTraining(self):
+        self._featureVersion += 1
+        self._trainingF = None
+        self._trainingL = None
+        self._trainingIndices = None
+        self.classifiers = []
+        
+        for index, item in enumerate(self.dataMgr):
+            self.clearFeaturesAndTrainingForImage(item)
+
+
+
+
+
+
+
     
 class ClassifierTrainThread(ThreadBase):
     def __init__(self, queueSize, dataMgr, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, classifierOptions = (10,)):
@@ -94,6 +359,7 @@ class ClassifierTrainThread(ThreadBase):
         self.stopped = False
         self.classifier = classifier
         self.classifierOptions = classifierOptions
+        self.classificationMgr = dataMgr.properties["Classification"]["classificationMgr"]
         self.jobMachine = jobMachine.JobMachine()
         self.classifiers = deque()
 
@@ -106,7 +372,7 @@ class ClassifierTrainThread(ThreadBase):
     def run(self):
         self.dataMgr.featureLock.acquire()
         try:
-            F, L = self.dataMgr.getTrainingMatrix()
+            F, L = self.classificationMgr.getTrainingMatrix()
             if F is not None and L is not None:
                 self.count = 0
                 self.classifiers = deque()
@@ -116,7 +382,7 @@ class ClassifierTrainThread(ThreadBase):
                     jobs.append(job)
                 self.jobMachine.process(jobs)
                 
-                self.dataMgr.classifiers = self.classifiers
+                self.classificationMgr.classifiers = self.classifiers
 
             self.dataMgr.featureLock.release()
         except Exception, e:
@@ -132,13 +398,15 @@ class ClassifierPredictThread(ThreadBase):
         ThreadBase.__init__(self, None)
         self.count = 0
         self.dataMgr = dataMgr
+        self.classificationMgr = dataMgr.properties["Classification"]["classificationMgr"]
+        self.classifiers = self.classificationMgr.classifiers
         self.stopped = False
         self.jobMachine = jobMachine.JobMachine()
         self._prediction = None
         self.predLock = threading.Lock()
         self.numberOfJobs = 0
         for i, item in enumerate(self.dataMgr):
-            self.numberOfJobs += item._featureBlockAccessor._blockCount * len(self.dataMgr.classifiers)
+            self.numberOfJobs += len(self.classificationMgr.classifiers)
     
     def classifierPredict(self, bnr, fm):
         try:
@@ -146,8 +414,8 @@ class ClassifierPredictThread(ThreadBase):
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4])
             tpred = self._prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
-            for num in range(len(self.dataMgr.classifiers)):
-                cf = self.dataMgr.classifiers[num]
+            for num in range(len(self.classifiers)):
+                cf = self.classifiers[num]
                 pred = cf.predict(tfm2)
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 tpred += pred[:,:,:,:]
@@ -169,29 +437,33 @@ class ClassifierPredictThread(ThreadBase):
             interactiveMessagePrint ( "Classifier %d _prediction" % cnt )
             self.dataMgr.featureLock.acquire()
             try:
-                #self.dataMgr.clearFeaturesAndTraining()
-                if len(self.dataMgr.classifiers) > 0:
+                classifiers = self.dataMgr.properties["Classification"]["classifiers"]
+                prop = item.properties["Classification"]
+                
+                featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
+                
+                if len(self.classifiers) > 0:
                     #make a little test _prediction to get the shape and see if it works:
                     tempPred = None
-                    if item._featureM is not None:
-                        tfm = item._featureM[0,0,0,0,:]
+                    if prop["featureM"] is not None:
+                        tfm = prop["featureM"][0,0,0,0,:]
                         tfm.shape = (1,) + (tfm.shape[-1],) 
-                        tempPred = self.dataMgr.classifiers[0].predict(tfm)
+                        tempPred = self.classifiers[0].predict(tfm)
                                         
                     if tempPred is not None:
-                        self._prediction = numpy.zeros((item._featureM.shape[0:4]) + (tempPred.shape[1],) , 'float32')
+                        self._prediction = numpy.zeros((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
                         jobs= []
-                        for bnr in range(item._featureBlockAccessor._blockCount):
-                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, bnr, item._featureBlockAccessor])
+                        for bnr in range(featureBlockAccessor._blockCount):
+                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, bnr, featureBlockAccessor])
                             jobs.append(job)
                         self.jobMachine.process(jobs)
-                        count = len(self.dataMgr.classifiers)
+                        count = len(self.classifiers)
                         if count == 0:
                             count = 1
-                        self._prediction = self._prediction / count
+                        self._prediction = self._prediction / count * 255
                         #item._prediction = ve.DataAccessor(self._prediction.reshape(item._dataVol._data.shape[0:-1] + (self._prediction.shape[-1],)), channels = True)
-                        item._prediction = DataAccessor(self._prediction, channels = True)
-                        self._prediction = None
+                        #item.properties["Classification"]["prediction"] = DataAccessor(self._prediction, channels = True)
+                        self._prediction = DataAccessor(self._prediction.reshape(item.shape[0:-1] + (self._prediction.shape[-1],)), channels = True)
                 self.dataMgr.featureLock.release()
             except Exception, e:
                 print "########################## exception in ClassifierPredictThread ###################"
@@ -261,7 +533,7 @@ class ClassifierInteractiveThread(ThreadBase):
                 self.ilastik.activeImageLock.acquire()
                 self.ilastik.project.dataMgr.featureLock.acquire()
                 try:
-                    activeImage = self.ilastik._activeImage
+                    activeImage = self.ilastik._activeImageNumber
                     newLabels = self.ilastik.labelWidget.getPendingLabels()
                     if len(newLabels) > 0:
                         self.ilastik.project.dataMgr.updateTrainingMatrix(newLabels,  activeImage)

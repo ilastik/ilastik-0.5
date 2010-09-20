@@ -181,7 +181,7 @@ class LabelState(State):
         self.erasing = erasing
         self.labelNumber = labelNumber
         self.labels = labels
-        self.dataBefore = volumeEditor.labelWidget.volumeLabels._data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        self.dataBefore = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         
     def restore(self, volumeEditor):
         temp = volumeEditor.labelWidget.volumeLabels._data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
@@ -721,7 +721,7 @@ class VolumeEditor(QtGui.QWidget):
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
         self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
-        self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr._widget = self.overlayWidget
+        self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr._widget = self.overlayWidget
 
 
     def get_copy(self):
@@ -848,7 +848,7 @@ class VolumeEditor(QtGui.QWidget):
             sizes5 = (1,labels.shape[0], labels.shape[1],1,1)
         
         vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
-        vu.applyTo(self.labelWidget.volumeLabels._data)
+        vu.applyTo(self.labelWidget.overlayItem)
         self.pendingLabels.append(vu)
 
         patches = self.imageScenes[axis].patchAccessor.getPatchesForRect(offsets[0], offsets[1],offsets[0]+labels.shape[0], offsets[1]+labels.shape[1])

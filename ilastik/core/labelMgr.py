@@ -30,47 +30,46 @@
 import vigra, numpy
 
 from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
+from ilastik.core.classificationMgr import ClassificationMgr
 
 class LabelMgr(object):
-    def __init__(self,  dataMgr):
+    def __init__(self,  dataMgr, classificationMgr):
         self.dataMgr = dataMgr
+        self.classificationMgr = classificationMgr
         
     def addLabel(self, name,number, color):
         description = VolumeLabelDescription(name,number, color,  None)
-        
-        for imageIndex, imageItem in  enumerate(self.dataMgr):
-            descr = description.clone()
-            descr._prediction = numpy.zeros(imageItem._dataVol._data.shape[0:-1],  'uint8')
-            imageItem._dataVol.labels.descriptions.append(descr)
+        self.dataMgr.properties["Classification"]["labelDescriptions"].append(description)
             
 
     def changedLabel(self,  label):
-        for imageIndex, imageItem in  enumerate(self.dataMgr):
-            for labelIndex,  labelItem in enumerate(imageItem._dataVol.labels):
-                labelItem.name = label.name
-                labelItem.number = label.number
-                labelItem.color = label.color
+        for labelIndex,  labelItem in self.dataMgr.properties["Classification"]["labelDescriptions"]:
+            labelItem.name = label.name
+            labelItem.number = label.number
+            labelItem.color = label.color
                 
     def removeLabel(self, number):
         self.dataMgr.featureLock.acquire()
         self.dataMgr.clearFeaturesAndTraining()
+        ldnr = -1
+        for labelIndex,  labelItem in self.dataMgr.properties["Classification"]["labelDescriptions"]:
+            if labelItem.number == number:
+                ldnr = labelIndex
+                self.dataMgr.properties["Classification"]["labelDescriptions"].pop(ldnr)
+                
+        for labelIndex,  labelItem in self.dataMgr.properties["Classification"]["labelDescriptions"]:
+            if labelItem.number > ldnr:
+                labelItem.number -= 1
+                
         for index, item in enumerate(self.dataMgr):
-            ldnr = -1
-            for j, ld in enumerate(item._dataVol.labels.descriptions):
-                if ld.number == number:
-                    ldnr = j
             if ldnr != -1:
-                item._dataVol.labels.descriptions.pop(ldnr)
-                for j, ld in enumerate(item._dataVol.labels.descriptions):
-                    if ld.number > number:
-                        ld.number -= 1
-                temp = numpy.where(item._dataVol.labels._data[:,:,:,:,:] == number, 0, item._dataVol.labels._data[:,:,:,:,:])
+                ldata = item.overlayMgr["Classification/Labels"] 
+                temp = numpy.where(ldata[:,:,:,:,:] == number, 0, ldata[:,:,:,:,:])
                 temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item._dataVol.labels._data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item._dataVol.labels._history is not None:
-                    item._dataVol.labels._history.removeLabel(number)
-                print "unique label numbers : ",  numpy.unique(item._dataVol.labels._data[:,:,:,:,:])
+                ldata[:,:,:,:,:] = temp[:,:,:,:,:]
+                if item.properties["Classification"]["labelHistory"] is not None:
+                    item.properties["Classification"]["labelHistory"].removeLabel(number)
         self.dataMgr.featureLock.release()
         
     def newLabels(self,  newLabels):
-        self.dataMgr.updateTrainingMatrix(newLabels)
+        self.classificationMgr.updateTrainingMatrix(newLabels)

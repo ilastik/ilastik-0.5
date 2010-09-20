@@ -101,12 +101,7 @@ class FeatureMgr():
                 self.featureOffsets.append(oldSize)
             try:
                 for i, di in enumerate(self.dataMgr):
-                    if di._featureCacheDS is None:
-                        di._featureM = numpy.zeros(di._dataVol._data.shape[0:-1] + (totalSize,),'float32')
-                    else:
-                        di._featureCacheDS.resize(di._dataVol._data.shape[0:-1] + (totalSize,))
-                        di._featureM = di._featureCacheDS
-                    di._featureBlockAccessor = dataMgr.BlockAccessor(di._featureM, 64)
+                    di.properties["Classification"]["featureM"] = numpy.zeros(di.shape[0:-1] + (totalSize,),'float32')
 
             except Exception, e:
                 print e
@@ -170,17 +165,17 @@ class FeatureThread(ThreadBase):
 
     def computeNumberOfJobs(self):
         for image in self.dataMgr:
-            self.jobs += image._dataVol._data.shape[0]*image._dataVol._data.shape[4] * len(self.featureMgr.featureItems) * image._featureBlockAccessor._blockCount
+            self.jobs += image._dataVol._data.shape[0]*image._dataVol._data.shape[4] * len(self.featureMgr.featureItems)
 
-    def calcFeature(self, image, offset, size, feature, blockNum):
+    def calcFeature(self, image, featureBlockAccessor, offset, size, feature, blockNum):
         for t_ind in range(image._dataVol._data.shape[0]):
             try:
                 overlap = feature.minContext
-                bounds = image._featureBlockAccessor.getBlockBounds(blockNum, overlap)
-                dataInput = image._dataVol._data[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype('float32')
+                bounds = featureBlockAccessor.getBlockBounds(blockNum, overlap)
+                dataInput = image[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype('float32')
                 
                 result = feature.compute(dataInput[..., self.dataMgr.selectedChannels])
-                bounds1 = image._featureBlockAccessor.getBlockBounds(blockNum,0)
+                bounds1 = featureBlockAccessor.getBlockBounds(blockNum,0)
 
                 sx = bounds1[0]-bounds[0]
                 ex = bounds[1]-bounds1[1]
@@ -194,17 +189,10 @@ class FeatureThread(ThreadBase):
                 ez = result.shape[2] - ez
 
                 tres = result[sx:ex,sy:ey,sz:ez,:]
-                image._featureBlockAccessor[t_ind,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],offset:offset+size] = tres
+                featureBlockAccessor[t_ind,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],offset:offset+size] = tres
             except Exception, e:
                 self.printLock.acquire()
                 print "########################## exception in FeatureThread ###################"
-                print self.dataMgr.selectedChannels
-                print feature.__class__
-                #print result.shape
-                print bounds
-                #print bounds1
-                print offset
-                print size
                 print e
                 traceback.print_exc(file=sys.stdout)
                 self.printLock.release()
@@ -214,10 +202,11 @@ class FeatureThread(ThreadBase):
     
     def run(self):
         for image in self.dataMgr:
+            featureBlockAccessor = dataMgr.BlockAccessor(image.properties["Classification"]["featureM"],64)
             jobs = []
-            for blockNum in range(image._featureBlockAccessor._blockCount):
+            for blockNum in range(featureBlockAccessor._blockCount):
                 for i, feature in enumerate(self.featureMgr.featureItems):
-                    job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature, blockNum])
+                    job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, featureBlockAccessor, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature, blockNum])
                     jobs.append(job)
                     
             self.jobMachine.process(jobs)

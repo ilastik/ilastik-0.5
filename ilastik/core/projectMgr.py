@@ -45,6 +45,7 @@ from ilastik.core import classifiers
 from ilastik.core import labelMgr
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
+from ilastik.core import classificationMgr
 from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr 
 from ilastik.core import connectedComponents
@@ -77,7 +78,8 @@ class Project(object):
         self.trainingLabels = None
         self.trainingFeatureNames = None
         self.featureMgr = None
-        self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
+        self.classificationMgr = classificationMgr.ClassificationMgr(self.dataMgr)
+        self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)
         self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
@@ -193,7 +195,7 @@ class Project(object):
             for index2,  di in enumerate(self.dataMgr):
                 #create Feature Overlays
                 for c in range(0,size):
-                    rawdata = di._featureM[:, :, :, :, offset+c:offset+c+1]
+                    rawdata = di.properties["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
                     #TODO: the min/max stuff here is slow !!!
                     #parallelize ??
                     min = numpy.min(rawdata)
