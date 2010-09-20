@@ -268,6 +268,15 @@ class DataItemImage(DataItemBase):
             
     def __setitem__(self, args, data):
         self._dataVol._data[args] = data
+
+
+    def __getattr__(self, name):
+        if name == "dtype":
+            return self._dataVol._data.dtype
+        elif name == "shape":
+            return self._dataVol._data.shape
+        else:
+            raise AttributeError
         
     def getTrainingMforInd(self, ind):
 #                        featureShape = self._featureM.shape[0:4]

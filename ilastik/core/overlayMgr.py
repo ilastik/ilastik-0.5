@@ -97,6 +97,10 @@ class OverlayItemReference(object):
             return self.overlayItem.min
         elif name == "max":
             return self.overlayItem.max
+        elif name == "dtype":
+            return self._data.dtype
+        elif name == "shape":
+            return self._data.shape
         raise AttributeError,  name
         
         
@@ -150,6 +154,14 @@ class OverlayItem(object):
             
     def __setitem__(self, args, data):
         self._data[args] = data
+
+    def __getattr__(self, name):
+        if name == "dtype":
+            return self._data.dtype
+        elif name == "shape":
+            return self._data.shape
+        else:
+            raise AttributeError
                             
     def getRef(self):
         ref = OverlayItemReference(self)
