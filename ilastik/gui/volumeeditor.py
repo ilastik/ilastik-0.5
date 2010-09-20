@@ -967,7 +967,7 @@ class DrawManager(QtCore.QObject):
         painter.setPen(self.penVis)
         painter.drawPoint(QtGui.Q)
 
-    def beginDraw(self, pos, shape):
+    def beginDraw(self, pos, shape):        
         self.shape = shape
         self.initBoundingBox()
         self.scene.clear()
