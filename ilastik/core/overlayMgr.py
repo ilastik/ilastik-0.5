@@ -78,7 +78,13 @@ class OverlayItemReference(object):
         self.key = self.overlayItem.key
         self.channel = 0
         self.numChannels = self.overlayItem._data.shape[4]
-        
+
+    def __getitem__(self, args):
+        return self.overlayItem._data[args]
+            
+    def __setitem__(self, args, data):
+        self.overlayItem._data[args] = data
+                
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
         return OverlaySlice(self.overlayItem._data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable, self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
         
@@ -138,7 +144,13 @@ class OverlayItem(object):
         self.references = []
         self.min = None
         self.max = None
-                
+
+    def __getitem__(self, args):
+        return self._data[args]
+            
+    def __setitem__(self, args, data):
+        self._data[args] = data
+                            
     def getRef(self):
         ref = OverlayItemReference(self)
         ref.visible = self.autoVisible

@@ -210,6 +210,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
                      self.__completionListSelected)
 
         self.setFocus()
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
 
     def customEvent(self,event):
@@ -434,10 +435,9 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
 
         elif(ctrl or shift):
             QsciScintilla.keyPressEvent(self, ev)
-
-
         else:
             ev.ignore()
+
 
 
     def __QScintillaTab(self):

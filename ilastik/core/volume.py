@@ -78,10 +78,10 @@ class DataAccessor():
 
 
     def __getitem__(self, key):
-        return self._data[tuple(key)]
+        return self._data[key]
     
     def __setitem__(self, key, data):
-        self._data[tuple(key)] = data
+        self._data[key] = data
 
     def getSlice(self, num, axis, time = 0, channel = 0):
         if self.rgb is True:

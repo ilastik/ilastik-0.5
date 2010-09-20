@@ -262,6 +262,12 @@ class DataItemImage(DataItemBase):
         
         self.overlayMgr = overlayMgr.OverlayMgr()
         
+
+    def __getitem__(self, args):
+        return self._dataVol._data[args]
+            
+    def __setitem__(self, args, data):
+        self._dataVol._data[args] = data
         
     def getTrainingMforInd(self, ind):
 #                        featureShape = self._featureM.shape[0:4]
