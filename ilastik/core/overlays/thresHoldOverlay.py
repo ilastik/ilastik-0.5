@@ -7,8 +7,8 @@ class MultivariateThresholdAccessor(object):
     def __init__(self, thresholdOverlay):
 
         self.thresholdOverlay = thresholdOverlay        
-        self.shape = self.thresholdOverlay.dsets[0].data.shape
-        self.dtype = self.thresholdOverlay.dsets[0].data.dtype
+        self.shape = self.thresholdOverlay.dsets[0]._data.shape
+        self.dtype = self.thresholdOverlay.dsets[0]._data.dtype
         
         
     def __getitem__(self, key):
@@ -38,14 +38,14 @@ class MultivariateThresholdAccessor(object):
         return answer
     
     def __setitem__(self, key, data):
-        raise Exception('yeah sure', 'no setting of multivariathresholdaccessor data')
+        raise Exception('yeah sure', 'no setting of multivariathresholdaccessor _data')
         
 
 class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
     def __init__(self, foregrounds, backgrounds):
         overlayBase.OverlayBase.__init__(self)
         
-        self.data = None
+        self._data = None
         self.sigma = 1.5
         self.smoothing = False
         
@@ -86,7 +86,7 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         dsets = []
         for i,f in enumerate(foregrounds):
-            dsets.append(f.data)
+            dsets.append(f._data)
         
         if back is not None:
             dsets.append(back)
@@ -99,13 +99,13 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
     def setBackgrounds(self, backgrounds):
         dsets = []
         for i,f in enumerate(self.foregrounds):
-            dsets.append(f.data)
+            dsets.append(f._data)
 
         
         if len(backgrounds)>0:
-            background = numpy.zeros(backgrounds[0].data.shape, backgrounds[0].data.dtype)
+            background = numpy.zeros(backgrounds[0]._data.shape, backgrounds[0]._data.dtype)
             for b in backgrounds:
-                background += b.data[:,:,:,:,:]
+                background += b._data[:,:,:,:,:]
             dsets.append(background)
                           
         

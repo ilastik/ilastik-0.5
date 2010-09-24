@@ -17,11 +17,11 @@ from ilastik.core import jobMachine
 class ConnectedComponentsThread(QtCore.QThread):
     def __init__(self, dataMgr, image, background=set(), connector = connectedComponents.ConnectedComponents(), connectorOptions = None):
         QtCore.QThread.__init__(self, None)
-        self.data = image
+        self._data = image
         self.backgroundSet = background
         self.dataMgr = dataMgr
         self.count = 0
-        self.numberOfJobs = self.data.shape[0]
+        self.numberOfJobs = self._data.shape[0]
         self.stopped = False
         self.connector = connector
         self.connectorOptions = connectorOptions
@@ -34,22 +34,22 @@ class ConnectedComponentsThread(QtCore.QThread):
     def run(self):
         self.dataMgr.featureLock.acquire()
         #if self.dataItem.dataVol.segmentation is None:
-        #    self.dataItem.dataVol.segmentation = numpy.zeros(self.dataItem.dataVol.data.shape[0:-1],'uint8')
+        #    self.dataItem.dataVol.segmentation = numpy.zeros(self.dataItem.dataVol._data.shape[0:-1],'uint8')
 
         try:
-            self.result = range(0,self.data.shape[0])
+            self.result = range(0,self._data.shape[0])
             jobs = []
-            for i in range(self.data.shape[0]):
-                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, self.data[i,:,:,:,0], self.backgroundSet])
+            for i in range(self._data.shape[0]):
+                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, self._data[i,:,:,:,0], self.backgroundSet])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)
             #for i in range(50):
             #    print self.result[0, i, i, 24, 0]
             #for i in range(10):
-            #if self.data[0,i,i,0,0] != self.result[0,i,i,0,0]:
+            #if self._data[0,i,i,0,0] != self.result[0,i,i,0,0]:
             #        print "not equal at", i
-            #print self.data.shape, "  ", self.data[0,0,0,0,0]
+            #print self._data.shape, "  ", self._data[0,0,0,0,0]
             #print self.result.shape, "  ", self.result[0,0,0,0,0]
             self.dataMgr.featureLock.release()
         except Exception, e:

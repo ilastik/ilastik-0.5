@@ -119,11 +119,11 @@ class Project(object):
             # create group for dataItem
             dk = dataSetG.create_group('dataItem%02d' % k)
             dk.attrs["fileName"] = str(item.fileName)
-            dk.attrs["Name"] = str(item.Name)
+            dk.attrs["_name"] = str(item._name)
             # save raw data
-            item.dataVol.serialize(dk)
-            if item.prediction is not None:
-                item.prediction.serialize(dk, 'prediction' )
+            item._dataVol.serialize(dk)
+            if item._prediction is not None:
+                item._prediction.serialize(dk, '_prediction' )
 
 
         # Save to hdf5 file
@@ -153,16 +153,16 @@ class Project(object):
         for name in fileHandle['DataSets']:
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
-            activeItem.dataVol = dataVol
+            activeItem._dataVol = dataVol
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
 
-            if 'prediction' in fileHandle['DataSets'][name].keys():
-                activeItem.prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], 'prediction')
-                for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
-                    item.prediction = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            if '_prediction' in fileHandle['DataSets'][name].keys():
+                activeItem._prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], '_prediction')
+                for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
+                    item._prediction = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
     
-                margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
-                activeItem.dataVol.uncertainty = margin[:,:,:,:]
+                margin = activeLearning.computeEnsembleMargin(activeItem._prediction[:,:,:,:,:])*255.0
+                activeItem._dataVol.uncertainty = margin[:,:,:,:]
             
             activeItem.updateOverlays()
                             
@@ -176,6 +176,14 @@ class Project(object):
         project.filename = fileName
         # print "Project %s loaded from %s " % (p.name, fileName)
         return project
+
+    def deleteFeatureOverlays(self):
+        for index2,  di in enumerate(self.dataMgr):
+            keys = di.overlayMgr.keys()
+            for k in keys:
+                if k.startswith("Classification/Features/"):
+                    di.overlayMgr.remove(k)
+    
     
     def createFeatureOverlays(self):
         for index,  feature in enumerate(self.featureMgr.featureItems):
@@ -195,7 +203,7 @@ class Project(object):
                     ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
                     ov.min = min
                     ov.max = max
-                    di.overlayMgr["Classification/Features/" + feature.name + " Sigma " + str(feature.sigma) + "/" + feature.name + " Sigma " + str(feature.sigma) + "Channel " + str(c)] = ov
+                    di.overlayMgr[ feature.getKey(c)] = ov
         
   
 

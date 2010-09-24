@@ -50,6 +50,11 @@ class FeatureBase(object):
         self.settings = { }
         self.minContext = sigma*3.5
 
+    def getName(self):
+        return self.name + " Sigma " + str(self.sigma)
+    
+    def getKey(self, c):
+        return "Classification/Features/" + self.getName() + "/" + self.getName()+ " Channel " + str(c)
 
     def settings(self):
         """

@@ -134,25 +134,25 @@ class ClassifierPredictThread(ThreadBase):
         self.dataMgr = dataMgr
         self.stopped = False
         self.jobMachine = jobMachine.JobMachine()
-        self.prediction = None
+        self._prediction = None
         self.predLock = threading.Lock()
         self.numberOfJobs = 0
         for i, item in enumerate(self.dataMgr):
-            self.numberOfJobs += item.featureBlockAccessor.blockCount * len(self.dataMgr.classifiers)
+            self.numberOfJobs += item._featureBlockAccessor._blockCount * len(self.dataMgr.classifiers)
     
     def classifierPredict(self, bnr, fm):
         try:
             b = fm.getBlockBounds(bnr, 0)
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4])
-            tpred = self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
+            tpred = self._prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             for num in range(len(self.dataMgr.classifiers)):
                 cf = self.dataMgr.classifiers[num]
                 pred = cf.predict(tfm2)
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 tpred += pred[:,:,:,:]
 		self.count += 1
-	    self.prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred
+	    self._prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred
         except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e
@@ -166,12 +166,12 @@ class ClassifierPredictThread(ThreadBase):
         for item in self.dataMgr:
             cnt = 0
             interactiveMessagePrint( "Feature Item" )
-            interactiveMessagePrint ( "Classifier %d prediction" % cnt )
+            interactiveMessagePrint ( "Classifier %d _prediction" % cnt )
             self.dataMgr.featureLock.acquire()
             try:
                 #self.dataMgr.clearFeaturesAndTraining()
                 if len(self.dataMgr.classifiers) > 0:
-                    #make a little test prediction to get the shape and see if it works:
+                    #make a little test _prediction to get the shape and see if it works:
                     tempPred = None
                     if item._featureM is not None:
                         tfm = item._featureM[0,0,0,0,:]
@@ -179,19 +179,19 @@ class ClassifierPredictThread(ThreadBase):
                         tempPred = self.dataMgr.classifiers[0].predict(tfm)
                                         
                     if tempPred is not None:
-                        self.prediction = numpy.zeros((item._featureM.shape[0:4]) + (tempPred.shape[1],) , 'float32')
+                        self._prediction = numpy.zeros((item._featureM.shape[0:4]) + (tempPred.shape[1],) , 'float32')
                         jobs= []
-                        for bnr in range(item.featureBlockAccessor.blockCount):
-                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, bnr, item.featureBlockAccessor])
+                        for bnr in range(item._featureBlockAccessor._blockCount):
+                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, bnr, item._featureBlockAccessor])
                             jobs.append(job)
                         self.jobMachine.process(jobs)
                         count = len(self.dataMgr.classifiers)
                         if count == 0:
                             count = 1
-                        self.prediction = self.prediction / count
-                        #item.prediction = ve.DataAccessor(self.prediction.reshape(item.dataVol.data.shape[0:-1] + (self.prediction.shape[-1],)), channels = True)
-                        item.prediction = DataAccessor(self.prediction, channels = True)
-                        self.prediction = None
+                        self._prediction = self._prediction / count
+                        #item._prediction = ve.DataAccessor(self._prediction.reshape(item._dataVol._data.shape[0:-1] + (self._prediction.shape[-1],)), channels = True)
+                        item._prediction = DataAccessor(self._prediction, channels = True)
+                        self._prediction = None
                 self.dataMgr.featureLock.release()
             except Exception, e:
                 print "########################## exception in ClassifierPredictThread ###################"
@@ -243,7 +243,7 @@ class ClassifierInteractiveThread(ThreadBase):
         try:
             cf = self.classifiers[num]
             pred = cf.predict(featureMatrix[i][start:end,:]) / len(self.classifiers)
-            self.prediction[i][start:end,:] += pred
+            self._prediction[i][start:end,:] += pred
             self.count += 1
         except Exception, e:
             print "### ClassifierInteractiveThread::classifierPredict"
@@ -261,7 +261,7 @@ class ClassifierInteractiveThread(ThreadBase):
                 self.ilastik.activeImageLock.acquire()
                 self.ilastik.project.dataMgr.featureLock.acquire()
                 try:
-                    activeImage = self.ilastik.activeImage
+                    activeImage = self.ilastik._activeImage
                     newLabels = self.ilastik.labelWidget.getPendingLabels()
                     if len(newLabels) > 0:
                         self.ilastik.project.dataMgr.updateTrainingMatrix(newLabels,  activeImage)
@@ -283,9 +283,9 @@ class ClassifierInteractiveThread(ThreadBase):
                     features = self.ilastik.project.dataMgr[activeImage].getFeatureSlicesForViewState(vs)
                     vs.append(activeImage)
     
-                    interactiveMessagePrint("1>> Pop prediction Data")
+                    interactiveMessagePrint("1>> Pop _prediction Data")
                     if len(self.classifiers) > 0:
-                        #make a little test prediction to get the shape and see if it works:
+                        #make a little test _prediction to get the shape and see if it works:
                         tempPred = None
                         if features is not None:
                             tfm = features[0][0,:]
@@ -293,11 +293,11 @@ class ClassifierInteractiveThread(ThreadBase):
                             tempPred = self.classifiers[0].predict(tfm)
                                             
                         if tempPred is not None:
-                            self.prediction = []
+                            self._prediction = []
                             jobs= []
                             self.count = 0
                             for i in range(len(features)):
-                                self.prediction.append(numpy.zeros((features[i].shape[0],) + (tempPred.shape[1],) , 'float32'))
+                                self._prediction.append(numpy.zeros((features[i].shape[0],) + (tempPred.shape[1],) , 'float32'))
                                 for j in range(0,features[i].shape[0],128**2):
                                     for k in range(len(self.classifiers)):
                                         end = min(j+128**2,features[i].shape[0])
@@ -306,80 +306,80 @@ class ClassifierInteractiveThread(ThreadBase):
                                 
                             self.jobMachine.process(jobs)
 
-                            shape = self.ilastik.project.dataMgr[vs[-1]].dataVol.data.shape
+                            shape = self.ilastik.project.dataMgr[vs[-1]]._dataVol._data.shape
 
                             tp = []
-                            tp.append(self.prediction[0].reshape((shape[2],shape[3],self.prediction[0].shape[-1])))
-                            tp.append(self.prediction[1].reshape((shape[1],shape[3],self.prediction[1].shape[-1])))
-                            tp.append(self.prediction[2].reshape((shape[1],shape[2],self.prediction[2].shape[-1])))
+                            tp.append(self._prediction[0].reshape((shape[2],shape[3],self._prediction[0].shape[-1])))
+                            tp.append(self._prediction[1].reshape((shape[1],shape[3],self._prediction[1].shape[-1])))
+                            tp.append(self._prediction[2].reshape((shape[1],shape[2],self._prediction[2].shape[-1])))
 
-                            all =  range(len(self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions))
+                            all =  range(len(self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions))
                             not_predicted = numpy.setdiff1d(all, self.classifiers[0].unique_vals - 1)
 
                             #Axis 0
                             tpc = tp[0]
                             ba = DM.BlockAccessor2D(tpc[:,:,:])
-                            for i in range(ba.blockCount):
+                            for i in range(ba._blockCount):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
                                 margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
                                 
-                                self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = margin
+                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.uncertainty[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = margin
 #                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
-#                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = seg
+#                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.segmentation[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = seg
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
-                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
-                                    item.prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num-1]
+                                    item._prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
-                                    item.prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = 0
+                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num]
+                                    item._prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = 0
 
                             #Axis 1
                             tpc = tp[1]
                             ba = DM.BlockAccessor2D(tpc[:,:,:])
-                            for i in range(ba.blockCount):
+                            for i in range(ba._blockCount):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
                                 margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
                                 seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
-                                self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = margin
-#                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = seg
+                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.uncertainty[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = margin
+#                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.segmentation[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = seg
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
-                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
-                                    item.prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num-1]
+                                    item._prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
-                                    item.prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = 0
+                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num]
+                                    item._prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = 0
 
 
                             #Axis 2
                             tpc = tp[2]
                             ba = DM.BlockAccessor2D(tpc[:,:,:])
-                            for i in range(ba.blockCount):
+                            for i in range(ba._blockCount):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
                                 margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
                                 seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
-                                self.ilastik.project.dataMgr[vs[-1]].dataVol.uncertainty[vs[0], b[0]:b[1],b[2]:b[3], vs[3]] = margin
-#                                self.ilastik.project.dataMgr[vs[-1]].dataVol.segmentation[vs[0], b[0]:b[1],b[2]:b[3],vs[3]] = seg
+                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.uncertainty[vs[0], b[0]:b[1],b[2]:b[3], vs[3]] = margin
+#                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.segmentation[vs[0], b[0]:b[1],b[2]:b[3],vs[3]] = seg
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
-                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num-1]
-                                    item.prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num-1]
+                                    item._prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    item = self.ilastik.project.dataMgr[vs[-1]].dataVol.labels.descriptions[p_num]
-                                    item.prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = 0
+                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num]
+                                    item._prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = 0
 
 
 
 
                         else:
-                            print "##################### prediction None #########################"
+                            print "##################### _prediction None #########################"
                     else:
                         print "##################### No Classifiers ############################"
                     if have_qt:

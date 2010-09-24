@@ -68,11 +68,11 @@ class ProjectDlg(QtGui.QDialog):
         flagON = ~theFlag | theFlag 
         flagOFF = ~theFlag
             
-        for d in project.dataMgr.dataItems:
+        for d in project.dataMgr._dataItems:
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)
             
-            # File Name
+            # File _name
             r = QtGui.QTableWidgetItem(d.fileName)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                        
@@ -81,8 +81,8 @@ class ProjectDlg(QtGui.QDialog):
             
             # labels
             r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(checker(d.dataVol.labels.data != None))
+            r._data(QtCore.Qt.CheckStateRole)
+            r.setCheckState(checker(d._dataVol.labels._data != None))
             #r.setFlags(r.flags() & flagOFF);
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
@@ -106,14 +106,14 @@ class ProjectDlg(QtGui.QDialog):
             # file name
             dirname = os.path.basename(os.path.dirname(path))
             offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')'
-            theDataItem.Name = dirname + ' ' + offsetstr   
+            theDataItem._name = dirname + ' ' + offsetstr   
             try:
                 self.dataMgr.append(theDataItem, True)
-                self.dataMgr.dataItemsLoaded[-1] = True
+                self.dataMgr._dataItemsLoaded[-1] = True
 
-                theDataItem.hasLabels = True
-                theDataItem.isTraining = True
-                theDataItem.isTesting = True
+                theDataItem._hasLabels = True
+                theDataItem._isTraining = True
+                theDataItem._isTesting = True
 
                 #self.ilastik.ribbon.getTab('Projects').btnEdit.setEnabled(True)
                 #self.ilastik.ribbon.getTab('Projects').btnOptions.setEnabled(True)
@@ -134,7 +134,7 @@ class ProjectDlg(QtGui.QDialog):
                 r.setCheckState(QtCore.Qt.Unchecked)
 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-                print theDataItem.dataVol.labels
+                print theDataItem._dataVol.labels
                 
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
@@ -168,7 +168,7 @@ class ProjectDlg(QtGui.QDialog):
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             # labels
             r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
+            r._data(QtCore.Qt.CheckStateRole)
             r.setCheckState(QtCore.Qt.Checked)
 
 
@@ -191,9 +191,9 @@ class ProjectDlg(QtGui.QDialog):
                     #theDataItem = dataMgr.DataItemImage(file_name)
                     theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
                     if theDataItem is None:
-                        print "No data item loaded"
+                        print "No _data item loaded"
                     self.dataMgr.append(theDataItem, True)
-                    #self.dataMgr.dataItemsLoaded[-1] = True
+                    #self.dataMgr._dataItemsLoaded[-1] = True
 
                     rowCount = self.tableWidget.rowCount()
                     self.tableWidget.insertRow(rowCount)
@@ -267,16 +267,16 @@ class ProjectDlg(QtGui.QDialog):
         for k in range(0, rowCount):               
             theDataItem = self.dataMgr[k]
             
-            theDataItem.hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
-            if theDataItem.hasLabels == False:
-                theDataItem.dataVol.labels.clear()
+            theDataItem._hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
+            if theDataItem._hasLabels == False:
+                theDataItem._dataVol.labels.clear()
                 
             contained = False
-            for pr in theDataItem.projects:
+            for pr in theDataItem._projects:
                 if pr == self.parent.project:
                     contained = True
             if not contained:
-                theDataItem.projects.append(self.parent.project)
+                theDataItem._projects.append(self.parent.project)
         gc.collect()
         self.accept()
 

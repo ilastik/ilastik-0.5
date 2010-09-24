@@ -85,14 +85,14 @@ class FeatureDlg(QtGui.QDialog):
     def initDlg(self):
 
         #determine the minimum x,y,z of all images
-        min = self.ilastik.project.dataMgr[0].dataVol.data.shape[3]
+        min = self.ilastik.project.dataMgr[0]._dataVol._data.shape[3]
         for i, it in enumerate(self.ilastik.project.dataMgr):
-            if it.dataVol.data.shape[2] < min:
-                min = it.dataVol.data.shape[2]
-            if it.dataVol.data.shape[3] < min:
-                min = it.dataVol.data.shape[3]
-            if it.dataVol.data.shape[1] < min and it.dataVol.data.shape[1] > 1:
-                min = it.dataVol.data.shape[1]
+            if it._dataVol._data.shape[2] < min:
+                min = it._dataVol._data.shape[2]
+            if it._dataVol._data.shape[3] < min:
+                min = it._dataVol._data.shape[3]
+            if it._dataVol._data.shape[1] < min and it._dataVol._data.shape[1] > 1:
+                min = it._dataVol._data.shape[1]
 
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(ilastik.__file__)
@@ -309,12 +309,12 @@ class FeatureDlg(QtGui.QDialog):
         if featureSelectionList != []:
             dataMgr = self.parent.project.dataMgr
 
-            numOfChannels = dataMgr[0].dataVol.data.shape[-1]
+            numOfChannels = dataMgr[0]._dataVol._data.shape[-1]
             numOfEffectiveFeatures =  0
             for f in featureSelectionList:
-                numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0].dataVol.data.shape)
+                numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0]._dataVol._data.shape)
                 numOfEffectiveFeatures *= numOfChannels
-                numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
+                numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
                 # 7 bytes per pixel overhead
             memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
             print "Total feature vector length is %d with aprox. memory demand of %8.2f MB" % (numOfEffectiveFeatures, memoryReq)

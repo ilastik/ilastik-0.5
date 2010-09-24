@@ -47,13 +47,13 @@ class ObjectMgr(object):
         
         for imageIndex, imageItem in  enumerate(self.dataMgr):
             descr = description.clone()
-            descr.prediction = numpy.zeros(imageItem.dataVol.data.shape[0:-1],  'uint8')
-            imageItem.dataVol.objects.descriptions.append(descr)
+            descr._prediction = numpy.zeros(imageItem._dataVol._data.shape[0:-1],  'uint8')
+            imageItem._dataVol.objects.descriptions.append(descr)
             
 
     def changedLabel(self,  label):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
-            for labelIndex,  labelItem in enumerate(imageItem.dataVol.objects):
+            for labelIndex,  labelItem in enumerate(imageItem._dataVol.objects):
                 labelItem.name = label.name
                 labelItem.number = label.number
                 labelItem.color = label.color
@@ -62,19 +62,19 @@ class ObjectMgr(object):
         self.dataMgr.featureLock.acquire()
         for index, item in enumerate(self.dataMgr):
             ldnr = -1
-            for j, ld in enumerate(item.dataVol.objects.descriptions):
+            for j, ld in enumerate(item._dataVol.objects.descriptions):
                 if ld.number == number:
                     ldnr = j
             if ldnr != -1:
-                item.dataVol.objects.descriptions.pop(ldnr)
-                for j, ld in enumerate(item.dataVol.objects.descriptions):
+                item._dataVol.objects.descriptions.pop(ldnr)
+                for j, ld in enumerate(item._dataVol.objects.descriptions):
                     if ld.number > number:
                         ld.number -= 1
-                temp = numpy.where(item.dataVol.objects.data[:,:,:,:,:] == number, 0, item.dataVol.objects.data[:,:,:,:,:])
+                temp = numpy.where(item._dataVol.objects._data[:,:,:,:,:] == number, 0, item._dataVol.objects._data[:,:,:,:,:])
                 temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item.dataVol.objects.data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item.dataVol.objects.history is not None:
-                    item.dataVol.objects.history.removeLabel(number)
+                item._dataVol.objects._data[:,:,:,:,:] = temp[:,:,:,:,:]
+                if item._dataVol.objects._history is not None:
+                    item._dataVol.objects._history.removeLabel(number)
         self.dataMgr.featureLock.release()
 
        
@@ -85,28 +85,28 @@ class ObjectMgr(object):
         repaint = False
         if self.inputData is not None:
             try:
-               for nl in newLabels:
-                indic =  list(numpy.nonzero(nl.data))
-                indic[0] = indic[0] + nl.offsets[0]
-                indic[1] += nl.offsets[1]
-                indic[2] += nl.offsets[2]
-                indic[3] += nl.offsets[3]
-                indic[4] += nl.offsets[4]
-                for index, selector in enumerate(indic[0]):
-                    selector = [indic[0][index],indic[1][index],indic[2][index],indic[3][index],indic[4][index]]
-                    if nl.erasing == False:
-                        if not self.inputData[selector] in self.selectedObjects:
-                            repaint = True
-                            self.selectedObjects.append(self.inputData[selector])
-                    else:
-                        if self.inputData[selector] in self.selectedObjects:
-                            repaint = True
-                            self.selectedObjects.remove(self.inputData[selector])
+                for nl in newLabels:
+                    indic =  list(numpy.nonzero(nl._data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+                    for index, selector in enumerate(indic[0]):
+                        selector = [indic[0][index],indic[1][index],indic[2][index],indic[3][index],indic[4][index]]
+                        if nl.erasing == False:
+                            if not self.inputData[selector] in self.selectedObjects:
+                                repaint = True
+                                self.selectedObjects.append(self.inputData[selector])
+                        else:
+                            if self.inputData[selector] in self.selectedObjects:
+                                repaint = True
+                                self.selectedObjects.remove(self.inputData[selector])
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
         
-        ov = self.dataMgr[self.dataMgr.activeImage].overlayMgr["Objects/Selection Result"]
+        ov = self.dataMgr[self.dataMgr._activeImage].overlayMgr["Objects/Selection Result"]
         
         if ov is not None:
             ov.setSelectedNumbers(self.selectedObjects)

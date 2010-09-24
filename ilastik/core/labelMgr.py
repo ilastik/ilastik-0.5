@@ -40,13 +40,13 @@ class LabelMgr(object):
         
         for imageIndex, imageItem in  enumerate(self.dataMgr):
             descr = description.clone()
-            descr.prediction = numpy.zeros(imageItem.dataVol.data.shape[0:-1],  'uint8')
-            imageItem.dataVol.labels.descriptions.append(descr)
+            descr._prediction = numpy.zeros(imageItem._dataVol._data.shape[0:-1],  'uint8')
+            imageItem._dataVol.labels.descriptions.append(descr)
             
 
     def changedLabel(self,  label):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
-            for labelIndex,  labelItem in enumerate(imageItem.dataVol.labels):
+            for labelIndex,  labelItem in enumerate(imageItem._dataVol.labels):
                 labelItem.name = label.name
                 labelItem.number = label.number
                 labelItem.color = label.color
@@ -56,20 +56,20 @@ class LabelMgr(object):
         self.dataMgr.clearFeaturesAndTraining()
         for index, item in enumerate(self.dataMgr):
             ldnr = -1
-            for j, ld in enumerate(item.dataVol.labels.descriptions):
+            for j, ld in enumerate(item._dataVol.labels.descriptions):
                 if ld.number == number:
                     ldnr = j
             if ldnr != -1:
-                item.dataVol.labels.descriptions.pop(ldnr)
-                for j, ld in enumerate(item.dataVol.labels.descriptions):
+                item._dataVol.labels.descriptions.pop(ldnr)
+                for j, ld in enumerate(item._dataVol.labels.descriptions):
                     if ld.number > number:
                         ld.number -= 1
-                temp = numpy.where(item.dataVol.labels.data[:,:,:,:,:] == number, 0, item.dataVol.labels.data[:,:,:,:,:])
+                temp = numpy.where(item._dataVol.labels._data[:,:,:,:,:] == number, 0, item._dataVol.labels._data[:,:,:,:,:])
                 temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item.dataVol.labels.data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item.dataVol.labels.history is not None:
-                    item.dataVol.labels.history.removeLabel(number)
-                print "unique label numbers : ",  numpy.unique(item.dataVol.labels.data[:,:,:,:,:])
+                item._dataVol.labels._data[:,:,:,:,:] = temp[:,:,:,:,:]
+                if item._dataVol.labels._history is not None:
+                    item._dataVol.labels._history.removeLabel(number)
+                print "unique label numbers : ",  numpy.unique(item._dataVol.labels._data[:,:,:,:,:])
         self.dataMgr.featureLock.release()
         
     def newLabels(self,  newLabels):

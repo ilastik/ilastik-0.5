@@ -1,5 +1,6 @@
 import numpy,vigra
 import random
+import code
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
@@ -24,6 +25,7 @@ from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
 
+
 import gc, weakref
 
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
@@ -38,26 +40,26 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.projectOverlays
         if len(ovs) == 0:
-            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
             if raw is not None:
                 ovs.append(raw.getRef())
         
-        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+        self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.projectOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.projectOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
     
     def on_deActivation(self):
         if self.ilastik.labelWidget is not None:
-            if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
-                self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
+            if self.ilastik.labelWidget._history != self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history:
+                self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history = self.ilastik.labelWidget._history
     
-            if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history is not None:
-                self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history
+            if self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history is not None:
+                self.ilastik.labelWidget._history = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history
 
         
     def _initContent(self):
@@ -103,7 +105,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.btnEdit.setEnabled(True)
             self.btnOptions.setEnabled(True)
             self.parent.updateFileSelector()
-            self.parent.activeImage = 0
+            self.parent._activeImage = 0
             
     def on_btnSave_clicked(self):
         fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
@@ -119,13 +121,13 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         if str(fileName) != "":
             labelWidget = None
             if self.parent.project is not None:
-                if len(self.parent.project.dataMgr) > self.parent.activeImage:
-                    labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent.activeImage])#.featureBlockAccessor)
+                if len(self.parent.project.dataMgr) > self.parent._activeImage:
+                    labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent._activeImage])#.featureBlockAccessor)
             self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
             self.btnSave.setEnabled(True)
             self.btnEdit.setEnabled(True)
             self.btnOptions.setEnabled(True)
-            self.parent.activeImage = 0
+            self.parent._activeImage = 0
             self.parent.changeImage(0)
             
             ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
@@ -146,6 +148,84 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
     def on_btnOptions_clicked(self):
         tmp = ProjectSettingsDlg(self, self.parent.project)
         tmp.exec_()
+
+
+try:
+    from ilastik.gui.shellWidget import SciShell
+            
+    class ConsoleTab(IlastikTabBase, QtGui.QWidget):
+        name = 'Interactive Console'
+        def __init__(self, parent=None):
+            IlastikTabBase.__init__(self, parent)
+            QtGui.QWidget.__init__(self, parent)
+            
+            self.consoleWidget = None
+            
+            self._initContent()
+            self._initConnects()
+            
+        def on_activation(self):
+            if self.ilastik.project is None:
+                return
+            ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.projectOverlays
+            if len(ovs) == 0:
+                raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
+                if raw is not None:
+                    ovs.append(raw.getRef())
+            
+            self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
+    
+            overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.projectOverlays)
+            self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+            
+            self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+            
+            
+            self.volumeEditorVisible = self.ilastik.volumeEditorDock.isVisible()
+            self.ilastik.volumeEditorDock.setVisible(False)
+            
+            if self.consoleWidget is None:
+                locals = {}
+                locals["activeImage"] = self.ilastik.project.dataMgr[self.ilastik._activeImage]
+                locals["dataMgr"] = self.ilastik.project.dataMgr
+                self.interpreter = code.InteractiveInterpreter(locals)
+                self.consoleWidget = SciShell(self.interpreter)
+                
+                dock = QtGui.QDockWidget("Ilastik Interactive Console", self.ilastik)
+                dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
+                dock.setWidget(self.consoleWidget)
+                
+                self.consoleDock = dock
+        
+               
+                area = QtCore.Qt.BottomDockWidgetArea
+                self.ilastik.addDockWidget(area, dock)
+            self.consoleDock.setVisible(True)
+            self.consoleDock.setFocus()
+            self.consoleWidget.multipleRedirection(True)
+            
+        
+        def on_deActivation(self):
+            self.consoleWidget.multipleRedirection(False)
+            self.consoleWidget.releaseKeyboard()
+            self.consoleDock.setVisible(False)
+            self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
+            if self.ilastik.labelWidget is not None:
+                if self.ilastik.labelWidget._history != self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history:
+                    self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history = self.ilastik.labelWidget._history
+        
+                if self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history is not None:
+                    self.ilastik.labelWidget._history = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history
+            
+        def _initContent(self):
+            pass
+        
+        def _initConnects(self):
+            pass
+except:
+    pass    
+
+
         
 class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Classification'
@@ -159,34 +239,34 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labelOverlays
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labelOverlays
         if len(ovs) == 0:
-            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
             if raw is not None:
                 ovs.append(raw.getRef())
                         
-        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+        self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
         
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labelOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labelOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         #create LabelOverlay
-        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Classification/Labels"] = ov
-        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Classification/Labels"]
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Classification/Labels"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Classification/Labels"]
         
-        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels,  self.ilastik.labelWidget,  ov))
+        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels,  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
         if hasattr(self.parent, "classificationInteractive"):
             self.btnStartLive.click()
-        if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history:
-            self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history = self.ilastik.labelWidget.history
+        if self.ilastik.labelWidget._history != self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history:
+            self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history = self.ilastik.labelWidget._history
 
-        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history is not None:
-            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.labels.history
+        if self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history is not None:
+            self.ilastik.labelWidget._history = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.labels._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -227,7 +307,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnClassifierOptions, QtCore.SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
         
     def on_btnSelectFeatures_clicked(self):
-        preview = self.parent.project.dataMgr[0].dataVol.data[0,0,:,:,0:3]
+        preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
         self.parent.newFeatureDlg = FeatureDlg(self.parent, preview)
         
     def on_btnStartLive_clicked(self, state):
@@ -256,15 +336,15 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.autosegOverlays
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.autosegOverlays
         if len(ovs) == 0:
-            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
             if raw is not None:
                 ovs.append(raw.getRef())
                         
-        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+        self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.autosegOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.autosegOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
@@ -304,7 +384,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
             overlay = answer[0]
             self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
             
-            volume = overlay.data[0,:,:,:,0]
+            volume = overlay._data[0,:,:,:,0]
             
             print numpy.max(volume),  numpy.min(volume)
     
@@ -350,11 +430,11 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
                 colortable.append(color.rgba())
             
             #create Overlay for segmentation:
-            if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"] is None:
+            if self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Auto Segmentation/Segmentation"] is None:
                 ov = OverlayItem(res, color = 0, alpha = 1.0, colorTable = colortable, autoAdd = True, autoVisible = True)
-                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"] = ov
+                self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Auto Segmentation/Segmentation"] = ov
             else:
-                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Auto Segmentation/Segmentation"].data = DataAccessor(res)
+                self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Auto Segmentation/Segmentation"]._data = DataAccessor(res)
             self.parent.labelWidget.repaint()
         
     def on_btnSegmentorsOptions_clicked(self):
@@ -363,7 +443,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         #answer = dialog.exec_()
         #if answer != None:
         #    self.parent.project.autoSegmentor = answer
-        #    self.parent.project.autoSegmentor.setupWeights(self.parent.project.dataMgr[self.parent.activeImage].autoSegmentationWeights)
+        #    self.parent.project.autoSegmentor.setupWeights(self.parent.project.dataMgr[self.parent._activeImage].autoSegmentationWeights)
 
 
         
@@ -379,34 +459,34 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seedOverlays
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seedOverlays
         if len(ovs) == 0:
-            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
             if raw is not None:
                 ovs.append(raw.getRef())
                         
-        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+        self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seedOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seedOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         #create SeedsOverlay
-        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Segmentation/Seeds"] = ov
-        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Segmentation/Seeds"]
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Segmentation/Seeds"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Segmentation/Seeds"]
 
-        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.seedMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds,  self.ilastik.labelWidget,  ov))
+        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.seedMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds,  self.ilastik.labelWidget,  ov))
 
 
     
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
-        if self.ilastik.labelWidget.history != self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history:
-            self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history = self.ilastik.labelWidget.history
+        if self.ilastik.labelWidget._history != self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds._history:
+            self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds._history = self.ilastik.labelWidget._history
         
-        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history is not None:
-            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.history
+        if self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds._history is not None:
+            self.ilastik.labelWidget._history = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -442,7 +522,7 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
             overlay = answer[0]
             self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
             
-            volume = overlay.data[0,:,:,:,0]
+            volume = overlay._data[0,:,:,:,0]
             
             print numpy.max(volume),  numpy.min(volume)
     
@@ -480,7 +560,7 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
                 #real_weights[:] = weights[:]
     
             self.ilastik.project.segmentor.setupWeights(weights)
-            self.ilastik.project.dataMgr[self.ilastik.activeImage].segmentationWeights = weights
+            self.ilastik.project.dataMgr[self.ilastik._activeImage]._segmentationWeights = weights
             self.btnSegment.setEnabled(True)
         
     def on_btnSegment_clicked(self):
@@ -491,7 +571,7 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         answer = dialog.exec_()
         if answer != None:
             self.parent.project.segmentor = answer
-            self.parent.project.segmentor.setupWeights(self.parent.project.dataMgr[self.parent.activeImage].segmentationWeights)
+            self.parent.project.segmentor.setupWeights(self.parent.project.dataMgr[self.parent._activeImage]._segmentationWeights)
 
 class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     name = "Connected Components"
@@ -505,30 +585,30 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.backgroundOverlays
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.backgroundOverlays
         if len(ovs) == 0:
-            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
             if raw is not None:
                 ovs.append(raw.getRef())
                         
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.backgroundOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.backgroundOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         
         #create background overlay
-        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.data, color=0, alpha=1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
-        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Connected Components/Background"] = ov
-        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Connected Components/Background"]
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.background._data, color=0, alpha=1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Connected Components/Background"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Connected Components/Background"]
         
-        self.ilastik.labelWidget.setLabelWidget(BackgroundWidget(self.ilastik.project.backgroundMgr, self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background, self.ilastik.labelWidget, ov))    
+        self.ilastik.labelWidget.setLabelWidget(BackgroundWidget(self.ilastik.project.backgroundMgr, self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.background, self.ilastik.labelWidget, ov))    
     
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
-        self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history = self.ilastik.labelWidget.history
+        self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.background._history = self.ilastik.labelWidget._history
 
-        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history is not None:
-            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.background.history
+        if self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.background._history is not None:
+            self.ilastik.labelWidget._history = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.background._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -595,32 +675,32 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objectOverlays
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.objectOverlays
         if len(ovs) == 0:
-            raw = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Raw Data"]
+            raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
             if raw is not None:
                 ovs.append(raw.getRef())        
         
-        self.ilastik.labelWidget.history.volumeEditor = self.ilastik.labelWidget
+        self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objectOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.objectOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         
         #create ObjectsOverlay
-        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Objects/Selection"] = ov
-        ov = self.ilastik.project.dataMgr[self.ilastik.activeImage].overlayMgr["Objects/Selection"]
+        ov = OverlayItem(self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.objects._data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Objects/Selection"] = ov
+        ov = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Objects/Selection"]
         
-        self.ilastik.labelWidget.setLabelWidget(ObjectListWidget(self.ilastik.project.objectMgr,  self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects,  self.ilastik.labelWidget,  ov))
+        self.ilastik.labelWidget.setLabelWidget(ObjectListWidget(self.ilastik.project.objectMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.objects,  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
-        self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history = self.ilastik.labelWidget.history
+        self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.objects._history = self.ilastik.labelWidget._history
         
-        if self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history is not None:
-            self.ilastik.labelWidget.history = self.ilastik.project.dataMgr[self.ilastik.activeImage].dataVol.objects.history
+        if self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.objects._history is not None:
+            self.ilastik.labelWidget._history = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.objects._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -648,16 +728,16 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         
         if len(answer) > 0:
             import ilastik.core.overlays.selectionOverlay
-            if self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Objects/Selection Result"] is None:
-                ov = ilastik.core.overlays.selectionOverlay.SelectionOverlay(answer[0].data, color = long(QtGui.QColor(0,255,255).rgba()))
-                self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Objects/Selection Result"] = ov
-                ov = self.parent.project.dataMgr[self.parent.activeImage].overlayMgr["Objects/Selection Result"]
+            if self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Objects/Selection Result"] is None:
+                ov = ilastik.core.overlays.selectionOverlay.SelectionOverlay(answer[0]._data, color = long(QtGui.QColor(0,255,255).rgba()))
+                self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Objects/Selection Result"] = ov
+                ov = self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Objects/Selection Result"]
             
             ref = answer[0].getRef()
             ref.setAlpha(0.4)
             self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
             
-            self.parent.project.objectMgr.setInputData(answer[0].data)
+            self.parent.project.objectMgr.setInputData(answer[0]._data)
                 
             self.parent.labelWidget.repaint()
 

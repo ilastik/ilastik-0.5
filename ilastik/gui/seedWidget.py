@@ -128,7 +128,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def removeLabel(self, item,  index):
         self.labelMgr.removeLabel(item.number)
         
-        self.volumeEditor.history.removeLabel(item.number)
+        self.volumeEditor._history.removeLabel(item.number)
         for ii, it in enumerate(self.items):
             if it.number > item.number:
                 it.number -= 1

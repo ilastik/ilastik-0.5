@@ -92,7 +92,7 @@ class SegmentationThread(QtCore.QThread):
         self.dataItem = image
         self.dataMgr = dataMgr
         self.count = 0
-        self.numberOfJobs = self.dataItem.dataVol.data.shape[0]
+        self.numberOfJobs = self.dataItem._dataVol._data.shape[0]
         self.stopped = False
         self.segmentor = segmentor
         self.segmentorOptions = segmentorOptions
@@ -104,14 +104,14 @@ class SegmentationThread(QtCore.QThread):
 
     def run(self):
         self.dataMgr.featureLock.acquire()
-        if self.dataItem.dataVol.segmentation is None:
-            self.dataItem.dataVol.segmentation = numpy.zeros(self.dataItem.dataVol.data.shape[0:-1],'uint8')
+        if self.dataItem._dataVol.segmentation is None:
+            self.dataItem._dataVol.segmentation = numpy.zeros(self.dataItem._dataVol._data.shape[0:-1],'uint8')
 
         try:
-            self.result = range(0,self.dataItem.dataVol.data.shape[0])
+            self.result = range(0,self.dataItem._dataVol._data.shape[0])
             jobs = []
-            for i in range(self.dataItem.dataVol.data.shape[0]):
-                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem.dataVol.data[i,:,:,:,:], self.dataItem.dataVol.seeds.data[i,:,:,:], self.dataItem.seedL, self.dataItem.seedIndices])
+            for i in range(self.dataItem._dataVol._data.shape[0]):
+                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem._dataVol._data[i,:,:,:,:], self.dataItem._dataVol.seeds._data[i,:,:,:], self.dataItem._seedL, self.dataItem._seedIndices])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)

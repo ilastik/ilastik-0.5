@@ -40,13 +40,13 @@ class BackgroundMgr(object):
         
         for imageIndex, imageItem in  enumerate(self.dataMgr):
             descr = description.clone()
-            descr.prediction = numpy.zeros(imageItem.dataVol.data.shape[0:-1],  'uint8')
-            imageItem.dataVol.background.descriptions.append(descr)
+            descr._prediction = numpy.zeros(imageItem._dataVol._data.shape[0:-1],  'uint8')
+            imageItem._dataVol.background.descriptions.append(descr)
             
 
     def changedLabel(self,  label):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
-            for labelIndex,  labelItem in enumerate(imageItem.dataVol.background):
+            for labelIndex,  labelItem in enumerate(imageItem._dataVol.background):
                 labelItem.name = label.name
                 labelItem.number = label.number
                 labelItem.color = label.color
@@ -55,19 +55,19 @@ class BackgroundMgr(object):
 #        self.dataMgr.featureLock.acquire()
 #        for index, item in enumerate(self.dataMgr):
 #            ldnr = -1
-#            for j, ld in enumerate(item.dataVol.seeds.descriptions):
+#            for j, ld in enumerate(item._dataVol.seeds.descriptions):
 #                if ld.number == number:
 #                    ldnr = j
 #            if ldnr != -1:
-#                item.dataVol.seeds.descriptions.pop(ldnr)
-#                for j, ld in enumerate(item.dataVol.seeds.descriptions):
+#                item._dataVol.seeds.descriptions.pop(ldnr)
+#                for j, ld in enumerate(item._dataVol.seeds.descriptions):
 #                    if ld.number > number:
 #                        ld.number -= 1
-#                temp = numpy.where(item.dataVol.seeds.data[:,:,:,:,:] == number, 0, item.dataVol.seeds.data[:,:,:,:,:])
+#                temp = numpy.where(item._dataVol.seeds._data[:,:,:,:,:] == number, 0, item._dataVol.seeds._data[:,:,:,:,:])
 #                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-#                item.dataVol.seeds.data[:,:,:,:,:] = temp[:,:,:,:,:]
-#                if item.dataVol.seeds.history is not None:
-#                    item.dataVol.seeds.history.removeLabel(number)
+#                item._dataVol.seeds._data[:,:,:,:,:] = temp[:,:,:,:,:]
+#                if item._dataVol.seeds.history is not None:
+#                    item._dataVol.seeds.history.removeLabel(number)
 #        self.dataMgr.featureLock.release()
 
         
