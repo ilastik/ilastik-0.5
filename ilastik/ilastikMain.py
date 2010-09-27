@@ -51,7 +51,8 @@ import time
 
 
 from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
+from ilastik.core import version, dataMgr, projectMgr,  segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
+from ilastik.core.modules.Classification import featureMgr, classificationMgr
 from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
 from ilastik.gui.featureDlg import FeatureDlg
 
@@ -61,7 +62,8 @@ from Queue import Queue as queue
 from collections import deque
 
 import ilastik.gui
-from ilastik.core import projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning
+from ilastik.core import projectMgr, segmentationMgr, activeLearning
+from ilastik.core.modules.Classification import featureMgr, classificationMgr
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase

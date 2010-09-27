@@ -43,12 +43,12 @@ except:
     ThreadBase = threading.Thread
     have_qt = False
 from ilastik.core.utilities import irange
-import onlineClassifcator
-import dataMgr as DM
-import activeLearning, segmentationMgr
-import classifiers
+from ilastik.core import onlineClassifcator
+from ilastik.core import dataMgr as DM
+from ilastik.core import activeLearning, segmentationMgr
+from ilastik.core import classifiers
 from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr
-import jobMachine
+from ilastik.core import jobMachine
 import sys, traceback
 import ilastik.core.classifiers.classifierRandomForest
 from ilastik.core.dataMgr import PropertyMgr, BlockAccessor

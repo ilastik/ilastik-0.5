@@ -42,10 +42,10 @@ from ilastik.core.volume import DataAccessor,  Volume
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
-from ilastik.core import labelMgr
+from ilastik.core.modules.Classification import labelMgr
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
-from ilastik.core import classificationMgr
+from ilastik.core.modules.Classification import classificationMgr
 from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr 
 from ilastik.core import connectedComponents
