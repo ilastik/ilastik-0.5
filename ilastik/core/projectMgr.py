@@ -50,7 +50,7 @@ from ilastik.core import overlayMgr
 from ilastik.core import connectedComponents
 
 from ilastik import core 
-import core.segmentors
+
 
 
 class Project(object):

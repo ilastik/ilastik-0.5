@@ -806,7 +806,7 @@ class Segmentation(object):
         activeItem = self.parent.project.dataMgr[self.parent._activeImage]
         activeItem._dataVol.segmentation = self.segmentation.result
 
-        temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
+        #temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Segmentation/Segmentation"] is None:
