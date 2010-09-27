@@ -612,6 +612,23 @@ class ClassificationInteractive(object):
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
 
         self.temp_cnt = 0
+        
+        descriptions =  self.parent.project.dataMgr.properties["Classification"]["labelDescriptions"]
+        activeImage = self.parent._activeImage
+        
+        for p_num,pd in enumerate(descriptions):
+            #create Overlay for _prediction if not there:
+            if activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] is None:
+                data = numpy.zeros(activeImage.shape, 'uint8')
+                ov = OverlayItem(data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
+                activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
+
+        #create Overlay for uncertainty:
+        if activeImage.overlayMgr["Classification/Uncertainty"] is None:
+            data = numpy.zeros(activeImage.shape, 'uint8')
+            ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+            activeImage.overlayMgr["Classification/Uncertainty"] = ov
+        
         self.start()
     
     def updateThreadQueues(self, a = 0, b = 0):
@@ -642,20 +659,8 @@ class ClassificationInteractive(object):
         self.parent.statusBar().hide()
         
     def start(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
-        for p_i, descr in enumerate(activeItem._dataVol.labels.descriptions):
-            #create Overlay for _prediction:
-            ov = OverlayItem(descr._prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Prediction/" + descr.name] = ov
-
-        #create Overlay for uncertainty:
-        ov = OverlayItem(activeItem._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-        self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Uncertainty"] = ov
-
-
-
         self.initInteractiveProgressBar()
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, classifier = self.parent.project.classifier)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.properties["Classification"]["classificationMgr"],classifier = self.parent.project.classifier)
 
         self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
     
@@ -730,7 +735,6 @@ class ClassificationPredict(object):
             for p_i, p_num in enumerate(classifiers[0].unique_vals):
                 #create Overlay for _prediction:
                 
-                print descriptions[p_num-1].color
                 ov = OverlayItem(prediction[:,:,:,:,p_i],  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
                 ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]

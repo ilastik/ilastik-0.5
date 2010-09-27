@@ -184,7 +184,7 @@ class LabelState(State):
         self.dataBefore = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         
     def restore(self, volumeEditor):
-        temp = volumeEditor.labelWidget.volumeLabels._data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        temp = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         restore  = numpy.where(self.labels > 0, self.dataBefore, 0)
         stuff = numpy.where(self.labels > 0, self.dataBefore + 1, 0)
         erase = numpy.where(stuff == 1, 1, 0)

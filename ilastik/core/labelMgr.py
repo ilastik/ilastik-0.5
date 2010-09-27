@@ -50,14 +50,14 @@ class LabelMgr(object):
                 
     def removeLabel(self, number):
         self.dataMgr.featureLock.acquire()
-        self.dataMgr.clearFeaturesAndTraining()
+        self.classificationMgr.clearFeaturesAndTraining()
         ldnr = -1
-        for labelIndex,  labelItem in self.dataMgr.properties["Classification"]["labelDescriptions"]:
+        for labelIndex,  labelItem in enumerate(self.dataMgr.properties["Classification"]["labelDescriptions"]):
             if labelItem.number == number:
                 ldnr = labelIndex
                 self.dataMgr.properties["Classification"]["labelDescriptions"].pop(ldnr)
                 
-        for labelIndex,  labelItem in self.dataMgr.properties["Classification"]["labelDescriptions"]:
+        for labelIndex,  labelItem in enumerate(self.dataMgr.properties["Classification"]["labelDescriptions"]):
             if labelItem.number > ldnr:
                 labelItem.number -= 1
                 

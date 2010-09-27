@@ -103,7 +103,7 @@ class ClassificationMgr(object):
         self.classifiers = []
         
         if self.dataMgr.properties["Classification"] is None:
-            self.dataMgr.properties["Classification"] = PropertyMgr()
+            self.dataMgr.properties["Classification"] = PropertyMgr(self)
             
         self.dataMgr.properties["Classification"]["classificationMgr"] = self
         self.dataMgr.properties["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
@@ -265,7 +265,7 @@ class ClassificationMgr(object):
 
     def clearFeaturesAndTrainingForImage(self, dataItemImage):
         if dataItemImage.properties["Classification"] is None:
-            dataItemImage.properties["Classification"] = PropertyMgr()
+            dataItemImage.properties["Classification"] = PropertyMgr(self)
         prop = dataItemImage.properties["Classification"]
         prop["trainingF"] = numpy.zeros((0), 'float32')      
         prop["trainingL"] = numpy.zeros((0, 1), 'uint8')
@@ -475,9 +475,11 @@ class ClassifierPredictThread(ThreadBase):
                 
 
 class ClassifierInteractiveThread(ThreadBase):
-    def __init__(self, parent, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):
+    def __init__(self, parent, classificationMgr, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):
         ThreadBase.__init__(self, None)
-
+        
+        self.classificationMgr = classificationMgr
+        
         self.ilastik = parent
         
         self.stopped = False
@@ -488,7 +490,7 @@ class ClassifierInteractiveThread(ThreadBase):
 
         self.classifiers = deque(maxlen=numClassifiers)
 
-        for i, item in enumerate(self.ilastik.project.dataMgr.classifiers):
+        for i, item in enumerate(self.classificationMgr.classifiers):
             self.classifiers.append(item)
         
         self.result = deque(maxlen=1)
@@ -520,7 +522,7 @@ class ClassifierInteractiveThread(ThreadBase):
         except Exception, e:
             print "### ClassifierInteractiveThread::classifierPredict"
             print e
-            traceback.print_exc(file=sys.stdout)        
+            traceback.print_exc(file=sys.stdout)       
 
 
     def run(self):
@@ -533,12 +535,13 @@ class ClassifierInteractiveThread(ThreadBase):
                 self.ilastik.activeImageLock.acquire()
                 self.ilastik.project.dataMgr.featureLock.acquire()
                 try:
-                    activeImage = self.ilastik._activeImageNumber
+                    activeImageNumber = self.ilastik._activeImageNumber
+                    activeImage = self.ilastik._activeImage
                     newLabels = self.ilastik.labelWidget.getPendingLabels()
-                    if len(newLabels) > 0:
-                        self.ilastik.project.dataMgr.updateTrainingMatrix(newLabels,  activeImage)
-                    #if len(newLabels) > 0 or self.ilastik.project.dataMgr.trainingVersion < self.ilastik.project.dataMgr.featureVersion:
-                    features,labels = self.ilastik.project.dataMgr.getTrainingMatrix()
+                    
+                    self.classificationMgr.updateTrainingMatrixForImage(newLabels,  activeImage)
+                    features,labels = self.classificationMgr.getTrainingMatrix()
+                    #if len(newLabels) > 0 or len(self.classifiers) == 0:
                     if features is not None:
                         print "retraining..."
                         interactiveMessagePrint("1>> Pop training Data")
@@ -551,8 +554,9 @@ class ClassifierInteractiveThread(ThreadBase):
                             self.jobMachine.process(jobs)                        
                         else:
                             print "##################### shape mismatch #####################"
+                    
                     vs = self.ilastik.labelWidget.getVisibleState()
-                    features = self.ilastik.project.dataMgr[activeImage].getFeatureSlicesForViewState(vs)
+                    features = self.classificationMgr.getFeatureSlicesForViewStateForImage(vs, activeImage)
                     vs.append(activeImage)
     
                     interactiveMessagePrint("1>> Pop _prediction Data")
@@ -578,15 +582,18 @@ class ClassifierInteractiveThread(ThreadBase):
                                 
                             self.jobMachine.process(jobs)
 
-                            shape = self.ilastik.project.dataMgr[vs[-1]]._dataVol._data.shape
+                            shape = activeImage.shape
 
                             tp = []
                             tp.append(self._prediction[0].reshape((shape[2],shape[3],self._prediction[0].shape[-1])))
                             tp.append(self._prediction[1].reshape((shape[1],shape[3],self._prediction[1].shape[-1])))
                             tp.append(self._prediction[2].reshape((shape[1],shape[2],self._prediction[2].shape[-1])))
 
-                            all =  range(len(self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions))
+                            descriptions =  self.ilastik.project.dataMgr.properties["Classification"]["labelDescriptions"]
+                            all =  range(len(descriptions))
                             not_predicted = numpy.setdiff1d(all, self.classifiers[0].unique_vals - 1)
+
+                            uncertaintyData = activeImage.overlayMgr["Classification/Uncertainty"]._data
 
                             #Axis 0
                             tpc = tp[0]
@@ -596,17 +603,17 @@ class ClassifierInteractiveThread(ThreadBase):
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
                                 margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
                                 
-                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.uncertainty[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = margin
+                                uncertaintyData[vs[0], vs[1], b[0]:b[1],b[2]:b[3],0] = margin
 #                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
 #                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.segmentation[vs[0], vs[1], b[0]:b[1],b[2]:b[3]] = seg
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
-                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num-1]
-                                    item._prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData[vs[0],vs[1],b[0]:b[1],b[2]:b[3],0] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num]
-                                    item._prediction[vs[0],vs[1],b[0]:b[1],b[2]:b[3]] = 0
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData[vs[0],vs[1],b[0]:b[1],b[2]:b[3],0] = 0
 
                             #Axis 1
                             tpc = tp[1]
@@ -615,17 +622,15 @@ class ClassifierInteractiveThread(ThreadBase):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
                                 margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
-                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
-                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.uncertainty[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = margin
-#                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.segmentation[vs[0], b[0]:b[1],vs[2],b[2]:b[3]] = seg
+                                uncertaintyData[vs[0], b[0]:b[1],vs[2],b[2]:b[3],0] = margin
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
-                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num-1]
-                                    item._prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData[vs[0],b[0]:b[1],vs[2],b[2]:b[3],0] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num]
-                                    item._prediction[vs[0],b[0]:b[1],vs[2],b[2]:b[3]] = 0
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData[vs[0],b[0]:b[1],vs[2],b[2]:b[3],0] = 0
 
 
                             #Axis 2
@@ -635,19 +640,15 @@ class ClassifierInteractiveThread(ThreadBase):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
                                 margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
-                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
-                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.uncertainty[vs[0], b[0]:b[1],b[2]:b[3], vs[3]] = margin
-#                                self.ilastik.project.dataMgr[vs[-1]]._dataVol.segmentation[vs[0], b[0]:b[1],b[2]:b[3],vs[3]] = seg
+                                uncertaintyData[vs[0], b[0]:b[1],b[2]:b[3], vs[3],0] = margin
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
-                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num-1]
-                                    item._prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData[vs[0],b[0]:b[1],b[2]:b[3],vs[3],0] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    item = self.ilastik.project.dataMgr[vs[-1]]._dataVol.labels.descriptions[p_num]
-                                    item._prediction[vs[0],b[0]:b[1],b[2]:b[3],vs[3]] = 0
-
-
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData[vs[0],b[0]:b[1],b[2]:b[3],vs[3],0] = 0
 
 
                         else:

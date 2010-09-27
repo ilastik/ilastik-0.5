@@ -245,8 +245,9 @@ class BlockAccessor2D():
             self._lock.release()
 
 class PropertyMgr():
-    def __init__(self):
+    def __init__(self, parent):
         self._dict = {}
+        self._parent = parent
         
     def serialize(self, h5g, name):
         pass
@@ -262,6 +263,7 @@ class PropertyMgr():
 
     def __setitem__(self,  key,  value):
         self._dict[key] = value
+        setattr(self._parent, key, value)
     
     def __getitem__(self, key):
         try:
@@ -282,7 +284,7 @@ class DataItemImage(DataItemBase):
         self._segmentationWeights = None
         
         self.overlayMgr = overlayMgr.OverlayMgr()
-        self.properties = PropertyMgr()
+        self.properties = PropertyMgr(self)
         
 
     def __getitem__(self, args):
@@ -501,7 +503,7 @@ class DataMgr():
         self._dataItemsLoaded = []
         self.channels = -1
         self._activeImageNumber = 0
-        self.properties = PropertyMgr()
+        self.properties = PropertyMgr(self)
         
         #TODO: Maybe it shouldn't be here...
         self.connCompBackgroundKey = ""    

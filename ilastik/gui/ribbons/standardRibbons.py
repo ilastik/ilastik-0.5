@@ -229,7 +229,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         if self.ilastik.project is None:
             return
         if self.ilastik._activeImage.properties[self.name] is None:
-            self.ilastik._activeImage.properties[self.name] = PropertyMgr()
+            self.ilastik._activeImage.properties[self.name] = PropertyMgr(self.ilastik._activeImage)
         if  self.ilastik._activeImage.properties[self.name]["overlayReferences"] is None:
             self.ilastik._activeImage.properties[self.name]["overlayReferences"] = OverlayReferenceMgr()
         
