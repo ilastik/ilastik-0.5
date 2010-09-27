@@ -247,12 +247,13 @@ class FeatureDlg(QtGui.QDialog):
             self.drawPreview()
     #oli todo
     def drawPreview(self):
-        self.size = self.groupMaskSizesList[self.horizontalHeaderIndex]
-        self.grscene.removeItem(self.circle)
-        self.circle = self.grscene.addEllipse(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
-        self.circle.setPos(self.graphicsView.mapToScene(0, 0))
-        self.circle.setPen(QtGui.QPen(self.hudColor))
-        self.sizeText.setText("Size: " + str(self.size))
+        if not self.horizontalHeaderIndex < 0:
+            self.size = self.groupMaskSizesList[self.horizontalHeaderIndex]
+            self.grscene.removeItem(self.circle)
+            self.circle = self.grscene.addEllipse(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
+            self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+            self.sizeText.setText("Size: " + str(self.size))
         
     #oli todo
     def eventFilter(self, obj, event):
