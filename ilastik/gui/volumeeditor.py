@@ -556,24 +556,34 @@ class VolumeEditor(QtGui.QWidget):
         self.focusAxis =  0
 
     def toggleFullscreenX(self):
-        self.maximizeSliceView(0, self.imageScenes[1].isVisible())
+        self.maximizeSliceView(0)
     
     def toggleFullscreenY(self):
-        self.maximizeSliceView(1, self.imageScenes[0].isVisible())
+        self.maximizeSliceView(1)
         
     def toggleFullscreenZ(self):
-        self.maximizeSliceView(2, self.imageScenes[1].isVisible())
+        self.maximizeSliceView(2)
 
-    def maximizeSliceView(self, axis, maximize):
+    def maximizeSliceView(self, axis):
         if self.image.shape[1] > 1:
+            visible = True
             a = range(3)
-            if maximize:
+            for i in a:
+                if not self.imageScenes[i].isVisible():
+                    visible = False
+            if visible:
                 for i in a:
-                    self.imageScenes[i].setVisible(i == axis)
+                    self.imageScenes[i].setVisible(False)
+                self.imageScenes[axis].setVisible(True)
             else:
-                for i in range(3):
-                    self.imageScenes[i].setVisible(True)
-        
+                if self.imageScenes[axis].isVisible():
+                    for i in a:
+                        self.imageScenes[i].setVisible(True)
+                else:
+                    for i in a:
+                        self.imageScenes[i].setVisible(False)
+                    self.imageScenes[axis].setVisible(True)
+                    
             self.imageScenes[axis].setFocus()
             for i in a:
                 self.imageScenes[i].setImageSceneFullScreenLabel()
