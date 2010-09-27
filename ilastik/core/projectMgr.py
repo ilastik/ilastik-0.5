@@ -90,54 +90,53 @@ class Project(object):
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
-        if fileName is not None:
-            self.filename = fileName
-        else:
-            fileName = self.filename
-            
-        fileHandle = h5py.File(fileName,'w')
-        
-        fileHandle.create_dataset('IlastikVersion', data=ILASTIK_VERSION)
-        
-        # get project settings
-        projectG = fileHandle.create_group('Project') 
-        dataSetG = fileHandle.create_group('DataSets') 
-
-        projectG.create_dataset('Name', data=str(self.name))
-        projectG.create_dataset('Labeler', data=str(self.labeler))
-        projectG.create_dataset('Description', data=str(self.description))
-            
-        featureG = projectG.create_group('FeatureSelection')
-        
         try:
-            self.featureMgr.exportFeatureItems(featureG)
+            if fileName is not None:
+                self.filename = fileName
+            else:
+                fileName = self.filename
+                
+            fileHandle = h5py.File(fileName,'w')
+            
+            fileHandle.create_dataset('IlastikVersion', data=ILASTIK_VERSION)
+            
+            # get project settings
+            projectG = fileHandle.create_group('Project') 
+            dataSetG = fileHandle.create_group('DataSets') 
+    
+            projectG.create_dataset('Name', data=str(self.name))
+            projectG.create_dataset('Labeler', data=str(self.labeler))
+            projectG.create_dataset('Description', data=str(self.description))
+                
+            featureG = projectG.create_group('FeatureSelection')
+            
+            try:
+                self.featureMgr.exportFeatureItems(featureG)
+            except:
+                print 'saveToDisk(): No features where selected: '
+                
+                
+            # get number of images
+            
+            # save raw data and labels
+            for k, item in enumerate(self.dataMgr):
+                # create group for dataItem
+                dk = dataSetG.create_group('dataItem%02d' % k)
+                dk.attrs["fileName"] = str(item.fileName)
+                dk.attrs["_name"] = str(item._name)
+                # save raw data
+                item._dataVol.serialize(dk)
+                if item._prediction is not None:
+                    item._prediction.serialize(dk, '_prediction' )
+    
+    
+            # Save to hdf5 file
+            fileHandle.close()
+            self.dataMgr.exportClassifiers(fileName,'Project/')
         except:
-            print 'saveToDisk(): No features where selected: '
-            
-            
-        # get number of images
-        n = len(self.dataMgr)
+            return False
         
-        # save raw data and labels
-        for k, item in enumerate(self.dataMgr):
-            # create group for dataItem
-            dk = dataSetG.create_group('dataItem%02d' % k)
-            dk.attrs["fileName"] = str(item.fileName)
-            dk.attrs["_name"] = str(item._name)
-            # save raw data
-            item._dataVol.serialize(dk)
-            if item._prediction is not None:
-                item._prediction.serialize(dk, '_prediction' )
-
-
-        # Save to hdf5 file
-        
-        
-        classifierG = projectG.create_group('Classifier')
-        fileHandle.close()
-        
-        
-        print "Project %s saved to %s " % (self.name, fileName)
+        return True
     
     @staticmethod
     def loadFromDisk(fileName, featureCache):
