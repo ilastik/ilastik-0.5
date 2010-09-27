@@ -439,25 +439,25 @@ class ClassifierPredictThread(ThreadBase):
         self.classifiers = self.classificationMgr.classifiers
         self.stopped = False
         self.jobMachine = jobMachine.JobMachine()
-        self._prediction = None
+        self._prediction = range(len(self.dataMgr))
         self.predLock = threading.Lock()
         self.numberOfJobs = 0
         for i, item in enumerate(self.dataMgr):
             self.numberOfJobs += len(self.classificationMgr.classifiers)
     
-    def classifierPredict(self, bnr, fm):
+    def classifierPredict(self, itnr, bnr, fm):
         try:
             b = fm.getBlockBounds(bnr, 0)
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4])
-            tpred = self._prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
+            tpred = self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             for num in range(len(self.classifiers)):
                 cf = self.classifiers[num]
                 pred = cf.predict(tfm2)
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 tpred += pred[:,:,:,:]
 		self.count += 1
-	    self._prediction[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred
+	    self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred
         except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e
@@ -468,7 +468,7 @@ class ClassifierPredictThread(ThreadBase):
     
     def run(self):
         
-        for item in self.dataMgr:
+        for itemindex, item in enumerate(self.dataMgr):
             cnt = 0
             interactiveMessagePrint( "Feature Item" )
             interactiveMessagePrint ( "Classifier %d _prediction" % cnt )
@@ -487,19 +487,19 @@ class ClassifierPredictThread(ThreadBase):
                         tempPred = self.classifiers[0].predict(tfm)
                                         
                     if tempPred is not None:
-                        self._prediction = numpy.zeros((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
+                        self._prediction[itemindex] = numpy.zeros((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
                         jobs= []
                         for bnr in range(featureBlockAccessor._blockCount):
-                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, bnr, featureBlockAccessor])
+                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, itemindex, bnr, featureBlockAccessor])
                             jobs.append(job)
                         self.jobMachine.process(jobs)
                         count = len(self.classifiers)
                         if count == 0:
                             count = 1
-                        self._prediction = self._prediction / count * 255
+                        self._prediction[itemindex] = self._prediction[itemindex] / count * 255
                         #item._prediction = ve.DataAccessor(self._prediction.reshape(item._dataVol._data.shape[0:-1] + (self._prediction.shape[-1],)), channels = True)
                         #item.properties["Classification"]["prediction"] = DataAccessor(self._prediction, channels = True)
-                        self._prediction = DataAccessor(self._prediction.reshape(item.shape[0:-1] + (self._prediction.shape[-1],)), channels = True)
+                        self._prediction[itemindex] = DataAccessor(self._prediction[itemindex].reshape(item.shape[0:-1] + (self._prediction[itemindex].shape[-1],)), channels = True)
                 self.dataMgr.featureLock.release()
             except Exception, e:
                 print "########################## exception in ClassifierPredictThread ###################"

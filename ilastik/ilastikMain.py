@@ -725,50 +725,56 @@ class ClassificationPredict(object):
             self.terminateClassificationProgressBar()
 
     def finalize(self):
-        activeItem = self.parent._activeImage
-        prediction = self.classificationPredict._prediction
-        descriptions =  self.parent.project.dataMgr.properties["Classification"]["labelDescriptions"]
-        classifiers = self.parent.project.dataMgr.properties["Classification"]["classificationMgr"].classifiers
+        activeImage = self.parent._activeImage
         
-        if prediction is not None:
-#            for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
-#                item._prediction[:,:,:,:] = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-            foregrounds = []
-            for p_i, p_num in enumerate(classifiers[0].unique_vals):
-                #create Overlay for _prediction:
-                
-                ov = OverlayItem(prediction[:,:,:,:,p_i],  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
-                ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
-                foregrounds.append(ov)
-
-            import ilastik.core.overlays.thresHoldOverlay as tho
+        for itemindex, activeItem in enumerate(self.parent.project.dataMgr):
+            display = False
+            if activeImage == activeItem:
+                display = True
             
-            ov = tho.ThresHoldOverlay(foregrounds, [])
-            if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Segmentation"] is None:
-                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Segmentation"] = ov
-            else:
-                ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Segmentation"]
-                ov.setForegrounds(foregrounds)
-
-
-            all =  range(len(descriptions))
-            classifiers = self.parent.project.classificationMgr.classifiers
-            if len(classifiers) > 0:
-                not_predicted = numpy.setdiff1d(all, classifiers[0].unique_vals - 1)
-                for p_i, p_num in enumerate(not_predicted):
-                    prediction[:,:,:,:,p_i] = 0
-
-
-
-            margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])*255.0
-
-            #create Overlay for uncertainty:
-            ov = OverlayItem(margin, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Classification/Uncertainty"] = ov
-
-
-            self.parent.labelWidget.repaint()
+            prediction = self.classificationPredict._prediction
+            descriptions =  self.parent.project.dataMgr.properties["Classification"]["labelDescriptions"]
+            classifiers = self.parent.project.dataMgr.properties["Classification"]["classificationMgr"].classifiers
+            
+            if prediction is not None:
+    #            for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
+    #                item._prediction[:,:,:,:] = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+                foregrounds = []
+                for p_i, p_num in enumerate(classifiers[0].unique_vals):
+                    #create Overlay for _prediction:
+                    
+                    ov = OverlayItem(prediction[itemindex][:,:,:,:,p_i],  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = display, autoVisible = display)
+                    activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
+                    ov = activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
+                    foregrounds.append(ov)
+    
+                import ilastik.core.overlays.thresHoldOverlay as tho
+                
+                ov = tho.ThresHoldOverlay(foregrounds, [])
+                if activeItem.overlayMgr["Classification/Segmentation"] is None:
+                    activeItem.overlayMgr["Classification/Segmentation"] = ov
+                else:
+                    ov = activeItem.overlayMgr["Classification/Segmentation"]
+                    ov.setForegrounds(foregrounds)
+    
+    
+                all =  range(len(descriptions))
+                classifiers = self.parent.project.classificationMgr.classifiers
+                if len(classifiers) > 0:
+                    not_predicted = numpy.setdiff1d(all, classifiers[0].unique_vals - 1)
+                    for p_i, p_num in enumerate(not_predicted):
+                        prediction[:,:,:,:,p_i] = 0
+    
+    
+    
+                margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])*255.0
+    
+                #create Overlay for uncertainty:
+                ov = OverlayItem(margin, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = display, autoVisible = False)
+                activeItem.overlayMgr["Classification/Uncertainty"] = ov
+    
+    
+        self.parent.labelWidget.repaint()
         
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
