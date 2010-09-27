@@ -141,8 +141,8 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
                         print r
    
     def on_btnEdit_clicked(self):
-        self.parent.pareprojectDlg = ProjectDlg(self, False)
-        self.parentprojectDlg.updateDlg(self.project)
+        self.parent.projectDlg = ProjectDlg(self.parent, False)
+        self.parent.projectDlg.updateDlg(self.parent.project)
         self.parent.projectModified()
         
     def on_btnOptions_clicked(self):
