@@ -253,7 +253,7 @@ class ProjectDlg(QtGui.QDialog):
         labeler = self.labeler
         description = self.description
                
-        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
+        #self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
 
             
         # Go through the rows of the table and add files if needed

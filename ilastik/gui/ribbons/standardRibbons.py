@@ -246,12 +246,6 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         
-        #create LabelOverlay
-        if self.ilastik._activeImage.overlayMgr["Classification/Labels"] is None:
-            data = numpy.zeros(self.ilastik._activeImage.shape[0:-1]+(1,),'uint8')
-            ov = OverlayItem(data, color = 0, alpha = 1.0, colorTable = self.ilastik.project.dataMgr.properties["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-            self.ilastik._activeImage.overlayMgr["Classification/Labels"] = ov
-        
         ov = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
         
         self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr.properties["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))

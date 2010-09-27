@@ -42,7 +42,7 @@ from ilastik.core.volume import DataAccessor,  Volume
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
-from ilastik.core.modules.Classification import labelMgr
+from ilastik.core.modules.Classification import labelMgr, featureMgr, classificationMgr
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
 from ilastik.core.modules.Classification import classificationMgr
@@ -77,8 +77,13 @@ class Project(object):
         self.trainingMatrix = None
         self.trainingLabels = None
         self.trainingFeatureNames = None
-        self.featureMgr = None
-        self.classificationMgr = classificationMgr.ClassificationMgr(self.dataMgr)
+        self.featureMgr = featureMgr.FeatureMgr(self.dataMgr)
+        
+        
+        classificationMgr.ClassificationModuleMgr(self.dataMgr, self.featureMgr)
+            
+        self.classificationMgr = self.dataMgr.properties["Classification"]["classificationMgr"]
+        
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)

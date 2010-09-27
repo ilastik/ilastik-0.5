@@ -282,7 +282,6 @@ class FeatureDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def on_confirmButtons_accepted(self):
-        self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:

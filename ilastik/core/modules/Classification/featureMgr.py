@@ -74,6 +74,7 @@ class FeatureMgr():
     """
     def __init__(self, dataMgr, featureItems=None):
         self.dataMgr = dataMgr
+        self.totalFeatureSize = 1
         self.featureSizes = []
         self.featureOffsets = []
         if featureItems is None:
@@ -100,6 +101,7 @@ class FeatureMgr():
                 self.featureSizes.append(totalSize - oldSize)
                 self.featureOffsets.append(oldSize)
             try:
+                self.totalFeatureSize = totalSize
                 for i, di in enumerate(self.dataMgr):
                     di.properties["Classification"]["featureM"] = numpy.zeros(di.shape[0:-1] + (totalSize,),'float32')
 
@@ -133,7 +135,7 @@ class FeatureMgr():
     def prepareCompute(self, dataMgr):
         self.dataMgr = dataMgr
 
-        self.featureProcess = FeatureThread(self, self.dataMgr)
+        self.featureProcess = FeatureThread(self, self.dataMgr, self.dataMgr)
 
         return self.featureProcess.jobs
     
@@ -153,12 +155,13 @@ class FeatureMgr():
         return {}     
                 
 class FeatureThread(ThreadBase):
-    def __init__(self, featureMgr, dataMgr):
+    def __init__(self, featureMgr, dataMgr, items):
         ThreadBase.__init__(self)
         self.count = 0
         self.jobs = 0
         self.featureMgr = featureMgr
         self.dataMgr = dataMgr
+        self.items = items
         self.computeNumberOfJobs()
         self.jobMachine = jobMachine.JobMachine()
         self.printLock = threading.Lock()
@@ -201,15 +204,15 @@ class FeatureThread(ThreadBase):
         
     
     def run(self):
-        for image in self.dataMgr:
+        jobs = []
+        for image in self.items:
             featureBlockAccessor = dataMgr.BlockAccessor(image.properties["Classification"]["featureM"],64)
-            jobs = []
             for blockNum in range(featureBlockAccessor._blockCount):
                 for i, feature in enumerate(self.featureMgr.featureItems):
                     job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, featureBlockAccessor, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature, blockNum])
                     jobs.append(job)
                     
-            self.jobMachine.process(jobs)
+        self.jobMachine.process(jobs)
 
     
 

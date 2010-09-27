@@ -272,6 +272,18 @@ class PropertyMgr():
             answer = None
         return answer
     
+    
+class ModuleMgr(PropertyMgr):
+    def __init__(self, parent):
+        PropertyMgr.__init__(self, parent)
+    
+    
+    def onNewImage(self, dataItemImage):
+        pass
+    
+    
+        
+    
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
@@ -528,6 +540,9 @@ class DataMgr():
             
             self._dataItems.append(dataItem)
             self._dataItemsLoaded.append(alreadyLoaded)
+            for v in self.properties.values():
+                v.onNewImage(dataItem)
+                
         else:
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         

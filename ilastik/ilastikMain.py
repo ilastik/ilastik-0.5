@@ -728,7 +728,7 @@ class ClassificationPredict(object):
         activeItem = self.parent._activeImage
         prediction = self.classificationPredict._prediction
         descriptions =  self.parent.project.dataMgr.properties["Classification"]["labelDescriptions"]
-        classifiers = self.parent.project.classificationMgr.classifiers
+        classifiers = self.parent.project.dataMgr.properties["Classification"]["classificationMgr"].classifiers
         
         if prediction is not None:
 #            for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
@@ -753,9 +753,11 @@ class ClassificationPredict(object):
 
 
             all =  range(len(descriptions))
-            not_predicted = numpy.setdiff1d(all, self.parent.project.classificationMgr.classifiers[0].unique_vals - 1)
-            for p_i, p_num in enumerate(not_predicted):
-                prediction[:,:,:,:,p_i] = 0
+            classifiers = self.parent.project.classificationMgr.classifiers
+            if len(classifiers) > 0:
+                not_predicted = numpy.setdiff1d(all, classifiers[0].unique_vals - 1)
+                for p_i, p_num in enumerate(not_predicted):
+                    prediction[:,:,:,:,p_i] = 0
 
 
 

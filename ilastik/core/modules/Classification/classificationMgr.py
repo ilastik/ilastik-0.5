@@ -49,10 +49,11 @@ from ilastik.core import activeLearning, segmentationMgr
 from ilastik.core import classifiers
 from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr
 from ilastik.core import jobMachine
+from ilastik.core import overlayMgr
 import sys, traceback
 import ilastik.core.classifiers.classifierRandomForest
-from ilastik.core.dataMgr import PropertyMgr, BlockAccessor
-
+from ilastik.core.dataMgr import ModuleMgr, PropertyMgr, BlockAccessor
+from ilastik.core.modules.Classification import featureMgr
 import numpy
 
 
@@ -94,22 +95,53 @@ def unravelIndices(indices, shape):
     return ti    
 
 
+class ClassificationModuleMgr(ModuleMgr):
+    def __init__(self, dataMgr, featureMgr):
+        ModuleMgr.__init__(self, dataMgr)
+        self.dataMgr = dataMgr
+        self.featureMgr = featureMgr
+        if self.dataMgr.properties["Classification"] is None:
+            self.dataMgr.properties["Classification"] = self
+        self.classificationMgr = self.dataMgr.properties["Classification"]["classificationMgr"] = ClassificationMgr(self.dataMgr)
+        self.dataMgr.properties["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
+
+        for i, im in enumerate(self.dataMgr):
+            self.onNewImage(im)
+        
+        self.classificationMgr.clearFeaturesAndTraining()
+                    
+    def onNewImage(self, dataItemImage):
+        
+        
+        #create featureM
+        dataItemImage.properties["Classification"] = PropertyMgr(dataItemImage)
+        dataItemImage.properties["Classification"]["featureM"] = numpy.zeros(dataItemImage.shape[0:-1] + (self.featureMgr.totalFeatureSize,),'float32')
+        
+        #clear features and training
+        self.classificationMgr.clearFeaturesAndTrainingForImage(dataItemImage)
+        
+        #create LabelOverlay
+        if dataItemImage.overlayMgr["Classification/Labels"] is None:
+            data = numpy.zeros(dataItemImage.shape[0:-1]+(1,),'uint8')
+            ov = overlayMgr.OverlayItem(data, color = 0, alpha = 1.0, colorTable = self.dataMgr.properties["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+            dataItemImage.overlayMgr["Classification/Labels"] = ov
+            
+            
+        #calculate features for the image
+        featureProcess = featureMgr.FeatureThread(self.featureMgr, self.dataMgr, [dataItemImage])        
+        featureProcess.start()
+        featureProcess.wait()
+
 class ClassificationMgr(object):
     def __init__(self, dataMgr):
         self.dataMgr = dataMgr         
         self._trainingVersion = 0
         self._featureVersion = 0
-        self._trainingF = None
+        
         self.classifiers = []
         
-        if self.dataMgr.properties["Classification"] is None:
-            self.dataMgr.properties["Classification"] = PropertyMgr(self)
-            
-        self.dataMgr.properties["Classification"]["classificationMgr"] = self
-        self.dataMgr.properties["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
+        self.classificationModuleMgr = self.dataMgr.properties["Classification"]
         
-        for i, im in enumerate(self.dataMgr):
-            self.clearFeaturesAndTrainingForImage(im)
 
     def getTrainingMforIndForImage(self, ind, dataItemImage):
 #                        featureShape = prop["featureM"].shape[0:4]
@@ -145,7 +177,7 @@ class ClassificationMgr(object):
             if len(indices) > 0:
                 prop["trainingF"] = self.getTrainingMforIndForImage(indices, dataItemImage)
             else:
-                self.clearFeaturesAndTraining()
+                self.clearFeaturesAndTrainingForImage(dataItemImage)
         return prop["trainingL"], prop["trainingF"], prop["trainingIndices"]
     
     def getTrainingMatrixForImage(self, dataItemImage):
@@ -227,6 +259,7 @@ class ClassificationMgr(object):
                                 tempfm = self.getTrainingMforIndForImage(indices, dataItemImage)
                                 if len(prop["trainingF"].shape) == 1:
                                     prop["trainingF"].shape = (0,tempfm.shape[1])
+                                print tempfm.shape, prop["trainingF"].shape 
                                 prop["trainingF"] = numpy.vstack((prop["trainingF"],tempfm))
                             else:
                                 prop["trainingF"] = self.getTrainingMforIndForImage(indices, dataItemImage)
@@ -264,10 +297,12 @@ class ClassificationMgr(object):
                 traceback.print_exc(file=sys.stdout)
 
     def clearFeaturesAndTrainingForImage(self, dataItemImage):
-        if dataItemImage.properties["Classification"] is None:
-            dataItemImage.properties["Classification"] = PropertyMgr(self)
+        totalsize = 1
+        featureM = dataItemImage.properties["Classification"]["featureM"]
+        if featureM is not None:
+            totalsize = featureM.shape[-1]
         prop = dataItemImage.properties["Classification"]
-        prop["trainingF"] = numpy.zeros((0), 'float32')      
+        prop["trainingF"] = numpy.zeros((0, totalsize), 'float32')      
         prop["trainingL"] = numpy.zeros((0, 1), 'uint8')
         prop["trainingIndices"] = numpy.zeros((0, 1), 'uint32')
         
@@ -290,12 +325,14 @@ class ClassificationMgr(object):
         trainingF = []
         trainingL = []
         indices = []
+        print "Shapes"
         for item in self.dataMgr:
             trainingLabels, trainingFeatures, indic = self.getTrainingMatrixRefForImage(item)
             if trainingFeatures is not None:
                 indices.append(indic)
                 trainingL.append(trainingLabels)
                 trainingF.append(trainingFeatures)
+                print trainingFeatures.shape
             
         self._trainingL = trainingL
         self._trainingF = trainingF
@@ -334,9 +371,9 @@ class ClassificationMgr(object):
                     
     def clearFeaturesAndTraining(self):
         self._featureVersion += 1
-        self._trainingF = None
-        self._trainingL = None
-        self._trainingIndices = None
+        self._trainingF = [numpy.zeros((0, 1), 'float32')]
+        self._trainingL = [numpy.zeros((0, 1), 'uint8')]
+        self._trainingIndices = [numpy.zeros((0, 1), 'uint32')]
         self.classifiers = []
         
         for index, item in enumerate(self.dataMgr):
@@ -437,7 +474,6 @@ class ClassifierPredictThread(ThreadBase):
             interactiveMessagePrint ( "Classifier %d _prediction" % cnt )
             self.dataMgr.featureLock.acquire()
             try:
-                classifiers = self.dataMgr.properties["Classification"]["classifiers"]
                 prop = item.properties["Classification"]
                 
                 featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
