@@ -249,6 +249,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         ov = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
         
+        overlayWidget.addOverlayRef(ov.getRef())
+        
         self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
