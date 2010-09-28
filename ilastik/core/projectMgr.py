@@ -131,9 +131,9 @@ class Project(object):
                 # create group for dataItem
                 dk = dataSetG.create_group('dataItem%02d' % k)
                 dk.attrs["fileName"] = str(item.fileName)
-            dk.attrs["Name"] = str(item._name)
+                dk.attrs["Name"] = str(item._name)
                 # save raw data
-            item.serialize(dk)
+                item.serialize(dk)
             
     
             # Save to hdf5 file
