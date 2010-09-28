@@ -1447,7 +1447,7 @@ class ImageScene( QtGui.QGraphicsView):
         #self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
 
         self.patchAccessor = PatchAccessor(imShape[0],imShape[1],64)
-        print "PatchCount :", self.patchAccessor.patchCount
+        #print "PatchCount :", self.patchAccessor.patchCount
 
         self.imagePatches = range(self.patchAccessor.patchCount)
         for i,p in enumerate(self.imagePatches):
