@@ -31,10 +31,11 @@ import os
 import numpy
 import ilastik
 from ilastik.core.utilities import irange, debug
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.core import version, dataMgr, projectMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.core.modules.Classification import featureMgr, classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
-from ilastik.core.featureMgr import ilastikFeatureGroups
+from ilastik.core.modules.Classification.featureMgr import ilastikFeatureGroups
 
 
 class FeatureDlg(QtGui.QDialog):
@@ -281,7 +282,6 @@ class FeatureDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def on_confirmButtons_accepted(self):
-        self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
