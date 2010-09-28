@@ -1378,6 +1378,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
         self.border.setZValue(200)
         self.scene.addItem(self.border)
+        self.lastPanPoint = QtCore.QPoint()
+        self.dragMode = False
         
     def __init__(self, parent, imShape, axis, drawManager):
         """
@@ -1420,7 +1422,7 @@ class ImageScene( QtGui.QGraphicsView):
             #self.fullSceenButton = QtGui.QPushButton("+")
             self.fullSceenButton = MyQLabel()
             self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.AddSelx22))
-            self.fullSceenButton.setStyleSheet("border: none")
+            self.fullSceenButton.setStyleSheet("border: none; background-color: white")
             self.connect(self.fullSceenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
             tempLayout.addStretch()
             tempLayout.addWidget(self.fullSceenButton)
@@ -1844,6 +1846,10 @@ class ImageScene( QtGui.QGraphicsView):
 
 
     def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.MidButton:
+            self.lastPanPoint = event.pos()
+            self.crossHairCursor.setVisible(False)
+            self.dragMode = True
         if not self.volumeEditor.labelWidget.currentItem():
             return
         
@@ -1857,6 +1863,11 @@ class ImageScene( QtGui.QGraphicsView):
             self.onContext(event.pos())
 
     def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.MidButton:
+            self.crossHairCursor.setVisible(True)
+            self.lastPanPoint = QtCore.QPoint()
+            self.dragMode = False
+            self.mouseMoveEvent(event)
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
             self.endDraw(mousePos)
@@ -1865,6 +1876,18 @@ class ImageScene( QtGui.QGraphicsView):
             self.tempErase = False
             
     def mouseMoveEvent(self,event):
+        if self.dragMode == True:
+            hBar = self.horizontalScrollBar()
+            vBar = self.verticalScrollBar()
+            delta = QtCore.QPointF(event.pos() - self.lastPanPoint)
+            vBar.setValue(vBar.value() - delta.y())
+            if self.isRightToLeft():
+                hBar.setValue(hBar.value() + delta.x())
+            else:
+                hBar.setValue(hBar.value() - delta.x())
+            self.lastPanPoint = event.pos()
+            return
+            
         self.mousePos = mousePos = self.mousePos = self.mapToScene(event.pos())
         x = mousePos.x()
         y = mousePos.y()
