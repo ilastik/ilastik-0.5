@@ -374,7 +374,7 @@ class ClassificationMgr(object):
         trainingF = []
         trainingL = []
         indices = []
-        print "Shapes"
+
         for item in self.dataMgr:
             trainingLabels, trainingFeatures, indic = self.getTrainingMatrixRefForImage(item)
             if trainingFeatures is not None:
