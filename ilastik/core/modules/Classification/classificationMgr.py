@@ -475,19 +475,21 @@ class ClassifierPredictThread(ThreadBase):
             b = fm.getBlockBounds(bnr, 0)
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4])
-            tpred = self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
+            self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = 0
+            
+            tpred = self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             for num in range(len(self.classifiers)):
                 cf = self.classifiers[num]
                 pred = cf.predict(tfm2)
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 tpred += pred[:,:,:,:]
 		self.count += 1
-	    self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred / len(self.classifiers)
+	    self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred / len(self.classifiers)
         except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
-        print "Prediction Job ", bnr, "/", fm._blockCount, "with classifiers ", len(self.classifiers),  " finished"
+        #print "Prediction Job ", bnr, "/", fm._blockCount, "with classifiers ", len(self.classifiers),  " finished"
             
             
     
@@ -511,7 +513,7 @@ class ClassifierPredictThread(ThreadBase):
                         tempPred = self.classifiers[0].predict(tfm)
                         featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
                                             
-                        self._prediction[itemindex] = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
+                        self.currentPred = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
     
                         if tempPred is not None:
                             jobs= []
@@ -519,6 +521,8 @@ class ClassifierPredictThread(ThreadBase):
                                 job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, itemindex, bnr, featureBlockAccessor])
                                 jobs.append(job)
                             self.jobMachine.process(jobs)
+                            
+                        self._prediction[itemindex] = self.currentPred
                 else:
                     print "ClassifierPredictThread: no trained classifiers"
                 self.dataMgr.featureLock.release()
