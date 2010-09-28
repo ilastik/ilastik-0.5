@@ -154,7 +154,7 @@ class ClassificationModuleMgr(ModuleMgr):
         #handle obsolete file formats:
         if dataItemImage.module["_obsolete_labels"] is not None:
             labels = dataItemImage.module["_obsolete_labels"]
-            ov = overlayMgr.OverlayItem(labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False)
+            ov = overlayMgr.OverlayItem(labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False, linkColorTable = True)
             dataItemImage.overlayMgr["Classification/Labels"] = ov
             for d in labels.descriptions:
                 self.dataMgr.module["Classification"]["labelDescriptions"].append(d)
