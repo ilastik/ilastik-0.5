@@ -78,7 +78,7 @@ from ilastik.gui import volumeeditor as ve
 # Please no import *
 from ilastik.gui.shortcutmanager import *
 
-from ilastik.gui.labelWidget import LabelListWidget
+from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget

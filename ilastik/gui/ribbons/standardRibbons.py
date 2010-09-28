@@ -21,12 +21,12 @@ from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui import volumeeditor as ve
 from ilastik.core.volume import DataAccessor
 from ilastik.core.dataMgr import  PropertyMgr
-from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
 
 from ilastik.gui.ribbons.Classification import *
+from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
 
 import gc, weakref
 
