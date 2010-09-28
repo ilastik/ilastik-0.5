@@ -482,12 +482,12 @@ class ClassifierPredictThread(ThreadBase):
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 tpred += pred[:,:,:,:]
 		self.count += 1
-	    self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred
+	    self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred / len(self.classifiers)
         except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
-        # print "Prediction Job ", self.count, "/", self.numberOfJobs, " finished"
+        print "Prediction Job ", bnr, "/", fm._blockCount, "with classifiers ", len(self.classifiers),  " finished"
             
             
     
@@ -501,7 +501,6 @@ class ClassifierPredictThread(ThreadBase):
             try:
                 prop = item.properties["Classification"]
                 
-                featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
                 
                 if len(self.classifiers) > 0:
                     #make a little test _prediction to get the shape and see if it works:
@@ -510,22 +509,16 @@ class ClassifierPredictThread(ThreadBase):
                         tfm = prop["featureM"][0,0,0,0,:]
                         tfm.shape = (1,) + (tfm.shape[-1],) 
                         tempPred = self.classifiers[0].predict(tfm)
-                    
-                    self._prediction[itemindex] = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
-
-                    if tempPred is not None:
-                        jobs= []
-                        for bnr in range(featureBlockAccessor._blockCount):
-                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, itemindex, bnr, featureBlockAccessor])
-                            jobs.append(job)
-                        self.jobMachine.process(jobs)
-                        count = len(self.classifiers)
-                        if count == 0:
-                            count = 1
-                        self._prediction[itemindex] = self._prediction[itemindex] / count
-                        #item._prediction = ve.DataAccessor(self._prediction.reshape(item._dataVol._data.shape[0:-1] + (self._prediction.shape[-1],)), channels = True)
-                        #item.properties["Classification"]["prediction"] = DataAccessor(self._prediction, channels = True)
-                        self._prediction[itemindex] = DataAccessor(self._prediction[itemindex].reshape(item.shape[0:-1] + (self._prediction[itemindex].shape[-1],)), channels = True)
+                        featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
+                                            
+                        self._prediction[itemindex] = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
+    
+                        if tempPred is not None:
+                            jobs= []
+                            for bnr in range(featureBlockAccessor._blockCount):
+                                job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, itemindex, bnr, featureBlockAccessor])
+                                jobs.append(job)
+                            self.jobMachine.process(jobs)
                 else:
                     print "ClassifierPredictThread: no trained classifiers"
                 self.dataMgr.featureLock.release()

@@ -243,13 +243,9 @@ class ClassificationPredict(object):
             classifiers = self.parent.project.dataMgr.properties["Classification"]["classificationMgr"].classifiers
             
             if prediction is not None:
-    #            for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
-    #                item._prediction[:,:,:,:] = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
                 foregrounds = []
                 for p_i, p_num in enumerate(classifiers[0].unique_vals):
                     #create Overlay for _prediction:
-                    print "Predstuff", prediction
-                    print "Colorstuff", QtGui.QColor.fromRgba(long(descriptions[p_num-1].color))
                     ov = overlayMgr.OverlayItem(prediction[itemindex][:,:,:,:,p_i],  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = display, autoVisible = display, min = 0, max = 1)
                     activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
                     ov = activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
