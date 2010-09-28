@@ -47,7 +47,7 @@ from ilastik.core import onlineClassifcator
 from ilastik.core import dataMgr as DM
 from ilastik.core import activeLearning, segmentationMgr
 from ilastik.core import classifiers
-from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr
+from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
 from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
@@ -95,6 +95,29 @@ def unravelIndices(indices, shape):
     return ti    
 
 
+class ClassificationItemModuleMgr(PropertyMgr):
+    def __init__(self, classificationModuleMgr, dataItemImage):
+        PropertyMgr.__init__(self, dataItemImage)
+        self.dataItemImage = dataItemImage
+        self.classificationModuleMgr = classificationModuleMgr
+        
+    def serialize(self, h5g):
+        #for now save the labels and prediction in the old format
+        #TODO: change that when we are certain about the new project file format
+        vl = VolumeLabels(self.dataItemImage.overlayMgr["Classification/Labels"]._data)
+        vl.descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"]
+        vl.serialize(h5g, "labels")
+
+        
+        prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
+        for d in vl.descriptions:
+            prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+        prediction = DataAccessor(prediction)
+        prediction.serialize(h5g, 'prediction' )
+        
+
+
+
 class ClassificationModuleMgr(ModuleMgr):
     def __init__(self, dataMgr, featureMgr):
         ModuleMgr.__init__(self, dataMgr)
@@ -115,7 +138,7 @@ class ClassificationModuleMgr(ModuleMgr):
         
         
         #create featureM
-        dataItemImage.module["Classification"] = PropertyMgr(dataItemImage)
+        dataItemImage.module["Classification"] = ClassificationItemModuleMgr(self, dataItemImage)
         dataItemImage.module["Classification"]["featureM"] = numpy.zeros(dataItemImage.shape[0:-1] + (self.featureMgr.totalFeatureSize,),'float32')
         
         #clear features and training
@@ -145,6 +168,7 @@ class ClassificationModuleMgr(ModuleMgr):
             margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])
             ov = overlayMgr.OverlayItem(DataAccessor(margin), alpha = 1.0, color = long(16535)<<16, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
             dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
+            dataItemImage.module["_obsolete_prediction"] = None
             
 #        if self._dataVol.uncertainty is not None:
 #            #create Overlay for uncertainty:

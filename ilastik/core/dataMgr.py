@@ -255,7 +255,9 @@ class PropertyMgr():
         self._parent = parent
         
     def serialize(self, h5g, name):
-        pass
+        for v in self.values():
+            if hasattr(v, "serialize"):
+                v.serialize(h5g)
     
     def deserialize(self, h5g, name):
         pass
@@ -480,9 +482,11 @@ class DataItemImage(DataItemBase):
      
     def serialize(self, h5G):
         self._dataVol.serialize(h5G)
-        if self._prediction is not None:
-            self._prediction.serialize(h5G, '_prediction')
-            
+        
+        for k in self.module.keys():
+            if hasattr(self.module[k], "serialize"):
+                print "serializing ", k
+                self.module[k].serialize(h5G)
     
     def updateOverlays(self):
         #create Overlay for uncertainty:
@@ -619,7 +623,8 @@ class DataMgr():
         return len(self._dataItems)
     
     def serialize(self, h5grp):
-        pass
+        for v in self.module.values():
+            v.serialize(h5grp)
         
     @staticmethod
     def deserialize(self):

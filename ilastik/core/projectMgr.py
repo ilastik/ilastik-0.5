@@ -126,12 +126,10 @@ class Project(object):
             # create group for dataItem
             dk = dataSetG.create_group('dataItem%02d' % k)
             dk.attrs["fileName"] = str(item.fileName)
-            dk.attrs["_name"] = str(item._name)
+            dk.attrs["Name"] = str(item._name)
             # save raw data
-            item._dataVol.serialize(dk)
-            if item._prediction is not None:
-                item._prediction.serialize(dk, '_prediction' )
-
+            item.serialize(dk)
+            
 
         # Save to hdf5 file
         
@@ -158,6 +156,7 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
+            print name
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             activeItem.deserialize(fileHandle['DataSets'][name])
             #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])

@@ -214,6 +214,7 @@ class OverlayMgr():
                 self._widget.removeOverlay(key)
             
     def __setitem__(self,  key,  value):
+        print "OverlayClass ", value.__class__
         addToWidget = False
         if issubclass(value.__class__,  OverlayItem):
             if not self._dict.has_key(key):
