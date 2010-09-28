@@ -323,6 +323,77 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         dialog = ClassifierSelectionDlg(self.parent)
         self.parent.project.classifier = dialog.exec_()
 
+class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
+    name = 'Unsupervised'
+    
+    def __init__(self, parent=None):
+        IlastikTabBase.__init__(self, parent)
+        QtGui.QWidget.__init__(self, parent)
+        
+        self._initContent()
+        self._initConnects()
+        self.overlays = None        
+        
+    def on_activation(self):
+        if self.ilastik.project is None:
+            return
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.autosegOverlays
+        if len(ovs) == 0:
+            raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+                        
+        self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
+
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.autosegOverlays)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+        
+    def on_deActivation(self):
+        pass
+            
+    def _initContent(self):
+        tl = QtGui.QHBoxLayout()
+        
+        self.btnChooseOverlays = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
+        self.btnPLSA = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'pLSA')
+
+        self.btnPLSA.setEnabled(False)     
+        
+        self.btnChooseOverlays.setToolTip('Choose the overlays for unsupervised decomposition')
+        self.btnPLSA.setToolTip('perform probabilistic Latent Semantic Analysis (pLSA)')
+        
+        tl.addWidget(self.btnChooseOverlays)
+        tl.addWidget(self.btnPLSA)
+        tl.addStretch()
+        
+        self.setLayout(tl)
+        
+    def _initConnects(self):
+        self.connect(self.btnChooseOverlays, QtCore.SIGNAL('clicked()'), self.on_btnChooseOverlays_clicked)
+        self.connect(self.btnPLSA, QtCore.SIGNAL('clicked()'), self.on_btnPLSA_clicked)
+       
+    def on_btnChooseOverlays_clicked(self):
+        dlg = OverlaySelectionDialog(self.parent,  singleSelection = False)
+        answer = dlg.exec_()
+        
+        if len(answer) > 0:
+
+            overlay = answer[0]
+            self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
+            
+            volume = overlay._data[:,:,:,:,:]
+            
+            # transform data
+            print volume.shape
+            
+            self.btnPLSA.setEnabled(True)            
+
+    def on_btnPLSA_clicked(self):
+        pass
+                    
+                    
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Auto Segmentation'
     def __init__(self, parent=None):
