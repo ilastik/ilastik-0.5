@@ -26,6 +26,7 @@ from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
 
+from ilastik.gui.ribbons.Classification import *
 
 import gc, weakref
 
@@ -299,12 +300,24 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_btnSelectFeatures_clicked(self):
         preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
         self.parent.newFeatureDlg = FeatureDlg(self.parent, preview)
-        
+
+                    
     def on_btnStartLive_clicked(self, state):
-        self.parent.on_classificationInteractive(state)
+        if state:
+            self.ilastik.ribbon.getTab('Classification').btnStartLive.setText('Stop Live Prediction')
+            self.classificationInteractive = ClassificationInteractive(self.ilastik)
+        else:
+            self.classificationInteractive.stop()
+            del self.classificationInteractive
+            self.ilastik.ribbon.getTab('Classification').btnStartLive.setText('Start Live Prediction')
         
     def on_btnTrainPredict_clicked(self):
-        self.parent.on_classificationTrain()
+        self.classificationTrain = ClassificationTrain(self.ilastik)
+        self.connect(self.classificationTrain, QtCore.SIGNAL("trainingFinished()"), self.on_trainingFinished)
+        
+    def on_trainingFinished(self):
+        print "Training finished"
+        self.classificationPredict = ClassificationPredict(self.ilastik)
         
     def on_btnExportClassifier_clicked(self):
         self.parent.on_exportClassifier()
@@ -312,6 +325,10 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_btnClassifierOptions_clicked(self):
         dialog = ClassifierSelectionDlg(self.parent)
         self.parent.project.classifier = dialog.exec_()
+
+        
+    
+
 
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Auto Segmentation'

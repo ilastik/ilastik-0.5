@@ -37,6 +37,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
 from ilastik.core.modules.Classification.featureMgr import ilastikFeatureGroups
 
+from ilastik.gui.ribbons.Classification import FeatureComputation
 
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None, previewImage=None):
@@ -290,7 +291,9 @@ class FeatureDlg(QtGui.QDialog):
             self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
-            self.ilastik.featureCompute()
+            if self.ilastik.project.featureMgr is not None:
+                self.ilastik.project.deleteFeatureOverlays()
+                self.featureComputation = FeatureComputation(self.ilastik)
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
             return False

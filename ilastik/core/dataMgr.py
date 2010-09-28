@@ -274,11 +274,17 @@ class PropertyMgr():
     
     
 class ModuleMgr(PropertyMgr):
+    """
+    abstract base class for modules
+    """
     def __init__(self, parent):
         PropertyMgr.__init__(self, parent)
     
     
     def onNewImage(self, dataItemImage):
+        pass
+    
+    def onDeleteImage(self, dataItemImage):
         pass
     
     
