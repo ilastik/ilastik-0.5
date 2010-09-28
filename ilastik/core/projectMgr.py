@@ -43,6 +43,7 @@ from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
 from ilastik.core import labelMgr
+from ilastik.core import featureMgr
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
 from ilastik.core import backgroundMgr
@@ -110,10 +111,11 @@ class Project(object):
                 
             featureG = projectG.create_group('FeatureSelection')
             
-            try:
-                self.featureMgr.exportFeatureItems(featureG)
-            except:
-                print 'saveToDisk(): No features where selected: '
+            #try:
+            self.featureMgr.exportFeatureItems(featureG)
+            featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
+            #except:
+            #    print 'saveToDisk(): No features where selected: '
                 
                 
             # get number of images
@@ -133,9 +135,9 @@ class Project(object):
             # Save to hdf5 file
             fileHandle.close()
             self.dataMgr.exportClassifiers(fileName,'Project/')
-        except:
+        except Exception as e:
+            print e.message
             return False
-        
         return True
     
     @staticmethod
@@ -155,7 +157,7 @@ class Project(object):
         
         for name in fileHandle['DataSets']:
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
-            activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
+            activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['_name'])
             activeItem._dataVol = dataVol
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
 
@@ -170,14 +172,19 @@ class Project(object):
             activeItem.updateOverlays()
                             
             dataMgr.append(activeItem,alreadyLoaded=True)
-
-               
-        fileHandle.close()
+           
         
         
         project = Project( name, labeler, description, dataMgr)
         project.filename = fileName
-        # print "Project %s loaded from %s " % (p.name, fileName)
+        
+        try:
+            userSelection = projectG['FeatureSelection']['UserSelection']
+            featureMgr.ilastikFeatureGroups.selection = userSelection.value
+        except:
+            print 'No user selection of features found.'
+        
+        fileHandle.close()
         return project
 
     def deleteFeatureOverlays(self):

@@ -249,8 +249,8 @@ class FeatureGroups(object):
 
     def createList(self):
         resList = []
-        for groupIndex, scaleList in irange(self.selection):
-            for scaleIndex, selected in irange(scaleList):
+        for groupIndex, scaleList in enumerate(self.selection):
+            for scaleIndex, selected in enumerate(scaleList):
                 for feature in self.groups[self.groups.keys()[groupIndex]]:
                     if selected:
                         scaleValue = self.groupScaleValues[scaleIndex]
