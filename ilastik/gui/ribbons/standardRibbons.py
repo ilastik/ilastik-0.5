@@ -332,12 +332,13 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         
         self._initContent()
         self._initConnects()
-        self.overlays = None        
+        
+        self.features = None
         
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.autosegOverlays
+        ovs = self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.backgroundOverlays
         if len(ovs) == 0:
             raw = self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr["Raw Data"]
             if raw is not None:
@@ -345,11 +346,11 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.autosegOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr,  self.ilastik.project.dataMgr[self.ilastik._activeImage]._dataVol.backgroundOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
-        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
-        
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())        
+           
     def on_deActivation(self):
         pass
             
@@ -379,18 +380,44 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         answer = dlg.exec_()
         
         if len(answer) > 0:
-
-            overlay = answer[0]
-            self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
             
-            volume = overlay._data[:,:,:,:,:]
+            overlays = answer
+            #self.parent.labelWidget.overlayWidget.addOverlayRef(overlays[0].getRef())
+   
+            #print answer[0].shape
+            #print answer[1].shape
             
-            # transform data
-            print volume.shape
+            # transform to feature matrix
+            # ...first find out how many columns and rows the feature matrix will have
+            numFeatures = 0
+            numPoints = overlays[0].shape[0] * overlays[0].shape[1] * overlays[0].shape[2] * overlays[0].shape[3]
+            for overlay in overlays:
+                numFeatures += overlay.shape[4]
+            # ... then copy the data
+            features = numpy.zeros((numFeatures, numPoints))
+            currFeature = 0
+            for overlay in overlays:
+                currData = overlay[:,:,:,:,:]
+                features[currFeature:currFeature+overlay.shape[4], :] = currData.reshape((currData.shape[4], numPoints))
+                currFeature += currData.shape[4]
+            self.features = features
+            
+            # add all overlays
+            for overlay in overlays:
+                ref = overlay.getRef()
+                ref.setAlpha(0.4)
+                self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
+            
+            #self.parent.project.objectMgr.setInputData(answer[0]._data)
+                
+            self.parent.labelWidget.repaint()
             
             self.btnPLSA.setEnabled(True)            
 
+
     def on_btnPLSA_clicked(self):
+        # take features, call pLSA
+        # create overlays - one per component
         pass
                     
                     
