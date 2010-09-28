@@ -484,6 +484,8 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = ov
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
 
+        overlayWidget.addOverlayRef(ov.getRef())
+        
         self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.seedMgr,  self.ilastik._activeImage._dataVol.seeds,  self.ilastik.labelWidget,  ov))
 
 

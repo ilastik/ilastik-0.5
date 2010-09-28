@@ -354,8 +354,11 @@ class Volume():
     def deserialize(dataItemImage, h5G, offsets = (0,0,0), shape=(0,0,0)):
         data = DataAccessor.deserialize(h5G, "data", offsets, shape)
         #seeds = VolumeLabels.deserialize(h5G,  "seeds")
-        #v =  Volume(data,   seeds = seeds)
-        v =  Volume(data)
+        if "seeds" in h5G.keys():
+            seeds = VolumeLabels.deserialize(h5G,  "seeds")
+            v =  Volume(data,   seeds = seeds)
+        else:
+            v =  Volume(data)
         return v
 
 
