@@ -594,11 +594,12 @@ class VolumeEditor(QtGui.QWidget):
     def prevLabel(self):
         self.labelWidget.nextLabel()
 
-    def onLabelSelected(self, index):
-        if self.labelWidget.currentItem() is not None:
-            self.drawManager.setBrushColor(self.labelWidget.currentItem().color)
-            for i in range(3):
-                self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
+    def onLabelSelected(self):
+        print "onLabelSelected() Warning: am i used anymore?"
+#        if self.labelWidget.currentItem() is not None:
+#            self.drawManager.setBrushColor(self.labelWidget.currentItem().color)
+#            for i in range(3):
+#                self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
 
     def onOverlaySelected(self, index):
         if self.labelWidget.currentItem() is not None:
@@ -717,7 +718,8 @@ class VolumeEditor(QtGui.QWidget):
             self.labelWidget.close()
             del self.labelWidget
         self.labelWidget = widget
-        self.connect(self.labelWidget , QtCore.SIGNAL("selectedLabel(int)"), self.onLabelSelected)
+        print widget
+        self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
         self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
     
     def setOverlayWidget(self,  widget):
@@ -1588,7 +1590,6 @@ class ImageScene( QtGui.QGraphicsView):
     def sliceDown10(self):
         self.changeSlice(-10)
 
-
     def brushSmaller(self):
         b = self.drawManager.brushSize
         if b > 2:
@@ -1964,16 +1965,16 @@ class ImageScene( QtGui.QGraphicsView):
     def onContext(self, pos):
         menu = QtGui.QMenu('Labeling menu', self)
         
-        toggleEraseA = None
-        if self.drawManager.erasing == True:
-            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
-        else:
-            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
+#        toggleEraseA = None
+#        if self.drawManager.erasing == True:
+#            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
+#        else:
+#            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
         
         menu.addSeparator()
         labelList = []
-        volumeLabel = self.volumeEditor.labelWidget.volumeLabels
-        for index, item in enumerate(volumeLabel.descriptions):
+        volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
+        for index, item in enumerate(volumeLabel):
             labelColor = QtGui.QColor.fromRgb(long(item.color))
             labelIndex = item.number
             labelName = item.name

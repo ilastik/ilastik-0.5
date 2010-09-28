@@ -61,7 +61,7 @@ import numpy
 pathext = os.path.dirname(__file__)
 
 try:
-    for f in os.listdir(os.path.abspath(pathext + '/classifiers')):
+    for f in os.listdir(os.path.abspath(pathext + '/../../classifiers')):
         module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
         if ext == '.py': # Important, ignore .pyc/othesr files.
             module = __import__('ilastik.core.classifiers.' + module_name)
@@ -492,7 +492,8 @@ class ClassifierPredictThread(ThreadBase):
         self.predLock = threading.Lock()
         self.numberOfJobs = 0
         for i, item in enumerate(self.dataMgr):
-            self.numberOfJobs += len(self.classificationMgr.classifiers)
+            featureBlockAccessor = BlockAccessor(item.module["Classification"]["featureM"], 64)
+            self.numberOfJobs += len(self.classificationMgr.classifiers) * featureBlockAccessor._blockCount
     
     def classifierPredict(self, itnr, bnr, fm):
         try:
@@ -507,8 +508,8 @@ class ClassifierPredictThread(ThreadBase):
                 pred = cf.predict(tfm2)
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 tpred += pred[:,:,:,:]
-		self.count += 1
-	    self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred / len(self.classifiers)
+                self.count += 1
+            self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred / len(self.classifiers)
         except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e

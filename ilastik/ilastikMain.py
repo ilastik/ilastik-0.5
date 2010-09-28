@@ -440,14 +440,14 @@ class MainWindow(QtGui.QMainWindow):
             #ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
         # Make sure group 'classifiers' exist
-        print fileName
-        h5file = h5py.File(str(fileName),'a')
-        h5file.create_group('classifiers')
-        h5file.close()
-        
-        for i, c in enumerate(self.project.dataMgr.classifiers):
-            tmp = c.serialize(str(fileName), "classifiers/rf_%03d" % i)
-            print "Write Random Forest # %03d -> %d" % (i,tmp)
+#        print fileName
+#        h5file = h5py.File(str(fileName),'a')
+#        h5file.create_group('classifiers')
+#        h5file.close()
+#        
+#        for i, c in enumerate(self.project.dataMgr.classifiers):
+#            tmp = c.serialize(str(fileName), "classifiers/rf_%03d" % i)
+#            print "Write Random Forest # %03d -> %d" % (i,tmp)
         
         # Export user feature selection
 #        h5file = h5py.File(str(fileName),'a')
