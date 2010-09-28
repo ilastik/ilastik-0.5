@@ -51,7 +51,8 @@ import time
 
 
 from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
+from ilastik.core import version, dataMgr, projectMgr,  segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
+from ilastik.core.modules.Classification import featureMgr, classificationMgr
 from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
 from ilastik.gui.featureDlg import FeatureDlg
 
@@ -61,7 +62,8 @@ from Queue import Queue as queue
 from collections import deque
 
 import ilastik.gui
-from ilastik.core import projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning
+from ilastik.core import projectMgr, segmentationMgr, activeLearning
+from ilastik.core.modules.Classification import featureMgr, classificationMgr
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
@@ -76,7 +78,7 @@ from ilastik.gui import volumeeditor as ve
 # Please no import *
 from ilastik.gui.shortcutmanager import *
 
-from ilastik.gui.labelWidget import LabelListWidget
+from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
@@ -99,12 +101,13 @@ class MainWindow(QtGui.QMainWindow):
         #self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
 
-        self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImage during thread stuff
+        self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
         
         self.previousTabText = ""
         
         self.labelWidget = None
-        self._activeImage = 0
+        self._activeImageNumber = 0
+        self._activeImage = None
         
         self.createRibbons()
         self.initImageWindows()
@@ -189,7 +192,7 @@ class MainWindow(QtGui.QMainWindow):
         if project != None:
             self.project = projectMgr.Project.loadFromDisk(project, self.featureCache)
             self.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
-            self._activeImage = 0
+            self._activeImageNumber = 0
             self.projectModified()
         
         self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject) 
@@ -224,8 +227,10 @@ class MainWindow(QtGui.QMainWindow):
         
         self.destroyImageWindows()
         
-        self._activeImage = number
-        self.project.dataMgr._activeImage = number
+        self._activeImageNumber = number
+        self._activeImage = self.project.dataMgr[number]
+        
+        self.project.dataMgr._activeImageNumber = number
         
         self.createImageWindows( self.project.dataMgr[number]._dataVol)
         
@@ -304,7 +309,8 @@ class MainWindow(QtGui.QMainWindow):
                     
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
-        self.project.dataMgr._activeImage = self._activeImage
+        self.project.dataMgr._activeImageNumber = self._activeImageNumber
+        self._activeImage = self.project.dataMgr[self._activeImageNumber]
 
           
 #    def newFeatureDlg(self):
@@ -371,11 +377,6 @@ class MainWindow(QtGui.QMainWindow):
     def createFeatures(self):
         self.featureList = featureMgr.ilastikFeatures
         
-    def featureCompute(self):
-        if self.project.featureMgr is not None:
-            self.project.deleteFeatureOverlays()
-            self.featureComputation = FeatureComputation(self)
-
     def on_shortcutsDlg(self):
         shortcutManager.showDialog()
 
@@ -393,26 +394,11 @@ class MainWindow(QtGui.QMainWindow):
 #        answer = dialog.exec_()
 #        if answer != None:
 #            self.project.segmentor = answer
-#            self.project.segmentor.setupWeights(self.project.dataMgr[self._activeImage].segmentationWeights)
+#            self.project.segmentor.setupWeights(self.project.dataMgr[self._activeImageNumber].segmentationWeights)
 
 
     def on_segmentationSegment(self):
         self.segmentationSegment = Segmentation(self)
-
-    def on_classificationTrain(self):
-        self.classificationTrain = ClassificationTrain(self)
-        
-    def on_classificationPredict(self):
-        self.classificationPredict = ClassificationPredict(self)
-    
-    def on_classificationInteractive(self, state):
-        if state:
-            self.ribbon.getTab('Classification').btnStartLive.setText('Stop Live Prediction')
-            self.classificationInteractive = ClassificationInteractive(self)
-        else:
-            self.classificationInteractive.stop()
-            del self.classificationInteractive
-            self.ribbon.getTab('Classification').btnStartLive.setText('Start Live Prediction')
 
 
     def on_segmentation_border(self):
@@ -492,275 +478,6 @@ class MainWindow(QtGui.QMainWindow):
             event.ignore()
             
 
-class FeatureComputation(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.featureCompute() 
-    
-    def featureCompute(self):
-        self.parent.project.dataMgr.featureLock.acquire()
-        self.myTimer = QtCore.QTimer()
-        self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
-        self.parent.project.dataMgr.clearFeaturesAndTraining()
-        numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)   
-        self.initFeatureProgress(numberOfJobs)
-        self.parent.project.featureMgr.triggerCompute()
-        self.myTimer.start(200)
-        
-    def initFeatureProgress(self, numberOfJobs):
-        statusBar = self.parent.statusBar()
-        self.myFeatureProgressBar = QtGui.QProgressBar()
-        self.myFeatureProgressBar.setMinimum(0)
-        self.myFeatureProgressBar.setMaximum(numberOfJobs)
-        self.myFeatureProgressBar.setFormat(' Features... %p%')
-        statusBar.addWidget(self.myFeatureProgressBar)
-        statusBar.show()
-    
-    def updateFeatureProgress(self):
-        val = self.parent.project.featureMgr.getCount() 
-        self.myFeatureProgressBar.setValue(val)
-        if not self.parent.project.featureMgr.featureProcess.isRunning():
-            self.myTimer.stop()
-            self.terminateFeatureProgressBar()
-            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)   
-            self.parent.project.createFeatureOverlays()
-
-            
-    def terminateFeatureProgressBar(self):
-        self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
-        self.parent.statusBar().hide()
-        self.parent.project.dataMgr.buildTrainingMatrix()
-        self.parent.project.dataMgr.featureLock.release()
-        if hasattr(self.parent, "classificationInteractive"):
-            self.parent.classificationInteractive.updateThreadQueues()
-            
-        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
-        self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
-                    
-    def featureShow(self, item):
-        pass
-
-class ClassificationTrain(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.ilastik = parent
-        self.start()
-        
-    def start(self):
-        #process all unaccounted label changes
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
-        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
-        
-        newLabels = self.parent.labelWidget.getPendingLabels()
-        if len(newLabels) > 0:
-            self.parent.project.dataMgr.updateTrainingMatrix(newLabels)
-        
-        self.classificationTimer = QtCore.QTimer()
-        self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-        numberOfJobs = 10                 
-        self.initClassificationProgress(numberOfJobs)
-        
-        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, self.parent.project.dataMgr, classifier = self.parent.project.classifier)
-        self.classificationProcess.start()
-        self.classificationTimer.start(500) 
-
-    def initClassificationProgress(self, numberOfJobs):
-        statusBar = self.parent.statusBar()
-        self.myClassificationProgressBar = QtGui.QProgressBar()
-        self.myClassificationProgressBar.setMinimum(0)
-        self.myClassificationProgressBar.setMaximum(numberOfJobs)
-        self.myClassificationProgressBar.setFormat(' Training... %p%')
-        statusBar.addWidget(self.myClassificationProgressBar)
-        statusBar.show()
-    
-    def updateClassificationProgress(self):
-        val = self.classificationProcess.count
-        self.myClassificationProgressBar.setValue(val)
-        if not self.classificationProcess.isRunning():
-            self.classificationTimer.stop()
-            self.classificationProcess.wait()
-            self.terminateClassificationProgressBar()
-            self.finalize()
-            
-    def finalize(self):
-        self.ilastik.on_classificationPredict()
-                      
-    def terminateClassificationProgressBar(self):
-        self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
-        self.parent.statusBar().hide()
-        
-
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
-        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
-        
-
-class ClassificationInteractive(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.stopped = False
-        
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
-        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
-        
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
-
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
-
-        self.temp_cnt = 0
-        self.start()
-    
-    def updateThreadQueues(self, a = 0, b = 0):
-        if self.classificationInteractive is not None:
-            self.myInteractionProgressBar.setVisible(True)
-            self.classificationInteractive.dataPending.set()
-
-    def updateLabelWidget(self):
-        try:
-            self.myInteractionProgressBar.setVisible(False)
-            self.parent.labelWidget.repaint()                    
-        except IndexError:
-            pass
-                
-
-
-    def initInteractiveProgressBar(self):
-        statusBar = self.parent.statusBar()
-        self.myInteractionProgressBar = QtGui.QProgressBar()
-        self.myInteractionProgressBar.setVisible(False)
-        self.myInteractionProgressBar.setMinimum(0)
-        self.myInteractionProgressBar.setMaximum(0)
-        statusBar.addWidget(self.myInteractionProgressBar)
-        statusBar.show()
-        
-    def terminateClassificationProgressBar(self):
-        self.parent.statusBar().removeWidget(self.myInteractionProgressBar)
-        self.parent.statusBar().hide()
-        
-    def start(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImage]
-        for p_i, descr in enumerate(activeItem._dataVol.labels.descriptions):
-            #create Overlay for _prediction:
-            ov = OverlayItem(descr._prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Prediction/" + descr.name] = ov
-
-        #create Overlay for uncertainty:
-        ov = OverlayItem(activeItem._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-        self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Uncertainty"] = ov
-
-
-
-        self.initInteractiveProgressBar()
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, classifier = self.parent.project.classifier)
-
-        self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
-    
-               
-        self.classificationInteractive.start()
-        self.updateThreadQueues()
-        
-        
-    def stop(self):
-        self.classificationInteractive.stopped = True
-
-        self.classificationInteractive.dataPending.set() #wake up thread one last time before his death
-        self.classificationInteractive.wait()
-        self.finalize()
-        
-        self.terminateClassificationProgressBar()
-    
-    def finalize(self):
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
-        
-        self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifiers)
-        self.classificationInteractive =  None
-        
-
-class ClassificationPredict(object):
-    def __init__(self, parent):
-        self.parent = parent
-        self.start()
-    
-    def start(self):       
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
-        self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(False)
-         
-        self.classificationTimer = QtCore.QTimer()
-        self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
-                    
-        self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.dataMgr)
-        numberOfJobs = self.classificationPredict.numberOfJobs
-        self.initClassificationProgress(numberOfJobs)
-        self.classificationPredict.start()
-        self.classificationTimer.start(200)
-
-    def initClassificationProgress(self, numberOfJobs):
-        statusBar = self.parent.statusBar()
-        self.myClassificationProgressBar = QtGui.QProgressBar()
-        self.myClassificationProgressBar.setMinimum(0)
-        self.myClassificationProgressBar.setMaximum(numberOfJobs)
-        self.myClassificationProgressBar.setFormat(' Prediction... %p%')
-        statusBar.addWidget(self.myClassificationProgressBar)
-        statusBar.show()
-    
-    def updateClassificationProgress(self):
-        val = self.classificationPredict.count
-        self.myClassificationProgressBar.setValue(val)
-        if not self.classificationPredict.isRunning():
-            self.classificationTimer.stop()
-
-            self.classificationPredict.wait()
-            self.finalize()           
-            self.terminateClassificationProgressBar()
-
-    def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImage]
-        if activeItem._prediction is not None:
-#            for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
-#                item._prediction[:,:,:,:] = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-            foregrounds = []
-            for p_i, p_num in enumerate(self.parent.project.dataMgr.classifiers[0].unique_vals):
-                activeItem._dataVol.labels.descriptions[p_num-1]._prediction[:,:,:,:] = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-                #create Overlay for _prediction:
-                ov = OverlayItem(activeItem._dataVol.labels.descriptions[p_num-1]._prediction,  color = QtGui.QColor.fromRgba(long(activeItem._dataVol.labels.descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-                self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Prediction/" + activeItem._dataVol.labels.descriptions[p_num-1].name] = ov
-                ov = self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Prediction/" + activeItem._dataVol.labels.descriptions[p_num-1].name]
-                foregrounds.append(ov)
-
-            import ilastik.core.overlays.thresHoldOverlay as tho
-            
-            ov = tho.ThresHoldOverlay(foregrounds, [])
-            if self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Segmentation"] is None:
-                self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Segmentation"] = ov
-            else:
-                ov = self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Segmentation"]
-                ov.setForegrounds(foregrounds)
-
-
-            all =  range(len(activeItem._dataVol.labels.descriptions))
-            not_predicted = numpy.setdiff1d(all, self.parent.project.dataMgr.classifiers[0].unique_vals - 1)
-            for p_i, p_num in enumerate(not_predicted):
-                activeItem._dataVol.labels.descriptions[p_num]._prediction[:,:,:,:] = 0
-
-
-
-            margin = activeLearning.computeEnsembleMargin(activeItem._prediction[:,:,:,:,:])*255.0
-            activeItem._dataVol.uncertainty[:,:,:,:] = margin[:,:,:,:]
-
-            #create Overlay for uncertainty:
-            ov = OverlayItem(activeItem._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-            self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Classification/Uncertainty"] = ov
-
-
-            self.parent.labelWidget.repaint()
-        
-    def terminateClassificationProgressBar(self):
-        self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
-        self.parent.statusBar().hide()
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
-        self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
-        self.parent.ribbon.getTab('Classification').btnExportClassifier.setEnabled(True)
-
 
 
 
@@ -777,7 +494,7 @@ class Segmentation(object):
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
 
-        self.segmentation = segmentationMgr.SegmentationThread(self.parent.project.dataMgr, self.parent.project.dataMgr[self.ilastik._activeImage], self.ilastik.project.segmentor)
+        self.segmentation = segmentationMgr.SegmentationThread(self.parent.project.dataMgr, self.parent.project.dataMgr[self.ilastik._activeImageNumber], self.ilastik.project.segmentor)
         numberOfJobs = self.segmentation.numberOfJobs
         self.initClassificationProgress(numberOfJobs)
         self.segmentation.start()
@@ -803,17 +520,17 @@ class Segmentation(object):
             self.terminateProgressBar()
 
     def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImage]
+        activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
         activeItem._dataVol.segmentation = self.segmentation.result
 
-        temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
+        #temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
         
         #create Overlay for segmentation:
-        if self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Segmentation/Segmentation"] is None:
+        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
             ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Segmentation/Segmentation"] = ov
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
-            self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem._dataVol.segmentation)
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem._dataVol.segmentation)
         self.ilastik.labelWidget.repaint()
 
 
@@ -837,7 +554,7 @@ class CC(object):
         self.parent.ribbon.getTab('Connected Components').btnCCBack.setEnabled(False)
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
-        overlay = self.parent.project.dataMgr[self.parent._activeImage].overlayMgr[self.selection_key]
+        overlay = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr[self.selection_key]
         if background==False:
             self.cc = connectedComponentsMgr.ConnectedComponentsThread(self.parent.project.dataMgr, overlay._data)
         else:
@@ -867,19 +584,19 @@ class CC(object):
             self.terminateProgressBar()
 
     def finalize(self):
-        #activeItem = self.parent.project.dataMgr[self.parent._activeImage]
+        #activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
         #activeItem._dataVol.cc = self.cc.result
 
         #temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
         
         #create Overlay for connected components:
-        if self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Connected Components/CC"] is None:
+        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] is None:
             #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
             colortab = self.makeColorTab()
             ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Connected Components/CC"] = ov
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] = ov
         else:
-            self.parent.project.dataMgr[self.parent._activeImage].overlayMgr["Connected Components/CC"]._data = DataAccessor(self.cc.result)
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"]._data = DataAccessor(self.cc.result)
         self.ilastik.labelWidget.repaint()
        
     def terminateProgressBar(self):
