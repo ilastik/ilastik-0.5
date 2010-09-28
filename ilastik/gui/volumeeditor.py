@@ -1941,16 +1941,16 @@ class ImageScene( QtGui.QGraphicsView):
     def onContext(self, pos):
         menu = QtGui.QMenu('Labeling menu', self)
         
-        toggleEraseA = None
-        if self.drawManager.erasing == True:
-            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
-        else:
-            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
+#        toggleEraseA = None
+#        if self.drawManager.erasing == True:
+#            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
+#        else:
+#            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
         
         menu.addSeparator()
         labelList = []
-        volumeLabel = self.volumeEditor.labelWidget.volumeLabels
-        for index, item in enumerate(volumeLabel.descriptions):
+        volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
+        for index, item in enumerate(volumeLabel):
             labelColor = QtGui.QColor.fromRgb(long(item.color))
             labelIndex = item.number
             labelName = item.name
