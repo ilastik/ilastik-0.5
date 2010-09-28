@@ -56,13 +56,13 @@ class LabelListItem(QtGui.QListWidgetItem):
 
 
 class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
-    def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
+    def __init__(self,  labelMgr,  volumeLabelDescriptions, volumeEditor,  overlayItem):
         QtGui.QGroupBox.__init__(self,  "Labels")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)
         self.overlayItem = overlayItem
-
+        self.volumeLabelDescriptions = volumeLabelDescriptions
         #Label selector
         self.addLabelButton = QtGui.QPushButton("Create Class")
         self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
@@ -74,7 +74,6 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.labelMgr = labelMgr
         self.listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.listWidget.connect(self.listWidget, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
-        self.volumeLabels = volumeLabels
         self.colorTab = []
         self.items = []
         self.volumeEditor = volumeEditor
@@ -82,16 +81,16 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
         self.labelPropertiesChanged_callback = None
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.initFromVolumeLabels(volumeLabels)
+        self.initFromVolumeLabelDescriptions(volumeLabelDescriptions)
             
     def currentItem(self):
         return self.listWidget.currentItem()
     
     
     
-    def initFromVolumeLabels(self, volumelabel):
-        self.volumeLabel = volumelabel
-        for index, item in enumerate(volumelabel.descriptions):
+    def initFromVolumeLabelDescriptions(self, volumeLabelDescriptions):
+        self.volumeLabelDescriptions = volumeLabelDescriptions
+        for index, item in enumerate(volumeLabelDescriptions):
             li = LabelListItem(item.name,item.number, QtGui.QColor.fromRgba(long(item.color)))
             self.listWidget.addItem(li)
             self.items.append(li)
@@ -102,7 +101,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
 
 
     def changeText(self, text):
-        self.volumeLabels.descriptions[self.currentRow()].name = text
+        self.volumeLabelDescriptions[self.currentRow()].name = text
         
     def createLabel(self):
         name = "Label " + len(self.items).__str__()
@@ -143,7 +142,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         
 
     def buildColorTab(self):
-        self.overlayItem.colorTable = self.colorTab = self.volumeLabels.getColorTab()
+        self.overlayItem.colorTable = self.colorTab = self.volumeLabelDescriptions.getColorTab()
 
 
     def onContext(self, pos):

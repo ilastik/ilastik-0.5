@@ -24,8 +24,9 @@ import sys
 
 import ilastik.gui.volumeeditor as ve
 
-from ilastik.core import dataMgr, featureMgr
-from ilastik.core import classificationMgr as cm
+from ilastik.core import dataMgr
+from ilastik.core.modules.Classification import featureMgr
+from ilastik.core.modules.Classification import classificationMgr as cm
 from ilastik.gui.iconMgr import ilastikIcons
 
 class BatchProcess(QtGui.QDialog):

@@ -33,14 +33,7 @@ class ProjectDlg(QtGui.QDialog):
             self.dataMgr = self.ilastik.project.dataMgr
             self.project = self.ilastik.project
         else:
-            if self.ilastik.featureCache is not None:
-                if 'tempF' in self.ilastik.featureCache.keys():
-                    grp = self.ilastik.featureCache['tempF']
-                else:
-                    grp = self.ilastik.featureCache.create_group('tempF')
-            else:
-                grp = None
-            self.dataMgr = dataMgr.DataMgr(grp)
+            self.dataMgr = dataMgr.DataMgr()
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
                     
     def initDlg(self):
@@ -68,7 +61,7 @@ class ProjectDlg(QtGui.QDialog):
         flagON = ~theFlag | theFlag 
         flagOFF = ~theFlag
             
-        for d in project.dataMgr._dataItems:
+        for d in project.dataMgr:
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)
             
@@ -82,7 +75,9 @@ class ProjectDlg(QtGui.QDialog):
             # labels
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(checker(d._dataVol.labels._data != None))
+            #TODO: check for label availability
+            #r.setCheckState(checker(d._dataVol.labels._data != None))
+            
             #r.setFlags(r.flags() & flagOFF);
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
@@ -134,7 +129,6 @@ class ProjectDlg(QtGui.QDialog):
                 r.setCheckState(QtCore.Qt.Unchecked)
 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-                print theDataItem._dataVol.labels
                 
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
@@ -258,7 +252,7 @@ class ProjectDlg(QtGui.QDialog):
         labeler = self.labeler
         description = self.description
                
-        self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
+        #self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
 
             
         # Go through the rows of the table and add files if needed
@@ -269,7 +263,8 @@ class ProjectDlg(QtGui.QDialog):
             
             theDataItem._hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
             if theDataItem._hasLabels == False:
-                theDataItem._dataVol.labels.clear()
+                #TODO: remove labels from item
+                pass
                 
             contained = False
             for pr in theDataItem._projects:

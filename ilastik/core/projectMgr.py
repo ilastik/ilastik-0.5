@@ -42,10 +42,15 @@ from ilastik.core.volume import DataAccessor,  Volume
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
+<<<<<<< HEAD
 from ilastik.core import labelMgr
 from ilastik.core import featureMgr
+=======
+from ilastik.core.modules.Classification import labelMgr, featureMgr, classificationMgr
+>>>>>>> 70310248ce1a1540776873b4eae550f8abdabb8c
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
+from ilastik.core.modules.Classification import classificationMgr
 from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr 
 from ilastik.core import connectedComponents
@@ -79,8 +84,14 @@ class Project(object):
         self.trainingMatrix = None
         self.trainingLabels = None
         self.trainingFeatureNames = None
-        self.featureMgr = None
-        self.labelMgr = labelMgr.LabelMgr(self.dataMgr)
+        self.featureMgr = featureMgr.FeatureMgr(self.dataMgr)
+        
+        
+        classificationMgr.ClassificationModuleMgr(self.dataMgr, self.featureMgr)
+            
+        self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"]
+        
+        self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)
         self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
@@ -125,12 +136,10 @@ class Project(object):
                 # create group for dataItem
                 dk = dataSetG.create_group('dataItem%02d' % k)
                 dk.attrs["fileName"] = str(item.fileName)
-                dk.attrs["_name"] = str(item._name)
+            dk.attrs["Name"] = str(item._name)
                 # save raw data
-                item._dataVol.serialize(dk)
-                if item._prediction is not None:
-                    item._prediction.serialize(dk, '_prediction' )
-    
+            item.serialize(dk)
+            
     
             # Save to hdf5 file
             fileHandle.close()
@@ -156,19 +165,19 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
+<<<<<<< HEAD
             dataVol = Volume.deserialize(fileHandle['DataSets'][name])
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['_name'])
             activeItem._dataVol = dataVol
+=======
+            print name
+            activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
+            activeItem.deserialize(fileHandle['DataSets'][name])
+            #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
+            #activeItem._dataVol = dataVol
+>>>>>>> 70310248ce1a1540776873b4eae550f8abdabb8c
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
 
-            if '_prediction' in fileHandle['DataSets'][name].keys():
-                activeItem._prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], '_prediction')
-                for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
-                    item._prediction = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-    
-                margin = activeLearning.computeEnsembleMargin(activeItem._prediction[:,:,:,:,:])*255.0
-                activeItem._dataVol.uncertainty = margin[:,:,:,:]
-            
             activeItem.updateOverlays()
                             
             dataMgr.append(activeItem,alreadyLoaded=True)
@@ -203,7 +212,7 @@ class Project(object):
             for index2,  di in enumerate(self.dataMgr):
                 #create Feature Overlays
                 for c in range(0,size):
-                    rawdata = di._featureM[:, :, :, :, offset+c:offset+c+1]
+                    rawdata = di.module["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
                     #TODO: the min/max stuff here is slow !!!
                     #parallelize ??
                     min = numpy.min(rawdata)

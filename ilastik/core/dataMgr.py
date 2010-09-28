@@ -44,7 +44,7 @@ except:
     have_qt = False
 
 from ilastik.core.volume import DataAccessor as DataAccessor
-from ilastik.core.volume import Volume as Volume
+from ilastik.core.volume import Volume as Volume, VolumeLabels, VolumeLabelDescriptionMgr
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
@@ -245,23 +245,77 @@ class BlockAccessor2D():
             self._data[args] = data
             self._lock.release()
 
+class PropertyMgr():
+    """
+    Holds a bag of Properties that can be serialized and deserialized
+    new properties are also added to the parents regular attributes
+    for easier access
+    """
+    def __init__(self, parent):
+        self._dict = {}
+        self._parent = parent
+        
+    def serialize(self, h5g, name):
+        for v in self.values():
+            if hasattr(v, "serialize"):
+                v.serialize(h5g)
+    
+    def deserialize(self, h5g, name):
+        pass
+
+    def keys(self):
+        return self._dict.keys()
+    
+    def values(self):
+        return self._dict.values()
+
+    def __setitem__(self,  key,  value):
+        self._dict[key] = value
+        setattr(self._parent, key, value)
+    
+    def __getitem__(self, key):
+        try:
+            answer =  self._dict[key]
+        except:
+            answer = None
+        return answer
+    
+    
+class ModuleMgr(PropertyMgr):
+    """
+    abstract base class for modules
+    """
+    def __init__(self, parent):
+        PropertyMgr.__init__(self, parent)
+    
+    def onModuleStart(self):
+        pass
+    
+    def onModuleStop(self):
+        pass
+    
+    def onNewImage(self, dataItemImage):
+        pass
+    
+    def onDeleteImage(self, dataItemImage):
+        pass
+    
+    
+        
+    
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
         self._dataVol = None
-        self._prediction = None
         self._featureM = None
-        
-        self.clearFeaturesAndTraining()
         
         self._seedL = numpy.zeros((0, 1), 'uint8')
         self._seedIndices = numpy.zeros((0, 1), 'uint32')
         
-        self._featureCacheDS = None
-        self._featureBlockAccessor = None
         self._segmentationWeights = None
         
         self.overlayMgr = overlayMgr.OverlayMgr()
+        self.module = PropertyMgr(self)
         
 
     def __getitem__(self, args):
@@ -277,49 +331,8 @@ class DataItemImage(DataItemBase):
         elif name == "shape":
             return self._dataVol._data.shape
         else:
-            raise AttributeError
+            raise AttributeError, name
         
-    def getTrainingMforInd(self, ind):
-#                        featureShape = self._featureM.shape[0:4]
-#                        URI =  unravelIndices(indices, featureShape)
-#                        tempfm = self._featureM[URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
-#                        tempfm.shape = (tempfm.shape[0],) + (tempfm.shape[1]*tempfm.shape[2],)
-        featureShape = self._featureM.shape[0:4]
-        URI =  unravelIndices(ind, featureShape)
-        if issubclass(self._featureM.__class__,numpy.ndarray): 
-            trainingF = self._featureM[URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
-        else:
-            print ind.shape
-            print self._featureM.shape
-            trainingF = numpy.zeros((ind.shape[0],) + (self._featureM.shape[4],), 'float32')
-            for i in range(URI.shape[0]): 
-                trainingF[i,:,:] = self._featureM[URI[i,0],URI[i,1],URI[i,2],URI[i,3],:]
-        return trainingF
-        
-    def getTrainingMatrixRef(self):
-        if len(self._trainingF) == 0 and self._featureM is not None:
-            tempF = []
-            tempL = []
-    
-            tempd =  self._dataVol.labels._data[:, :, :, :, 0].ravel()
-            indices = numpy.nonzero(tempd)[0]
-            tempL = self._dataVol.labels._data[:,:,:,:,0].ravel()[indices]
-            tempL.shape += (1,)
-                                   
-            self._trainingIndices = indices
-            self._trainingL = tempL
-            if len(indices) > 0:
-                self._trainingF = self.getTrainingMforInd(indices)
-            else:
-                self.clearFeaturesAndTraining()
-        return self._trainingL, self._trainingF, self._trainingIndices
-    
-    def getTrainingMatrix(self):
-        self.getTrainingMatrixRef()
-        if len(self._trainingF) != 0:
-            return self._trainingL, self._trainingF, self._trainingIndices
-        else:
-            return None, None, None
     
     def _buildSeedsWhenNotThere(self):
         if self._seedL is None:
@@ -337,115 +350,6 @@ class DataItemImage(DataItemBase):
         self._buildSeedsWhenNotThere()
         return self._seedL,  self._seedIndices
         
-    def updateTrainingMatrix(self, newLabels):
-        """
-        This method updates the current training Matrix with new labels.
-        newlabels can contain completey new labels, changed labels and deleted labels
-        """
-        for nl in newLabels:
-            try:
-                if nl.erasing == False:
-                    indic =  list(numpy.nonzero(nl._data))
-                    indic[0] = indic[0] + nl.offsets[0]
-                    indic[1] += nl.offsets[1]
-                    indic[2] += nl.offsets[2]
-                    indic[3] += nl.offsets[3]
-                    indic[4] += nl.offsets[4]
-                    loopc = 2
-                    count = 1
-                    indices = indic[-loopc]*count
-                    templ = list(self._dataVol._data.shape[1:-1])
-                    templ.reverse()
-                    for s in templ:
-                        loopc += 1
-                        count *= s
-                        indices += indic[-loopc]*count
-
-                    if len(indices.shape) == 1:
-                        indices.shape = indices.shape + (1,)
-
-                    mask = numpy.setmember1d(self._trainingIndices.ravel(),indices.ravel())
-                    nonzero = numpy.nonzero(mask)[0]
-                    if len(nonzero) > 0:
-                        tt = numpy.delete(self._trainingIndices,nonzero)
-                        if len(tt.shape) == 1:
-                            tt.shape = tt.shape + (1,)
-                        self._trainingIndices = numpy.concatenate((tt,indices))
-                        tempI = numpy.nonzero(nl._data)
-                        tempL = nl._data[tempI]
-                        tempL.shape += (1,)
-                        temp2 = numpy.delete(self._trainingL,nonzero)
-                        temp2.shape += (1,)
-                        self._trainingL = numpy.vstack((temp2,tempL))
-
-
-                        temp2 = numpy.delete(self._trainingF,nonzero, axis = 0)
-
-                        if self._featureM is not None and len(indices) > 0:
-                            tempfm = self.getTrainingMforInd(indices)
-
-                            if len(temp2.shape) == 1:
-                                temp2.shape += (1,)
-
-                            self._trainingF = numpy.vstack((temp2,tempfm))
-                        else:
-                            self._trainingF = temp2
-
-                    elif indices.shape[0] > 0: #no intersection, just add everything...
-                        if len(self._trainingIndices.shape) == 1:
-                            self._trainingIndices.shape = self._trainingIndices.shape + (1,)
-                        self._trainingIndices = numpy.concatenate((self._trainingIndices,indices))
-
-                        tempI = numpy.nonzero(nl._data)
-                        tempL = nl._data[tempI]
-                        tempL.shape += (1,)
-                        temp2 = self._trainingL
-                        self._trainingL = numpy.vstack((temp2,tempL))
-
-                        if self._featureM is not None and len(indices) > 0:
-                            if self._trainingF is not None:
-                                tempfm = self.getTrainingMforInd(indices)
-                                if len(self._trainingF.shape) == 1:
-                                    self._trainingF.shape = (0,tempfm.shape[1])
-                                self._trainingF = numpy.vstack((self._trainingF,tempfm))
-                            else:
-                                self._trainingF = self.getTrainingMforInd(indices)
-
-                else: #erasing == True
-                    indic =  list(numpy.nonzero(nl._data))
-                    indic[0] = indic[0] + nl.offsets[0]
-                    indic[1] += nl.offsets[1]
-                    indic[2] += nl.offsets[2]
-                    indic[3] += nl.offsets[3]
-                    indic[4] += nl.offsets[4]
-
-                    loopc = 2
-                    count = 1
-                    indices = indic[-loopc]*count
-                    templ = list(self._dataVol._data.shape[1:-1])
-                    templ.reverse()
-                    for s in templ:
-                        loopc += 1
-                        count *= s
-                        indices += indic[-loopc]*count
-
-                    mask = numpy.setmember1d(self._trainingIndices.ravel(),indices.ravel())
-                    nonzero = numpy.nonzero(mask)[0]
-                    if len(nonzero) > 0:
-                        if self._trainingF is not None:
-                            self._trainingIndices = numpy.delete(self._trainingIndices,nonzero)
-                            self._trainingL  = numpy.delete(self._trainingL,nonzero)
-                            self._trainingL.shape += (1,) #needed because numpy.delete is stupid
-                            self._trainingF = numpy.delete(self._trainingF,nonzero, axis = 0)
-                    else: #no intersectoin, in erase mode just pass
-                        pass
-            except Exception, e:
-                print e
-                traceback.print_exc(file=sys.stdout)
-                print self._trainingIndices.shape
-                print indices.shape
-                print self._trainingF.shape
-                print nonzero
 
 
     def updateSeeds(self, newLabels):
@@ -570,24 +474,6 @@ class DataItemImage(DataItemBase):
         self._seedL = None
         self._seedIndices = None
 
-    def clearFeaturesAndTraining(self):
-        self._trainingF = numpy.zeros((0), 'float32')      
-        self._trainingL = numpy.zeros((0, 1), 'uint8')
-        self._trainingIndices = numpy.zeros((0, 1), 'uint32')
-        
-    def getFeatureSlicesForViewState(self, vs):
-        tempM = []
-        if self._featureM is not None:
-            tempM.append(self._featureM[vs[0],vs[1],:,:,:])
-            tempM.append(self._featureM[vs[0],:,vs[2],:,:])
-            tempM.append(self._featureM[vs[0],:,:,vs[3],:])
-            for i, f in enumerate(tempM):
-                tf = f.reshape((numpy.prod(f.shape[0:2]),) + (f.shape[2],))
-                tempM[i] = tf
-                
-            return tempM
-        else:
-            return None
             
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
@@ -597,41 +483,45 @@ class DataItemImage(DataItemBase):
      
     def serialize(self, h5G):
         self._dataVol.serialize(h5G)
-        if self._prediction is not None:
-            self._prediction.serialize(h5G, '_prediction')
-            
+        
+        for k in self.module.keys():
+            if hasattr(self.module[k], "serialize"):
+                print "serializing ", k
+                self.module[k].serialize(h5G)
     
     def updateOverlays(self):
         #create Overlay for uncertainty:
         ov = overlayMgr.OverlayItem(self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False)
         self.overlayMgr["Raw Data"] = ov
 
-        if self._dataVol.labels is not None:
-            #create an overlay for labels
-            ov = overlayMgr.OverlayItem(self._dataVol.labels._data, color = 0, alpha = 1.0, colorTable = self._dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-            self.overlayMgr["Classification/Labels"] = ov
-            for p_i, descr in enumerate(self._dataVol.labels.descriptions):
-                #create Overlay for _prediction:
-                ov = overlayMgr.OverlayItem(descr._prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-                self.overlayMgr["Classification/Prediction/" + descr.name] = ov
-
-        if self._dataVol.uncertainty is not None:
-            #create Overlay for uncertainty:
-            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-            self.overlayMgr["Classification/Uncertainty"] = ov
+#        if self._dataVol.labels is not None:
+#            #create an overlay for labels
+#            ov = overlayMgr.OverlayItem(self._dataVol.labels._data, color = 0, alpha = 1.0, colorTable = self._dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+#            self.overlayMgr["Classification/Labels"] = ov
+#            for p_i, descr in enumerate(self._dataVol.labels.descriptions):
+#                #create Overlay for _prediction:
+#                ov = overlayMgr.OverlayItem(descr._prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
+#                self.overlayMgr["Classification/Prediction/" + descr.name] = ov
+#
+#        if self._dataVol.uncertainty is not None:
+#            #create Overlay for uncertainty:
+#            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+#            self.overlayMgr["Classification/Uncertainty"] = ov
 
             
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
-        self._dataVol = Volume.deserialize(h5G, offsets, shape)
+        self._dataVol = Volume.deserialize(self, h5G, offsets, shape)
         
-        if '_prediction' in h5G.keys():
-            print "deserializing _prediction..."
-            self._prediction = DataAccessor.deserialize(h5G, '_prediction', offsets, shape)
-            for p_i, item in enumerate(self._dataVol.labels.descriptions):
-                item._prediction = (self._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-
-            margin = activeLearning.computeEnsembleMargin(self._prediction[:,:,:,:,:])*255.0
-            self._dataVol.uncertainty = margin[:,:,:,:]
+        #load obsolete file format parts (pre version 0.5)
+        #and store them in the properties
+        #the responsible modules will take care of them
+        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
+        self.module["_obsolete_labels"] = labels
+        if 'prediction' in h5G.keys():
+            self.module["_obsolete_prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
+            
+            
+        
         self.updateOverlays()
         
             
@@ -644,15 +534,11 @@ class DataMgr():
     
     def __init__(self, featureCacheFile=None):
         self._dataItems = []            
-        self.classifiers = []
-        self.featureLock = threading.Semaphore(1) #prevent chaining of _activeImage during thread stuff
-        self._trainingVersion = 0
-        self._featureVersion = 0
+        self.featureLock = threading.Semaphore(1) #prevent chaining of _activeImageNumber during thread stuff
         self._dataItemsLoaded = []
-        self._trainingF = None
-        self._featureCacheFile = featureCacheFile
         self.channels = -1
-        self._activeImage = 0
+        self._activeImageNumber = 0
+        self.module = PropertyMgr(self)
         
         #TODO: Maybe it shouldn't be here...
         self.connCompBackgroundKey = ""    
@@ -675,15 +561,11 @@ class DataMgr():
             
             self.selectedChannels = range(self.channels)
             
-            if self._featureCacheFile is not None:
-                cx = 1
-                cy = 32
-                cz = 32
-                if str(len(self)) in self._featureCacheFile.keys():
-                    del self._featureCacheFile[str(len(self))]
-                dataItem._featureCacheDS = self._featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,cx,cy,cz,1,1), compression=None)
             self._dataItems.append(dataItem)
             self._dataItemsLoaded.append(alreadyLoaded)
+            for v in self.module.values():
+                v.onNewImage(dataItem)
+                
         else:
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         
@@ -693,69 +575,13 @@ class DataMgr():
         gc.collect()
         
     
-    def buildTrainingMatrix(self, sigma = 0):
-        trainingF = []
-        trainingL = []
-        indices = []
-        for item in self:
-            trainingLabels, trainingFeatures, indic = item.getTrainingMatrixRef()
-            if trainingFeatures is not None:
-                indices.append(indic)
-                trainingL.append(trainingLabels)
-                trainingF.append(trainingFeatures)
-            
-        self._trainingL = trainingL
-        self._trainingF = trainingF
-        self._trainingIndices = indices     
-    
-    def getTrainingMatrix(self, sigma = 0):
-        """
-        sigma: trainig _data that is within sigma to the image borders is not considered to prevent
-        border artifacts in training
-        """
-        if self._trainingVersion < self._featureVersion:
-            self.clearFeaturesAndTraining()
-        self.buildTrainingMatrix()
-        self._trainingVersion =  self._featureVersion
-            
-        if len(self._trainingF) == 0:
-            self.buildTrainingMatrix()
-        
-        if len(self._trainingF) > 0:
-            trainingF = numpy.vstack(self._trainingF)
-            trainingL = numpy.vstack(self._trainingL)
-        
-            return trainingF, trainingL
-        else:
-            print "######### empty Training Matrix ##########"
-            return None, None
-        
-    
-    def updateTrainingMatrix(self, newLabels,  imageNr = None):
-        if self._trainingF is None or len(self._trainingF) == 0 or self._trainingVersion < self._featureVersion:
-            self.buildTrainingMatrix()        
-        if imageNr is None:
-            imageNr = self._activeImage
-        self[imageNr].updateTrainingMatrix(newLabels)
-
-                    
-    def clearFeaturesAndTraining(self):
-        self._featureVersion += 1
-        self._trainingF = None
-        self._trainingL = None
-        self._trainingIndices = None
-        self.classifiers = []
-        
-        for index, item in enumerate(self):
-            item.clearFeaturesAndTraining()
-            
     def clearSeeds(self):
         for index, item in enumerate(self):
             item.clearSeeds()
 
     def updateSeeds(self, newLabels,  imageNr = None):
         if imageNr is None:
-            imageNr = self._activeImage
+            imageNr = self._activeImageNumber
         self[imageNr].updateSeeds(newLabels)
         
     def updateBackground(self, newLabels, imageNr = None):
@@ -764,7 +590,7 @@ class DataMgr():
             print "Select an overlay first!"
             return
         if imageNr is None:
-            imageNr = self._activeImage
+            imageNr = self._activeImageNumber
         setAdd, setRemove = self[imageNr].updateBackground(newLabels, self.connCompBackgroundKey)
         self.connCompBackgroundClasses = self.connCompBackgroundClasses.union(setAdd)
         self.connCompBackgroundClasses = self.connCompBackgroundClasses.difference(setRemove)
@@ -798,7 +624,8 @@ class DataMgr():
         return len(self._dataItems)
     
     def serialize(self, h5grp):
-        pass
+        for v in self.module.values():
+            v.serialize(h5grp)
         
     @staticmethod
     def deserialize(self):
