@@ -58,7 +58,7 @@ from ilastik.core.volume import DataAccessor,  Volume
 from shortcutmanager import *
 
 from ilastik.gui.overlayWidget import OverlayListWidget
-from ilastik.gui.labelWidget import LabelListWidget
+from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
 import ilastik.gui.exportDialog as exportDialog
 
 from ilastik.gui.iconMgr import ilastikIcons # oli todo
@@ -181,10 +181,10 @@ class LabelState(State):
         self.erasing = erasing
         self.labelNumber = labelNumber
         self.labels = labels
-        self.dataBefore = volumeEditor.labelWidget.volumeLabels._data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        self.dataBefore = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         
     def restore(self, volumeEditor):
-        temp = volumeEditor.labelWidget.volumeLabels._data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        temp = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         restore  = numpy.where(self.labels > 0, self.dataBefore, 0)
         stuff = numpy.where(self.labels > 0, self.dataBefore + 1, 0)
         erase = numpy.where(stuff == 1, 1, 0)
@@ -731,7 +731,7 @@ class VolumeEditor(QtGui.QWidget):
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
         self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
-        self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr._widget = self.overlayWidget
+        self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr._widget = self.overlayWidget
 
 
     def get_copy(self):
@@ -858,7 +858,7 @@ class VolumeEditor(QtGui.QWidget):
             sizes5 = (1,labels.shape[0], labels.shape[1],1,1)
         
         vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
-        vu.applyTo(self.labelWidget.volumeLabels._data)
+        vu.applyTo(self.labelWidget.overlayItem)
         self.pendingLabels.append(vu)
 
         patches = self.imageScenes[axis].patchAccessor.getPatchesForRect(offsets[0], offsets[1],offsets[0]+labels.shape[0], offsets[1]+labels.shape[1])
@@ -1194,7 +1194,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 else:
                                     image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
                                     image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                    if isinstance(origitem.color,  int):
+                                    if isinstance(origitem.color,  long):
                                         image0.fill(origitem.color)
                                     else: #shold be QColor then !
                                         image0.fill(origitem.color.rgba())
@@ -1378,6 +1378,8 @@ class ImageScene( QtGui.QGraphicsView):
         self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
         self.border.setZValue(200)
         self.scene.addItem(self.border)
+        self.lastPanPoint = QtCore.QPoint()
+        self.dragMode = False
         
     def __init__(self, parent, imShape, axis, drawManager):
         """
@@ -1420,7 +1422,7 @@ class ImageScene( QtGui.QGraphicsView):
             #self.fullSceenButton = QtGui.QPushButton("+")
             self.fullSceenButton = MyQLabel()
             self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.AddSelx22))
-            self.fullSceenButton.setStyleSheet("border: none")
+            self.fullSceenButton.setStyleSheet("border: none; background-color: white")
             self.connect(self.fullSceenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
             tempLayout.addStretch()
             tempLayout.addWidget(self.fullSceenButton)
@@ -1447,7 +1449,7 @@ class ImageScene( QtGui.QGraphicsView):
         #self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
 
         self.patchAccessor = PatchAccessor(imShape[0],imShape[1],64)
-        print "PatchCount :", self.patchAccessor.patchCount
+        #print "PatchCount :", self.patchAccessor.patchCount
 
         self.imagePatches = range(self.patchAccessor.patchCount)
         for i,p in enumerate(self.imagePatches):
@@ -1844,6 +1846,10 @@ class ImageScene( QtGui.QGraphicsView):
 
 
     def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.MidButton:
+            self.lastPanPoint = event.pos()
+            self.crossHairCursor.setVisible(False)
+            self.dragMode = True
         if not self.volumeEditor.labelWidget.currentItem():
             return
         
@@ -1857,6 +1863,11 @@ class ImageScene( QtGui.QGraphicsView):
             self.onContext(event.pos())
 
     def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.MidButton:
+            self.crossHairCursor.setVisible(True)
+            self.lastPanPoint = QtCore.QPoint()
+            self.dragMode = False
+            self.mouseMoveEvent(event)
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
             self.endDraw(mousePos)
@@ -1865,6 +1876,18 @@ class ImageScene( QtGui.QGraphicsView):
             self.tempErase = False
             
     def mouseMoveEvent(self,event):
+        if self.dragMode == True:
+            hBar = self.horizontalScrollBar()
+            vBar = self.verticalScrollBar()
+            delta = QtCore.QPointF(event.pos() - self.lastPanPoint)
+            vBar.setValue(vBar.value() - delta.y())
+            if self.isRightToLeft():
+                hBar.setValue(hBar.value() + delta.x())
+            else:
+                hBar.setValue(hBar.value() - delta.x())
+            self.lastPanPoint = event.pos()
+            return
+            
         self.mousePos = mousePos = self.mousePos = self.mapToScene(event.pos())
         x = mousePos.x()
         y = mousePos.y()

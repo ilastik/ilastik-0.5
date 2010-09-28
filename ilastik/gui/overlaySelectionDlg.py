@@ -103,7 +103,7 @@ class OverlaySelectionDialog(QDialog):
         self.layoutWidget = QWidget(self)
         self.selectedOverlaysList = []
         self.ilastik = ilastik
-        self.christophsDict = ilastik.project.dataMgr[ilastik._activeImage].overlayMgr
+        self.christophsDict = ilastik.project.dataMgr[ilastik._activeImageNumber].overlayMgr
         self.forbiddenOverlays = forbiddenItems
         self.preSelectedOverlays = selectedItems
         self.singleOverlaySelection = singleSelection
@@ -154,6 +154,8 @@ class OverlaySelectionDialog(QDialog):
         self.grview = QGraphicsView()
         self.grview.setMinimumWidth(350)
         self.grview.setMinimumHeight(300)
+        self.grview.setMaximumWidth(350)
+        self.grview.setMaximumHeight(300)
         self.grview.setDragMode(QGraphicsView.ScrollHandDrag)
         self.grview.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.grview.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -451,7 +453,7 @@ class OverlaySelectionDialog(QDialog):
             if answer is not None:
                 name = QInputDialog.getText(self,"Edit Name", "Please Enter the name of the new Overlay:", text = "Custom Overlays/My Overlay" )
                 name = str(name[0])
-                self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr[name] = answer
+                self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr[name] = answer
                 self.cancel()
 
 

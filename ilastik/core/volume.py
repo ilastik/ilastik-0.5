@@ -203,6 +203,28 @@ class VolumeLabelDescription():
         t = VolumeLabelDescription( self.name, self.number, self.color,  self._prediction)
         return t
     
+class VolumeLabelDescriptionMgr(list):
+    def __init__(self):
+        list.__init__(self)
+
+    def getLabelNames(self):
+        labelNames = []
+        for idx, it in enumerate(self):
+            labelNames.append(it.name)
+        return labelNames    
+        
+        
+    def getColorTab(self):
+        colorTab = []
+        for i in range(256):
+            colorTab.append(long(0)) #QtGui.QColor(0,0,0,0).rgba()
+
+        for index,item in enumerate(self):
+            colorTab[item.number] = long(item.color)
+        return colorTab
+    
+    
+    
 class VolumeLabels():
     def __init__(self, data = None):
         if issubclass(data.__class__, DataAccessor):
@@ -218,7 +240,7 @@ class VolumeLabels():
         
     def serialize(self, h5G, name):
         group = h5G.create_group(name)
-        self._data.serialize(group, '_data')
+        self._data.serialize(group, 'data')
         
         tColor = []
         tName = []
@@ -279,15 +301,15 @@ class VolumeLabels():
             return None
         
 class Volume():
-    def __init__(self,  data,  labels = None,  seeds = None,  uncertainty = None,  segmentation = None, background = None, objects = None):
+    def __init__(self,  data, seeds = None,  uncertainty = None,  segmentation = None, background = None, objects = None):
         self._data = data
-        self.labels = labels
+        #self.labels = labels
         self.seeds = seeds
         self.objects = objects
         
         self.projectOverlays = []
         self.seedOverlays = []
-        self.labelOverlays = []
+        #self.labelOverlays = []
         self.objectOverlays = []
         self.backgroundOverlays = []
         self.autosegOverlays = []
@@ -296,9 +318,9 @@ class Volume():
         self.segmentation = segmentation
         self.background = background
         
-        if self.labels is None:
-            l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
-            self.labels = VolumeLabels(l)
+#        if self.labels is None:
+#            l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
+#            self.labels = VolumeLabels(l)
             
         if self.seeds is None:
             l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
@@ -325,18 +347,18 @@ class Volume():
 
     def serialize(self, h5G):
         self._data.serialize(h5G, "data")
-        if self.labels is not None:
-            self.labels.serialize(h5G, "labels")
         if self.seeds is not None:
             self.seeds.serialize(h5G, "seeds")
         
     @staticmethod
-    def deserialize(h5G, offsets = (0,0,0), shape=(0,0,0)):
-        #TODO: make nicer
+    def deserialize(dataItemImage, h5G, offsets = (0,0,0), shape=(0,0,0)):
         data = DataAccessor.deserialize(h5G, "data", offsets, shape)
-        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
-        seeds = VolumeLabels.deserialize(h5G,  "seeds")
-        v =  Volume(data,  labels = labels,  seeds = seeds)
+        #seeds = VolumeLabels.deserialize(h5G,  "seeds")
+        if "seeds" in h5G.keys():
+            seeds = VolumeLabels.deserialize(h5G,  "seeds")
+            v =  Volume(data,   seeds = seeds)
+        else:
+            v =  Volume(data)
         return v
 
 
