@@ -594,11 +594,12 @@ class VolumeEditor(QtGui.QWidget):
     def prevLabel(self):
         self.labelWidget.nextLabel()
 
-    def onLabelSelected(self, index):
-        if self.labelWidget.currentItem() is not None:
-            self.drawManager.setBrushColor(self.labelWidget.currentItem().color)
-            for i in range(3):
-                self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
+    def onLabelSelected(self):
+        print "onLabelSelected() Warning: am i used anymore?"
+#        if self.labelWidget.currentItem() is not None:
+#            self.drawManager.setBrushColor(self.labelWidget.currentItem().color)
+#            for i in range(3):
+#                self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
 
     def onOverlaySelected(self, index):
         if self.labelWidget.currentItem() is not None:
@@ -717,7 +718,8 @@ class VolumeEditor(QtGui.QWidget):
             self.labelWidget.close()
             del self.labelWidget
         self.labelWidget = widget
-        self.connect(self.labelWidget , QtCore.SIGNAL("selectedLabel(int)"), self.onLabelSelected)
+        print widget
+        self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
         self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
     
     def setOverlayWidget(self,  widget):
@@ -1585,7 +1587,6 @@ class ImageScene( QtGui.QGraphicsView):
 
     def sliceDown10(self):
         self.changeSlice(-10)
-
 
     def brushSmaller(self):
         b = self.drawManager.brushSize

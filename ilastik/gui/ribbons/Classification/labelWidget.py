@@ -57,8 +57,8 @@ class LabelListItem(QtGui.QListWidgetItem):
 
 class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def __init__(self,  labelMgr,  volumeLabelDescriptions, volumeEditor,  overlayItem):
-        QtGui.QGroupBox.__init__(self,  "Labels")
-        BaseLabelWidget.__init__(self,None)
+        QtGui.QGroupBox.__init__(self, "Labels")
+        BaseLabelWidget.__init__(self, None)
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)
         self.overlayItem = overlayItem
@@ -76,9 +76,10 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.connect(self.listWidget, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
         self.colorTab = []
         self.items = []
-        self.volumeEditor = volumeEditor
         self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
         #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
+        
+        self.connect(self.listWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.changeLabel)
         self.labelPropertiesChanged_callback = None
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.initFromVolumeLabelDescriptions(volumeLabelDescriptions)
@@ -190,4 +191,8 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         else:
             i = self.listWidget.model().index(self.listWidget.model().rowCount()-1,0)
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
+        
+    def changeLabel(self):
+        for i in range(3):
+            self.volumeEditor.imageScenes[i].crossHairCursor.setColor(self.listWidget.currentItem().color)
 
