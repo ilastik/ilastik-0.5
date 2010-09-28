@@ -144,7 +144,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.parent.projectModified()
         
     def on_btnOptions_clicked(self):
-        tmp = ProjectSettingsDlg(self, self.ilastik.project)
+        tmp = ProjectSettingsDlg(self.ilastik, self.ilastik.project)
         tmp.exec_()
 
 
