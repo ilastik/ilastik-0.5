@@ -280,7 +280,7 @@ class VolumeLabels():
         if name in h5G.keys():
             t = h5G[name]
             if isinstance(t,h5py.highlevel.Group):
-                data = DataAccessor.deserialize(t, '_data', offsets, shape)
+                data = DataAccessor.deserialize(t, 'data', offsets, shape)
             else:
                 data = DataAccessor.deserialize(h5G, name, offsets, shape)
             colors = []

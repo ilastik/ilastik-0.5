@@ -61,7 +61,7 @@ import numpy
 pathext = os.path.dirname(__file__)
 
 try:
-    for f in os.listdir(os.path.abspath(pathext + '/classifiers')):
+    for f in os.listdir(os.path.abspath(pathext + '/../../classifiers')):
         module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
         if ext == '.py': # Important, ignore .pyc/othesr files.
             module = __import__('ilastik.core.classifiers.' + module_name)

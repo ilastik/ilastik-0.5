@@ -42,17 +42,12 @@ from ilastik.core.volume import DataAccessor,  Volume
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import classifiers
-<<<<<<< HEAD
-from ilastik.core import labelMgr
-from ilastik.core import featureMgr
-=======
 from ilastik.core.modules.Classification import labelMgr, featureMgr, classificationMgr
->>>>>>> 70310248ce1a1540776873b4eae550f8abdabb8c
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
 from ilastik.core.modules.Classification import classificationMgr
 from ilastik.core import backgroundMgr
-from ilastik.core import overlayMgr 
+from ilastik.core import overlayMgr  
 from ilastik.core import connectedComponents
 
 from ilastik import core 
@@ -165,17 +160,10 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
-<<<<<<< HEAD
-            dataVol = Volume.deserialize(fileHandle['DataSets'][name])
-            activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['_name'])
-            activeItem._dataVol = dataVol
-=======
-            print name
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             activeItem.deserialize(fileHandle['DataSets'][name])
             #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
             #activeItem._dataVol = dataVol
->>>>>>> 70310248ce1a1540776873b4eae550f8abdabb8c
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
 
             activeItem.updateOverlays()

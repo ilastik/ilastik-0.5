@@ -3,7 +3,7 @@ import h5py
 
 class ClassifierRandomForestVariableImportance(ClassifierBase):
     #human readable information
-    name = "RandomForest classifier with variable importance" 
+    name = "Random forest classifier with variable importance" 
     description = "Basic RandomForest classifier with computation of variable importance"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
