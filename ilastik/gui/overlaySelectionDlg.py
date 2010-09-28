@@ -154,6 +154,8 @@ class OverlaySelectionDialog(QDialog):
         self.grview = QGraphicsView()
         self.grview.setMinimumWidth(350)
         self.grview.setMinimumHeight(300)
+        self.grview.setMaximumWidth(350)
+        self.grview.setMaximumHeight(300)
         self.grview.setDragMode(QGraphicsView.ScrollHandDrag)
         self.grview.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.grview.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
