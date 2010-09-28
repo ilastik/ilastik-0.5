@@ -158,16 +158,17 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
-            dataVol = Volume.deserialize(fileHandle['DataSets'][name])
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
-            activeItem._dataVol = dataVol
+            activeItem.deserialize(fileHandle['DataSets'][name])
+            #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
+            #activeItem._dataVol = dataVol
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
 
             if '_prediction' in fileHandle['DataSets'][name].keys():
                 activeItem._prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], '_prediction')
                 for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
                     item._prediction = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-    
+                print "deserializing prediction"
                 margin = activeLearning.computeEnsembleMargin(activeItem._prediction[:,:,:,:,:])*255.0
                 activeItem._dataVol.uncertainty = margin[:,:,:,:]
             

@@ -750,8 +750,8 @@ class ClassificationPredict(object):
     
                 import ilastik.core.overlays.thresHoldOverlay as tho
                 
-                ov = tho.ThresHoldOverlay(foregrounds, [])
                 if activeItem.overlayMgr["Classification/Segmentation"] is None:
+                    ov = tho.ThresHoldOverlay(foregrounds, [])
                     activeItem.overlayMgr["Classification/Segmentation"] = ov
                 else:
                     ov = activeItem.overlayMgr["Classification/Segmentation"]

@@ -103,7 +103,8 @@ class ClassificationModuleMgr(ModuleMgr):
         if self.dataMgr.properties["Classification"] is None:
             self.dataMgr.properties["Classification"] = self
         self.classificationMgr = self.dataMgr.properties["Classification"]["classificationMgr"] = ClassificationMgr(self.dataMgr)
-        self.dataMgr.properties["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
+        if self.dataMgr.properties["Classification"]["labelDescriptions"] is None:
+            self.dataMgr.properties["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
 
         for i, im in enumerate(self.dataMgr):
             self.onNewImage(im)
@@ -126,7 +127,17 @@ class ClassificationModuleMgr(ModuleMgr):
             ov = overlayMgr.OverlayItem(data, color = 0, alpha = 1.0, colorTable = self.dataMgr.properties["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
             dataItemImage.overlayMgr["Classification/Labels"] = ov
             
-            
+        
+        #handle obsolete file formats:
+        if dataItemImage.properties["_obsolete_labels"] is not None:
+            labels = dataItemImage.properties["_obsolete_labels"]
+            ov = overlayMgr.OverlayItem(labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False)
+            dataItemImage.overlayMgr["Classification/Labels"] = ov
+            for d in labels.descriptions:
+                self.dataMgr.properties["Classification"]["labelDescriptions"].append(d)
+            dataItemImage.properties["_obsolete_labels"]  = None          
+        
+        
         #calculate features for the image
         featureProcess = featureMgr.FeatureThread(self.featureMgr, self.dataMgr, [dataItemImage])        
         featureProcess.start()

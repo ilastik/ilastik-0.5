@@ -44,7 +44,7 @@ except:
     have_qt = False
 
 from ilastik.core.volume import DataAccessor as DataAccessor
-from ilastik.core.volume import Volume as Volume
+from ilastik.core.volume import Volume as Volume, VolumeLabels, VolumeLabelDescriptionMgr
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
@@ -489,8 +489,15 @@ class DataItemImage(DataItemBase):
 
             
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
-        self._dataVol = Volume.deserialize(h5G, offsets, shape)
+        self._dataVol = Volume.deserialize(self, h5G, offsets, shape)
         
+        #load obsolete file format parts (pre version 0.5)
+        #and store them in the properties
+        #the responsible modules will take care of them
+        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
+        self.properties["_obsolete_labels"] = labels
+        
+        #Handle obsolete file format (pre version 0.4):
         if '_prediction' in h5G.keys():
             print "deserializing _prediction..."
             self._prediction = DataAccessor.deserialize(h5G, '_prediction', offsets, shape)
