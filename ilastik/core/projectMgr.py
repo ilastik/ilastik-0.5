@@ -95,7 +95,7 @@ class Project(object):
         self.connector = connectedComponents.ConnectedComponents()
  
     def saveToDisk(self, fileName = None):
-        """ Save the whole project includeing data, feautues, labels and settings to 
+        """ Save the whole project including data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
         try:
             if fileName is not None:
@@ -117,11 +117,11 @@ class Project(object):
                 
             featureG = projectG.create_group('FeatureSelection')
             
-            #try:
-            self.featureMgr.exportFeatureItems(featureG)
-            featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
-            #except:
-            #    print 'saveToDisk(): No features where selected: '
+            try:
+                self.featureMgr.exportFeatureItems(featureG)
+                featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
+            except:
+                print 'saveToDisk(): No features where selected: '
                 
                 
             # get number of images
@@ -129,6 +129,7 @@ class Project(object):
             # save raw data and labels
             for k, item in enumerate(self.dataMgr):
                 # create group for dataItem
+                print "creating group", k
                 dk = dataSetG.create_group('dataItem%02d' % k)
                 dk.attrs["fileName"] = str(item.fileName)
                 dk.attrs["Name"] = str(item._name)

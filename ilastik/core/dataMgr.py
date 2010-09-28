@@ -487,8 +487,12 @@ class DataItemImage(DataItemBase):
         for k in self.module.keys():
             if hasattr(self.module[k], "serialize"):
                 print "serializing ", k
-                self.module[k].serialize(h5G)
-    
+                try:
+                    if self.module[k] is not None:
+                        self.module[k].serialize(h5G)
+                except:
+                    print "couldn't serialize something"
+                    
     def updateOverlays(self):
         #create Overlay for uncertainty:
         ov = overlayMgr.OverlayItem(self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False)
