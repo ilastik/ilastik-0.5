@@ -245,6 +245,11 @@ class BlockAccessor2D():
             self._lock.release()
 
 class PropertyMgr():
+    """
+    Holds a bag of Properties that can be serialized and deserialized
+    new properties are also added to the parents regular attributes
+    for easier access
+    """
     def __init__(self, parent):
         self._dict = {}
         self._parent = parent
@@ -252,7 +257,7 @@ class PropertyMgr():
     def serialize(self, h5g, name):
         pass
     
-    def deserialize(self, h5g):
+    def deserialize(self, h5g, name):
         pass
 
     def keys(self):
@@ -280,6 +285,11 @@ class ModuleMgr(PropertyMgr):
     def __init__(self, parent):
         PropertyMgr.__init__(self, parent)
     
+    def onModuleStart(self):
+        pass
+    
+    def onModuleStop(self):
+        pass
     
     def onNewImage(self, dataItemImage):
         pass
@@ -302,7 +312,7 @@ class DataItemImage(DataItemBase):
         self._segmentationWeights = None
         
         self.overlayMgr = overlayMgr.OverlayMgr()
-        self.properties = PropertyMgr(self)
+        self.module = PropertyMgr(self)
         
 
     def __getitem__(self, args):
@@ -501,9 +511,9 @@ class DataItemImage(DataItemBase):
         #and store them in the properties
         #the responsible modules will take care of them
         labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
-        self.properties["_obsolete_labels"] = labels
+        self.module["_obsolete_labels"] = labels
         if 'prediction' in h5G.keys():
-            self.properties["_obsolete_prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
+            self.module["_obsolete_prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
             
             
         
@@ -523,7 +533,7 @@ class DataMgr():
         self._dataItemsLoaded = []
         self.channels = -1
         self._activeImageNumber = 0
-        self.properties = PropertyMgr(self)
+        self.module = PropertyMgr(self)
         
         #TODO: Maybe it shouldn't be here...
         self.connCompBackgroundKey = ""    
@@ -548,7 +558,7 @@ class DataMgr():
             
             self._dataItems.append(dataItem)
             self._dataItemsLoaded.append(alreadyLoaded)
-            for v in self.properties.values():
+            for v in self.module.values():
                 v.onNewImage(dataItem)
                 
         else:

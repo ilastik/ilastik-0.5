@@ -82,7 +82,7 @@ class Project(object):
         
         classificationMgr.ClassificationModuleMgr(self.dataMgr, self.featureMgr)
             
-        self.classificationMgr = self.dataMgr.properties["Classification"]["classificationMgr"]
+        self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"]
         
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
@@ -193,7 +193,7 @@ class Project(object):
             for index2,  di in enumerate(self.dataMgr):
                 #create Feature Overlays
                 for c in range(0,size):
-                    rawdata = di.properties["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
+                    rawdata = di.module["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
                     #TODO: the min/max stuff here is slow !!!
                     #parallelize ??
                     min = numpy.min(rawdata)

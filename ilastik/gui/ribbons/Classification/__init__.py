@@ -13,7 +13,7 @@ class FeatureComputation(object):
         self.parent.project.dataMgr.featureLock.acquire()
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
-        self.parent.project.dataMgr.properties["Classification"]["classificationMgr"].clearFeaturesAndTraining()
+        self.parent.project.dataMgr.module["Classification"]["classificationMgr"].clearFeaturesAndTraining()
         numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)   
         self.initFeatureProgress(numberOfJobs)
         self.parent.project.featureMgr.triggerCompute()
@@ -41,7 +41,7 @@ class FeatureComputation(object):
     def terminateFeatureProgressBar(self):
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
-        self.parent.project.dataMgr.properties["Classification"]["classificationMgr"].buildTrainingMatrix()
+        self.parent.project.dataMgr.module["Classification"]["classificationMgr"].buildTrainingMatrix()
         self.parent.project.dataMgr.featureLock.release()
         if hasattr(self.parent, "classificationInteractive"):
             self.parent.classificationInteractive.updateThreadQueues()
@@ -121,7 +121,7 @@ class ClassificationInteractive(object):
 
         self.temp_cnt = 0
         
-        descriptions =  self.parent.project.dataMgr.properties["Classification"]["labelDescriptions"]
+        descriptions =  self.parent.project.dataMgr.module["Classification"]["labelDescriptions"]
         activeImage = self.parent._activeImage
         
         for p_num,pd in enumerate(descriptions):
@@ -168,7 +168,7 @@ class ClassificationInteractive(object):
         
     def start(self):
         self.initInteractiveProgressBar()
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.properties["Classification"]["classificationMgr"],classifier = self.parent.project.classifier)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.module["Classification"]["classificationMgr"],classifier = self.parent.project.classifier)
 
         self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
     
@@ -239,8 +239,8 @@ class ClassificationPredict(object):
                 display = True
             
             prediction = self.classificationPredict._prediction
-            descriptions =  self.parent.project.dataMgr.properties["Classification"]["labelDescriptions"]
-            classifiers = self.parent.project.dataMgr.properties["Classification"]["classificationMgr"].classifiers
+            descriptions =  self.parent.project.dataMgr.module["Classification"]["labelDescriptions"]
+            classifiers = self.parent.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
             
             if prediction is not None:
                 foregrounds = []

@@ -39,11 +39,11 @@ class LabelMgr(object):
         
     def addLabel(self, name,number, color):
         description = VolumeLabelDescription(name,number, color,  None)
-        self.dataMgr.properties["Classification"]["labelDescriptions"].append(description)
+        self.dataMgr.module["Classification"]["labelDescriptions"].append(description)
             
 
     def changedLabel(self,  label):
-        for labelIndex,  labelItem in self.dataMgr.properties["Classification"]["labelDescriptions"]:
+        for labelIndex,  labelItem in self.dataMgr.module["Classification"]["labelDescriptions"]:
             labelItem.name = label.name
             labelItem.number = label.number
             labelItem.color = label.color
@@ -52,12 +52,12 @@ class LabelMgr(object):
         self.dataMgr.featureLock.acquire()
         self.classificationMgr.clearFeaturesAndTraining()
         ldnr = -1
-        for labelIndex,  labelItem in enumerate(self.dataMgr.properties["Classification"]["labelDescriptions"]):
+        for labelIndex,  labelItem in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
             if labelItem.number == number:
                 ldnr = labelIndex
-                self.dataMgr.properties["Classification"]["labelDescriptions"].pop(ldnr)
+                self.dataMgr.module["Classification"]["labelDescriptions"].pop(ldnr)
                 
-        for labelIndex,  labelItem in enumerate(self.dataMgr.properties["Classification"]["labelDescriptions"]):
+        for labelIndex,  labelItem in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
             if labelItem.number > ldnr:
                 labelItem.number -= 1
                 
@@ -67,8 +67,8 @@ class LabelMgr(object):
                 temp = numpy.where(ldata[:,:,:,:,:] == number, 0, ldata[:,:,:,:,:])
                 temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
                 ldata[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item.properties["Classification"]["labelHistory"] is not None:
-                    item.properties["Classification"]["labelHistory"].removeLabel(number)
+                if item.module["Classification"]["labelHistory"] is not None:
+                    item.module["Classification"]["labelHistory"].removeLabel(number)
         self.dataMgr.featureLock.release()
         
     def newLabels(self,  newLabels):

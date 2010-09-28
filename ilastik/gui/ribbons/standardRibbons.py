@@ -229,12 +229,12 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        if self.ilastik._activeImage.properties[self.name] is None:
-            self.ilastik._activeImage.properties[self.name] = PropertyMgr(self.ilastik._activeImage)
-        if  self.ilastik._activeImage.properties[self.name]["overlayReferences"] is None:
-            self.ilastik._activeImage.properties[self.name]["overlayReferences"] = OverlayReferenceMgr()
+        if self.ilastik._activeImage.module[self.name] is None:
+            self.ilastik._activeImage.module[self.name] = PropertyMgr(self.ilastik._activeImage)
+        if  self.ilastik._activeImage.module[self.name]["overlayReferences"] is None:
+            self.ilastik._activeImage.module[self.name]["overlayReferences"] = OverlayReferenceMgr()
         
-        ovs = self.ilastik._activeImage.properties[self.name]["overlayReferences"]
+        ovs = self.ilastik._activeImage.module[self.name]["overlayReferences"]
         
         if len(ovs) == 0:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
@@ -249,15 +249,15 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         ov = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
         
-        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr.properties["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
+        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
         if hasattr(self.parent, "classificationInteractive"):
             self.btnStartLive.click()
-        if self.ilastik.labelWidget._history != self.ilastik._activeImage.properties["Classification"]["labelHistory"]:
-            self.ilastik._activeImage.properties["Classification"]["labelHistory"] = self.ilastik.labelWidget._history
+        if self.ilastik.labelWidget._history != self.ilastik._activeImage.module["Classification"]["labelHistory"]:
+            self.ilastik._activeImage.module["Classification"]["labelHistory"] = self.ilastik.labelWidget._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
