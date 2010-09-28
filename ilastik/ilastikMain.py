@@ -489,7 +489,7 @@ class Segmentation(object):
         self.start()
 
     def start(self):
-        self.parent.ribbon.getTab('Segmentation').btnSegment.setEnabled(False)
+        self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(False)
         
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
@@ -538,7 +538,7 @@ class Segmentation(object):
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)
         self.parent.statusBar().hide()
-        self.parent.ribbon.getTab('Segmentation').btnSegment.setEnabled(True)
+        self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(True)
 
 
 class CC(object):
