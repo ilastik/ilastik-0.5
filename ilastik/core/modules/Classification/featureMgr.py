@@ -103,7 +103,7 @@ class FeatureMgr():
             try:
                 self.totalFeatureSize = totalSize
                 for i, di in enumerate(self.dataMgr):
-                    di.properties["Classification"]["featureM"] = numpy.zeros(di.shape[0:-1] + (totalSize,),'float32')
+                    di.module["Classification"]["featureM"] = numpy.zeros(di.shape[0:-1] + (totalSize,),'float32')
 
             except Exception, e:
                 print e
@@ -206,7 +206,7 @@ class FeatureThread(ThreadBase):
     def run(self):
         jobs = []
         for image in self.items:
-            featureBlockAccessor = dataMgr.BlockAccessor(image.properties["Classification"]["featureM"],64)
+            featureBlockAccessor = dataMgr.BlockAccessor(image.module["Classification"]["featureM"],64)
             for blockNum in range(featureBlockAccessor._blockCount):
                 for i, feature in enumerate(self.featureMgr.featureItems):
                     job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, featureBlockAccessor, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature, blockNum])

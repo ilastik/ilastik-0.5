@@ -61,7 +61,6 @@ class ProjectDlg(QtGui.QDialog):
         flagON = ~theFlag | theFlag 
         flagOFF = ~theFlag
             
-        print "aslhjalksjdkajsdhjksahd"
         for d in project.dataMgr:
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)

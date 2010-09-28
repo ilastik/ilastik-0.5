@@ -84,7 +84,7 @@ class Project(object):
         
         classificationMgr.ClassificationModuleMgr(self.dataMgr, self.featureMgr)
             
-        self.classificationMgr = self.dataMgr.properties["Classification"]["classificationMgr"]
+        self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"]
         
         self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
@@ -130,12 +130,10 @@ class Project(object):
                 # create group for dataItem
                 dk = dataSetG.create_group('dataItem%02d' % k)
                 dk.attrs["fileName"] = str(item.fileName)
-                dk.attrs["_name"] = str(item._name)
+            dk.attrs["Name"] = str(item._name)
                 # save raw data
-                item._dataVol.serialize(dk)
-                if item._prediction is not None:
-                    item._prediction.serialize(dk, '_prediction' )
-    
+            item.serialize(dk)
+            
     
             # Save to hdf5 file
             fileHandle.close()
@@ -161,6 +159,7 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
+            print name
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             activeItem.deserialize(fileHandle['DataSets'][name])
             #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
@@ -196,7 +195,7 @@ class Project(object):
             for index2,  di in enumerate(self.dataMgr):
                 #create Feature Overlays
                 for c in range(0,size):
-                    rawdata = di.properties["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
+                    rawdata = di.module["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
                     #TODO: the min/max stuff here is slow !!!
                     #parallelize ??
                     min = numpy.min(rawdata)

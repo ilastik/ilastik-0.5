@@ -240,7 +240,7 @@ class VolumeLabels():
         
     def serialize(self, h5G, name):
         group = h5G.create_group(name)
-        self._data.serialize(group, '_data')
+        self._data.serialize(group, 'data')
         
         tColor = []
         tName = []
@@ -347,16 +347,15 @@ class Volume():
 
     def serialize(self, h5G):
         self._data.serialize(h5G, "data")
-        if self.labels is not None:
-            self.labels.serialize(h5G, "labels")
         if self.seeds is not None:
             self.seeds.serialize(h5G, "seeds")
         
     @staticmethod
     def deserialize(dataItemImage, h5G, offsets = (0,0,0), shape=(0,0,0)):
         data = DataAccessor.deserialize(h5G, "data", offsets, shape)
-        seeds = VolumeLabels.deserialize(h5G,  "seeds")
-        v =  Volume(data,   seeds = seeds)
+        #seeds = VolumeLabels.deserialize(h5G,  "seeds")
+        #v =  Volume(data,   seeds = seeds)
+        v =  Volume(data)
         return v
 
 

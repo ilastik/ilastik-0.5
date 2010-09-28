@@ -240,7 +240,6 @@ class OverlayMgr():
         return self._dict.values()
 
     def _addToWidget(self,  value):
-        print "adding ",  value.name,  "to overlays"
         if self._widget != None and value.autoAdd is True:
             self._widget.addOverlayRef(value.getRef())
             

@@ -37,6 +37,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
 from ilastik.core.modules.Classification.featureMgr import ilastikFeatureGroups
 
+from ilastik.gui.ribbons.Classification import FeatureComputation
 
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None, previewImage=None):
@@ -248,12 +249,13 @@ class FeatureDlg(QtGui.QDialog):
             self.drawPreview()
     #oli todo
     def drawPreview(self):
-        self.size = self.groupMaskSizesList[self.horizontalHeaderIndex]
-        self.grscene.removeItem(self.circle)
-        self.circle = self.grscene.addEllipse(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
-        self.circle.setPos(self.graphicsView.mapToScene(0, 0))
-        self.circle.setPen(QtGui.QPen(self.hudColor))
-        self.sizeText.setText("Size: " + str(self.size))
+        if not self.horizontalHeaderIndex < 0:
+            self.size = self.groupMaskSizesList[self.horizontalHeaderIndex]
+            self.grscene.removeItem(self.circle)
+            self.circle = self.grscene.addEllipse(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
+            self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+            self.sizeText.setText("Size: " + str(self.size))
         
     #oli todo
     def eventFilter(self, obj, event):
@@ -289,7 +291,9 @@ class FeatureDlg(QtGui.QDialog):
             self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
-            self.ilastik.featureCompute()
+            if self.ilastik.project.featureMgr is not None:
+                self.ilastik.project.deleteFeatureOverlays()
+                self.featureComputation = FeatureComputation(self.ilastik)
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
             return False

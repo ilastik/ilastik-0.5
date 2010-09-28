@@ -47,7 +47,7 @@ from ilastik.core import onlineClassifcator
 from ilastik.core import dataMgr as DM
 from ilastik.core import activeLearning, segmentationMgr
 from ilastik.core import classifiers
-from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr
+from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
 from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
@@ -95,16 +95,39 @@ def unravelIndices(indices, shape):
     return ti    
 
 
+class ClassificationItemModuleMgr(PropertyMgr):
+    def __init__(self, classificationModuleMgr, dataItemImage):
+        PropertyMgr.__init__(self, dataItemImage)
+        self.dataItemImage = dataItemImage
+        self.classificationModuleMgr = classificationModuleMgr
+        
+    def serialize(self, h5g):
+        #for now save the labels and prediction in the old format
+        #TODO: change that when we are certain about the new project file format
+        vl = VolumeLabels(self.dataItemImage.overlayMgr["Classification/Labels"]._data)
+        vl.descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"]
+        vl.serialize(h5g, "labels")
+
+        
+        prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
+        for d in vl.descriptions:
+            prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+        prediction = DataAccessor(prediction)
+        prediction.serialize(h5g, 'prediction' )
+        
+
+
+
 class ClassificationModuleMgr(ModuleMgr):
     def __init__(self, dataMgr, featureMgr):
         ModuleMgr.__init__(self, dataMgr)
         self.dataMgr = dataMgr
         self.featureMgr = featureMgr
-        if self.dataMgr.properties["Classification"] is None:
-            self.dataMgr.properties["Classification"] = self
-        self.classificationMgr = self.dataMgr.properties["Classification"]["classificationMgr"] = ClassificationMgr(self.dataMgr)
-        if self.dataMgr.properties["Classification"]["labelDescriptions"] is None:
-            self.dataMgr.properties["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
+        if self.dataMgr.module["Classification"] is None:
+            self.dataMgr.module["Classification"] = self
+        self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"] = ClassificationMgr(self.dataMgr)
+        if self.dataMgr.module["Classification"]["labelDescriptions"] is None:
+            self.dataMgr.module["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
 
         for i, im in enumerate(self.dataMgr):
             self.onNewImage(im)
@@ -115,8 +138,8 @@ class ClassificationModuleMgr(ModuleMgr):
         
         
         #create featureM
-        dataItemImage.properties["Classification"] = PropertyMgr(dataItemImage)
-        dataItemImage.properties["Classification"]["featureM"] = numpy.zeros(dataItemImage.shape[0:-1] + (self.featureMgr.totalFeatureSize,),'float32')
+        dataItemImage.module["Classification"] = ClassificationItemModuleMgr(self, dataItemImage)
+        dataItemImage.module["Classification"]["featureM"] = numpy.zeros(dataItemImage.shape[0:-1] + (self.featureMgr.totalFeatureSize,),'float32')
         
         #clear features and training
         self.classificationMgr.clearFeaturesAndTrainingForImage(dataItemImage)
@@ -124,27 +147,28 @@ class ClassificationModuleMgr(ModuleMgr):
         #create LabelOverlay
         if dataItemImage.overlayMgr["Classification/Labels"] is None:
             data = numpy.zeros(dataItemImage.shape[0:-1]+(1,),'uint8')
-            ov = overlayMgr.OverlayItem(data, color = 0, alpha = 1.0, colorTable = self.dataMgr.properties["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+            ov = overlayMgr.OverlayItem(data, color = 0, alpha = 1.0, colorTable = self.dataMgr.module["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
             dataItemImage.overlayMgr["Classification/Labels"] = ov
             
         
         #handle obsolete file formats:
-        if dataItemImage.properties["_obsolete_labels"] is not None:
-            labels = dataItemImage.properties["_obsolete_labels"]
+        if dataItemImage.module["_obsolete_labels"] is not None:
+            labels = dataItemImage.module["_obsolete_labels"]
             ov = overlayMgr.OverlayItem(labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False)
             dataItemImage.overlayMgr["Classification/Labels"] = ov
             for d in labels.descriptions:
-                self.dataMgr.properties["Classification"]["labelDescriptions"].append(d)
-            dataItemImage.properties["_obsolete_labels"]  = None          
+                self.dataMgr.module["Classification"]["labelDescriptions"].append(d)
+            dataItemImage.module["_obsolete_labels"]  = None          
 
-        if dataItemImage.properties["_obsolete_prediction"] is not None:
-            prediction = dataItemImage.properties["_obsolete_prediction"]
-            for index, descr in enumerate(self.dataMgr.properties["Classification"]["labelDescriptions"]):
+        if dataItemImage.module["_obsolete_prediction"] is not None:
+            prediction = dataItemImage.module["_obsolete_prediction"]
+            for index, descr in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
                 ov = overlayMgr.OverlayItem(DataAccessor(prediction[:,:,:,:,index], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 dataItemImage.overlayMgr["Classification/Prediction/" + descr.name] = ov
             margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])
             ov = overlayMgr.OverlayItem(DataAccessor(margin), alpha = 1.0, color = long(16535)<<16, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
             dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
+            dataItemImage.module["_obsolete_prediction"] = None
             
 #        if self._dataVol.uncertainty is not None:
 #            #create Overlay for uncertainty:
@@ -165,7 +189,7 @@ class ClassificationMgr(object):
         
         self.classifiers = []
         
-        self.classificationModuleMgr = self.dataMgr.properties["Classification"]
+        self.classificationModuleMgr = self.dataMgr.module["Classification"]
         
 
     def getTrainingMforIndForImage(self, ind, dataItemImage):
@@ -173,7 +197,7 @@ class ClassificationMgr(object):
 #                        URI =  unravelIndices(indices, featureShape)
 #                        tempfm = prop["featureM"][URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
 #                        tempfm.shape = (tempfm.shape[0],) + (tempfm.shape[1]*tempfm.shape[2],)
-        prop = dataItemImage.properties["Classification"]
+        prop = dataItemImage.module["Classification"]
         featureShape = prop["featureM"].shape[0:4]
         URI =  unravelIndices(ind, featureShape)
         if issubclass(prop["featureM"].__class__,numpy.ndarray): 
@@ -187,7 +211,7 @@ class ClassificationMgr(object):
         return trainingF
         
     def getTrainingMatrixRefForImage(self, dataItemImage):
-        prop = dataItemImage.properties["Classification"]
+        prop = dataItemImage.module["Classification"]
         if len(prop["trainingF"]) == 0 and prop["featureM"] is not None:
             tempF = []
             tempL = []
@@ -207,7 +231,7 @@ class ClassificationMgr(object):
     
     def getTrainingMatrixForImage(self, dataItemImage):
         self.getTrainingMatrixRefForImage(dataItemImage)
-        prop = dataItemImage.properties["Classification"]
+        prop = dataItemImage.module["Classification"]
         if len(prop["trainingF"]) != 0:
             return prop["trainingL"], prop["trainingF"], prop["trainingIndices"]
         else:
@@ -218,7 +242,7 @@ class ClassificationMgr(object):
         This method updates the current training Matrix with new labels.
         newlabels can contain completey new labels, changed labels and deleted labels
         """
-        prop = dataItemImage.properties["Classification"]
+        prop = dataItemImage.module["Classification"]
         for nl in newLabels:
             try:
                 if nl.erasing == False:
@@ -323,16 +347,16 @@ class ClassificationMgr(object):
 
     def clearFeaturesAndTrainingForImage(self, dataItemImage):
         totalsize = 1
-        featureM = dataItemImage.properties["Classification"]["featureM"]
+        featureM = dataItemImage.module["Classification"]["featureM"]
         if featureM is not None:
             totalsize = featureM.shape[-1]
-        prop = dataItemImage.properties["Classification"]
+        prop = dataItemImage.module["Classification"]
         prop["trainingF"] = numpy.zeros((0, totalsize), 'float32')      
         prop["trainingL"] = numpy.zeros((0, 1), 'uint8')
         prop["trainingIndices"] = numpy.zeros((0, 1), 'uint32')
         
     def getFeatureSlicesForViewStateForImage(self, vs, dataItemImage):
-        prop = dataItemImage.properties["Classification"]
+        prop = dataItemImage.module["Classification"]
         tempM = []
         if prop["featureM"] is not None:
             tempM.append(prop["featureM"][vs[0],vs[1],:,:,:])
@@ -421,7 +445,7 @@ class ClassifierTrainThread(ThreadBase):
         self.stopped = False
         self.classifier = classifier
         self.classifierOptions = classifierOptions
-        self.classificationMgr = dataMgr.properties["Classification"]["classificationMgr"]
+        self.classificationMgr = dataMgr.module["Classification"]["classificationMgr"]
         self.jobMachine = jobMachine.JobMachine()
         self.classifiers = deque()
 
@@ -460,7 +484,7 @@ class ClassifierPredictThread(ThreadBase):
         ThreadBase.__init__(self, None)
         self.count = 0
         self.dataMgr = dataMgr
-        self.classificationMgr = dataMgr.properties["Classification"]["classificationMgr"]
+        self.classificationMgr = dataMgr.module["Classification"]["classificationMgr"]
         self.classifiers = self.classificationMgr.classifiers
         self.stopped = False
         self.jobMachine = jobMachine.JobMachine()
@@ -475,19 +499,21 @@ class ClassifierPredictThread(ThreadBase):
             b = fm.getBlockBounds(bnr, 0)
             tfm = fm[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             tfm2 = tfm.reshape(tfm.shape[0]*tfm.shape[1]*tfm.shape[2]*tfm.shape[3],tfm.shape[4])
-            tpred = self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
+            self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = 0
+            
+            tpred = self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:]
             for num in range(len(self.classifiers)):
                 cf = self.classifiers[num]
                 pred = cf.predict(tfm2)
                 pred.shape = (tfm.shape[0],tfm.shape[1],tfm.shape[2],tfm.shape[3],pred.shape[1])
                 tpred += pred[:,:,:,:]
 		self.count += 1
-	    self._prediction[itnr][:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred
+	    self.currentPred[:,b[0]:b[1],b[2]:b[3],b[4]:b[5],:] = tpred / len(self.classifiers)
         except Exception, e:
             print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
-        # print "Prediction Job ", self.count, "/", self.numberOfJobs, " finished"
+        #print "Prediction Job ", bnr, "/", fm._blockCount, "with classifiers ", len(self.classifiers),  " finished"
             
             
     
@@ -499,9 +525,8 @@ class ClassifierPredictThread(ThreadBase):
             interactiveMessagePrint ( "Classifier %d _prediction" % cnt )
             self.dataMgr.featureLock.acquire()
             try:
-                prop = item.properties["Classification"]
+                prop = item.module["Classification"]
                 
-                featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
                 
                 if len(self.classifiers) > 0:
                     #make a little test _prediction to get the shape and see if it works:
@@ -510,21 +535,20 @@ class ClassifierPredictThread(ThreadBase):
                         tfm = prop["featureM"][0,0,0,0,:]
                         tfm.shape = (1,) + (tfm.shape[-1],) 
                         tempPred = self.classifiers[0].predict(tfm)
-                                        
-                    if tempPred is not None:
-                        self._prediction[itemindex] = numpy.zeros((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
-                        jobs= []
-                        for bnr in range(featureBlockAccessor._blockCount):
-                            job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, itemindex, bnr, featureBlockAccessor])
-                            jobs.append(job)
-                        self.jobMachine.process(jobs)
-                        count = len(self.classifiers)
-                        if count == 0:
-                            count = 1
-                        self._prediction[itemindex] = self._prediction[itemindex] / count * 255
-                        #item._prediction = ve.DataAccessor(self._prediction.reshape(item._dataVol._data.shape[0:-1] + (self._prediction.shape[-1],)), channels = True)
-                        #item.properties["Classification"]["prediction"] = DataAccessor(self._prediction, channels = True)
-                        self._prediction[itemindex] = DataAccessor(self._prediction[itemindex].reshape(item.shape[0:-1] + (self._prediction[itemindex].shape[-1],)), channels = True)
+                        featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
+                                            
+                        self.currentPred = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
+    
+                        if tempPred is not None:
+                            jobs= []
+                            for bnr in range(featureBlockAccessor._blockCount):
+                                job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, itemindex, bnr, featureBlockAccessor])
+                                jobs.append(job)
+                            self.jobMachine.process(jobs)
+                            
+                        self._prediction[itemindex] = self.currentPred
+                else:
+                    print "ClassifierPredictThread: no trained classifiers"
                 self.dataMgr.featureLock.release()
             except Exception, e:
                 print "########################## exception in ClassifierPredictThread ###################"
@@ -650,7 +674,7 @@ class ClassifierInteractiveThread(ThreadBase):
                             tp.append(self._prediction[1].reshape((shape[1],shape[3],self._prediction[1].shape[-1])))
                             tp.append(self._prediction[2].reshape((shape[1],shape[2],self._prediction[2].shape[-1])))
 
-                            descriptions =  self.ilastik.project.dataMgr.properties["Classification"]["labelDescriptions"]
+                            descriptions =  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
                             all =  range(len(descriptions))
                             not_predicted = numpy.setdiff1d(all, self.classifiers[0].unique_vals - 1)
 

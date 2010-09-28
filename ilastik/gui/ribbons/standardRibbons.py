@@ -21,11 +21,12 @@ from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui import volumeeditor as ve
 from ilastik.core.volume import DataAccessor
 from ilastik.core.dataMgr import  PropertyMgr
-from ilastik.gui.labelWidget import LabelListWidget
 from ilastik.gui.seedWidget import SeedListWidget
 from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
 
+from ilastik.gui.ribbons.Classification import *
+from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
 
 import gc, weakref
 
@@ -230,12 +231,12 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        if self.ilastik._activeImage.properties[self.name] is None:
-            self.ilastik._activeImage.properties[self.name] = PropertyMgr(self.ilastik._activeImage)
-        if  self.ilastik._activeImage.properties[self.name]["overlayReferences"] is None:
-            self.ilastik._activeImage.properties[self.name]["overlayReferences"] = OverlayReferenceMgr()
+        if self.ilastik._activeImage.module[self.name] is None:
+            self.ilastik._activeImage.module[self.name] = PropertyMgr(self.ilastik._activeImage)
+        if  self.ilastik._activeImage.module[self.name]["overlayReferences"] is None:
+            self.ilastik._activeImage.module[self.name]["overlayReferences"] = OverlayReferenceMgr()
         
-        ovs = self.ilastik._activeImage.properties[self.name]["overlayReferences"]
+        ovs = self.ilastik._activeImage.module[self.name]["overlayReferences"]
         
         if len(ovs) == 0:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
@@ -250,15 +251,15 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         ov = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
         
-        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr.properties["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
+        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
         if hasattr(self.parent, "classificationInteractive"):
             self.btnStartLive.click()
-        if self.ilastik.labelWidget._history != self.ilastik._activeImage.properties["Classification"]["labelHistory"]:
-            self.ilastik._activeImage.properties["Classification"]["labelHistory"] = self.ilastik.labelWidget._history
+        if self.ilastik.labelWidget._history != self.ilastik._activeImage.module["Classification"]["labelHistory"]:
+            self.ilastik._activeImage.module["Classification"]["labelHistory"] = self.ilastik.labelWidget._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -301,12 +302,24 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_btnSelectFeatures_clicked(self):
         preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
         self.parent.newFeatureDlg = FeatureDlg(self.parent, preview)
-        
+
+                    
     def on_btnStartLive_clicked(self, state):
-        self.parent.on_classificationInteractive(state)
+        if state:
+            self.ilastik.ribbon.getTab('Classification').btnStartLive.setText('Stop Live Prediction')
+            self.classificationInteractive = ClassificationInteractive(self.ilastik)
+        else:
+            self.classificationInteractive.stop()
+            del self.classificationInteractive
+            self.ilastik.ribbon.getTab('Classification').btnStartLive.setText('Start Live Prediction')
         
     def on_btnTrainPredict_clicked(self):
-        self.parent.on_classificationTrain()
+        self.classificationTrain = ClassificationTrain(self.ilastik)
+        self.connect(self.classificationTrain, QtCore.SIGNAL("trainingFinished()"), self.on_trainingFinished)
+        
+    def on_trainingFinished(self):
+        print "Training finished"
+        self.classificationPredict = ClassificationPredict(self.ilastik)
         
     def on_btnExportClassifier_clicked(self):
         self.parent.on_exportClassifier()
@@ -314,6 +327,10 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_btnClassifierOptions_clicked(self):
         dialog = ClassifierSelectionDlg(self.parent)
         self.parent.project.classifier = dialog.exec_()
+
+        
+    
+
 
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Auto Segmentation'
