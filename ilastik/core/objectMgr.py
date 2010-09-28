@@ -106,7 +106,7 @@ class ObjectMgr(object):
                 print e
                 traceback.print_exc(file=sys.stdout)
         
-        ov = self.dataMgr[self.dataMgr._activeImage].overlayMgr["Objects/Selection Result"]
+        ov = self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Objects/Selection Result"]
         
         if ov is not None:
             ov.setSelectedNumbers(self.selectedObjects)

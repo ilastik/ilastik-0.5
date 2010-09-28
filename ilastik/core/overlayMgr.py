@@ -128,12 +128,17 @@ class OverlayItemReference(object):
         else:
             raise Exception
 
+class OverlayReferenceMgr(list):
+    def __init__(self):
+        list.__init__(self)
+    
+
 class OverlayItem(object):
     """
     A Item that holds some scalar or multichannel _data and their drawing related settings.
     OverlayItems are held by the OverlayMgr
     """
-    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True):
+    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
         self._data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
@@ -146,8 +151,8 @@ class OverlayItem(object):
         self.autoAdd = autoAdd
         self.autoVisible = autoVisible
         self.references = []
-        self.min = None
-        self.max = None
+        self.min = min
+        self.max = max
 
     def __getitem__(self, args):
         return self._data[args]
@@ -161,7 +166,13 @@ class OverlayItem(object):
         elif name == "shape":
             return self._data.shape
         else:
-            raise AttributeError
+            raise AttributeError, name
+    def getSubSlice(self, offsets, sizes, num, axis, time = 0, channel = 0):
+        return self._data.getSubSlice(offsets, sizes, num, axis, time, channel)
+
+        
+    def setSubSlice(self, offsets, data, num, axis, time = 0, channel = 0):
+        self._data.setSubSlice(offsets, data, num, axis, time, channel)
                             
     def getRef(self):
         ref = OverlayItemReference(self)

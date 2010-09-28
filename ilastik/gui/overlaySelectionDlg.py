@@ -103,7 +103,7 @@ class OverlaySelectionDialog(QDialog):
         self.layoutWidget = QWidget(self)
         self.selectedOverlaysList = []
         self.ilastik = ilastik
-        self.christophsDict = ilastik.project.dataMgr[ilastik._activeImage].overlayMgr
+        self.christophsDict = ilastik.project.dataMgr[ilastik._activeImageNumber].overlayMgr
         self.forbiddenOverlays = forbiddenItems
         self.preSelectedOverlays = selectedItems
         self.singleOverlaySelection = singleSelection
@@ -451,7 +451,7 @@ class OverlaySelectionDialog(QDialog):
             if answer is not None:
                 name = QInputDialog.getText(self,"Edit Name", "Please Enter the name of the new Overlay:", text = "Custom Overlays/My Overlay" )
                 name = str(name[0])
-                self.ilastik.project.dataMgr[self.ilastik._activeImage].overlayMgr[name] = answer
+                self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr[name] = answer
                 self.cancel()
 
 
