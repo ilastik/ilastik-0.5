@@ -164,14 +164,6 @@ class Project(object):
             #activeItem._dataVol = dataVol
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
 
-            if '_prediction' in fileHandle['DataSets'][name].keys():
-                activeItem._prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], '_prediction')
-                for p_i, item in enumerate(activeItem._dataVol.labels.descriptions):
-                    item._prediction = (activeItem._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-                print "deserializing prediction"
-                margin = activeLearning.computeEnsembleMargin(activeItem._prediction[:,:,:,:,:])*255.0
-                activeItem._dataVol.uncertainty = margin[:,:,:,:]
-            
             activeItem.updateOverlays()
                             
             dataMgr.append(activeItem,alreadyLoaded=True)

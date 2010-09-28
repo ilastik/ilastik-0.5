@@ -1184,7 +1184,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 else:
                                     image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
                                     image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                    if isinstance(origitem.color,  int):
+                                    if isinstance(origitem.color,  long):
                                         image0.fill(origitem.color)
                                     else: #shold be QColor then !
                                         image0.fill(origitem.color.rgba())

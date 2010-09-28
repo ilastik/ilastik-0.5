@@ -496,16 +496,11 @@ class DataItemImage(DataItemBase):
         #the responsible modules will take care of them
         labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
         self.properties["_obsolete_labels"] = labels
+        if 'prediction' in h5G.keys():
+            self.properties["_obsolete_prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
+            
+            
         
-        #Handle obsolete file format (pre version 0.4):
-        if '_prediction' in h5G.keys():
-            print "deserializing _prediction..."
-            self._prediction = DataAccessor.deserialize(h5G, '_prediction', offsets, shape)
-            for p_i, item in enumerate(self._dataVol.labels.descriptions):
-                item._prediction = (self._prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-
-            margin = activeLearning.computeEnsembleMargin(self._prediction[:,:,:,:,:])*255.0
-            self._dataVol.uncertainty = margin[:,:,:,:]
         self.updateOverlays()
         
             

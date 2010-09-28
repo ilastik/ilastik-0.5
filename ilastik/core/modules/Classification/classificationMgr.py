@@ -136,6 +136,20 @@ class ClassificationModuleMgr(ModuleMgr):
             for d in labels.descriptions:
                 self.dataMgr.properties["Classification"]["labelDescriptions"].append(d)
             dataItemImage.properties["_obsolete_labels"]  = None          
+
+        if dataItemImage.properties["_obsolete_prediction"] is not None:
+            prediction = dataItemImage.properties["_obsolete_prediction"]
+            for index, descr in enumerate(self.dataMgr.properties["Classification"]["labelDescriptions"]):
+                ov = overlayMgr.OverlayItem(DataAccessor(prediction[:,:,:,:,index], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
+                dataItemImage.overlayMgr["Classification/Prediction/" + descr.name] = ov
+            margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])
+            ov = overlayMgr.OverlayItem(DataAccessor(margin), alpha = 1.0, color = long(16535)<<16, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
+            dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
+            
+#        if self._dataVol.uncertainty is not None:
+#            #create Overlay for uncertainty:
+#            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+#            self.overlayMgr["Classification/Uncertainty"] = ov        
         
         
         #calculate features for the image
