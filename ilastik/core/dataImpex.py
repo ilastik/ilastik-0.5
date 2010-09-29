@@ -25,7 +25,7 @@ class DataImpex(object):
             image = DataImpex.loadStack(filename, options, None)
             if image is not None:
                 #the name will be set in the calling function
-                theDataItem = DataImpex.initDataItemFromArray(image, "bla")
+                theDataItem = DataImpex.initDataItemFromArray(image, "Unknown Name")
                 return theDataItem
         else:
             #this is just added for backward compatibility with 'Add' button
