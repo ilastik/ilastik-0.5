@@ -12,6 +12,7 @@ from ilastik.gui.classifierSelectionDialog import ClassifierSelectionDlg
 from ilastik.core import projectMgr
 from ilastik.gui.featureDlg import FeatureDlg
 from ilastik.gui.segmentorSelectionDlg import SegmentorSelectionDlg
+from ilastik.gui.unsupervisedSelectionDlg import UnsupervisedSelectionDlg
 from ilastik.gui.batchProcess import BatchProcess
 from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core.overlays
@@ -355,6 +356,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+        self.btnUnsupervisedOptions.setEnabled(True)     
            
     def on_deActivation(self):
         pass
@@ -363,22 +365,27 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         tl = QtGui.QHBoxLayout()
         
         self.btnChooseOverlays = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
-        self.btnPLSA = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'pLSA')
+        self.btnDecompose = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'decompose')
+        self.btnUnsupervisedOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Unsupervised Decomposition Options')
 
-        self.btnPLSA.setEnabled(False)     
+        self.btnDecompose.setEnabled(False)     
+        self.btnUnsupervisedOptions.setEnabled(False)     
         
         self.btnChooseOverlays.setToolTip('Choose the overlays for unsupervised decomposition')
-        self.btnPLSA.setToolTip('perform probabilistic Latent Semantic Analysis (pLSA)')
+        self.btnDecompose.setToolTip('perform unsupervised decomposition')
+        self.btnUnsupervisedOptions.setToolTip('select an unsupervised decomposition plugin and change settings')
         
         tl.addWidget(self.btnChooseOverlays)
-        tl.addWidget(self.btnPLSA)
+        tl.addWidget(self.btnDecompose)
         tl.addStretch()
+        tl.addWidget(self.btnUnsupervisedOptions)
         
         self.setLayout(tl)
         
     def _initConnects(self):
         self.connect(self.btnChooseOverlays, QtCore.SIGNAL('clicked()'), self.on_btnChooseOverlays_clicked)
-        self.connect(self.btnPLSA, QtCore.SIGNAL('clicked()'), self.on_btnPLSA_clicked)
+        self.connect(self.btnDecompose, QtCore.SIGNAL('clicked()'), self.on_btnDecompose_clicked)
+        self.connect(self.btnUnsupervisedOptions, QtCore.SIGNAL('clicked()'), self.on_btnUnsupervisedOptions_clicked)
        
     def on_btnChooseOverlays_clicked(self):
         dlg = OverlaySelectionDialog(self.parent,  singleSelection = False)
@@ -393,11 +400,17 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
                 self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
                 
             self.parent.labelWidget.repaint()
-            self.btnPLSA.setEnabled(True)            
+            self.btnDecompose.setEnabled(True)            
 
+    def on_btnDecompose_clicked(self):
+        self.parent.on_unsupervisedDecomposition(self.overlays)
 
-    def on_btnPLSA_clicked(self):
-        self.parent.on_unsupervisedDecomposition(self.overlays, ilastik.core.unsupervised.unsupervisedPLSA.UnsupervisedPLSA())
+    def on_btnUnsupervisedOptions_clicked(self):
+        dialog = UnsupervisedSelectionDlg(self.parent)
+        answer = dialog.exec_()
+        if answer != None:
+            self.parent.project.unsupervisedDecomposer = answer
+            #self.parent.project.unsupervised.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber]._segmentationWeights)
                     
                     
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
@@ -556,6 +569,7 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.seedMgr,  self.ilastik._activeImage._dataVol.seeds,  self.ilastik.labelWidget,  ov))
 
+        self.btnSegmentorsOptions.setEnabled(True)     
 
     
     def on_deActivation(self):
@@ -574,6 +588,7 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
         self.btnSegment.setEnabled(False)
         self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Segmentors Options')
+        self.btnSegmentorsOptions.setEnabled(False)     
         
         self.btnChooseWeights.setToolTip('Choose the edge weights for the segmentation task')
         self.btnSegment.setToolTip('Segment the image into foreground/background')
