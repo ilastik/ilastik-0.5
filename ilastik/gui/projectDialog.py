@@ -101,7 +101,8 @@ class ProjectDlg(QtGui.QDialog):
             # file name
             dirname = os.path.basename(os.path.dirname(path))
             offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')'
-            theDataItem._name = dirname + ' ' + offsetstr   
+            theDataItem._name = dirname + ' ' + offsetstr
+            theDataItem.fileName = path   
             try:
                 self.dataMgr.append(theDataItem, True)
                 self.dataMgr._dataItemsLoaded[-1] = True

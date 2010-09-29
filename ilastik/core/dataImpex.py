@@ -215,7 +215,7 @@ class DataImpex(object):
             for item in pathparts:
                 prevgr = prevgr.create_group(item)
             try:
-                dataset = prevgr.create_dataset(overlayItemReference.name, data=overlayItemReference.overlayItem._data[:,:,:,:,:])
+                dataset = prevgr.create_dataset(overlayItemReference.name, data=overlayItemReference.overlayItem._data[0,:,:,:,:])
             except Exception, e:
                 print e
             f.close()
