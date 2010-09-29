@@ -91,7 +91,6 @@ class Project(object):
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = core.segmentors.segmentorClasses[0]()
         self.connector = connectedComponents.ConnectedComponents()
-        self.unsupervisedDecomposer = core.unsupervised.unsupervisedClasses[0]()
         
  
     def saveToDisk(self, fileName = None):

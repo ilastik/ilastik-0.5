@@ -467,10 +467,10 @@ class MainWindow(QtGui.QMainWindow):
         self.connComp.selection_key = self.project.dataMgr.connCompBackgroundKey
         self.connComp.start(background)
 
-    def on_unsupervisedDecomposition(self, overlays):
+    def on_unsupervisedDecomposition(self, overlays, method):
         self.unsDec = UnsupervisedDecomposition(self)
         #self.unsDec.selection_key = self.project.dataMgr.connCompBackgroundKey
-        self.unsDec.start(overlays)
+        self.unsDec.start(overlays, method)
         
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No, QtGui.QMessageBox.Cancel)
@@ -598,6 +598,7 @@ class CC(object):
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] is None:
             #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
             colortab = self.makeColorTab()
+            print self.cc.result.shape
             ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] = ov
         else:
@@ -644,13 +645,13 @@ class UnsupervisedDecomposition(object):
         self.parent = parent
         self.ilastik = parent
 
-    def start(self, overlays):
+    def start(self, overlays, method):
         self.parent.ribbon.getTab('Unsupervised').btnPLSA.setEnabled(False)
         
         self.timer = QtCore.QTimer()
         self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
 
-        self.ud = unsupervisedMgr.UnsupervisedThread(self.parent.project.dataMgr, overlays, self.ilastik.project.unsupervisedDecomposer)
+        self.ud = unsupervisedMgr.UnsupervisedThread(self.parent.project.dataMgr, overlays, method)
         numberOfJobs = self.ud.numberOfJobs
         self.initDecompositionProgress(numberOfJobs)
         self.ud.start()
@@ -680,13 +681,15 @@ class UnsupervisedDecomposition(object):
         activeItem._dataVol.segmentation = self.ud.result
 
         #create Overlay for unsupervised decomposition:
-        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/Unsupervised"] is None:
-            ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/Unsupervised"] = ov
+        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA"] is None:
+            data = self.ud.result[:,:,:,:,:]
+            colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
+            for o in range(0, data.shape[4]):
+                ov = OverlayItem(data[:,:,:,:,o:(o+1)], color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA component %d" %o] = ov
         else:
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/Unsupervised"]._data = DataAccessor(activeItem._dataVol.unsDec)
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA"]._data = DataAccessor(self.ud.result)
         self.ilastik.labelWidget.repaint()
-
 
         
     def terminateProgressBar(self):

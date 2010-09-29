@@ -343,7 +343,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik._activeImage._dataVol.backgroundOverlays
+        ovs = self.ilastik._activeImage._dataVol.unsupervisedOverlays
         if len(ovs) == 0:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None:
@@ -351,7 +351,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.backgroundOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.unsupervisedOverlays)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
@@ -397,7 +397,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
 
 
     def on_btnPLSA_clicked(self):
-        self.parent.on_unsupervisedDecomposition(self.overlays)
+        self.parent.on_unsupervisedDecomposition(self.overlays, ilastik.core.unsupervised.unsupervisedPLSA.UnsupervisedPLSA())
                     
                     
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):

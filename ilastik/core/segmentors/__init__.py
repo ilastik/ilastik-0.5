@@ -51,7 +51,7 @@ if load:
         pass
 
     for i, c in enumerate(segmentorBase.SegmentorBase.__subclasses__()):
-        #print "loaded segmentor ",c, ': ',  c.name
+        print "loaded segmentor ",c, ': ',  c.name
         pass
         
     segmentorClasses = segmentorBase.SegmentorBase.__subclasses__()
