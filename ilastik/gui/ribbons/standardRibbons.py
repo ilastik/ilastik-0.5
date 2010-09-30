@@ -1,4 +1,4 @@
-import numpy,vigra
+import numpy, vigra
 import random
 import code
 
