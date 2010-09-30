@@ -494,8 +494,7 @@ class DataItemImage(DataItemBase):
                     print "couldn't serialize something"
                     
     def updateOverlays(self):
-        #create Overlay for uncertainty:
-        ov = overlayMgr.OverlayItem(self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False)
+        ov = overlayMgr.OverlayItem(self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False, min = 0, max = 255)
         self.overlayMgr["Raw Data"] = ov
 
 #        if self._dataVol.labels is not None:
