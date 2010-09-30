@@ -48,11 +48,13 @@ from ilastik.core import seedMgr
 from ilastik.core import objectMgr
 from ilastik.core.modules.Classification import classificationMgr
 from ilastik.core import backgroundMgr
-from ilastik.core import overlayMgr 
+from ilastik.core import overlayMgr  
 from ilastik.core import connectedComponents
 from ilastik.core.unsupervised import unsupervisedPCA
 
 from ilastik import core 
+
+ILASTIK_VERSION = 0.5
 
 
 
@@ -99,50 +101,52 @@ class Project(object):
     def saveToDisk(self, fileName = None):
         """ Save the whole project includeing data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
-        if fileName is not None:
-            self.filename = fileName
-        else:
-            fileName = self.filename
-            
-        fileHandle = h5py.File(fileName,'w')
-        
-        # get project settings
-        projectG = fileHandle.create_group('Project') 
-        dataSetG = fileHandle.create_group('DataSets') 
-
-        projectG.create_dataset('Name', data=str(self.name))
-        projectG.create_dataset('Labeler', data=str(self.labeler))
-        projectG.create_dataset('Description', data=str(self.description))
-            
-        featureG = projectG.create_group('FeatureSelection')
-        
         try:
+            if fileName is not None:
+                self.filename = fileName
+            else:
+                fileName = self.filename
+                
+            fileHandle = h5py.File(fileName,'w')
+            
+            fileHandle.create_dataset('IlastikVersion', data=ILASTIK_VERSION)
+            
+            # get project settings
+            projectG = fileHandle.create_group('Project') 
+            dataSetG = fileHandle.create_group('DataSets') 
+    
+            projectG.create_dataset('Name', data=str(self.name))
+            projectG.create_dataset('Labeler', data=str(self.labeler))
+            projectG.create_dataset('Description', data=str(self.description))
+                
+            featureG = projectG.create_group('FeatureSelection')
+            
+            #try:
             self.featureMgr.exportFeatureItems(featureG)
-        except:
-            print 'saveToDisk(): No features where selected: '
+            featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
+            #except:
+            #    print 'saveToDisk(): No features where selected: '
+                
+                
+            # get number of images
             
-            
-        # get number of images
-        n = len(self.dataMgr)
-        
-        # save raw data and labels
-        for k, item in enumerate(self.dataMgr):
-            # create group for dataItem
-            dk = dataSetG.create_group('dataItem%02d' % k)
-            dk.attrs["fileName"] = str(item.fileName)
+            # save raw data and labels
+            for k, item in enumerate(self.dataMgr):
+                # create group for dataItem
+                dk = dataSetG.create_group('dataItem%02d' % k)
+                dk.attrs["fileName"] = str(item.fileName)
             dk.attrs["Name"] = str(item._name)
-            # save raw data
+                # save raw data
             item.serialize(dk)
             
-
-        # Save to hdf5 file
-        
-        
-        classifierG = projectG.create_group('Classifier')
-        fileHandle.close()
-        
-        
-        print "Project %s saved to %s " % (self.name, fileName)
+    
+            # Save to hdf5 file
+            fileHandle.close()
+            self.dataMgr.exportClassifiers(fileName,'Project/')
+        except Exception as e:
+            print e.message
+            return False
+        return True
     
     @staticmethod
     def loadFromDisk(fileName, featureCache):
@@ -160,7 +164,6 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
-            print name
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             activeItem.deserialize(fileHandle['DataSets'][name])
             #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
@@ -170,14 +173,19 @@ class Project(object):
             activeItem.updateOverlays()
                             
             dataMgr.append(activeItem,alreadyLoaded=True)
-
-               
-        fileHandle.close()
+           
         
         
         project = Project( name, labeler, description, dataMgr)
         project.filename = fileName
-        # print "Project %s loaded from %s " % (p.name, fileName)
+        
+        try:
+            userSelection = projectG['FeatureSelection']['UserSelection']
+            featureMgr.ilastikFeatureGroups.selection = userSelection.value
+        except:
+            print 'No user selection of features found.'
+        
+        fileHandle.close()
         return project
 
     def deleteFeatureOverlays(self):

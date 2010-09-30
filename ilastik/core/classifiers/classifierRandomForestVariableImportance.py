@@ -3,7 +3,7 @@ import h5py
 
 class ClassifierRandomForestVariableImportance(ClassifierBase):
     #human readable information
-    name = "RandomForest classifier with variable importance" 
+    name = "Random forest classifier with variable importance" 
     description = "Basic RandomForest classifier with computation of variable importance"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
@@ -37,7 +37,7 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
         self.unique_vals = numpy.unique(labels)
         
         # Have to set this becauce the new rf dont set mtry properly by default
-        mtry = max(1,int(numpy.sqrt(features.shape[1]))+1) 
+        # mtry = max(1,int(numpy.sqrt(features.shape[1]))+1) 
         
         self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
         if isInteractive:
@@ -45,6 +45,11 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
             self.variableImportance = numpy.zeros( (1, ) )
         else:
             self.oob, self.variableImportance = self.RF.learnRFWithFeatureSelection(features, labels)
+            ClassifierBase.printLock.acquire()
+            a = self.variableImportance
+            varStr = " ".join([str(i) + ": " + "%7.4f"%k for i,k in enumerate(a[:,3])])
+            print "Gini Importance: " + varStr
+            ClassifierBase.printLock.release()
         
     def predict(self, features):
         #3d: check that only 1D data arrives here

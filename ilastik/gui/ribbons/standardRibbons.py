@@ -110,7 +110,9 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         if len(fn) > 4:
             if fn[-4:] != '.ilp':
                 fn = fn + '.ilp'
-            self.parent.project.saveToDisk(fn)
+            if self.parent.project.saveToDisk(fn):
+                QtGui.QMessageBox.information(self.parent, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+                
             ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
     
     def on_btnOpen_clicked(self):
@@ -124,7 +126,6 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.btnSave.setEnabled(True)
             self.btnEdit.setEnabled(True)
             self.btnOptions.setEnabled(True)
-            self.parent._activeImageNumber = 0
             self.parent.changeImage(0)
             
             ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
@@ -143,7 +144,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.parent.projectModified()
         
     def on_btnOptions_clicked(self):
-        tmp = ProjectSettingsDlg(self, self.ilastik.project)
+        tmp = ProjectSettingsDlg(self.ilastik, self.ilastik.project)
         tmp.exec_()
 
 
