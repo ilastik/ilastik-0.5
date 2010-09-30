@@ -77,23 +77,15 @@ class UnsupervisedThread(QtCore.QThread):
 
     def run(self):
         self.dataMgr.featureLock.acquire()
-        #try:
-        jobs = []
-        job = jobMachine.IlastikJob(UnsupervisedThread.decompose, [self])
-        jobs.append(job)
-        self.jobMachine.process(jobs)
-            #self.result = ListOfNDArraysAsNDArray(self.result)
-            #for i in range(50):
-            #    print self.result[0, i, i, 24, 0]
-            #for i in range(10):
-            #if self._data[0,i,i,0,0] != self.result[0,i,i,0,0]:
-            #        print "not equal at", i
-            #print self._data.shape, "  ", self._data[0,0,0,0,0]
-            #print self.result.shape, "  ", self.result[0,0,0,0,0]
-        self.dataMgr.featureLock.release()
-        #except Exception, e:
-        #    print "######### Exception in UnsupervisedThread ##########"
-        #    print e
-        #    traceback.print_exc(file=sys.stdout)
-        #    self.dataMgr.featureLock.release()
+        try:
+            jobs = []
+            job = jobMachine.IlastikJob(UnsupervisedThread.decompose, [self])
+            jobs.append(job)
+            self.jobMachine.process(jobs)
+            self.dataMgr.featureLock.release()
+        except Exception, e:
+            print "######### Exception in UnsupervisedThread ##########"
+            print e
+            traceback.print_exc(file=sys.stdout)
+            self.dataMgr.featureLock.release()
             

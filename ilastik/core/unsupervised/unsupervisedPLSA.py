@@ -38,8 +38,9 @@ class UnsupervisedPLSA(UnsupervisedBase):
             if(numpy.mod(iteration, 25)==0):
                 print "iteration %d" % iteration
                 print "last relative change %f" % lastChange
-            ZV = self.normalizeColumn(ZV * numpy.dot(FZ.T, features / (FZV + numpy.finfo(float).eps)))
-            FZ = self.normalizeColumn(FZ * numpy.dot(features / (FZV + numpy.finfo(float).eps), ZV.T))
+            factor = features / (FZV + numpy.finfo(float).eps)    
+            ZV = self.normalizeColumn(ZV * numpy.dot(FZ.T, factor))
+            FZ = self.normalizeColumn(FZ * numpy.dot(factor, ZV.T))
             FZV = numpy.dot(FZ, ZV) # pre-calculate
             # check relative change in least squares model fit
             model = numpy.tile(voxelSums, (numFeatures, 1)) * FZV
