@@ -4,35 +4,34 @@ import numpy, scipy
 class UnsupervisedPCA(UnsupervisedBase):
     #human readable information
     name = "Principal Component Analysis (PCA)" 
+    shortname = "PCA"
     description = "also known as Karhunen-Loeve or Hotelling transform"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
     
-    def __init__(self, numComponents = 0):
+    numComponents = 10
+    
+    def __init__(self):
         UnsupervisedBase.__init__(self)
-        self.numComponents = numComponents
         
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
-        print 'PCA'
-        if (self.numComponents == 0):
-            self.numComponents = features.shape[1]
-        # sanity check
-        #self.numComponents = numpy.min(self.numComponents, features.shape[1])
-            
+        # sanity checks
+        self.numComponents = numpy.min((self.numComponents, features.shape[1]))
+        self.numComponents = numpy.max((self.numComponents, 1))
+        
         # use singular value decomposition (SVD)
         meanData = self.meanData(features)
         features_centered = features - meanData
         U,s,Vh = numpy.linalg.svd(features_centered, full_matrices=False)
-        print Vh.shape
-        print (features.T).shape
-        ZV = numpy.dot(Vh, features.T)#meanData + U.T#features_centered.T * U
-        FZ = Vh 
-
-        print ZV.shape
-        print FZ.shape
-
+        ZV = (U*s).T #equivalent: numpy.dot(Vh, features.T)
+        FZ = Vh
+        # preselect components
+        ZV = ZV[range(0, self.numComponents), :]
+        FZ = FZ[:, range(0, self.numComponents)]
         return FZ, ZV
     
+    def configure(self, options):
+        self.numComponents = options[0]
     
     # helper method
     def meanData(self, X):

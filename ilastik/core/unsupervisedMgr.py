@@ -54,7 +54,6 @@ class UnsupervisedThread(QtCore.QThread):
         numFeatures = 0
         numPoints = overlays[0].shape[0] * overlays[0].shape[1] * overlays[0].shape[2] * overlays[0].shape[3]
         for overlay in overlays:
-            print overlay.shape
             numFeatures += overlay.shape[4]
         # ... then copy the data
         features = numpy.zeros((numPoints, numFeatures), dtype=numpy.float)
@@ -71,6 +70,7 @@ class UnsupervisedThread(QtCore.QThread):
 
     def decompose(self):
         # V contains the component spectra/scores, W contains the projected data
+        print self.unsupervised
         V, W = self.unsupervised.decompose(self.features)
         self.result = (W.T).reshape((self.origshape[0], self.origshape[1], self.origshape[2], self.origshape[3], W.shape[0]))
         

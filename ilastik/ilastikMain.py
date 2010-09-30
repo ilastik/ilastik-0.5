@@ -62,7 +62,7 @@ from Queue import Queue as queue
 from collections import deque
 
 import ilastik.gui
-from ilastik.core import projectMgr, segmentationMgr, activeLearning
+from ilastik.core import projectMgr, segmentationMgr, unsupervisedMgr, activeLearning
 from ilastik.core.modules.Classification import featureMgr, classificationMgr
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
@@ -680,7 +680,6 @@ class UnsupervisedDecomposition(object):
         activeItem._dataVol.unsupervised = self.ud.result
 
         #create Overlay for unsupervised decomposition:
-        print self.parent.project.unsupervisedDecomposer
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA"] is None:
             data = self.ud.result[:,:,:,:,:]
             colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
@@ -694,9 +693,9 @@ class UnsupervisedDecomposition(object):
                 data2 = data2.astype(numpy.uint8)
                 
                 ov = OverlayItem(data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
-                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA component %d" % (o+1)] = ov
+                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname + " component %d" % (o+1)] = ov
         else:
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA"]._data = DataAccessor(self.ud.result)
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname]._data = DataAccessor(self.ud.result)
         self.ilastik.labelWidget.repaint()
 
         

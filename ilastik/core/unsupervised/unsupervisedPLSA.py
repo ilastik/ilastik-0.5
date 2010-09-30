@@ -3,21 +3,24 @@ import numpy
 
 class UnsupervisedPLSA(UnsupervisedBase):
     #human readable information
-    name = "probabilistic Latent Semantic Analysis (pLSA)" 
+    name = "probabilistic Latent Semantic Analysis (pLSA)"
+    shortname = "pLSA" 
     description = "Standard pLSA method as proposed by Hofmann 99"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
     
-    def __init__(self, numComponents = 3, minRelGain = 1e-3, maxIterations = 100):
+    numComponents = 3
+    minRelGain = 1e-3
+    maxIterations = 100
+    
+    def __init__(self):
         UnsupervisedBase.__init__(self)
-        self.numComponents = numComponents
-        self.minRelGain = minRelGain
-        self.maxIterations = maxIterations
         
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
-        # sanity check
-        #self.numComponents = numpy.min(self.numComponents, features.shape[1])
-        
+        # sanity checks
+        self.numComponents = numpy.min((self.numComponents, features.shape[1]))
+        self.numComponents = numpy.max((self.numComponents, 1))
+                
         features = features.T
         numFeatures, numVoxels = features.shape # this should be the shape of features!
         # initialize result matrices
@@ -45,6 +48,11 @@ class UnsupervisedPLSA(UnsupervisedBase):
             lastChange = numpy.abs((err - error_old)/(numpy.finfo(float).eps+err))
             iteration = iteration + 1;
         return FZ, ZV
+    
+    def configure(self, options):
+        self.numComponents = options[0]
+        self.minRelGain = options[1]
+        self.maxIterations = options[2]
     
     # Helper function
     def normalizeColumn(self, X):
