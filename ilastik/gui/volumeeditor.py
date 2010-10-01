@@ -1594,7 +1594,6 @@ class ImageScene( QtGui.QGraphicsView):
         self.changeSlice(-10)
 
     def brushSmaller(self):
-        print "smaller"
         b = self.drawManager.brushSize
         if b > 1:
             self.drawManager.setBrushSize(b-1)
