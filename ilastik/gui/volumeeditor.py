@@ -1547,6 +1547,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
         self.crossHairCursor.setZValue(100)
         self.scene.addItem(self.crossHairCursor)
+        self.crossHairCursor.setBrushSize(self.drawManager.brushSize)
 
         self.tempErase = False
 
@@ -1593,6 +1594,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.changeSlice(-10)
 
     def brushSmaller(self):
+        print "smaller"
         b = self.drawManager.brushSize
         if b > 1:
             self.drawManager.setBrushSize(b-1)
@@ -1600,7 +1602,7 @@ class ImageScene( QtGui.QGraphicsView):
         
     def brushBigger(self):
         b = self.drawManager.brushSize
-        if b < 31:
+        if b < 61:
             self.drawManager.setBrushSize(b+1)
             self.crossHairCursor.setBrushSize(b+1)
 
@@ -1790,6 +1792,7 @@ class ImageScene( QtGui.QGraphicsView):
         k_ctrl = (keys == QtCore.Qt.ControlModifier)
 
         self.mousePos = self.mapToScene(event.pos())
+        grviewCenter  = self.mapToScene(self.viewport().rect().center())
 
         if event.delta() > 0:
             if k_alt is True:
@@ -1808,11 +1811,21 @@ class ImageScene( QtGui.QGraphicsView):
             else:
                 self.changeSlice(-1)
 
+        mousePosAfterScale = self.mapToScene(event.pos())
+        offset = self.mousePos - mousePosAfterScale
+        newGrviewCenter = grviewCenter + offset
+        self.centerOn(newGrviewCenter)
+        self.mouseMoveEvent(event)
+
     def zoomOut(self):
+        self.setResizeAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
         self.doScale(0.9)
+        self.setResizeAnchor(QtGui.QGraphicsView.AnchorViewCenter)
 
     def zoomIn(self):
+        self.setResizeAnchor(ViewportAnchor(QtGui.QGraphicsView.AnchorUnderMouse))
         self.doScale(1.1)
+        self.setResizeAnchor(ViewportAnchor(QtGui.QGraphicsView.AnchorViewCenter))
 
     def doScale(self, factor):
         self.view.scale(factor, factor)
@@ -1925,7 +1938,7 @@ class ImageScene( QtGui.QGraphicsView):
         else:
             self.deltaPan = self.deaccelerate(self.deltaPan)
             self.panning()
-
+        
     #oli todo
     def mouseMoveEvent(self,event):
         if self.dragMode == True:
@@ -1958,7 +1971,6 @@ class ImageScene( QtGui.QGraphicsView):
                 self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
-                
                 yView.setVisible(False)
                 zView.showYPosition(x, y)
                 
@@ -2039,10 +2051,12 @@ class ImageScene( QtGui.QGraphicsView):
         # brushM = labeling.addMenu("Brush size")
         brushGroup = QtGui.QActionGroup(self)
         
-        defaultBrushSizes = [1,3,7,11,31]
+        defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
         brush = []
-        for ind, b in enumerate(defaultBrushSizes):
-            act = QtGui.QAction(str(b), brushGroup)
+        for ind, bSizes in enumerate(defaultBrushSizes):
+            b = bSizes[0]
+            desc = bSizes[1]
+            act = QtGui.QAction(str(b) + desc, brushGroup)
             act.setCheckable(True)
             self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
             if b == self.drawManager.getBrushSize():
