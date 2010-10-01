@@ -718,7 +718,6 @@ class VolumeEditor(QtGui.QWidget):
             self.labelWidget.close()
             del self.labelWidget
         self.labelWidget = widget
-        print widget
         self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
         self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
     
@@ -1627,6 +1626,7 @@ class ImageScene( QtGui.QGraphicsView):
         #if we are in opengl 2d render mode, quickly update the texture without any overlays
         #to get a fast update on slice change
         if image is not None:
+            #TODO: This doing something twice (see below)
             if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
                 self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
                 t = self.scene.tex
@@ -1649,7 +1649,8 @@ class ImageScene( QtGui.QGraphicsView):
                 self.min = 0
                 self.max = 255
         ########### 
-        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
+        #TODO: This doing something twice (see above)
+        self.updatePatches(range(self.patchAccessor.patchCount), image, overlays)
         
     def saveSlice(self, filename):
         print "Saving in ", filename, "slice #", self.sliceNumber, "axis", self.axis

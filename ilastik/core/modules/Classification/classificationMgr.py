@@ -156,8 +156,9 @@ class ClassificationModuleMgr(ModuleMgr):
             labels = dataItemImage.module["_obsolete_labels"]
             ov = overlayMgr.OverlayItem(labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False, linkColorTable = True)
             dataItemImage.overlayMgr["Classification/Labels"] = ov
-            for d in labels.descriptions:
-                self.dataMgr.module["Classification"]["labelDescriptions"].append(d)
+            if len(self.dataMgr.module["Classification"]["labelDescriptions"]) == 0: 
+                for d in labels.descriptions:
+                    self.dataMgr.module["Classification"]["labelDescriptions"].append(d)
             dataItemImage.module["_obsolete_labels"]  = None          
 
         if dataItemImage.module["_obsolete_prediction"] is not None:
@@ -374,14 +375,12 @@ class ClassificationMgr(object):
         trainingF = []
         trainingL = []
         indices = []
-        print "Shapes"
         for item in self.dataMgr:
             trainingLabels, trainingFeatures, indic = self.getTrainingMatrixRefForImage(item)
             if trainingFeatures is not None:
                 indices.append(indic)
                 trainingL.append(trainingLabels)
                 trainingF.append(trainingFeatures)
-                print trainingFeatures.shape
             
         self._trainingL = trainingL
         self._trainingF = trainingF

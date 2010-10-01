@@ -1,4 +1,4 @@
-import numpy,vigra
+import numpy, vigra
 import random
 import code
 
@@ -118,9 +118,9 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
         if str(fileName) != "":
             labelWidget = None
-            if self.parent.project is not None:
-                if len(self.parent.project.dataMgr) > self.parent._activeImageNumber:
-                    labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent._activeImageNumber])#.featureBlockAccessor)
+            #if self.parent.project is not None:
+            #    if len(self.parent.project.dataMgr) > self.parent._activeImageNumber:
+            #        labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent._activeImageNumber])#.featureBlockAccessor)
             self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
             self.btnSave.setEnabled(True)
             self.btnEdit.setEnabled(True)

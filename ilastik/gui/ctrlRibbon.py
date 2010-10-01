@@ -53,68 +53,7 @@ class IlastikTabWidget(QtGui.QTabWidget):
     def addTab(self, page, tabName):
         self.tabDict[tabName] = page
         QtGui.QTabWidget.addTab(self, page, tabName)  
-        
-#<<<<<<< HEAD
-#    def makeTab(self):
-#        self.tabs = RibbonTabContainer(self.position)
-#	stretched = False
-#        for rib in self.entries:
-#            item = rib.type(rib)
-#	    if rib.type is RibbonStretch:
-#		    stretched = True
-#            self.tabs.addItem(item)
-#	if not stretched:
-#		self.tabs.layout().addStretch()
-#        return self.tabs   
-#
-#def createRibbons():
-#    RibbonGroupObjects = {}
-#    RibbonGroupObjects["Projects"] = RibbonEntryGroup("Projects", 0)    
-#    RibbonGroupObjects["Classification"] = RibbonEntryGroup("Classification", 2)   
-#    RibbonGroupObjects["Segmentation"] = RibbonEntryGroup("Segmentation", 3)
-#    RibbonGroupObjects["Object Processing"] = RibbonEntryGroup("Object Processing", 4)
-#    RibbonGroupObjects["Automate"] = RibbonEntryGroup("Automate", 5)
-#    RibbonGroupObjects["Help"] = RibbonEntryGroup("Help", 6)
-#
-#    #RibbonGroupObjects["Export"] = RibbonEntryGroup("Export", 3)
-#    
-#    RibbonGroupObjects["Projects"].append(RibbonEntry("New", ilastikIcons.New ,"New"))
-#    RibbonGroupObjects["Projects"].append(RibbonEntry("Open", ilastikIcons.Open ,"Open"))
-#    RibbonGroupObjects["Projects"].append(RibbonEntry("Save", ilastikIcons.Save,"Save"))
-#    RibbonGroupObjects["Projects"].append(RibbonEntry("Edit", ilastikIcons.Edit ,"Edit"))
-#    RibbonGroupObjects["Projects"].append(RibbonEntry("", None, "", type=RibbonStretch))
-#    RibbonGroupObjects["Projects"].append(RibbonEntry("Options", ilastikIcons.Edit ,"Options"))
-#    
-#    RibbonGroupObjects["Classification"].append(RibbonEntry("Select Features", ilastikIcons.Select ,"Select and compute features"))
-#    
-#    RibbonGroupObjects["Classification"].append(RibbonEntry("Start Live Prediction", ilastikIcons.Play ,"Interactive prediction of visible image parts while drawing etc.",type=RibbonToggleButtonItem))
-#    RibbonGroupObjects["Classification"].append(RibbonEntry("Train and Predict", ilastikIcons.System ,"Train Classifier and predict the whole image"))
-#    RibbonGroupObjects["Classification"].append(RibbonEntry("", None, "", type=RibbonStretch))
-#
-#    RibbonGroupObjects["Classification"].append(RibbonEntry("Export Classifier", ilastikIcons.System ,"Save current classifier and its feature settings"))
-#    RibbonGroupObjects["Classification"].append(RibbonEntry("Classifier Options", ilastikIcons.System ,"Select a classifier and change its settings"))
-#
-#
-#
-#
-#    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Choose Weights", ilastikIcons.System ,"Choose the edge weights for the segmentation task"))
-#    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment the image into foreground/background"))
-#    RibbonGroupObjects["Segmentation"].append(RibbonEntry("", None, "", type=RibbonStretch))
-#    RibbonGroupObjects["Segmentation"].append(RibbonEntry("Change Segmentation", ilastikIcons.System ,"Select a segmentation plugin and change settings"))
-#
-#    RibbonGroupObjects["Object Processing"].append(RibbonEntry("Select Input", ilastikIcons.Select, "Select the input layer"))
-#    RibbonGroupObjects["Object Processing"].append(RibbonEntry("CC", ilastikIcons.System, "Find connected components in the data"))
-#
-#    RibbonGroupObjects["Automate"].append(RibbonEntry("Batchprocess", ilastikIcons.Play ,"Batchpredict files in a directory with the currently trained classifier"))
-#
-#    RibbonGroupObjects["Help"].append(RibbonEntry("Shortcuts", ilastikIcons.System ,"Shortcuts"))
-#
-#    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("Segment", ilastikIcons.Play ,"Segment Foreground/Background"))
-#    #RibbonGroupObjects["Segmentation"].append(RibbonEntry("BorderSegment", ilastikIcons.Play ,"Segment Foreground/Background with Border"))
-#
-#    #RibbonGroupObjects["Export"].append(RibbonEntry("Export", ilastikIcons.System  ,"Export"))
-#    return RibbonGroupObjects   
-#=======
+ 
     def getTab(self, tabName):
         return self.tabDict[tabName] 
                    
