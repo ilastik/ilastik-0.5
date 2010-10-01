@@ -71,8 +71,6 @@ class FeatureDlg(QtGui.QDialog):
         self.size = None
         self.zoom = 2
         self.horizontalHeaderIndex = None
-        print "###size###", self.size
-
         tempLayoutZoomV = QtGui.QVBoxLayout(self.graphicsView)
         tempLayoutZoom = QtGui.QHBoxLayout()
         self.sizeText = QtGui.QLabel()
