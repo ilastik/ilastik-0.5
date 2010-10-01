@@ -1252,17 +1252,17 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.penSolid.setCosmetic(True)
         self.update()
     
-    def showXPosition(self, x):
+    def showXPosition(self, x, y):
         """only mark the x position by displaying a line f(y) = x"""
         self.setVisible(True)
         self.mode = self.modeXPosition
-        self.setPos(x,0)
+        self.setPos(x, y - int(y))
         
-    def showYPosition(self, y):
+    def showYPosition(self, y, x):
         """only mark the y position by displaying a line f(x) = y"""
         self.setVisible(True)
         self.mode = self.modeYPosition
-        self.setPos(0,y)
+        self.setPos(x - int(x), y)
         
     def showXYPosition(self, x,y):
         """mark the (x,y) position by displaying a cross hair cursor
@@ -1275,18 +1275,18 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         painter.setPen(self.penDotted)
         
         if self.mode == self.modeXPosition:
-            painter.drawLine(self.x, 0, self.x, self.height)
+            painter.drawLine(QtCore.QPointF(self.x+0.5, 0), QtCore.QPointF(self.x+0.5, self.height))
         elif self.mode == self.modeYPosition:
-            painter.drawLine(0, self.y, self.width, self.y)
-        else:
-            painter.drawLine(0,                         self.y, self.x-0.5*self.brushSize, self.y)
-            painter.drawLine(self.x+0.5*self.brushSize, self.y, self.width,                self.y)
+            painter.drawLine(QtCore.QPointF(0, self.y), QtCore.QPointF(self.width, self.y))
+        else:            
+            painter.drawLine(QtCore.QPointF(0.0,self.y), QtCore.QPointF(self.x -0.5*self.brushSize, self.y))
+            painter.drawLine(QtCore.QPointF(self.x+0.5*self.brushSize, self.y), QtCore.QPointF(self.width, self.y))
 
-            painter.drawLine(self.x, 0,                         self.x, self.y-0.5*self.brushSize)
-            painter.drawLine(self.x, self.y+0.5*self.brushSize, self.x, self.height)
+            painter.drawLine(QtCore.QPointF(self.x, 0), QtCore.QPointF(self.x, self.y-0.5*self.brushSize))
+            painter.drawLine(QtCore.QPointF(self.x, self.y+0.5*self.brushSize), QtCore.QPointF(self.x, self.height))
 
             painter.setPen(self.penSolid)
-            painter.drawEllipse(self.x-0.5*self.brushSize, self.y-0.5*self.brushSize, 1*self.brushSize, 1*self.brushSize)
+            painter.drawEllipse(QtCore.QPointF(self.x, self.y), 0.5*self.brushSize, 0.5*self.brushSize)
         
     def setPos(self, x, y):
         self.x = x
@@ -1382,6 +1382,10 @@ class ImageScene( QtGui.QGraphicsView):
         self.scene.addItem(self.border)
         self.lastPanPoint = QtCore.QPoint()
         self.dragMode = False
+        self.deltaPan = QtCore.QPointF(0,0)
+        self.ticker = QtCore.QBasicTimer()
+        self.x = 0.0
+        self.y = 0.0
         
     def __init__(self, parent, imShape, axis, drawManager):
         """
@@ -1421,13 +1425,12 @@ class ImageScene( QtGui.QGraphicsView):
         if self.volumeEditor.image.shape[1] > 1:
             grviewHudLayout = QtGui.QVBoxLayout(self)
             tempLayout = QtGui.QHBoxLayout()
-            #self.fullSceenButton = QtGui.QPushButton("+")
-            self.fullSceenButton = MyQLabel()
-            self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.AddSelx22))
-            self.fullSceenButton.setStyleSheet("border: none; background-color: white")
-            self.connect(self.fullSceenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
+            self.fullScreenButton = QtGui.QPushButton()
+            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx22)))
+            self.fullScreenButton.setStyleSheet("background-color: white")
+            self.connect(self.fullScreenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
             tempLayout.addStretch()
-            tempLayout.addWidget(self.fullSceenButton)
+            tempLayout.addWidget(self.fullScreenButton)
             grviewHudLayout.addLayout(tempLayout)
             grviewHudLayout.addStretch()
         
@@ -1549,11 +1552,11 @@ class ImageScene( QtGui.QGraphicsView):
         self.tempErase = False
 
     def imageSceneFullScreen(self): #oli todo
-        if self.volumeEditor.imageScenes[0] == self.fullSceenButton.parent():
+        if self.volumeEditor.imageScenes[0] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenX()
-        if self.volumeEditor.imageScenes[1] == self.fullSceenButton.parent():
+        if self.volumeEditor.imageScenes[1] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenY()
-        if self.volumeEditor.imageScenes[2] == self.fullSceenButton.parent():
+        if self.volumeEditor.imageScenes[2] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenZ()
 
     def setImageSceneFullScreenLabel(self): #oli todo
@@ -1564,9 +1567,9 @@ class ImageScene( QtGui.QGraphicsView):
                 self.allVisible = False
                 break
         if self.allVisible:
-            self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.AddSelx22))
+            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx22)))
         else:
-            self.fullSceenButton.setPixmap(QtGui.QPixmap(ilastikIcons.RemSelx22))
+            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.RemSelx22)))
 
         
     def changeSlice(self, delta):
@@ -1592,13 +1595,13 @@ class ImageScene( QtGui.QGraphicsView):
 
     def brushSmaller(self):
         b = self.drawManager.brushSize
-        if b > 2:
+        if b > 1:
             self.drawManager.setBrushSize(b-1)
             self.crossHairCursor.setBrushSize(b-1)
         
     def brushBigger(self):
         b = self.drawManager.brushSize
-        if b < 20:
+        if b < 31:
             self.drawManager.setBrushSize(b+1)
             self.crossHairCursor.setBrushSize(b+1)
 
@@ -1845,16 +1848,21 @@ class ImageScene( QtGui.QGraphicsView):
                 
         self.mouseMoveEvent(event)
 
-
+    #oli todo
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
             self.lastPanPoint = event.pos()
             self.crossHairCursor.setVisible(False)
             self.dragMode = True
+            if self.ticker.isActive():
+                self.deltaPan = QtCore.QPointF(0, 0)
         if not self.volumeEditor.labelWidget.currentItem():
             return
         
         if event.buttons() == QtCore.Qt.LeftButton:
+            #don't draw if flicker the view
+            if self.ticker.isActive():
+                return
             if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
                 self.drawManager.setErasing()
                 self.tempErase = True
@@ -1862,36 +1870,74 @@ class ImageScene( QtGui.QGraphicsView):
             self.beginDraw(mousePos)
         elif event.buttons() == QtCore.Qt.RightButton:
             self.onContext(event.pos())
-
+    #oli todo
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
-            self.crossHairCursor.setVisible(True)
             self.lastPanPoint = QtCore.QPoint()
             self.dragMode = False
-            self.mouseMoveEvent(event)
+            self.ticker.start(20, self)
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
             self.endDraw(mousePos)
         if self.tempErase == True:
             self.drawManager.disableErasing()
             self.tempErase = False
-            
+
+    #oli todo
+    def panning(self):
+        hBar = self.horizontalScrollBar()
+        vBar = self.verticalScrollBar()
+        vBar.setValue(vBar.value() - self.deltaPan.y())
+        if self.isRightToLeft():
+            hBar.setValue(hBar.value() + self.deltaPan.x())
+        else:
+            hBar.setValue(hBar.value() - self.deltaPan.x())
+        
+        
+    #oli todo
+    def deaccelerate(self, speed, a=1, maxVal=64):
+        x = self.qBound(-maxVal, speed.x(), maxVal)
+        y = self.qBound(-maxVal, speed.y(), maxVal)
+        if x > 0:
+            x = max(0, x - a)
+        elif x < 0:
+            x = min(0, x + a)
+        if y > 0:
+            y = max(0, y - a)
+        elif y < 0:
+            y = min(0, y + a)
+        return QtCore.QPointF(x, y)
+
+    #oli todo
+    def qBound(self, minVal, current, maxVal):
+        return max(min(current, maxVal), minVal)
+
+    #oli todo
+    def timerEvent(self, event):
+        if self.deltaPan.x() == 0.0 and self.deltaPan.y() == 0.0 or self.dragMode == True:
+            self.ticker.stop()
+            cursor = QtGui.QCursor()
+            mousePos = self.mapToScene(self.mapFromGlobal(cursor.pos()))
+            x = mousePos.x()
+            y = mousePos.y()
+            self.crossHairCursor.showXYPosition(x, y)
+        else:
+            self.deltaPan = self.deaccelerate(self.deltaPan)
+            self.panning()
+
+    #oli todo
     def mouseMoveEvent(self,event):
         if self.dragMode == True:
-            hBar = self.horizontalScrollBar()
-            vBar = self.verticalScrollBar()
-            delta = QtCore.QPointF(event.pos() - self.lastPanPoint)
-            vBar.setValue(vBar.value() - delta.y())
-            if self.isRightToLeft():
-                hBar.setValue(hBar.value() + delta.x())
-            else:
-                hBar.setValue(hBar.value() - delta.x())
+            self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
+            self.panning()
             self.lastPanPoint = event.pos()
+            return
+        if self.ticker.isActive():
             return
             
         self.mousePos = mousePos = self.mousePos = self.mapToScene(event.pos())
-        x = mousePos.x()
-        y = mousePos.y()
+        x = self.x = mousePos.x()
+        y = self.y = mousePos.y()
         posX = 0
         posY = 0
         posZ = 0
@@ -1913,7 +1959,7 @@ class ImageScene( QtGui.QGraphicsView):
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
                 
                 yView.setVisible(False)
-                zView.showYPosition(x)
+                zView.showYPosition(x, y)
                 
             elif self.axis == 1:
                 posY = posX = self.volumeEditor.selSlices[1]
@@ -1923,7 +1969,7 @@ class ImageScene( QtGui.QGraphicsView):
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
                 
-                zView.showXPosition(x)
+                zView.showXPosition(x, y)
                 xView.setVisible(False)
             else:
                 posY = y
@@ -1933,8 +1979,8 @@ class ImageScene( QtGui.QGraphicsView):
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 
-                xView.showXPosition(y)
-                yView.showXPosition(x)
+                xView.showXPosition(y, x)
+                yView.showXPosition(x, y)
         else:
             self.unsetCursor()
                 
