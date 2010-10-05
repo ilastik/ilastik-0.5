@@ -111,7 +111,8 @@ class SegmentationThread(QtCore.QThread):
             self.result = range(0,self.dataItem._dataVol._data.shape[0])
             jobs = []
             for i in range(self.dataItem._dataVol._data.shape[0]):
-                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem._dataVol._data[i,:,:,:,:], self.dataItem._dataVol.seeds._data[i,:,:,:], self.dataItem._seedL, self.dataItem._seedIndices])
+                labels, indices = self.dataItem.getSeeds()
+                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem._dataVol._data[i,:,:,:,:], self.dataItem._dataVol.seeds._data[i,:,:,:], labels, indices])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)

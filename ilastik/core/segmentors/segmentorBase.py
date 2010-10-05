@@ -54,6 +54,10 @@ class SegmentorBase(HasTraits):
         return:
             3D unit8 volume that contains label numbers
         """
+        print "labelVolume:  ", labelVolume.dtype, labelVolume.shape
+        print "labelValues:  ", labelValues.dtype, labelValues.shape
+        print "labelIndices: ", labelIndices.dtype, labelIndices.shape
+        
         if labelVolume.shape[0] > 1:
             return self.segment3D(labelVolume, labelValues.astype('uint8'), labelIndices)
         else:

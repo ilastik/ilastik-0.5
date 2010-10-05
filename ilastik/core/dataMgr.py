@@ -309,8 +309,8 @@ class DataItemImage(DataItemBase):
         self._dataVol = None
         self._featureM = None
         
-        self._seedL = numpy.zeros((0, 1), 'uint8')
-        self._seedIndices = numpy.zeros((0, 1), 'uint32')
+        self._seedL = None#numpy.zeros((0, 1), 'uint8')
+        self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
         
         self._segmentationWeights = None
         
