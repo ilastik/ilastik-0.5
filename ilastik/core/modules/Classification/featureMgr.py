@@ -168,7 +168,8 @@ class FeatureThread(ThreadBase):
 
     def computeNumberOfJobs(self):
         for image in self.dataMgr:
-            self.jobs += image._dataVol._data.shape[0]*image._dataVol._data.shape[4] * len(self.featureMgr.featureItems)
+            blockA = dataMgr.BlockAccessor(image.module["Classification"]["featureM"],64)
+            self.jobs += image._dataVol._data.shape[0] * len(self.featureMgr.featureItems) * blockA._blockCount
 
     def calcFeature(self, image, featureBlockAccessor, offset, size, feature, blockNum):
         for t_ind in range(image._dataVol._data.shape[0]):
