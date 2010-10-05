@@ -374,6 +374,8 @@ class MainWindow(QtGui.QMainWindow):
 
         try:
             h5file = h5py.File(str(fileName),'a')
+            if 'features' in h5file.keys():
+                del h5file['features']
             h5featGrp = h5file.create_group('features')
             self.project.featureMgr.exportFeatureItems(h5featGrp)
             h5file.close()
