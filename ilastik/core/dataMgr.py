@@ -640,19 +640,23 @@ class DataMgr():
         pass
     
     def exportClassifiers(self, fileName, pathToGroup='/'):
-        if not hasattr(self, 'classifiers'):
+        if not hasattr(self, 'Classification') or not hasattr(self.Classification, 'classificationMgr') or not hasattr(self.Classification.classificationMgr, 'classifiers'):
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
-        if len(self.classifiers) == 0:
+        if len(self.Classification.classificationMgr.classifiers) == 0:
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
-        
         
         h5file = h5py.File(str(fileName),'a')
         h5group = h5file[pathToGroup]
+        
+        if 'classifiers' in h5group.keys():
+            del h5group['classifiers']
+            print "overwrite classifiers"
+            
         h5group.create_group('classifiers')
         h5file.close()
         
-        for i, c in enumerate(self.classifiers):
+        for i, c in enumerate(self.Classification.classificationMgr.classifiers):
             print pathToGroup + "/classifiers/rf_%03d" % i
             tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
             print "Write Random Forest # %03d -> %d" % (i,tmp)
