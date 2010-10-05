@@ -104,8 +104,6 @@ class SegmentationThread(QtCore.QThread):
 
     def run(self):
         self.dataMgr.featureLock.acquire()
-        if self.dataItem._dataVol.segmentation is None:
-            self.dataItem._dataVol.segmentation = numpy.zeros(self.dataItem._dataVol._data.shape[0:-1],'uint8')
 
         try:
             self.result = range(0,self.dataItem._dataVol._data.shape[0])
@@ -116,6 +114,8 @@ class SegmentationThread(QtCore.QThread):
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)
+            if self.dataItem._dataVol.segmentation is None:
+                self.dataItem._dataVol.segmentation = numpy.zeros(self.dataItem._dataVol._data.shape[0:-1],'uint8')
             self.dataMgr.featureLock.release()
         except Exception, e:
             print "######### Exception in ClassifierTrainThread ##########"

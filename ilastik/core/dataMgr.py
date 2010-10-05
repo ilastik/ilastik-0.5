@@ -357,6 +357,7 @@ class DataItemImage(DataItemBase):
         This method updates the seedMatrix with new seeds.
         newlabels can contain completey new labels, changed labels and deleted labels
         """
+        self._buildSeedsWhenNotThere()
         for nl in newLabels:
             try:
                 if nl.erasing == False:
