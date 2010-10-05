@@ -72,13 +72,11 @@ class FeatureMgr():
     """
     Manages selected features (merkmale) for classificator.
     """
-    def __init__(self, dataMgr, featureItems=None):
+    def __init__(self, dataMgr, featureItems=[]):
         self.dataMgr = dataMgr
         self.totalFeatureSize = 1
         self.featureSizes = []
         self.featureOffsets = []
-        if featureItems is None:
-            featureItems = []
         self.maxContext = 0
         self.setFeatureItems(featureItems)
         self.parent_conn = None

@@ -160,6 +160,7 @@ class DataAccessor():
                 self._data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel] = data
      
     def serialize(self, h5G, name='data'):
+        print self._data.dtype, self._data.shape
         h5G.create_dataset(name,data = self._data)
          
     @staticmethod

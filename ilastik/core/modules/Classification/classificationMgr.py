@@ -164,7 +164,7 @@ class ClassificationModuleMgr(ModuleMgr):
         if dataItemImage.module["_obsolete_prediction"] is not None:
             prediction = dataItemImage.module["_obsolete_prediction"]
             for index, descr in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
-                ov = overlayMgr.OverlayItem(DataAccessor(prediction[:,:,:,:,index], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
+                ov = overlayMgr.OverlayItem(DataAccessor(prediction[:,:,:,:,index:index+1], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 dataItemImage.overlayMgr["Classification/Prediction/" + descr.name] = ov
             margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])
             ov = overlayMgr.OverlayItem(DataAccessor(margin), alpha = 1.0, color = long(16535)<<16, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
@@ -555,6 +555,49 @@ class ClassifierPredictThread(ThreadBase):
                 print e
                 traceback.print_exc(file=sys.stdout)                
                 self.dataMgr.featureLock.release()
+                
+    def generateOverlays(self, activeImage = None):
+        for itemindex, activeItem in enumerate(self.dataMgr):
+            display = False
+            if activeImage == activeItem:
+                display = True
+            
+            prediction = self._prediction
+            descriptions =  self.dataMgr.module["Classification"]["labelDescriptions"]
+            classifiers = self.dataMgr.module["Classification"]["classificationMgr"].classifiers
+            
+            if prediction is not None:
+                foregrounds = []
+                for p_i, p_num in enumerate(classifiers[0].unique_vals):
+                    #create Overlay for _prediction:
+                    ov = overlayMgr.OverlayItem(prediction[itemindex][:,:,:,:,p_i],  color = long(descriptions[p_num-1].color), alpha = 0.4, colorTable = None, autoAdd = display, autoVisible = display, min = 0, max = 1)
+                    activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
+                    ov = activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
+                    foregrounds.append(ov)
+    
+                import ilastik.core.overlays.thresHoldOverlay as tho
+                
+                if activeItem.overlayMgr["Classification/Segmentation"] is None:
+                    ov = tho.ThresHoldOverlay(foregrounds, [])
+                    activeItem.overlayMgr["Classification/Segmentation"] = ov
+                else:
+                    ov = activeItem.overlayMgr["Classification/Segmentation"]
+                    ov.setForegrounds(foregrounds)
+    
+    
+                all =  range(len(descriptions))
+                if len(classifiers) > 0:
+                    not_predicted = numpy.setdiff1d(all, classifiers[0].unique_vals - 1)
+                    for p_i, p_num in enumerate(not_predicted):
+                        prediction[:,:,:,:,p_i] = 0
+    
+    
+    
+                margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
+    
+                #create Overlay for uncertainty:
+                ov = overlayMgr.OverlayItem(margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = display, autoVisible = False, min = 0, max = 1)
+                activeItem.overlayMgr["Classification/Uncertainty"] = ov
 
 
                 

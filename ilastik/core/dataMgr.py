@@ -481,6 +481,11 @@ class DataItemImage(DataItemBase):
         self._data = None
         
      
+    def loadFromFile(self):
+        f = h5py.File(self.fileName, 'r')
+        g = f["volume"]
+        self.deserialize(g)
+    
     def serialize(self, h5G):
         self._dataVol.serialize(h5G)
         
@@ -488,9 +493,10 @@ class DataItemImage(DataItemBase):
             if hasattr(self.module[k], "serialize"):
                 print "serializing ", k
                 try:
-                    if self.module[k] is not None:
-                        self.module[k].serialize(h5G)
-                except:
+                    self.module[k].serialize(h5G)
+                except Exception as e:
+                    print e
+                    print traceback.print_exc()
                     print "couldn't serialize something"
                     
     def updateOverlays(self):
@@ -550,7 +556,7 @@ class DataMgr():
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
             try:
-                dataItem.loadData()
+                dataItem.loadFromFile()
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
@@ -559,8 +565,8 @@ class DataMgr():
 
             alreadyLoaded = True
             
-        if self.channels == -1 or dataItem._dataVol._data.shape[-1] == self.channels:
-            self.channels = dataItem._dataVol._data.shape[-1]
+        if self.channels == -1 or dataItem.shape[-1] == self.channels:
+            self.channels = dataItem.shape[-1]
             
             self.selectedChannels = range(self.channels)
             
@@ -573,7 +579,6 @@ class DataMgr():
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         
     def clearAll(self):
-        self.clearFeaturesAndTraining()
         self._dataItems = []
         gc.collect()
         

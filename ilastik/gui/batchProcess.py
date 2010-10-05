@@ -26,8 +26,10 @@ import ilastik.gui.volumeeditor as ve
 
 from ilastik.core import dataMgr
 from ilastik.core.modules.Classification import featureMgr
-from ilastik.core.modules.Classification import classificationMgr as cm
+from ilastik.core.modules.Classification import classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
+
+from ilastik.core.modules.Classification import classificationMgr
 
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent):
@@ -79,21 +81,11 @@ class BatchProcess(QtGui.QDialog):
         self.layout.addWidget(self.logger)        
         self.image = None
 
-        if self.ilastik.featureCache is not None:
-            if 'tempF_batch' in self.ilastik.featureCache.keys():
-                grp = self.ilastik.featureCache['tempF_batch']
-            else:
-                grp = self.ilastik.featureCache.create_group('tempF_batch')
-        else:
-            grp = None
-
-        self.dataMgr = dataMgr.DataMgr(grp)
-        self.dataMgr.channels = self.ilastik.project.dataMgr.channels
         
 
 
     def slotDir(self):
-        selection = QtGui.QFileDialog.getOpenFileNames(self, "Image Files")
+        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 Files", filter = "HDF5 (*.h5)")
         self.filenames.extend(selection)
         for f in selection:
             self.filesView.addItem(f)
@@ -115,33 +107,38 @@ class BatchProcess(QtGui.QDialog):
         for filename in fileNames:
             try:
                 filename = str(filename)
+                
+                dm = dataMgr.DataMgr()
+                dm.channels = self.ilastik.project.dataMgr.channels
+
                 di = dataMgr.DataItemImage(filename)
-                di.loadData()
-                self.dataMgr.append(di)
+                dm.append(di)
+                                
+                fm = featureMgr.FeatureMgr(dm)
+                cm = classificationMgr.ClassificationModuleMgr(dm, fm)
+                fm.setFeatureItems(self.ilastik.project.featureMgr.featureItems)
 
-                fm = featureMgr.FeatureMgr(self.dataMgr, self.ilastik.project.featureMgr.featureItems)
-
-                fm.prepareCompute(self.dataMgr)
+                fm.prepareCompute(dm)
                 fm.triggerCompute()
-                fm.joinCompute(self.dataMgr)
+                fm.joinCompute(dm)
 
 
-                self.dataMgr.classifiers = self.ilastik.project.dataMgr.classifiers
+                dm.module["Classification"]["classificationMgr"].classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
+                dm.module["Classification"]["labelDescriptions"] = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
 
-                classificationPredict = cm.ClassifierPredictThread(self.dataMgr)
+                classificationPredict = classificationMgr.ClassifierPredictThread(dm)
                 classificationPredict.start()
                 classificationPredict.wait()
-  
-                #save results
-            
+                
+                classificationPredict.generateOverlays()
+                
+                #save results            
                 f = h5py.File(filename + '_processed.h5', 'w')
                 g = f.create_group("volume")
-                self.dataMgr[0]._dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((self.dataMgr[0]._dataVol._data.shape[0:4]),'uint8')))
-                self.dataMgr[0]._dataVol.labels.descriptions = self.ilastik.project.dataMgr[0]._dataVol.labels.descriptions
-                self.dataMgr[0]._dataVol.serialize(g)
-                self.dataMgr[0]._prediction.serialize(g, '_prediction')
+                dm[0].serialize(g)
                 f.close()
                 self.logger.insertPlainText(".")
+                
             except Exception, e:
                 print "######Exception"
                 traceback.print_exc(file=sys.stdout)
@@ -150,8 +147,8 @@ class BatchProcess(QtGui.QDialog):
                 self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
                 self.logger.appendPlainText("")                
             
-            self.dataMgr.clearAll()
-            #self.logger.update()
+            
+            self.logger.update()
             self.logger.repaint()
             
         if allok:
@@ -163,6 +160,9 @@ class BatchProcess(QtGui.QDialog):
             return  self.image
         else:
             return None
+
+
+
        
 def test():
     """Text editor demo"""
