@@ -100,6 +100,7 @@ class BatchProcess(QtGui.QDialog):
     
     def printStuff(self, stuff):
         self.logger.insertPlainText(stuff)
+        self.logger.ensureCursorVisible()
         self.logger.update()
         self.logger.repaint()
         QtGui.QApplication.instance().processEvents()
