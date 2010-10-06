@@ -588,6 +588,7 @@ class ClassifierPredictThread(ThreadBase):
                 all =  range(len(descriptions))
                 if len(classifiers) > 0:
                     not_predicted = numpy.setdiff1d(all, classifiers[0].unique_vals - 1)
+                    print not_predicted
                     for p_i, p_num in enumerate(not_predicted):
                         prediction[:,:,:,:,p_i] = 0
     
