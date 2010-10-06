@@ -20,7 +20,7 @@ import traceback
 
 from PyQt4 import QtCore, QtGui, uic
 
-import sys
+import sys, gc
 
 import ilastik.gui.volumeeditor as ve
 
@@ -28,7 +28,7 @@ from ilastik.core import dataMgr
 from ilastik.core.modules.Classification import featureMgr
 from ilastik.core.modules.Classification import classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
-
+from ilastik.core.volume import DataAccessor
 from ilastik.core.modules.Classification import classificationMgr
 
 class BatchProcess(QtGui.QDialog):
@@ -97,6 +97,13 @@ class BatchProcess(QtGui.QDialog):
     def slotProcess(self):
         self.process(self.filenames)
     
+    
+    def printStuff(self, stuff):
+        self.logger.insertPlainText(stuff)
+        self.logger.update()
+        self.logger.repaint()
+        QtGui.QApplication.instance().processEvents()
+                        
     def process(self, fileNames):
         self.logger.clear()
         self.logger.setVisible(True)
@@ -106,38 +113,51 @@ class BatchProcess(QtGui.QDialog):
         allok = True
         for filename in fileNames:
             try:
-                filename = str(filename)
+                self.printStuff("Processing " + str(filename) + "\n")
                 
-                dm = dataMgr.DataMgr()
-                dm.channels = self.ilastik.project.dataMgr.channels
-
-                di = dataMgr.DataItemImage(filename)
-                dm.append(di)
-                                
-                fm = featureMgr.FeatureMgr(dm)
-                cm = classificationMgr.ClassificationModuleMgr(dm, fm)
-                fm.setFeatureItems(self.ilastik.project.featureMgr.featureItems)
-
-                fm.prepareCompute(dm)
-                fm.triggerCompute()
-                fm.joinCompute(dm)
-
-
-                dm.module["Classification"]["classificationMgr"].classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
-                dm.module["Classification"]["labelDescriptions"] = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
-
-                classificationPredict = classificationMgr.ClassifierPredictThread(dm)
-                classificationPredict.start()
-                classificationPredict.wait()
+                fr = h5py.File(str(filename), 'r')
+                dr = fr["volume/data"]
+                mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 128, 20)
                 
-                classificationPredict.generateOverlays()
-                
+
                 #save results            
-                f = h5py.File(filename + '_processed.h5', 'w')
-                g = f.create_group("volume")
-                dm[0].serialize(g)
-                f.close()
-                self.logger.insertPlainText(".")
+                fw = h5py.File(str(filename) + '_processed.h5', 'w')
+                gw = fw.create_group("volume")
+
+                for blockNr in range(mpa.getBlockCount()):
+                    
+                    self.printStuff("Part " + str(blockNr) + "/" + str(mpa.getBlockCount()) + " " )
+                                            
+                    dm = dataMgr.DataMgr()
+                                    
+                    di = mpa.getDataItem(blockNr)
+                    dm.append(di, alreadyLoaded = True)
+                                    
+                    fm = featureMgr.FeatureMgr(dm)
+                    cm = classificationMgr.ClassificationModuleMgr(dm, fm)
+                    fm.setFeatureItems(self.ilastik.project.featureMgr.featureItems)
+    
+                    gc.collect()
+    
+                    fm.prepareCompute(dm)
+                    fm.triggerCompute()
+                    fm.joinCompute(dm)
+    
+    
+                    dm.module["Classification"]["classificationMgr"].classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
+                    dm.module["Classification"]["labelDescriptions"] = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
+    
+                    classificationPredict = classificationMgr.ClassifierPredictThread(dm)
+                    classificationPredict.start()
+                    classificationPredict.wait()
+                    
+                    classificationPredict.generateOverlays()
+                    
+                    dm[0].serialize(gw)
+                    self.printStuff(" done\n")
+                                        
+                fw.close()
+                fr.close()
                 
             except Exception, e:
                 print "######Exception"
@@ -148,11 +168,8 @@ class BatchProcess(QtGui.QDialog):
                 self.logger.appendPlainText("")                
             
             
-            self.logger.update()
-            self.logger.repaint()
-            
         if allok:
-            self.logger.appendPlainText("Batch processing finished")            
+            self.printStuff("Batch processing finished")            
             self.okButton.setEnabled(True)
         
     def exec_(self):

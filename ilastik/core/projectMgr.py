@@ -29,6 +29,7 @@
 
 from ilastik.core import dataMgr as dataMgrModule
 import numpy
+import traceback
 import cPickle as pickle
 import h5py
 from ilastik.core.utilities import irange, debug
@@ -142,6 +143,7 @@ class Project(object):
             self.dataMgr.exportClassifiers(fileName,'Project/')
         except Exception as e:
             print e.message
+            traceback.print_exc()
             return False
         return True
     

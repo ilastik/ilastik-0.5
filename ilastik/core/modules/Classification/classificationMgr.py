@@ -101,19 +101,19 @@ class ClassificationItemModuleMgr(PropertyMgr):
         self.dataItemImage = dataItemImage
         self.classificationModuleMgr = classificationModuleMgr
         
-    def serialize(self, h5g):
+    def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         #for now save the labels and prediction in the old format
         #TODO: change that when we are certain about the new project file format
         vl = VolumeLabels(self.dataItemImage.overlayMgr["Classification/Labels"]._data)
         vl.descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"]
-        vl.serialize(h5g, "labels")
+        vl.serialize(h5g, "labels", destbegin, destend, srcbegin, srcend, destshape)
 
         
         prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
         for d in vl.descriptions:
             prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
         prediction = DataAccessor(prediction)
-        prediction.serialize(h5g, 'prediction' )
+        prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape )
         
 
 

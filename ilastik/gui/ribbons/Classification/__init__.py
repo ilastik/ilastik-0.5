@@ -188,8 +188,8 @@ class ClassificationInteractive(object):
     
     def finalize(self):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
-        
-        self.parent.project.dataMgr.classifiers = list(self.classificationInteractive.classifiers)
+        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
+        self.parent.project.dataMgr.Classification.classificationMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
         
 

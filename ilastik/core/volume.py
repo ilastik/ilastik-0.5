@@ -159,9 +159,23 @@ class DataAccessor():
             elif axis ==2:
                 self._data[time, ax0l:ax0r, ax1l:ax1r ,num,  channel] = data
      
-    def serialize(self, h5G, name='data'):
-        print self._data.dtype, self._data.shape
-        h5G.create_dataset(name,data = self._data)
+    def serialize(self, h5G, name='data', destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0)):
+        print self._data.dtype, self._data.shape, destbegin, destend, srcbegin, srcend, destshape
+        
+        if name not in h5G.keys():
+            if destshape != (0,0,0):
+                shape = (self._data.shape[0], destshape[0], destshape[1],destshape[2], self._data.shape[-1] )
+            else:
+                shape = self._data.shape
+                
+            h5G.create_dataset(name, shape, self._data.dtype)
+            
+        h5d = h5G[name]
+        
+        if destend != (0,0,0):
+            h5d[:, destbegin[0]:destend[0], destbegin[1]:destend[1], destbegin[2]:destend[2],:] = self._data[:, srcbegin[0]:srcend[0], srcbegin[1]:srcend[1], srcbegin[2]:srcend[2],:]
+        else:
+            h5d[:,:,:,:,:] = self._data[:,:,:,:,:]
          
     @staticmethod
     def deserialize(h5G, name = 'data', offsets=(0, 0, 0), shape=(0, 0, 0)):
@@ -239,9 +253,14 @@ class VolumeLabels():
         #TODO: clear the labvles
         pass
         
-    def serialize(self, h5G, name):
-        group = h5G.create_group(name)
-        self._data.serialize(group, 'data')
+    def serialize(self, h5G, name, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+        
+        if name not in h5G.keys():
+            group = h5G.create_group(name)
+        else:
+            group = h5G[name]
+        
+        self._data.serialize(group, 'data', destbegin, destend, srcbegin, srcend, destshape)
         
         tColor = []
         tName = []
@@ -304,6 +323,9 @@ class VolumeLabels():
 class Volume():
     def __init__(self,  data, seeds = None,  uncertainty = None,  segmentation = None, background = None, objects = None):
         self._data = data
+        self.shape = data.shape
+        self.dtype = data.dtype
+        
         #self.labels = labels
         self.seeds = seeds
         self.objects = objects
@@ -346,10 +368,10 @@ class Volume():
         #self.selectedObjects = {}
         #self.selectedObjectsOverlay = None
 
-    def serialize(self, h5G):
-        self._data.serialize(h5G, "data")
+    def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0)):
+        self._data.serialize(h5G, "data", destbegin, destend, srcbegin, srcend, destshape )
         if self.seeds is not None:
-            self.seeds.serialize(h5G, "seeds")
+            self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )
         
     @staticmethod
     def deserialize(dataItemImage, h5G, offsets = (0,0,0), shape=(0,0,0)):
