@@ -6,8 +6,9 @@ from ilastik.core import activeLearning
 
 class FeatureComputation(object):
     def __init__(self, parent):
-        self.parent = parent
-        self.featureCompute() 
+        self.ilastik = self.parent = parent
+        self.ilastik.lockRibbon(True)
+        self.featureCompute()
     
     def featureCompute(self):
         self.parent.project.dataMgr.featureLock.acquire()
@@ -49,7 +50,8 @@ class FeatureComputation(object):
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
-                    
+        self.ilastik.lockRibbon(False)
+                  
     def featureShow(self, item):
         pass
 
@@ -62,6 +64,7 @@ class ClassificationTrain(QtCore.QObject):
         
     def start(self):
         #process all unaccounted label changes
+        self.ilastik.lockRibbon(True)
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         
@@ -98,6 +101,7 @@ class ClassificationTrain(QtCore.QObject):
         self.classificationProcess.wait()
         self.terminateClassificationProgressBar()
         self.emit(QtCore.SIGNAL("trainingFinished()"))
+        self.ilastik.lockRibbon(True)
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
@@ -109,7 +113,8 @@ class ClassificationTrain(QtCore.QObject):
 
 class ClassificationInteractive(object):
     def __init__(self, parent):
-        self.parent = parent
+        
+        self.ilastik = self.parent = parent
         self.stopped = False
         
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
@@ -167,6 +172,7 @@ class ClassificationInteractive(object):
         self.parent.statusBar().hide()
         
     def start(self):
+        self.ilastik.lockRibbon(True)
         self.initInteractiveProgressBar()
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.module["Classification"]["classificationMgr"],classifier = self.parent.project.classifier)
 
@@ -185,20 +191,22 @@ class ClassificationInteractive(object):
         self.finalize()
         
         self.terminateClassificationProgressBar()
+        self.ilastik.ribbonBusy = False
     
     def finalize(self):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
         self.parent.project.dataMgr.Classification.classificationMgr.classifiers = list(self.classificationInteractive.classifiers)
-        self.classificationInteractive =  None
+        self.ilastik.lockRibbon(False)
         
 
 class ClassificationPredict(object):
     def __init__(self, parent):
-        self.parent = parent
+        self.ilastik = self.parent = parent
         self.start()
     
-    def start(self):       
+    def start(self):
+        self.ilastik.lockRibbon(True)
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(False)
          
@@ -234,6 +242,7 @@ class ClassificationPredict(object):
         activeImage = self.parent._activeImage
         self.classificationPredict.generateOverlays(activeImage)
         self.parent.volumeEditor.repaint()
+        self.ilastik.lockRibbon(False)
         
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)

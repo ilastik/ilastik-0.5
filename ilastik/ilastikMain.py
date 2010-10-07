@@ -42,7 +42,7 @@ os.environ['ETS_TOOLKIT'] = 'qt4'
 
 from ilastik.core import version, dataMgr, projectMgr,  segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
 import ilastik.gui
-from ilastik.core import projectMgr, segmentationMgr, unsupervisedMgr, activeLearning
+from ilastik.core import projectMgr, segmentationMgr, unsupervisedMgr, activeLearning, overlayMgr
 from ilastik.core.volume import DataAccessor
 from ilastik.core.modules.Classification import featureMgr
 from ilastik.core import connectedComponentsMgr
@@ -93,6 +93,8 @@ class MainWindow(QtGui.QMainWindow):
               
         self.classificationProcess = None
         self.classificationOnline = None
+        
+        self.ribbonBusy = False
         
         self.featureCache = None
         self.opengl = None
@@ -423,6 +425,16 @@ class MainWindow(QtGui.QMainWindow):
         #self.unsDec.selection_key = self.project.dataMgr.connCompBackgroundKey
         self.unsDec.start(overlays)
         
+    def lockRibbon(self, lock):
+        ct = self.ribbon.currentTabNumber
+        for i in range(self.ribbon.count()):
+            state = not lock
+            if i == ct and lock:
+                state = True
+            self.ribbon.setTabEnabled(i,state)
+        self.volumeEditor.setLabelWidgetEnabled(not lock)
+        
+        
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No, QtGui.QMessageBox.Cancel)
         if reply == QtGui.QMessageBox.Yes:
@@ -445,6 +457,7 @@ class Segmentation(object):
         self.start()
 
     def start(self):
+        self.ilastik.lockRibbon(True)
         self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(False)
         
         self.timer = QtCore.QTimer()
@@ -483,13 +496,13 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.volumeEditor.volumeEditor.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
+            ov = overlayMgr.OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.volumeEditor.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem._dataVol.segmentation)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.volumeEditor.volumeEditor.colorTab
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.volumeEditor.labelWidget.colorTab
         self.ilastik.volumeEditor.repaint()
-
+        self.ilastik.lockRibbon(False)
 
         
     def terminateProgressBar(self):
@@ -507,6 +520,7 @@ class CC(object):
         #self.start()
 
     def start(self, background = False):
+        self.ilastik.lockRibbon(True)
         self.parent.ribbon.getTab('Connected Components').btnCC.setEnabled(False)
         self.parent.ribbon.getTab('Connected Components').btnCCBack.setEnabled(False)
         self.timer = QtCore.QTimer()
@@ -551,11 +565,12 @@ class CC(object):
             #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
             colortab = self.makeColorTab()
             print self.cc.result.shape
-            ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+            ov = overlayMgr.OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"]._data = DataAccessor(self.cc.result)
         self.ilastik.volumeEditor.repaint()
+        self.ilastik.lockRibbon(False)
        
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)
@@ -598,6 +613,7 @@ class UnsupervisedDecomposition(object):
         self.ilastik = parent
 
     def start(self, overlays):
+        self.ilastik.lockRibbon(True)
         self.parent.ribbon.getTab('Unsupervised').btnDecompose.setEnabled(False)
         
         self.timer = QtCore.QTimer()
@@ -644,12 +660,12 @@ class UnsupervisedDecomposition(object):
                 data2 = 255/dmax*data2
                 data2 = data2.astype(numpy.uint8)
                 
-                ov = OverlayItem(data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+                ov = overlayMgr.OverlayItem(data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname + " component %d" % (o+1)] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname]._data = DataAccessor(self.ud.result)
         self.ilastik.volumeEditor.repaint()
-
+        self.ilastik.lockRibbon(False)
         
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)

@@ -181,10 +181,10 @@ class LabelState(State):
         self.erasing = erasing
         self.labelNumber = labelNumber
         self.labels = labels
-        self.dataBefore = volumeEditor.volumeEditor.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        self.dataBefore = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         
     def restore(self, volumeEditor):
-        temp = volumeEditor.volumeEditor.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        temp = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         restore  = numpy.where(self.labels > 0, self.dataBefore, 0)
         stuff = numpy.where(self.labels > 0, self.dataBefore + 1, 0)
         erase = numpy.where(stuff == 1, 1, 0)
@@ -409,7 +409,7 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBox.setMaximumWidth(190)
         self.toolBox.setMinimumWidth(190)
 
-        self.volumeEditor = None
+        self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
 
 
@@ -589,20 +589,20 @@ class VolumeEditor(QtGui.QWidget):
                 self.imageScenes[i].setImageSceneFullScreenLabel()
     
     def nextLabel(self):
-        self.volumeEditor.nextLabel()
+        self.labelWidget.nextLabel()
         
     def prevLabel(self):
-        self.volumeEditor.nextLabel()
+        self.labelWidget.nextLabel()
 
     def onLabelSelected(self):
         print "onLabelSelected() Warning: am i used anymore?"
-#        if self.volumeEditor.currentItem() is not None:
-#            self.drawManager.setBrushColor(self.volumeEditor.currentItem().color)
+#        if self.labelWidget.currentItem() is not None:
+#            self.drawManager.setBrushColor(self.labelWidget.currentItem().color)
 #            for i in range(3):
-#                self.imageScenes[i].crossHairCursor.setColor(self.volumeEditor.currentItem().color)
+#                self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
 
     def onOverlaySelected(self, index):
-        if self.volumeEditor.currentItem() is not None:
+        if self.labelWidget.currentItem() is not None:
             pass
 
     def focusNextPrevChild(self, forward = True):
@@ -643,7 +643,7 @@ class VolumeEditor(QtGui.QWidget):
             self.ilastik.project.dataMgr.selectedChannels = result
 
     def togglePrediction(self):
-        labelNames = self.volumeEditor.volumeLabels.getLabelNames()
+        labelNames = self.labelWidget.volumeLabels.getLabelNames()
         for index,  item in enumerate(self.overlayWidget.overlays):
             if item.name in labelNames:
                 self.overlayWidget.toggleVisible(index)
@@ -708,18 +708,22 @@ class VolumeEditor(QtGui.QWidget):
             
         except:
             pass
+    
+    def setLabelWidgetEnabled(self, state):
+        self.labelWidget.setEnabled(state)
+        
         
     def setLabelWidget(self,  widget):
         """
         Public interface function for setting the volumeEditor toolBox
         """
-        if self.volumeEditor is not None:
-            self.toolBoxLayout.removeWidget(self.volumeEditor)
-            self.volumeEditor.close()
-            del self.volumeEditor
-        self.volumeEditor = widget
-        self.connect(self.volumeEditor, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 4, self.volumeEditor)        
+        if self.labelWidget is not None:
+            self.toolBoxLayout.removeWidget(self.labelWidget)
+            self.labelWidget.close()
+            del self.labelWidget
+        self.labelWidget = widget
+        self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
+        self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
     
     def setOverlayWidget(self,  widget):
         """
@@ -859,7 +863,7 @@ class VolumeEditor(QtGui.QWidget):
             sizes5 = (1,labels.shape[0], labels.shape[1],1,1)
         
         vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
-        vu.applyTo(self.volumeEditor.overlayItem)
+        vu.applyTo(self.labelWidget.overlayItem)
         self.pendingLabels.append(vu)
 
         patches = self.imageScenes[axis].patchAccessor.getPatchesForRect(offsets[0], offsets[1],offsets[0]+labels.shape[0], offsets[1]+labels.shape[1])
@@ -879,7 +883,7 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays)
 
         newLabels = self.getPendingLabels()
-        self.volumeEditor.labelMgr.newLabels(newLabels)
+        self.labelWidget.labelMgr.newLabels(newLabels)
 
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
             
@@ -963,10 +967,10 @@ class DrawManager(QtCore.QObject):
         
     def getCurrentPenPixmap(self):
         pixmap = QtGui.QPixmap(self.brushSize, self.brushSize)
-        if self.erasing == True or not self.volumeEditor.volumeEditor.currentItem():
+        if self.erasing == True or not self.volumeEditor.labelWidget.currentItem():
             self.penVis.setColor(QtCore.Qt.black)
         else:
-            self.penVis.setColor(self.volumeEditor.volumeEditor.currentItem().color)
+            self.penVis.setColor(self.volumeEditor.labelWidget.currentItem().color)
                     
         painter = QtGui.QPainter(pixmap)
         painter.setPen(self.penVis)
@@ -976,10 +980,10 @@ class DrawManager(QtCore.QObject):
         self.shape = shape
         self.initBoundingBox()
         self.scene.clear()
-        if self.erasing == True or not self.volumeEditor.volumeEditor.currentItem():
+        if self.erasing == True or not self.volumeEditor.labelWidget.currentItem():
             self.penVis.setColor(QtCore.Qt.black)
         else:
-            self.penVis.setColor(self.volumeEditor.volumeEditor.currentItem().color)
+            self.penVis.setColor(self.volumeEditor.labelWidget.currentItem().color)
         self.pos = QtCore.QPointF(pos.x()+0.0001, pos.y()+0.0001)
         
         line = self.moveTo(pos)
@@ -1752,7 +1756,7 @@ class ImageScene( QtGui.QGraphicsView):
         ndarr = qimage2ndarray.rgb_view(image)
         labels = ndarr[:,:,0]
         labels = labels.swapaxes(0,1)
-        number = self.volumeEditor.volumeEditor.currentItem().number
+        number = self.volumeEditor.labelWidget.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor._history.append(ls)        
@@ -1777,7 +1781,7 @@ class ImageScene( QtGui.QGraphicsView):
         ndarr = qimage2ndarray.rgb_view(image)
         labels = ndarr[:,:,0]
         labels = labels.swapaxes(0,1)
-        number = self.volumeEditor.volumeEditor.currentItem().number
+        number = self.volumeEditor.labelWidget.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor._history.append(ls)        
@@ -1833,7 +1837,7 @@ class ImageScene( QtGui.QGraphicsView):
     def tabletEvent(self, event):
         self.setFocus(True)
         
-        if not self.volumeEditor.volumeEditor.currentItem():
+        if not self.volumeEditor.labelWidget.currentItem():
             return
         
         self.mousePos = mousePos = self.mapToScene(event.pos())
@@ -1869,7 +1873,7 @@ class ImageScene( QtGui.QGraphicsView):
             self.dragMode = True
             if self.ticker.isActive():
                 self.deltaPan = QtCore.QPointF(0, 0)
-        if not self.volumeEditor.volumeEditor.currentItem():
+        if not self.volumeEditor.labelWidget.currentItem():
             return
         
         if event.buttons() == QtCore.Qt.LeftButton:
@@ -2031,7 +2035,7 @@ class ImageScene( QtGui.QGraphicsView):
         
         menu.addSeparator()
         labelList = []
-        volumeLabel = self.volumeEditor.volumeEditor.volumeLabelDescriptions
+        volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
         for index, item in enumerate(volumeLabel):
             labelColor = QtGui.QColor.fromRgb(long(item.color))
             labelIndex = item.number
@@ -2041,9 +2045,9 @@ class ImageScene( QtGui.QGraphicsView):
             icon = QtGui.QIcon(pixmap)
             
             act = QtGui.QAction(icon, labelName, menu)
-            i = self.volumeEditor.volumeEditor.listWidget.model().index(labelIndex-1,0)
+            i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
             # print self.volumeEditor.labelView.selectionModel()
-            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.volumeEditor.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
+            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
             labelList.append(menu.addAction(act))
 
         menu.addSeparator()
