@@ -76,6 +76,8 @@ class HessianOfGaussianEigenvalues(FeatureBase):
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
+
+
 class StructureTensorEigenvalues(FeatureBase):
     name = "Eigenvalues of structure tensor"
     groups = ['Texture']

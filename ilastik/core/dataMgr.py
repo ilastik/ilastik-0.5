@@ -301,6 +301,8 @@ class ModuleMgr(PropertyMgr):
         pass
     
     
+    
+
         
     
 class DataItemImage(DataItemBase):
@@ -309,14 +311,35 @@ class DataItemImage(DataItemBase):
         self._dataVol = None
         self._featureM = None
         
-        self._seedL = numpy.zeros((0, 1), 'uint8')
-        self._seedIndices = numpy.zeros((0, 1), 'uint32')
+        self._seedL = None#numpy.zeros((0, 1), 'uint8')
+        self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
         
         self._segmentationWeights = None
         
+        self._readBegin = (0,0,0)
+        self._readEnd = (0,0,0)
+        
+        self._writeBegin = (0,0,0)
+        self._writeEnd = (0,0,0)
+        
         self.overlayMgr = overlayMgr.OverlayMgr()
         self.module = PropertyMgr(self)
+    
+    
+    def setDataVol(self, dataVol):
+        self._dataVol = dataVol
+        self._writeBegin = (0,0,0)
+        self._writeEnd = (dataVol.shape[1], dataVol.shape[2], dataVol.shape[3])
         
+    def setReadBounds(self, begin, end):
+        self._readBegin = begin
+        self._readEnd  = end
+    
+    def setWriteBounds(self, begin, end, shape):
+        self._writeBegin = begin
+        self._writeEnd  = end
+        self._writeShape = shape
+    
 
     def __getitem__(self, args):
         return self._dataVol._data[args]
@@ -357,6 +380,7 @@ class DataItemImage(DataItemBase):
         This method updates the seedMatrix with new seeds.
         newlabels can contain completey new labels, changed labels and deleted labels
         """
+        self._buildSeedsWhenNotThere()
         for nl in newLabels:
             try:
                 if nl.erasing == False:
@@ -481,16 +505,34 @@ class DataItemImage(DataItemBase):
         self._data = None
         
      
-    def serialize(self, h5G):
-        self._dataVol.serialize(h5G)
-        
+    def loadFromFile(self):
+        f = h5py.File(self.fileName, 'r')
+        g = f["volume"]
+        self.deserialize(g)
+    
+    def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+        if destend != (0,0,0):
+            self._dataVol.serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+        elif self._writeEnd != (0,0,0):
+            
+            destbegin = self._writeBegin
+            destend =  self._writeEnd
+            srcbegin =  self._readBegin
+            srcend =  self._readEnd
+            destshape = self._writeShape
+            
+            self._dataVol.serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+        else:
+            self._dataVol.serialize(h5G)
+            
         for k in self.module.keys():
             if hasattr(self.module[k], "serialize"):
                 print "serializing ", k
                 try:
-                    if self.module[k] is not None:
-                        self.module[k].serialize(h5G)
-                except:
+                    self.module[k].serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+                except Exception as e:
+                    print e
+                    print traceback.print_exc()
                     print "couldn't serialize something"
                     
     def updateOverlays(self):
@@ -526,6 +568,31 @@ class DataItemImage(DataItemBase):
             
         
         self.updateOverlays()
+
+
+
+
+class MultiPartDataItemAccessor(object):
+    def __init__(self, data, blocksize = 128, overlap = 10):
+        self._data = data
+        self.overlap = 10
+        self._blockAccessor = BlockAccessor(self._data, blocksize)
+        
+    def getBlockCount(self):
+        return self._blockAccessor._blockCount
+    
+    def getDataItem(self, blockNr):
+        di = DataItemImage("block " + str(blockNr))
+        boundsa = self._blockAccessor.getBlockBounds(blockNr, self.overlap)
+        tempdata = DataAccessor(self._data[:,boundsa[0]:boundsa[1],boundsa[2]:boundsa[3],boundsa[4]:boundsa[5],:])
+        di.setDataVol(Volume(tempdata))
+        boundsb = self._blockAccessor.getBlockBounds(blockNr, 0)
+        di.setWriteBounds( (boundsb[0], boundsb[2], boundsb[4]), (boundsb[1], boundsb[3], boundsb[5]), self._data.shape[1:-1])
+        di.setReadBounds( (boundsb[0]-boundsa[0], boundsb[2]-boundsa[2], boundsb[4]-boundsa[4]), (boundsb[0]-boundsa[0] + boundsb[1] - boundsb[0], boundsb[2]-boundsa[2] + boundsb[3] - boundsb[2], boundsb[4]-boundsa[4] + boundsb[5] - boundsb[4]))
+        return di
+
+
+
         
             
 class DataMgr():
@@ -550,7 +617,7 @@ class DataMgr():
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
             try:
-                dataItem.loadData()
+                dataItem.loadFromFile()
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
@@ -559,8 +626,8 @@ class DataMgr():
 
             alreadyLoaded = True
             
-        if self.channels == -1 or dataItem._dataVol._data.shape[-1] == self.channels:
-            self.channels = dataItem._dataVol._data.shape[-1]
+        if self.channels == -1 or dataItem.shape[-1] == self.channels:
+            self.channels = dataItem.shape[-1]
             
             self.selectedChannels = range(self.channels)
             
@@ -573,7 +640,6 @@ class DataMgr():
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         
     def clearAll(self):
-        self.clearFeaturesAndTraining()
         self._dataItems = []
         gc.collect()
         
@@ -635,19 +701,23 @@ class DataMgr():
         pass
     
     def exportClassifiers(self, fileName, pathToGroup='/'):
-        if not hasattr(self, 'classifiers'):
+        if not hasattr(self, 'Classification') or not hasattr(self.Classification, 'classificationMgr') or not hasattr(self.Classification.classificationMgr, 'classifiers'):
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
-        if len(self.classifiers) == 0:
+        if len(self.Classification.classificationMgr.classifiers) == 0:
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
-        
         
         h5file = h5py.File(str(fileName),'a')
         h5group = h5file[pathToGroup]
+        
+        if 'classifiers' in h5group.keys():
+            del h5group['classifiers']
+            print "overwrite classifiers"
+            
         h5group.create_group('classifiers')
         h5file.close()
         
-        for i, c in enumerate(self.classifiers):
+        for i, c in enumerate(self.Classification.classificationMgr.classifiers):
             print pathToGroup + "/classifiers/rf_%03d" % i
             tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
             print "Write Random Forest # %03d -> %d" % (i,tmp)

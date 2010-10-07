@@ -29,6 +29,7 @@
 
 from ilastik.core import dataMgr as dataMgrModule
 import numpy
+import traceback
 import cPickle as pickle
 import h5py
 from ilastik.core.utilities import irange, debug
@@ -41,6 +42,7 @@ from ilastik.core.volume import DataAccessor,  Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
+from ilastik.core import unsupervisedMgr
 from ilastik.core import classifiers
 from ilastik.core.modules.Classification import labelMgr, featureMgr, classificationMgr
 from ilastik.core import seedMgr
@@ -49,6 +51,7 @@ from ilastik.core.modules.Classification import classificationMgr
 from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr  
 from ilastik.core import connectedComponents
+from ilastik.core.unsupervised import unsupervisedPCA
 
 from ilastik import core 
 
@@ -93,6 +96,8 @@ class Project(object):
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         self.segmentor = core.segmentors.segmentorClasses[0]()
         self.connector = connectedComponents.ConnectedComponents()
+        self.unsupervisedDecomposer = unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()
+        
  
     def saveToDisk(self, fileName = None):
         """ Save the whole project including data, feautues, labels and settings to 
@@ -142,6 +147,7 @@ class Project(object):
             self.dataMgr.exportClassifiers(fileName,'Project/')
         except Exception as e:
             print e.message
+            traceback.print_exc()
             return False
         return True
     

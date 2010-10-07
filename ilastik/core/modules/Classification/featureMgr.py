@@ -72,13 +72,11 @@ class FeatureMgr():
     """
     Manages selected features (merkmale) for classificator.
     """
-    def __init__(self, dataMgr, featureItems=None):
+    def __init__(self, dataMgr, featureItems=[]):
         self.dataMgr = dataMgr
         self.totalFeatureSize = 1
         self.featureSizes = []
         self.featureOffsets = []
-        if featureItems is None:
-            featureItems = []
         self.maxContext = 0
         self.setFeatureItems(featureItems)
         self.parent_conn = None
@@ -168,7 +166,8 @@ class FeatureThread(ThreadBase):
 
     def computeNumberOfJobs(self):
         for image in self.dataMgr:
-            self.jobs += image._dataVol._data.shape[0]*image._dataVol._data.shape[4] * len(self.featureMgr.featureItems)
+            blockA = dataMgr.BlockAccessor(image.module["Classification"]["featureM"],64)
+            self.jobs += image._dataVol._data.shape[0] * len(self.featureMgr.featureItems) * blockA._blockCount
 
     def calcFeature(self, image, featureBlockAccessor, offset, size, feature, blockNum):
         for t_ind in range(image._dataVol._data.shape[0]):

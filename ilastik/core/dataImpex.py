@@ -138,7 +138,8 @@ class DataImpex(object):
         if options.destShape is not None:
             result = numpy.zeros(options.destShape + (nch,), 'float32')
             for i in range(nch):
-                cresult = vigra.sampling.resizeVolumeSplineInterpolation(image[:,:,:,i].view(vigra.Volume),options.destShape)
+                cresult = vigra.filters.gaussianSmoothing(image[:,:,:,i].view(vigra.Volume), 2.0)
+                cresult = vigra.sampling.resizeVolumeSplineInterpolation(cresult,options.destShape)
                 result[:,:,:,i] = cresult[:,:,:]
             image = result
         else:

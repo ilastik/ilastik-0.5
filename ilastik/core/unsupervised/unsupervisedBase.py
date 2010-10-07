@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    Copyright 2010 C Sommer, C Straehle, M Hanselmann, U Koethe, FA Hamprecht. All rights reserved.
 #
 #    Redistribution and use in source and binary forms, with or without modification, are
 #    permitted provided that the following conditions are met:
@@ -26,34 +26,29 @@
 #    The views and conclusions contained in the software and documentation are those of the
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
+import numpy
+from enthought.traits.api import *
+from enthought.traits.ui.api import *
 
-import traceback,  os,  sys,  segmentorBase
 
-#
-#Import other segmentation plugins dynamically
-#
-load = False
-try:
-    test = segmentorClasses
-except Exception,  e:
-    load = True
+class UnsupervisedBase(object):
+    #human readable information
+    name = "Base Unsupervised Decomposition"
+    description = "virtual base class"
+    author = "HCI, University of Heidelberg"
+    homepage = "http://hci.iwr.uni-heidelberg.de"
+
+    #minimum required isotropic context
+    #0 means pixel based classification
+    #-1 means whole dataset - segmentation plugins normally need the whole volume for segmentation
+    minContext = -1
+
+    def __init__(self):
+        pass
+
+    def decompose(self, features):
+        pass
     
-
-if load:
-    pathext = os.path.dirname(__file__)
-    try:
-        for f in os.listdir(os.path.abspath(pathext)):
-            module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
-            if ext == '.py': # Important, ignore .pyc/other files.
-                module = __import__('core.segmentors.' + module_name)
-    except Exception, e:
-        #traceback.print_exc(file=sys.stdout)
+    def configure(self, options):
         pass
-
-    for i, c in enumerate(segmentorBase.SegmentorBase.__subclasses__()):
-        print "loaded segmentor ",c, ': ',  c.name
-        pass
-        
-    segmentorClasses = segmentorBase.SegmentorBase.__subclasses__()
-    if len(segmentorClasses) == 0:
-        segmentorClasses = [segmentorBase.SegmentorBase]
+    

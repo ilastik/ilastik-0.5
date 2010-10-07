@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    Copyright 2010 C Sommer, C Straehle, M Hanselmann, U Koethe, FA Hamprecht. All rights reserved.
 #
 #    Redistribution and use in source and binary forms, with or without modification, are
 #    permitted provided that the following conditions are met:
@@ -27,14 +27,14 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import traceback,  os,  sys,  segmentorBase
+import traceback,  os,  sys,  unsupervisedBase
 
 #
-#Import other segmentation plugins dynamically
+#Import other unsupervised plugins dynamically
 #
 load = False
 try:
-    test = segmentorClasses
+    test = unsupervisedClasses
 except Exception,  e:
     load = True
     
@@ -45,15 +45,16 @@ if load:
         for f in os.listdir(os.path.abspath(pathext)):
             module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
             if ext == '.py': # Important, ignore .pyc/other files.
-                module = __import__('core.segmentors.' + module_name)
+                module = __import__('core.unsupervised.' + module_name)
     except Exception, e:
         #traceback.print_exc(file=sys.stdout)
         pass
 
-    for i, c in enumerate(segmentorBase.SegmentorBase.__subclasses__()):
-        print "loaded segmentor ",c, ': ',  c.name
+    for i, c in enumerate(unsupervisedBase.UnsupervisedBase.__subclasses__()):
+        print "loaded unsupervised decomposer ",c, ': ',  c.name
         pass
         
-    segmentorClasses = segmentorBase.SegmentorBase.__subclasses__()
-    if len(segmentorClasses) == 0:
-        segmentorClasses = [segmentorBase.SegmentorBase]
+    unsupervisedClasses = unsupervisedBase.UnsupervisedBase.__subclasses__()
+    if len(unsupervisedClasses) == 0:
+        unsupervisedClasses = [unsupervisedBase.UnsupervisedBase]
+        
