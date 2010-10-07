@@ -14,33 +14,79 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
         self.rgb = 1
-
-        tempLayout = QtGui.QHBoxLayout()
+        self.layout.addWidget(QtGui.QLabel("Select a subvolume:"))
+        #tempGrid = QtGui.QGridLayout()
+        #tempForm = QtGui.QFormLayout()
+        tempLayoutRight = QtGui.QVBoxLayout()        
+        tempLayout = QtGui.QHBoxLayout()        
         self.offsetX = QtGui.QSpinBox()
         self.offsetX.setRange(0,10000)
+        self.connect(self.offsetX, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
         self.offsetY = QtGui.QSpinBox()
         self.offsetY.setRange(0,10000)
+        self.connect(self.offsetY, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
         self.offsetZ = QtGui.QSpinBox()
         self.offsetZ.setRange(0,10000)
+        self.connect(self.offsetZ, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
+        tempLayout.addWidget(QtGui.QLabel("X"))
         tempLayout.addWidget( self.offsetX)
+        tempLayout.addWidget(QtGui.QLabel("Y"))
         tempLayout.addWidget( self.offsetY)
+        tempLayout.addWidget(QtGui.QLabel("Z"))
         tempLayout.addWidget( self.offsetZ)
-        self.layout.addWidget(QtGui.QLabel("Subvolume Offsets:"))
-        self.layout.addLayout(tempLayout)
+        tempLayoutRight.addLayout(tempLayout)
+        #self.layout.addLayout(tempLayout)
+        #tempForm.addRow(QtGui.QLabel("From:"), tempLayout)
+#        tempGrid.addWidget(QtGui.QLabel("From:"), 0, 0)
+#        tempGrid.addWidget(QtGui.QLabel("X"), 0, 1)
+#        tempGrid.addWidget(self.offsetX, 0, 2)
+#        tempGrid.addWidget(QtGui.QLabel("Y"), 0, 3)
+#        tempGrid.addWidget(self.offsetY, 0, 4)
+#        tempGrid.addWidget(QtGui.QLabel("Z"), 0, 5)
+#        tempGrid.addWidget(self.offsetZ, 0, 6)
         
         tempLayout = QtGui.QHBoxLayout()
         self.sizeX = QtGui.QSpinBox()
         self.sizeX.setRange(0,10000)
+        self.connect(self.sizeX, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
         self.sizeY = QtGui.QSpinBox()
         self.sizeY.setRange(0,10000)
+        self.connect(self.sizeY, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
         self.sizeZ = QtGui.QSpinBox()
         self.sizeZ.setRange(0,10000)
+        self.connect(self.sizeZ, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
+        tempLayout.addWidget(QtGui.QLabel("X"))
         tempLayout.addWidget( self.sizeX)
+        tempLayout.addWidget(QtGui.QLabel("Y"))
         tempLayout.addWidget( self.sizeY)
+        tempLayout.addWidget(QtGui.QLabel("Z"))
         tempLayout.addWidget( self.sizeZ)
-        self.layout.addWidget(QtGui.QLabel("Subvolume Size:"))
+        tempLayoutRight.addLayout(tempLayout)
+        #self.layout.addWidget(QtGui.QLabel("Subvolume End Offsets:"))
+        
+        tempLayoutLeft = QtGui.QVBoxLayout()
+        tempLayoutLeft.addWidget(QtGui.QLabel("From:"))
+        tempLayoutLeft.addWidget(QtGui.QLabel("To:"))
+        tempLayout = QtGui.QHBoxLayout()
+        
+        tempLayout.addLayout(tempLayoutLeft)
+        tempLayout.addLayout(tempLayoutRight)
+        tempLayout.addStretch()
         self.layout.addLayout(tempLayout)
-
+#        tempForm.addRow(QtGui.QLabel("To:"), tempLayout)
+#        self.layout.addLayout(tempForm)
+#        tempGrid.addWidget(QtGui.QLabel("To:"), 1, 0)
+#        x = QtGui.QLabel("X")
+#        x.setAlignment(QtCore.Qt.AlignCenter)
+#        tempGrid.addWidget(x, 1, 1)
+#        tempGrid.addWidget(self.sizeX, 1, 2)
+#        tempGrid.addWidget(QtGui.QLabel("Y"), 1, 3)
+#        tempGrid.addWidget(self.sizeY, 1, 4)
+#        tempGrid.addWidget(QtGui.QLabel("Z"), 1, 5)
+#        tempGrid.addWidget(self.sizeZ, 1, 6)
+#        self.layout.addLayout(tempGrid)
+        
+        
         tempLayout = QtGui.QHBoxLayout()
         self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
         self.connect(self.resCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleResolution)
@@ -153,20 +199,46 @@ class LoadOptionsWidget(QtGui.QWidget):
         except Exception as e:
             self.resolution = [1,1,1]
 
+
+    def off2Changed(self):
+        try:
+            if self.offsetX.value() >= self.sizeX.value():
+                self.offsetX.setValue(self.sizeX.value()-1)               
+            if self.offsetY.value() >= self.sizeY.value():
+                self.offsetY.setValue(self.sizeY.value()-1)               
+            if self.offsetZ.value() >= self.sizeZ.value():
+                self.offsetZ.setValue(self.sizeZ.value()+1)               
+        except Exception as e:
+            pass
+
+
+    def off1Changed(self):
+        try:
+            if self.offsetX.value() >= self.sizeX.value():
+                self.sizeX.setValue(self.offsetX.value()+1)               
+            if self.offsetY.value() >= self.sizeY.value():
+                self.sizeY.setValue(self.offsetY.value()+1)               
+            if self.offsetZ.value() >= self.sizeZ.value():
+                self.sizeZ.setValue(self.offsetZ.value()+1)               
+        except Exception as e:
+            pass
+
+
+
     def slotFile(self):
         filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
         self.file.setText(filename)
 
     def fillOptions(self, options):
         options.offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
-        options.shape = (self.sizeX.value(),self.sizeY.value(),self.sizeZ.value())
+        options.shape = (self.sizeX.value() - self.offsetX.value(),self.sizeY.value() - self.offsetY.value(),self.sizeZ.value() - self.offsetZ.value())
         options.resolution = (int(str(self.resX.text())), int(str(self.resY.text())), int(str(self.resZ.text())))
         options.destShape = None
         if self.downsample.checkState() > 0:
             options.destShape = (self.downX.value(),self.downY.value(),self.downZ.value())
-        options.file_exp = str(self.file.text())
+        options.destfile = str(self.file.text())
         if self.alsoSave.checkState() == 0:
-            options.file_exp = None
+            options.destfile = None
         options.normalize = self.normalize.checkState() > 0
         options.invert = self.invert.checkState() > 0
         options.grayscale = self.grayscale.checkState() > 0

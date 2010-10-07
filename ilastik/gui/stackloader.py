@@ -1,22 +1,37 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Mar 22 09:33:57 2010
 
-@author: - 
-"""
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
 
-
-import os, glob
-import vigra
-import sys
-import getopt
-import h5py
-import numpy
+import glob
 
 import loadOptions
-from ilastik.core import dataImpex
 
-from PyQt4 import QtCore, QtGui, uic
+from PyQt4 import QtCore, QtGui
 
 class StackLoader(QtGui.QDialog):
     def __init__(self):
@@ -42,7 +57,7 @@ class StackLoader(QtGui.QDialog):
         self.layout.addLayout(tempLayout)
 
         tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("MultiChannel Data:")
+        self.multiChannel = QtGui.QCheckBox("Load MultiChannel data as one image:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout) 
@@ -95,10 +110,11 @@ class StackLoader(QtGui.QDialog):
         self.image = None
 
     def toggleMultiChannel(self, int):
-	    if self.multiChannel.checkState() == 0:
-	        self.multiChannelFrame.setVisible(False)
-	    else:
-	        self.multiChannelFrame.setVisible(True)
+        if self.multiChannel.checkState() == 0:
+            self.multiChannelFrame.setVisible(False)
+        else:
+            self.multiChannelFrame.setVisible(True)
+
 
 
     def pathChanged(self, text):
@@ -149,11 +165,11 @@ class StackLoader(QtGui.QDialog):
         self.accept()
 
             
-    #def exec_(self):
-    #    if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
-    #        return  self.image
-    #    else:
-    #        return None
+    def exec_(self):
+        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+            return  str(self.path.text()), self.fileList, self.options
+        else:
+            return None, None, None
        
 def test():
     """Text editor demo"""

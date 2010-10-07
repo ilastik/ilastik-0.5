@@ -20,13 +20,16 @@ import traceback
 
 from PyQt4 import QtCore, QtGui, uic
 
-import sys
+import sys, gc
 
 import ilastik.gui.volumeeditor as ve
 
-from ilastik.core import dataMgr, featureMgr
-from ilastik.core import classificationMgr as cm
+from ilastik.core import dataMgr
+from ilastik.core.modules.Classification import featureMgr
+from ilastik.core.modules.Classification import classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
+from ilastik.core.volume import DataAccessor
+from ilastik.core.modules.Classification import classificationMgr
 
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent):
@@ -78,21 +81,11 @@ class BatchProcess(QtGui.QDialog):
         self.layout.addWidget(self.logger)        
         self.image = None
 
-        if self.ilastik.featureCache is not None:
-            if 'tempF_batch' in self.ilastik.featureCache.keys():
-                grp = self.ilastik.featureCache['tempF_batch']
-            else:
-                grp = self.ilastik.featureCache.create_group('tempF_batch')
-        else:
-            grp = None
-
-        self.dataMgr = dataMgr.DataMgr(grp)
-        self.dataMgr.channels = self.ilastik.project.dataMgr.channels
         
 
 
     def slotDir(self):
-        selection = QtGui.QFileDialog.getOpenFileNames(self, "Image Files")
+        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 Files", filter = "HDF5 (*.h5)")
         self.filenames.extend(selection)
         for f in selection:
             self.filesView.addItem(f)
@@ -104,6 +97,14 @@ class BatchProcess(QtGui.QDialog):
     def slotProcess(self):
         self.process(self.filenames)
     
+    
+    def printStuff(self, stuff):
+        self.logger.insertPlainText(stuff)
+        self.logger.ensureCursorVisible()
+        self.logger.update()
+        self.logger.repaint()
+        QtGui.QApplication.instance().processEvents()
+                        
     def process(self, fileNames):
         self.logger.clear()
         self.logger.setVisible(True)
@@ -113,34 +114,52 @@ class BatchProcess(QtGui.QDialog):
         allok = True
         for filename in fileNames:
             try:
-                filename = str(filename)
-                di = dataMgr.DataItemImage(filename)
-                di.loadData()
-                self.dataMgr.append(di)
+                self.printStuff("Processing " + str(filename) + "\n")
+                
+                fr = h5py.File(str(filename), 'r')
+                dr = fr["volume/data"]
+                mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 128, 20)
+                
 
-                fm = featureMgr.FeatureMgr(self.dataMgr, self.ilastik.project.featureMgr.featureItems)
+                #save results            
+                fw = h5py.File(str(filename) + '_processed.h5', 'w')
+                gw = fw.create_group("volume")
 
-                fm.prepareCompute(self.dataMgr)
-                fm.triggerCompute()
-                fm.joinCompute(self.dataMgr)
-
-
-                self.dataMgr.classifiers = self.ilastik.project.dataMgr.classifiers
-
-                classificationPredict = cm.ClassifierPredictThread(self.dataMgr)
-                classificationPredict.start()
-                classificationPredict.wait()
-  
-                #save results
-            
-                f = h5py.File(filename + '_processed.h5', 'w')
-                g = f.create_group("volume")
-                self.dataMgr[0].dataVol.labels = ve.VolumeLabels(ve.DataAccessor(numpy.zeros((self.dataMgr[0].dataVol.data.shape[0:4]),'uint8')))
-                self.dataMgr[0].dataVol.labels.descriptions = self.ilastik.project.dataMgr[0].dataVol.labels.descriptions
-                self.dataMgr[0].dataVol.serialize(g)
-                self.dataMgr[0].prediction.serialize(g, 'prediction')
-                f.close()
-                self.logger.insertPlainText(".")
+                for blockNr in range(mpa.getBlockCount()):
+                    
+                    self.printStuff("Part " + str(blockNr) + "/" + str(mpa.getBlockCount()) + " " )
+                                            
+                    dm = dataMgr.DataMgr()
+                                    
+                    di = mpa.getDataItem(blockNr)
+                    dm.append(di, alreadyLoaded = True)
+                                    
+                    fm = featureMgr.FeatureMgr(dm)
+                    cm = classificationMgr.ClassificationModuleMgr(dm, fm)
+                    fm.setFeatureItems(self.ilastik.project.featureMgr.featureItems)
+    
+                    gc.collect()
+    
+                    fm.prepareCompute(dm)
+                    fm.triggerCompute()
+                    fm.joinCompute(dm)
+    
+    
+                    dm.module["Classification"]["classificationMgr"].classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
+                    dm.module["Classification"]["labelDescriptions"] = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
+    
+                    classificationPredict = classificationMgr.ClassifierPredictThread(dm)
+                    classificationPredict.start()
+                    classificationPredict.wait()
+                    
+                    classificationPredict.generateOverlays()
+                    
+                    dm[0].serialize(gw)
+                    self.printStuff(" done\n")
+                                        
+                fw.close()
+                fr.close()
+                
             except Exception, e:
                 print "######Exception"
                 traceback.print_exc(file=sys.stdout)
@@ -149,12 +168,9 @@ class BatchProcess(QtGui.QDialog):
                 self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
                 self.logger.appendPlainText("")                
             
-            self.dataMgr.clearDataList()
-            #self.logger.update()
-            self.logger.repaint()
             
         if allok:
-            self.logger.appendPlainText("Batch processing finished")            
+            self.printStuff("Batch processing finished")            
             self.okButton.setEnabled(True)
         
     def exec_(self):
@@ -162,6 +178,9 @@ class BatchProcess(QtGui.QDialog):
             return  self.image
         else:
             return None
+
+
+
        
 def test():
     """Text editor demo"""

@@ -1,4 +1,5 @@
 import vigra, numpy
+import threading
 
 class ClassifierBase(object):
     #human readable information
@@ -11,6 +12,7 @@ class ClassifierBase(object):
     #0 means pixel based classification
     #-1 means whole dataset
     minContext = 0
+    printLock = threading.Lock()
 
     #If you want to provide a gui to the user, to set up additional parameter and stuff
     #implement the following settings classmethod in your derived class
@@ -23,7 +25,7 @@ class ClassifierBase(object):
     def __init__(self):
         pass
 
-    def train(self, labels, features):
+    def train(self, labels, features, isInteractive):
         pass
 
     def predict(self, features):

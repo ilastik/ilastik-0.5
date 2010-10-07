@@ -29,19 +29,35 @@
 
 from ilastik.core import dataMgr as dataMgrModule
 import numpy
+import traceback
 import cPickle as pickle
 import h5py
 from ilastik.core.utilities import irange, debug
+from ilastik.core.overlayMgr import OverlayItem
 
 from vigra import arraytypes as at
 from PyQt4 import QtGui
 
-from ilastik.gui.volumeeditor import DataAccessor as DataAccessor
-from ilastik.gui.volumeeditor import Volume as Volume
+from ilastik.core.volume import DataAccessor,  Volume
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
+from ilastik.core import unsupervisedMgr
 from ilastik.core import classifiers
+from ilastik.core.modules.Classification import labelMgr, featureMgr, classificationMgr
+from ilastik.core import seedMgr
+from ilastik.core import objectMgr
+from ilastik.core.modules.Classification import classificationMgr
+from ilastik.core import backgroundMgr
+from ilastik.core import overlayMgr  
+from ilastik.core import connectedComponents
+from ilastik.core.unsupervised import unsupervisedPCA
+
+from ilastik import core 
+
+ILASTIK_VERSION = 0.5
+
+
 
 class Project(object):
     """
@@ -66,61 +82,74 @@ class Project(object):
         self.trainingMatrix = None
         self.trainingLabels = None
         self.trainingFeatureNames = None
-        self.featureMgr = None
+        self.featureMgr = featureMgr.FeatureMgr(self.dataMgr)
+        
+        
+        classificationMgr.ClassificationModuleMgr(self.dataMgr, self.featureMgr)
+            
+        self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"]
+        
+        self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)
+        self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
+        self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)
+        self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
-    
+        self.segmentor = core.segmentors.segmentorClasses[0]()
+        self.connector = connectedComponents.ConnectedComponents()
+        self.unsupervisedDecomposer = unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()
+        
+ 
     def saveToDisk(self, fileName = None):
-        """ Save the whole project includeing data, feautues, labels and settings to 
+        """ Save the whole project including data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
-        if fileName is not None:
-            self.filename = fileName
-        else:
-            fileName = self.filename
-            
-        fileHandle = h5py.File(fileName,'w')
-        
-        # get project settings
-        projectG = fileHandle.create_group('Project') 
-        dataSetG = fileHandle.create_group('DataSets') 
-
-        projectG.create_dataset('Name', data=str(self.name))
-        projectG.create_dataset('Labeler', data=str(self.labeler))
-        projectG.create_dataset('Description', data=str(self.description))
-            
-        featureG = projectG.create_group('FeatureSelection')
-        
         try:
-            self.featureMgr.exportFeatureItems(featureG)
-        except RuntimeError as e:
-            print 'saveToDisk(): No features where selected: ' , e
+            if fileName is not None:
+                self.filename = fileName
+            else:
+                fileName = self.filename
+                
+            fileHandle = h5py.File(fileName,'w')
             
+            fileHandle.create_dataset('IlastikVersion', data=ILASTIK_VERSION)
             
-        # get number of images
-        n = len(self.dataMgr)
-        
-        # save raw data and labels
-        for k, item in enumerate(self.dataMgr):
-            # create group for dataItem
-            dk = dataSetG.create_group('dataItem%02d' % k)
-            dk.attrs["fileName"] = str(item.fileName)
-            dk.attrs["Name"] = str(item.Name)
-            # save raw data
-            item.dataVol.serialize(dk)
-            if item.prediction is not None:
-                item.prediction.serialize(dk, 'prediction' )
-            if item.history is not None:
-                item.history.serialize(dk)
+            # get project settings
+            projectG = fileHandle.create_group('Project') 
+            dataSetG = fileHandle.create_group('DataSets') 
+    
+            projectG.create_dataset('Name', data=str(self.name))
+            projectG.create_dataset('Labeler', data=str(self.labeler))
+            projectG.create_dataset('Description', data=str(self.description))
+                
+            featureG = projectG.create_group('FeatureSelection')
             
-        
-        
-        # Save to hdf5 file
-        
-        
-        classifierG = projectG.create_group('Classifier')
-        fileHandle.close()
-        
-        
-        print "Project %s saved to %s " % (self.name, fileName)
+            try:
+                self.featureMgr.exportFeatureItems(featureG)
+                featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
+            except:
+                print 'saveToDisk(): No features where selected: '
+                
+                
+            # get number of images
+            
+            # save raw data and labels
+            for k, item in enumerate(self.dataMgr):
+                # create group for dataItem
+                print "creating group", k
+                dk = dataSetG.create_group('dataItem%02d' % k)
+                dk.attrs["fileName"] = str(item.fileName)
+                dk.attrs["Name"] = str(item._name)
+                # save raw data
+                item.serialize(dk)
+            
+    
+            # Save to hdf5 file
+            fileHandle.close()
+            self.dataMgr.exportClassifiers(fileName,'Project/')
+        except Exception as e:
+            print e.message
+            traceback.print_exc()
+            return False
+        return True
     
     @staticmethod
     def loadFromDisk(fileName, featureCache):
@@ -138,29 +167,59 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
-            dataVol = Volume.deserialize(fileHandle['DataSets'][name])
+            print "Loading image ", name
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
-            activeItem.dataVol = dataVol
+            activeItem.deserialize(fileHandle['DataSets'][name])
+            #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
+            #activeItem._dataVol = dataVol
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
-
-            if 'prediction' in fileHandle['DataSets'][name].keys():
-                prediction = DataAccessor.deserialize(fileHandle['DataSets'][name], 'prediction' )
-                activeItem.prediction = prediction
-                for p_i, item in enumerate(activeItem.dataVol.labels.descriptions):
-                    item.prediction = (activeItem.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
-    
-                margin = activeLearning.computeEnsembleMargin(activeItem.prediction[:,:,:,:,:])*255.0
-                activeItem.dataVol.uncertainty = margin[:,:,:,:]
-                seg = segmentationMgr.LocallyDominantSegmentation(activeItem.prediction[:,:,:,:,:], 1.0)
-                activeItem.dataVol.segmentation = seg[:,:,:,:]
+            activeItem.name = activeItem.fileName
+            
+            activeItem.updateOverlays()
+                            
             dataMgr.append(activeItem,alreadyLoaded=True)
-
-               
-        fileHandle.close()
+           
         
         
         project = Project( name, labeler, description, dataMgr)
         project.filename = fileName
-        # print "Project %s loaded from %s " % (p.name, fileName)
+        
+        try:
+            userSelection = projectG['FeatureSelection']['UserSelection']
+            featureMgr.ilastikFeatureGroups.selection = userSelection.value
+        except:
+            print 'No user selection of features found.'
+        
+        fileHandle.close()
         return project
+
+    def deleteFeatureOverlays(self):
+        for index2,  di in enumerate(self.dataMgr):
+            keys = di.overlayMgr.keys()
+            for k in keys:
+                if k.startswith("Classification/Features/"):
+                    di.overlayMgr.remove(k)
     
+    
+    def createFeatureOverlays(self):
+        for index,  feature in enumerate(self.featureMgr.featureItems):
+            offset = self.featureMgr.featureOffsets[index]
+            size = self.featureMgr.featureSizes[index]
+
+            for index2,  di in enumerate(self.dataMgr):
+                #create Feature Overlays
+                for c in range(0,size):
+                    rawdata = di.module["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
+                    #TODO: the min/max stuff here is slow !!!
+                    #parallelize ??
+                    min = numpy.min(rawdata)
+                    max = numpy.max(rawdata)
+                    data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
+                    
+                    ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
+                    ov.min = min
+                    ov.max = max
+                    di.overlayMgr[ feature.getKey(c)] = ov
+        
+  
+

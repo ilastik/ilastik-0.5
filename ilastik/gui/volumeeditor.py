@@ -32,6 +32,7 @@ Dataset Editor Dialog based on PyQt4
 """
 import qimage2ndarray.qimageview
 import math
+import ctypes 
 
 try:
     from OpenGL.GL import *
@@ -52,10 +53,15 @@ import threading
 import traceback
 import os, sys
 
-from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
+from ilastik.core.volume import DataAccessor,  Volume
 
 from shortcutmanager import *
 
+from ilastik.gui.overlayWidget import OverlayListWidget
+from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
+import ilastik.gui.exportDialog as exportDialog
+
+from ilastik.gui.iconMgr import ilastikIcons # oli todo
 # Local import
 #from spyderlib.config import get_icon, get_font
 
@@ -68,20 +74,6 @@ from shortcutmanager import *
 #numpy.ndarray.__base__ += (VolumeLabelAccessor, )
 
 
-class LabeledVolumeArray(numpy.ndarray):
-    def __new__(cls, input_array, labels=None):
-        # Input array is an already formed ndarray instance
-        # We first cast to be our class type
-        obj = numpy.asarray(input_array).view(cls)
-        # add the new attribute to the created instance
-        obj._labels = labels
-        # Finally, we must return the newly created object:
-        return obj
-
-    def __array_finalize__(self,obj):
-        # reset the attribute from passed original object
-        self.info = getattr(obj, '_labels', None)
-        # We do not need to return anything
 
 
 
@@ -92,346 +84,83 @@ def rgb(r, g, b):
 
 
 
-class VolumeEditorList(QtCore.QObject):
-    editors = None #class variable to hold global editor list
-
-    def __init__(self):
-        QtCore.QObject.__init__(self)
-        self.editors = []
-
-
-    def append(self, object):
-        self.editors.append(object)
-        self.emit(QtCore.SIGNAL('appended(int)'), self.editors.__len__() - 1)
-
-    def remove(self, editor):
-        for index, item in enumerate(self.editors):
-            if item == editor:
-                self.emit(QtCore.SIGNAL('removed(int)'), index)
-                self.editors.__delitem__(index)
-
-VolumeEditorList.editors = VolumeEditorList()
-
+# oli todo
+class MyQLabel(QtGui.QLabel):
+    def __init(self, parent):
+        QtGui.QLabel.__init__(self, parent)
+    #enabling clicked signal for QLable
+    def mouseReleaseEvent(self, ev):
+        self.emit(QtCore.SIGNAL('clicked()'))
+        
 
 class PatchAccessor():
     def __init__(self, size_x,size_y, blockSize = 128):
-        self.blockSize = blockSize
+        self._blockSize = blockSize
         self.size_x = size_x
         self.size_y = size_y
 
-        self.cX = int(numpy.ceil(1.0 * size_x / self.blockSize))
+        self._cX = int(numpy.ceil(1.0 * size_x / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cXend = size_x % self.blockSize
-        if self.cXend < self.blockSize / 3 and self.cXend != 0 and self.cX > 1:
-            self.cX -= 1
+        self._cXend = size_x % self._blockSize
+        if self._cXend < self._blockSize / 3 and self._cXend != 0 and self._cX > 1:
+            self._cX -= 1
         else:
-            self.cXend = 0
+            self._cXend = 0
 
-        self.cY = int(numpy.ceil(1.0 * size_y / self.blockSize))
+        self._cY = int(numpy.ceil(1.0 * size_y / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cYend = size_y % self.blockSize
-        if self.cYend < self.blockSize / 3 and self.cYend != 0 and self.cY > 1:
-            self.cY -= 1
+        self._cYend = size_y % self._blockSize
+        if self._cYend < self._blockSize / 3 and self._cYend != 0 and self._cY > 1:
+            self._cY -= 1
         else:
-            self.cYend = 0
+            self._cYend = 0
 
 
-        self.patchCount = self.cX * self.cY
+        self.patchCount = self._cX * self._cY
 
 
     def getPatchBounds(self, blockNum, overlap = 0):
-        z = int(numpy.floor(blockNum / (self.cX*self.cY)))
-        rest = blockNum % (self.cX*self.cY)
-        y = int(numpy.floor(rest / self.cX))
-        x = rest % self.cX
+        z = int(numpy.floor(blockNum / (self._cX*self._cY)))
+        rest = blockNum % (self._cX*self._cY)
+        y = int(numpy.floor(rest / self._cX))
+        x = rest % self._cX
 
-        startx = max(0, x*self.blockSize - overlap)
-        endx = min(self.size_x, (x+1)*self.blockSize + overlap)
-        if x+1 >= self.cX:
+        startx = max(0, x*self._blockSize - overlap)
+        endx = min(self.size_x, (x+1)*self._blockSize + overlap)
+        if x+1 >= self._cX:
             endx = self.size_x
 
-        starty = max(0, y*self.blockSize - overlap)
-        endy = min(self.size_y, (y+1)*self.blockSize + overlap)
-        if y+1 >= self.cY:
+        starty = max(0, y*self._blockSize - overlap)
+        endy = min(self.size_y, (y+1)*self._blockSize + overlap)
+        if y+1 >= self._cY:
             endy = self.size_y
 
 
         return [startx,endx,starty,endy]
 
     def getPatchesForRect(self,startx,starty,endx,endy):
-        sx = int(numpy.floor(1.0 * startx / self.blockSize))
-        ex = int(numpy.ceil(1.0 * endx / self.blockSize))
-        sy = int(numpy.floor(1.0 * starty / self.blockSize))
-        ey = int(numpy.ceil(1.0 * endy / self.blockSize))
+        sx = int(numpy.floor(1.0 * startx / self._blockSize))
+        ex = int(numpy.ceil(1.0 * endx / self._blockSize))
+        sy = int(numpy.floor(1.0 * starty / self._blockSize))
+        ey = int(numpy.ceil(1.0 * endy / self._blockSize))
         
         
-        if ey > self.cY:
-            ey = self.cY
+        if ey > self._cY:
+            ey = self._cY
 
-        if ex > self.cX :
-            ex = self.cX
+        if ex > self._cX :
+            ex = self._cX
 
         nums = []
         for y in range(sy,ey):
-            nums += range(y*self.cX+sx,y*self.cX+ex)
+            nums += range(y*self._cX+sx,y*self._cX+ex)
         
         return nums
 
-class OverlaySlice():
-    def __init__(self, data, color, alpha, colorTable):
-        self.colorTable = colorTable
-        self.color = color
-        self.alpha = alpha
-        self.alphaChannel = None
-        self.data = data
-
-class VolumeOverlay(QtGui.QListWidgetItem, DataAccessor):
-    def __init__(self, data, name = "Red Overlay", color = 0, alpha = 0.4, colorTable = None, visible = True):
-        QtGui.QListWidgetItem.__init__(self,name)
-        DataAccessor.__init__(self,data)
-        self.colorTable = colorTable
-        self.setTooltip = name
-        self.color = color
-        self.alpha = alpha
-        self.name = name
-        self.visible = visible
-
-	s = None
-	if self.visible:
-		s = QtCore.Qt.Checked
-	else:
-		s = QtCore.Qt.Unchecked
-
-        self.setCheckState(s)
-        self.oldCheckState = self.visible
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-
-
-    def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.getSlice(num,axis,time,channel), self.color, self.alpha, self.colorTable)
-         
-
-class QSliderDialog(QtGui.QDialog):
-    def __init__(self, min, max, value):
-        QtGui.QDialog.__init__(self)
-        self.setWindowTitle('Change Alpha')
-        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
-        self.slider.setGeometry(20, 30, 140, 20)
-        self.slider.setRange(min,max)
-        self.slider.setValue(value)
         
-
-class OverlayListView(QtGui.QListWidget):
-    def __init__(self,parent):
-        QtGui.QListWidget.__init__(self, parent)
-        self.volumeEditor = parent
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
-        self.connect(self, QtCore.SIGNAL("clicked(QModelIndex)"), self.onItemClick)
-        self.connect(self, QtCore.SIGNAL("doubleClicked(QModelIndex)"), self.onItemDoubleClick)
-        self.overlays = [] #array of VolumeOverlays
-        self.currentItem = None
-
-    def onItemClick(self, itemIndex):
-        item = self.itemFromIndex(itemIndex)
-        if (item.checkState() == QtCore.Qt.Checked and not item.visible) or (item.checkState() == QtCore.Qt.Unchecked and item.visible):
-            item.visible = not(item.visible)
-            s = None
-	    if item.visible:
-                s = QtCore.Qt.Checked
-            else:
-                s = QtCore.Qt.Unchecked
-            item.setCheckState(s)
-            self.volumeEditor.repaint()
-            
-    def onItemDoubleClick(self, itemIndex):
-        self.currentItem = item = self.itemFromIndex(itemIndex)
-        if item.checkState() == item.visible * 2:
-            dialog = QSliderDialog(1, 20, round(item.alpha*20))
-            dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
-            dialog.exec_()
-        else:
-            self.onItemClick(self,itemIndex)
-            
-            
-    def setCurrentItemAlpha(self, num):
-        self.currentItem.alpha = 1.0 * num / 20.0
-        self.volumeEditor.repaint()
-        
-    def clearOverlays(self):
-        self.clear()
-        self.overlays = []
-
-    def addOverlay(self, overlay):
-        self.overlays.append(overlay)
-        self.addItem(overlay)
-
-    def onContext(self, pos):
-        index = self.indexAt(pos)
-
-#        if not index.isValid():
-#           return
-#
-#        item = self.itemAt(pos)
-#        name = item.text()
-#
-#        menu = QtGui.QMenu(self)
-#
-#        #removeAction = menu.addAction("Remove")
-#        if item.visible is True:
-#            toggleHideAction = menu.addAction("Hide")
-#        else:
-#            toggleHideAction = menu.addAction("Show")
-#
-#        action = menu.exec_(QtGui.QCursor.pos())
-##        if action == removeAction:
-##            self.overlays.remove(item)
-##            it = self.takeItem(index.row())
-##            del it
-#        if action == toggleHideAction:
-#            item.visible = not(item.visible)
-#            self.volumeEditor.repaint()
-            
-
-
-
-class LabelListItem(QtGui.QListWidgetItem):
-    def __init__(self, name , number, color):
-        QtGui.QListWidgetItem.__init__(self, name)
-        self.number = number
-        self.visible = True
-        self.setColor(color)
-        #self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
-        #self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
-
-        
-
-    def toggleVisible(self):
-        self.visible = not(self.visible)
-
-    def setColor(self, color):
-        self.color = color
-        pixmap = QtGui.QPixmap(16, 16)
-        pixmap.fill(color)
-        icon = QtGui.QIcon(pixmap)
-        self.setIcon(icon)      
-
-
-class LabelListView(QtGui.QListWidget):
-    def __init__(self,parent = None):
-        QtGui.QListWidget.__init__(self,parent)
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
-        self.colorTab = []
-        self.items = []
-        self.volumeEditor = parent
-        self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
-        #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
-        self.labelPropertiesChanged_callback = None
-        self.volumeLabel = None
-        
-    def getVolumeLabelDescriptions(self):
-        return self.volumeLabel
     
-    def initFromMgr(self, volumelabel):
-        self.volumeLabel = volumelabel
-        for index, item in enumerate(volumelabel.descriptions):
-            li = LabelListItem(item.name,item.number, QtGui.QColor.fromRgb(long(item.color)))
-            self.addItem(li)
-            self.items.append(li)
-        self.buildColorTab()
-        
-        #just select the first item in the list so we have some selection
-        self.selectionModel().setCurrentIndex(self.model().index(0,0), QtGui.QItemSelectionModel.ClearAndSelect)
-        
-    def changeText(self, text):
-        self.volumeLabel.descriptions[self.currentRow()].name = text
-        
-    def createLabel(self):
-        name = "Label " + len(self.items).__str__()
-        number = len(self.items)
-        if number > len(self.labelColorTable):
-            color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
-        else:
-            color = self.labelColorTable[number]
-        number +=1
-        self.addLabel(name, number, color)
-        self.buildColorTab()
-        
-    def addLabel(self, labelName, labelNumber, color):
-        description = VolumeLabelDescription(labelName, labelNumber, color.rgb())
-        self.volumeLabel.descriptions.append(description)
-        
-        label =  LabelListItem(labelName, labelNumber, color)
-        self.items.append(label)
-        self.addItem(label)
-        self.buildColorTab()
-        #self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
-        if self.labelPropertiesChanged_callback is not None:
-            self.labelPropertiesChanged_callback()
-        
-        #select the last item in the last
-        self.selectionModel().setCurrentIndex(self.model().index(self.model().rowCount()-1,0), QtGui.QItemSelectionModel.ClearAndSelect)
-
-    def buildColorTab(self):
-        self.colorTab = []
-        for i in range(256):
-            self.colorTab.append(QtGui.QColor.fromRgb(0,0,0).rgb())
-
-        for index,item in enumerate(self.items):
-            self.colorTab[item.number] = item.color.rgb()
-
-
-    def onContext(self, pos):
-        index = self.indexAt(pos)
-
-        if not index.isValid():
-           return
-
-        item = self.itemAt(pos)
-        name = item.text()
-
-        menu = QtGui.QMenu(self)
-
-        removeAction = menu.addAction("Remove")
-        colorAction = menu.addAction("Change Color")
-        if item.visible is True:
-            toggleHideAction = menu.addAction("Hide")
-        else:
-            toggleHideAction = menu.addAction("Show")
-
-        action = menu.exec_(QtGui.QCursor.pos())
-        if action == removeAction:
-            self.volumeEditor.history.removeLabel(item.number)
-            for ii, it in enumerate(self.items):
-                if it.number > item.number:
-                    it.number -= 1
-            self.items.remove(item)
-            it = self.takeItem(index.row())
-            del it
-            self.buildColorTab()
-            self.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
-            #self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
-            if self.labelPropertiesChanged_callback is not None:
-                self.labelPropertiesChanged_callback()
-            self.volumeEditor.repaint()
-        elif action == toggleHideAction:
-            self.buildColorTab()
-            item.toggleVisible()
-        elif action == colorAction:
-            color = QtGui.QColorDialog().getColor()
-            item.setColor(color)
-            self.volumeLabel.descriptions[index.row()].color = color.rgb()
-            
-#            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
-            if self.labelPropertiesChanged_callback is not None:
-                self.labelPropertiesChanged_callback()
-            self.buildColorTab()
-            self.volumeEditor.repaint()
-
-        
 
 #abstract base class for undo redo stuff
 class State():
@@ -452,15 +181,15 @@ class LabelState(State):
         self.erasing = erasing
         self.labelNumber = labelNumber
         self.labels = labels
-        self.dataBefore = volumeEditor.labels.data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        self.dataBefore = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         
     def restore(self, volumeEditor):
-        temp = volumeEditor.labels.data.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
+        temp = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         restore  = numpy.where(self.labels > 0, self.dataBefore, 0)
         stuff = numpy.where(self.labels > 0, self.dataBefore + 1, 0)
         erase = numpy.where(stuff == 1, 1, 0)
         self.dataBefore = temp
-        #volumeEditor.labels.data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
+        #volumeEditor.labels._data.setSubSlice(self.offsets, temp, self.num, self.axis, self.time, 0)
         volumeEditor.setLabels(self.offsets, self.axis, self.num, restore, False)
         volumeEditor.setLabels(self.offsets, self.axis, self.num, erase, True)
         if volumeEditor.sliceSelectors[self.axis].value() != self.num:
@@ -478,32 +207,32 @@ class HistoryManager(QtCore.QObject):
         QtCore.QObject.__init__(self)
         self.volumeEditor = parent
         self.maxSize = maxSize
-        self.history = []
+        self._history = []
         self.current = -1
 
     def append(self, state):
-        if self.current + 1 < len(self.history):
-            self.history = self.history[0:self.current+1]
-        self.history.append(state)
+        if self.current + 1 < len(self._history):
+            self._history = self._history[0:self.current+1]
+        self._history.append(state)
 
-        if len(self.history) > self.maxSize:
-            self.history = self.history[len(self.history)-self.maxSize:len(self.history)]
+        if len(self._history) > self.maxSize:
+            self._history = self._history[len(self._history)-self.maxSize:len(self._history)]
         
-        self.current = len(self.history) - 1
+        self.current = len(self._history) - 1
 
     def undo(self):
         if self.current >= 0:
-            self.history[self.current].restore(self.volumeEditor)
+            self._history[self.current].restore(self.volumeEditor)
             self.current -= 1
 
     def redo(self):
-        if self.current < len(self.history) - 1:
-            self.history[self.current + 1].restore(self.volumeEditor)
+        if self.current < len(self._history) - 1:
+            self._history[self.current + 1].restore(self.volumeEditor)
             self.current += 1
             
-    def serialize(self, grp):
-        histGrp= grp.create_group('history')
-        for i, hist in enumerate(self.history):
+    def serialize(self, grp, name='_history'):
+        histGrp = grp.create_group(name)
+        for i, hist in enumerate(self._history):
             histItemGrp = histGrp.create_group('%04d'%i)
             histItemGrp.create_dataset('labels',data=hist.labels)
             histItemGrp.create_dataset('axis',data=hist.axis)
@@ -516,7 +245,7 @@ class HistoryManager(QtCore.QObject):
 
     def removeLabel(self, number):
         tobedeleted = []
-        for index, item in enumerate(self.history):
+        for index, item in enumerate(self._history):
             if item.labelNumber != number:
                 item.dataBefore = numpy.where(item.dataBefore == number, 0, item.dataBefore)
                 item.dataBefore = numpy.where(item.dataBefore > number, item.dataBefore - 1, item.dataBefore)
@@ -530,14 +259,14 @@ class HistoryManager(QtCore.QObject):
                     self.current -= 1
 
         for val in tobedeleted:
-            it = self.history[val]
-            self.history.__delitem__(val)
+            it = self._history[val]
+            self._history.__delitem__(val)
             del it
 
 class VolumeUpdate():
     def __init__(self, data, offsets, sizes, erasing):
         self.offsets = offsets
-        self.data = data
+        self._data = data
         self.sizes = sizes
         self.erasing = erasing
     
@@ -548,19 +277,36 @@ class VolumeUpdate():
         tempData = dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]].copy()
 
         if self.erasing == True:
-            tempData = numpy.where(self.data > 0, 0, tempData)
+            tempData = numpy.where(self._data > 0, 0, tempData)
         else:
-            tempData = numpy.where(self.data > 0, self.data, tempData)
+            tempData = numpy.where(self._data > 0, self._data, tempData)
         
         dataAcc[offsets[0]:offsets[0]+sizes[0],offsets[1]:offsets[1]+sizes[1],offsets[2]:offsets[2]+sizes[2],offsets[3]:offsets[3]+sizes[3],offsets[4]:offsets[4]+sizes[4]] = tempData  
 
 
 
+
+class DummyLabelWidget(QtGui.QWidget):
+    def __init__(self):
+        QtGui.QWidget.__init__(self)
+        self.volumeLabels = None
+        
+    def currentItem(self):
+        return None
+
+class DummyOverlayListWidget(QtGui.QWidget):
+    def __init__(self,  parent):
+        QtGui.QWidget.__init__(self)
+        self.volumeEditor = parent
+        self.overlays = []
+
+
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
-    def __init__(self, image, name="", font=None,
-                 readonly=False, size=(400, 300), labels = None , opengl = True, openglOverview = True, embedded = False, parent = None):
+    def __init__(self, image, parent,  name="", font=None,
+                 readonly=False, size=(400, 300), opengl = True, openglOverview = True):
         QtGui.QWidget.__init__(self, parent)
+        self.ilastik = parent
         self.name = name
         title = name
         
@@ -572,7 +318,7 @@ class VolumeEditor(QtGui.QWidget):
         self.borderMargin = 0
 
 
-        #this setting controls the rescaling of the displayed data to the full 0-255 range
+        #this setting controls the rescaling of the displayed _data to the full 0-255 range
         self.normalizeData = False
 
         #this settings controls the timer interval during interactive mode
@@ -591,7 +337,7 @@ class VolumeEditor(QtGui.QWidget):
             #print "Enabling OpenGL Overview rendering"
             pass
         
-        self.embedded = embedded
+        self.embedded = True
 
 
         QtGui.QPixmapCache.setCacheLimit(100000)
@@ -600,38 +346,21 @@ class VolumeEditor(QtGui.QWidget):
         if issubclass(image.__class__, DataAccessor):
             self.image = image
         elif issubclass(image.__class__, Volume):
-            self.image = image.data
-            labels = image.labels
+            self.image = image._data
         else:
             self.image = DataAccessor(image)
 
-       
-        if hasattr(image, '_labels'):
-            self.labels = image._labels
-        elif labels is not None:
-            self.labels = labels
-        else:
-            tempData = DataAccessor(numpy.zeros(self.image.shape[1:4],'uint8'))
-            self.labels = VolumeLabels(tempData)
-
-        if issubclass(image.__class__, Volume):
-            image.labels = self.labels
-
-            
-        self.editor_list = VolumeEditorList.editors
-
-        self.linkedTo = None
-
+        self.save_thread = ImageSaveThread(self)
+              
         self.selectedTime = 0
         self.selectedChannel = 0
 
         self.pendingLabels = []
 
-        self.ownIndex = self.editor_list.editors.__len__()
         #self.setAccessibleName(self.name)
 
 
-        self.history = HistoryManager(self)
+        self._history = HistoryManager(self)
 
         self.layout = QtGui.QHBoxLayout()
         self.setLayout(self.layout)
@@ -642,6 +371,14 @@ class VolumeEditor(QtGui.QWidget):
         self.drawManager = DrawManager(self)
 
         self.imageScenes = []
+
+        if self.openglOverview is True:
+            self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
+            self.overview = OverviewScene(self, self.image.shape[1:4])
+        else:
+            self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
+            
+        self.grid.addWidget(self.overview, 1, 1)
         
         self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
         self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
@@ -651,12 +388,6 @@ class VolumeEditor(QtGui.QWidget):
         self.grid.addWidget(self.imageScenes[0], 0, 1)
         self.grid.addWidget(self.imageScenes[1], 1, 0)
 
-        if self.openglOverview is True:
-            self.overview = OverviewScene(self, self.image.shape[1:4])
-        else:
-            self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
-            
-        self.grid.addWidget(self.overview, 1, 1)
 
         if self.image.shape[1] == 1:
             self.imageScenes[1].setVisible(False)
@@ -665,51 +396,22 @@ class VolumeEditor(QtGui.QWidget):
 
         self.gridWidget = QtGui.QWidget()
         self.gridWidget.setLayout(self.grid)
-        self.layout.addWidget(self.gridWidget)
+        tempLayout = QtGui.QVBoxLayout(self)
+        tempLayout.addWidget(self.gridWidget)
+        self.posLabel = QtGui.QLabel("Mouse")
+        tempLayout.addWidget(self.posLabel)
+        self.layout.addLayout(tempLayout)
 
         #right side toolbox
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
         self.toolBox.setLayout(self.toolBoxLayout)
-        self.toolBox.setMaximumWidth(150)
-        self.toolBox.setMinimumWidth(150)
+        self.toolBox.setMaximumWidth(190)
+        self.toolBox.setMinimumWidth(190)
 
+        self.labelWidget = None
+        self.setLabelWidget(DummyLabelWidget())
 
-        #Label selector
-        self.addLabelButton = QtGui.QPushButton("Create Label Class")
-        self.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.addLabel)
-        self.toolBoxLayout.addWidget(self.addLabelButton)
-
-        self.labelAlphaSlider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
-        self.labelAlphaSlider.setRange(0,20)
-        self.labelAlphaSlider.setValue(20)
-        self.labelAlphaSlider.setToolTip('Change Label Opacity')
-        self.connect(self.labelAlphaSlider, QtCore.SIGNAL('valueChanged(int)'), self.setLabelsAlpha)
-        self.toolBoxLayout.addWidget( self.labelAlphaSlider)
-
-        self.labelView = LabelListView(self)
-        self.labelView.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.connect(self.labelView.selectionModel(), QtCore.SIGNAL("selectionChanged(QItemSelection, QItemSelection)"), self.onLabelSelected)
-        #only initialize after we have made the necessary connections
-        self.labelView.initFromMgr(self.labels)
-
-        self.toolBoxLayout.addWidget( self.labelView)
-
-
-        if self.embedded == False:
-            #Link to ComboBox
-            self.editor_list.append(self)
-            self.connect(self.editor_list, QtCore.SIGNAL("appended(int)"), self.linkComboAppend)
-            self.connect(self.editor_list, QtCore.SIGNAL("removed(int)"), self.linkComboRemove)
-    
-            self.linkCombo = QtGui.QComboBox()
-            self.linkCombo.setEnabled(True)
-            self.linkCombo.addItem("None")
-            for index, item in enumerate(self.editor_list.editors):
-                self.linkCombo.addItem(item.name)
-            self.connect(self.linkCombo, QtCore.SIGNAL("currentIndexChanged(int)"), self.linkToOther)
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Link to:"))
-            self.toolBoxLayout.addWidget(self.linkCombo)
 
         self.toolBoxLayout.addSpacing(30)
 
@@ -756,29 +458,39 @@ class VolumeEditor(QtGui.QWidget):
         self.selSlices.append(0)
         
         #Channel Selector Combo Box in right side toolbox
+        self.channelLayout = QtGui.QHBoxLayout()
+        
+        self.channelSpinLabel = QtGui.QLabel("Channel:")
+        
         self.channelSpin = QtGui.QSpinBox()
         self.channelSpin.setEnabled(True)
         self.connect(self.channelSpin, QtCore.SIGNAL("valueChanged(int)"), self.setChannel)
-        self.channelSpinLabel = QtGui.QLabel("Channel:")
+        
+        self.channelEditBtn = QtGui.QPushButton('Edit channels')
+        self.connect(self.channelEditBtn, QtCore.SIGNAL("clicked()"), self.on_editChannels)
+        
+        
         self.toolBoxLayout.addWidget(self.channelSpinLabel)
-        self.toolBoxLayout.addWidget(self.channelSpin)
+        self.channelLayout.addWidget(self.channelSpin)
+        self.channelLayout.addWidget(self.channelEditBtn)
+        self.toolBoxLayout.addLayout(self.channelLayout)
+        
         if self.image.shape[-1] == 1 or self.image.rgb is True: #only show when needed
             self.channelSpin.setVisible(False)
             self.channelSpinLabel.setVisible(False)
+            self.channelEditBtn.setVisible(False)
         self.channelSpin.setRange(0,self.image.shape[-1] - 1)
-
-        if self.embedded == False:
-            self.addOverlayButton = QtGui.QPushButton("Add Overlay")
-            self.connect(self.addOverlayButton, QtCore.SIGNAL("pressed()"), self.addOverlayDialog)
-            self.toolBoxLayout.addWidget(self.addOverlayButton)
-        else:
-            self.toolBoxLayout.addWidget(QtGui.QLabel("Overlays:"))
-
 
 
         #Overlay selector
-        self.overlayView = OverlayListView(self)
-        self.toolBoxLayout.addWidget( self.overlayView)
+        self.overlayWidget = DummyOverlayListWidget(self)
+        self.toolBoxLayout.addWidget( self.overlayWidget)
+
+        #Save the current images button
+        self.saveAsImageBtn = QtGui.QPushButton('Export Images')
+        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
+        self.toolBoxLayout.addWidget(self.saveAsImageBtn)
+        
         self.toolBoxLayout.addStretch()
 
 
@@ -803,95 +515,95 @@ class VolumeEditor(QtGui.QWidget):
         self.changeSliceZ(numpy.floor((self.image.shape[3] - 1) / 2))
 
         ##undo/redo and other shortcuts
-        self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo) 
-        shortcutManager.register(self.shortcutUndo, "history undo")
+        self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo, context = QtCore.Qt.WidgetShortcut) 
+        shortcutManager.register(self.shortcutUndo, "_history undo")
         
-        self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo)
-        shortcutManager.register(self.shortcutRedo, "history redo")
+        self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo, context = QtCore.Qt.WidgetShortcut)
+        shortcutManager.register(self.shortcutRedo, "_history redo")
         
-        self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo)
-        shortcutManager.register(self.shortcutRedo2, "history redo")
+        self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo, context = QtCore.Qt.WidgetShortcut)
+        shortcutManager.register(self.shortcutRedo2, "_history redo")
         
-        self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction)
+        self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.togglePredictionSC, "toggle prediction overlays")
         
-        self.shortcutNextLabel = QtGui.QShortcut(QtGui.QKeySequence("l"), self, self.nextLabel, self.nextLabel)
+        self.shortcutNextLabel = QtGui.QShortcut(QtGui.QKeySequence("l"), self, self.nextLabel, self.nextLabel, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutNextLabel, "go to next label (cyclic, forward)")
         
-        self.shortcutPrevLabel = QtGui.QShortcut(QtGui.QKeySequence("k"), self, self.prevLabel, self.prevLabel)
+        self.shortcutPrevLabel = QtGui.QShortcut(QtGui.QKeySequence("k"), self, self.prevLabel, self.prevLabel, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutPrevLabel, "go to previous label (cyclic, backwards)")
         
-        self.shortcutToggleFullscreenX = QtGui.QShortcut(QtGui.QKeySequence("x"), self, self.toggleFullscreenX, self.toggleFullscreenX)
+        self.shortcutToggleFullscreenX = QtGui.QShortcut(QtGui.QKeySequence("x"), self, self.toggleFullscreenX, self.toggleFullscreenX, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutToggleFullscreenX, "enlarge slice view x to full size")
         
-        self.shortcutToggleFullscreenY = QtGui.QShortcut(QtGui.QKeySequence("y"), self, self.toggleFullscreenY, self.toggleFullscreenY)
+        self.shortcutToggleFullscreenY = QtGui.QShortcut(QtGui.QKeySequence("y"), self, self.toggleFullscreenY, self.toggleFullscreenY, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutToggleFullscreenY, "enlarge slice view y to full size")
         
-        self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ)
+        self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutToggleFullscreenZ, "enlarge slice view z to full size")
         
         self.shortcutUndo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo2.setContext(QtCore.Qt.ApplicationShortcut )
-        self.togglePredictionSC.setContext(QtCore.Qt.ApplicationShortcut)
-        self.shortcutPrevLabel.setContext(QtCore.Qt.ApplicationShortcut)
-        self.shortcutNextLabel.setContext(QtCore.Qt.ApplicationShortcut)
-        self.shortcutToggleFullscreenX.setContext(QtCore.Qt.ApplicationShortcut)
-        self.shortcutToggleFullscreenY.setContext(QtCore.Qt.ApplicationShortcut)
-        self.shortcutToggleFullscreenZ.setContext(QtCore.Qt.ApplicationShortcut)
         
         self.shortcutUndo.setEnabled(True)
         self.shortcutRedo.setEnabled(True)
         self.shortcutRedo2.setEnabled(True)
         self.togglePredictionSC.setEnabled(True)
         
-        self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
+        self.connect(self, QtCore.SIGNAL("destroyed()"), self.widgetDestroyed)
         
         self.focusAxis =  0
 
     def toggleFullscreenX(self):
-        self.maximizeSliceView(0, self.imageScenes[1].isVisible())
+        self.maximizeSliceView(0)
     
     def toggleFullscreenY(self):
-        self.maximizeSliceView(1, self.imageScenes[0].isVisible())
+        self.maximizeSliceView(1)
         
     def toggleFullscreenZ(self):
-        self.maximizeSliceView(2, self.imageScenes[1].isVisible())
+        self.maximizeSliceView(2)
 
-    def maximizeSliceView(self, axis, maximize):
-        a = range(3)
-        if maximize:
+    def maximizeSliceView(self, axis):
+        if self.image.shape[1] > 1:
+            visible = True
+            a = range(3)
             for i in a:
-                self.imageScenes[i].setVisible(i == axis)
-        else:
-            for i in range(3):
-                self.imageScenes[i].setVisible(True)
-        
-        self.imageScenes[axis].setFocus()
+                if not self.imageScenes[i].isVisible():
+                    visible = False
+            if visible:
+                for i in a:
+                    self.imageScenes[i].setVisible(False)
+                self.imageScenes[axis].setVisible(True)
+            else:
+                if self.imageScenes[axis].isVisible():
+                    for i in a:
+                        self.imageScenes[i].setVisible(True)
+                else:
+                    for i in a:
+                        self.imageScenes[i].setVisible(False)
+                    self.imageScenes[axis].setVisible(True)
+                    
+            self.imageScenes[axis].setFocus()
+            for i in a:
+                self.imageScenes[i].setImageSceneFullScreenLabel()
     
     def nextLabel(self):
-        print "next label"
-        i = self.labelView.selectedIndexes()[0].row()
-        if i+1 == self.labelView.model().rowCount():
-            i = self.labelView.model().index(0,0)
-        else:
-            i = self.labelView.model().index(i+1,0)
-        self.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
-
+        self.labelWidget.nextLabel()
+        
     def prevLabel(self):
-        print "prev label"
-        i = self.labelView.selectedIndexes()[0].row()
-        if i >  0:
-            i = self.labelView.model().index(i-1,0)
-        else:
-            i = self.labelView.model().index(self.labelView.model().rowCount()-1,0)
-        self.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
+        self.labelWidget.nextLabel()
 
-    def onLabelSelected(self, index):
-        if self.labelView.currentItem() is not None:
-            self.drawManager.setBrushColor(self.labelView.currentItem().color)
-            for i in range(3):
-                self.imageScenes[i].crossHairCursor.setColor(self.labelView.currentItem().color)
+    def onLabelSelected(self):
+        print "onLabelSelected() Warning: am i used anymore?"
+#        if self.labelWidget.currentItem() is not None:
+#            self.drawManager.setBrushColor(self.labelWidget.currentItem().color)
+#            for i in range(3):
+#                self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
+
+    def onOverlaySelected(self, index):
+        if self.labelWidget.currentItem() is not None:
+            pass
 
     def focusNextPrevChild(self, forward = True):
         if forward is True:
@@ -905,30 +617,41 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes[self.focusAxis].setFocus()
         return True
         
+    def widgetDestroyed(self):
+        print "volumeeditor destroyed"
 
     def cleanUp(self):
-        pass
-#        for i, item in enumerate(self.imageScenes):
-#            item.deleteLater()
+        print "VolumeEditor: cleaning up"
+        for index, s in enumerate( self.imageScenes ):
+            s.cleanUp()
+            s.close()
+            s.deleteLater()
+        self.imageScenes = []
+        self.save_thread.stopped = True
+        self.save_thread.imagePending.set()
+        self.save_thread.wait()
+        print "finished saving thread"
+
+
+    def on_editChannels(self):
+        from ilastik.gui.channelEditDialog import EditChannelsDialog 
+        
+        dlg = EditChannelsDialog(self.ilastik.project.dataMgr.selectedChannels, self.ilastik.project.dataMgr[0]._dataVol._data.shape[-1], self)
+        
+        result = dlg.exec_()
+        if result is not None:
+            self.ilastik.project.dataMgr.selectedChannels = result
 
     def togglePrediction(self):
-        print "toggling prediction.."
-        maxi = self.overlayView.count() - 2
-        if maxi >= 0:
-            state = not(self.overlayView.item(0).visible)
-            for index in range(0,maxi):
-                item = self.overlayView.item(index)
-                item.visible = state
-                item.setCheckState(item.visible * 2)
+        labelNames = self.labelWidget.volumeLabels.getLabelNames()
+        for index,  item in enumerate(self.overlayWidget.overlays):
+            if item.name in labelNames:
+                self.overlayWidget.toggleVisible(index)
         self.repaint()
         
 
     def setLabelsAlpha(self, num):
-        self.labelsAlpha = num / 20.0
-        self.repaint()
-        
-    def cleanup(self):
-        pass
+        print "####################### function not used anymore"
         
     def getPendingLabels(self):
         temp = self.pendingLabels
@@ -936,49 +659,80 @@ class VolumeEditor(QtGui.QWidget):
         return temp
 
     def historyUndo(self):
-        self.history.undo()
+        self._history.undo()
 
     def historyRedo(self):
-        self.history.redo()
-
-    def clearOverlays(self):
-        self.overlayView.clearOverlays()
+        self._history.redo()
 
     def addOverlay(self, visible, data, name, color, alpha, colorTab = None):
         ov = VolumeOverlay(data,name, color, alpha, colorTab, visible)
-        self.overlayView.addOverlay(ov)
+        self.overlayWidget.addOverlay(ov)
 
-    def addOverlayDialog(self):
-        overlays = []
-        for index, item in enumerate(self.editor_list.editors):
-            overlays.append(item.name)
-        itemName, ok  = QtGui.QInputDialog.getItem(self,"Add Overlay", "Overlay:", overlays, 0, False)
-        if ok is True:
-            for index, item in enumerate(self.editor_list.editors):
-                if item.name == itemName:
-                    ov = VolumeOverlay(item.image, item.name)
-                    self.overlayView.addOverlay(ov)
-        self.repaint()
-
+    def addOverlayObject(self, ov):
+        self.overlayWidget.addOverlay(ov)
+        
     def repaint(self):
         for i in range(3):
             tempImage = None
             tempLabels = None
             tempoverlays = []   
-            for index, item in enumerate(self.overlayView.overlays):
+            for index, item in enumerate(reversed(self.overlayWidget.overlays)):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
     
-            tempImage = self.image.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
-    
-            if self.labels.data is not None:
-                tempLabels = self.labels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
-    
-            self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
+            if len(self.overlayWidget.overlays) > 0:
+                tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
+            else:
+                tempImage = None
+#            if self.labelWidget.volumeLabels is not None:
+#                if self.labelWidget.volumeLabels.data is not None:
+#                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
+            self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
 
-
-    def addLabel(self):
-        self.labelView.createLabel()
+    def on_saveAsImage(self):
+        sliceOffsetCheck = False
+        if self.image.shape[1]>1:
+            #stack z-view is stored in imageScenes[2], for no apparent reason
+            sliceOffsetCheck = True
+        timeOffsetCheck = self.image.shape[0]>1
+        formatList = QtGui.QImageWriter.supportedImageFormats()
+        expdlg = exportDialog.ExportDialog(formatList, timeOffsetCheck, sliceOffsetCheck, None)
+        expdlg.exec_()
+        try:
+            tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
+            filename = str(QtCore.QDir.convertSeparators(tempname))
+            self.save_thread.start()
+            stuff = (filename, expdlg.timeOffset, expdlg.sliceOffset, expdlg.format)
+            self.save_thread.queue.append(stuff)
+            self.save_thread.imagePending.set()
+            
+        except:
+            pass
+        
+    def setLabelWidget(self,  widget):
+        """
+        Public interface function for setting the labelWidget toolBox
+        """
+        if self.labelWidget is not None:
+            self.toolBoxLayout.removeWidget(self.labelWidget)
+            self.labelWidget.close()
+            del self.labelWidget
+        self.labelWidget = widget
+        self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
+        self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
+    
+    def setOverlayWidget(self,  widget):
+        """
+        Public interface function for setting the overlayWidget toolBox
+        """
+        if self.overlayWidget is not None:
+            self.toolBoxLayout.removeWidget(self.overlayWidget)
+            self.overlayWidget.close()
+            del self.overlayWidget
+        self.overlayWidget = widget
+        self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
+        self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
+        self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr._widget = self.overlayWidget
 
 
     def get_copy(self):
@@ -1033,64 +787,51 @@ class VolumeEditor(QtGui.QWidget):
         for i in range(3):
             self.changeSlice(self.selSlices[i], i)
 
+    def updateTimeSliceForSaving(self, time, num, axis):
+        self.imageScenes[axis].thread.freeQueue.clear()
+        if self.sliceSelectors[axis].value() != num:
+            #this will emit the signal and change the slice
+            self.sliceSelectors[axis].setValue(num)
+        elif self.selectedTime!=time:
+            #if only the time is changed, we don't want to update all 3 slices
+            self.selectedTime = time
+            self.changeSlice(num, axis)
+        else:
+            #no need to update, just save the current image
+            self.imageScenes[axis].thread.freeQueue.set()
 
     def changeSlice(self, num, axis):
         self.selSlices[axis] = num
         tempImage = None
         tempLabels = None
         tempoverlays = []
+        #This bloody call is recursive, be careful!
         self.sliceSelectors[axis].setValue(num)
 
-        for index, item in enumerate(self.overlayView.overlays):
+        for index, item in enumerate(reversed(self.overlayWidget.overlays)):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
+        
+        if len(self.overlayWidget.overlays) > 0:
+            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+        else:
+            tempImage = None            
+        #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
 
-        tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
-
-
-        if self.labels.data is not None:
-            tempLabels = self.labels.data.getSlice(num,axis, self.selectedTime, 0)
+#        if self.labelWidget.volumeLabels is not None:
+#            if self.labelWidget.volumeLabels.data is not None:
+#                tempLabels = self.labelWidget.volumeLabels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
         self.imageScenes[axis].sliceNumber = num
-        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays, tempLabels, self.labelsAlpha)
+        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
 #            image.setColor(i, col.rgba())
 
-    def unlink(self):
-        if self.linkedTo is not None:
-            self.disconnect(self.editor_list.editors[self.linkedTo], QtCore.SIGNAL("changedSlice(int, int)"), self.changeSlice)
-            self.linkedTo = None
-
-    def linkToOther(self, index):
-        self.unlink()
-        if index > 0 and index != self.ownIndex + 1:
-            other = self.editor_list.editors[index-1]
-            self.connect(other, QtCore.SIGNAL("changedSlice(int, int)"), self.changeSlice)
-            self.linkedTo = index - 1
-        else:
-            self.linkCombo.setCurrentIndex(0)
-
-    def linkComboAppend(self, index):
-        self.linkCombo.addItem( self.editor_list.editors[index].name )
-
-    def linkComboRemove(self, index):
-        if self.linkedTo == index:
-            self.linkCombo.setCurrentIndex(0)
-            self.linkedTo = None
-        if self.linkedTo > index:
-            self.linkedTo = self.linkedTo - 1
-        if self.ownIndex > index:
-            self.ownIndex = self.ownIndex - 1
-            self.linkCombo.removeItem(index + 1)
 
     def closeEvent(self, event):
-        self.disconnect(self.editor_list, QtCore.SIGNAL("appended(int)"), self.linkComboAppend)
-        self.disconnect(self.editor_list, QtCore.SIGNAL("removed(int)"), self.linkComboRemove)
-        self.unlink()
-        self.editor_list.remove(self)
         event.accept()
 
     def wheelEvent(self, event):
@@ -1118,7 +859,7 @@ class VolumeEditor(QtGui.QWidget):
             sizes5 = (1,labels.shape[0], labels.shape[1],1,1)
         
         vu = VolumeUpdate(labels.reshape(sizes5),offsets5, sizes5, erase)
-        vu.applyTo(self.labels.data)
+        vu.applyTo(self.labelWidget.overlayItem)
         self.pendingLabels.append(vu)
 
         patches = self.imageScenes[axis].patchAccessor.getPatchesForRect(offsets[0], offsets[1],offsets[0]+labels.shape[0], offsets[1]+labels.shape[1])
@@ -1126,17 +867,19 @@ class VolumeEditor(QtGui.QWidget):
         tempImage = None
         tempLabels = None
         tempoverlays = []
-        for index, item in enumerate(self.overlayView.overlays):
+        for index, item in enumerate(reversed(self.overlayWidget.overlays)):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
-        tempImage = self.image.getSlice(self.selSlices[axis], axis, self.selectedTime, self.selectedChannel)
+        if len(self.overlayWidget.overlays) > 0:
+            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+        else:
+            tempImage = None            
 
-        if self.labels.data is not None:
-            tempLabels = self.labels.data.getSlice(self.selSlices[axis],axis, self.selectedTime, 0)
+        self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays)
 
-        self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays, tempLabels, self.labelsAlpha)
-
+        newLabels = self.getPendingLabels()
+        self.labelWidget.labelMgr.newLabels(newLabels)
 
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
             
@@ -1149,7 +892,6 @@ class VolumeEditor(QtGui.QWidget):
 
     def show(self):
         QtGui.QWidget.show(self)
-        return  self.labels
 
 
 
@@ -1221,24 +963,24 @@ class DrawManager(QtCore.QObject):
         
     def getCurrentPenPixmap(self):
         pixmap = QtGui.QPixmap(self.brushSize, self.brushSize)
-        if self.erasing == True or not self.volumeEditor.labelView.currentItem():
+        if self.erasing == True or not self.volumeEditor.labelWidget.currentItem():
             self.penVis.setColor(QtCore.Qt.black)
         else:
-            self.penVis.setColor(self.volumeEditor.labelView.currentItem().color)
+            self.penVis.setColor(self.volumeEditor.labelWidget.currentItem().color)
                     
         painter = QtGui.QPainter(pixmap)
         painter.setPen(self.penVis)
         painter.drawPoint(QtGui.Q)
 
-    def beginDraw(self, pos, shape):
+    def beginDraw(self, pos, shape):        
         self.shape = shape
         self.initBoundingBox()
         self.scene.clear()
-        if self.erasing == True or not self.volumeEditor.labelView.currentItem():
+        if self.erasing == True or not self.volumeEditor.labelWidget.currentItem():
             self.penVis.setColor(QtCore.Qt.black)
         else:
-            self.penVis.setColor(self.volumeEditor.labelView.currentItem().color)
-        self.pos = QtCore.QPoint(pos.x()+0.0001, pos.y()+0.0001)
+            self.penVis.setColor(self.volumeEditor.labelWidget.currentItem().color)
+        self.pos = QtCore.QPointF(pos.x()+0.0001, pos.y()+0.0001)
         
         line = self.moveTo(pos)
         return line
@@ -1264,7 +1006,7 @@ class DrawManager(QtCore.QObject):
         return res
 
 
-    def moveTo(self, pos):      
+    def moveTo(self, pos):    
         lineVis = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         lineVis.setPen(self.penVis)
         
@@ -1286,8 +1028,63 @@ class DrawManager(QtCore.QObject):
             self.topMost = y
         return lineVis
 
-
-    
+class ImageSaveThread(QtCore.QThread):
+    def __init__(self, parent):
+        QtCore.QThread.__init__(self, None)
+        self.ve = parent
+        self.queue = deque()
+        self.imageSaved = threading.Event()
+        self.imageSaved.clear()
+        self.imagePending = threading.Event()
+        self.imagePending.clear()
+        self.stopped = False
+        self.previousSlice = None
+        
+    def run(self):
+        while not self.stopped:
+            self.imagePending.wait()
+            while len(self.queue)>0:
+                stuff = self.queue.pop()
+                if stuff is not None:
+                    filename, timeOffset, sliceOffset, format = stuff
+                    if self.ve.image.shape[1]>1:
+                        axis = 2
+                        self.previousSlice = self.ve.sliceSelectors[axis].value()
+                        for t in range(self.ve.image.shape[0]):
+                            for z in range(self.ve.image.shape[3]):                   
+                                self.filename = filename
+                                if (self.ve.image.shape[0]>1):
+                                    self.filename = self.filename + ("_time%03i" %(t+timeOffset))
+                                self.filename = self.filename + ("_z%05i" %(z+sliceOffset))
+                                self.filename = self.filename + "." + format
+                        
+                                #only change the z slice display
+                                self.ve.imageScenes[axis].thread.queue.clear()
+                                self.ve.imageScenes[axis].thread.freeQueue.wait()
+                                self.ve.updateTimeSliceForSaving(t, z, axis)
+                                
+                                
+                                self.ve.imageScenes[axis].thread.freeQueue.wait()
+        
+                                self.ve.imageScenes[axis].saveSlice(self.filename)
+                    else:
+                        axis = 0
+                        for t in range(self.ve.image.shape[0]):                 
+                            self.filename = filename
+                            if (self.ve.image.shape[0]>1):
+                                self.filename = self.filename + ("_time%03i" %(t+timeOffset))
+                            self.filename = self.filename + "." + format
+                            self.ve.imageScenes[axis].thread.queue.clear()
+                            self.ve.imageScenes[axis].thread.freeQueue.wait()
+                            self.ve.updateTimeSliceForSaving(t, self.ve.selSlices[0], axis)                              
+                            self.ve.imageScenes[axis].thread.freeQueue.wait()
+                            self.ve.imageScenes[axis].saveSlice(self.filename)
+            self.imageSaved.set()
+            self.imagePending.clear()
+            if self.previousSlice is not None:
+                self.ve.sliceSelectors[axis].setValue(self.previousSlice)
+                self.previousSlice = None
+            
 
 class ImageSceneRenderThread(QtCore.QThread):
     def __init__(self, parent):
@@ -1297,13 +1094,21 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.volumeEditor = parent.volumeEditor
         #self.queue = deque(maxlen=1) #python 2.6
         self.queue = deque() #python 2.5
-
+        self.outQueue = deque()
         self.dataPending = threading.Event()
         self.dataPending.clear()
         self.newerDataPending = threading.Event()
         self.newerDataPending.clear()
+        self.freeQueue = threading.Event()
+        self.freeQueue.clear()
         self.stopped = False
-        self.imagePatches = range(self.patchAccessor.patchCount)
+        if self.imageScene.openglWidget is not None:
+            self.contextPixmap = QtGui.QPixmap(2,2)
+            self.context = QtOpenGL.QGLContext(self.imageScene.openglWidget.context().format(), self.contextPixmap)
+            self.context.create(self.imageScene.openglWidget.context())
+        else:
+            self.context = None
+        
             
     def run(self):
         #self.context.makeCurrent()
@@ -1311,73 +1116,108 @@ class ImageSceneRenderThread(QtCore.QThread):
         while not self.stopped:
             self.dataPending.wait()
             self.newerDataPending.clear()
+            self.freeQueue.clear()
             while len(self.queue) > 0:
                 stuff = self.queue.pop()
                 if stuff is not None:
-                    nums, origimage, overlays , origlabels , labelsAlpha, min, max  = stuff
+                    nums, origimage, overlays , min, max  = stuff
                     for patchNr in nums:
                         if self.newerDataPending.isSet():
                             self.newerDataPending.clear()
                             break
                         bounds = self.patchAccessor.getPatchBounds(patchNr)
 
-                        image = origimage[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-
-                        if image.dtype == 'uint16':
-                            image = (image / 255).astype(numpy.uint8)
-
-                        temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
-
-                        p = QtGui.QPainter(self.imageScene.scene.image)
-                        p.translate(bounds[0],bounds[2])
-                        #p = QtGui.QPainter(temp_image)
-                        p.drawImage(0,0,temp_image)
+                        if self.imageScene.openglWidget is None:
+                            p = QtGui.QPainter(self.imageScene.scene.image)
+                            p.translate(bounds[0],bounds[2])
+                        else:
+                            p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
+                        
+#                        if origimage is not None:
+#                            image = origimage[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+#    
+#                            if image.dtype == 'uint16':
+#                                image = (image / 255).astype(numpy.uint8)
+#    
+#                            temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
+#                            p.drawImage(0,0,temp_image)
+#                        else:
+                        p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
 
                         #add overlays
                         for index, origitem in enumerate(overlays):
                             p.setOpacity(origitem.alpha)
                             itemcolorTable = origitem.colorTable
-                            itemdata = origitem.data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-                            if origitem.colorTable != None:
+                            itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+                            if origitem.colorTable != None:         
+                                if itemdata.dtype != 'uint8':
+                                    """
+                                    if the item is larger we take the values module 256
+                                    since QImage supports only 8Bit Indexed images
+                                    """
+                                    olditemdata = itemdata              
+                                    itemdata = numpy.ndarray(olditemdata.shape, 'uint8')
+                                    if olditemdata.dtype == 'uint32':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+                                    elif olditemdata.dtype == 'uint64':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+                                    elif olditemdata.dtype == 'int32':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+                                    elif olditemdata.dtype == 'int64':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+                                    elif olditemdata.dtype == 'uint16':
+                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
+                                    else:
+                                        raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
+                                   
+                                       
                                 image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                image0.setColorTable(origitem.colorTable)
+                                image0.setColorTable(origitem.colorTable[:])
+                                
                             else:
-                                image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                image0.fill(origitem.color.rgba())
-                                image0.setAlphaChannel(qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), False))
-
-                            p.drawImage(0,0, image0)
-                        if origlabels is not None:
-                            labels = origlabels[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-                            #p.setOpacity(item.alpha)
-
-                            p.setOpacity(labelsAlpha)
-                            image0 = qimage2ndarray.gray2qimage(labels.swapaxes(0,1), False)
-
-                            image0.setColorTable(self.volumeEditor.labelView.colorTab)
-                            mask = image0.createMaskFromColor(QtGui.QColor(0,0,0).rgb(),QtCore.Qt.MaskOutColor)
-                            image0.setAlphaChannel(mask)
+                                if origitem.min is not None and origitem.max is not None:
+                                    normalize = (origitem.min, origitem.max)
+                                else:
+                                    normalize = False
+                                
+                                                                
+                                if origitem.autoAlphaChannel is False:
+                                    if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
+                                        image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+                                        image0 = image1
+                                    else:
+                                        tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'uint8')
+                                        tempdat[:,:,0] = origitem.color.redF()*itemdata[:]
+                                        tempdat[:,:,1] = origitem.color.greenF()*itemdata[:]
+                                        tempdat[:,:,2] = origitem.color.blueF()*itemdata[:]
+                                        image1 = qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
+                                        image0 = image1
+                                else:
+                                    image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+                                    image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                    if isinstance(origitem.color,  long):
+                                        image0.fill(origitem.color)
+                                    else: #shold be QColor then !
+                                        image0.fill(origitem.color.rgba())
+                                    image0.setAlphaChannel(image1)
                             p.drawImage(0,0, image0)
 
                         p.end()
+                        self.outQueue.append(patchNr)
+                        
+#                        if self.imageScene.scene.tex > -1:
+#                            self.context.makeCurrent()    
+#                            glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
+#                            b = self.imageScene.patchAccessor.getPatchBounds(patchNr,0)
+#                            glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imageScene.imagePatches[patchNr].bits().__int__()))
+#                            
+#                        self.outQueue.clear()
+                                       
 
-                        #self.imagePatches[patchNr] = temp_image
-
-#                        #draw the patch result to complete image
-#                        p = QtGui.QPainter(self.imageScene.scene.image)
-#                        p.drawImage(bounds[0],bounds[2],self.imagePatches[patchNr])
-#                        p.end()
-
-    #                    #this code would be cool, but unfortunately glTexSubimage doesnt work ??
-    #                    glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
-    #                    pixels = qimage2ndarray.byte_view(temp_image)
-    #                    print pixels.shape
-    #                    glTexSubImage2D(GL_TEXTURE_2D,0,bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2],GL_RGBA,GL_UNSIGNED_BYTE, pixels )
-
-                        #This signal is not needed anymore for now
-                        #self.emit(QtCore.SIGNAL("finishedPatch(int)"),patchNr)
             self.dataPending.clear()
+            #self.freeQueue.set()
             self.emit(QtCore.SIGNAL('finishedQueue()'))
+
 
 class CrossHairCursor(QtGui.QGraphicsItem) :
     modeYPosition  = 0
@@ -1411,17 +1251,17 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.penSolid.setCosmetic(True)
         self.update()
     
-    def showXPosition(self, x):
+    def showXPosition(self, x, y):
         """only mark the x position by displaying a line f(y) = x"""
         self.setVisible(True)
         self.mode = self.modeXPosition
-        self.setPos(x,0)
+        self.setPos(x, y - int(y))
         
-    def showYPosition(self, y):
+    def showYPosition(self, y, x):
         """only mark the y position by displaying a line f(x) = y"""
         self.setVisible(True)
         self.mode = self.modeYPosition
-        self.setPos(0,y)
+        self.setPos(x - int(x), y)
         
     def showXYPosition(self, x,y):
         """mark the (x,y) position by displaying a cross hair cursor
@@ -1434,18 +1274,18 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         painter.setPen(self.penDotted)
         
         if self.mode == self.modeXPosition:
-            painter.drawLine(self.x, 0, self.x, self.height)
+            painter.drawLine(QtCore.QPointF(self.x+0.5, 0), QtCore.QPointF(self.x+0.5, self.height))
         elif self.mode == self.modeYPosition:
-            painter.drawLine(0, self.y, self.width, self.y)
-        else:
-            painter.drawLine(0,                         self.y, self.x-0.5*self.brushSize, self.y)
-            painter.drawLine(self.x+0.5*self.brushSize, self.y, self.width,                self.y)
+            painter.drawLine(QtCore.QPointF(0, self.y), QtCore.QPointF(self.width, self.y))
+        else:            
+            painter.drawLine(QtCore.QPointF(0.0,self.y), QtCore.QPointF(self.x -0.5*self.brushSize, self.y))
+            painter.drawLine(QtCore.QPointF(self.x+0.5*self.brushSize, self.y), QtCore.QPointF(self.width, self.y))
 
-            painter.drawLine(self.x, 0,                         self.x, self.y-0.5*self.brushSize)
-            painter.drawLine(self.x, self.y+0.5*self.brushSize, self.x, self.height)
+            painter.drawLine(QtCore.QPointF(self.x, 0), QtCore.QPointF(self.x, self.y-0.5*self.brushSize))
+            painter.drawLine(QtCore.QPointF(self.x, self.y+0.5*self.brushSize), QtCore.QPointF(self.x, self.height))
 
             painter.setPen(self.penSolid)
-            painter.drawEllipse(self.x-0.5*self.brushSize, self.y-0.5*self.brushSize, 1*self.brushSize, 1*self.brushSize)
+            painter.drawEllipse(QtCore.QPointF(self.x, self.y), 0.5*self.brushSize, 0.5*self.brushSize)
         
     def setPos(self, x, y):
         self.x = x
@@ -1473,28 +1313,35 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
     def __init__(self,parent,widget,image):
         QtGui.QGraphicsScene.__init__(self)
         #QtOpenGL.QGLWidget.__init__(self)
-        self.widget = widget
+        self._widget = widget
         self.imageScene = parent
         self.image = image
+        self.images = []
         self.bgColor = QtGui.QColor(QtCore.Qt.black)
         self.tex = -1
 
             
     def drawBackground(self, painter, rect):
         #painter.fillRect(rect,self.bgBrush)
-        if self.widget != None:
+        if self._widget != None:
 
-            self.widget.context().makeCurrent()
+            self._widget.context().makeCurrent()
             
             glClearColor(self.bgColor.redF(),self.bgColor.greenF(),self.bgColor.blueF(),1.0)
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             if self.tex > -1:
-                #self.widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
+                #self._widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
                 d = painter.device()
                 dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
 
                 rect = QtCore.QRectF(self.image.rect())
+                tl = rect.topLeft()
+                br = rect.bottomRight()
+                
+                #flip coordinates since the texture is flipped
+                #this is due to qimage having another representation thatn OpenGL
+                rect.setCoords(tl.x(),br.y(),br.x(),tl.y())
                 
                 #switch corrdinates if qt version is small
                 painter.beginNativePainting()
@@ -1502,16 +1349,6 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
                 dc.drawTexture(rect,self.tex)
                 painter.endNativePainting()
-
-#            rect = rect.intersected(QtCore.QRectF(self.image.rect()))
-#
-#            patches =  self.imageScene.patchAccessor.getPatchesForRect(rect.x(),rect.y(),rect.x()+rect.width(),rect.y()+rect.height())
-#            #print self.imageScene.patchAccessor.patchCount
-#            #print patches
-#            for i in patches:
-#                bounds = self.imageScene.patchAccessor.getPatchBounds(i)
-#                if self.imageScene.textures[i] >= 0:
-#                    self.widget.drawTexture(QtCore.QRectF(QtCore.QRect(bounds[0],bounds[2],bounds[1]-bounds[0],bounds[3]-bounds[2])), self.imageScene.textures[i] )
 
         else:
             painter.setClipRect(rect)
@@ -1542,6 +1379,12 @@ class ImageScene( QtGui.QGraphicsView):
         self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
         self.border.setZValue(200)
         self.scene.addItem(self.border)
+        self.lastPanPoint = QtCore.QPoint()
+        self.dragMode = False
+        self.deltaPan = QtCore.QPointF(0,0)
+        self.ticker = QtCore.QBasicTimer()
+        self.x = 0.0
+        self.y = 0.0
         
     def __init__(self, parent, imShape, axis, drawManager):
         """
@@ -1559,7 +1402,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.sliceExtent = imShape[2]
         self.drawing = False
         self.view = self
-        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_ARGB32)
+        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_RGB888) #Format_ARGB32
         self.border = None
         self.allBorder = None
 
@@ -1569,12 +1412,34 @@ class ImageScene( QtGui.QGraphicsView):
         self.openglWidget = None
         ##enable OpenGL acceleratino
         if self.volumeEditor.opengl is True:
-            self.openglWidget = QtOpenGL.QGLWidget()
+            self.openglWidget = QtOpenGL.QGLWidget(shareWidget = self.volumeEditor.sharedOpenGLWidget)
             self.setViewport(self.openglWidget)
             self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
+            
 
 
         self.scene = CustomGraphicsScene(self, self.openglWidget, self.image)
+
+        # oli todo
+        if self.volumeEditor.image.shape[1] > 1:
+            grviewHudLayout = QtGui.QVBoxLayout(self)
+            tempLayout = QtGui.QHBoxLayout()
+            self.fullScreenButton = QtGui.QPushButton()
+            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx22)))
+            self.fullScreenButton.setStyleSheet("background-color: white")
+            self.connect(self.fullScreenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
+            tempLayout.addStretch()
+            tempLayout.addWidget(self.fullScreenButton)
+            grviewHudLayout.addLayout(tempLayout)
+            grviewHudLayout.addStretch()
+        
+        
+        if self.openglWidget is not None:
+            self.openglWidget.context().makeCurrent()
+            self.scene.tex = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+            glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+            
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
@@ -1588,14 +1453,12 @@ class ImageScene( QtGui.QGraphicsView):
         #self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
 
         self.patchAccessor = PatchAccessor(imShape[0],imShape[1],64)
-        print "PatchCount :", self.patchAccessor.patchCount
-        self.imagePatchItems = []
-        self.pixmapPatches = []
-        self.textures = []
-        for i in range(self.patchAccessor.patchCount + 1):
-            self.imagePatchItems.append(None)
-            self.pixmapPatches.append(None)
-            self.textures.append(-1)
+        #print "PatchCount :", self.patchAccessor.patchCount
+
+        self.imagePatches = range(self.patchAccessor.patchCount)
+        for i,p in enumerate(self.imagePatches):
+            b = self.patchAccessor.getPatchBounds(i, 0)
+            self.imagePatches[i] = QtGui.QImage(b[1]-b[0], b[3] -b[2], QtGui.QImage.Format_RGB888)
 
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
@@ -1650,51 +1513,65 @@ class ImageScene( QtGui.QGraphicsView):
         
         self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
 
-        self.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), self, self.zoomIn, self.zoomIn)
+        self.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), self, self.zoomIn, self.zoomIn, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutZoomIn, "zoom in")
-        self.shortcutZoomIn.setContext(QtCore.Qt.WidgetShortcut )
 
-        self.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), self, self.zoomOut, self.zoomOut)
+        self.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), self, self.zoomOut, self.zoomOut, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutZoomOut, "zoom out")
-        self.shortcutZoomOut.setContext(QtCore.Qt.WidgetShortcut )
         
-        self.shortcutSliceUp = QtGui.QShortcut(QtGui.QKeySequence("p"), self, self.sliceUp, self.sliceUp)
+        self.shortcutSliceUp = QtGui.QShortcut(QtGui.QKeySequence("p"), self, self.sliceUp, self.sliceUp, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutSliceUp, "slice up")
-        self.shortcutSliceUp.setContext(QtCore.Qt.WidgetShortcut )
         
-        self.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("o"), self, self.sliceDown, self.sliceDown)
+        self.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("o"), self, self.sliceDown, self.sliceDown, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutSliceDown, "slice down")
-        self.shortcutSliceDown.setContext(QtCore.Qt.WidgetShortcut )
 
-        self.shortcutSliceUp2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Up"), self, self.sliceUp, self.sliceUp)
+        self.shortcutSliceUp2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Up"), self, self.sliceUp, self.sliceUp, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutSliceUp2, "slice up")
-        self.shortcutSliceUp2.setContext(QtCore.Qt.WidgetShortcut )
 
-        self.shortcutSliceDown2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Down"), self, self.sliceDown, self.sliceDown)
+        self.shortcutSliceDown2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Down"), self, self.sliceDown, self.sliceDown, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutSliceDown2, "slice down")
-        self.shortcutSliceDown2.setContext(QtCore.Qt.WidgetShortcut )
 
 
-        self.shortcutSliceUp10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Up"), self, self.sliceUp10, self.sliceUp10)
+        self.shortcutSliceUp10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Up"), self, self.sliceUp10, self.sliceUp10, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutSliceUp10, "10 slices up")
-        self.shortcutSliceUp10.setContext(QtCore.Qt.WidgetShortcut )
 
-        self.shortcutSliceDown10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Down"), self, self.sliceDown10, self.sliceDown10)
+        self.shortcutSliceDown10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Down"), self, self.sliceDown10, self.sliceDown10, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutSliceDown10, "10 slices down")
-        self.shortcutSliceDown10.setContext(QtCore.Qt.WidgetShortcut )
 
 
-        self.shortcutBrushSizeUp = QtGui.QShortcut(QtGui.QKeySequence("n"), self, self.brushSmaller, self.brushSmaller)
+        self.shortcutBrushSizeUp = QtGui.QShortcut(QtGui.QKeySequence("n"), self, self.brushSmaller,  context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutBrushSizeUp, "increase brush size")
-        self.shortcutBrushSizeDown = QtGui.QShortcut(QtGui.QKeySequence("m"), self, self.brushBigger, self.brushBigger)
+        self.shortcutBrushSizeDown = QtGui.QShortcut(QtGui.QKeySequence("m"), self, self.brushBigger,  context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutBrushSizeDown, "decrease brush size")
  
         self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
         self.crossHairCursor.setZValue(100)
         self.scene.addItem(self.crossHairCursor)
+        self.crossHairCursor.setBrushSize(self.drawManager.brushSize)
 
         self.tempErase = False
 
+    def imageSceneFullScreen(self): #oli todo
+        if self.volumeEditor.imageScenes[0] == self.fullScreenButton.parent():
+            self.volumeEditor.toggleFullscreenX()
+        if self.volumeEditor.imageScenes[1] == self.fullScreenButton.parent():
+            self.volumeEditor.toggleFullscreenY()
+        if self.volumeEditor.imageScenes[2] == self.fullScreenButton.parent():
+            self.volumeEditor.toggleFullscreenZ()
+
+    def setImageSceneFullScreenLabel(self): #oli todo
+        self.allVisible = True
+        a = range(3)
+        for i in a:
+            if not self.volumeEditor.imageScenes[i].isVisible():
+                self.allVisible = False
+                break
+        if self.allVisible:
+            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx22)))
+        else:
+            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.RemSelx22)))
+
+        
     def changeSlice(self, delta):
         if self.drawing == True:
             self.endDraw(self.mousePos)
@@ -1716,16 +1593,15 @@ class ImageScene( QtGui.QGraphicsView):
     def sliceDown10(self):
         self.changeSlice(-10)
 
-
     def brushSmaller(self):
         b = self.drawManager.brushSize
-        if b > 2:
+        if b > 1:
             self.drawManager.setBrushSize(b-1)
             self.crossHairCursor.setBrushSize(b-1)
         
     def brushBigger(self):
         b = self.drawManager.brushSize
-        if b < 20:
+        if b < 61:
             self.drawManager.setBrushSize(b+1)
             self.crossHairCursor.setBrushSize(b+1)
 
@@ -1735,68 +1611,118 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.stopped = True
         self.thread.dataPending.set()
         self.thread.wait()
+        print "finished thread"
 
-    def updatePatches(self, patchNumbers ,image, overlays = [], labels = None, labelsAlpha = 1.0):
-        stuff = [patchNumbers,image, overlays, labels, labelsAlpha, self.min, self.max]
+    def updatePatches(self, patchNumbers ,image, overlays = []):
+        stuff = [patchNumbers,image, overlays, self.min, self.max]
         #print patchNumbers
         if patchNumbers is not None:
             self.thread.queue.append(stuff)
             self.thread.dataPending.set()
 
-    def displayNewSlice(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
+    def displayNewSlice(self, image, overlays = [], fastPreview = True):
         self.thread.queue.clear()
-        #self.thread.newerDataPending.set()
+        self.thread.newerDataPending.set()
 
         #if we are in opengl 2d render mode, quickly update the texture without any overlays
         #to get a fast update on slice change
-        if self.openglWidget is not None and len(image.shape) == 2:
-            self.openglWidget.context().makeCurrent()
-            t = self.scene.tex
-            self.scene.tex = -1
-            if t > -1:
-                self.openglWidget.deleteTexture(t)
-            ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
-            self.scene.tex = self.openglWidget.bindTexture(ti, GL_TEXTURE_2D, GL_RGB)
-            self.viewport().repaint()
+        if image is not None:
+            #TODO: This doing something twice (see below)
+            if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
+                self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
+                t = self.scene.tex
+                ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
+    
+                if not t > -1:
+                    self.scene.tex = glGenTextures(1)
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+                else:
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+                
+                self.viewport().repaint()
+    
+            if self.volumeEditor.normalizeData:
+                self.min = numpy.min(image)
+                self.max = numpy.max(image)
+            else:
+                self.min = 0
+                self.max = 255
+        ########### 
+        #TODO: This doing something twice (see above)
+        self.updatePatches(range(self.patchAccessor.patchCount), image, overlays)
+        
+    def saveSlice(self, filename):
+        print "Saving in ", filename, "slice #", self.sliceNumber, "axis", self.axis
+        
+        result_image = QtGui.QImage(self.scene.image.size(), self.scene.image.format())
+        p = QtGui.QPainter(result_image)
+        for patchNr in range(self.patchAccessor.patchCount):
+            bounds = self.patchAccessor.getPatchBounds(patchNr)
+            if self.openglWidget is None:
+                p.drawImage(0, 0, self.scene.image)
+            else:
+                p.drawImage(bounds[0], bounds[2], self.imagePatches[patchNr])
+        p.end()
+        result_image.save(QtCore.QString(filename))
 
-        if self.volumeEditor.normalizeData:
-            self.min = numpy.min(image)
-            self.max = numpy.max(image)
-        else:
-            self.min = 0
-            self.max = 255
-            
-        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
-
-    def display(self, image, overlays = [], labels = None, labelsAlpha = 1.0):
+    def display(self, image, overlays = []):
         self.thread.queue.clear()
-        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays, labels, labelsAlpha)
+        self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 
     def clearTempitems(self):
-        #only proceed if htere is no new data already in the rendering thread queue
+        #only proceed if htere is no new _data already in the rendering thread queue
         if not self.thread.dataPending.isSet():
             #if, in slicing direction, we are within the margin of the image border
             #we set the border overlay indicator to visible
             self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
 
             #if we are in opengl 2d render mode, update the texture
+            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
             if self.openglWidget is not None:
-                self.openglWidget.context().makeCurrent()
-                t = self.scene.tex
-                self.scene.tex = -1
-                if t > -1:
-                    self.openglWidget.deleteTexture(t)
-                self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
-
+                for patchNr in self.thread.outQueue:
+                    t = self.scene.tex
+                    #self.scene.tex = -1
+                    if t > -1:
+                        #self.openglWidget.deleteTexture(t)
+                        pass
+                    else:
+                        #self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+                        self.scene.tex = glGenTextures(1)
+                        glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                        
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    b = self.patchAccessor.getPatchBounds(patchNr,0)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imagePatches[patchNr].bits().__int__()))
+            else:
+                    t = self.scene.tex
+                    #self.scene.tex = -1
+                    if t > -1:
+                        #self.openglWidget.deleteTexture(t)
+                        pass
+                    else:
+                        #self.scene.tex = self.openglWidget.bindTexture(self.scene.image, GL_TEXTURE_2D, GL_RGBA)
+                        self.scene.tex = glGenTextures(1)
+                        glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                        
+                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, self.scene.image.width(), self.scene.image.height(), GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                    
+            self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
             if self.thread.queue.__len__() == 0:
                 for index, item in enumerate(self.tempImageItems):
                     self.scene.removeItem(item)
                 self.tempImageItems = []
 
-            #update the scene, and the 3d overview
-            self.viewport().repaint() #update(QtCore.QRectF(self.image.rect()))
-            self.volumeEditor.overview.display(self.axis)
+            #update the scene, and the 3d overvie
+        #print "updating slice view ", self.axis
+        self.viewport().repaint() #update(QtCore.QRectF(self.image.rect()))
+        self.volumeEditor.overview.display(self.axis)
+        self.thread.freeQueue.set()
         
     def redrawPatch(self, patchNr):
         if self.thread.stopped is False:
@@ -1826,12 +1752,12 @@ class ImageScene( QtGui.QGraphicsView):
         ndarr = qimage2ndarray.rgb_view(image)
         labels = ndarr[:,:,0]
         labels = labels.swapaxes(0,1)
-        number = self.volumeEditor.labelView.currentItem().number
+        number = self.volumeEditor.labelWidget.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
-        self.volumeEditor.history.append(ls)        
+        self.volumeEditor._history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
-
+        
     
     def beginDraw(self, pos):
         self.mousePos = pos
@@ -1851,10 +1777,10 @@ class ImageScene( QtGui.QGraphicsView):
         ndarr = qimage2ndarray.rgb_view(image)
         labels = ndarr[:,:,0]
         labels = labels.swapaxes(0,1)
-        number = self.volumeEditor.labelView.currentItem().number
+        number = self.volumeEditor.labelWidget.currentItem().number
         labels = numpy.where(labels > 0, number, 0)
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
-        self.volumeEditor.history.append(ls)        
+        self.volumeEditor._history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
         self.drawing = False
 
@@ -1865,6 +1791,7 @@ class ImageScene( QtGui.QGraphicsView):
         k_ctrl = (keys == QtCore.Qt.ControlModifier)
 
         self.mousePos = self.mapToScene(event.pos())
+        grviewCenter  = self.mapToScene(self.viewport().rect().center())
 
         if event.delta() > 0:
             if k_alt is True:
@@ -1883,11 +1810,21 @@ class ImageScene( QtGui.QGraphicsView):
             else:
                 self.changeSlice(-1)
 
+        mousePosAfterScale = self.mapToScene(event.pos())
+        offset = self.mousePos - mousePosAfterScale
+        newGrviewCenter = grviewCenter + offset
+        self.centerOn(newGrviewCenter)
+        self.mouseMoveEvent(event)
+
     def zoomOut(self):
+        self.setResizeAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
         self.doScale(0.9)
+        self.setResizeAnchor(QtGui.QGraphicsView.AnchorViewCenter)
 
     def zoomIn(self):
+        self.setResizeAnchor(ViewportAnchor(QtGui.QGraphicsView.AnchorUnderMouse))
         self.doScale(1.1)
+        self.setResizeAnchor(ViewportAnchor(QtGui.QGraphicsView.AnchorViewCenter))
 
     def doScale(self, factor):
         self.view.scale(factor, factor)
@@ -1896,7 +1833,7 @@ class ImageScene( QtGui.QGraphicsView):
     def tabletEvent(self, event):
         self.setFocus(True)
         
-        if not self.volumeEditor.labelView.currentItem():
+        if not self.volumeEditor.labelWidget.currentItem():
             return
         
         self.mousePos = mousePos = self.mapToScene(event.pos())
@@ -1924,12 +1861,21 @@ class ImageScene( QtGui.QGraphicsView):
                 
         self.mouseMoveEvent(event)
 
-
+    #oli todo
     def mousePressEvent(self, event):
-        if not self.volumeEditor.labelView.currentItem():
+        if event.button() == QtCore.Qt.MidButton:
+            self.lastPanPoint = event.pos()
+            self.crossHairCursor.setVisible(False)
+            self.dragMode = True
+            if self.ticker.isActive():
+                self.deltaPan = QtCore.QPointF(0, 0)
+        if not self.volumeEditor.labelWidget.currentItem():
             return
         
         if event.buttons() == QtCore.Qt.LeftButton:
+            #don't draw if flicker the view
+            if self.ticker.isActive():
+                return
             if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
                 self.drawManager.setErasing()
                 self.tempErase = True
@@ -1937,21 +1883,80 @@ class ImageScene( QtGui.QGraphicsView):
             self.beginDraw(mousePos)
         elif event.buttons() == QtCore.Qt.RightButton:
             self.onContext(event.pos())
-
+    #oli todo
     def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.MidButton:
+            self.lastPanPoint = QtCore.QPoint()
+            self.dragMode = False
+            self.ticker.start(20, self)
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
             self.endDraw(mousePos)
         if self.tempErase == True:
             self.drawManager.disableErasing()
             self.tempErase = False
-            
+
+    #oli todo
+    def panning(self):
+        hBar = self.horizontalScrollBar()
+        vBar = self.verticalScrollBar()
+        vBar.setValue(vBar.value() - self.deltaPan.y())
+        if self.isRightToLeft():
+            hBar.setValue(hBar.value() + self.deltaPan.x())
+        else:
+            hBar.setValue(hBar.value() - self.deltaPan.x())
+        
+        
+    #oli todo
+    def deaccelerate(self, speed, a=1, maxVal=64):
+        x = self.qBound(-maxVal, speed.x(), maxVal)
+        y = self.qBound(-maxVal, speed.y(), maxVal)
+        if x > 0:
+            x = max(0, x - a)
+        elif x < 0:
+            x = min(0, x + a)
+        if y > 0:
+            y = max(0, y - a)
+        elif y < 0:
+            y = min(0, y + a)
+        return QtCore.QPointF(x, y)
+
+    #oli todo
+    def qBound(self, minVal, current, maxVal):
+        return max(min(current, maxVal), minVal)
+
+    #oli todo
+    def timerEvent(self, event):
+        if self.deltaPan.x() == 0.0 and self.deltaPan.y() == 0.0 or self.dragMode == True:
+            self.ticker.stop()
+            cursor = QtGui.QCursor()
+            mousePos = self.mapToScene(self.mapFromGlobal(cursor.pos()))
+            x = mousePos.x()
+            y = mousePos.y()
+            self.crossHairCursor.showXYPosition(x, y)
+        else:
+            self.deltaPan = self.deaccelerate(self.deltaPan)
+            self.panning()
+        
+    #oli todo
     def mouseMoveEvent(self,event):
+        if self.dragMode == True:
+            self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
+            self.panning()
+            self.lastPanPoint = event.pos()
+            return
+        if self.ticker.isActive():
+            return
+            
         self.mousePos = mousePos = self.mousePos = self.mapToScene(event.pos())
-        x = mousePos.x()
-        y = mousePos.y()
+        x = self.x = mousePos.x()
+        y = self.y = mousePos.y()
+        posX = 0
+        posY = 0
+        posZ = 0
 
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
+            
             #should we hide the cursor only when entering once ? performance?
             #self.setCursor(self.hiddenCursor)
             
@@ -1959,24 +1964,35 @@ class ImageScene( QtGui.QGraphicsView):
             #self.crossHairCursor.setPos(x,y)
             
             if self.axis == 0:
+                posY = y
+                posZ = x
+                posX = self.volumeEditor.selSlices[0]
+                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
-                
                 yView.setVisible(False)
-                zView.showYPosition(x)
+                zView.showYPosition(x, y)
                 
             elif self.axis == 1:
+                posY = posX = self.volumeEditor.selSlices[1]
+                posZ = y
+                posX = x
+                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
                 
-                zView.showXPosition(x)
+                zView.showXPosition(x, y)
                 xView.setVisible(False)
             else:
+                posY = y
+                posZ = posX = self.volumeEditor.selSlices[2]
+                posX = x
+                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 
-                xView.showXPosition(y)
-                yView.showXPosition(x)
+                xView.showXPosition(y, x)
+                yView.showXPosition(x, y)
         else:
             self.unsetCursor()
                 
@@ -2007,16 +2023,16 @@ class ImageScene( QtGui.QGraphicsView):
     def onContext(self, pos):
         menu = QtGui.QMenu('Labeling menu', self)
         
-        toggleEraseA = None
-        if self.drawManager.erasing == True:
-            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
-        else:
-            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
+#        toggleEraseA = None
+#        if self.drawManager.erasing == True:
+#            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
+#        else:
+#            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
         
         menu.addSeparator()
         labelList = []
-        volumeLabel = self.volumeEditor.labelView.getVolumeLabelDescriptions()
-        for index, item in enumerate(volumeLabel.descriptions):
+        volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
+        for index, item in enumerate(volumeLabel):
             labelColor = QtGui.QColor.fromRgb(long(item.color))
             labelIndex = item.number
             labelName = item.name
@@ -2025,19 +2041,21 @@ class ImageScene( QtGui.QGraphicsView):
             icon = QtGui.QIcon(pixmap)
             
             act = QtGui.QAction(icon, labelName, menu)
-            i = self.volumeEditor.labelView.model().index(labelIndex-1,0)
+            i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
             # print self.volumeEditor.labelView.selectionModel()
-            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelView.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
+            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
             labelList.append(menu.addAction(act))
 
         menu.addSeparator()
         # brushM = labeling.addMenu("Brush size")
         brushGroup = QtGui.QActionGroup(self)
         
-        defaultBrushSizes = [1,3,7,11,31]
+        defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
         brush = []
-        for ind, b in enumerate(defaultBrushSizes):
-            act = QtGui.QAction(str(b), brushGroup)
+        for ind, bSizes in enumerate(defaultBrushSizes):
+            b = bSizes[0]
+            desc = bSizes[1]
+            act = QtGui.QAction(str(b) + desc, brushGroup)
             act.setCheckable(True)
             self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
             if b == self.drawManager.getBrushSize():
@@ -2065,7 +2083,7 @@ class OverviewSceneDummy(QtGui.QWidget):
     
 class OverviewScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
-        QtOpenGL.QGLWidget.__init__(self)
+        QtOpenGL.QGLWidget.__init__(self, shareWidget = parent.sharedOpenGLWidget)
         self.sceneShape = shape
         self.volumeEditor = parent
         self.images = parent.imageScenes
@@ -2083,8 +2101,6 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 #self.initializeGL()
                 self.makeCurrent()
-                if self.tex[axis] > -1:
-                    self.deleteTexture(self.tex[axis])
                 self.paintGL(axis)
                 self.swapBuffers()
             
@@ -2093,8 +2109,6 @@ class OverviewScene(QtOpenGL.QGLWidget):
             if self.initialized is True:
                 for i in range(3):
                     self.makeCurrent()
-                    if self.tex[i] > -1:
-                        self.deleteTexture(self.tex[i])
                     self.paintGL(i)
                 self.swapBuffers()        
 
@@ -2173,39 +2187,38 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
     
             curCenter = -(( 1.0 * self.volumeEditor.selSlices[2] / self.sceneShape[2] ) - 0.5 )*2.0*ratio1h
-            if axis is 2 and self.tex[2] != -1:
-                self.deleteTexture(self.tex[2])
-            if axis is 2 or self.tex[2] is -1:
-                self.tex[2] = self.bindTexture(self.images[2].scene.image, GL_TEXTURE_2D, GL_RGB)
-            else:
+            if axis is 2:
+                self.tex[2] = self.images[2].scene.tex
+            if self.tex[2] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[2])
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
-    
-            glBegin(GL_QUADS) #horizontal quad (e.g. first axis)
-            glColor3f(1.0,1.0,1.0)            # Set The Color To White
-            glTexCoord2d(0.0, 1.0)
-            glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
-            glTexCoord2d(1.0, 1.0)
-            glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
-            glTexCoord2d(1.0, 0.0)
-            glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
-            glTexCoord2d(0.0, 0.0)
-            glVertex3f( -ratio2w,curCenter, + ratio2h)        # Bottom Right Of The Quad
-            glEnd()
-    
-    
-            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
-            glBindTexture(GL_TEXTURE_2D,0) #unbind texture
-    
-            glBegin(GL_QUADS)
-            glColor3f(0.0,0.0,1.0)            # Set The Color To Blue, Z Axis
-            glVertex3f( ratio2w,curCenter, ratio2h)        # Top Right Of The Quad (Bottom)
-            glVertex3f(- ratio2w,curCenter, ratio2h)        # Top Left Of The Quad (Bottom)
-            glVertex3f(- ratio2w,curCenter,- ratio2h)        # Bottom Left Of The Quad (Bottom)
-            glVertex3f( ratio2w,curCenter,- ratio2h)        # Bottom Right Of The Quad (Bottom)
-            glEnd()
+                
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
+
+                glBegin(GL_QUADS) #horizontal quad (e.g. first axis)
+                glColor3f(1.0,1.0,1.0)            # Set The Color To White
+                glTexCoord2d(0.0, 0.0)
+                glVertex3f( -ratio2w,curCenter, -ratio2h)        # Top Right Of The Quad
+                glTexCoord2d(1.0, 0.0)
+                glVertex3f(+ ratio2w,curCenter, -ratio2h)        # Top Left Of The Quad
+                glTexCoord2d(1.0, 1.0)
+                glVertex3f(+ ratio2w,curCenter, + ratio2h)        # Bottom Left Of The Quad
+                glTexCoord2d(0.0, 1.0)
+                glVertex3f( -ratio2w,curCenter, + ratio2h)        # Bottom Right Of The Quad
+                glEnd()
+
+
+                glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
+                glBindTexture(GL_TEXTURE_2D,0) #unbind texture
+
+                glBegin(GL_QUADS)
+                glColor3f(0.0,0.0,1.0)            # Set The Color To Blue, Z Axis
+                glVertex3f( ratio2w,curCenter, ratio2h)        # Top Right Of The Quad (Bottom)
+                glVertex3f(- ratio2w,curCenter, ratio2h)        # Top Left Of The Quad (Bottom)
+                glVertex3f(- ratio2w,curCenter,- ratio2h)        # Bottom Left Of The Quad (Bottom)
+                glVertex3f( ratio2w,curCenter,- ratio2h)        # Bottom Right Of The Quad (Bottom)
+                glEnd()
     
     
     
@@ -2215,77 +2228,73 @@ class OverviewScene(QtOpenGL.QGLWidget):
     
             curCenter = (( (1.0 * self.volumeEditor.selSlices[0]) / self.sceneShape[0] ) - 0.5 )*2.0*ratio2w
     
-            if axis is 0 and self.tex[0] != -1:
-                self.deleteTexture(self.tex[0])
-            if axis is 0 or self.tex[0] is -1:
-                self.tex[0] = self.bindTexture(self.images[0].scene.image, GL_TEXTURE_2D, GL_RGB)
-            else:
+            if axis is 0:
+                self.tex[0] = self.images[0].scene.tex
+            if self.tex[0] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[0])
-    
-    
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
-    
-            glBegin(GL_QUADS)
-            glColor3f(0.8,0.8,0.8)            # Set The Color To White
-            glTexCoord2d(1.0, 1.0)
-            glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
-            glTexCoord2d(0.0, 1.0)
-            glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
-            glTexCoord2d(0.0, 0.0)
-            glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
-            glTexCoord2d(1.0, 0.0)
-            glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
-            glEnd()
-    
-            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
-            glBindTexture(GL_TEXTURE_2D,0) #unbind texture
-    
-            glBegin(GL_QUADS)
-            glColor3f(1.0,0.0,0.0)            # Set The Color To Red, 
-            glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
-            glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
-            glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
-            glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
-            glEnd()
+
+
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
+
+                glBegin(GL_QUADS)
+                glColor3f(0.8,0.8,0.8)            # Set The Color To White
+                glTexCoord2d(1.0, 0.0)
+                glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
+                glTexCoord2d(0.0, 0.0)
+                glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
+                glTexCoord2d(0.0, 1.0)
+                glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
+                glTexCoord2d(1.0, 1.0)
+                glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
+                glEnd()
+
+                glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
+                glBindTexture(GL_TEXTURE_2D,0) #unbind texture
+
+                glBegin(GL_QUADS)
+                glColor3f(1.0,0.0,0.0)            # Set The Color To Red,
+                glVertex3f(curCenter, ratio0h, ratio0w)        # Top Right Of The Quad (Left)
+                glVertex3f(curCenter, ratio0h, - ratio0w)        # Top Left Of The Quad (Left)
+                glVertex3f(curCenter,- ratio0h,- ratio0w)        # Bottom Left Of The Quad (Left)
+                glVertex3f(curCenter,- ratio0h, ratio0w)        # Bottom Right Of The Quad (Left)
+                glEnd()
     
     
             curCenter = (( 1.0 * self.volumeEditor.selSlices[1] / self.sceneShape[1] ) - 0.5 )*2.0*ratio2h
     
     
-            if axis is 1 and self.tex[1] != -1:
-                self.deleteTexture(self.tex[1])
-            if axis is 1 or self.tex[1] is -1:
-                self.tex[1] = self.bindTexture(self.images[1].scene.image, GL_TEXTURE_2D, GL_RGB)
-            else:
+            if axis is 1:
+                self.tex[1] = self.images[1].scene.tex
+            if self.tex[1] != -1:
                 glBindTexture(GL_TEXTURE_2D,self.tex[1])
     
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
-    
-            glBegin(GL_QUADS)
-            glColor3f(0.6,0.6,0.6)            # Set The Color To White
-            glTexCoord2d(1.0, 1.0)
-            glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
-            glTexCoord2d(0.0, 1.0)
-            glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
-            glTexCoord2d(0.0, 0.0)
-            glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
-            glTexCoord2d(1.0, 0.0)
-            glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
-            glEnd()
-    
-            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
-            glBindTexture(GL_TEXTURE_2D,0) #unbind texture
-            glBegin(GL_QUADS)
-            glColor3f(0.0,1.0,0.0)            # Set The Color To Green
-            glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
-            glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
-            glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
-            glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
-            glEnd()
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glPolygonMode( GL_FRONT_AND_BACK, GL_FILL ) #solid drawing mode
+
+                glBegin(GL_QUADS)
+                glColor3f(0.6,0.6,0.6)            # Set The Color To White
+                glTexCoord2d(1.0, 0.0)
+                glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
+                glTexCoord2d(0.0, 0.0)
+                glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
+                glTexCoord2d(0.0, 1.0)
+                glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
+                glTexCoord2d(1.0, 1.0)
+                glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
+                glEnd()
+
+                glPolygonMode( GL_FRONT_AND_BACK, GL_LINE ) #wireframe mode
+                glBindTexture(GL_TEXTURE_2D,0) #unbind texture
+                glBegin(GL_QUADS)
+                glColor3f(0.0,1.0,0.0)            # Set The Color To Green
+                glVertex3f( ratio1w,  ratio1h, curCenter)        # Top Right Of The Quad (Front)
+                glVertex3f(- ratio1w, ratio1h, curCenter)        # Top Left Of The Quad (Front)
+                glVertex3f(- ratio1w,- ratio1h, curCenter)        # Bottom Left Of The Quad (Front)
+                glVertex3f( ratio1w,- ratio1h, curCenter)        # Bottom Right Of The Quad (Front)
+                glEnd()
     
             glFlush()
 

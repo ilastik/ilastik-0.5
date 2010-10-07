@@ -3,7 +3,7 @@ import h5py
 
 class ClassifierRandomForest(ClassifierBase):
     #human readable information
-    name = "RandomForest classifier New" 
+    name = "Random forest classifier" 
     description = "Basic RandomForest classifier with extensions"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
@@ -19,10 +19,13 @@ class ClassifierRandomForest(ClassifierBase):
         self.treeCount = treeCount
         
 
-    def train(self, features, labels):
+    def train(self, features, labels, isInteractive):
+        self.RF = None
+        if features is None:
+            return
         if features.shape[0] != labels.shape[0]:
-            print " 3, 2 ,1 ... BOOOM!! #features != # labels"
-
+            # #features != # labels"
+            return
         if not labels.dtype == numpy.uint32:
             labels = labels.astype(numpy.uint32)
         if not features.dtype == numpy.float32:
@@ -43,7 +46,7 @@ class ClassifierRandomForest(ClassifierBase):
         
     def predict(self, features):
         #3d: check that only 1D data arrives here
-        if self.RF is not None and features is not None:
+        if self.RF is not None and features is not None and len(self.unique_vals) > 1:
             if not features.dtype == numpy.float32:
                 features = numpy.array(features, dtype=numpy.float32)
             return self.RF.predictProbabilities(features)

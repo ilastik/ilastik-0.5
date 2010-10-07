@@ -1,0 +1,81 @@
+from classifierBase import *
+import h5py
+
+class ClassifierRandomForestVariableImportance(ClassifierBase):
+    #human readable information
+    name = "Random forest classifier with variable importance" 
+    description = "Basic RandomForest classifier with computation of variable importance"
+    author = "HCI, University of Heidelberg"
+    homepage = "http://hci.iwr.uni-heidelberg.de"
+
+    #minimum required isotropic context
+    #0 means pixel based classification
+    #-1 means whole dataset
+    minContext = 0
+    treeCount = 10
+
+    def __init__(self, treeCount = 10):
+        ClassifierBase.__init__(self)
+        self.treeCount = treeCount
+        self.oob = 0
+        self.variableImportance = numpy.zeros( (1, ) )
+
+    def train(self, features, labels, isInteractive):
+        self.RF = None
+        if features.shape[0] != labels.shape[0]:
+            # #features != # labels"
+            return
+
+        if not labels.dtype == numpy.uint32:
+            labels = labels.astype(numpy.uint32)
+        if not features.dtype == numpy.float32:
+            features = features.astype(numpy.float32)
+
+        if labels.ndim == 1:
+            labels.shape = labels.shape + (1,)
+        
+        self.unique_vals = numpy.unique(labels)
+        
+        # Have to set this becauce the new rf dont set mtry properly by default
+        # mtry = max(1,int(numpy.sqrt(features.shape[1]))+1) 
+        
+        self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
+        if isInteractive:
+            self.oob = self.RF.learnRF(features, labels)
+            self.variableImportance = numpy.zeros( (1, ) )
+        else:
+            self.oob, self.variableImportance = self.RF.learnRFWithFeatureSelection(features, labels)
+            ClassifierBase.printLock.acquire()
+            a = self.variableImportance
+            varStr = " ".join([str(i) + ": " + "%7.4f"%k for i,k in enumerate(a[:,3])])
+            print "Gini Importance: " + varStr
+            ClassifierBase.printLock.release()
+        
+    def predict(self, features):
+        #3d: check that only 1D data arrives here
+        if self.RF is not None and features is not None and len(self.unique_vals) > 1:
+            if not features.dtype == numpy.float32:
+                features = numpy.array(features, dtype=numpy.float32)
+            return self.RF.predictProbabilities(features)
+        else:
+            return None
+        
+    def serialize(self, fileName, pathInFile):
+        # cannot serialize into group because can not pass h5py handle to vigra yet
+        # works only with new RF version
+        tmp = self.RF.writeHDF5(fileName, pathInFile, True)
+        f = h5py.File(fileName, 'r+')
+        f.create_dataset(pathInFile+'/Variable importance', data=self.variableImportance)
+        f.create_dataset(pathInFile+'/OOB', data=self.oob)
+        f.close()
+        return tmp
+
+    @classmethod
+    def deserialize(cls, fileName, pathInFile):
+        classifier = cls()
+        classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
+        classifier.treeCount = classifier.RF.treeCount
+        return classifier
+
+
+

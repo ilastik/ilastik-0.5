@@ -72,15 +72,13 @@ class FeatureMgr():
     """
     Manages selected features (merkmale) for classificator.
     """
-    def __init__(self, dataMgr, featureItems=None):
+    def __init__(self, dataMgr, featureItems=[]):
         self.dataMgr = dataMgr
+        self.totalFeatureSize = 1
         self.featureSizes = []
         self.featureOffsets = []
-        if featureItems is None:
-            featureItems = []
         self.maxContext = 0
         self.setFeatureItems(featureItems)
-        self.featuresComputed = [False] * len(self.featureItems)
         self.parent_conn = None
         self.child_conn = None
         
@@ -90,24 +88,20 @@ class FeatureMgr():
         self.featureSizes = []
         self.featureOffsets = []
         if len(featureItems) > 0:
-            numChannels = self.dataMgr[0].dataVol.data.shape[-1]
+            numChannels = self.dataMgr[0]._dataVol._data.shape[-1]
             totalSize = 0
             for i, f in enumerate(featureItems):
                 oldSize = totalSize
-                totalSize += f.computeSizeForShape(self.dataMgr[0].dataVol.data.shape)
+                totalSize += f.computeSizeForShape(self.dataMgr[0]._dataVol._data.shape, self.dataMgr.selectedChannels)
                 if f.minContext > self.maxContext:
                     self.maxContext = f.minContext
 
                 self.featureSizes.append(totalSize - oldSize)
                 self.featureOffsets.append(oldSize)
             try:
+                self.totalFeatureSize = totalSize
                 for i, di in enumerate(self.dataMgr):
-                    if di.featureCacheDS is None:
-                        di._featureM = numpy.zeros(di.dataVol.data.shape + (totalSize,),'float32')
-                    else:
-                        di.featureCacheDS.resize(di.dataVol.data.shape + (totalSize,))
-                        di._featureM = di.featureCacheDS
-                    di.featureBlockAccessor = dataMgr.BlockAccessor(di._featureM)
+                    di.module["Classification"]["featureM"] = numpy.zeros(di.shape[0:-1] + (totalSize,),'float32')
 
             except Exception, e:
                 print e
@@ -139,7 +133,7 @@ class FeatureMgr():
     def prepareCompute(self, dataMgr):
         self.dataMgr = dataMgr
 
-        self.featureProcess = FeatureThread(self, self.dataMgr)
+        self.featureProcess = FeatureThread(self, self.dataMgr, self.dataMgr)
 
         return self.featureProcess.jobs
     
@@ -159,65 +153,65 @@ class FeatureMgr():
         return {}     
                 
 class FeatureThread(ThreadBase):
-    def __init__(self, featureMgr, dataMgr):
+    def __init__(self, featureMgr, dataMgr, items):
         ThreadBase.__init__(self)
         self.count = 0
         self.jobs = 0
         self.featureMgr = featureMgr
         self.dataMgr = dataMgr
+        self.items = items
         self.computeNumberOfJobs()
         self.jobMachine = jobMachine.JobMachine()
         self.printLock = threading.Lock()
 
     def computeNumberOfJobs(self):
         for image in self.dataMgr:
-            self.jobs += image.dataVol.data.shape[0]*image.dataVol.data.shape[4] * len(self.featureMgr.featureItems) * image.featureBlockAccessor.blockCount
+            blockA = dataMgr.BlockAccessor(image.module["Classification"]["featureM"],64)
+            self.jobs += image._dataVol._data.shape[0] * len(self.featureMgr.featureItems) * blockA._blockCount
 
-    def calcFeature(self, image, offset, size, feature, blockNum):
-        for t_ind in range(image.dataVol.data.shape[0]):
-            for c_ind in range(image.dataVol.data.shape[4]):
-                try:
-                    overlap = feature.minContext
-                    bounds = image.featureBlockAccessor.getBlockBounds(blockNum, overlap)
-                    result = feature.compute(image.dataVol.data[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], c_ind].astype('float32'))
-                    bounds1 = image.featureBlockAccessor.getBlockBounds(blockNum,0)
+    def calcFeature(self, image, featureBlockAccessor, offset, size, feature, blockNum):
+        for t_ind in range(image._dataVol._data.shape[0]):
+            try:
+                overlap = feature.minContext
+                bounds = featureBlockAccessor.getBlockBounds(blockNum, overlap)
+                dataInput = image[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype('float32')
+                
+                result = feature.compute(dataInput[..., self.dataMgr.selectedChannels])
+                bounds1 = featureBlockAccessor.getBlockBounds(blockNum,0)
 
-                    sx = bounds1[0]-bounds[0]
-                    ex = bounds[1]-bounds1[1]
-                    sy = bounds1[2]-bounds[2]
-                    ey = bounds[3]-bounds1[3]
-                    sz = bounds1[4]-bounds[4]
-                    ez = bounds[5]-bounds1[5]
+                sx = bounds1[0]-bounds[0]
+                ex = bounds[1]-bounds1[1]
+                sy = bounds1[2]-bounds[2]
+                ey = bounds[3]-bounds1[3]
+                sz = bounds1[4]-bounds[4]
+                ez = bounds[5]-bounds1[5]
 
-                    ex = result.shape[0] - ex
-                    ey = result.shape[1] - ey
-                    ez = result.shape[2] - ez
+                ex = result.shape[0] - ex
+                ey = result.shape[1] - ey
+                ez = result.shape[2] - ez
 
-                    tres = result[sx:ex,sy:ey,sz:ez]
-                    image.featureBlockAccessor[t_ind,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],c_ind,offset:offset+size] = tres
-                except Exception, e:
-                    print "########################## exception in FeatureThread ###################"
-                    print feature.__class__
-                    #print result.shape
-                    print bounds
-                    print bounds1
-                    print offset
-                    print size
-                    print e
-                    traceback.print_exc(file=sys.stdout)
-                self.count += 1
-                # print "Feature Job ", self.count, "/", self.jobs, " finished"
+                tres = result[sx:ex,sy:ey,sz:ez,:]
+                featureBlockAccessor[t_ind,bounds1[0]:bounds1[1],bounds1[2]:bounds1[3],bounds1[4]:bounds1[5],offset:offset+size] = tres
+            except Exception, e:
+                self.printLock.acquire()
+                print "########################## exception in FeatureThread ###################"
+                print e
+                traceback.print_exc(file=sys.stdout)
+                self.printLock.release()
+            self.count += 1
+            # print "Feature Job ", self.count, "/", self.jobs, " finished"
         
     
     def run(self):
-        for image in self.dataMgr:
-            jobs = []
-            for blockNum in range(image.featureBlockAccessor.blockCount):
+        jobs = []
+        for image in self.items:
+            featureBlockAccessor = dataMgr.BlockAccessor(image.module["Classification"]["featureM"],64)
+            for blockNum in range(featureBlockAccessor._blockCount):
                 for i, feature in enumerate(self.featureMgr.featureItems):
-                    job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature, blockNum])
+                    job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, featureBlockAccessor, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature, blockNum])
                     jobs.append(job)
                     
-            self.jobMachine.process(jobs)
+        self.jobMachine.process(jobs)
 
     
 
@@ -230,6 +224,7 @@ class FeatureGroups(object):
     def __init__(self):
         self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
         self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
+        self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.groups = {}
         self.createGroups()
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
@@ -245,8 +240,8 @@ class FeatureGroups(object):
 
     def createList(self):
         resList = []
-        for groupIndex, scaleList in irange(self.selection):
-            for scaleIndex, selected in irange(scaleList):
+        for groupIndex, scaleList in enumerate(self.selection):
+            for scaleIndex, selected in enumerate(scaleList):
                 for feature in self.groups[self.groups.keys()[groupIndex]]:
                     if selected:
                         scaleValue = self.groupScaleValues[scaleIndex]

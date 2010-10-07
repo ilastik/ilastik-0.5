@@ -50,6 +50,11 @@ class FeatureBase(object):
         self.settings = { }
         self.minContext = sigma*3.5
 
+    def getName(self):
+        return self.name + " Sigma " + str(self.sigma)
+    
+    def getKey(self, c):
+        return "Classification/Features/" + self.getName() + "/" + self.getName()+ " Channel " + str(c)
 
     def settings(self):
         """
@@ -88,21 +93,37 @@ class FeatureBase(object):
         pass
 
 
-    def computeSizeForShape(self, shape):
-        if shape[1] > 1:
-            return self.__class__.numOutputChannels3d
+    def computeSizeForShape(self, shape, selectedChannels=None):
+        if selectedChannels is None:
+            numChannels = shape[-1]
         else:
-            return self.__class__.numOutputChannels2d
+            numChannels = len(selectedChannels)
+        
+        if shape[1] > 1:
+            return self.__class__.numOutputChannels3d * numChannels
+        else:
+            return self.__class__.numOutputChannels2d * numChannels
+        
+    def applyToAllChannels(self, data, func, *args):
+        result = []
+        for channel in range(data.shape[-1]):
+            tres = func(data[...,channel], *args)
+            if len(tres.shape) != len(data.shape):
+                tres.shape = tres.shape + (1,)
+            result.append(tres)
+        return numpy.concatenate(result, axis=-1)
         
     def serialize(self, h5grp):
         h5grp.create_dataset('name',data=self.name)
         h5grp.create_dataset('class',data=self.__class__.__name__)
         h5grp.create_dataset('sigma',data=self.sigma)
-
+        #h5grp.create_dataset('number of 2d channels',data=self.__class__.numOutputChannels2d)
+        #h5grp.create_dataset('number of 3d channels',data=self.__class__.numOutputChannels3d)
+        #h5grp.create_dataset('groups',','.join(self.groups))
 
     @classmethod
     def deserialize(cls, h5grp):
-        _name = h5grp['name']
+        # _name = h5grp['name']
         _class = h5grp['class']
         _sigma = h5grp['sigma']
 

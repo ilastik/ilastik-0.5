@@ -1,7 +1,6 @@
 from PyQt4 import QtGui
-import sip
 
-class ShortcutManager():
+class shortcutManager():
     def __init__(self):
         self.shortcuts = dict()
         
@@ -9,19 +8,25 @@ class ShortcutManager():
         self.shortcuts[shortcut.key().toString()] = description
         
     def showDialog(self):
-        dlg = ShortcutManagerDlg(self)
+        dlg = shortcutManagerDlg(self)
 
-class ShortcutManagerDlg(QtGui.QDialog):
+class shortcutManagerDlg(QtGui.QDialog):
     def __init__(self, s):
         QtGui.QDialog.__init__(self)
-        l = QtGui.QGridLayout(self)
-        
-        for i, sc in enumerate(s.shortcuts):
-            desc = s.shortcuts[sc]
+        if len(s.shortcuts)>0:
+            l = QtGui.QGridLayout(self)
             
-            l.addWidget(QtGui.QLabel(str(sc)), i,0)
-            l.addWidget(QtGui.QLabel(desc), i,1)
-        self.setLayout(l)
-        self.exec_()
-
-shortcutManager = ShortcutManager()
+            for i, sc in enumerate(s.shortcuts):
+                desc = s.shortcuts[sc]
+                
+                l.addWidget(QtGui.QLabel(str(sc)), i,0)
+                l.addWidget(QtGui.QLabel(desc), i,1)
+            self.setLayout(l)
+            self.exec_()
+        else:
+            l = QtGui.QVBoxLayout()
+            l.addWidget(QtGui.QLabel("Load the data by pressing the \"New\" button in the project dialog"))
+            self.setLayout(l)
+            self.exec_()
+            
+shortcutManager = shortcutManager()

@@ -27,21 +27,13 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import numpy
+import numpy, vigra, os, sys
+import traceback
 
-try:
-    import vigra
-except ImportError:
-    sys.exit("vigra module not found!")
+import ilastik.core.segmentors
 
-class SegmentationBase(object):
-    def __init__(self):
-        self.smoothing = ''
-        pass
-    
-    def segment(self):
-        pass
-    
+from PyQt4 import QtCore
+from ilastik.core import jobMachine
 
    
 def LocallyDominantSegmentation(propmap, sigma = 2.0):
@@ -70,4 +62,64 @@ if __name__ == "__main__":
     s = LocallyDominantSegmentation()
     r = s.segment(a)
     print r 
-        
+
+
+class ListOfNDArraysAsNDArray:
+    """
+    Helper class that behaves like an ndarray, but consists of an array of ndarrays
+    """
+
+    def __init__(self, ndarrays):
+        self.ndarrays = ndarrays
+        self.dtype = ndarrays[0].dtype
+        self.shape = (len(ndarrays),) + ndarrays[0].shape
+        for idx, it in enumerate(ndarrays):
+            if it.dtype != self.dtype or self.shape[1:] != it.shape:
+                print "########### ERROR ListOfNDArraysAsNDArray all array items should have same dtype and shape (array: ", self.dtype, self.shape, " item : ",it.dtype, it.shape , ")"
+
+    def __getitem__(self, key):
+        return self.ndarrays[key[0]][tuple(key[1:])]
+
+    def __setitem__(self, key, data):
+        self.ndarrays[key[0]][tuple(key[1:])] = data
+        print "##########ERROR ######### : ListOfNDArraysAsNDArray not implemented"
+
+
+
+class SegmentationThread(QtCore.QThread):
+    def __init__(self, dataMgr, image, segmentor = ilastik.core.segmentors.segmentorClasses[0], segmentorOptions = None):
+        QtCore.QThread.__init__(self, None)
+        self.dataItem = image
+        self.dataMgr = dataMgr
+        self.count = 0
+        self.numberOfJobs = self.dataItem._dataVol._data.shape[0]
+        self.stopped = False
+        self.segmentor = segmentor
+        self.segmentorOptions = segmentorOptions
+        self.jobMachine = jobMachine.JobMachine()
+
+    def segment(self, i, data, labelVolume, labelValues, labelIndices):
+        self.result[i] = self.segmentor.segment(labelVolume, labelValues, labelIndices)
+        self.count += 1
+
+    def run(self):
+        self.dataMgr.featureLock.acquire()
+
+        try:
+            self.result = range(0,self.dataItem._dataVol._data.shape[0])
+            jobs = []
+            for i in range(self.dataItem._dataVol._data.shape[0]):
+                labels, indices = self.dataItem.getSeeds()
+                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem._dataVol._data[i,:,:,:,:], self.dataItem._dataVol.seeds._data[i,:,:,:], labels, indices])
+                jobs.append(job)
+            self.jobMachine.process(jobs)
+            self.result = ListOfNDArraysAsNDArray(self.result)
+            if self.dataItem._dataVol.segmentation is None:
+                self.dataItem._dataVol.segmentation = numpy.zeros(self.dataItem._dataVol._data.shape[0:-1],'uint8')
+            self.dataMgr.featureLock.release()
+        except Exception, e:
+            print "######### Exception in ClassifierTrainThread ##########"
+            print e
+            traceback.print_exc(file=sys.stdout)
+            self.dataMgr.featureLock.release()
+

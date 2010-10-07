@@ -28,3 +28,8 @@
 #    or implied, of their employers.
 
 import featureBase, standardFeatures
+
+try:
+    import firstOfHessian
+except:
+    pass

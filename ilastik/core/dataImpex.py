@@ -19,13 +19,13 @@ class DataImpex(object):
     
     @staticmethod
     def importDataItem(filename, options):
-        #call this method when you expect to get a single data item back, such
+        #call this method when you expect to get a single _data item back, such
         #as when you load a stack from a directory
         if isinstance(filename, list):
             image = DataImpex.loadStack(filename, options, None)
             if image is not None:
                 #the name will be set in the calling function
-                theDataItem = DataImpex.initDataItemFromArray(image, "bla")
+                theDataItem = DataImpex.initDataItemFromArray(image, "Unknown Name")
                 return theDataItem
         else:
             #this is just added for backward compatibility with 'Add' button
@@ -67,15 +67,12 @@ class DataImpex(object):
         else:
             # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
-            theDataItem.data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-            #data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-            theDataItem.labels = None
+            data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
+            #_data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
 
-            dataAcc = DataAccessor(theDataItem.data)
-            theDataItem.dataVol = Volume()
-            theDataItem.dataVol.data = dataAcc
-            print "dataVol.data", theDataItem.dataVol.data.shape
-            theDataItem.dataVol.labels = theDataItem.labels
+            dataAcc = DataAccessor(data)
+            theDataItem._dataVol = Volume(dataAcc)
+        theDataItem.updateOverlays()
         return theDataItem
 
     @staticmethod
@@ -103,7 +100,6 @@ class DataImpex(object):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                 try:
                     img_data = vigra.impex.readImage(filename).swapaxes(0,1)
-
                     if options.rgb > 1:
                         image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
                     else:
@@ -142,7 +138,8 @@ class DataImpex(object):
         if options.destShape is not None:
             result = numpy.zeros(options.destShape + (nch,), 'float32')
             for i in range(nch):
-                cresult = vigra.sampling.resizeVolumeSplineInterpolation(image[:,:,:,i].view(vigra.Volume),options.destShape)
+                cresult = vigra.filters.gaussianSmoothing(image[:,:,:,i].view(vigra.Volume), 2.0)
+                cresult = vigra.sampling.resizeVolumeSplineInterpolation(cresult,options.destShape)
                 result[:,:,:,i] = cresult[:,:,:]
             image = result
         else:
@@ -161,9 +158,10 @@ class DataImpex(object):
             image.reshape(image.shape + (1,))
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
-        
+        print options.destfile
         try:
             if options.destfile != None :
+                print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
                 g = f.create_group("volume")        
                 g.create_dataset("data",data = image)
@@ -177,8 +175,8 @@ class DataImpex(object):
     @staticmethod
     def initDataItemFromArray(image, name):
         dataItem = dataMgr.DataItemImage(name)
-        dataItem.dataVol = Volume()
-        dataItem.dataVol.data = DataAccessor(image, True)
+        dataItem._dataVol = Volume(DataAccessor(image, True))
+        dataItem.updateOverlays()
         return dataItem
 
     @staticmethod
@@ -188,9 +186,9 @@ class DataImpex(object):
         fBase, fExt = os.path.splitext(filename)
         if fExt == '.h5':
             f = h5py.File(filename, 'r')
-            shape = f["volume/data"].shape
+            shape = f["volume/_data"].shape
             if shape[1] == 1:
-                #2d data looks like (1, 1, x, y, c)
+                #2d _data looks like (1, 1, x, y, c)
                 return (shape[2], shape[3], 1, shape[4])
             else:
                 #3d data looks like (1, x, y, z, c)
@@ -206,8 +204,57 @@ class DataImpex(object):
             else:
                 return (tempimage.shape[0], tempimage.shape[1], 1, 1)
         
+    @staticmethod
+    def exportOverlay(filename, format, overlayItemReference, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
+        if format == "h5":
+            filename = filename + "." + format
+            f = h5py.File(filename, 'a')
+            path = overlayItemReference.key
+            pathparts = path.split("/")
+            pathparts.pop()
+            prevgr = f.create_group(pathparts.pop(0))
+            for item in pathparts:
+                prevgr = prevgr.create_group(item)
+            try:
+                dataset = prevgr.create_dataset(overlayItemReference.name, data=overlayItemReference.overlayItem._data[0,:,:,:,:])
+            except Exception, e:
+                print e
+            f.close()
+            return
+        
+        if overlayItemReference._data.shape[1]>1:
+            #3d _data
+            for t in range(overlayItemReference._data.shape[0]):
+                for z in range(overlayItemReference._data.shape[3]):
+                    for c in range(overlayItemReference._data.shape[-1]):
+                        fn = filename
+                        data = overlayItemReference._data[t,:,:,z,c]
+                        if overlayItemReference._data.shape[0]>1:
+                            fn = fn + ("_time%03i" %(t+timeOffset))
+                        fn = fn + ("_z%05i" %(z+sliceOffset))
+                        if overlayItemReference._data.shape[-1]>1:
+                            fn = fn + ("_channel%03i" %(c+channelOffset))
+                        fn = fn + "." + format
+                        vigra.impex.writeImage(data, fn)
+                        print "Exported file ", fn
+        else:
+            for t in range(overlayItemReference._data.shape[0]):
+                for c in range(overlayItemReference._data.shape[-1]):
+                    fn = filename
+                    data = overlayItemReference._data[t, 0, :, :, c]
+                    if overlayItemReference._data.shape[0]>1:
+                        fn = fn + ("_time%03i" %(t+timeOffset))
+                    if overlayItemReference._data.shape[-1]>1:
+                        fn = fn + ("_channel%03i" %(c+channelOffset))
+                    fn = fn + "." + format
+                    vigra.impex.writeImage(data.swapaxes(0,1), fn)
+                    print "Exported file ", fn
 
-     #           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
+    @staticmethod
+    def exportFormatList():
+        return vigra.impex.listExtensions().split(' ')
+
+#           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
       #      if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):
        #         QtGui.QErrorMessage.qtHandler().showMessage("Chosen channels don't have an equal number of files. Check with Preview files button")
                 #should it really reject?

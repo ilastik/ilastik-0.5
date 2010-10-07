@@ -1,6 +1,11 @@
 *.pyc
 *.backup
+nbproject
 *~
 build/*
 .spyder*
-.gitig*
+*.orig
+*.ilp
+*.project
+*.pydevproject
+*.settings

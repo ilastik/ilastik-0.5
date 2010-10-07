@@ -29,6 +29,7 @@
 
 import numpy
 import sys
+import gc
 from Queue import Queue as queue
 from copy import copy
 import os
@@ -43,11 +44,14 @@ except:
     have_qt = False
 
 from ilastik.core.volume import DataAccessor as DataAccessor
-from ilastik.core.volume import Volume as Volume
+from ilastik.core.volume import Volume as Volume, VolumeLabels, VolumeLabelDescriptionMgr
 
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
+from ilastik.core import overlayMgr
 from ilastik.core.classifiers.classifierRandomForest import ClassifierRandomForest
+
+
 #from ilastik.core import dataImpex
 
 import traceback
@@ -72,301 +76,326 @@ def unravelIndices(indices, shape):
 
 class DataItemBase():
     """
-    Data Base class, serves as an interface for the specialized data structures, e.g. images, multispectral, volume etc.  
+    Data Base class, serves as an interface for the specialized _data structures, e.g. images, multispectral, volume etc.  
     """
     #3D: important
     def __init__(self, fileName):
         self.fileName = str(fileName)
-        self.Name = os.path.split(self.fileName)[1]
-        self.hasLabels = False
-        self.isTraining = True
-        self.isTesting = False
-        self.groupMember = []
-        self.projects = []
+        self._name = os.path.split(self.fileName)[1]
+        self._hasLabels = False
+        self._isTraining = True
+        self._isTesting = False
+        self._groupMember = []
+        self._projects = []
         
-        self.data = None
-        self.labels = None
-        self.dataKind = None
-        self.dataType = []
-        self.dataDimensions = 0
         self.thumbnail = None
-        self.shape = ()
-        self.channelDescription = []
-        self.channelUsed = []
-        
-    def shape(self):
-        if self.dataKind in ['rgb', 'multi', 'gray']:
-            return self.shape[0:2]
-        
-    def loadData(self):
-        self.data = "This is not an Image..."
-    
-    def unpackChannels(self):
-        if self.dataKind in ['rgb']:
-            return [ self.data[:,:,k] for k in range(0,3) ]
-        elif self.dataKind in ['multi']:
-            return [ self.data[:,:,k] for k in irangeIfTrue(self.channelUsed)]
-        elif self.dataKind in ['gray']:
-            return [ self.data ]   
 
 
 class BlockAccessor():
     def __init__(self, data, blockSize = None):
-        self.data = data
-	if blockSize is None:
-		max = int(numpy.max(self.data.shape[1:4]))
-		if max > 128:
-			self.blockSize = blockSize = 128
-		else:
-			self.blockSize = blockSize = max / 2
-	else:
-		self.blockSize = blockSize
+        self._data = data
+        if blockSize is None:
+            max = int(numpy.max(self._data.shape[1:4]))
+            if max > 128:
+                self._blockSize = blockSize = 128
+            else:
+                self._blockSize = blockSize = max / 2
+        else:
+            self._blockSize = blockSize
         
-        self.cX = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
+        self._cX = int(numpy.ceil(1.0 * data.shape[1] / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cXend = data.shape[1] % self.blockSize
-        if self.cXend < self.blockSize / 3 and self.cX > 1:
-            self.cX -= 1
+        self._cXend = data.shape[1] % self._blockSize
+        if self._cXend > 0 and self._cXend < self._blockSize / 3 and self._cX > 1:
+            self._cX -= 1
         else:
-            self.cXend = 0
+            self._cXend = 0
                 
-        self.cY = int(numpy.ceil(1.0 * data.shape[2] / self.blockSize))
+        self._cY = int(numpy.ceil(1.0 * data.shape[2] / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cYend = data.shape[2] % self.blockSize
-        if self.cYend < self.blockSize / 3 and self.cY > 1:
-            self.cY -= 1
+        self._cYend = data.shape[2] % self._blockSize
+        if self._cYend > 0 and self._cYend < self._blockSize / 3 and self._cY > 1:
+            self._cY -= 1
         else:
-            self.cYend = 0
+            self._cYend = 0
 
-        self.cZ = int(numpy.ceil(1.0 * data.shape[3] / self.blockSize))
+        self._cZ = int(numpy.ceil(1.0 * data.shape[3] / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cZend = data.shape[3] % self.blockSize
-        if self.cZend < self.blockSize / 3 and self.cZ > 1:
-            self.cZ -= 1
+        self._cZend = data.shape[3] % self._blockSize
+        if self._cZend > 0 and self._cZend < self._blockSize / 3 and self._cZ > 1:
+            self._cZ -= 1
         else:
-            self.cZend = 0
+            self._cZend = 0
 
-        self.blockCount = self.cX * self.cY * self.cZ
-        self.lock = threading.Lock()
-        if issubclass(self.data.__class__, numpy.ndarray):
-            self.fileBacked = False
+        self._blockCount = self._cX * self._cY * self._cZ
+        self._lock = threading.Lock()
+        if issubclass(self._data.__class__, numpy.ndarray):
+            self._fileBacked = False
         else:
-            self.fileBacked = True
-        
+            self._fileBacked = True
         
     def getBlockBounds(self, blockNum, overlap):
-        z = int(numpy.floor(blockNum / (self.cX*self.cY)))
-        rest = blockNum % (self.cX*self.cY)
-        y = int(numpy.floor(rest / self.cX))
-        x = rest % self.cX
+        z = int(numpy.floor(blockNum / (self._cX*self._cY)))
+        rest = blockNum % (self._cX*self._cY)
+        y = int(numpy.floor(rest / self._cX))
+        x = rest % self._cX
         
-        startx = max(0, x*self.blockSize - overlap) 
-        endx = min(self.data.shape[1], (x+1)*self.blockSize + overlap)
-        if x+1 >= self.cX:
-            endx = self.data.shape[1]
+        startx = max(0, x*self._blockSize - overlap) 
+        endx = min(self._data.shape[1], (x+1)*self._blockSize + overlap)
+        if x+1 >= self._cX:
+            endx = self._data.shape[1]
         
-        starty = max(0, y*self.blockSize - overlap)
-        endy = min(self.data.shape[2], (y+1)*self.blockSize + overlap) 
-        if y+1 >= self.cY:
-            endy = self.data.shape[2]
+        starty = max(0, y*self._blockSize - overlap)
+        endy = min(self._data.shape[2], (y+1)*self._blockSize + overlap) 
+        if y+1 >= self._cY:
+            endy = self._data.shape[2]
     
-        startz = max(0, z*self.blockSize - overlap)
-        endz = min(self.data.shape[3], (z+1)*self.blockSize + overlap)
-        if z+1 >= self.cZ:
-            endz = self.data.shape[3]
-        
+        startz = max(0, z*self._blockSize - overlap)
+        endz = min(self._data.shape[3], (z+1)*self._blockSize + overlap)
+        if z+1 >= self._cZ:
+            endz = self._data.shape[3]
         return [startx,endx,starty,endy,startz,endz]
 
     def __getitem__(self, args):
-        if self.fileBacked is False:
-            return self.data[args]
+        if self._fileBacked is False:
+            return self._data[args]
         else:
-            self.lock.acquire()
-            temp =  self.data[args]
-            self.lock.release()
+            self._lock.acquire()
+            temp =  self._data[args]
+            self._lock.release()
             return temp
 
     def __setitem__(self, args, data):
-        if self.fileBacked is False:
-            self.data[args] = data
+        if self._fileBacked is False:
+            self._data[args] = data
         else:
-            self.lock.acquire()
-            self.data[args] = data
-            self.lock.release()
+            self._lock.acquire()
+            self._data[args] = data
+            self._lock.release()
             
 class BlockAccessor2D():
     def __init__(self, data, blockSize = 128):
-        self.data = data
-        self.blockSize = blockSize
+        self._data = data
+        self._blockSize = blockSize
 
-        self.cX = int(numpy.ceil(1.0 * data.shape[0] / self.blockSize))
-
-        #last blocks can be very small -> merge them with the secondlast one
-        self.cXend = data.shape[0] % self.blockSize
-        if self.cXend < self.blockSize / 3 and self.cX > 1:
-            self.cX -= 1
-        else:
-            self.cXend = 0
-
-        self.cY = int(numpy.ceil(1.0 * data.shape[1] / self.blockSize))
+        self._cX = int(numpy.ceil(1.0 * data.shape[0] / self._blockSize))
 
         #last blocks can be very small -> merge them with the secondlast one
-        self.cYend = data.shape[1] % self.blockSize
-        if self.cYend < self.blockSize / 3 and self.cY > 1:
-            self.cY -= 1
+        self._cXend = data.shape[0] % self._blockSize
+        if self._cXend < self._blockSize / 3 and self._cX > 1:
+            self._cX -= 1
         else:
-            self.cYend = 0
+            self._cXend = 0
+
+        self._cY = int(numpy.ceil(1.0 * data.shape[1] / self._blockSize))
+
+        #last blocks can be very small -> merge them with the secondlast one
+        self._cYend = data.shape[1] % self._blockSize
+        if self._cYend < self._blockSize / 3 and self._cY > 1:
+            self._cY -= 1
+        else:
+            self._cYend = 0
 
 
-        self.blockCount = self.cX * self.cY
-        self.lock = threading.Lock()
-        if issubclass(self.data.__class__, numpy.ndarray):
-            self.fileBacked = False
+        self._blockCount = self._cX * self._cY
+        self._lock = threading.Lock()
+        if issubclass(self._data.__class__, numpy.ndarray):
+            self._fileBacked = False
         else:
-            self.fileBacked = True
+            self._fileBacked = True
 
 
     def getBlockBounds(self, blockNum, overlap):
-        z = int(numpy.floor(blockNum / (self.cX*self.cY)))
-        rest = blockNum % (self.cX*self.cY)
-        y = int(numpy.floor(rest / self.cX))
-        x = rest % self.cX
+        z = int(numpy.floor(blockNum / (self._cX*self._cY)))
+        rest = blockNum % (self._cX*self._cY)
+        y = int(numpy.floor(rest / self._cX))
+        x = rest % self._cX
 
-        startx = max(0, x*self.blockSize - overlap)
-        endx = min(self.data.shape[0], (x+1)*self.blockSize + overlap)
-        if x+1 >= self.cX:
-            endx = self.data.shape[0]
+        startx = max(0, x*self._blockSize - overlap)
+        endx = min(self._data.shape[0], (x+1)*self._blockSize + overlap)
+        if x+1 >= self._cX:
+            endx = self._data.shape[0]
 
-        starty = max(0, y*self.blockSize - overlap)
-        endy = min(self.data.shape[1], (y+1)*self.blockSize + overlap)
-        if y+1 >= self.cY:
-            endy = self.data.shape[1]
+        starty = max(0, y*self._blockSize - overlap)
+        endy = min(self._data.shape[1], (y+1)*self._blockSize + overlap)
+        if y+1 >= self._cY:
+            endy = self._data.shape[1]
 
 
         return [startx,endx,starty,endy]
 
 
     def __getitem__(self, args):
-        if self.fileBacked is False:
-            return self.data[args]
+        if self._fileBacked is False:
+            return self._data[args]
         else:
-            self.lock.acquire()
-            temp =  self.data[args]
-            self.lock.release()
+            self._lock.acquire()
+            temp =  self._data[args]
+            self._lock.release()
             return temp
             
     def __setitem__(self, args, data):
-        if self.fileBacked is False:
-            self.data[args] = data
+        if self._fileBacked is False:
+            self._data[args] = data
         else:
-            self.lock.acquire()
-            self.data[args] = data
-            self.lock.release()
+            self._lock.acquire()
+            self._data[args] = data
+            self._lock.release()
 
+class PropertyMgr():
+    """
+    Holds a bag of Properties that can be serialized and deserialized
+    new properties are also added to the parents regular attributes
+    for easier access
+    """
+    def __init__(self, parent):
+        self._dict = {}
+        self._parent = parent
+        
+    def serialize(self, h5g, name):
+        for v in self.values():
+            if hasattr(v, "serialize"):
+                v.serialize(h5g)
+    
+    def deserialize(self, h5g, name):
+        pass
+
+    def keys(self):
+        return self._dict.keys()
+    
+    def values(self):
+        return self._dict.values()
+
+    def __setitem__(self,  key,  value):
+        self._dict[key] = value
+        setattr(self._parent, key, value)
+    
+    def __getitem__(self, key):
+        try:
+            answer =  self._dict[key]
+        except:
+            answer = None
+        return answer
+    
+    
+class ModuleMgr(PropertyMgr):
+    """
+    abstract base class for modules
+    """
+    def __init__(self, parent):
+        PropertyMgr.__init__(self, parent)
+    
+    def onModuleStart(self):
+        pass
+    
+    def onModuleStop(self):
+        pass
+    
+    def onNewImage(self, dataItemImage):
+        pass
+    
+    def onDeleteImage(self, dataItemImage):
+        pass
+    
+    
+    
+
+        
+    
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName) 
-        self.dataDimensions = 2
-        self.overlayImage = None
-        self.dataVol = None
-        self.prediction = None
-        self.trainingF = None        
-        self.features = [] #features is an array of arrays of arrays etc. like this
-                           #feature, channel, time
+        self._dataVol = None
         self._featureM = None
-        self.history = None
-        self.featureCacheDS = None
-        self.featureBlockAccessor = None
         
-#    def loadData(self):
-#        fBase, fExt = os.path.splitext(self.fileName)
-#        if fExt == '.h5':
-#            f = h5py.File(self.fileName, 'r')
-#            g = f['volume']
-#            self.deserialize(g)
-#        else:
-#            #self.data = dataImpex.DataImpex.loadImageData(self.fileName)
-#            self.labels = None
-#        #print "Shape after Loading and width",self.data.shape, self.data.width
-#        if self.dataVol is None:
-#            dataAcc = DataAccessor(self.data)
-#            self.dataVol = Volume()
-#            self.dataVol.data = dataAcc
-#            self.dataVol.labels = self.labels
-#        
-#   
-#    @classmethod
-#    def initFromArray(cls, dataArray, originalFileName):
-#        obj = cls(originalFileName)
-#        obj.dataVol = Volume()
-#        obj.dataVol.data = DataAccessor(dataArray, True)
-#        return obj
+        self._seedL = None#numpy.zeros((0, 1), 'uint8')
+        self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
         
+        self._segmentationWeights = None
         
-    def getTrainingMforInd(self, ind):
-#                        featureShape = self._featureM.shape[0:4]
-#                        URI =  unravelIndices(indices, featureShape)
-#                        tempfm = self._featureM[URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
-#                        tempfm.shape = (tempfm.shape[0],) + (tempfm.shape[1]*tempfm.shape[2],)
-        featureShape = self._featureM.shape[0:4]
-        URI =  unravelIndices(ind, featureShape)
-        if issubclass(self._featureM.__class__,numpy.ndarray): 
-            trainingF = self._featureM[URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
+        self._readBegin = (0,0,0)
+        self._readEnd = (0,0,0)
+        
+        self._writeBegin = (0,0,0)
+        self._writeEnd = (0,0,0)
+        
+        self.overlayMgr = overlayMgr.OverlayMgr()
+        self.module = PropertyMgr(self)
+    
+    
+    def setDataVol(self, dataVol):
+        self._dataVol = dataVol
+        self._writeBegin = (0,0,0)
+        self._writeEnd = (dataVol.shape[1], dataVol.shape[2], dataVol.shape[3])
+        
+    def setReadBounds(self, begin, end):
+        self._readBegin = begin
+        self._readEnd  = end
+    
+    def setWriteBounds(self, begin, end, shape):
+        self._writeBegin = begin
+        self._writeEnd  = end
+        self._writeShape = shape
+    
+
+    def __getitem__(self, args):
+        return self._dataVol._data[args]
+            
+    def __setitem__(self, args, data):
+        self._dataVol._data[args] = data
+
+
+    def __getattr__(self, name):
+        if name == "dtype":
+            return self._dataVol._data.dtype
+        elif name == "shape":
+            return self._dataVol._data.shape
         else:
-            print ind.shape
-            print self._featureM.shape
-            trainingF = numpy.zeros((ind.shape[0],) + (self._featureM.shape[4],self._featureM.shape[5],), 'float32')
-            for i in range(URI.shape[0]): 
-                trainingF[i,:,:] = self._featureM[URI[i,0],URI[i,1],URI[i,2],URI[i,3],:]
-        trainingF.shape = (trainingF.shape[0],) + (trainingF.shape[1]*trainingF.shape[2],)
-        return trainingF
+            raise AttributeError, name
         
-    def getTrainingMatrixRef(self):
-        #TODO: time behaviour should be discussed !
-        #also adapt feature computation when doing this(4D??)!
-        if self.trainingF is None and self._featureM is not None:
-            tempF = []
+    
+    def _buildSeedsWhenNotThere(self):
+        if self._seedL is None:
             tempL = []
     
-            tempd =  self.dataVol.labels.data[:, :, :, :, 0].ravel()
+            tempd =  self._dataVol.seeds._data[:, :, :, :, 0].ravel()
             indices = numpy.nonzero(tempd)[0]
-            tempL = self.dataVol.labels.data[:,:,:,:,0].ravel()[indices]
+            tempL = self._dataVol.seeds._data[:,:,:,:,0].ravel()[indices]
             tempL.shape += (1,)
                                    
-            self.trainingIndices = indices
-            self.trainingL = tempL
-            if len(indices) > 0:
-                self.trainingF = self.getTrainingMforInd(indices)
-            else:
-                self.trainingF = None
-        return self.trainingL, self.trainingF, self.trainingIndices
+            self._seedIndices = indices
+            self._seedL = tempL
     
-    def getTrainingMatrix(self):
-        self.getTrainingMatrixRef()
-        if self.trainingF is not None:
-            return self.trainingL, self.trainingF, self.trainingIndices
-        else:
-            return None, None, None
-            
-    def updateTrainingMatrix(self, newLabels):
-        #TODO: this method is crazy, make it less crazy
+    def getSeeds(self):
+        self._buildSeedsWhenNotThere()
+        return self._seedL,  self._seedIndices
+        
+
+
+    def updateSeeds(self, newLabels):
+        """
+        This method updates the seedMatrix with new seeds.
+        newlabels can contain completey new labels, changed labels and deleted labels
+        """
+        self._buildSeedsWhenNotThere()
         for nl in newLabels:
             try:
                 if nl.erasing == False:
-                    indic =  list(numpy.nonzero(nl.data))
+                    indic =  list(numpy.nonzero(nl._data))
                     indic[0] = indic[0] + nl.offsets[0]
                     indic[1] += nl.offsets[1]
                     indic[2] += nl.offsets[2]
                     indic[3] += nl.offsets[3]
                     indic[4] += nl.offsets[4]
 
+
                     loopc = 2
                     count = 1
                     indices = indic[-loopc]*count
-                    templ = list(self.dataVol.data.shape[1:-1])
+                    templ = list(self._dataVol._data.shape[1:-1])
                     templ.reverse()
                     for s in templ:
                         loopc += 1
@@ -376,56 +405,34 @@ class DataItemImage(DataItemBase):
                     if len(indices.shape) == 1:
                         indices.shape = indices.shape + (1,)
 
-                    mask = numpy.setmember1d(self.trainingIndices.ravel(),indices.ravel())
+                    mask = numpy.setmember1d(self._seedIndices.ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
-                        tt = numpy.delete(self.trainingIndices,nonzero)
+                        tt = numpy.delete(self._seedIndices,nonzero)
                         if len(tt.shape) == 1:
                             tt.shape = tt.shape + (1,)
-                        self.trainingIndices = numpy.concatenate((tt,indices))
-                        tempI = numpy.nonzero(nl.data)
-                        tempL = nl.data[tempI]
+                        self._seedIndices = numpy.concatenate((tt,indices))
+                        tempI = numpy.nonzero(nl._data)
+                        tempL = nl._data[tempI]
                         tempL.shape += (1,)
-                        temp2 = numpy.delete(self.trainingL,nonzero)
+                        temp2 = numpy.delete(self._seedL,nonzero)
                         temp2.shape += (1,)
-                        self.trainingL = numpy.vstack((temp2,tempL))
+                        self._seedL = numpy.vstack((temp2,tempL))
 
-
-                        temp2 = numpy.delete(self.trainingF,nonzero, axis = 0)
-
-                        if self._featureM is not None and len(indices) > 0:
-                            tempfm = self.getTrainingMforInd(indices)
-
-                            if len(temp2.shape) == 1:
-                                temp2.shape += (1,)
-
-                            self.trainingF = numpy.vstack((temp2,tempfm))
-                        else:
-                            self.trainingF = temp2
 
                     elif indices.shape[0] > 0: #no intersection, just add everything...
-                        if len(self.trainingIndices.shape) == 1:
-                            self.trainingIndices.shape = self.trainingIndices.shape + (1,)
-                        self.trainingIndices = numpy.concatenate((self.trainingIndices,indices))
+                        if len(self._seedIndices.shape) == 1:
+                            self._seedIndices.shape = self._seedIndices.shape + (1,)
+                        self._seedIndices = numpy.concatenate((self._seedIndices,indices))
 
-                        tempI = numpy.nonzero(nl.data)
-                        tempL = nl.data[tempI]
+                        tempI = numpy.nonzero(nl._data)
+                        tempL = nl._data[tempI]
                         tempL.shape += (1,)
-                        temp2 = self.trainingL
-                        self.trainingL = numpy.vstack((temp2,tempL))
-
-                        if self._featureM is not None and len(indices) > 0:
-                            if self.trainingF is not None:
-                                if len(self.trainingF.shape) == 1:
-                                    self.trainingF.shape += (1,)
-
-                                tempfm = self.getTrainingMforInd(indices)
-                                self.trainingF = numpy.vstack((self.trainingF,tempfm))
-                            else:
-                                self.trainingF = self.getTrainingMforInd(indices)
+                        temp2 = self._seedL
+                        self._seedL = numpy.vstack((temp2,tempL))
 
                 else: #erasing == True
-                    indic =  list(numpy.nonzero(nl.data))
+                    indic =  list(numpy.nonzero(nl._data))
                     indic[0] = indic[0] + nl.offsets[0]
                     indic[1] += nl.offsets[1]
                     indic[2] += nl.offsets[2]
@@ -435,96 +442,182 @@ class DataItemImage(DataItemBase):
                     loopc = 2
                     count = 1
                     indices = indic[-loopc]*count
-                    templ = list(self.dataVol.data.shape[1:-1])
+                    templ = list(self._dataVol._data.shape[1:-1])
                     templ.reverse()
                     for s in templ:
                         loopc += 1
                         count *= s
                         indices += indic[-loopc]*count
 
-                    mask = numpy.setmember1d(self.trainingIndices.ravel(),indices.ravel())
+                    mask = numpy.setmember1d(self._seedIndices.ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
-                        if self.trainingF is not None:
-                            self.trainingIndices = numpy.delete(self.trainingIndices,nonzero)
-                            self.trainingL  = numpy.delete(self.trainingL,nonzero)
-                            self.trainingL.shape += (1,) #needed because numpy.delete is stupid
-                            self.trainingF = numpy.delete(self.trainingF,nonzero, axis = 0)
+                        if self._seedIndices is not None:
+                            self._seedIndices = numpy.delete(self._seedIndices,nonzero)
+                            self._seedL  = numpy.delete(self._seedL,nonzero)
+                            self._seedL.shape += (1,) #needed because numpy.delete is stupid
                     else: #no intersectoin, in erase mode just pass
                         pass
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
-                print self.trainingIndices.shape
+                print self._trainingIndices.shape
                 print indices.shape
-                print self.trainingF.shape
+                print self._trainingF.shape
                 print nonzero
 
+
+    def updateBackground(self, newLabels, key):
+        """
+        This function returns the classes which correspond to background
+        """
+        setAdd = set()
+        setRemove = set()
+        for nl in newLabels:
+            try:
+                indic =  list(numpy.nonzero(nl._data))
+                indic[0] = indic[0] + nl.offsets[0]
+                indic[1] += nl.offsets[1]
+                indic[2] += nl.offsets[2]
+                indic[3] += nl.offsets[3]
+                indic[4] += nl.offsets[4]
+                for i in range(0, len(indic[0])):
+                    backclass = self.overlayMgr[key]._data[(indic[0][i],indic[1][i],indic[2][i],indic[3][i],indic[4][i])]
+                    if nl.erasing == False:
+                        setAdd.add(backclass)
+                    else:
+                        setRemove.add(backclass)
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
         
-    def clearFeaturesAndTraining(self):
-        self.trainingF = None
-        self.trainingL = None
-        self.trainingIndices = None
-                
-    def getFeatureSlicesForViewState(self, vs):
-        tempM = []
-        if self._featureM is not None:
-            tempM.append(self._featureM[vs[0],vs[1],:,:,:,:])
-            tempM.append(self._featureM[vs[0],:,vs[2],:,:,:])
-            tempM.append(self._featureM[vs[0],:,:,vs[3],:,:])
-            for i, f in enumerate(tempM):
-                tf = f.reshape((numpy.prod(f.shape[0:2]),) + (numpy.prod(f.shape[2:]),))
-                tempM[i] = tf
-                
-            return tempM
-        else:
-            return None
+        return setAdd, setRemove
+
+
+    def clearSeeds(self):
+        self._seedL = None
+        self._seedIndices = None
+
             
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
-        self.dataVol = None
-        self.data = None
+        self._dataVol = None
+        self._data = None
         
      
-    def serialize(self, h5G):
-        self.dataVol.serialize(h5G)
-        if self.prediction is not None:
-            self.prediction.serialize(h5G, 'prediction')
+    def loadFromFile(self):
+        f = h5py.File(self.fileName, 'r')
+        g = f["volume"]
+        self.deserialize(g)
+    
+    def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+        if destend != (0,0,0):
+            self._dataVol.serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+        elif self._writeEnd != (0,0,0):
+            
+            destbegin = self._writeBegin
+            destend =  self._writeEnd
+            srcbegin =  self._readBegin
+            srcend =  self._readEnd
+            destshape = self._writeShape
+            
+            self._dataVol.serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+        else:
+            self._dataVol.serialize(h5G)
+            
+        for k in self.module.keys():
+            if hasattr(self.module[k], "serialize"):
+                print "serializing ", k
+                try:
+                    self.module[k].serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+                except Exception as e:
+                    print e
+                    print traceback.print_exc()
+                    print "couldn't serialize something"
+                    
+    def updateOverlays(self):
+        ov = overlayMgr.OverlayItem(self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False, min = 0, max = 255)
+        self.overlayMgr["Raw Data"] = ov
+
+#        if self._dataVol.labels is not None:
+#            #create an overlay for labels
+#            ov = overlayMgr.OverlayItem(self._dataVol.labels._data, color = 0, alpha = 1.0, colorTable = self._dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+#            self.overlayMgr["Classification/Labels"] = ov
+#            for p_i, descr in enumerate(self._dataVol.labels.descriptions):
+#                #create Overlay for _prediction:
+#                ov = overlayMgr.OverlayItem(descr._prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
+#                self.overlayMgr["Classification/Prediction/" + descr.name] = ov
+#
+#        if self._dataVol.uncertainty is not None:
+#            #create Overlay for uncertainty:
+#            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+#            self.overlayMgr["Classification/Uncertainty"] = ov
+
             
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
-        self.dataVol = Volume.deserialize(h5G, offsets, shape)
+        self._dataVol = Volume.deserialize(self, h5G, offsets, shape)
+        
+        #load obsolete file format parts (pre version 0.5)
+        #and store them in the properties
+        #the responsible modules will take care of them
+        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
+        self.module["_obsolete_labels"] = labels
         if 'prediction' in h5G.keys():
-            self.prediction = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
-            for p_i, item in enumerate(self.dataVol.labels.descriptions):
-                item.prediction = (self.prediction[:,:,:,:,p_i] * 255).astype(numpy.uint8)
+            self.module["_obsolete_prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
+            
+            
+        
+        self.updateOverlays()
 
-            margin = activeLearning.computeEnsembleMargin(self.prediction[:,:,:,:,:])*255.0
-            self.dataVol.uncertainty = margin[:,:,:,:]
-            seg = segmentationMgr.LocallyDominantSegmentation(self.prediction[:,:,:,:,:], 1.0)
-            self.dataVol.segmentation = seg[:,:,:,:]
+
+
+
+class MultiPartDataItemAccessor(object):
+    def __init__(self, data, blocksize = 128, overlap = 10):
+        self._data = data
+        self.overlap = 10
+        self._blockAccessor = BlockAccessor(self._data, blocksize)
+        
+    def getBlockCount(self):
+        return self._blockAccessor._blockCount
+    
+    def getDataItem(self, blockNr):
+        di = DataItemImage("block " + str(blockNr))
+        boundsa = self._blockAccessor.getBlockBounds(blockNr, self.overlap)
+        tempdata = DataAccessor(self._data[:,boundsa[0]:boundsa[1],boundsa[2]:boundsa[3],boundsa[4]:boundsa[5],:])
+        di.setDataVol(Volume(tempdata))
+        boundsb = self._blockAccessor.getBlockBounds(blockNr, 0)
+        di.setWriteBounds( (boundsb[0], boundsb[2], boundsb[4]), (boundsb[1], boundsb[3], boundsb[5]), self._data.shape[1:-1])
+        di.setReadBounds( (boundsb[0]-boundsa[0], boundsb[2]-boundsa[2], boundsb[4]-boundsa[4]), (boundsb[0]-boundsa[0] + boundsb[1] - boundsb[0], boundsb[2]-boundsa[2] + boundsb[3] - boundsb[2], boundsb[4]-boundsa[4] + boundsb[5] - boundsb[4]))
+        return di
+
+
+
+        
             
 class DataMgr():
     """
     Manages Project structure and associated files, e.g. images volumedata
     """
-    # does not unload data, maybe implement some sort of reference 
+    # does not unload _data, maybe implement some sort of reference 
     # counting if memory scarceness manifests itself
     
     def __init__(self, featureCacheFile=None):
-        self.dataItems = []            
-        self.classifiers = []
-        self.featureLock = threading.Semaphore(1) #prevent chaining of activeImage during thread stuff
-        self.trainingVersion = 0
-        self.featureVersion = 0
-        self.dataItemsLoaded = []
-        self.trainingF = None
-        self.featureCacheFile = featureCacheFile
+        self._dataItems = []            
+        self.featureLock = threading.Semaphore(1) #prevent chaining of _activeImageNumber during thread stuff
+        self._dataItemsLoaded = []
         self.channels = -1
-            
+        self._activeImageNumber = 0
+        self.module = PropertyMgr(self)
+        
+        #TODO: Maybe it shouldn't be here...
+        self.connCompBackgroundKey = ""    
+        self.connCompBackgroundClasses = set()
+        
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
             try:
-                dataItem.loadData()
+                dataItem.loadFromFile()
             except Exception, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
@@ -533,155 +626,100 @@ class DataMgr():
 
             alreadyLoaded = True
             
-        if self.channels == -1 or dataItem.dataVol.data.shape[-1] == self.channels:
-            self.channels = dataItem.dataVol.data.shape[-1]
-            if self.featureCacheFile is not None:
-                cx = 1
-                cy = 32
-                cz = 32
-                if str(len(self)) in self.featureCacheFile.keys():
-                    del self.featureCacheFile[str(len(self))]
-                dataItem.featureCacheDS = self.featureCacheFile.create_dataset(str(len(self)), (1,1,1,1,1,1), 'float32', maxshape = (None, None, None, None, None, None), chunks=(1,cx,cy,cz,1,1), compression=None)
-            self.dataItems.append(dataItem)
-            self.dataItemsLoaded.append(alreadyLoaded)
+        if self.channels == -1 or dataItem.shape[-1] == self.channels:
+            self.channels = dataItem.shape[-1]
+            
+            self.selectedChannels = range(self.channels)
+            
+            self._dataItems.append(dataItem)
+            self._dataItemsLoaded.append(alreadyLoaded)
+            for v in self.module.values():
+                v.onNewImage(dataItem)
+                
         else:
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         
-    def clearDataList(self):
-        self.dataItems = []
-        self.dataFeatures = []
-        self.labels = {}
+    def clearAll(self):
+        self._dataItems = []
+        gc.collect()
         
     
-    def buildTrainingMatrix(self, sigma = 0):
-        trainingF = []
-        trainingL = []
-        indices = []
-        for item in self:
-            trainingLabels, trainingFeatures, indic = item.getTrainingMatrixRef()
-            if trainingFeatures is not None:
-                indices.append(indic)
-                trainingL.append(trainingLabels)
-                trainingF.append(trainingFeatures)
-            
-        self.trainingL = trainingL
-        self.trainingF = trainingF
-        self.trainingIndices = indices     
-    
-    def getTrainingMatrix(self, sigma = 0):
-        """
-        sigma: trainig data that is within sigma to the image borders is not considered to prevent
-        border artifacts in training
-        """
-        if self.trainingVersion < self.featureVersion:
-            self.clearFeaturesAndTraining()
-        self.buildTrainingMatrix()
-        self.trainingVersion =  self.featureVersion
-            
-        if len(self.trainingF) == 0:
-            self.buildTrainingMatrix()
-        
-        if len(self.trainingF) > 0:
-            trainingF = numpy.vstack(self.trainingF)
-            trainingL = numpy.vstack(self.trainingL)
-        
-            return trainingF, trainingL
-        else:
-            print "######### empty Training Matrix ##########"
-            return None, None
-        
-    
-    def updateTrainingMatrix(self, num, newLabels):
-        if self.trainingF is None or len(self.trainingF) == 0 or self.trainingVersion < self.featureVersion:
-            self.buildTrainingMatrix()        
-        self[num].updateTrainingMatrix(newLabels)
-
-
-
-    def buildFeatureMatrix(self):
-        print "buildFeatureMatrix should not be called !!"
-
-                    
-    def clearFeaturesAndTraining(self):
-        self.featureVersion += 1
-        self.trainingF = None
-        self.trainingL = None
-        self.trainingIndices = None
-        self.classifiers = []
-        
+    def clearSeeds(self):
         for index, item in enumerate(self):
-            item.clearFeaturesAndTraining()
+            item.clearSeeds()
 
-    def removeLabel(self, number):
-        self.featureLock.acquire()
-        self.clearFeaturesAndTraining()
-        for index, item in enumerate(self):
-            ldnr = -1
-            for j, ld in enumerate(item.dataVol.labels.descriptions):
-                if ld.number == number:
-                    ldnr = j
-            if ldnr != -1:
-                item.dataVol.labels.descriptions.__delitem__(j)
-                for j, ld in enumerate(item.dataVol.labels.descriptions):
-                    if ld.number > number:
-                        ld.number -= 1
-                temp = numpy.where(item.dataVol.labels.data[:,:,:,:,:] == number, 0, item.dataVol.labels.data[:,:,:,:,:])
-                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item.dataVol.labels.data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item.history is not None:
-                    item.history.removeLabel(number)
-        self.featureLock.release()
-
+    def updateSeeds(self, newLabels,  imageNr = None):
+        if imageNr is None:
+            imageNr = self._activeImageNumber
+        self[imageNr].updateSeeds(newLabels)
+        
+    def updateBackground(self, newLabels, imageNr = None):
+        if self.connCompBackgroundKey == "":
+            #TODO: make a real error message
+            print "Select an overlay first!"
+            return
+        if imageNr is None:
+            imageNr = self._activeImageNumber
+        setAdd, setRemove = self[imageNr].updateBackground(newLabels, self.connCompBackgroundKey)
+        self.connCompBackgroundClasses = self.connCompBackgroundClasses.union(setAdd)
+        self.connCompBackgroundClasses = self.connCompBackgroundClasses.difference(setRemove)
 
     def getDataList(self):
-        return self.dataItems
+        return self._dataItems
                
     def __getitem__(self, ind):
-        if not self.dataItemsLoaded[ind]:
-            self.dataItems[ind].loadData()
-            self.dataItemsLoaded[ind] = True
-        return self.dataItems[ind]
+        if not self._dataItemsLoaded[ind]:
+            self._dataItems[ind].loadData()
+            self._dataItemsLoaded[ind] = True
+        return self._dataItems[ind]
     
     def __setitem__(self, ind, val):
-        self.dataItems[ind] = val
-        self.dataItemsLoaded[ind] = True
+        self._dataItems[ind] = val
+        self._dataItemsLoaded[ind] = True
     
     def getIndexFromFileName(self, fileName):
-        for k, dataItem in irange(self.dataItems):
+        for k, dataItem in irange(self._dataItems):
             if fileName == dataItem.fileName:
                 return k
         return False
     
     def remove(self, dataItemIndex):
-        del self.dataItems[dataItemIndex]
-        del self.dataItemsLoaded[dataItemIndex]
+        del self._dataItems[dataItemIndex]
+        del self._dataItemsLoaded[dataItemIndex]
         if len(self) == 0:
             self.channels = -1
     
     def __len__(self):
-        return len(self.dataItems)
+        return len(self._dataItems)
     
     def serialize(self, h5grp):
-        pass
+        for v in self.module.values():
+            v.serialize(h5grp)
         
     @staticmethod
     def deserialize(self):
         pass
     
-    def exportClassifiers(self, fileName):
-        if not hasattr(self, 'classifiers'):
+    def exportClassifiers(self, fileName, pathToGroup='/'):
+        if not hasattr(self, 'Classification') or not hasattr(self.Classification, 'classificationMgr') or not hasattr(self.Classification.classificationMgr, 'classifiers'):
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
-        if len(self.classifiers) == 0:
+        if len(self.Classification.classificationMgr.classifiers) == 0:
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
+        h5file = h5py.File(str(fileName),'a')
+        h5group = h5file[pathToGroup]
         
-        h5file = h5py.File(str(fileName),'w')
-        h5file.create_group('classifiers')
+        if 'classifiers' in h5group.keys():
+            del h5group['classifiers']
+            print "overwrite classifiers"
+            
+        h5group.create_group('classifiers')
         h5file.close()
         
-        for i, c in enumerate(self.classifiers):
-            tmp = c.RF.writeHDF5(str(fileName), "classifiers/rf_%03d" % i, True)
+        for i, c in enumerate(self.Classification.classificationMgr.classifiers):
+            print pathToGroup + "/classifiers/rf_%03d" % i
+            tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
             print "Write Random Forest # %03d -> %d" % (i,tmp)
             
     def importClassifiers(self, fileName):
@@ -690,8 +728,6 @@ class DataMgr():
         for cid in hf['classifiers']:
             classifiers.append(ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
         self.classifiers = classifiers
-        
-        
         
     
     

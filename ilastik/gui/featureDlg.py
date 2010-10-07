@@ -31,33 +31,73 @@ import os
 import numpy
 import ilastik
 from ilastik.core.utilities import irange, debug
-from ilastik.core import version, dataMgr, projectMgr, featureMgr, classificationMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.core import version, dataMgr, projectMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.core.modules.Classification import featureMgr, classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
+import qimage2ndarray
+from ilastik.core.modules.Classification.featureMgr import ilastikFeatureGroups
 
+from ilastik.gui.ribbons.Classification import FeatureComputation
 
 class FeatureDlg(QtGui.QDialog):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, previewImage=None):
         QtGui.QWidget.__init__(self)
         self.parent = parent
         self.ilastik = parent
         self.initDlg()
 
+        if self.parent.project.featureMgr is not None:
+            self.oldFeatureItems = self.parent.project.featureMgr.featureItems
+        else:
+            self.oldFeatureItems = []
+
+
+
+        self.hudColor = QtGui.QColor("red")
+        self.groupMaskSizesList = ilastikFeatureGroups.groupMaskSizes
+        self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
+        self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.grscene = QtGui.QGraphicsScene()
+        pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
+        self.grscene.addPixmap(pixmapImage)
+        self.circle = self.grscene.addEllipse(96, 96, 0, 0)
+        self.circle.setPen(QtGui.QPen(self.hudColor))
+        self.graphicsView.setScene(self.grscene)
+        self.graphicsView.scale(2, 2)
+        self.graphicsView.viewport().installEventFilter(self)
+        self.graphicsView.setViewportUpdateMode(0)
+        self.graphicsView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.size = None
+        self.zoom = 2
+        self.horizontalHeaderIndex = None
+        tempLayoutZoomV = QtGui.QVBoxLayout(self.graphicsView)
+        tempLayoutZoom = QtGui.QHBoxLayout()
+        self.sizeText = QtGui.QLabel()
+        self.sizeText.setStyleSheet("color: red; font-weight:bold;")
+        self.sizeText.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
+        tempLayoutZoom.addWidget(self.sizeText)
+        tempLayoutZoom.addStretch()
+        tempLayoutZoomV.addLayout(tempLayoutZoom)
+        tempLayoutZoomV.addStretch()
+
 
     def initDlg(self):
 
         #determine the minimum x,y,z of all images
-        min = self.ilastik.project.dataMgr[0].dataVol.data.shape[3]
+        min = self.ilastik.project.dataMgr[0]._dataVol._data.shape[3]
         for i, it in enumerate(self.ilastik.project.dataMgr):
-            if it.dataVol.data.shape[2] < min:
-                min = it.dataVol.data.shape[2]
-            if it.dataVol.data.shape[3] < min:
-                min = it.dataVol.data.shape[3]
-            if it.dataVol.data.shape[1] < min and it.dataVol.data.shape[1] > 1:
-                min = it.dataVol.data.shape[1]
+            if it._dataVol._data.shape[2] < min:
+                min = it._dataVol._data.shape[2]
+            if it._dataVol._data.shape[3] < min:
+                min = it._dataVol._data.shape[3]
+            if it._dataVol._data.shape[1] < min and it._dataVol._data.shape[1] > 1:
+                min = it._dataVol._data.shape[1]
 
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(ilastik.__file__)
         uic.loadUi(ilastikPath+'/gui/dlgFeature.ui', self)
+        self.featureTable.setMouseTracking(1)
         self.featureTable.viewport().installEventFilter(self)
 
         for featureItem in self.parent.featureList:
@@ -96,6 +136,9 @@ class FeatureDlg(QtGui.QDialog):
         self.setStyleSheet("selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0.5, y2: 0.5, stop: 0 #BBBBDD, stop: 1 white)")
         self.show()
 
+        self.featureTable.horizontalHeader().setMouseTracking(1)
+        self.featureTable.horizontalHeader().installEventFilter(self)
+
         self.featureTableList = []
         self.selectedItemList = []
         self.boolSelection = False
@@ -105,6 +148,11 @@ class FeatureDlg(QtGui.QDialog):
             item = self.featureTable.horizontalHeaderItem(i)
             size = len(item.text()) * 11
             self.featureTable.setColumnWidth(i, size)
+
+    #oli todo
+    def testSome(self):
+        print "moving"
+
 
     def on_featureTable_itemSelectionChanged(self):
         tempItemSelectedList = []
@@ -158,7 +206,56 @@ class FeatureDlg(QtGui.QDialog):
             for j in range(iColumn):
                 self.featureTable.item(i, j).setSelected(False)
 
-
+    #oli todo
+    def contextMenuGraphicsView(self, position):
+        menu = QtGui.QMenu(self.graphicsView)
+        menuChangeColor = QtGui.QMenu("change HUD color", menu)
+        red = menuChangeColor.addAction("red")
+        green = menuChangeColor.addAction("green")
+        blue = menuChangeColor.addAction("blue")
+        menu.addMenu(menuChangeColor)
+        zoomMenu = QtGui.QMenu("change zoom", menu)
+        zoomx1 = zoomMenu.addAction("x1")
+        zoomx2 = zoomMenu.addAction("x2")
+        if self.zoom == 1:
+            zoomx1.setDisabled(True)
+            zoomx2.setDisabled(False)
+        else:
+            zoomx1.setDisabled(False)
+            zoomx2.setDisabled(True)
+        menu.addMenu(zoomMenu)
+        action = menu.exec_(self.graphicsView.mapToGlobal(position))
+        if action == red:
+            self.hudColor = QtGui.QColor("red")
+            self.sizeText.setStyleSheet("color: red")
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+        elif action == green:
+            self.hudColor = QtGui.QColor("green")
+            self.sizeText.setStyleSheet("color: green")
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+        elif action == blue:
+            self.hudColor = QtGui.QColor("blue")
+            self.sizeText.setStyleSheet("color: blue")
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+        elif action == zoomx1:
+            self.zoom = 1
+            self.graphicsView.scale(.5, .5)
+            self.drawPreview()
+        elif action == zoomx2:
+            self.zoom = 2
+            self.graphicsView.scale(2, 2)
+            self.drawPreview()
+    #oli todo
+    def drawPreview(self):
+        if not self.horizontalHeaderIndex < 0:
+            self.size = self.groupMaskSizesList[self.horizontalHeaderIndex]
+            self.grscene.removeItem(self.circle)
+            self.circle = self.grscene.addEllipse(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
+            self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+            self.circle.setPen(QtGui.QPen(self.hudColor))
+            self.sizeText.setText("Size: " + str(self.size))
+        
+    #oli todo
     def eventFilter(self, obj, event):
         if(event.type()==QtCore.QEvent.MouseButtonPress):
             if event.button() == QtCore.Qt.LeftButton:
@@ -168,12 +265,23 @@ class FeatureDlg(QtGui.QDialog):
                 self.selectedItemList = []
                 self.deselectAllTableItems()
                 self.boolSelection = False
+        if event.type() == QtCore.QEvent.HoverMove:
+            self.horizontalHeaderIndex = self.featureTable.horizontalHeader().logicalIndexAt(event.pos())
+            self.drawPreview()
+        if event.type() == QtCore.QEvent.MouseMove:
+            self.circle.setPos(self.graphicsView.mapToScene(0, 0))
+            if self.featureTable.itemAt(event.pos()) and self.featureTable.underMouse():
+                item = self.featureTable.itemAt(event.pos())
+                self.horizontalHeaderIndex = item.column()
+                self.drawPreview()
+        if(event.type() == QtCore.QEvent.ContextMenu and self.graphicsView.underMouse()):
+            self.contextMenuGraphicsView(event.pos())
+
         return False
 
 
     @QtCore.pyqtSignature("")
     def on_confirmButtons_accepted(self):
-        self.parent.project.featureMgr = featureMgr.FeatureMgr(self.parent.project.dataMgr)
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
         res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
@@ -181,7 +289,9 @@ class FeatureDlg(QtGui.QDialog):
             self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
-            self.ilastik.featureCompute()
+            if self.ilastik.project.featureMgr is not None:
+                self.ilastik.project.deleteFeatureOverlays()
+                self.featureComputation = FeatureComputation(self.ilastik)
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
             return False
@@ -192,21 +302,21 @@ class FeatureDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def on_confirmButtons_rejected(self):
-        self.parent.ribbon.tabDict['Features'].itemDict['Select and Compute'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(True)
-        self.parent.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(True)
-        self.close()
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
+        self.reject()
 
     def computeMemoryRequirement(self, featureSelectionList):
         if featureSelectionList != []:
             dataMgr = self.parent.project.dataMgr
 
-            numOfChannels = dataMgr[0].dataVol.data.shape[-1]
+            numOfChannels = dataMgr[0]._dataVol._data.shape[-1]
             numOfEffectiveFeatures =  0
             for f in featureSelectionList:
-                numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0].dataVol.data.shape)
+                numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0]._dataVol._data.shape)
                 numOfEffectiveFeatures *= numOfChannels
-                numOfPixels = numpy.sum([ numpy.prod(dataItem.dataVol.data.shape[:-1]) for dataItem in dataMgr ])
+                numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
                 # 7 bytes per pixel overhead
             memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
             print "Total feature vector length is %d with aprox. memory demand of %8.2f MB" % (numOfEffectiveFeatures, memoryReq)
