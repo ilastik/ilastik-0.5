@@ -1,4 +1,4 @@
-import numpy,vigra
+import numpy, vigra
 import random
 import code
 
@@ -119,9 +119,9 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
         if str(fileName) != "":
             labelWidget = None
-            if self.parent.project is not None:
-                if len(self.parent.project.dataMgr) > self.parent._activeImageNumber:
-                    labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent._activeImageNumber])#.featureBlockAccessor)
+            #if self.parent.project is not None:
+            #    if len(self.parent.project.dataMgr) > self.parent._activeImageNumber:
+            #        labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent._activeImageNumber])#.featureBlockAccessor)
             self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
             self.btnSave.setEnabled(True)
             self.btnEdit.setEnabled(True)
@@ -619,8 +619,6 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
             
             volume = overlay._data[0,:,:,:,0]
             
-            print numpy.max(volume),  numpy.min(volume)
-    
             #real_weights = numpy.zeros(volume.shape + (3,))        
             
             borderIndicator = QtGui.QInputDialog.getItem(None, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness"],  editable = False)
@@ -631,28 +629,14 @@ class SegmentationTab(IlastikTabBase, QtGui.QWidget):
             #TODO: this , until now, only supports gray scale and 2D!
             if borderIndicator == "Brightness":
                 weights = volume[:,:,:].view(vigra.ScalarVolume)
-                #weights = vigra.filters.gaussianSmoothing(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                #weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                #real_weights[:,:,:,0] = weights[:,:,:]
-                #eal_weights[:,:,:,1] = weights[:,:,:]
-                #real_weights[:,:,:,2] = weights[:,:,:]
             elif borderIndicator == "Darkness":
                 weights = (255 - volume[:,:,:]).view(vigra.ScalarVolume)
-                #weights = vigra.filters.gaussianSmoothing((255 - volume[:,:,:]).swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                #weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                #real_weights[:,:,:,0] = weights[:,:,:]
-                #real_weights[:,:,:,1] = weights[:,:,:]
-                #real_weights[:,:,:,2] = weights[:,:,:]
-            elif borderIndicator == "Gradient":
-                weights = vigra.filters.gaussianGradientMagnitude(volume[:,:,:].swapaxes(0,2).astype('float32').view(vigra.ScalarVolume), sigma)
-                weights = weights.swapaxes(0,2).view(vigra.ScalarVolume)
-                #real_weights[:] = weights[:]
     
             if normalizePotential == True:
-                min = numpy.min(weights)
-                max = numpy.max(weights)
+                min = numpy.min(volume)
+                max = numpy.max(volume)
+                print "Weights min/max :", min, max
                 weights = (weights - min)*(255.0 / (max - min))
-                #real_weights[:] = weights[:]
     
             self.ilastik.project.segmentor.setupWeights(weights)
             self.ilastik._activeImage._segmentationWeights = weights

@@ -29,6 +29,7 @@
 
 from ilastik.core import dataMgr as dataMgrModule
 import numpy
+import traceback
 import cPickle as pickle
 import h5py
 from ilastik.core.utilities import irange, debug
@@ -99,7 +100,7 @@ class Project(object):
         
  
     def saveToDisk(self, fileName = None):
-        """ Save the whole project includeing data, feautues, labels and settings to 
+        """ Save the whole project including data, feautues, labels and settings to 
         and hdf5 file with ending ilp """
         try:
             if fileName is not None:
@@ -121,11 +122,11 @@ class Project(object):
                 
             featureG = projectG.create_group('FeatureSelection')
             
-            #try:
-            self.featureMgr.exportFeatureItems(featureG)
-            featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
-            #except:
-            #    print 'saveToDisk(): No features where selected: '
+            try:
+                self.featureMgr.exportFeatureItems(featureG)
+                featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
+            except:
+                print 'saveToDisk(): No features where selected: '
                 
                 
             # get number of images
@@ -133,11 +134,12 @@ class Project(object):
             # save raw data and labels
             for k, item in enumerate(self.dataMgr):
                 # create group for dataItem
+                print "creating group", k
                 dk = dataSetG.create_group('dataItem%02d' % k)
                 dk.attrs["fileName"] = str(item.fileName)
-            dk.attrs["Name"] = str(item._name)
+                dk.attrs["Name"] = str(item._name)
                 # save raw data
-            item.serialize(dk)
+                item.serialize(dk)
             
     
             # Save to hdf5 file
@@ -145,6 +147,7 @@ class Project(object):
             self.dataMgr.exportClassifiers(fileName,'Project/')
         except Exception as e:
             print e.message
+            traceback.print_exc()
             return False
         return True
     
@@ -164,12 +167,14 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
         
         for name in fileHandle['DataSets']:
+            print "Loading image ", name
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             activeItem.deserialize(fileHandle['DataSets'][name])
             #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
             #activeItem._dataVol = dataVol
             activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
-
+            activeItem.name = activeItem.fileName
+            
             activeItem.updateOverlays()
                             
             dataMgr.append(activeItem,alreadyLoaded=True)

@@ -54,10 +54,23 @@ class SegmentorBase(HasTraits):
         return:
             3D unit8 volume that contains label numbers
         """
+        print "labelVolume:  ", labelVolume.dtype, labelVolume.shape
+        print "labelValues:  ", labelValues.dtype, labelValues.shape
+        print "labelIndices: ", labelIndices.dtype, labelIndices.shape
+        
+        if labelValues.dtype != numpy.uint8:
+            print "Converting labelValues to uint8"
+            labelValues = labelValues.astype('uint8')
+
+        if labelIndices.dtype != numpy.uint32:
+            print "Converting labelIndices to uint32"
+            labelIndices = labelIndices.astype('uint32')
+
+        
         if labelVolume.shape[0] > 1:
-            return self.segment3D(labelVolume, labelValues.astype('uint8'), labelIndices)
+            return self.segment3D(labelVolume, labelValues, labelIndices)
         else:
-            res = self.segment2D(labelVolume, labelValues.astype('uint8'), labelIndices)
+            res = self.segment2D(labelVolume, labelValues, labelIndices)
 
     def setupWeights(self, weights):
         """
@@ -65,6 +78,7 @@ class SegmentorBase(HasTraits):
         you get a 3D 3Vector of the weights to the [x+1,y,z], [x,y+1,z], [x,y,z+1] neighbours
         """
         print "setting up weights"
+        print "weights ", weights.dtype, weights.shape
         self.weights = weights
 
     def settings(self):

@@ -7,8 +7,8 @@ class MultivariateThresholdAccessor(object):
     def __init__(self, thresholdOverlay):
 
         self.thresholdOverlay = thresholdOverlay        
-        self.shape = self.thresholdOverlay.dsets[0]._data.shape
-        self.dtype = self.thresholdOverlay.dsets[0]._data.dtype
+        self.shape = self.thresholdOverlay.dsets[0].shape
+        self.dtype = self.thresholdOverlay.dsets[0].dtype
         
         
     def __getitem__(self, key):

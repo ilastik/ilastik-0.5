@@ -37,55 +37,32 @@ except:
 
 import sys
 import os
-
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
-import vigra
-import h5py
-
-import threading
-import traceback
-import numpy
-import time
-
-
-from ilastik.gui.segmentationWeightSelectionDlg import SegmentationWeightSelectionDlg
 from ilastik.core import version, dataMgr, projectMgr,  segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
-from ilastik.core.modules.Classification import featureMgr, classificationMgr
-from ilastik.gui import ctrlRibbon, stackloader, fileloader, batchProcess
-from ilastik.gui.featureDlg import FeatureDlg
-
-import copy
-
-from Queue import Queue as queue
-from collections import deque
-
 import ilastik.gui
 from ilastik.core import projectMgr, segmentationMgr, unsupervisedMgr, activeLearning
-from ilastik.core.modules.Classification import featureMgr, classificationMgr
+from ilastik.core.volume import DataAccessor
+from ilastik.core.modules.Classification import featureMgr
+from ilastik.core import connectedComponentsMgr
+from ilastik.core import projectMgr, segmentationMgr
+
+from ilastik.gui import volumeeditor as ve
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
-import ilastik.core.jobMachine
+import ilastik.gui.ribbons.standardRibbons
 
-
-from PyQt4 import QtCore, QtGui, uic, QtOpenGL
+import threading
+import h5py
 import getopt
 
-from ilastik.gui import volumeeditor as ve
+
+from PyQt4 import QtCore, QtOpenGL, QtGui
 
 # Please no import *
-from ilastik.gui.shortcutmanager import *
-
-from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
-from ilastik.gui.seedWidget import SeedListWidget
-from ilastik.gui.objectWidget import ObjectListWidget
-from ilastik.gui.backgroundWidget import BackgroundWidget
-from ilastik.gui.overlayWidget import OverlayWidget
-from ilastik.core.overlayMgr import OverlayItem
-from ilastik.core.volume import DataAccessor
-from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
+from ilastik.gui.shortcutmanager import shortcutManager, shortcutManagerDlg, shortcutManager
 
 #make the program quit on Ctrl+C
 import signal
@@ -251,9 +228,7 @@ class MainWindow(QtGui.QMainWindow):
         if self.labelWidget is not None:
             self.labelWidget.historyRedo
     
-    def createRibbons(self):                     
-        from ilastik.gui.ribbons.standardRibbons import ProjectTab
-        
+    def createRibbons(self):                        
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
         
         self.ribbon = ctrlRibbon.IlastikTabWidget(self.ribbonToolbar)
@@ -263,7 +238,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbonsTabs = IlastikTabBase.__subclasses__()
 
         for tab in self.ribbonsTabs:
-            print "Adding tab ", tab.name
+            print "Adding ribbon", tab.name
             self.ribbon.addTab(tab(self), tab.name)
         
    
@@ -311,16 +286,7 @@ class MainWindow(QtGui.QMainWindow):
         self.updateFileSelector() #this one also changes the image
         self.project.dataMgr._activeImageNumber = self._activeImageNumber
         self._activeImage = self.project.dataMgr[self._activeImageNumber]
-
-          
-#    def newFeatureDlg(self):
-#        self.newFeatureDlg = FeatureDlg(self)
-#        self.ribbon.tabDict['Classification'].itemDict['Train and Predict'].setEnabled(False)
-#        self.ribbon.tabDict['Classification'].itemDict['Start Live Prediction'].setEnabled(False)
-#        self.ribbon.tabDict['Automate'].itemDict['Batchprocess'].setEnabled(False)
-#        self.ribbon.tabDict['Classification'].itemDict['Save Classifier'].setEnabled(False)
-        
-        
+     
     def initImageWindows(self):
         self.labelDocks = []
         
@@ -380,23 +346,6 @@ class MainWindow(QtGui.QMainWindow):
     def on_shortcutsDlg(self):
         shortcutManager.showDialog()
 
-#    def on_batchProcess(self):
-#        dialog = batchProcess.BatchProcess(self)
-#        result = dialog.exec_()
-    
-#    def on_changeClassifier(self):
-#        dialog = ClassifierSelectionDlg(self)
-#        self.project.classifier = dialog.exec_()
-#        print self.project.classifier
-
-#    def on_changeSegmentor(self):
-#        dialog = SegmentorSelectionDlg(self)
-#        answer = dialog.exec_()
-#        if answer != None:
-#            self.project.segmentor = answer
-#            self.project.segmentor.setupWeights(self.project.dataMgr[self._activeImageNumber].segmentationWeights)
-
-
     def on_segmentationSegment(self):
         self.segmentationSegment = Segmentation(self)
 
@@ -404,7 +353,7 @@ class MainWindow(QtGui.QMainWindow):
     def on_segmentation_border(self):
         pass
 
-    def on_saveClassifier(self, fileName=None):
+    def on_importClassifier(self, fileName=None):
         
         hf = h5py.File(fileName,'r')
         h5featGrp = hf['features']
@@ -426,6 +375,8 @@ class MainWindow(QtGui.QMainWindow):
 
         try:
             h5file = h5py.File(str(fileName),'a')
+            if 'features' in h5file.keys():
+                del h5file['features']
             h5featGrp = h5file.create_group('features')
             self.project.featureMgr.exportFeatureItems(h5featGrp)
             h5file.close()
@@ -532,10 +483,11 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True)
+            ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem._dataVol.segmentation)
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.labelWidget.labelWidget.colorTab
         self.ilastik.labelWidget.repaint()
 
 
