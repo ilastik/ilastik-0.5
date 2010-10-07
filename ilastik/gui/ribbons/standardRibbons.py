@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy, vigra
 import random
 import code
