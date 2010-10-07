@@ -398,8 +398,13 @@ class VolumeEditor(QtGui.QWidget):
         self.gridWidget.setLayout(self.grid)
         tempLayout = QtGui.QVBoxLayout(self)
         tempLayout.addWidget(self.gridWidget)
-        self.posLabel = QtGui.QLabel("Mouse")
-        tempLayout.addWidget(self.posLabel)
+        labelLayout = QtGui.QHBoxLayout()
+        self.posLabel = QtGui.QLabel()
+        self.pixelValuesLabel = QtGui.QLabel()
+        labelLayout.addWidget(self.posLabel)
+        labelLayout.addWidget(self.pixelValuesLabel)
+        labelLayout.addStretch()
+        tempLayout.addLayout(labelLayout)
         self.layout.addLayout(tempLayout)
 
         #right side toolbox
@@ -1408,7 +1413,7 @@ class ImageScene( QtGui.QGraphicsView):
 
         self.min = 0
         self.max = 255
-
+        
         self.openglWidget = None
         ##enable OpenGL acceleratino
         if self.volumeEditor.opengl is True:
@@ -1817,14 +1822,10 @@ class ImageScene( QtGui.QGraphicsView):
         self.mouseMoveEvent(event)
 
     def zoomOut(self):
-        self.setResizeAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
         self.doScale(0.9)
-        self.setResizeAnchor(QtGui.QGraphicsView.AnchorViewCenter)
 
     def zoomIn(self):
-        self.setResizeAnchor(ViewportAnchor(QtGui.QGraphicsView.AnchorUnderMouse))
         self.doScale(1.1)
-        self.setResizeAnchor(ViewportAnchor(QtGui.QGraphicsView.AnchorViewCenter))
 
     def doScale(self, factor):
         self.view.scale(factor, factor)
@@ -1937,6 +1938,15 @@ class ImageScene( QtGui.QGraphicsView):
         else:
             self.deltaPan = self.deaccelerate(self.deltaPan)
             self.panning()
+
+    #oli todo
+    def updateInfoLabels(self, posX, posY, posZ, colorValues):
+        self.volumeEditor.posLabel.setText("<b>x:</b> %03i  <b>y:</b> %03i  <b>z:</b> %03i" % (posX, posY, posZ))
+        if isinstance(colorValues, numpy.ndarray):
+            self.volumeEditor.pixelValuesLabel.setText("<b>R:</b> %03i  <b>G:</b> %03i  <b>B:</b> %03i" % (colorValues[0], colorValues[1], colorValues[2]))
+        else:
+            self.volumeEditor.pixelValuesLabel.setText("<b>Gray:</b> %03i" %int(colorValues))
+        
         
     #oli todo
     def mouseMoveEvent(self,event):
@@ -1951,10 +1961,9 @@ class ImageScene( QtGui.QGraphicsView):
         self.mousePos = mousePos = self.mousePos = self.mapToScene(event.pos())
         x = self.x = mousePos.x()
         y = self.y = mousePos.y()
-        posX = 0
-        posY = 0
-        posZ = 0
-
+        #posX = 0
+        #posY = 0
+        #posZ = 0
         if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
             
             #should we hide the cursor only when entering once ? performance?
@@ -1967,17 +1976,20 @@ class ImageScene( QtGui.QGraphicsView):
                 posY = y
                 posZ = x
                 posX = self.volumeEditor.selSlices[0]
-                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
+                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
+                self.updateInfoLabels(posX, posY, posZ, colorValues)
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
                 yView.setVisible(False)
                 zView.showYPosition(x, y)
                 
+                
             elif self.axis == 1:
-                posY = posX = self.volumeEditor.selSlices[1]
+                posY = self.volumeEditor.selSlices[1]
                 posZ = y
                 posX = x
-                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
+                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
+                self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
                 
@@ -1987,7 +1999,8 @@ class ImageScene( QtGui.QGraphicsView):
                 posY = y
                 posZ = posX = self.volumeEditor.selSlices[2]
                 posX = x
-                self.volumeEditor.posLabel.setText("<b>x:</b> %i  <b>y:</b> %i  <b>z:</b> %i" % (posX, posY, posZ))
+                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
+                self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
                 
