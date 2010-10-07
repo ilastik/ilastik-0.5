@@ -362,12 +362,12 @@ class ProjectSettingsDlg(QtGui.QDialog):
             self.project.useBorderMargin = True
         if self.rgbDataCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.rgbData = True
-        if self.ilastik.labelWidget is not None:
-            self.ilastik.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
-            self.ilastik.labelWidget.normalizeData = self.project.normalizeData
-            self.ilastik.labelWidget.setRgbMode(self.project.rgbData)
-            self.ilastik.labelWidget.setUseBorderMargin(self.project.useBorderMargin)
-            self.ilastik.labelWidget.repaint()
+        if self.ilastik.volumeEditor is not None:
+            self.ilastik.volumeEditor.drawUpdateInterval = self.project.drawUpdateInterval
+            self.ilastik.volumeEditor.normalizeData = self.project.normalizeData
+            self.ilastik.volumeEditor.setRgbMode(self.project.rgbData)
+            self.ilastik.volumeEditor.setUseBorderMargin(self.project.useBorderMargin)
+            self.ilastik.volumeEditor.repaint()
             
         self.close()
 

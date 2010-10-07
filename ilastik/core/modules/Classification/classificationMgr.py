@@ -666,7 +666,7 @@ class ClassifierInteractiveThread(ThreadBase):
                 try:
                     activeImageNumber = self.ilastik._activeImageNumber
                     activeImage = self.ilastik._activeImage
-                    newLabels = self.ilastik.labelWidget.getPendingLabels()
+                    newLabels = self.ilastik.volumeEditor.getPendingLabels()
                     
                     self.classificationMgr.updateTrainingMatrixForImage(newLabels,  activeImage)
                     features,labels = self.classificationMgr.getTrainingMatrix()
@@ -684,7 +684,7 @@ class ClassifierInteractiveThread(ThreadBase):
                         else:
                             print "##################### shape mismatch #####################"
                     
-                    vs = self.ilastik.labelWidget.getVisibleState()
+                    vs = self.ilastik.volumeEditor.getVisibleState()
                     features = self.classificationMgr.getFeatureSlicesForViewStateForImage(vs, activeImage)
                     vs.append(activeImage)
     

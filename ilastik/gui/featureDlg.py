@@ -286,7 +286,7 @@ class FeatureDlg(QtGui.QDialog):
         res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
             #print "features have maximum needed margin of:", self.parent.project.featureMgr.maxSigma*3
-            self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
+            self.parent.volumeEditor.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
             if self.ilastik.project.featureMgr is not None:

@@ -65,7 +65,7 @@ class ClassificationTrain(QtCore.QObject):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         
-        newLabels = self.parent.labelWidget.getPendingLabels()
+        newLabels = self.parent.volumeEditor.getPendingLabels()
         if len(newLabels) > 0:
             self.parent.project.dataMgr.updateTrainingMatrix(newLabels)
         
@@ -115,9 +115,9 @@ class ClassificationInteractive(object):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
+        self.parent.volumeEditor.connect(self.parent.volumeEditor, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
 
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
+        self.parent.volumeEditor.connect(self.parent.volumeEditor, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
 
         self.temp_cnt = 0
         
@@ -147,7 +147,7 @@ class ClassificationInteractive(object):
     def updateLabelWidget(self):
         try:
             self.myInteractionProgressBar.setVisible(False)
-            self.parent.labelWidget.repaint()                    
+            self.parent.volumeEditor.repaint()                    
         except IndexError:
             pass
                 
@@ -233,7 +233,7 @@ class ClassificationPredict(object):
     def finalize(self):
         activeImage = self.parent._activeImage
         self.classificationPredict.generateOverlays(activeImage)
-        self.parent.labelWidget.repaint()
+        self.parent.volumeEditor.repaint()
         
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)

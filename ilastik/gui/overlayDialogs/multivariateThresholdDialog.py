@@ -34,7 +34,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             ov = ovm[k]
             self.overlayItem = ThresHoldOverlay([ov], [])
 
-        self.volumeEditor = ilastik.labelWidget
+        self.volumeEditor = ilastik.volumeEditor
         self.project = ilastik.project
         self.mainlayout = QtGui.QVBoxLayout()
         self.setLayout(self.mainlayout)

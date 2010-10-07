@@ -82,7 +82,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.previousTabText = ""
         
-        self.labelWidget = None
+        self.volumeEditor = None
         self._activeImageNumber = 0
         self._activeImage = None
         
@@ -193,12 +193,12 @@ class MainWindow(QtGui.QMainWindow):
         self.activeImageLock.acquire()
         QtCore.QCoreApplication.processEvents()
         if hasattr(self, "classificationInteractive"):
-            #self.labelWidget.disconnect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
+            #self.volumeEditor.disconnect(self.volumeEditor, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
             self.classificationInteractive.stop()
             del self.classificationInteractive
             self.classificationInteractive = True
-        if self.labelWidget is not None:
-            self.labelWidget._history.volumeEditor = None
+        if self.volumeEditor is not None:
+            self.volumeEditor._history.volumeEditor = None
 
 
         
@@ -211,22 +211,22 @@ class MainWindow(QtGui.QMainWindow):
         
         self.createImageWindows( self.project.dataMgr[number]._dataVol)
         
-        self.labelWidget.repaint() #for overlays
+        self.volumeEditor.repaint() #for overlays
         self.activeImageLock.release()
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive = ClassificationInteractive(self)
-            #self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
+            #self.volumeEditor.connect(self.volumeEditor, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
             self.classificationInteractive.updateThreadQueues()
         # Notify tabs
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
             
     def historyUndo(self):
-        if self.labelWidget is not None:
-            self.labelWidget.historyUndo
+        if self.volumeEditor is not None:
+            self.volumeEditor.historyUndo
         
     def historyRedo(self):
-        if self.labelWidget is not None:
-            self.labelWidget.historyRedo
+        if self.volumeEditor is not None:
+            self.volumeEditor.historyRedo
     
     def createRibbons(self):                        
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
@@ -270,8 +270,8 @@ class MainWindow(QtGui.QMainWindow):
 
         self.ribbon.widget(index).on_activation()
 
-        if self.labelWidget is not None:
-            self.labelWidget.repaint()     
+        if self.volumeEditor is not None:
+            self.volumeEditor.repaint()     
         
         
     def saveProject(self):
@@ -296,32 +296,32 @@ class MainWindow(QtGui.QMainWindow):
         for dock in self.labelDocks:
             self.removeDockWidget(dock)
         self.labelDocks = []
-        if self.labelWidget is not None:
-            self.labelWidget.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
-            self.labelWidget.cleanUp()
-            self.labelWidget.close()
-            self.labelWidget.deleteLater()
+        if self.volumeEditor is not None:
+            self.volumeEditor.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            self.volumeEditor.cleanUp()
+            self.volumeEditor.close()
+            self.volumeEditor.deleteLater()
 
                 
     def createImageWindows(self, dataVol):
-        self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
+        self.volumeEditor = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
 
         self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()
 
-        self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
-        self.labelWidget.normalizeData = self.project.normalizeData
-        self.labelWidget.useBorderMargin = self.project.useBorderMargin
-        self.labelWidget.setRgbMode(self.project.rgbData)
+        self.volumeEditor.drawUpdateInterval = self.project.drawUpdateInterval
+        self.volumeEditor.normalizeData = self.project.normalizeData
+        self.volumeEditor.useBorderMargin = self.project.useBorderMargin
+        self.volumeEditor.setRgbMode(self.project.rgbData)
         
         
         dock = QtGui.QDockWidget("Ilastik Label Widget", self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
-        dock.setWidget(self.labelWidget)
+        dock.setWidget(self.volumeEditor)
         
         self.volumeEditorDock = dock
 
-        self.connect(self.labelWidget, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
-        self.connect(self.labelWidget, QtCore.SIGNAL("seedRemoved(int)"),self.seedRemoved)
+        self.connect(self.volumeEditor, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
+        self.connect(self.volumeEditor, QtCore.SIGNAL("seedRemoved(int)"),self.seedRemoved)
         
         area = QtCore.Qt.BottomDockWidgetArea
         self.addDockWidget(area, dock)
@@ -483,12 +483,12 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
+            ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.volumeEditor.volumeEditor.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem._dataVol.segmentation)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.labelWidget.labelWidget.colorTab
-        self.ilastik.labelWidget.repaint()
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.volumeEditor.volumeEditor.colorTab
+        self.ilastik.volumeEditor.repaint()
 
 
         
@@ -555,7 +555,7 @@ class CC(object):
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"]._data = DataAccessor(self.cc.result)
-        self.ilastik.labelWidget.repaint()
+        self.ilastik.volumeEditor.repaint()
        
     def terminateProgressBar(self):
         self.parent.statusBar().removeWidget(self.progressBar)
@@ -648,7 +648,7 @@ class UnsupervisedDecomposition(object):
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname + " component %d" % (o+1)] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname]._data = DataAccessor(self.ud.result)
-        self.ilastik.labelWidget.repaint()
+        self.ilastik.volumeEditor.repaint()
 
         
     def terminateProgressBar(self):
@@ -666,8 +666,8 @@ if __name__ == "__main__":
     mainwindow.show() 
     app.exec_()
     print "cleaning up..."
-    if mainwindow.labelWidget is not None:
-        del mainwindow.labelWidget
+    if mainwindow.volumeEditor is not None:
+        del mainwindow.volumeEditor
     del mainwindow
 
 
