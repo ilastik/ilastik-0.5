@@ -154,6 +154,7 @@ class Segmentation(object):
         self.start()
 
     def start(self):
+        self.parent.setTabBusy(True)
         self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(False)
         
         self.timer = QtCore.QTimer()
@@ -198,6 +199,7 @@ class Segmentation(object):
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem.Interactive_Segmentation.segmentation)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.labelWidget.labelWidget.colorTab
         self.ilastik.labelWidget.repaint()
+        self.parent.setTabBusy(False)
 
 
         

@@ -10,6 +10,7 @@ class FeatureComputation(object):
         self.featureCompute() 
     
     def featureCompute(self):
+        self.parent.setTabBusy(True)
         self.parent.project.dataMgr.featureLock.acquire()
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
@@ -48,6 +49,7 @@ class FeatureComputation(object):
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
+        self.parent.setTabBusy(False)
                     
     def featureShow(self, item):
         pass
@@ -60,6 +62,7 @@ class ClassificationTrain(QtCore.QObject):
         self.start()
         
     def start(self):
+        self.parent.setTabBusy(True)
         #process all unaccounted label changes
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
@@ -96,6 +99,7 @@ class ClassificationTrain(QtCore.QObject):
         self.classificationTimer.stop()
         self.classificationProcess.wait()
         self.terminateClassificationProgressBar()
+        self.parent.setTabBusy(False)
         self.emit(QtCore.SIGNAL("trainingFinished()"))
                       
     def terminateClassificationProgressBar(self):
@@ -166,6 +170,7 @@ class ClassificationInteractive(object):
         self.parent.statusBar().hide()
         
     def start(self):
+        self.parent.setTabBusy(True)
         self.initInteractiveProgressBar()
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.module["Classification"]["classificationMgr"],classifier = self.parent.project.dataMgr.module["Classification"].classifier)
 
@@ -184,6 +189,7 @@ class ClassificationInteractive(object):
         self.finalize()
         
         self.terminateClassificationProgressBar()
+        self.parent.setTabBusy(False)
     
     def finalize(self):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
@@ -197,7 +203,8 @@ class ClassificationPredict(object):
         self.parent = parent
         self.start()
     
-    def start(self):       
+    def start(self):
+        self.parent.setTabBusy(True)       
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(False)
          
@@ -233,6 +240,7 @@ class ClassificationPredict(object):
         activeImage = self.parent._activeImage
         self.classificationPredict.generateOverlays(activeImage)
         self.parent.labelWidget.repaint()
+        self.parent.setTabBusy(False)
         
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)

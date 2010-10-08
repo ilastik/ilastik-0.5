@@ -261,6 +261,13 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.setCurrentIndex (0)
         self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
 
+    def setTabBusy(self, state):
+        for i in range(self.ribbon.count()):
+            enabled = not state
+            if i == self.ribbon.currentTabNumber:
+                enabled = True
+            self.ribbon.setTabEnabled(i, enabled)
+
 
     def tabChanged(self,  index):
         """
