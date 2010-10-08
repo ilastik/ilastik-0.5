@@ -104,6 +104,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         if self.segmentation is None:
             self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')        
 
+    def clearSeeds(self):
+        self._seedL = None
+        self._seedIndices = None
+
 
     def _buildSeedsWhenNotThere(self):
         if self._seedL is None:
@@ -121,10 +125,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self._buildSeedsWhenNotThere()
         return self._seedL,  self._seedIndices
     
-    def removeSeed(self):
-        pass
-
-
     def updateSeeds(self, newLabels):
         """
         This method updates the seedMatrix with new seeds.

@@ -72,6 +72,8 @@ class SeedMgr(object):
                 item.Interactive_Segmentation.seeds._data[:,:,:,:,:] = temp[:,:,:,:,:]
                 if item.Interactive_Segmentation.seeds._history is not None:
                     item.Interactive_Segmentation.seeds._history.removeLabel(number)
+            item.Interactive_Segmentation.clearSeeds()
+            
         self.dataMgr.featureLock.release()
 
         

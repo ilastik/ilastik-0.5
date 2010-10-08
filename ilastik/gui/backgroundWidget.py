@@ -128,21 +128,6 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(self.listWidget.model().rowCount()-1,0), QtGui.QItemSelectionModel.ClearAndSelect)
         
         
-#    def removeLabel(self, item,  index):
-#        self.labelMgr.removeLabel(item.number)
-#        
-#        self.volumeEditor.history.removeLabel(item.number)
-#        for ii, it in enumerate(self.items):
-#            if it.number > item.number:
-#                it.number -= 1
-#        self.items.remove(item)
-#        it = self.listWidget.takeItem(index.row())
-#        del it
-#        self.buildColorTab()
-#        self.volumeEditor.emit(QtCore.SIGNAL("seedRemoved(int)"), item.number)
-#        self.volumeEditor.repaint()
-        
-
     def buildColorTab(self):
         self.overlayItem.colorTable = self.colorTab = self.volumeLabels.getColorTab()
 
