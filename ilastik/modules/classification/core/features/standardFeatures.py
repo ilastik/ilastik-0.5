@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from ilastik.core.features.featureBase import *
+from ilastik.modules.classification.core.features.featureBase import *
 import vigra
 
 class HessianOfGaussian(FeatureBase):

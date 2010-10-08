@@ -32,7 +32,7 @@ def detectCPUs():
     return 1 # Default
 
 
-class IlastikJob():
+class IlastikJob(object):
     def __init__(self, target, args):
         self.target = target
         self.args = args

@@ -49,8 +49,8 @@ except:
 import vigra
 at = vigra.arraytypes
 
-import ilastik.core.features
-from ilastik.core.features.featureBase import FeatureBase
+import features
+from features.featureBase import FeatureBase
 
 import os, sys
 
@@ -62,7 +62,7 @@ try:
     for f in os.listdir(os.path.abspath(pathext + '/features')):
         module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
         if ext == '.py': # Important, ignore .pyc/other files.
-            module = __import__('ilastik.core.features.' + module_name)
+            module = __import__('ilastik.modules.classification.core.features.' + module_name)
 except Exception, e:
     pass
 
@@ -230,7 +230,7 @@ class FeatureGroups(object):
         self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
         
     def createGroups(self):
-        for c in ilastik.core.features.featureBase.FeatureBase.__subclasses__():
+        for c in FeatureBase.__subclasses__():
             for g in c.groups:
                 print "Adding ", c.__name__, " to Group ", g
                 if g in self.groups:

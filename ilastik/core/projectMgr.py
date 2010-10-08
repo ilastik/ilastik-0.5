@@ -43,17 +43,19 @@ from ilastik.core.volume import DataAccessor,  Volume
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import unsupervisedMgr
-from ilastik.core import classifiers
-from ilastik.core.modules.Classification import labelMgr, featureMgr, classificationMgr
+
 from ilastik.core import seedMgr
 from ilastik.core import objectMgr
-from ilastik.core.modules.Classification import classificationMgr
 from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr  
 from ilastik.core import connectedComponents
 from ilastik.core.unsupervised import unsupervisedPCA
 
 from ilastik import core 
+
+
+from ilastik.modules.classification.core import labelMgr, featureMgr, classificationMgr
+from ilastik.modules.classification.core import classificationMgr
 
 ILASTIK_VERSION = 0.5
 
@@ -93,7 +95,7 @@ class Project(object):
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)
         self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
-        self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
+
         self.segmentor = core.segmentors.segmentorClasses[0]()
         self.connector = connectedComponents.ConnectedComponents()
         self.unsupervisedDecomposer = unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()

@@ -35,7 +35,6 @@ from copy import copy
 import os
 import threading
 import h5py
-import h5py as tables # TODO: exchange tables with h5py
 from utilities import irange, debug, irangeIfTrue
 try:
     from PyQt4 import QtGui
@@ -49,7 +48,8 @@ from ilastik.core.volume import Volume as Volume, VolumeLabels, VolumeLabelDescr
 from ilastik.core import activeLearning
 from ilastik.core import segmentationMgr
 from ilastik.core import overlayMgr
-from ilastik.core.classifiers.classifierRandomForest import ClassifierRandomForest
+from ilastik.core.baseModuleMgr import PropertyMgr
+
 
 
 #from ilastik.core import dataImpex
@@ -245,65 +245,6 @@ class BlockAccessor2D():
             self._data[args] = data
             self._lock.release()
 
-class PropertyMgr():
-    """
-    Holds a bag of Properties that can be serialized and deserialized
-    new properties are also added to the parents regular attributes
-    for easier access
-    """
-    def __init__(self, parent):
-        self._dict = {}
-        self._parent = parent
-        
-    def serialize(self, h5g, name):
-        for v in self.values():
-            if hasattr(v, "serialize"):
-                v.serialize(h5g)
-    
-    def deserialize(self, h5g, name):
-        pass
-
-    def keys(self):
-        return self._dict.keys()
-    
-    def values(self):
-        return self._dict.values()
-
-    def __setitem__(self,  key,  value):
-        self._dict[key] = value
-        setattr(self._parent, key, value)
-    
-    def __getitem__(self, key):
-        try:
-            answer =  self._dict[key]
-        except:
-            answer = None
-        return answer
-    
-    
-class ModuleMgr(PropertyMgr):
-    """
-    abstract base class for modules
-    """
-    def __init__(self, parent):
-        PropertyMgr.__init__(self, parent)
-    
-    def onModuleStart(self):
-        pass
-    
-    def onModuleStop(self):
-        pass
-    
-    def onNewImage(self, dataItemImage):
-        pass
-    
-    def onDeleteImage(self, dataItemImage):
-        pass
-    
-    
-    
-
-        
     
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
@@ -699,35 +640,7 @@ class DataMgr():
     @staticmethod
     def deserialize(self):
         pass
-    
-    def exportClassifiers(self, fileName, pathToGroup='/'):
-        if not hasattr(self, 'Classification') or not hasattr(self.Classification, 'classificationMgr') or not hasattr(self.Classification.classificationMgr, 'classifiers'):
-            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
-        
-        if len(self.Classification.classificationMgr.classifiers) == 0:
-            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
-        
-        h5file = h5py.File(str(fileName),'a')
-        h5group = h5file[pathToGroup]
-        
-        if 'classifiers' in h5group.keys():
-            del h5group['classifiers']
-            print "overwrite classifiers"
-            
-        h5group.create_group('classifiers')
-        h5file.close()
-        
-        for i, c in enumerate(self.Classification.classificationMgr.classifiers):
-            print pathToGroup + "/classifiers/rf_%03d" % i
-            tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
-            print "Write Random Forest # %03d -> %d" % (i,tmp)
-            
-    def importClassifiers(self, fileName):
-        hf = h5py.File(fileName,'r')
-        classifiers = []
-        for cid in hf['classifiers']:
-            classifiers.append(ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
-        self.classifiers = classifiers
+
         
     
     

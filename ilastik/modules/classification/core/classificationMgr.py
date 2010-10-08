@@ -32,6 +32,7 @@ import threading
 import time
 import sys
 import os
+import h5py
 from Queue import Queue as queue
 from Queue import Empty as QueueEmpty
 from collections import deque
@@ -44,18 +45,24 @@ except:
     have_qt = False
 from ilastik.core.utilities import irange
 from ilastik.core import onlineClassifcator
+
+
 from ilastik.core import dataMgr as DM
+
+
 from ilastik.core import activeLearning, segmentationMgr
-from ilastik.core import classifiers
+import classifiers
 from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
 from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
-import ilastik.core.classifiers.classifierRandomForest
-from ilastik.core.dataMgr import ModuleMgr, PropertyMgr, BlockAccessor
-from ilastik.core.modules.Classification import featureMgr
+import classifiers.classifierRandomForest
+from ilastik.core.dataMgr import BlockAccessor
+from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, PropertyMgr
+import featureMgr
 import numpy
 
+import classifiers
 
 """ Import all classification plugins"""
 pathext = os.path.dirname(__file__)
@@ -95,11 +102,12 @@ def unravelIndices(indices, shape):
     return ti    
 
 
-class ClassificationItemModuleMgr(PropertyMgr):
+class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
     def __init__(self, classificationModuleMgr, dataItemImage):
-        PropertyMgr.__init__(self, dataItemImage)
+        BaseModuleDataItemMgr.__init__(self, dataItemImage)
         self.dataItemImage = dataItemImage
         self.classificationModuleMgr = classificationModuleMgr
+        
         
     def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         #for now save the labels and prediction in the old format
@@ -118,11 +126,14 @@ class ClassificationItemModuleMgr(PropertyMgr):
 
 
 
-class ClassificationModuleMgr(ModuleMgr):
+class ClassificationModuleMgr(BaseModuleMgr):
+    name = "Classification"
+    
     def __init__(self, dataMgr, featureMgr):
-        ModuleMgr.__init__(self, dataMgr)
+        BaseModuleMgr.__init__(self, dataMgr)
         self.dataMgr = dataMgr
         self.featureMgr = featureMgr
+        self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         if self.dataMgr.module["Classification"] is None:
             self.dataMgr.module["Classification"] = self
         self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"] = ClassificationMgr(self.dataMgr)
@@ -181,6 +192,40 @@ class ClassificationModuleMgr(ModuleMgr):
         featureProcess = featureMgr.FeatureThread(self.featureMgr, self.dataMgr, [dataItemImage])        
         featureProcess.start()
         featureProcess.wait()
+
+    def exportClassifiers(self, fileName, pathToGroup='/'):
+        if not hasattr(self, 'classificationMgr') or not hasattr(self.classificationMgr, 'classifiers'):
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
+        
+        if len(self.classificationMgr.classifiers) == 0:
+            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
+        
+        h5file = h5py.File(str(fileName),'a')
+        h5group = h5file[pathToGroup]
+        
+        if 'classifiers' in h5group.keys():
+            del h5group['classifiers']
+            print "overwrite classifiers"
+            
+        h5group.create_group('classifiers')
+        h5file.close()
+        
+        for i, c in enumerate(self.classificationMgr.classifiers):
+            print pathToGroup + "/classifiers/rf_%03d" % i
+            tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
+            print "Write Random Forest # %03d -> %d" % (i,tmp)
+            
+    def importClassifiers(self, fileName):
+        hf = h5py.File(fileName,'r')
+        classifiers = []
+        for cid in hf['classifiers']:
+            classifiers.append(classifiers.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
+        self.classificationMgr.classifiers = classifiers
+        
+        
+        
+
+
 
 class ClassificationMgr(object):
     def __init__(self, dataMgr):
@@ -435,7 +480,7 @@ class ClassificationMgr(object):
 
     
 class ClassifierTrainThread(ThreadBase):
-    def __init__(self, queueSize, dataMgr, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, classifierOptions = (10,)):
+    def __init__(self, queueSize, dataMgr, classifier = classifiers.classifierRandomForest.ClassifierRandomForest, classifierOptions = (10,)):
         ThreadBase.__init__(self, None)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
@@ -604,7 +649,7 @@ class ClassifierPredictThread(ThreadBase):
                 
 
 class ClassifierInteractiveThread(ThreadBase):
-    def __init__(self, parent, classificationMgr, classifier = ilastik.core.classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):
+    def __init__(self, parent, classificationMgr, classifier = classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):
         ThreadBase.__init__(self, None)
         
         self.classificationMgr = classificationMgr

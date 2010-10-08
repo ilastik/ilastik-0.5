@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 import numpy, h5py
-import ilastik.core.features
+import ilastik.modules.classification.core.features
 
 class FeatureBase(object):
     """

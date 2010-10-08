@@ -40,11 +40,15 @@ import os
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
+import ilastik.modules
+
 from ilastik.core import version, dataMgr, projectMgr,  segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
 import ilastik.gui
 from ilastik.core import projectMgr, segmentationMgr, unsupervisedMgr, activeLearning
 from ilastik.core.volume import DataAccessor
-from ilastik.core.modules.Classification import featureMgr
+
+from ilastik.modules.classification.core import featureMgr
+
 from ilastik.core import connectedComponentsMgr
 from ilastik.core import projectMgr, segmentationMgr
 
@@ -235,7 +239,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.ribbonToolbar.addWidget(self.ribbon)
         
-        self.ribbonsTabs = IlastikTabBase.__subclasses__()
+        self.ribbonsTabs =  sorted(IlastikTabBase.__subclasses__(), key=lambda tab: tab.position)
 
         for tab in self.ribbonsTabs:
             print "Adding ribbon", tab.name
@@ -368,7 +372,7 @@ class MainWindow(QtGui.QMainWindow):
         LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         
         try:
-            self.project.dataMgr.exportClassifiers(fileName)
+            self.project.dataMgr.module["Classification"].exportClassifiers(fileName)
         except RuntimeError as e:
             QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
             return

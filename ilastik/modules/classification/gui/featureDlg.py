@@ -31,13 +31,13 @@ import os
 import numpy
 import ilastik
 from ilastik.core.utilities import irange, debug
-from ilastik.core import version, dataMgr, projectMgr, segmentationMgr, activeLearning, onlineClassifcator
-from ilastik.core.modules.Classification import featureMgr, classificationMgr
+from ilastik.core import version, dataMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.modules.classification.core import featureMgr, classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
-from ilastik.core.modules.Classification.featureMgr import ilastikFeatureGroups
+from ilastik.modules.classification.core.featureMgr import ilastikFeatureGroups
 
-from ilastik.gui.ribbons.Classification import FeatureComputation
+from ilastik.modules.classification.gui import FeatureComputation
 
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None, previewImage=None):
@@ -96,7 +96,7 @@ class FeatureDlg(QtGui.QDialog):
 
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(ilastik.__file__)
-        uic.loadUi(ilastikPath+'/gui/dlgFeature.ui', self)
+        uic.loadUi(ilastikPath+'/modules/classification/gui/dlgFeature.ui', self)
         self.featureTable.setMouseTracking(1)
         self.featureTable.viewport().installEventFilter(self)
 

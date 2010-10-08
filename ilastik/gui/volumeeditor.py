@@ -58,7 +58,6 @@ from ilastik.core.volume import DataAccessor,  Volume
 from shortcutmanager import *
 
 from ilastik.gui.overlayWidget import OverlayListWidget
-from ilastik.gui.ribbons.Classification.labelWidget import LabelListWidget
 import ilastik.gui.exportDialog as exportDialog
 
 from ilastik.gui.iconMgr import ilastikIcons # oli todo

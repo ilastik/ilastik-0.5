@@ -1,6 +1,6 @@
 import numpy
 from PyQt4 import QtGui, QtCore
-from ilastik.core.modules.Classification import classificationMgr
+from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import overlayMgr
 from ilastik.core import activeLearning
 
@@ -74,7 +74,7 @@ class ClassificationTrain(QtCore.QObject):
         numberOfJobs = 10                 
         self.initClassificationProgress(numberOfJobs)
         
-        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, self.parent.project.dataMgr, classifier = self.parent.project.classifier)
+        self.classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, self.parent.project.dataMgr, classifier = self.parent.project.dataMgr.module["Classification"].classifier)
         self.classificationProcess.start()
         self.classificationTimer.start(500) 
 
@@ -168,7 +168,7 @@ class ClassificationInteractive(object):
         
     def start(self):
         self.initInteractiveProgressBar()
-        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.module["Classification"]["classificationMgr"],classifier = self.parent.project.classifier)
+        self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.module["Classification"]["classificationMgr"],classifier = self.parent.project.dataMgr.module["Classification"].classifier)
 
         self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
     

@@ -25,11 +25,12 @@ import sys, gc
 import ilastik.gui.volumeeditor as ve
 
 from ilastik.core import dataMgr
-from ilastik.core.modules.Classification import featureMgr
-from ilastik.core.modules.Classification import classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.core.volume import DataAccessor
-from ilastik.core.modules.Classification import classificationMgr
+
+from ilastik.modules.classification.core import featureMgr
+from ilastik.modules.classification.core import classificationMgr
+from ilastik.modules.classification.core import classificationMgr
 
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent):
