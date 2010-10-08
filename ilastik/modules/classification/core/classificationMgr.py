@@ -50,7 +50,7 @@ from ilastik.core import onlineClassifcator
 from ilastik.core import dataMgr as DM
 
 
-from ilastik.core import activeLearning, segmentationMgr
+from ilastik.core import activeLearning
 import classifiers
 from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
 from ilastik.core import jobMachine
@@ -68,11 +68,13 @@ import classifiers
 pathext = os.path.dirname(__file__)
 
 try:
-    for f in os.listdir(os.path.abspath(pathext + '/../../classifiers')):
+    for f in os.listdir(os.path.abspath(pathext + '/classifiers')):
         module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
         if ext == '.py': # Important, ignore .pyc/othesr files.
-            module = __import__('ilastik.core.classifiers.' + module_name)
+            module = __import__('ilastik.modules.classification.core.classifiers.' + module_name)
 except Exception, e:
+    print e
+    traceback.print_exc()
     pass
 
 for i, c in enumerate(classifiers.classifierBase.ClassifierBase.__subclasses__()):
