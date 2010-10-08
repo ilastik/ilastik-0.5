@@ -325,7 +325,6 @@ class MainWindow(QtGui.QMainWindow):
         self.volumeEditorDock = dock
 
         self.connect(self.labelWidget, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
-        self.connect(self.labelWidget, QtCore.SIGNAL("seedRemoved(int)"),self.seedRemoved)
         
         area = QtCore.Qt.BottomDockWidgetArea
         self.addDockWidget(area, dock)
@@ -335,14 +334,6 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
-
-
-    def seedRemoved(self, number):
-        self.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
-        self.project.dataMgr.removeSeed(number)
-        if hasattr(self, "segmentationInteractive"):
-            self.segmentatinoInteractive.updateThreadQueues()
-
 
     def createFeatures(self):
         self.featureList = featureMgr.ilastikFeatures

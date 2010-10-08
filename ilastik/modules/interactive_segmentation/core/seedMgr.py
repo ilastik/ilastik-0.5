@@ -45,12 +45,12 @@ class SeedMgr(object):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
             descr = description.clone()
             descr._prediction = numpy.zeros(imageItem._dataVol._data.shape[0:-1],  'uint8')
-            imageItem._dataVol.seeds.descriptions.append(descr)
+            imageItem.Interactive_Segmentation.seeds.descriptions.append(descr)
             
 
     def changedLabel(self,  label):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
-            for labelIndex,  labelItem in enumerate(imageItem._dataVol.seeds):
+            for labelIndex,  labelItem in enumerate(imageItem.Interactive_Segmentation.seeds):
                 labelItem.name = label.name
                 labelItem.number = label.number
                 labelItem.color = label.color
@@ -59,21 +59,21 @@ class SeedMgr(object):
         self.dataMgr.featureLock.acquire()
         for index, item in enumerate(self.dataMgr):
             ldnr = -1
-            for j, ld in enumerate(item._dataVol.seeds.descriptions):
+            for j, ld in enumerate(item.Interactive_Segmentation.seeds.descriptions):
                 if ld.number == number:
                     ldnr = j
             if ldnr != -1:
-                item._dataVol.seeds.descriptions.pop(ldnr)
-                for j, ld in enumerate(item._dataVol.seeds.descriptions):
+                item.Interactive_Segmentation.seeds.descriptions.pop(ldnr)
+                for j, ld in enumerate(item.Interactive_Segmentation.seeds.descriptions):
                     if ld.number > number:
                         ld.number -= 1
-                temp = numpy.where(item._dataVol.seeds._data[:,:,:,:,:] == number, 0, item._dataVol.seeds._data[:,:,:,:,:])
+                temp = numpy.where(item.Interactive_Segmentation.seeds._data[:,:,:,:,:] == number, 0, item.Interactive_Segmentation.seeds._data[:,:,:,:,:])
                 temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item._dataVol.seeds._data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item._dataVol.seeds._history is not None:
-                    item._dataVol.seeds._history.removeLabel(number)
+                item.Interactive_Segmentation.seeds._data[:,:,:,:,:] = temp[:,:,:,:,:]
+                if item.Interactive_Segmentation.seeds._history is not None:
+                    item.Interactive_Segmentation.seeds._history.removeLabel(number)
         self.dataMgr.featureLock.release()
 
         
     def newLabels(self,  newLabels):
-        self.dataMgr.updateSeeds(newLabels)
+        self.dataMgr[self.dataMgr._activeImageNumber].Interactive_Segmentation.updateSeeds(newLabels)

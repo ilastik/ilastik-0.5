@@ -87,10 +87,12 @@ class ListOfNDArraysAsNDArray:
 
 
 class SegmentationThread(QtCore.QThread):
-    def __init__(self, dataMgr, image, segmentor = segmentors.segmentorClasses[0], segmentorOptions = None):
+    def __init__(self, dataMgr, image, segmentor = None, segmentorOptions = None):
         QtCore.QThread.__init__(self, None)
         self.dataItem = image
         self.dataMgr = dataMgr
+        if segmentor == None:
+            segmentor = dataMgr.Interactive_Segmentation.segmentorClasses[0]            
         self.count = 0
         self.numberOfJobs = self.dataItem._dataVol._data.shape[0]
         self.stopped = False
@@ -109,13 +111,11 @@ class SegmentationThread(QtCore.QThread):
             self.result = range(0,self.dataItem._dataVol._data.shape[0])
             jobs = []
             for i in range(self.dataItem._dataVol._data.shape[0]):
-                labels, indices = self.dataItem.getSeeds()
-                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem._dataVol._data[i,:,:,:,:], self.dataItem._dataVol.seeds._data[i,:,:,:], labels, indices])
+                labels, indices = self.dataItem.Interactive_Segmentation.getSeeds()
+                job = jobMachine.IlastikJob(SegmentationThread.segment, [self, i, self.dataItem._dataVol._data[i,:,:,:,:], self.dataItem.Interactive_Segmentation.seeds._data[i,:,:,:], labels, indices])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)
-            if self.dataItem._dataVol.segmentation is None:
-                self.dataItem._dataVol.segmentation = numpy.zeros(self.dataItem._dataVol._data.shape[0:-1],'uint8')
             self.dataMgr.featureLock.release()
         except Exception, e:
             print "######### Exception in ClassifierTrainThread ##########"

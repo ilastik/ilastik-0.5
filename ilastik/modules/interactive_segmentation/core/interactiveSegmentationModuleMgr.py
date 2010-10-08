@@ -47,22 +47,29 @@ from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, Pro
 from ilastik.core.volume import Volume, VolumeLabels
 
 import seedMgr
-import segmentors.segmentorBase
+from segmentors import segmentorBase
 
 
-""" Import all interactive segmentation plugins"""
 pathext = os.path.dirname(__file__)
+for f in os.listdir(os.path.abspath(pathext) + "/segmentors"):
+    module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
+    if ext == '.py' and module_name[-1] != "_": # Important, ignore .pyc/other files.
+        try:
+            module = __import__("ilastik.modules.interactive_segmentation.core.segmentors." + module_name)
+        except Exception, e:
+            print e
+            traceback.print_exc(file=sys.stdout)
+            pass
 
-try:
-    for f in os.listdir(os.path.abspath(pathext + 'segmentors')):
-        module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
-        if ext == '.py': # Important, ignore .pyc/othesr files.
-            module = __import__('ilastik.module.interactive_segmentation.core.segmentors.' + module_name)
-except Exception, e:
+for i, c in enumerate(segmentorBase.SegmentorBase.__subclasses__()):
+    print "loaded segmentor ",c, ': ',  c.name
     pass
+    
+segmentorClasses = segmentorBase.SegmentorBase.__subclasses__()
+if len(segmentorClasses) == 0:
+    segmentorClasses = [segmentorBase.SegmentorBase]
 
-for i, c in enumerate(segmentors.segmentorBase.SegmentorBase.__subclasses__()):
-    print "loaded interactive segmentation segmentor ", c.name
+
 
 
 
@@ -82,17 +89,136 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def __init__(self, interactiveSegmentationModuleMgr, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
         self.dataItemImage = dataItemImage
-        self.classificationModuleMgr = interactiveSegmentationModuleMgr
+        self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         self.overlays = []
         self.segmentation = None
         self.seeds = None
+        self._segmentationWeights = None
+        self._seedL = None#numpy.zeros((0, 1), 'uint8')
+        self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
         
         if self.seeds is None:
             l = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seeds = VolumeLabels(l)
             
         if self.segmentation is None:
-            self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1],  'uint8')        
+            self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')        
+
+
+    def _buildSeedsWhenNotThere(self):
+        if self._seedL is None:
+            tempL = []
+    
+            tempd =  self.seeds._data[:, :, :, :, 0].ravel()
+            indices = numpy.nonzero(tempd)[0]
+            tempL = self.seeds._data[:,:,:,:,0].ravel()[indices]
+            tempL.shape += (1,)
+                                   
+            self._seedIndices = indices
+            self._seedL = tempL
+    
+    def getSeeds(self):
+        self._buildSeedsWhenNotThere()
+        return self._seedL,  self._seedIndices
+    
+    def removeSeed(self):
+        pass
+
+
+    def updateSeeds(self, newLabels):
+        """
+        This method updates the seedMatrix with new seeds.
+        newlabels can contain completey new labels, changed labels and deleted labels
+        """
+        self._buildSeedsWhenNotThere()
+        for nl in newLabels:
+            try:
+                if nl.erasing == False:
+                    indic =  list(numpy.nonzero(nl._data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+
+
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(self.dataItemImage.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
+
+                    if len(indices.shape) == 1:
+                        indices.shape = indices.shape + (1,)
+
+                    mask = numpy.setmember1d(self._seedIndices.ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        tt = numpy.delete(self._seedIndices,nonzero)
+                        if len(tt.shape) == 1:
+                            tt.shape = tt.shape + (1,)
+                        self._seedIndices = numpy.concatenate((tt,indices))
+                        tempI = numpy.nonzero(nl._data)
+                        tempL = nl._data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = numpy.delete(self._seedL,nonzero)
+                        temp2.shape += (1,)
+                        self._seedL = numpy.vstack((temp2,tempL))
+
+
+                    elif indices.shape[0] > 0: #no intersection, just add everything...
+                        if len(self._seedIndices.shape) == 1:
+                            self._seedIndices.shape = self._seedIndices.shape + (1,)
+                        self._seedIndices = numpy.concatenate((self._seedIndices,indices))
+
+                        tempI = numpy.nonzero(nl._data)
+                        tempL = nl._data[tempI]
+                        tempL.shape += (1,)
+                        temp2 = self._seedL
+                        self._seedL = numpy.vstack((temp2,tempL))
+
+                else: #erasing == True
+                    indic =  list(numpy.nonzero(nl._data))
+                    indic[0] = indic[0] + nl.offsets[0]
+                    indic[1] += nl.offsets[1]
+                    indic[2] += nl.offsets[2]
+                    indic[3] += nl.offsets[3]
+                    indic[4] += nl.offsets[4]
+
+                    loopc = 2
+                    count = 1
+                    indices = indic[-loopc]*count
+                    templ = list(self.dataItemImage.shape[1:-1])
+                    templ.reverse()
+                    for s in templ:
+                        loopc += 1
+                        count *= s
+                        indices += indic[-loopc]*count
+
+                    mask = numpy.setmember1d(self._seedIndices.ravel(),indices.ravel())
+                    nonzero = numpy.nonzero(mask)[0]
+                    if len(nonzero) > 0:
+                        if self._seedIndices is not None:
+                            self._seedIndices = numpy.delete(self._seedIndices,nonzero)
+                            self._seedL  = numpy.delete(self._seedL,nonzero)
+                            self._seedL.shape += (1,) #needed because numpy.delete is stupid
+                    else: #no intersectoin, in erase mode just pass
+                        pass
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
+                print self._trainingIndices.shape
+                print indices.shape
+                print self._trainingF.shape
+                print nonzero
+
+
+
+
         
     def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         if self.seeds is not None:
@@ -110,7 +236,8 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
     def __init__(self, dataMgr):
         BaseModuleMgr.__init__(self, dataMgr)
         self.dataMgr = dataMgr
-        self.segmentor = segmentors.segmentorClasses[0]()
+        self.segmentor = segmentorClasses[0]()
+        self.segmentorClasses = segmentorClasses
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
                             
     def onNewImage(self, dataItemImage):

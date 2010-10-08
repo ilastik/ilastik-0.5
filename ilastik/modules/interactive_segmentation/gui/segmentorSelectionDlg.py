@@ -30,25 +30,24 @@
 from PyQt4 import QtCore, QtGui, uic
 import sys, os
 
-import ilastik.modules.interactive_segmentation.core.segmentors as segmentors
-from ilastik.modules.interactive_segmentation.core.segmentors import *
 
 class SegmentorSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastik):
         QtGui.QWidget.__init__(self, ilastik)
         self.ilastik = ilastik
-        self.previousSegmentor = self.currentSegmentor = self.ilastik.project.Interactive_Segmentation.segmentor
+        self.previousSegmentor = self.currentSegmentor = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor
 
 
         #get the absolute path of the 'ilastik' module
         path = os.path.dirname(__file__)
-        uic.loadUi(path + '/classifierSelectionDlg.ui', self)
+        uic.loadUi(path + '/segmentorSelectionDlg.ui', self)
 
         self.connect(self.buttonBox, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)
         self.connect(self.settingsButton, QtCore.SIGNAL('pressed()'), self.segmentorSettings)
 
-        self.segmentors = segmentors.segmentorBase.SegmentorBase.__subclasses__()
+        self.segmentors = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentorClasses
+        
         j = 0
         for i, c in enumerate(self.segmentors):
             print c.name

@@ -249,11 +249,6 @@ class DataItemImage(DataItemBase):
         self._dataVol = None
         self._featureM = None
         
-        self._seedL = None#numpy.zeros((0, 1), 'uint8')
-        self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
-        
-        self._segmentationWeights = None
-        
         self._readBegin = (0,0,0)
         self._readEnd = (0,0,0)
         
@@ -295,116 +290,6 @@ class DataItemImage(DataItemBase):
             raise AttributeError, name
         
     
-    def _buildSeedsWhenNotThere(self):
-        if self._seedL is None:
-            tempL = []
-    
-            tempd =  self._dataVol.seeds._data[:, :, :, :, 0].ravel()
-            indices = numpy.nonzero(tempd)[0]
-            tempL = self._dataVol.seeds._data[:,:,:,:,0].ravel()[indices]
-            tempL.shape += (1,)
-                                   
-            self._seedIndices = indices
-            self._seedL = tempL
-    
-    def getSeeds(self):
-        self._buildSeedsWhenNotThere()
-        return self._seedL,  self._seedIndices
-        
-
-
-    def updateSeeds(self, newLabels):
-        """
-        This method updates the seedMatrix with new seeds.
-        newlabels can contain completey new labels, changed labels and deleted labels
-        """
-        self._buildSeedsWhenNotThere()
-        for nl in newLabels:
-            try:
-                if nl.erasing == False:
-                    indic =  list(numpy.nonzero(nl._data))
-                    indic[0] = indic[0] + nl.offsets[0]
-                    indic[1] += nl.offsets[1]
-                    indic[2] += nl.offsets[2]
-                    indic[3] += nl.offsets[3]
-                    indic[4] += nl.offsets[4]
-
-
-                    loopc = 2
-                    count = 1
-                    indices = indic[-loopc]*count
-                    templ = list(self._dataVol._data.shape[1:-1])
-                    templ.reverse()
-                    for s in templ:
-                        loopc += 1
-                        count *= s
-                        indices += indic[-loopc]*count
-
-                    if len(indices.shape) == 1:
-                        indices.shape = indices.shape + (1,)
-
-                    mask = numpy.setmember1d(self._seedIndices.ravel(),indices.ravel())
-                    nonzero = numpy.nonzero(mask)[0]
-                    if len(nonzero) > 0:
-                        tt = numpy.delete(self._seedIndices,nonzero)
-                        if len(tt.shape) == 1:
-                            tt.shape = tt.shape + (1,)
-                        self._seedIndices = numpy.concatenate((tt,indices))
-                        tempI = numpy.nonzero(nl._data)
-                        tempL = nl._data[tempI]
-                        tempL.shape += (1,)
-                        temp2 = numpy.delete(self._seedL,nonzero)
-                        temp2.shape += (1,)
-                        self._seedL = numpy.vstack((temp2,tempL))
-
-
-                    elif indices.shape[0] > 0: #no intersection, just add everything...
-                        if len(self._seedIndices.shape) == 1:
-                            self._seedIndices.shape = self._seedIndices.shape + (1,)
-                        self._seedIndices = numpy.concatenate((self._seedIndices,indices))
-
-                        tempI = numpy.nonzero(nl._data)
-                        tempL = nl._data[tempI]
-                        tempL.shape += (1,)
-                        temp2 = self._seedL
-                        self._seedL = numpy.vstack((temp2,tempL))
-
-                else: #erasing == True
-                    indic =  list(numpy.nonzero(nl._data))
-                    indic[0] = indic[0] + nl.offsets[0]
-                    indic[1] += nl.offsets[1]
-                    indic[2] += nl.offsets[2]
-                    indic[3] += nl.offsets[3]
-                    indic[4] += nl.offsets[4]
-
-                    loopc = 2
-                    count = 1
-                    indices = indic[-loopc]*count
-                    templ = list(self._dataVol._data.shape[1:-1])
-                    templ.reverse()
-                    for s in templ:
-                        loopc += 1
-                        count *= s
-                        indices += indic[-loopc]*count
-
-                    mask = numpy.setmember1d(self._seedIndices.ravel(),indices.ravel())
-                    nonzero = numpy.nonzero(mask)[0]
-                    if len(nonzero) > 0:
-                        if self._seedIndices is not None:
-                            self._seedIndices = numpy.delete(self._seedIndices,nonzero)
-                            self._seedL  = numpy.delete(self._seedL,nonzero)
-                            self._seedL.shape += (1,) #needed because numpy.delete is stupid
-                    else: #no intersectoin, in erase mode just pass
-                        pass
-            except Exception, e:
-                print e
-                traceback.print_exc(file=sys.stdout)
-                print self._trainingIndices.shape
-                print indices.shape
-                print self._trainingF.shape
-                print nonzero
-
-
     def updateBackground(self, newLabels, key):
         """
         This function returns the classes which correspond to background
@@ -432,11 +317,6 @@ class DataItemImage(DataItemBase):
         return setAdd, setRemove
 
 
-    def clearSeeds(self):
-        self._seedL = None
-        self._seedIndices = None
-
-            
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
         self._dataVol = None
@@ -564,7 +444,7 @@ class DataMgr():
         self.module = PropertyMgr(self)
     
         for m in BaseModuleMgr.__subclasses__():
-            print "DataMgr initializing ", m
+            print "DataMgr initializing module", m
             self.module[m.name] = m(self)
                 
         
@@ -598,15 +478,6 @@ class DataMgr():
         gc.collect()
         
     
-    def clearSeeds(self):
-        for index, item in enumerate(self):
-            item.clearSeeds()
-
-    def updateSeeds(self, newLabels,  imageNr = None):
-        if imageNr is None:
-            imageNr = self._activeImageNumber
-        self[imageNr].updateSeeds(newLabels)
-        
     def updateBackground(self, newLabels, imageNr = None):
         if self.connCompBackgroundKey == "":
             #TODO: make a real error message
