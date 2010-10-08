@@ -146,7 +146,7 @@ class Project(object):
     
             # Save to hdf5 file
             fileHandle.close()
-            self.dataMgr.exportClassifiers(fileName,'Project/')
+            self.dataMgr.module["Classification"].exportClassifiers(fileName,'Project/')
         except Exception as e:
             print e.message
             traceback.print_exc()
