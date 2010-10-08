@@ -34,7 +34,7 @@ from ilastik.core.baseModuleMgr import BaseModuleMgr
 #
 load = False
 try:
-    test = module
+    test = modules
 except Exception,  e:
     load = True
 
@@ -57,4 +57,4 @@ if load:
         print "loaded plugin ",c, ': ',  c.name
         pass
 
-    module = BaseModuleMgr.__subclasses__()
+    modules = BaseModuleMgr.__subclasses__()

@@ -134,10 +134,11 @@ class BatchProcess(QtGui.QDialog):
                                     
                     di = mpa.getDataItem(blockNr)
                     dm.append(di, alreadyLoaded = True)
-                                    
-                    fm = featureMgr.FeatureMgr(dm)
-                    cm = classificationMgr.ClassificationModuleMgr(dm, fm)
-                    fm.setFeatureItems(self.ilastik.project.featureMgr.featureItems)
+                              
+                    fm = dm.Classification.featureMgr      
+                    #fm = featureMgr.FeatureMgr(dm)
+                    #cm = classificationMgr.ClassificationModuleMgr(dm)
+                    fm.setFeatureItems(self.ilastik.project.dataMgr.Classification.featureMgr.featureItems)
     
                     gc.collect()
     

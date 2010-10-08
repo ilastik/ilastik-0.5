@@ -33,6 +33,9 @@ from ilastik.core import jobMachine
 from collections import deque
 from ilastik.core.utilities import irange
 from ilastik.core import dataMgr
+from ilastik.core.volume import DataAccessor
+from ilastik.core.overlayMgr import OverlayItem
+
 import copy
 import traceback
 import threading
@@ -146,6 +149,36 @@ class FeatureMgr():
     def joinCompute(self, dataMgr):
         self.featureProcess.wait()
         self.featureProcess = None
+        self.deleteFeatureOverlays()
+        self.createFeatureOverlays()
+
+    def deleteFeatureOverlays(self):
+        for index2,  di in enumerate(self.dataMgr):
+            keys = di.overlayMgr.keys()
+            for k in keys:
+                if k.startswith("Classification/Features/"):
+                    di.overlayMgr.remove(k)
+    
+    
+    def createFeatureOverlays(self):
+        for index,  feature in enumerate(self.featureItems):
+            offset = self.featureOffsets[index]
+            size = self.featureSizes[index]
+
+            for index2,  di in enumerate(self.dataMgr):
+                #create Feature Overlays
+                for c in range(0,size):
+                    rawdata = di.module["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
+                    #TODO: the min/max stuff here is slow !!!
+                    #parallelize ??
+                    min = numpy.min(rawdata)
+                    max = numpy.max(rawdata)
+                    data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
+                    
+                    ov = OverlayItem(data, color = long(255 << 16), alpha = 1.0,  autoAdd = False, autoVisible = False)
+                    ov.min = min
+                    ov.max = max
+                    di.overlayMgr[ feature.getKey(c)] = ov
   
 
     def __getstate__(self): 

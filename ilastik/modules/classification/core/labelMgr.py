@@ -30,7 +30,6 @@
 import vigra, numpy
 
 from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
-from classificationMgr import ClassificationMgr
 
 class LabelMgr(object):
     def __init__(self,  dataMgr, classificationMgr):

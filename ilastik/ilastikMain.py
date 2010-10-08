@@ -42,15 +42,15 @@ os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import ilastik.modules
 
-from ilastik.core import version, dataMgr, projectMgr,  segmentationMgr, activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
+from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
 import ilastik.gui
-from ilastik.core import projectMgr, segmentationMgr, unsupervisedMgr, activeLearning
+from ilastik.core import projectMgr, unsupervisedMgr, activeLearning
 from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
 
 from ilastik.core import connectedComponentsMgr
-from ilastik.core import projectMgr, segmentationMgr
+from ilastik.core import projectMgr
 
 from ilastik.gui import volumeeditor as ve
 from ilastik.gui import ctrlRibbon
@@ -350,73 +350,6 @@ class MainWindow(QtGui.QMainWindow):
     def on_shortcutsDlg(self):
         shortcutManager.showDialog()
 
-    def on_segmentationSegment(self):
-        self.segmentationSegment = Segmentation(self)
-
-
-    def on_segmentation_border(self):
-        pass
-
-    def on_importClassifier(self, fileName=None):
-        
-        hf = h5py.File(fileName,'r')
-        h5featGrp = hf['features']
-        self.project.featureMgr.importFeatureItems(h5featGrp)
-        hf.close()
-        
-        self.project.dataMgr.importClassifiers(fileName)
-    
-    def on_exportClassifier(self):
-        global LAST_DIRECTORY
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
-        LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
-        
-        try:
-            self.project.dataMgr.module["Classification"].exportClassifiers(fileName)
-        except RuntimeError as e:
-            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
-            return
-
-        try:
-            h5file = h5py.File(str(fileName),'a')
-            if 'features' in h5file.keys():
-                del h5file['features']
-            h5featGrp = h5file.create_group('features')
-            self.project.featureMgr.exportFeatureItems(h5featGrp)
-            h5file.close()
-        except RuntimeError as e:
-            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
-            h5file.close()
-            return
-        
-        #if fileName is not None:
-            # global LAST_DIRECTORY
-            #fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
-            #ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
-        
-        # Make sure group 'classifiers' exist
-#        print fileName
-#        h5file = h5py.File(str(fileName),'a')
-#        h5file.create_group('classifiers')
-#        h5file.close()
-#        
-#        for i, c in enumerate(self.project.dataMgr.classifiers):
-#            tmp = c.serialize(str(fileName), "classifiers/rf_%03d" % i)
-#            print "Write Random Forest # %03d -> %d" % (i,tmp)
-        
-        # Export user feature selection
-#        h5file = h5py.File(str(fileName),'a')
-#        h5featGrp = h5file.create_group('features')
-#        
-#        featureItems = self.project.featureMgr.featureItems
-#        for k, feat in enumerate(featureItems):
-#            itemGroup = h5featGrp.create_group('feature_%03d' % k)
-#            feat.serialize(itemGroup)
-#        h5file.close()
-
-        QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
-        
-    
     def on_connectComponents(self, background = False):
         self.connComp = CC(self)
         self.connComp.selection_key = self.project.dataMgr.connCompBackgroundKey
@@ -437,69 +370,6 @@ class MainWindow(QtGui.QMainWindow):
         else:
             event.ignore()
             
-
-
-
-
-class Segmentation(object):
-
-    def __init__(self, parent):
-        self.parent = parent
-        self.ilastik = parent
-        self.start()
-
-    def start(self):
-        self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(False)
-        
-        self.timer = QtCore.QTimer()
-        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
-
-        self.segmentation = segmentationMgr.SegmentationThread(self.parent.project.dataMgr, self.parent.project.dataMgr[self.ilastik._activeImageNumber], self.ilastik.project.segmentor)
-        numberOfJobs = self.segmentation.numberOfJobs
-        self.initClassificationProgress(numberOfJobs)
-        self.segmentation.start()
-        self.timer.start(200)
-
-    def initClassificationProgress(self, numberOfJobs):
-        statusBar = self.parent.statusBar()
-        self.progressBar = QtGui.QProgressBar()
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(numberOfJobs)
-        self.progressBar.setFormat(' Segmentation... %p%')
-        statusBar.addWidget(self.progressBar)
-        statusBar.show()
-
-    def updateProgress(self):
-        val = self.segmentation.count
-        self.progressBar.setValue(val)
-        if not self.segmentation.isRunning():
-            print "finalizing segmentation"
-            self.timer.stop()
-            self.segmentation.wait()
-            self.finalize()
-            self.terminateProgressBar()
-
-    def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
-        activeItem._dataVol.segmentation = self.segmentation.result
-
-        #temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
-        
-        #create Overlay for segmentation:
-        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem._dataVol.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
-        else:
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem._dataVol.segmentation)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.labelWidget.labelWidget.colorTab
-        self.ilastik.labelWidget.repaint()
-
-
-        
-    def terminateProgressBar(self):
-        self.parent.statusBar().removeWidget(self.progressBar)
-        self.parent.statusBar().hide()
-        self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(True)
 
 
 class CC(object):

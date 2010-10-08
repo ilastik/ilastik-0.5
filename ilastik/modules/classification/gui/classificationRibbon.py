@@ -1,4 +1,4 @@
-import numpy, vigra
+import numpy, vigra, h5py
 import random
 import code
 
@@ -54,7 +54,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         overlayWidget.addOverlayRef(ov.getRef())
         
-        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
+        self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.dataMgr.module["Classification"].labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):
         if self.ilastik.project is None:
@@ -125,7 +125,53 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.classificationPredict = ClassificationPredict(self.ilastik)
         
     def on_btnExportClassifier_clicked(self):
-        self.parent.on_exportClassifier()
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", filter =  "HDF5 Files (*.h5)")
+        
+        try:
+            self.ilastik.project.dataMgr.Classification.exportClassifiers(fileName)
+        except RuntimeError as e:
+            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            return
+
+        try:
+            h5file = h5py.File(str(fileName),'a')
+            if 'features' in h5file.keys():
+                del h5file['features']
+            h5featGrp = h5file.create_group('features')
+            self.ilastik.project.dataMgr.Classification.featureMgr.exportFeatureItems(h5featGrp)
+            h5file.close()
+        except RuntimeError as e:
+            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            h5file.close()
+            return
+        
+        #if fileName is not None:
+            # global LAST_DIRECTORY
+            #fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", ilastik.gui.LAST_DIRECTORY, "HDF5 Files (*.h5)")
+            #ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+        
+        # Make sure group 'classifiers' exist
+#        print fileName
+#        h5file = h5py.File(str(fileName),'a')
+#        h5file.create_group('classifiers')
+#        h5file.close()
+#        
+#        for i, c in enumerate(self.project.dataMgr.classifiers):
+#            tmp = c.serialize(str(fileName), "classifiers/rf_%03d" % i)
+#            print "Write Random Forest # %03d -> %d" % (i,tmp)
+        
+        # Export user feature selection
+#        h5file = h5py.File(str(fileName),'a')
+#        h5featGrp = h5file.create_group('features')
+#        
+#        featureItems = self.project.featureMgr.featureItems
+#        for k, feat in enumerate(featureItems):
+#            itemGroup = h5featGrp.create_group('feature_%03d' % k)
+#            feat.serialize(itemGroup)
+#        h5file.close()
+
+        QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+        
         
     def on_btnClassifierOptions_clicked(self):
         dialog = ClassifierSelectionDlg(self.parent)

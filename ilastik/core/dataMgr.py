@@ -46,13 +46,10 @@ from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.volume import Volume as Volume, VolumeLabels, VolumeLabelDescriptionMgr
 
 from ilastik.core import activeLearning
-from ilastik.core import segmentationMgr
 from ilastik.core import overlayMgr
 from ilastik.core.baseModuleMgr import PropertyMgr
 
-
-
-#from ilastik.core import dataImpex
+from ilastik.core.baseModuleMgr import BaseModuleMgr
 
 import traceback
 import vigra
@@ -501,13 +498,19 @@ class DataItemImage(DataItemBase):
         #load obsolete file format parts (pre version 0.5)
         #and store them in the properties
         #the responsible modules will take care of them
+            
+        for k in self.module.keys():
+            if hasattr(self.module[k], "deserialize"):
+                print "deserializing ", k
+                self.module[k].deserialize(h5G, offsets, shape)
+
         labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
+        
         self.module["_obsolete_labels"] = labels
         if 'prediction' in h5G.keys():
             self.module["_obsolete_prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
-            
-            
-        
+
+                
         self.updateOverlays()
 
 
@@ -549,11 +552,21 @@ class DataMgr():
         self._dataItemsLoaded = []
         self.channels = -1
         self._activeImageNumber = 0
-        self.module = PropertyMgr(self)
         
         #TODO: Maybe it shouldn't be here...
         self.connCompBackgroundKey = ""    
         self.connCompBackgroundClasses = set()
+        
+        self.initModules()
+        
+        
+    def initModules(self):
+        self.module = PropertyMgr(self)
+    
+        for m in BaseModuleMgr.__subclasses__():
+            print "DataMgr initializing ", m
+            self.module[m.name] = m(self)
+                
         
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:

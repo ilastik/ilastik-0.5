@@ -6,7 +6,7 @@ from ilastik.core import activeLearning
 
 class FeatureComputation(object):
     def __init__(self, parent):
-        self.parent = parent
+        self.ilastik = self.parent = parent
         self.featureCompute() 
     
     def featureCompute(self):
@@ -14,9 +14,9 @@ class FeatureComputation(object):
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
         self.parent.project.dataMgr.module["Classification"]["classificationMgr"].clearFeaturesAndTraining()
-        numberOfJobs = self.parent.project.featureMgr.prepareCompute(self.parent.project.dataMgr)   
+        numberOfJobs = self.ilastik.project.dataMgr.Classification.featureMgr.prepareCompute(self.parent.project.dataMgr)   
         self.initFeatureProgress(numberOfJobs)
-        self.parent.project.featureMgr.triggerCompute()
+        self.ilastik.project.dataMgr.Classification.featureMgr.triggerCompute()
         self.myTimer.start(200)
         
     def initFeatureProgress(self, numberOfJobs):
@@ -29,13 +29,12 @@ class FeatureComputation(object):
         statusBar.show()
     
     def updateFeatureProgress(self):
-        val = self.parent.project.featureMgr.getCount() 
+        val = self.ilastik.project.dataMgr.Classification.featureMgr.getCount() 
         self.myFeatureProgressBar.setValue(val)
-        if not self.parent.project.featureMgr.featureProcess.isRunning():
+        if not self.ilastik.project.dataMgr.Classification.featureMgr.featureProcess.isRunning():
             self.myTimer.stop()
             self.terminateFeatureProgressBar()
-            self.parent.project.featureMgr.joinCompute(self.parent.project.dataMgr)   
-            self.parent.project.createFeatureOverlays()
+            self.ilastik.project.dataMgr.Classification.featureMgr.joinCompute(self.parent.project.dataMgr)   
 
             
     def terminateFeatureProgressBar(self):

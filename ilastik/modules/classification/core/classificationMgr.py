@@ -29,13 +29,11 @@
 
 import numpy
 import threading 
-import time
-import sys
 import os
 import h5py
-from Queue import Queue as queue
-from Queue import Empty as QueueEmpty
+
 from collections import deque
+
 try:
     from PyQt4 import QtCore
     ThreadBase = QtCore.QThread
@@ -43,24 +41,21 @@ try:
 except:
     ThreadBase = threading.Thread
     have_qt = False
-from ilastik.core.utilities import irange
-from ilastik.core import onlineClassifcator
-
+    
 
 from ilastik.core import dataMgr as DM
-
-
 from ilastik.core import activeLearning
-import classifiers
+
 from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
 from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
 import classifiers.classifierRandomForest
 from ilastik.core.dataMgr import BlockAccessor
-from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, PropertyMgr
+from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
+
 import featureMgr
-import numpy
+import labelMgr
 
 import classifiers
 
@@ -131,20 +126,25 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
 class ClassificationModuleMgr(BaseModuleMgr):
     name = "Classification"
     
-    def __init__(self, dataMgr, featureMgr):
+    def __init__(self, dataMgr):
         BaseModuleMgr.__init__(self, dataMgr)
         self.dataMgr = dataMgr
+        
         self.featureMgr = featureMgr
         self.classifier = classifiers.classifierRandomForest.ClassifierRandomForest
         if self.dataMgr.module["Classification"] is None:
             self.dataMgr.module["Classification"] = self
-        self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"] = ClassificationMgr(self.dataMgr)
+        self.classificationMgr = self["classificationMgr"] = ClassificationMgr(self.dataMgr)
+        
         if self.dataMgr.module["Classification"]["labelDescriptions"] is None:
             self.dataMgr.module["Classification"]["labelDescriptions"] = VolumeLabelDescriptionMgr()
 
         for i, im in enumerate(self.dataMgr):
             self.onNewImage(im)
         
+        self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)      
+        self.featureMgr = featureMgr.FeatureMgr(self.dataMgr)
+
         self.classificationMgr.clearFeaturesAndTraining()
                     
     def onNewImage(self, dataItemImage):

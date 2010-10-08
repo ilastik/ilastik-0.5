@@ -30,7 +30,7 @@
 import numpy, vigra, os, sys
 import traceback
 
-import ilastik.core.segmentors
+import segmentors
 
 from PyQt4 import QtCore
 from ilastik.core import jobMachine
@@ -87,7 +87,7 @@ class ListOfNDArraysAsNDArray:
 
 
 class SegmentationThread(QtCore.QThread):
-    def __init__(self, dataMgr, image, segmentor = ilastik.core.segmentors.segmentorClasses[0], segmentorOptions = None):
+    def __init__(self, dataMgr, image, segmentor = segmentors.segmentorClasses[0], segmentorOptions = None):
         QtCore.QThread.__init__(self, None)
         self.dataItem = image
         self.dataMgr = dataMgr

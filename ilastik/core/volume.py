@@ -321,17 +321,16 @@ class VolumeLabels():
             return None
         
 class Volume():
-    def __init__(self,  data, seeds = None,  uncertainty = None,  segmentation = None, background = None, objects = None, unsupervised = None):
+    def __init__(self,  data,  uncertainty = None,  background = None, objects = None, unsupervised = None):
         self._data = data
         self.shape = data.shape
         self.dtype = data.dtype
         
         #self.labels = labels
-        self.seeds = seeds
         self.objects = objects
         
         self.projectOverlays = []
-        self.seedOverlays = []
+        
         #self.labelOverlays = []
         self.objectOverlays = []
         self.backgroundOverlays = []
@@ -339,7 +338,6 @@ class Volume():
         self.unsupervisedOverlays = []
         
         self.uncertainty = uncertainty
-        self.segmentation = segmentation
         self.background = background
         self.unsupervised = unsupervised
         
@@ -347,19 +345,12 @@ class Volume():
 #            l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
 #            self.labels = VolumeLabels(l)
             
-        if self.seeds is None:
-            l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
-            self.seeds = VolumeLabels(l)
-
         if self.objects is None:
             l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
             self.objects = VolumeLabels(l)
 
         if self.uncertainty is None:
             self.uncertainty = numpy.zeros(self._data.shape[0:-1],  'uint8')
-
-        if self.segmentation is None:
-            self.segmentation = numpy.zeros(self._data.shape[0:-1],  'uint8')
 
         if self.background is None:
             l = numpy.zeros(self._data.shape[0:-1], 'uint8')
@@ -375,18 +366,13 @@ class Volume():
 
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0)):
         self._data.serialize(h5G, "data", destbegin, destend, srcbegin, srcend, destshape )
-        if self.seeds is not None:
-            self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )
+
         
     @staticmethod
     def deserialize(dataItemImage, h5G, offsets = (0,0,0), shape=(0,0,0)):
         data = DataAccessor.deserialize(h5G, "data", offsets, shape)
         #seeds = VolumeLabels.deserialize(h5G,  "seeds")
-        if "seeds" in h5G.keys():
-            seeds = VolumeLabels.deserialize(h5G,  "seeds")
-            v =  Volume(data,   seeds = seeds)
-        else:
-            v =  Volume(data)
+        v =  Volume(data)
         return v
 
 

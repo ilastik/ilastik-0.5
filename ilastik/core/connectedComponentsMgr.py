@@ -9,7 +9,7 @@ import numpy, vigra, os, sys
 import traceback
 
 from ilastik.core import connectedComponents
-from ilastik.core.segmentationMgr import ListOfNDArraysAsNDArray
+from ilastik.modules.interactive_segmentation.core.segmentationMgr import ListOfNDArraysAsNDArray
 
 from PyQt4 import QtCore
 from ilastik.core import jobMachine

@@ -31,7 +31,7 @@ import os
 import numpy
 import ilastik
 from ilastik.core.utilities import irange, debug
-from ilastik.core import version, dataMgr, segmentationMgr, activeLearning, onlineClassifcator
+from ilastik.core import version, dataMgr, activeLearning, onlineClassifcator
 from ilastik.modules.classification.core import featureMgr, classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
@@ -46,8 +46,8 @@ class FeatureDlg(QtGui.QDialog):
         self.ilastik = parent
         self.initDlg()
 
-        if self.parent.project.featureMgr is not None:
-            self.oldFeatureItems = self.parent.project.featureMgr.featureItems
+        if self.parent.project.dataMgr.module["Classification"].featureMgr is not None:
+            self.oldFeatureItems = self.parent.project.dataMgr.module["Classification"].featureMgr.featureItems
         else:
             self.oldFeatureItems = []
 
@@ -283,14 +283,13 @@ class FeatureDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")
     def on_confirmButtons_accepted(self):
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
-        res = self.parent.project.featureMgr.setFeatureItems(featureSelectionList)
+        res = self.parent.project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
-            #print "features have maximum needed margin of:", self.parent.project.featureMgr.maxSigma*3
-            self.parent.labelWidget.setBorderMargin(int(self.parent.project.featureMgr.maxContext))
+            #print "features have maximum needed margin of:", self.parent.project.dataMgr.Classification.featureMgr.maxSigma*3
+            self.parent.labelWidget.setBorderMargin(int(self.parent.project.dataMgr.Classification.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
             self.close()
-            if self.ilastik.project.featureMgr is not None:
-                self.ilastik.project.deleteFeatureOverlays()
+            if self.parent.project.dataMgr.Classification.featureMgr is not None:
                 self.featureComputation = FeatureComputation(self.ilastik)
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")

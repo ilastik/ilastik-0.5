@@ -41,10 +41,9 @@ from PyQt4 import QtGui
 from ilastik.core.volume import DataAccessor,  Volume
 
 from ilastik.core import activeLearning
-from ilastik.core import segmentationMgr
+
 from ilastik.core import unsupervisedMgr
 
-from ilastik.core import seedMgr
 from ilastik.core import objectMgr
 from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr  
@@ -53,9 +52,6 @@ from ilastik.core.unsupervised import unsupervisedPCA
 
 from ilastik import core 
 
-
-from ilastik.modules.classification.core import labelMgr, featureMgr, classificationMgr
-from ilastik.modules.classification.core import classificationMgr
 
 ILASTIK_VERSION = 0.5
 
@@ -84,19 +80,11 @@ class Project(object):
         self.trainingMatrix = None
         self.trainingLabels = None
         self.trainingFeatureNames = None
-        self.featureMgr = featureMgr.FeatureMgr(self.dataMgr)
+
         
-        
-        classificationMgr.ClassificationModuleMgr(self.dataMgr, self.featureMgr)
-            
-        self.classificationMgr = self.dataMgr.module["Classification"]["classificationMgr"]
-        
-        self.labelMgr = labelMgr.LabelMgr(self.dataMgr, self.classificationMgr)
-        self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
         self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)
         self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
 
-        self.segmentor = core.segmentors.segmentorClasses[0]()
         self.connector = connectedComponents.ConnectedComponents()
         self.unsupervisedDecomposer = unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()
         
@@ -194,34 +182,6 @@ class Project(object):
         
         fileHandle.close()
         return project
-
-    def deleteFeatureOverlays(self):
-        for index2,  di in enumerate(self.dataMgr):
-            keys = di.overlayMgr.keys()
-            for k in keys:
-                if k.startswith("Classification/Features/"):
-                    di.overlayMgr.remove(k)
-    
-    
-    def createFeatureOverlays(self):
-        for index,  feature in enumerate(self.featureMgr.featureItems):
-            offset = self.featureMgr.featureOffsets[index]
-            size = self.featureMgr.featureSizes[index]
-
-            for index2,  di in enumerate(self.dataMgr):
-                #create Feature Overlays
-                for c in range(0,size):
-                    rawdata = di.module["Classification"]["featureM"][:, :, :, :, offset+c:offset+c+1]
-                    #TODO: the min/max stuff here is slow !!!
-                    #parallelize ??
-                    min = numpy.min(rawdata)
-                    max = numpy.max(rawdata)
-                    data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
-                    
-                    ov = OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0,  autoAdd = False, autoVisible = False)
-                    ov.min = min
-                    ov.max = max
-                    di.overlayMgr[ feature.getKey(c)] = ov
         
   
 
