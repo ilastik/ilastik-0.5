@@ -267,7 +267,7 @@ class MainWindow(QtGui.QMainWindow):
             if i == self.ribbon.currentTabNumber:
                 enabled = True
             self.ribbon.setTabEnabled(i, enabled)
-
+        self.labelWidget.labelWidget.setEnabled(not state)
 
     def tabChanged(self,  index):
         """
