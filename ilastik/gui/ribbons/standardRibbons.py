@@ -385,40 +385,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.parent.on_connectComponents(background = False)
     def on_btnCCBack_clicked(self):
         self.parent.on_connectComponents(background = True)
-        
-class HelpTab(IlastikTabBase, QtGui.QWidget):
-    name = 'Help'
-    def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, parent)
-        QtGui.QWidget.__init__(self, parent)
-        
-        self._initContent()
-        self._initConnects()
-        
-    def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
-       
-    def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
-        
-    def _initContent(self):
 
-        tl = QtGui.QHBoxLayout()      
-        self.btnShortcuts = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Help),'Shortcuts')
-      
-        self.btnShortcuts.setToolTip('Show a list of ilastik shortcuts')
-        
-        tl.addWidget(self.btnShortcuts)
-        tl.addStretch()
-        
-        self.setLayout(tl)
-        #self.shortcutManager = shortcutManager()
-        
-    def _initConnects(self):
-        self.connect(self.btnShortcuts, QtCore.SIGNAL('clicked()'), self.on_btnShortcuts_clicked)
-        
-    def on_btnShortcuts_clicked(self):
-        shortcutManager.showDialog()
         
         
     
