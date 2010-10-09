@@ -21,7 +21,7 @@ from ilastik.modules.interactive_segmentation.core.segmentationMgr import Segmen
 
 class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Interactive Segmentation'
-    position = 2
+    position = 3
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)

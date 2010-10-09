@@ -16,6 +16,8 @@ import ilastik.gui.volumeeditor as ve
                     
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Auto Segmentation'
+    position = 2
+    
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)

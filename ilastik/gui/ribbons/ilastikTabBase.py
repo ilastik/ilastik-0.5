@@ -4,7 +4,7 @@ class IlastikTabBase(object):
     description = "Virtual base class" 
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
-    position = 2 #position of the tab
+    position = 99 #position of the tab
     
     def __init__(self, parent=None):
         self.ilastik = self.parent = parent

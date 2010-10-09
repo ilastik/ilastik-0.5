@@ -13,6 +13,8 @@ from ilastik.gui.shortcutmanager import shortcutManager
 
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Help'
+    position = 101
+    
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)

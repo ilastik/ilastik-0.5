@@ -1,7 +1,7 @@
 from PyQt4 import QtCore, QtGui, uic
 from ilastik.core import  dataMgr, projectMgr, dataImpex
 import ilastik.gui
-from ilastik.gui import stackloader, fileloader
+import stackloader, fileloader
 import os, sys
 import traceback
 import gc
