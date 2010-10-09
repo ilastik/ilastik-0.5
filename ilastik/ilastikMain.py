@@ -43,6 +43,9 @@ os.environ['ETS_TOOLKIT'] = 'qt4'
 
 import ilastik.modules
 
+#load core functionality
+ilastik.modules.loadModuleCores()
+
 from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
 import ilastik.gui
 from ilastik.core import projectMgr, unsupervisedMgr, activeLearning
@@ -178,7 +181,8 @@ class MainWindow(QtGui.QMainWindow):
             self.projectModified()
         
         self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject) 
-        self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen) 
+        self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
+        
     
     def showFullscreen(self):
         if self.fullScreen:
@@ -532,10 +536,14 @@ class UnsupervisedDecomposition(object):
         
 
 if __name__ == "__main__":
-    app = QtGui.QApplication.instance() #(sys.argv)
+    app = QtGui.QApplication.instance() #(sys.argv
+    
+    #load gui functionality (after creation of qapplication)
+    ilastik.modules.loadModuleGuis()
+    
     #app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow(sys.argv)
-      
+    
     mainwindow.show() 
     app.exec_()
     print "cleaning up..."

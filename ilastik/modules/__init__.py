@@ -32,29 +32,45 @@ from ilastik.core.baseModuleMgr import BaseModuleMgr
 #
 #Import other segmentation plugins dynamically
 #
-load = False
 try:
-    test = modules
-except Exception,  e:
-    load = True
+    if modules == None:
+        pass
+except:
+    modules = []
 
+def loadModuleCores():
+    print "loading modules core functionality..."
 
-if load:
-    print "loading plugins..."
-    
     pathext = os.path.dirname(__file__)
-    
-    for f in os.listdir(os.path.abspath(pathext)):
-        if os.path.isdir(f):
-            module_name = os.path.basename(f) # Handles no-extension files, etc.
+    abspath = os.path.abspath(pathext)
+    for f in os.listdir(abspath):
+        if os.path.isdir(abspath + "/" + f):
+            module_name = f # Handles no-extension files, etc.
             try:
-                module = __import__('ilastik.modules.' + module_name)
+                module = __import__('ilastik.modules.' + module_name + '.core')
+                print "loaded core of module" , module_name
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 pass
-
-    for i, c in enumerate(BaseModuleMgr.__subclasses__()):
-        print "loaded plugin ",c, ': ',  c.name
-        pass
-
+                    
     modules = BaseModuleMgr.__subclasses__()
+    
+    
+    
+def loadModuleGuis():
+    print "loading modules gui functionality..."
+    import ilastik.gui.ribbons.ilastikTabBase
+
+    pathext = os.path.dirname(__file__)
+    abspath = os.path.abspath(pathext)
+    for f in os.listdir(abspath):
+        if os.path.isdir(abspath + "/" + f):
+            module_name = f # Handles no-extension files, etc.
+            try:
+                module = __import__('ilastik.modules.' + module_name + '.gui')
+                print "loaded gui of module " , module_name
+            except Exception, e:
+                traceback.print_exc(file=sys.stdout)
+                pass
+            
+    print ilastik.gui.ribbons.ilastikTabBase.IlastikTabBase.__subclasses__()

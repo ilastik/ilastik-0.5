@@ -37,7 +37,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
 from ilastik.modules.classification.core.featureMgr import ilastikFeatureGroups
 
-from ilastik.modules.classification.gui import FeatureComputation
+from ilastik.modules.classification.gui.guiThreads import FeatureComputation
 
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None, previewImage=None):

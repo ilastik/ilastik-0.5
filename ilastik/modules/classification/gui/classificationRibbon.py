@@ -11,7 +11,7 @@ from ilastik.core.overlayMgr import OverlayItem, OverlayReferenceMgr
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.iconMgr import ilastikIcons
 
-from ilastik.modules.classification.gui import *
+from ilastik.modules.classification.gui.guiThreads import *
 from ilastik.modules.classification.gui.labelWidget import LabelListWidget
 from ilastik.modules.classification.gui.batchProcess import BatchProcess
 from ilastik.modules.classification.gui.featureDlg import FeatureDlg
