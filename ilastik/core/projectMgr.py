@@ -44,7 +44,6 @@ from ilastik.core import activeLearning
 
 from ilastik.core import unsupervisedMgr
 
-from ilastik.core import objectMgr
 from ilastik.core import backgroundMgr
 from ilastik.core import overlayMgr  
 from ilastik.core import connectedComponents
@@ -82,7 +81,6 @@ class Project(object):
         self.trainingFeatureNames = None
 
         
-        self.objectMgr = objectMgr.ObjectMgr(self.dataMgr)
         self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
 
         self.connector = connectedComponents.ConnectedComponents()

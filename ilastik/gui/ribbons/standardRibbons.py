@@ -16,13 +16,10 @@ from ilastik.gui.unsupervisedSelectionDlg import UnsupervisedSelectionDlg
 from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core.overlays
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
-from ilastik.core.overlayMgr import OverlayItem, OverlayReferenceMgr
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui import volumeeditor as ve
-from ilastik.core.volume import DataAccessor
 
 
-from ilastik.gui.objectWidget import ObjectListWidget
 from ilastik.gui.backgroundWidget import BackgroundWidget
 
 import gc, weakref
@@ -388,90 +385,6 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.parent.on_connectComponents(background = False)
     def on_btnCCBack_clicked(self):
         self.parent.on_connectComponents(background = True)
-        
-    
-class ObjectsTab(IlastikTabBase, QtGui.QWidget):
-    name = 'Objects'
-    
-    def __init__(self, parent=None):
-        IlastikTabBase.__init__(self, parent)
-        QtGui.QWidget.__init__(self, parent)
-        
-        self._initContent()
-        self._initConnects()
-        
-    def on_activation(self):
-        if self.ilastik.project is None:
-            return
-        ovs = self.ilastik._activeImage._dataVol.objectOverlays
-        if len(ovs) == 0:
-            raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
-            if raw is not None:
-                ovs.append(raw.getRef())        
-        
-        self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
-
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.objectOverlays)
-        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
-        
-        
-        #create ObjectsOverlay
-        ov = OverlayItem(self.ilastik._activeImage._dataVol.objects._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage._dataVol.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.ilastik._activeImage.overlayMgr["Objects/Selection"] = ov
-        ov = self.ilastik._activeImage.overlayMgr["Objects/Selection"]
-        
-        self.ilastik.labelWidget.setLabelWidget(ObjectListWidget(self.ilastik.project.objectMgr,  self.ilastik._activeImage._dataVol.objects,  self.ilastik.labelWidget,  ov))
-    
-    def on_deActivation(self):
-        if self.ilastik.project is None:
-            return
-        self.ilastik._activeImage._dataVol.objects._history = self.ilastik.labelWidget._history
-        
-        if self.ilastik._activeImage._dataVol.objects._history is not None:
-            self.ilastik.labelWidget._history = self.ilastik._activeImage._dataVol.objects._history
-        
-    def _initContent(self):
-        tl = QtGui.QHBoxLayout()
-        
-        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
-        self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'3D')
-        
-        self.btnChooseWeights.setToolTip('Choose the edge weights for the segmentation task')
-        self.btnSegment.setToolTip('Segment the image into foreground/background')
-        
-        tl.addWidget(self.btnChooseWeights)
-        tl.addWidget(self.btnSegment)
-        tl.addStretch()
-        
-        self.setLayout(tl)
-        
-    def _initConnects(self):
-        self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
-        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
-        
-        
-    def on_btnChooseWeights_clicked(self):
-        dlg = OverlaySelectionDialog(self.parent,  singleSelection = True)
-        answer = dlg.exec_()
-        
-        if len(answer) > 0:
-            import ilastik.core.overlays.selectionOverlay
-            if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Objects/Selection Result"] is None:
-                ov = ilastik.core.overlays.selectionOverlay.SelectionOverlay(answer[0]._data, color = long(QtGui.QColor(0,255,255).rgba()))
-                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Objects/Selection Result"] = ov
-                ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Objects/Selection Result"]
-            
-            ref = answer[0].getRef()
-            ref.setAlpha(0.4)
-            self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
-            
-            self.parent.project.objectMgr.setInputData(answer[0]._data)
-                
-            self.parent.labelWidget.repaint()
-
-    def on_btnSegment_clicked(self):
-        pass
-                    
         
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Help'

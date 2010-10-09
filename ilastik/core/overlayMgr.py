@@ -74,7 +74,7 @@ class OverlayItemReference(object):
         self.color = self.overlayItem.color
         self.autoAlphaChannel = self.overlayItem.autoAlphaChannel
         if self.overlayItem.linkColorTable is False:
-            self.colorTable = self.overlayItem.colorTable
+            self.colorTable = self.overlayItem.getColorTab()
         self.key = self.overlayItem.key
         self.channel = 0
         self.numChannels = self.overlayItem._data.shape[4]
@@ -84,9 +84,16 @@ class OverlayItemReference(object):
             
     def __setitem__(self, args, data):
         self.overlayItem._data[args] = data
-                
+    
+    def getColorTab(self):
+        if self.overlayItem.linkColorTable is False:
+            return self.colorTable
+        else:
+            return self.overlayItem.getColorTab()
+        
+      
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.overlayItem._data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.colorTable, self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
+        return OverlaySlice(self.overlayItem._data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.getColorTab(), self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
         
     def __getattr__(self,  name):
         if name == "colorTable":
@@ -167,6 +174,10 @@ class OverlayItem(object):
             return self._data.shape
         else:
             raise AttributeError, name
+
+    def getColorTab(self):
+        return self.colorTable
+    
     def getSubSlice(self, offsets, sizes, num, axis, time = 0, channel = 0):
         return self._data.getSubSlice(offsets, sizes, num, axis, time, channel)
 

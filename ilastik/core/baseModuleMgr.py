@@ -39,8 +39,8 @@ class BaseModuleDataItemMgr(PropertyMgr):
     """
     name =  "BaseModuleDataItemMgr"
     
-    def __init__(self, parent):
-        PropertyMgr.__init__(self, parent)
+    def __init__(self, dataItemImage):
+        PropertyMgr.__init__(self, dataItemImage)
     
     def onModuleStart(self):
         pass
@@ -62,8 +62,8 @@ class BaseModuleMgr(PropertyMgr):
     """
     name = "BaseModuleMgr"
     
-    def __init__(self, parent):
-        PropertyMgr.__init__(self, parent)
+    def __init__(self, dataMgr):
+        PropertyMgr.__init__(self, dataMgr)
     
     def onModuleStart(self):
         pass

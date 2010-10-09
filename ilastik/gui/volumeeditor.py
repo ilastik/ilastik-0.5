@@ -1153,7 +1153,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                             p.setOpacity(origitem.alpha)
                             itemcolorTable = origitem.colorTable
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-                            if origitem.colorTable != None:         
+                            if itemcolorTable != None:         
                                 if itemdata.dtype != 'uint8':
                                     """
                                     if the item is larger we take the values module 256
@@ -1176,7 +1176,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                    
                                        
                                 image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                image0.setColorTable(origitem.colorTable[:])
+                                image0.setColorTable(itemcolorTable[:])
                                 
                             else:
                                 if origitem.min is not None and origitem.max is not None:
