@@ -49,7 +49,7 @@ from ilastik.core import activeLearning
 from ilastik.core import overlayMgr
 from ilastik.core.baseModuleMgr import PropertyMgr
 
-from ilastik.core.baseModuleMgr import BaseModuleMgr
+from ilastik.core.baseModuleMgr import BaseModuleMgr, BaseModuleDataItemMgr
 
 import traceback
 import vigra
@@ -245,7 +245,7 @@ class BlockAccessor2D():
     
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
-        DataItemBase.__init__(self, fileName) 
+        DataItemBase.__init__(self, fileName)
         self._dataVol = None
         self._featureM = None
         
@@ -256,9 +256,19 @@ class DataItemImage(DataItemBase):
         self._writeEnd = (0,0,0)
         
         self.overlayMgr = overlayMgr.OverlayMgr()
+
+        self.initModules()
+    
+    def initModules(self):
         self.module = PropertyMgr(self)
-    
-    
+        
+        mods = BaseModuleDataItemMgr.__subclasses__()
+        
+        for m in mods:
+            self.module[m.name] = m(self) 
+         
+
+                
     def setDataVol(self, dataVol):
         self._dataVol = dataVol
         self._writeBegin = (0,0,0)
@@ -384,13 +394,6 @@ class DataItemImage(DataItemBase):
                 print "deserializing ", k
                 self.module[k].deserialize(h5G, offsets, shape)
 
-        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
-        
-        self.module["_obsolete_labels"] = labels
-        if 'prediction' in h5G.keys():
-            self.module["_obsolete_prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
-
-                
         self.updateOverlays()
 
 
@@ -442,12 +445,15 @@ class DataMgr():
         
     def initModules(self):
         self.module = PropertyMgr(self)
-    
         for m in BaseModuleMgr.__subclasses__():
             print "DataMgr initializing module", m
             self.module[m.name] = m(self)
                 
-        
+    
+    def onNewImage(self, dataItemImage):
+        for v in self.module.values():
+            v.onNewImage(dataItemImage)
+    
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
             try:
@@ -467,9 +473,7 @@ class DataMgr():
             
             self._dataItems.append(dataItem)
             self._dataItemsLoaded.append(alreadyLoaded)
-            for v in self.module.values():
-                v.onNewImage(dataItem)
-                
+            self.onNewImage(dataItem)
         else:
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
         

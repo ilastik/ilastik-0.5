@@ -100,12 +100,17 @@ def unravelIndices(indices, shape):
 
 
 class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
-    def __init__(self, classificationModuleMgr, dataItemImage):
+    name = "Classification"
+    
+    def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
         self.dataItemImage = dataItemImage
+        self.classificationModuleMgr = None
+        
+    def setModuleMgr(self, classificationModuleMgr):
         self.classificationModuleMgr = classificationModuleMgr
-        
-        
+    
+    
     def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         #for now save the labels and prediction in the old format
         #TODO: change that when we are certain about the new project file format
@@ -120,7 +125,12 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         prediction = DataAccessor(prediction)
         prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape )
         
-
+    def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
+        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
+        self["labels"] = labels
+        if 'prediction' in h5G.keys():
+            self["prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
+        
 
 
 class ClassificationModuleMgr(BaseModuleMgr):
@@ -148,10 +158,9 @@ class ClassificationModuleMgr(BaseModuleMgr):
         self.classificationMgr.clearFeaturesAndTraining()
                     
     def onNewImage(self, dataItemImage):
-        
+        dataItemImage.Classification.setModuleMgr(self)
         
         #create featureM
-        dataItemImage.module["Classification"] = ClassificationItemModuleMgr(self, dataItemImage)
         dataItemImage.module["Classification"]["featureM"] = numpy.zeros(dataItemImage.shape[0:-1] + (self.featureMgr.totalFeatureSize,),'float32')
         
         #clear features and training
@@ -165,24 +174,24 @@ class ClassificationModuleMgr(BaseModuleMgr):
             
         
         #handle obsolete file formats:
-        if dataItemImage.module["_obsolete_labels"] is not None:
-            labels = dataItemImage.module["_obsolete_labels"]
+        if dataItemImage.Classification["labels"] is not None:
+            labels = dataItemImage.Classification["labels"]
             ov = overlayMgr.OverlayItem(labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False, linkColorTable = True)
             dataItemImage.overlayMgr["Classification/Labels"] = ov
             if len(self.dataMgr.module["Classification"]["labelDescriptions"]) == 0: 
                 for d in labels.descriptions:
                     self.dataMgr.module["Classification"]["labelDescriptions"].append(d)
-            dataItemImage.module["_obsolete_labels"]  = None          
+            dataItemImage.Classification["labels"]  = None          
 
-        if dataItemImage.module["_obsolete_prediction"] is not None:
-            prediction = dataItemImage.module["_obsolete_prediction"]
+        if dataItemImage.Classification["prediction"] is not None:
+            prediction = dataItemImage.Classification["prediction"]
             for index, descr in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
                 ov = overlayMgr.OverlayItem(DataAccessor(prediction[:,:,:,:,index:index+1], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 dataItemImage.overlayMgr["Classification/Prediction/" + descr.name] = ov
             margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])
             ov = overlayMgr.OverlayItem(DataAccessor(margin), alpha = 1.0, color = long(16535)<<16, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
             dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
-            dataItemImage.module["_obsolete_prediction"] = None
+            dataItemImage.Classification["prediction"] = None
             
 #        if self._dataVol.uncertainty is not None:
 #            #create Overlay for uncertainty:
@@ -199,23 +208,21 @@ class ClassificationModuleMgr(BaseModuleMgr):
         if not hasattr(self, 'classificationMgr') or not hasattr(self.classificationMgr, 'classifiers'):
             raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
         
-        if len(self.classificationMgr.classifiers) == 0:
-            raise RuntimeError("No classifiers trained so far. Use Train and Predict to learn classifiers.")
-        
-        h5file = h5py.File(str(fileName),'a')
-        h5group = h5file[pathToGroup]
-        
-        if 'classifiers' in h5group.keys():
-            del h5group['classifiers']
-            print "overwrite classifiers"
+        if len(self.classificationMgr.classifiers) != 0:      
+            h5file = h5py.File(str(fileName),'a')
+            h5group = h5file[pathToGroup]
             
-        h5group.create_group('classifiers')
-        h5file.close()
-        
-        for i, c in enumerate(self.classificationMgr.classifiers):
-            print pathToGroup + "/classifiers/rf_%03d" % i
-            tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
-            print "Write Random Forest # %03d -> %d" % (i,tmp)
+            if 'classifiers' in h5group.keys():
+                del h5group['classifiers']
+                print "overwrite classifiers"
+                
+            h5group.create_group('classifiers')
+            h5file.close()
+            
+            for i, c in enumerate(self.classificationMgr.classifiers):
+                print pathToGroup + "/classifiers/rf_%03d" % i
+                tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
+                print "Write Random Forest # %03d -> %d" % (i,tmp)
             
     def importClassifiers(self, fileName):
         hf = h5py.File(fileName,'r')
@@ -225,6 +232,20 @@ class ClassificationModuleMgr(BaseModuleMgr):
         self.classificationMgr.classifiers = classifiers
         
         
+    def serialize(self, h5G):
+        featureG = h5G.create_group('FeatureSelection')        
+        try:
+            featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
+            #self.featureMgr.exportFeatureItems(h5G)            
+        except:
+            traceback.print_exc()
+        
+    def deserialize(self, h5G):
+        try:
+            userSelection = h5G['FeatureSelection']['UserSelection']
+            featureMgr.ilastikFeatureGroups.selection = userSelection.value
+        except:
+            traceback.print_exc()
         
 
 

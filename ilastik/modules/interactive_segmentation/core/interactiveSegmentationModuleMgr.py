@@ -86,10 +86,12 @@ def unravelIndices(indices, shape):
 
 
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
-    def __init__(self, interactiveSegmentationModuleMgr, dataItemImage):
+    name = "Interactive_Segmentation"
+    
+    def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
         self.dataItemImage = dataItemImage
-        self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
+        self.interactiveSegmentationModuleMgr = None 
         self.overlays = []
         self.segmentation = None
         self.seeds = None
@@ -97,13 +99,17 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self._seedL = None#numpy.zeros((0, 1), 'uint8')
         self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
         
+    
+    def setModuleMgr(self, interactiveSegmentationModuleMgr):
+        self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
+        
         if self.seeds is None:
             l = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seeds = VolumeLabels(l)
             
         if self.segmentation is None:
-            self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')        
-
+            self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')  
+            
     def clearSeeds(self):
         self._seedL = None
         self._seedIndices = None
@@ -220,7 +226,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
 
 
         
-    def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+    def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         if self.seeds is not None:
             self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )        
 
@@ -241,5 +247,5 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
                             
     def onNewImage(self, dataItemImage):
-        dataItemImage.module["Interactive_Segmentation"] = InteractiveSegmentationItemModuleMgr(self, dataItemImage)
+        dataItemImage.Interactive_Segmentation.setModuleMgr(self)
         

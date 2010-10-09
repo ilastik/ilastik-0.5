@@ -37,6 +37,7 @@ except:
 
 import sys
 import os
+
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 

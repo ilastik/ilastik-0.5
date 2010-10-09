@@ -37,6 +37,8 @@ class BaseModuleDataItemMgr(PropertyMgr):
     """
     abstract base class for modules controlling a DataItem
     """
+    name =  "BaseModuleDataItemMgr"
+    
     def __init__(self, parent):
         PropertyMgr.__init__(self, parent)
     
@@ -46,10 +48,10 @@ class BaseModuleDataItemMgr(PropertyMgr):
     def onModuleStop(self):
         pass
     
-    def serialize(self, h5g):
+    def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         pass
     
-    def deserialize(self, h5g):
+    def deserialize(self, h5g, offsets, shape):
         pass
 
 
@@ -74,4 +76,10 @@ class BaseModuleMgr(PropertyMgr):
     
     def onDeleteImage(self, dataItemImage):
         pass
+    
+    def serialize(self, h5g):
+        pass
+    
+    def deserialize(self, h5g):
+        pass    
     

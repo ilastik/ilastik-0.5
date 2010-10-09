@@ -110,16 +110,9 @@ class Project(object):
             projectG.create_dataset('Labeler', data=str(self.labeler))
             projectG.create_dataset('Description', data=str(self.description))
                 
-            featureG = projectG.create_group('FeatureSelection')
-            
-            try:
-                self.featureMgr.exportFeatureItems(featureG)
-                featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
-            except:
-                print 'saveToDisk(): No features where selected: '
-                
-                
-            # get number of images
+            for k in self.dataMgr.module.keys():
+                print "serializing Module ", self.dataMgr.module[k].name
+                self.dataMgr.module[k].serialize(projectG)
             
             # save raw data and labels
             for k, item in enumerate(self.dataMgr):
@@ -131,10 +124,12 @@ class Project(object):
                 # save raw data
                 item.serialize(dk)
             
-    
             # Save to hdf5 file
             fileHandle.close()
+            
+            #TODO, integrate somehow into serialization scheme
             self.dataMgr.module["Classification"].exportClassifiers(fileName,'Project/')
+            
         except Exception as e:
             print e.message
             traceback.print_exc()
@@ -155,6 +150,11 @@ class Project(object):
         
         n = len(fileHandle['DataSets'])
         dataMgr = dataMgrModule.DataMgr(featureCache);
+
+        for k in dataMgr.module.keys():
+            print "deserializing Module ", dataMgr.module[k].name
+            dataMgr.module[k].deserialize(projectG)
+
         
         for name in fileHandle['DataSets']:
             print "Loading image ", name
@@ -173,12 +173,6 @@ class Project(object):
         
         project = Project( name, labeler, description, dataMgr)
         project.filename = fileName
-        
-        try:
-            userSelection = projectG['FeatureSelection']['UserSelection']
-            featureMgr.ilastikFeatureGroups.selection = userSelection.value
-        except:
-            print 'No user selection of features found.'
         
         fileHandle.close()
         return project
