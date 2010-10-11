@@ -402,7 +402,7 @@ class DataItemImage(DataItemBase):
 class MultiPartDataItemAccessor(object):
     def __init__(self, data, blocksize = 128, overlap = 10):
         self._data = data
-        self.overlap = 10
+        self.overlap = overlap
         self._blockAccessor = BlockAccessor(self._data, blocksize)
         
     def getBlockCount(self):
