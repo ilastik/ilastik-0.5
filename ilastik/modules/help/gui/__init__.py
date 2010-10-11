@@ -1,1 +1,1 @@
-import helpRibbon.py
+import helpRibbon

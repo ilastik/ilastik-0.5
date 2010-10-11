@@ -882,10 +882,12 @@ class VolumeEditor(QtGui.QWidget):
 
         self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays)
 
+        self.emit(QtCore.SIGNAL('newLabelsPending()'))
+            
+    def pushLabelsToLabelWidget(self):
         newLabels = self.getPendingLabels()
         self.labelWidget.labelMgr.newLabels(newLabels)
-
-        self.emit(QtCore.SIGNAL('newLabelsPending()'))
+            
             
     def getVisibleState(self):
         #TODO: ugly, make nicer
@@ -1786,6 +1788,7 @@ class ImageScene( QtGui.QGraphicsView):
         ls = LabelState('drawing', self.axis, self.volumeEditor.selSlices[self.axis], result[0:2], labels.shape, self.volumeEditor.selectedTime, self.volumeEditor, self.drawManager.erasing, labels, number)
         self.volumeEditor._history.append(ls)        
         self.volumeEditor.setLabels(result[0:2], self.axis, self.volumeEditor.sliceSelectors[self.axis].value(), labels, self.drawManager.erasing)
+        self.volumeEditor.pushLabelsToLabelWidget()
         self.drawing = False
 
 
