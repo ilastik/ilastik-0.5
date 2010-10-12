@@ -28,5 +28,5 @@
 #    or implied, of their employers.
 
 import os
-print "Load Ilastik GUI"
+print "Load ilastik GUI"
 LAST_DIRECTORY = os.path.expanduser("~")

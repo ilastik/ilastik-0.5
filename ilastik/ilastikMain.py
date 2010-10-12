@@ -41,26 +41,27 @@ import os
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
+from ilastik.core.projectMgr import ILASTIK_VERSION
 import ilastik.modules
 
 #load core functionality
 ilastik.modules.loadModuleCores()
 
-from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
-import ilastik.gui
-from ilastik.core import projectMgr, unsupervisedMgr, activeLearning
+#from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
+#import ilastik.gui
+#from ilastik.core import projectMgr, unsupervisedMgr, activeLearning
 from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
 
-from ilastik.core import connectedComponentsMgr
-from ilastik.core import projectMgr
+#from ilastik.core import connectedComponentsMgr
+#from ilastik.core import projectMgr
 
 from ilastik.gui import volumeeditor as ve
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
-import ilastik.gui.ribbons.standardRibbons
+#import ilastik.gui.ribbons.standardRibbons
 
 import threading
 import h5py
@@ -157,9 +158,9 @@ class MainWindow(QtGui.QMainWindow):
 
             help_text = "Normally the default option should work for you\nhowever, in some cases it might be beneficial to try to use another rendering method:"
             if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'ilastik: graphics setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
             elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'ilastik: graphics setup', help_text, ['Software + OpenGL Overview'], 0, False)
             else:
                 dl = []
                 dl.append("")
@@ -539,12 +540,21 @@ if __name__ == "__main__":
     app = QtGui.QApplication.instance() #(sys.argv
     
     #load gui functionality (after creation of qapplication)
-    ilastik.modules.loadModuleGuis()
+    import time
     
+    a = QtGui.QPixmap("../logo/ilastik-splash.png")
+    s = QtGui.QSplashScreen(a)#,QtCore.Qt.WindowStaysOnTopHint)
+
+    s.show();
+
+    app.processEvents();
+    ilastik.modules.loadModuleGuis()
     #app = QtGui.QApplication(sys.argv)
     mainwindow = MainWindow(sys.argv)
+    mainwindow.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
     
     mainwindow.show() 
+    s.finish(mainwindow)
     app.exec_()
     print "cleaning up..."
     if mainwindow.labelWidget is not None:

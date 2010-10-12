@@ -98,7 +98,7 @@ class Project(object):
                 
             fileHandle = h5py.File(fileName,'w')
             
-            fileHandle.create_dataset('IlastikVersion', data=ILASTIK_VERSION)
+            fileHandle.create_dataset('ilastikVersion', data=ILASTIK_VERSION)
             
             # get project settings
             projectG = fileHandle.create_group('Project') 
