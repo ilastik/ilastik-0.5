@@ -146,6 +146,7 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         
     def setThresholds(self, thresholds):
+        print "setting thresholds to: ", thresholds
         self.thresholds = numpy.zeros((len(self.dsets)),'float32' )
         for index, t in enumerate(thresholds):
             self.thresholds[index] = t
