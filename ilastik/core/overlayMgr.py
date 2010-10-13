@@ -71,7 +71,9 @@ class OverlayItemReference(object):
         self.name = self.overlayItem.name
         self.visible = True
         self.alpha = self.overlayItem.alpha
-        self.color = self.overlayItem.color
+        self.linkColor = self.overlayItem.linkColor
+        if self.linkColor is False:
+            self.color = self.overlayItem.color
         self.autoAlphaChannel = self.overlayItem.autoAlphaChannel
         if self.overlayItem.linkColorTable is False:
             self.colorTable = self.overlayItem.getColorTab()
@@ -98,6 +100,8 @@ class OverlayItemReference(object):
     def __getattr__(self,  name):
         if name == "colorTable":
             return self.overlayItem.colorTable
+        elif name == "color":
+            return self.overlayItem.getColor()
         elif name == "_data":
             return self.overlayItem._data
         elif name == "min":
@@ -149,9 +153,12 @@ class OverlayItem(object):
         self._data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
-        self.color = color
+        self.defaultColor = color
+        self.linkColor = False
+        self.colorGetter = None
+        self.colorGetterArguments = None
         self.alpha = alpha
-        self.autoAlphaChannel = autoAlphaChannel 
+        self.autoAlphaChannel = autoAlphaChannel
         self.channel = 0
         self.name = "Unnamed Overlay"
         self.key = "Unknown Key"
@@ -168,7 +175,9 @@ class OverlayItem(object):
         self._data[args] = data
 
     def __getattr__(self, name):
-        if name == "dtype":
+        if name == "color":
+            return self.getColor()
+        elif name == "dtype":
             return self._data.dtype
         elif name == "shape":
             return self._data.shape
@@ -184,7 +193,21 @@ class OverlayItem(object):
         
     def setSubSlice(self, offsets, data, num, axis, time = 0, channel = 0):
         self._data.setSubSlice(offsets, data, num, axis, time, channel)
-                            
+                          
+    
+    def getColor(self):
+        if self.linkColor is False:
+            return self.defaultColor
+        else:
+            return self.colorGetter()
+                          
+    
+    def setColorGetter(self,colorGetter, colorGetterArguments):
+        self.colorGetter = colorGetter
+        self.colorGetterArguments = colorGetterArguments
+        self.linkColor = True
+    
+    
     def getRef(self):
         ref = OverlayItemReference(self)
         ref.visible = self.autoVisible

@@ -200,7 +200,9 @@ class VolumeLabelDescription():
         self.color = color
         self._prediction = prediction
 
-        
+    def getColor(self):
+        return self.color
+    
     def __eq__(self, other):
         answer = True
         if self.number != other.number:
@@ -312,7 +314,7 @@ class VolumeLabels():
                 numbers = h5G[name].attrs['number']
             descriptions = []
             for index, item in enumerate(colors):
-                descriptions.append(VolumeLabelDescription(names[index], numbers[index], colors[index],  numpy.zeros(data.shape[0:-1],  'uint8')))
+                descriptions.append(VolumeLabelDescription(names[index], numbers[index], long(colors[index]),  numpy.zeros(data.shape[0:-1],  'uint8')))
     
             vl =  VolumeLabels(data)
             vl.descriptions = descriptions
