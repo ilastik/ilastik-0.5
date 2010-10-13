@@ -299,7 +299,7 @@ class ProjectSettingsDlg(QtGui.QDialog):
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.drawUpdateIntervalCheckbox = QtGui.QCheckBox("Train&Predict during brush strokes in Interactive Mode")
+        self.drawUpdateIntervalCheckbox = QtGui.QCheckBox("Train and predict during brush strokes in Interactive Mode")
         self.drawUpdateIntervalCheckbox.setCheckState((self.project.drawUpdateInterval > 0)  * 2)
         self.connect(self.drawUpdateIntervalCheckbox, QtCore.SIGNAL("stateChanged(int)"), self.toggleUpdateInterval)
         self.layout.addWidget(self.drawUpdateIntervalCheckbox)
@@ -319,15 +319,15 @@ class ProjectSettingsDlg(QtGui.QDialog):
             self.drawUpdateIntervalFrame.setVisible(False)
             self.drawUpdateIntervalSpin.setValue(300)
         
-        self.normalizeCheckbox = QtGui.QCheckBox("normalize Data for display in each SliceView seperately")
+        self.normalizeCheckbox = QtGui.QCheckBox("Normalize data for display in each slice view separately")
         self.normalizeCheckbox.setCheckState(self.project.normalizeData * 2)
         self.layout.addWidget(self.normalizeCheckbox)
 
-        self.rgbDataCheckbox = QtGui.QCheckBox("interpret 3-Channel files as RGB Data")
+        self.rgbDataCheckbox = QtGui.QCheckBox("Interpret 3-Channel files as RGB images")
         self.rgbDataCheckbox.setCheckState(self.project.rgbData * 2)
         self.layout.addWidget(self.rgbDataCheckbox)
 
-        self.borderMarginCheckbox = QtGui.QCheckBox("show border margin indicator")
+        self.borderMarginCheckbox = QtGui.QCheckBox("Show border margin indicator")
         self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin * 2)
         self.layout.addWidget(self.borderMarginCheckbox)
 
