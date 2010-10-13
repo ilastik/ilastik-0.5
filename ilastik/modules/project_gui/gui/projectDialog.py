@@ -87,7 +87,7 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")     
     def on_loadStack_clicked(self):
-        sl = stackloader.StackLoader()
+        sl = stackloader.StackLoader(self)
         #imageData = sl.exec_()
         path, fileList, options = sl.exec_()
         if path is None:
@@ -139,7 +139,7 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")
     def on_loadFileButton_clicked(self):
-        fl = fileloader.FileLoader()
+        fl = fileloader.FileLoader(self)
         #imageData = sl.exec_()
         fl.exec_()
         itemList = []

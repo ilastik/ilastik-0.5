@@ -19,10 +19,6 @@
   <property name="windowTitle">
    <string>Spatial Features</string>
   </property>
-  <property name="windowIcon">
-   <iconset>
-    <normaloff>../../icons/32x32/actions/window-new.png</normaloff>../../icons/32x32/actions/window-new.png</iconset>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
     <layout class="QVBoxLayout" name="verticalLayout_2">

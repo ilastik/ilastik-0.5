@@ -41,7 +41,7 @@ from ilastik.modules.classification.gui.guiThreads import FeatureComputation
 
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None, previewImage=None):
-        QtGui.QWidget.__init__(self)
+        QtGui.QWidget.__init__(self, parent)
         self.setWindowTitle("Select Spatial Features")
         self.parent = parent
         self.ilastik = parent

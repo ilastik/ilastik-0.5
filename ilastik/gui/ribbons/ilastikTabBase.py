@@ -8,7 +8,7 @@ class IlastikTabBase(object):
     
     def __init__(self, parent=None):
         self.ilastik = self.parent = parent
-    
+
     def on_activation(self):
         print "Tab changed: on_activation() not implementated by this tab"
     
