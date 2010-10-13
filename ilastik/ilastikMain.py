@@ -429,8 +429,7 @@ class CC(object):
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] is None:
             #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
             colortab = self.makeColorTab()
-            print self.cc.result.shape
-            ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+            ov = overlayMgr.OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"]._data = DataAccessor(self.cc.result)

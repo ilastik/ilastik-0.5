@@ -119,7 +119,7 @@ class BatchProcess(QtGui.QDialog):
                 
                 fr = h5py.File(str(filename), 'r')
                 dr = fr["volume/data"]
-                mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 128, 20)
+                mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 256, 30)
                 
 
                 #save results            
