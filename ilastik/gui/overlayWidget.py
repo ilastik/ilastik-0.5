@@ -161,6 +161,8 @@ class OverlayListWidget(QtGui.QListWidget):
         show3dAction = menu.addAction("Display 3D")
         if item.overlayItemReference.colorTable is None:
             colorAction = menu.addAction("Change Color")
+            if item.overlayItemReference.linkColor is True:
+                colorAction.setEnabled(False)
             if item.overlayItemReference.autoAlphaChannel:
                 alphaChannelAction = menu.addAction("Disable intensity blending")
             else:
@@ -376,8 +378,11 @@ class OverlayWidget(QtGui.QGroupBox):
                     overlayRef = None
                     break
         
-        if overlayRef is not None:    
-            self.overlays.insert(0,overlayRef)
+        if overlayRef is not None:   
+            if len(self.overlays)>1: 
+                self.overlays.insert(1,overlayRef)
+            else:
+                self.overlays.insert(0,overlayRef)
             answer = self.overlayListWidget.addOverlayRef(overlayRef)
             self.volumeEditor.repaint()
             return answer

@@ -133,6 +133,7 @@ class ClassificationInteractive(object):
                 data = numpy.zeros(activeImage.shape, 'float32')
                 ov = overlayMgr.OverlayItem(data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
+                ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
 
         #create Overlay for uncertainty:
         if activeImage.overlayMgr["Classification/Uncertainty"] is None:

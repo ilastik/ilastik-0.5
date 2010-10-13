@@ -188,6 +188,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
             for index, descr in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
                 ov = overlayMgr.OverlayItem(DataAccessor(prediction[:,:,:,:,index:index+1], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 dataItemImage.overlayMgr["Classification/Prediction/" + descr.name] = ov
+                ov.setColorGetter(descr.getColor, descr)
             margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])
             ov = overlayMgr.OverlayItem(DataAccessor(margin), alpha = 1.0, color = long(16535)<<16, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
             dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
@@ -641,6 +642,7 @@ class ClassifierPredictThread(ThreadBase):
                     ov = overlayMgr.OverlayItem(prediction[itemindex][:,:,:,:,p_i],  color = long(descriptions[p_num-1].color), alpha = 0.4, colorTable = None, autoAdd = display, autoVisible = display, min = 0, max = 1)
                     activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
                     ov = activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
+                    ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                     foregrounds.append(ov)
     
                 import ilastik.core.overlays.thresHoldOverlay as tho
