@@ -19,6 +19,7 @@ from PyQt4 import QtCore, QtGui, uic
 class FileLoader(QtGui.QDialog):
     def __init__(self):
         QtGui.QWidget.__init__(self)
+        self.setWindowTitle("File Loading")
         self.setMinimumWidth(400)
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)

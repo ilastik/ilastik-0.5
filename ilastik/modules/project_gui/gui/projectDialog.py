@@ -287,9 +287,13 @@ class ProjectDlg(QtGui.QDialog):
 class ProjectSettingsDlg(QtGui.QDialog):
     def __init__(self, ilastik = None, project=None):
         QtGui.QWidget.__init__(self, ilastik)
+        
+        self.setWindowTitle("Project Options")
 
         self.project = project
         self.ilastik = ilastik
+        
+        
 
 
         self.layout = QtGui.QVBoxLayout()

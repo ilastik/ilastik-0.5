@@ -13,6 +13,7 @@ class shortcutManager():
 class shortcutManagerDlg(QtGui.QDialog):
     def __init__(self, s):
         QtGui.QDialog.__init__(self)
+        self.setWindowTitle("Shortcuts")
         if len(s.shortcuts)>0:
             l = QtGui.QGridLayout(self)
             

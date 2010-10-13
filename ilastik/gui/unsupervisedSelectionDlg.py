@@ -36,6 +36,7 @@ from core.unsupervised import *
 class UnsupervisedSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastik):
         QtGui.QWidget.__init__(self, ilastik)
+        self.setWindowTitle("Spectral Features")
         self.ilastik = ilastik
         self.previousUnsupervisedDecomposer = self.currentUnsupervisedDecomposer = self.ilastik.project.unsupervisedDecomposer
 

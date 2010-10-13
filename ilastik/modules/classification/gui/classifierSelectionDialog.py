@@ -9,6 +9,7 @@ import os
 class ClassifierSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastikMain):
         QtGui.QWidget.__init__(self, ilastikMain)
+        self.setWindowTitle("Select Classifier")
         self.ilastik = ilastikMain
         self.previousClassifier = self.currentClassifier = self.ilastik.project.dataMgr.module["Classification"].classifier
 

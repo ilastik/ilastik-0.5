@@ -35,6 +35,7 @@ from ilastik.modules.classification.core import classificationMgr
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self)
+        self.setWindowTitle("Batch Process")
         self.filenames = []
         self.ilastik = parent
         self.setMinimumWidth(400)
