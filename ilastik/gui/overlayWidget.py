@@ -217,7 +217,7 @@ class OverlayListWidget(QtGui.QListWidget):
             channelOffset = item.overlayItemReference._data.shape[-1]>1
             formatList = dataImpex.DataImpex.exportFormatList()
             formatList.append("h5")
-            expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset)
+            expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset, parent=self.volumeEditor.ilastik)
             expdlg.exec_()
             try:
                 tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())

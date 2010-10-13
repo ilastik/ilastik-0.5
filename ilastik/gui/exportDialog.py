@@ -30,8 +30,8 @@
 from PyQt4 import QtCore, QtGui
 
 class ExportDialog(QtGui.QDialog):
-    def __init__(self, formatList, timeOffset, sliceOffset, channelOffset):
-        QtGui.QDialog.__init__(self)
+    def __init__(self, formatList, timeOffset, sliceOffset, channelOffset, parent=None):
+        QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle("Export Images")
         layout = QtGui.QVBoxLayout()
             
