@@ -5,6 +5,7 @@ import stackloader, fileloader
 import os, sys
 import traceback
 import gc
+from ilastik.gui.iconMgr import ilastikIcons
 
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None, newProject = True):
@@ -47,6 +48,9 @@ class ProjectDlg(QtGui.QDialog):
         self.tableWidget.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.tableWidget.verticalHeader().hide()
         self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
+        self.addFile.setIcon(QtGui.QIcon(ilastikIcons.DoubleArrow))
+        self.removeFile.setIcon(QtGui.QIcon(ilastikIcons.DoubleArrowBack))
+
 
 
     @QtCore.pyqtSignature("")

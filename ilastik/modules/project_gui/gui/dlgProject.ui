@@ -141,6 +141,48 @@ p, li { white-space: pre-wrap; }
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
+         <widget class="QPushButton" name="addFile">
+          <property name="text">
+           <string>Add</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../../../gui/icons/32x32/actions/media-seek-forward.png</normaloff>../../../gui/icons/32x32/actions/media-seek-forward.png</iconset>
+          </property>
+          <property name="default">
+           <bool>true</bool>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="removeFile">
+          <property name="text">
+           <string>Remove</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>../../../gui/icons/32x32/actions/media-seek-backward.png</normaloff>../../../gui/icons/32x32/actions/media-seek-backward.png</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Advanced</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="loadStack">
           <property name="text">
            <string>Load Stack</string>
@@ -157,26 +199,6 @@ p, li { white-space: pre-wrap; }
          <widget class="QPushButton" name="loadFileButton">
           <property name="text">
            <string>Load File</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="addFile">
-          <property name="text">
-           <string>Add &gt;&gt;</string>
-          </property>
-          <property name="default">
-           <bool>true</bool>
-          </property>
-          <property name="flat">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="removeFile">
-          <property name="text">
-           <string>Remove &lt;&lt;</string>
           </property>
          </widget>
         </item>
