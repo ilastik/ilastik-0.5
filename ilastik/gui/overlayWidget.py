@@ -378,8 +378,11 @@ class OverlayWidget(QtGui.QGroupBox):
                     overlayRef = None
                     break
         
-        if overlayRef is not None:    
-            self.overlays.insert(0,overlayRef)
+        if overlayRef is not None:   
+            if len(self.overlays)>1: 
+                self.overlays.insert(1,overlayRef)
+            else:
+                self.overlays.insert(0,overlayRef)
             answer = self.overlayListWidget.addOverlayRef(overlayRef)
             self.volumeEditor.repaint()
             return answer
