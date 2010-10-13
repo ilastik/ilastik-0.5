@@ -93,8 +93,8 @@ class MyTreeWidgetItem(QTreeWidgetItem):
         self.item = item
 
 class OverlaySelectionDialog(QDialog):
-    def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[], parent=None):
-        QWidget.__init__(self, parent)
+    def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[]):
+        QWidget.__init__(self, ilastik)
         
         # init
         # ------------------------------------------------
