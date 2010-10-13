@@ -66,6 +66,8 @@ class ClassificationTrain(QtCore.QObject):
         #process all unaccounted label changes
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
         
         newLabels = self.parent.labelWidget.getPendingLabels()
         if len(newLabels) > 0:
@@ -108,6 +110,8 @@ class ClassificationTrain(QtCore.QObject):
 
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         
 
 class ClassificationInteractive(object):
@@ -117,7 +121,11 @@ class ClassificationInteractive(object):
         
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
-        
+
+        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
+                
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
 
         self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
@@ -184,6 +192,10 @@ class ClassificationInteractive(object):
         
     def stop(self):
         self.classificationInteractive.stopped = True
+        
+        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
 
         self.classificationInteractive.dataPending.set() #wake up thread one last time before his death
         self.classificationInteractive.wait()
@@ -208,7 +220,10 @@ class ClassificationPredict(object):
         self.parent.setTabBusy(True)       
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(False)
-         
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
+        
+        
         self.classificationTimer = QtCore.QTimer()
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
                     
@@ -249,3 +264,5 @@ class ClassificationPredict(object):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnExportClassifier.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
