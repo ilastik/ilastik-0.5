@@ -84,7 +84,7 @@ class MainWindow(QtGui.QMainWindow):
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
         self.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
-        self.setWindowIcon(QtGui.QIcon("logo/ilastik-icon.png"))
+        self.setWindowIcon(QtGui.QIcon(ilastikIcons.Ilastik))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
         

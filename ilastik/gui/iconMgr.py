@@ -60,6 +60,8 @@ class ilastikIcons(object):
     ZoomIn = iconPath + 'actions/zoom-in.png'
     ZoomOut = iconPath + 'actions/zoom-out.png'
     
+    Ilastik = iconPath + 'ilastik-icon.png'
+    
     #22x22
     iconPath = ilastikPath+'/gui/icons/22x22/'
     AddSelx22 = iconPath + "actions/list-add.png"
