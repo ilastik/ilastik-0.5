@@ -33,8 +33,8 @@ from ilastik.modules.classification.core import classificationMgr
 from ilastik.modules.classification.core import classificationMgr
 
 class BatchProcess(QtGui.QDialog):
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self)
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
         self.setWindowTitle("Batch Process")
         self.filenames = []
         self.ilastik = parent

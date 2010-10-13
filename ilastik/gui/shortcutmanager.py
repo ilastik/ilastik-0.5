@@ -7,12 +7,12 @@ class shortcutManager():
     def register(self, shortcut, description):
         self.shortcuts[shortcut.key().toString()] = description
         
-    def showDialog(self):
-        dlg = shortcutManagerDlg(self)
+    def showDialog(self, parent=None):
+        dlg = shortcutManagerDlg(self, parent)
 
 class shortcutManagerDlg(QtGui.QDialog):
-    def __init__(self, s):
-        QtGui.QDialog.__init__(self)
+    def __init__(self, s, parent=None):
+        QtGui.QDialog.__init__(self, parent)
         self.setWindowTitle("Shortcuts")
         if len(s.shortcuts)>0:
             l = QtGui.QGridLayout(self)
