@@ -83,9 +83,8 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
-        
-        #self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
-        self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
+        self.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
+        self.setWindowIcon(QtGui.QIcon("../logo/ilastik-icon.png"))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
         
@@ -159,9 +158,9 @@ class MainWindow(QtGui.QMainWindow):
 
             help_text = "<b>OpenGL + OpenGL Overview</b> allows for fastest rendering if OpenGL is correctly installed.<br> If visualization is slow or incomplete, try the <b>Software + OpenGL</b> mode."
             if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(None,'ilastik: Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
             elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(None,'ilastik: Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
             else:
                 dl = []
                 dl.append("")
@@ -548,8 +547,7 @@ if __name__ == "__main__":
     ilastik.modules.loadModuleGuis()
 
     mainwindow = MainWindow(sys.argv)
-    mainwindow.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
-    mainwindow.setWindowIcon( QtGui.QIcon("../logo/ilastik-icon.png"))
+
     
     mainwindow.show() 
     splashScreen.finish(mainwindow)
