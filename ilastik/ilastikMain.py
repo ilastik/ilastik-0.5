@@ -156,11 +156,12 @@ class MainWindow(QtGui.QMainWindow):
                 gl_version = '0'
             del w
 
-            help_text = "Normally the default option should work for you\nhowever, in some cases it might be beneficial to try to use another rendering method:"
+
+            help_text = "<b>OpenGL + OpenGL Overview</b> allows for fastest rendering if OpenGL is correctly installed.<br> If visualization is slow or incomplete, try the <b>Software + OpenGL</b> mode."
             if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(None,'ilastik: graphics setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'ilastik: Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
             elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(None,'ilastik: graphics setup', help_text, ['Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(None,'ilastik: Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
             else:
                 dl = []
                 dl.append("")
