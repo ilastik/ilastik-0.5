@@ -798,7 +798,7 @@ class ClassifierInteractiveThread(ThreadBase):
                             for i in range(ba._blockCount):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
-                                margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
+                                margin = activeLearning.computeEnsembleMargin2D(lb)
                                 
                                 uncertaintyData[vs[0], vs[1], b[0]:b[1],b[2]:b[3],0] = margin
 #                                seg = segmentationMgr.LocallyDominantSegmentation2D(lb, 1.0)
@@ -806,7 +806,7 @@ class ClassifierInteractiveThread(ThreadBase):
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
                                     predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
-                                    predictionData[vs[0],vs[1],b[0]:b[1],b[2]:b[3],0] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    predictionData[vs[0],vs[1],b[0]:b[1],b[2]:b[3],0] = tpc[b[0]:b[1],b[2]:b[3],p_i]
 
                                 for p_i, p_num in enumerate(not_predicted):
                                     predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
@@ -818,12 +818,12 @@ class ClassifierInteractiveThread(ThreadBase):
                             for i in range(ba._blockCount):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
-                                margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
+                                margin = activeLearning.computeEnsembleMargin2D(lb)
                                 uncertaintyData[vs[0], b[0]:b[1],vs[2],b[2]:b[3],0] = margin
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
                                     predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
-                                    predictionData[vs[0],b[0]:b[1],vs[2],b[2]:b[3],0] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    predictionData[vs[0],b[0]:b[1],vs[2],b[2]:b[3],0] = tpc[b[0]:b[1],b[2]:b[3],p_i]
 
                                 for p_i, p_num in enumerate(not_predicted):
                                     predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
@@ -836,12 +836,12 @@ class ClassifierInteractiveThread(ThreadBase):
                             for i in range(ba._blockCount):
                                 b = ba.getBlockBounds(i,0)
                                 lb = tpc[b[0]:b[1],b[2]:b[3],:]
-                                margin = activeLearning.computeEnsembleMargin2D(lb)*255.0
+                                margin = activeLearning.computeEnsembleMargin2D(lb)
                                 uncertaintyData[vs[0], b[0]:b[1],b[2]:b[3], vs[3],0] = margin
 
                                 for p_i, p_num in enumerate(self.classifiers[0].unique_vals):
                                     predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
-                                    predictionData[vs[0],b[0]:b[1],b[2]:b[3],vs[3],0] = (tpc[b[0]:b[1],b[2]:b[3],p_i]* 255).astype(numpy.uint8)
+                                    predictionData[vs[0],b[0]:b[1],b[2]:b[3],vs[3],0] = tpc[b[0]:b[1],b[2]:b[3],p_i]
 
                                 for p_i, p_num in enumerate(not_predicted):
                                     predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
