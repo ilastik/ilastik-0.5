@@ -539,22 +539,20 @@ class UnsupervisedDecomposition(object):
 if __name__ == "__main__":
     app = QtGui.QApplication.instance() #(sys.argv
     
-    #load gui functionality (after creation of qapplication)
-    import time
-    
-    a = QtGui.QPixmap("../logo/ilastik-splash.png")
-    s = QtGui.QSplashScreen(a)#,QtCore.Qt.WindowStaysOnTopHint)
+    splashImage = QtGui.QPixmap("../logo/ilastik-splash.png")
 
-    s.show();
+    splashScreen = QtGui.QSplashScreen(splashImage)
+    splashScreen.show();
 
     app.processEvents();
     ilastik.modules.loadModuleGuis()
-    #app = QtGui.QApplication(sys.argv)
+
     mainwindow = MainWindow(sys.argv)
     mainwindow.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
+    mainwindow.setWindowIcon( QtGui.QIcon("../logo/ilastik-icon.png"))
     
     mainwindow.show() 
-    s.finish(mainwindow)
+    splashScreen.finish(mainwindow)
     app.exec_()
     print "cleaning up..."
     if mainwindow.labelWidget is not None:
