@@ -45,4 +45,4 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnShortcuts, QtCore.SIGNAL('clicked()'), self.on_btnShortcuts_clicked)
         
     def on_btnShortcuts_clicked(self):
-        shortcutManager.showDialog()
+        shortcutManager.showDialog(self.ilastik)

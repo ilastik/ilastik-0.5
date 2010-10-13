@@ -54,7 +54,7 @@ try:
                 self.interpreter = code.InteractiveInterpreter(locals)
                 self.consoleWidget = SciShell(self.interpreter)
                 
-                dock = QtGui.QDockWidget("Ilastik Interactive Console", self.ilastik)
+                dock = QtGui.QDockWidget("ilastik interactive console", self.ilastik)
                 dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
                 dock.setWidget(self.consoleWidget)
                 

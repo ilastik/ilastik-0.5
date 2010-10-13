@@ -33,8 +33,9 @@ from ilastik.modules.classification.core import classificationMgr
 from ilastik.modules.classification.core import classificationMgr
 
 class BatchProcess(QtGui.QDialog):
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self)
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.setWindowTitle("Batch Process")
         self.filenames = []
         self.ilastik = parent
         self.setMinimumWidth(400)
@@ -119,7 +120,7 @@ class BatchProcess(QtGui.QDialog):
                 
                 fr = h5py.File(str(filename), 'r')
                 dr = fr["volume/data"]
-                mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 128, 20)
+                mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 256, 30)
                 
 
                 #save results            

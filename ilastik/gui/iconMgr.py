@@ -42,6 +42,7 @@ class ilastikIcons(object):
     Undo = iconPath + 'actions/edit-undo.png'
     Redo = iconPath + 'actions/edit-redo.png'
     DoubleArrow = iconPath + 'actions/media-seek-forward.png'
+    DoubleArrowBack = iconPath + 'actions/media-seek-backward.png'
     Preferences = iconPath + 'categories/preferences-system.png'
     New = iconPath + "actions/document-new.png" 
     Open = iconPath + "actions/document-open.png" 

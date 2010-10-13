@@ -30,8 +30,9 @@
 from PyQt4 import QtCore, QtGui
 
 class ExportDialog(QtGui.QDialog):
-    def __init__(self, formatList, timeOffset, sliceOffset, channelOffset):
-        QtGui.QDialog.__init__(self)
+    def __init__(self, formatList, timeOffset, sliceOffset, channelOffset, parent=None):
+        QtGui.QDialog.__init__(self, parent)
+        self.setWindowTitle("Export Images")
         layout = QtGui.QVBoxLayout()
             
         l = QtGui.QHBoxLayout()
@@ -51,12 +52,7 @@ class ExportDialog(QtGui.QDialog):
         self.formatBox = QtGui.QComboBox()
         for item in self.formatList:
             self.formatBox.addItem(QtCore.QString(item))
-        #this is just setting the default to .tiff. Yes, it's ugly and depends on
-        #the current vigra format list
-#        if len(self.formatList)>13:
-#            self.formatBox.setCurrentIndex(12)
-#        else:
-#            self.formatBox.setCurrentIndex(0)
+
         l.addWidget(self.formatBox)        
         layout.addLayout(l)
         

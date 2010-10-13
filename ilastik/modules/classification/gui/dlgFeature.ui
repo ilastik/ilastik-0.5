@@ -17,11 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Select Features</string>
-  </property>
-  <property name="windowIcon">
-   <iconset>
-    <normaloff>../../icons/32x32/actions/window-new.png</normaloff>../../icons/32x32/actions/window-new.png</iconset>
+   <string>Spatial Features</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>

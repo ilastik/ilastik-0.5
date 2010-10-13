@@ -18,6 +18,7 @@ class MyListWidgetItem(QListWidgetItem):
 class OverlayCreateSelectionDlg(QDialog):
     def __init__(self, ilastikMain):
         QWidget.__init__(self, ilastikMain)
+        self.setWindowTitle("Overlay Dialog")
         self.ilastik = ilastikMain
 
         #get the absolute path of the 'ilastik' module
@@ -92,8 +93,8 @@ class MyTreeWidgetItem(QTreeWidgetItem):
         self.item = item
 
 class OverlaySelectionDialog(QDialog):
-    def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[], parent=None):
-        QWidget.__init__(self, parent)
+    def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[]):
+        QWidget.__init__(self, ilastik)
         
         # init
         # ------------------------------------------------

@@ -700,7 +700,8 @@ class VolumeEditor(QtGui.QWidget):
             sliceOffsetCheck = True
         timeOffsetCheck = self.image.shape[0]>1
         formatList = QtGui.QImageWriter.supportedImageFormats()
-        expdlg = exportDialog.ExportDialog(formatList, timeOffsetCheck, sliceOffsetCheck, None)
+        formatList = [x for x in formatList if x in ['png', 'tif']]
+        expdlg = exportDialog.ExportDialog(formatList, timeOffsetCheck, sliceOffsetCheck, None, parent=self.ilastik)
         expdlg.exec_()
         try:
             tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())

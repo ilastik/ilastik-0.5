@@ -284,6 +284,7 @@ class loadOptions:
 class previewTable(QtGui.QDialog):
     def __init__(self, fileList, parent=None, newProject = True):
         QtGui.QWidget.__init__(self, parent)
+        self.setWindowTitle("Preview")
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
         self.fileList = fileList

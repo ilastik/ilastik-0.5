@@ -105,7 +105,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             
             #real_weights = numpy.zeros(volume.shape + (3,))        
             
-            borderIndicator = QtGui.QInputDialog.getItem(None, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness"],  editable = False)
+            borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness"],  editable = False)
             borderIndicator = str(borderIndicator[0])
             
             sigma = 1.0

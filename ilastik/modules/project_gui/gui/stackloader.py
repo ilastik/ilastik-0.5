@@ -34,8 +34,9 @@ import loadOptions
 from PyQt4 import QtCore, QtGui
 
 class StackLoader(QtGui.QDialog):
-    def __init__(self):
-        QtGui.QWidget.__init__(self)
+    def __init__(self, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+        self.setWindowTitle("Load File Stack")
         self.setMinimumWidth(400)
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)

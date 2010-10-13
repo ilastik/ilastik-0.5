@@ -41,26 +41,27 @@ import os
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
+from ilastik.core.projectMgr import ILASTIK_VERSION
 import ilastik.modules
 
 #load core functionality
 ilastik.modules.loadModuleCores()
 
-from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
-import ilastik.gui
-from ilastik.core import projectMgr, unsupervisedMgr, activeLearning
+#from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
+#import ilastik.gui
+#from ilastik.core import projectMgr, unsupervisedMgr, activeLearning
 from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
 
-from ilastik.core import connectedComponentsMgr
-from ilastik.core import projectMgr
+#from ilastik.core import connectedComponentsMgr
+#from ilastik.core import projectMgr
 
 from ilastik.gui import volumeeditor as ve
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
-import ilastik.gui.ribbons.standardRibbons
+#import ilastik.gui.ribbons.standardRibbons
 
 import threading
 import h5py
@@ -82,9 +83,8 @@ class MainWindow(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
-        
-        #self.setWindowTitle("Ilastik rev: " + version.getIlastikVersion())
-        self.setWindowIcon(QtGui.QIcon(ilastikIcons.Python))
+        self.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
+        self.setWindowIcon(QtGui.QIcon("../logo/ilastik-icon.png"))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
         
@@ -155,11 +155,12 @@ class MainWindow(QtGui.QMainWindow):
                 gl_version = '0'
             del w
 
-            help_text = "Normally the default option should work for you\nhowever, in some cases it might be beneficial to try to use another rendering method:"
+
+            help_text = "<b>OpenGL + OpenGL Overview</b> allows for fastest rendering if OpenGL is correctly installed.<br> If visualization is slow or incomplete, try the <b>Software + OpenGL</b> mode."
             if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
             elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(None,'Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
             else:
                 dl = []
                 dl.append("")
@@ -427,8 +428,7 @@ class CC(object):
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] is None:
             #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
             colortab = self.makeColorTab()
-            print self.cc.result.shape
-            ov = OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+            ov = overlayMgr.OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"]._data = DataAccessor(self.cc.result)
@@ -538,13 +538,19 @@ class UnsupervisedDecomposition(object):
 if __name__ == "__main__":
     app = QtGui.QApplication.instance() #(sys.argv
     
-    #load gui functionality (after creation of qapplication)
+    splashImage = QtGui.QPixmap("../logo/ilastik-splash.png")
+
+    splashScreen = QtGui.QSplashScreen(splashImage)
+    splashScreen.show();
+
+    app.processEvents();
     ilastik.modules.loadModuleGuis()
-    
-    #app = QtGui.QApplication(sys.argv)
+
     mainwindow = MainWindow(sys.argv)
+
     
     mainwindow.show() 
+    splashScreen.finish(mainwindow)
     app.exec_()
     print "cleaning up..."
     if mainwindow.labelWidget is not None:

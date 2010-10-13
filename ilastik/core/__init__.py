@@ -27,4 +27,4 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-print "Load Ilastik Core"
+print "Load ilastik Core"

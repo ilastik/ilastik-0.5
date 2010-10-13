@@ -3,6 +3,7 @@ from PyQt4 import QtCore, QtGui
 class EditChannelsDialog(QtGui.QDialog):
     def __init__(self, selectedChannels, numOfChannels, parent):
         QtGui.QWidget.__init__(self, parent=None)
+        self.setWindowTitle("Edit Channels")
         
         self.selectedChannels = selectedChannels
         self.numOfChannels = numOfChannels

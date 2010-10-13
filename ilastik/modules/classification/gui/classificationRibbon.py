@@ -104,7 +104,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnSelectFeatures_clicked(self):
         preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
-        self.parent.newFeatureDlg = FeatureDlg(self.parent, preview)
+        self.parent.newFeatureDlg = FeatureDlg(self.ilastik, preview)
 
                     
     def on_btnStartLive_clicked(self, state):

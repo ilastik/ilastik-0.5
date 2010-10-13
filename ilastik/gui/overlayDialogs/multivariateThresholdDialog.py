@@ -24,7 +24,9 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             
     
     def __init__(self, ilastik, instance = None):
-        QtGui.QDialog.__init__(self)
+        QtGui.QDialog.__init__(self, ilastik)
+        self.setWindowTitle("Multi-variate Thresholding")
+        
         self.ilastik = ilastik
         if instance != None:
             self.overlayItem = instance

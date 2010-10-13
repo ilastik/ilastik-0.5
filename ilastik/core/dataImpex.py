@@ -252,7 +252,9 @@ class DataImpex(object):
 
     @staticmethod
     def exportFormatList():
-        return vigra.impex.listExtensions().split(' ')
+        formats = vigra.impex.listExtensions().split(' ')
+        formats = [x for x in formats if x in ['png', 'tif']]
+        return formats
 
 #           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
       #      if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):

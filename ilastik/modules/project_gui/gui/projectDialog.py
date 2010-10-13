@@ -5,6 +5,7 @@ import stackloader, fileloader
 import os, sys
 import traceback
 import gc
+from ilastik.gui.iconMgr import ilastikIcons
 
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None, newProject = True):
@@ -47,6 +48,9 @@ class ProjectDlg(QtGui.QDialog):
         self.tableWidget.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.tableWidget.verticalHeader().hide()
         self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
+        self.addFile.setIcon(QtGui.QIcon(ilastikIcons.DoubleArrow))
+        self.removeFile.setIcon(QtGui.QIcon(ilastikIcons.DoubleArrowBack))
+
 
 
     @QtCore.pyqtSignature("")
@@ -87,7 +91,7 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")     
     def on_loadStack_clicked(self):
-        sl = stackloader.StackLoader()
+        sl = stackloader.StackLoader(self)
         #imageData = sl.exec_()
         path, fileList, options = sl.exec_()
         if path is None:
@@ -139,7 +143,7 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")
     def on_loadFileButton_clicked(self):
-        fl = fileloader.FileLoader()
+        fl = fileloader.FileLoader(self)
         #imageData = sl.exec_()
         fl.exec_()
         itemList = []
@@ -287,15 +291,19 @@ class ProjectDlg(QtGui.QDialog):
 class ProjectSettingsDlg(QtGui.QDialog):
     def __init__(self, ilastik = None, project=None):
         QtGui.QWidget.__init__(self, ilastik)
+        
+        self.setWindowTitle("Project Options")
 
         self.project = project
         self.ilastik = ilastik
+        
+        
 
 
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.drawUpdateIntervalCheckbox = QtGui.QCheckBox("Train&Predict during brush strokes in Interactive Mode")
+        self.drawUpdateIntervalCheckbox = QtGui.QCheckBox("Train and predict during brush strokes in Interactive Mode")
         self.drawUpdateIntervalCheckbox.setCheckState((self.project.drawUpdateInterval > 0)  * 2)
         self.connect(self.drawUpdateIntervalCheckbox, QtCore.SIGNAL("stateChanged(int)"), self.toggleUpdateInterval)
         self.layout.addWidget(self.drawUpdateIntervalCheckbox)
@@ -315,15 +323,15 @@ class ProjectSettingsDlg(QtGui.QDialog):
             self.drawUpdateIntervalFrame.setVisible(False)
             self.drawUpdateIntervalSpin.setValue(300)
         
-        self.normalizeCheckbox = QtGui.QCheckBox("normalize Data for display in each SliceView seperately")
+        self.normalizeCheckbox = QtGui.QCheckBox("Normalize data for display in each slice view separately")
         self.normalizeCheckbox.setCheckState(self.project.normalizeData * 2)
         self.layout.addWidget(self.normalizeCheckbox)
 
-        self.rgbDataCheckbox = QtGui.QCheckBox("interpret 3-Channel files as RGB Data")
+        self.rgbDataCheckbox = QtGui.QCheckBox("Interpret 3-Channel files as RGB images")
         self.rgbDataCheckbox.setCheckState(self.project.rgbData * 2)
         self.layout.addWidget(self.rgbDataCheckbox)
 
-        self.borderMarginCheckbox = QtGui.QCheckBox("show border margin indicator")
+        self.borderMarginCheckbox = QtGui.QCheckBox("Show border margin indicator")
         self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin * 2)
         self.layout.addWidget(self.borderMarginCheckbox)
 
