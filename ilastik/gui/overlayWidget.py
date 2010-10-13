@@ -41,7 +41,7 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         QtGui.QListWidgetItem.__init__(self,overlayItemReference.name)
         self.overlayItemReference = overlayItemReference
         self.name = overlayItemReference.name
-        self.color = self.overlayItemReference.color
+
         self.visible = overlayItemReference.visible
         self.setToolTip(self.overlayItemReference.key)
 
@@ -49,6 +49,10 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         
         self.setCheckState(self.visible * 2)
 
+    def __getattr__(self,  name):
+        if name == "color":
+            return self.overlayItemReference.color
+        raise AttributeError,  name
 
 class OverlayListWidget(QtGui.QListWidget):
 

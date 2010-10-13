@@ -237,6 +237,7 @@ class OverlayMgr():
                 it = self._dict[key]
                 it.name = value.name = key.split('/')[-1]
                 it._data = value._data
+                it.color = value.color
                 res = it
             #update the key
             res.key = key
