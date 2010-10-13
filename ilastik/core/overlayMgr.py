@@ -236,16 +236,16 @@ class OverlayMgr():
     OverlayItems that have the autoAdd Property set to True are immediately added to the currently
     visible overlayWidget
     """
-    def __init__(self,  widget = None):
+    def __init__(self,  ilastik = None):
         self._dict = {}
-        self._widget = widget
+        self.ilastik = ilastik
         
     def remove(self,  key):
         it = self._dict.pop(key,  None)
         if it != None:
             it.remove()
-            if self._widget != None:
-                self._widget.removeOverlay(key)
+            if self.ilastik != None:
+                self.ilastik.labelWidget.overlayWidget.removeOverlay(key)
             
     def __setitem__(self,  key,  value):
         addToWidget = False
@@ -275,8 +275,8 @@ class OverlayMgr():
         return self._dict.values()
 
     def _addToWidget(self,  value):
-        if self._widget != None and value.autoAdd is True:
-            self._widget.addOverlayRef(value.getRef())
+        if self.ilastik != None and value.autoAdd is True:
+            self.ilastik.labelWidget.overlayWidget.addOverlayRef(value.getRef())
             
             
     def __getitem__(self,  key):

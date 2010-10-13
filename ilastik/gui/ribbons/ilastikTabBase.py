@@ -12,6 +12,9 @@ class IlastikTabBase(object):
     def on_activation(self):
         print "Tab changed: on_activation() not implementated by this tab"
     
+    def on_deActivation(self):
+        pass
+    
     def on_imageChanged(self):
         print "Image changed: on_imageChanged() not implementated by this tab"
         

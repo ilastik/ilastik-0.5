@@ -66,7 +66,7 @@ class OverlayListWidget(QtGui.QListWidget):
             self.slider.setValue(value)
 
     def __init__(self,volumeEditor,  overlayWidget):
-        QtGui.QListWidget.__init__(self, overlayWidget)
+        QtGui.QListWidget.__init__(self)
         self.volumeEditor = volumeEditor
         self.overlayWidget = overlayWidget
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)

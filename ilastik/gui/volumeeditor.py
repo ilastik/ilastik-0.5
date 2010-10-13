@@ -737,7 +737,7 @@ class VolumeEditor(QtGui.QWidget):
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
         self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
-        self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr._widget = self.overlayWidget
+        self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr.ilastik = self.ilastik
 
 
     def get_copy(self):
