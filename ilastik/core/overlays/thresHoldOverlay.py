@@ -57,23 +57,20 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.setBackgrounds(backgrounds)
                       
         accessor = MultivariateThresholdAccessor(self)
+        overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, autoAdd = True, autoVisible = True,  linkColorTable = True)        
+        self.color = None
         
-        self.generateColorTab()
-        
-        overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, colorTable = self.colorTable, autoAdd = True, autoVisible = True,  linkColorTable = True)        
-
-    def generateColorTab(self):
+    def getColorTab(self):
         colorTab = []
         for i in range(256):
             colorTab.append(long(0))
 
         for index,item in enumerate(self.foregrounds):
-            if isinstance(item.color, int) or isinstance(item.color, long):
-                colorTab[index+1] = item.color
-            else:
-                colorTab[index+1] = long(item.color.rgba())
+            print item
+            if item.getColor() is not None:
+                colorTab[index+1] = item.getColor()
 
-        self.colorTable = colorTab
+        return colorTab
         
 
     
@@ -94,8 +91,9 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.foregrounds = foregrounds
         self.calculateDsets(dsets)
         self.recalculateThresholds() 
-        self.generateColorTab()     
-            
+        
+
+
     def setBackgrounds(self, backgrounds):
         dsets = []
         for i,f in enumerate(self.foregrounds):
@@ -112,7 +110,6 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.backgrounds = backgrounds
         self.calculateDsets(dsets)
         self.recalculateThresholds()
-        self.generateColorTab()     
 
     def calculateDsets(self, dsets):
         """
