@@ -183,7 +183,7 @@ class MainWindow(QtGui.QMainWindow):
         
         self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject) 
         self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
-        
+        self.tabChanged(0)
     
     def showFullscreen(self):
         if self.fullScreen:
@@ -200,6 +200,7 @@ class MainWindow(QtGui.QMainWindow):
             self.fileSelectorList.addItem(item._name)
     
     def changeImage(self, number):
+        self.fileSelectorList.setEnabled(False)
         self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         self.activeImageLock.acquire()
         QtCore.QCoreApplication.processEvents()
@@ -231,6 +232,7 @@ class MainWindow(QtGui.QMainWindow):
         # Notify tabs
         self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()        
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
+        self.fileSelectorList.setEnabled(True)
             
     def historyUndo(self):
         if self.labelWidget is not None:
@@ -276,7 +278,8 @@ class MainWindow(QtGui.QMainWindow):
             if i == self.ribbon.currentTabNumber:
                 enabled = True
             self.ribbon.setTabEnabled(i, enabled)
-        self.labelWidget.labelWidget.setEnabled(not state)
+        if self.labelWidget is not None:
+            self.labelWidget.labelWidget.setEnabled(not state)
 
     def tabChanged(self,  index):
         """

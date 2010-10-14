@@ -11,6 +11,8 @@ class FeatureComputation(object):
     
     def featureCompute(self):
         self.parent.setTabBusy(True)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)        
         self.parent.project.dataMgr.featureLock.acquire()
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
@@ -49,6 +51,8 @@ class FeatureComputation(object):
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)        
         self.parent.setTabBusy(False)
                     
     def featureShow(self, item):
@@ -140,8 +144,9 @@ class ClassificationInteractive(object):
             if activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] is None:
                 data = numpy.zeros(activeImage.shape, 'float32')
                 ov = overlayMgr.OverlayItem(activeImage, data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
-                activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
                 ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
+                activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
+                
 
         #create Overlay for uncertainty:
         if activeImage.overlayMgr["Classification/Uncertainty"] is None:

@@ -44,7 +44,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         #create SeedsOverlay
-        ov = OverlayItem(self.ilastik._activeImage.Interactive_Segmentation.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage.Interactive_Segmentation.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        ov = OverlayItem(self.ilastik._activeImage, self.ilastik._activeImage.Interactive_Segmentation.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage.Interactive_Segmentation.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = ov
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
 
@@ -193,7 +193,7 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
+            ov = OverlayItem(activeItem, activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem.Interactive_Segmentation.segmentation)
