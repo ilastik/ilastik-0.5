@@ -33,11 +33,10 @@ class ProjectDlg(QtGui.QDialog):
         if hasattr(self.ilastik,'project') and (not self.newProject):
             self.dataMgr = self.ilastik.project.dataMgr
             self.project = self.ilastik.project
-            
         else:
             print "Create new project"
             self.dataMgr = dataMgr.DataMgr()
-            self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
+            self.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
                     
     def initDlg(self):
         #get the absolute path of the 'ilastik' module
@@ -280,6 +279,7 @@ class ProjectDlg(QtGui.QDialog):
             if not contained:
                 theDataItem._projects.append(self.parent.project)
         gc.collect()
+        self.ilastik.project = self.project
         self.accept()
 
         
