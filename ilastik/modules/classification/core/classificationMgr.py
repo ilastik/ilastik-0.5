@@ -719,8 +719,8 @@ class ClassifierInteractiveThread(ThreadBase):
     def classifierPredict(self, i, start, end, num, featureMatrix):
         try:
             cf = self.classifiers[num]
-            pred = cf.predict(featureMatrix[i][start:end,:]) / len(self.classifiers)
-            self._prediction[i][start:end,:] += pred
+            pred = cf.predict(featureMatrix[i][start:end,:]) 
+            self._prediction[i][start:end,:] += 1.0 * pred / len(self.classifiers)
             self.count += 1
         except Exception, e:
             print "### ClassifierInteractiveThread::classifierPredict"
