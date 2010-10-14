@@ -253,8 +253,7 @@ class ClassificationPredict(object):
             self.terminateClassificationProgressBar()
 
     def finalize(self):
-        activeImage = self.parent._activeImage
-        self.classificationPredict.generateOverlays(activeImage)
+        self.classificationPredict.generateOverlays(self.parent.project.dataMgr._activeImage)
         self.parent.labelWidget.repaint()
         self.parent.setTabBusy(False)
         

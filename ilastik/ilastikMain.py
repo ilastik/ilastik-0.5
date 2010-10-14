@@ -200,6 +200,7 @@ class MainWindow(QtGui.QMainWindow):
             self.fileSelectorList.addItem(item._name)
     
     def changeImage(self, number):
+        self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         self.activeImageLock.acquire()
         QtCore.QCoreApplication.processEvents()
         if hasattr(self, "classificationInteractive"):
@@ -228,7 +229,7 @@ class MainWindow(QtGui.QMainWindow):
             #self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
             self.classificationInteractive.updateThreadQueues()
         # Notify tabs
-        self.tabChanged(self.ribbon.currentTabNumber)
+        self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()        
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
             
     def historyUndo(self):

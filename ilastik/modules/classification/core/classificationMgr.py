@@ -627,6 +627,7 @@ class ClassifierPredictThread(ThreadBase):
                 
     def generateOverlays(self, activeImage = None):
         for itemindex, activeItem in enumerate(self.dataMgr):
+            print "shaaaaaaappe", activeItem.shape, itemindex
             display = False
             if activeImage == activeItem:
                 display = True
@@ -648,7 +649,7 @@ class ClassifierPredictThread(ThreadBase):
                 import ilastik.core.overlays.thresHoldOverlay as tho
                 
                 if activeItem.overlayMgr["Classification/Segmentation"] is None:
-                    ov = tho.ThresHoldOverlay(foregrounds, [])
+                    ov = tho.ThresHoldOverlay(foregrounds, [], autoVisible = display)
                     activeItem.overlayMgr["Classification/Segmentation"] = ov
                 else:
                     ov = activeItem.overlayMgr["Classification/Segmentation"]

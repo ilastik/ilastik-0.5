@@ -683,7 +683,6 @@ class VolumeEditor(QtGui.QWidget):
             for index, item in enumerate(reversed(self.overlayWidget.overlays)):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
-    
             if len(self.overlayWidget.overlays) > 0:
                 tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
             else:
@@ -1177,9 +1176,11 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     else:
                                         raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
                                    
-                                       
-                                image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                image0.setColorTable(itemcolorTable[:])
+                                if len(itemdata.shape) > 2 and itemdata.shape[2] > 1:
+                                    image0 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                else:
+                                        image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                        image0.setColorTable(itemcolorTable[:])
                                 
                             else:
                                 if origitem.min is not None and origitem.max is not None:
