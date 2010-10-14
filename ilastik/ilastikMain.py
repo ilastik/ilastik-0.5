@@ -200,6 +200,7 @@ class MainWindow(QtGui.QMainWindow):
             self.fileSelectorList.addItem(item._name)
     
     def changeImage(self, number):
+        self.fileSelectorList.setEnabled(False)
         self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         self.activeImageLock.acquire()
         QtCore.QCoreApplication.processEvents()
@@ -231,6 +232,7 @@ class MainWindow(QtGui.QMainWindow):
         # Notify tabs
         self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()        
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
+        self.fileSelectorList.setEnabled(True)
             
     def historyUndo(self):
         if self.labelWidget is not None:

@@ -11,6 +11,8 @@ class FeatureComputation(object):
     
     def featureCompute(self):
         self.parent.setTabBusy(True)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)        
         self.parent.project.dataMgr.featureLock.acquire()
         self.myTimer = QtCore.QTimer()
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
@@ -49,6 +51,8 @@ class FeatureComputation(object):
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)        
         self.parent.setTabBusy(False)
                     
     def featureShow(self, item):
