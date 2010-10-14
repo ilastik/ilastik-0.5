@@ -270,6 +270,7 @@ class MainWindow(QtGui.QMainWindow):
         self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
 
     def setTabBusy(self, state):
+        self.fileSelectorList.setEnabled(not state)
         for i in range(self.ribbon.count()):
             enabled = not state
             if i == self.ribbon.currentTabNumber:
