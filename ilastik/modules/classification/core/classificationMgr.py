@@ -644,6 +644,7 @@ class ClassifierPredictThread(ThreadBase):
                 for p_i, p_num in enumerate(classifiers[0].unique_vals):
                     #create Overlay for _prediction:
                     ov = overlayMgr.OverlayItem(activeItem, prediction[itemindex][:,:,:,:,p_i],  color = long(descriptions[p_num-1].color), alpha = 0.4, colorTable = None, autoAdd = display, autoVisible = display, min = 0, max = 1)
+                    ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                     activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
                     ov = activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
                     ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
