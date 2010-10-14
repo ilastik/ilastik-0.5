@@ -80,7 +80,7 @@ class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         if self.listWidget.model().rowCount() == 0:
             self.addLabel("Picker", 1, QtGui.QColor(0,0,255))
             
-        self.overlayItem = OverlayItem(self.labelMgr.objects._data)
+        self.overlayItem = OverlayItem(self.volumeEditor.ilastik._activeImage, self.labelMgr.objects._data)
     
     def currentItem(self):
         return self.listWidget.currentItem()

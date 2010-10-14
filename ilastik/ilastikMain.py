@@ -430,7 +430,7 @@ class CC(object):
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] is None:
             #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
             colortab = self.makeColorTab()
-            ov = overlayMgr.OverlayItem(self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+            ov = overlayMgr.OverlayItem(self.parent._activeImage,self.cc.result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC"]._data = DataAccessor(self.cc.result)
@@ -523,7 +523,7 @@ class UnsupervisedDecomposition(object):
                 data2 = 255/dmax*data2
                 data2 = data2.astype(numpy.uint8)
                 
-                ov = OverlayItem(data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+                ov = OverlayItem(self.parent._activeImage, data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname + " component %d" % (o+1)] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname]._data = DataAccessor(self.ud.result)
