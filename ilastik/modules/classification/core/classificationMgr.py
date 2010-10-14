@@ -530,18 +530,19 @@ class ClassifierTrainThread(ThreadBase):
     def run(self):
         self.dataMgr.featureLock.acquire()
         try:
+            self.classifiers = deque()
             F, L = self.classificationMgr.getTrainingMatrix()
-            if F is not None and L is not None:
+            if F is not None and L is not None and F.shape[0] > 0:
                 self.count = 0
-                self.classifiers = deque()
+
                 jobs = []
                 for i in range(self.numClassifiers):
                     job = jobMachine.IlastikJob(ClassifierTrainThread.trainClassifier, [self, F, L])
                     jobs.append(job)
                 self.jobMachine.process(jobs)
                 
-                self.classificationMgr.classifiers = self.classifiers
-
+            self.classificationMgr.classifiers = self.classifiers
+            
             self.dataMgr.featureLock.release()
         except Exception, e:
             print "######### Exception in ClassifierTrainThread ##########"
@@ -601,7 +602,7 @@ class ClassifierPredictThread(ThreadBase):
                 prop = item.module["Classification"]
                 
                 
-                if len(self.classifiers) > 0:
+                if len(self.classifiers) > 0 and prop["featureM"] is not None:
                     #make a little test _prediction to get the shape and see if it works:
                     tempPred = None
                     if prop["featureM"] is not None:
@@ -610,18 +611,22 @@ class ClassifierPredictThread(ThreadBase):
                         tempPred = self.classifiers[0].predict(tfm)
                         featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
                                             
-                        self.currentPred = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
-    
                         if tempPred is not None:
+                            self.currentPred = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
                             jobs= []
                             for bnr in range(featureBlockAccessor._blockCount):
                                 job = jobMachine.IlastikJob(ClassifierPredictThread.classifierPredict, [self, itemindex, bnr, featureBlockAccessor])
                                 jobs.append(job)
                             self.jobMachine.process(jobs)
-                            
-                        self._prediction[itemindex] = self.currentPred
+                            self._prediction[itemindex] = self.currentPred
+                        else:
+                            self._prediction[itemindex] = None
+                    else:
+                        self._prediction[itemindex] = None
+                        
                 else:
                     print "ClassifierPredictThread: no trained classifiers"
+                    self._prediction = None
                 self.dataMgr.featureLock.release()
             except Exception, e:
                 print "########################## exception in ClassifierPredictThread ###################"
@@ -639,7 +644,7 @@ class ClassifierPredictThread(ThreadBase):
             descriptions =  self.dataMgr.module["Classification"]["labelDescriptions"]
             classifiers = self.dataMgr.module["Classification"]["classificationMgr"].classifiers
             
-            if prediction is not None:
+            if prediction is not None and prediction[itemindex] is not None:
                 foregrounds = []
                 for p_i, p_num in enumerate(classifiers[0].unique_vals):
                     #create Overlay for _prediction:
@@ -652,12 +657,13 @@ class ClassifierPredictThread(ThreadBase):
     
                 import ilastik.core.overlays.thresHoldOverlay as tho
                 
-                if activeItem.overlayMgr["Classification/Segmentation"] is None:
-                    ov = tho.ThresHoldOverlay(activeItem, foregrounds, [], autoVisible = display)
-                    activeItem.overlayMgr["Classification/Segmentation"] = ov
-                else:
-                    ov = activeItem.overlayMgr["Classification/Segmentation"]
-                    ov.setForegrounds(foregrounds)
+                if len(foregrounds) > 1:
+                    if activeItem.overlayMgr["Classification/Segmentation"] is None:
+                        ov = tho.ThresHoldOverlay(activeItem, foregrounds, [], autoVisible = display)
+                        activeItem.overlayMgr["Classification/Segmentation"] = ov
+                    else:
+                        ov = activeItem.overlayMgr["Classification/Segmentation"]
+                        ov.setForegrounds(foregrounds)
     
     
                 all =  range(len(descriptions))
@@ -665,15 +671,14 @@ class ClassifierPredictThread(ThreadBase):
                     not_predicted = numpy.setdiff1d(all, classifiers[0].unique_vals - 1)
                     print not_predicted
                     for p_i, p_num in enumerate(not_predicted):
-                        prediction[:,:,:,:,p_i] = 0
+                        prediction[itemindex][:,:,:,:,p_i] = 0
     
     
-    
-                margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
-    
-                #create Overlay for uncertainty:
-                ov = overlayMgr.OverlayItem(activeItem, margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = display, autoVisible = False, min = 0, max = 1)
-                activeItem.overlayMgr["Classification/Uncertainty"] = ov
+                    margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
+
+                    #create Overlay for uncertainty:
+                    ov = overlayMgr.OverlayItem(activeItem, margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = display, autoVisible = False, min = 0, max = 1)
+                    activeItem.overlayMgr["Classification/Uncertainty"] = ov
 
 
                 
