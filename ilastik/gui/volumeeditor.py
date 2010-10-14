@@ -625,9 +625,9 @@ class VolumeEditor(QtGui.QWidget):
         print "volumeeditor destroyed"
 
     def cleanUp(self):
-        print "VolumeEditor: cleaning up"
+        print "VolumeEditor: cleaning up "
         for index, s in enumerate( self.imageScenes ):
-            s.cleanUp()
+            #s.cleanUp()
             s.close()
             s.deleteLater()
         self.imageScenes = []
@@ -1120,6 +1120,7 @@ class ImageSceneRenderThread(QtCore.QThread):
         #self.context.makeCurrent()
 
         while not self.stopped:
+            self.emit(QtCore.SIGNAL('finishedQueue()'))
             self.dataPending.wait()
             self.newerDataPending.clear()
             self.freeQueue.clear()
@@ -1223,8 +1224,6 @@ class ImageSceneRenderThread(QtCore.QThread):
                                        
 
             self.dataPending.clear()
-            #self.freeQueue.set()
-            self.emit(QtCore.SIGNAL('finishedQueue()'))
 
 
 class CrossHairCursor(QtGui.QGraphicsItem) :
