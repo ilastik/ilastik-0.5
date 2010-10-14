@@ -155,6 +155,7 @@ class FeatureDlg(QtGui.QDialog):
         print "moving"
 
 
+    @QtCore.pyqtSignature("")
     def on_featureTable_itemSelectionChanged(self):
         tempItemSelectedList = []
         if self.boolSelection == True:
@@ -197,8 +198,9 @@ class FeatureDlg(QtGui.QDialog):
                             featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = False
                         i.setSelected(False)
                     self.boolTest = True
-
-        self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
+        
+        memReq = self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
+        self.memReq.setText("%8.2f MB" % memReq)
 
     def deselectAllTableItems(self):
         iColumn = self.featureTable.columnCount()
@@ -329,6 +331,7 @@ class FeatureDlg(QtGui.QDialog):
             memoryReq = numOfPixels * (numOfEffectiveFeatures*4.0) /1024.0**2
             print "Feature memory demand: %8.2f MB. For feature vector of length %d" % (memoryReq, numOfEffectiveFeatures)
         else:
+            memoryReq = 0.0
             print "No features selected"
         return memoryReq
 
