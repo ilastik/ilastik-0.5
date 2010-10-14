@@ -249,9 +249,11 @@ class FeatureDlg(QtGui.QDialog):
     #oli todo
     def drawPreview(self):
         if not self.horizontalHeaderIndex < 0:
+            self.circle.setVisible(True)
+            self.sizeText.setVisible(True)
             self.size = self.groupMaskSizesList[self.horizontalHeaderIndex]
-            self.grscene.removeItem(self.circle)
-            self.circle = self.grscene.addEllipse(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
+            # self.grscene.removeItem(self.circle)
+            self.circle.setRect(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
             self.circle.setPos(self.graphicsView.mapToScene(0, 0))
             self.circle.setPen(QtGui.QPen(self.hudColor))
             self.sizeText.setText("Size: " + str(self.size))
@@ -261,14 +263,17 @@ class FeatureDlg(QtGui.QDialog):
         if(event.type()==QtCore.QEvent.MouseButtonPress):
             if event.button() == QtCore.Qt.LeftButton:
                 self.boolSelection = True
+                
         if(event.type()==QtCore.QEvent.MouseButtonRelease):
             if event.button() == QtCore.Qt.LeftButton:
                 self.selectedItemList = []
                 self.deselectAllTableItems()
                 self.boolSelection = False
+                
         if event.type() == QtCore.QEvent.HoverMove:
             self.horizontalHeaderIndex = self.featureTable.horizontalHeader().logicalIndexAt(event.pos())
             self.drawPreview()
+            
         if event.type() == QtCore.QEvent.MouseMove:
             self.circle.setPos(self.graphicsView.mapToScene(0, 0))
             if self.featureTable.itemAt(event.pos()) and self.featureTable.underMouse():
@@ -277,6 +282,10 @@ class FeatureDlg(QtGui.QDialog):
                 self.drawPreview()
         if(event.type() == QtCore.QEvent.ContextMenu and self.graphicsView.underMouse()):
             self.contextMenuGraphicsView(event.pos())
+        
+        if event.type() == QtCore.QEvent.Leave:
+            self.circle.setVisible(False)
+            self.sizeText.setVisible(False)
 
         return False
 
@@ -311,16 +320,16 @@ class FeatureDlg(QtGui.QDialog):
         if featureSelectionList != []:
             dataMgr = self.parent.project.dataMgr
 
-            numOfChannels = dataMgr[0]._dataVol._data.shape[-1]
             numOfEffectiveFeatures =  0
             for f in featureSelectionList:
                 numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0]._dataVol._data.shape)
-                numOfEffectiveFeatures *= numOfChannels
-                numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
-                # 7 bytes per pixel overhead
-            memoryReq = numOfPixels * (7 + numOfEffectiveFeatures*4.0) /1024.0**2
-            print "Total feature vector length is %d with aprox. memory demand of %8.2f MB" % (numOfEffectiveFeatures, memoryReq)
+
+            numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
+
+            memoryReq = numOfPixels * (numOfEffectiveFeatures*4.0) /1024.0**2
+            print "Feature memory demand: %8.2f MB. For feature vector of length %d" % (memoryReq, numOfEffectiveFeatures)
         else:
             print "No features selected"
-        # return memoryReq
+        return memoryReq
+
 
