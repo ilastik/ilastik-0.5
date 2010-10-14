@@ -31,7 +31,7 @@
 from OpenGL.GL import *
 try:
     from OpenGL.GLX import *
-    XInitThreads()
+#    XInitThreads()
 except:
     pass
 
