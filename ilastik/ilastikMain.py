@@ -543,7 +543,7 @@ class UnsupervisedDecomposition(object):
 if __name__ == "__main__":
     app = QtGui.QApplication.instance() #(sys.argv
     
-    splashImage = QtGui.QPixmap("logo/ilastik-splash.png")
+    splashImage = QtGui.QPixmap("logo/ilastik-splash2.png")
 
     splashScreen = QtGui.QSplashScreen(splashImage)
     splashScreen.show();

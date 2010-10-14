@@ -446,7 +446,7 @@ class DataMgr():
     def initModules(self):
         self.module = PropertyMgr(self)
         for m in BaseModuleMgr.__subclasses__():
-            print "DataMgr initializing module", m
+            print "DataMgr initializing module:", m.__name__
             self.module[m.name] = m(self)
                 
     

@@ -51,7 +51,7 @@ if load:
         pass
 
     for i, c in enumerate(unsupervisedBase.UnsupervisedBase.__subclasses__()):
-        print "loaded unsupervised decomposer ",c, ': ',  c.name
+        print "Loaded spectral features ", c.name
         pass
         
     unsupervisedClasses = unsupervisedBase.UnsupervisedBase.__subclasses__()

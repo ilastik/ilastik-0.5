@@ -69,10 +69,11 @@ try:
             
         
         def on_deActivation(self):
-            self.consoleWidget.multipleRedirection(False)
-            self.consoleWidget.releaseKeyboard()
-            self.consoleDock.setVisible(False)
-            self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
+            if self.consoleWidget is not None:
+                self.consoleWidget.multipleRedirection(False)
+                self.consoleWidget.releaseKeyboard()
+                self.consoleDock.setVisible(False)
+                self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
             
         def _initContent(self):
             pass
@@ -80,4 +81,4 @@ try:
         def _initConnects(self):
             pass
 except:
-    pass    
+    print "Console Tab error"    

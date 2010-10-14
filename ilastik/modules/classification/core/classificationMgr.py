@@ -73,7 +73,7 @@ except Exception, e:
     pass
 
 for i, c in enumerate(classifiers.classifierBase.ClassifierBase.__subclasses__()):
-    print "loaded classifier ", c.name
+    print "Loaded classifier ", c.name
 
 
 def interactiveMessagePrint(* args):

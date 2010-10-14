@@ -39,7 +39,7 @@ except:
     modules = []
 
 def loadModuleCores():
-    print "loading modules core functionality..."
+    print "Loading modules core functionality..."
 
     pathext = os.path.dirname(__file__)
     abspath = os.path.abspath(pathext)
@@ -48,7 +48,7 @@ def loadModuleCores():
             module_name = f # Handles no-extension files, etc.
             try:
                 module = __import__('ilastik.modules.' + module_name + '.core')
-                print "loaded core of module" , module_name
+                print "Loaded core part of module" , module_name
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 pass
@@ -58,7 +58,7 @@ def loadModuleCores():
     
     
 def loadModuleGuis():
-    print "loading modules gui functionality..."
+    print "Loading modules GUI functionality..."
     import ilastik.gui.ribbons.ilastikTabBase
 
     pathext = os.path.dirname(__file__)
@@ -68,7 +68,7 @@ def loadModuleGuis():
             module_name = f # Handles no-extension files, etc.
             try:
                 module = __import__('ilastik.modules.' + module_name + '.gui')
-                print "loaded gui of module " , module_name
+                print "Loaded GUI part of module " , module_name
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 pass
