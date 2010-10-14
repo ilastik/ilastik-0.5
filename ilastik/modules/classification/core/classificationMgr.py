@@ -256,7 +256,7 @@ class ClassificationMgr(object):
         self.dataMgr = dataMgr         
         self._trainingVersion = 0
         self._featureVersion = 0
-        
+        self.matrixLock = threading.Lock()
         self.classifiers = []
         
         self.classificationModuleMgr = self.dataMgr.module["Classification"]
@@ -312,6 +312,7 @@ class ClassificationMgr(object):
         This method updates the current training Matrix with new labels.
         newlabels can contain completey new labels, changed labels and deleted labels
         """
+        self.matrixLock.acquire()
         prop = dataItemImage.module["Classification"]
         for nl in newLabels:
             try:
@@ -412,9 +413,11 @@ class ClassificationMgr(object):
                     else: #no intersectoin, in erase mode just pass
                         pass
             except Exception, e:
+                self.matrixLock.release()
                 print e
                 traceback.print_exc(file=sys.stdout)
-
+        self.matrixLock.release()
+        
     def clearFeaturesAndTrainingForImage(self, dataItemImage):
         totalsize = 1
         featureM = dataItemImage.module["Classification"]["featureM"]
@@ -469,9 +472,10 @@ class ClassificationMgr(object):
             self.buildTrainingMatrix()
         
         if len(self._trainingF) > 0:
+            self.matrixLock.acquire()
             trainingF = numpy.vstack(self._trainingF)
             trainingL = numpy.vstack(self._trainingL)
-        
+            self.matrixLock.release()
             return trainingF, trainingL
         else:
             print "######### empty Training Matrix ##########"
