@@ -62,8 +62,7 @@ for f in os.listdir(os.path.abspath(pathext) + "/segmentors"):
             pass
 
 for i, c in enumerate(segmentorBase.SegmentorBase.__subclasses__()):
-    print "loaded segmentor ",c, ': ',  c.name
-    pass
+    print "Loaded segmentor:", c.name
     
 segmentorClasses = segmentorBase.SegmentorBase.__subclasses__()
 if len(segmentorClasses) == 0:
