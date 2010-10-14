@@ -631,7 +631,6 @@ class ClassifierPredictThread(ThreadBase):
                 
     def generateOverlays(self, activeImage = None):
         for itemindex, activeItem in enumerate(self.dataMgr):
-            print "shaaaaaaappe", activeItem.shape, itemindex
             display = False
             if activeImage == activeItem:
                 display = True

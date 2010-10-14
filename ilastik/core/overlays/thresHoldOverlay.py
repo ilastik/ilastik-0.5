@@ -66,7 +66,6 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
             colorTab.append(long(0))
 
         for index,item in enumerate(self.foregrounds):
-            print item
             if item.getColor() is not None:
                 colorTab[index+1] = item.getColor()
 
@@ -143,7 +142,6 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         
     def setThresholds(self, thresholds):
-        print "setting thresholds to: ", thresholds
         self.thresholds = numpy.zeros((len(self.dsets)),'float32' )
         for index, t in enumerate(thresholds):
             self.thresholds[index] = t
