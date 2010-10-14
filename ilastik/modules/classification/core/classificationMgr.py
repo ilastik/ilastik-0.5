@@ -669,9 +669,12 @@ class ClassifierPredictThread(ThreadBase):
                 all =  range(len(descriptions))
                 if len(classifiers) > 0:
                     not_predicted = numpy.setdiff1d(all, classifiers[0].unique_vals - 1)
-                    print not_predicted
-                    for p_i, p_num in enumerate(not_predicted):
-                        prediction[itemindex][:,:,:,:,p_i] = 0
+                    if len(not_predicted) > 0:
+                        print not_predicted
+                        for p_i, p_num in enumerate(not_predicted):
+                            if activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num].name] is not None:
+                                print "clearing prediction for unused Label ", p_num
+                                activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num].name][:,:,:,:,:] = 0
     
     
                     margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
@@ -679,6 +682,8 @@ class ClassifierPredictThread(ThreadBase):
                     #create Overlay for uncertainty:
                     ov = overlayMgr.OverlayItem(activeItem, margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = display, autoVisible = False, min = 0, max = 1)
                     activeItem.overlayMgr["Classification/Uncertainty"] = ov
+            else:
+                print "Prediction for item ", itemindex, "is None, not generating Overlays"
 
 
                 
