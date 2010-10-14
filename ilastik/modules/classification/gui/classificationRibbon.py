@@ -61,7 +61,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             return
         if hasattr(self.parent, "classificationInteractive"):
             self.btnStartLive.click()
-        if self.ilastik.labelWidget._history != self.ilastik._activeImage.module["Classification"]["labelHistory"]:
+        if self.ilastik.labelWidget is not None and self.ilastik.labelWidget._history != self.ilastik._activeImage.module["Classification"]["labelHistory"]:
             self.ilastik._activeImage.module["Classification"]["labelHistory"] = self.ilastik.labelWidget._history
         
     def _initContent(self):
