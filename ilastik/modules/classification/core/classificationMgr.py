@@ -826,7 +826,7 @@ class ClassifierInteractiveThread(ThreadBase):
                                     predictionData[vs[0],vs[1],b[0]:b[1],b[2]:b[3],0] = tpc[b[0]:b[1],b[2]:b[3],p_i]
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num].name]._data
                                     predictionData[vs[0],vs[1],b[0]:b[1],b[2]:b[3],0] = 0
 
                             #Axis 1
@@ -843,7 +843,7 @@ class ClassifierInteractiveThread(ThreadBase):
                                     predictionData[vs[0],b[0]:b[1],vs[2],b[2]:b[3],0] = tpc[b[0]:b[1],b[2]:b[3],p_i]
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num].name]._data
                                     predictionData[vs[0],b[0]:b[1],vs[2],b[2]:b[3],0] = 0
 
 
@@ -861,7 +861,7 @@ class ClassifierInteractiveThread(ThreadBase):
                                     predictionData[vs[0],b[0]:b[1],b[2]:b[3],vs[3],0] = tpc[b[0]:b[1],b[2]:b[3],p_i]
 
                                 for p_i, p_num in enumerate(not_predicted):
-                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]._data
+                                    predictionData = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num].name]._data
                                     predictionData[vs[0],b[0]:b[1],b[2]:b[3],vs[3],0] = 0
 
 
