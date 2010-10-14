@@ -33,7 +33,9 @@ class ProjectDlg(QtGui.QDialog):
         if hasattr(self.ilastik,'project') and (not self.newProject):
             self.dataMgr = self.ilastik.project.dataMgr
             self.project = self.ilastik.project
+            
         else:
+            print "Create new project"
             self.dataMgr = dataMgr.DataMgr()
             self.project = self.ilastik.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
                     

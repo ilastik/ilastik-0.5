@@ -148,7 +148,7 @@ class DataImpex(object):
         if options.normalize:
             maximum = numpy.max(image)
             minimum = numpy.min(image)
-            image = image * (255.0 / (maximum - minimum)) - minimum
+            image = (image - minimum) * (255.0 / (maximum - minimum)) 
 
         if options.grayscale:
             image = image.view(numpy.ndarray)
