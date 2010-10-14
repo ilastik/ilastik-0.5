@@ -19,9 +19,9 @@
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    version="1.0"
    style="enable-background:new"
-   inkscape:export-filename="C:\Dokumente und Einstellungen\fhamprecht\Desktop\ilastik-logo-vlowres.png"
-   inkscape:export-xdpi="5"
-   inkscape:export-ydpi="5">
+   inkscape:export-filename="C:\Users\csommer\ilastik\logo\ilastik-splash.png"
+   inkscape:export-xdpi="28.408316"
+   inkscape:export-ydpi="28.408316">
   <defs
      id="defs10421">
     <linearGradient
@@ -292,7 +292,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>

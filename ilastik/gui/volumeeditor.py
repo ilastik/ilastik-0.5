@@ -2038,13 +2038,7 @@ class ImageScene( QtGui.QGraphicsView):
 
     def onContext(self, pos):
         menu = QtGui.QMenu('Labeling menu', self)
-        
-#        toggleEraseA = None
-#        if self.drawManager.erasing == True:
-#            toggleEraseA = menu.addAction("Enable Labelmode",  self.drawManager.toggleErase)
-#        else:
-#            toggleEraseA = menu.addAction("Enable Eraser", self.drawManager.toggleErase)
-        
+       
         menu.addSeparator()
         labelList = []
         volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
@@ -2078,11 +2072,10 @@ class ImageScene( QtGui.QGraphicsView):
                 act.setChecked(True)
             brush.append(menu.addAction(act))
         
-        #menu.setTearOffEnabled(True)
+        menu.setTearOffEnabled(True)
 
         action = menu.exec_(QtGui.QCursor.pos())
-        #if action == toggleEraseA:
-            #
+
 
 
 
