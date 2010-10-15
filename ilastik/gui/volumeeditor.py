@@ -551,24 +551,35 @@ class VolumeEditor(QtGui.QWidget):
 
         for index, scene in enumerate(self.imageScenes):
             scene.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), scene, scene.zoomIn, scene.zoomIn )
-
+            scene.shortcutZoomIn.setContext(QtCore.Qt.WidgetShortcut)
+            
             scene.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), scene, scene.zoomOut, scene.zoomOut )
+            scene.shortcutZoomOut.setContext(QtCore.Qt.WidgetShortcut)
             
             scene.shortcutSliceUp = QtGui.QShortcut(QtGui.QKeySequence("p"), scene, scene.sliceUp, scene.sliceUp )
+            scene.shortcutSliceUp.setContext(QtCore.Qt.WidgetShortcut)
             
             scene.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("o"), scene, scene.sliceDown, scene.sliceDown )
+            scene.shortcutSliceDown.setContext(QtCore.Qt.WidgetShortcut)
 
             scene.shortcutSliceUp2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Up"), scene, scene.sliceUp, scene.sliceUp )
+            scene.shortcutSliceUp2.setContext(QtCore.Qt.WidgetShortcut)
 
             scene.shortcutSliceDown2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Down"), scene, scene.sliceDown, scene.sliceDown )
+            scene.shortcutSliceDown2.setContext(QtCore.Qt.WidgetShortcut)
 
 
             scene.shortcutSliceUp10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Up"), scene, scene.sliceUp10, scene.sliceUp10 )
+            scene.shortcutSliceUp10.setContext(QtCore.Qt.WidgetShortcut)
 
             scene.shortcutSliceDown10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Down"), scene, scene.sliceDown10, scene.sliceDown10 )
+            scene.shortcutSliceDown10.setContext(QtCore.Qt.WidgetShortcut)
 
             scene.shortcutBrushSizeUp = QtGui.QShortcut(QtGui.QKeySequence("n"), scene, scene.brushSmaller)
+            scene.shortcutBrushSizeUp.setContext(QtCore.Qt.WidgetShortcut)
+
             scene.shortcutBrushSizeDown = QtGui.QShortcut(QtGui.QKeySequence("m"), scene, scene.brushBigger)
+            scene.shortcutBrushSizeDown.setContext(QtCore.Qt.WidgetShortcut)
 
 
         #add shortcuts of the imagescenes to the help text szstem
