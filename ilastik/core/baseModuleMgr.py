@@ -1,3 +1,5 @@
+from ilastik.core.overlayMgr import OverlayReferenceMgr
+
 class PropertyMgr(object):
     """
     Holds a bag of Properties that can be serialized and deserialized
@@ -41,13 +43,23 @@ class BaseModuleDataItemMgr(PropertyMgr):
     
     def __init__(self, dataItemImage):
         PropertyMgr.__init__(self, dataItemImage)
-    
+        self.overlayReferences = OverlayReferenceMgr()
+        
     def onModuleStart(self):
         pass
     
     def onModuleStop(self):
         pass
     
+    def getOverlayRefs(self):
+        return self.overlayReferences
+    
+    def insertOverlayRef(self, position, ov):
+        self.overlayReferences.insert(position, ov)
+
+    def addOverlayRef(self, ov):
+        self.overlayReferences.insert(0, ov)
+            
     def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         pass
     

@@ -14,6 +14,7 @@ from ilastik.gui import volumeeditor as ve
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
     name = 'Project'
     position = 0
+    moduleName = "Project"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
@@ -25,7 +26,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         if self.ilastik.project is None:
             self.ilastik.setTabBusy(True)
             return
-        ovs = self.ilastik._activeImage._dataVol.projectOverlays
+        ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         if len(ovs) == 0:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None:
@@ -33,7 +34,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.projectOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  ovs)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())

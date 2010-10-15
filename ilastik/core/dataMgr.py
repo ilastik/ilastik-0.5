@@ -255,7 +255,7 @@ class DataItemImage(DataItemBase):
         self._writeBegin = (0,0,0)
         self._writeEnd = (0,0,0)
         
-        self.overlayMgr = overlayMgr.OverlayMgr()
+        self.overlayMgr = overlayMgr.OverlayMgr(None)
 
         self.initModules()
     
@@ -435,7 +435,7 @@ class DataMgr():
         self._dataItemsLoaded = []
         self.channels = -1
         self._activeImageNumber = 0
-        
+        self._currentModuleName = None
         #TODO: Maybe it shouldn't be here...
         self.connCompBackgroundKey = ""    
         self.connCompBackgroundClasses = set()
@@ -445,14 +445,21 @@ class DataMgr():
         
     def initModules(self):
         self.module = PropertyMgr(self)
+        oldModuleName = self._currentModuleName
         for m in BaseModuleMgr.__subclasses__():
-            print "DataMgr initializing module:", m.__name__
+            print "DataMgr initializing module:", m.name
+            self._currentModuleName = m.name
             self.module[m.name] = m(self)
+        self._currentModuleName = oldModuleName
                 
     
     def onNewImage(self, dataItemImage):
+        dataItemImage.overlayMgr.dataMgr = self
+        oldModuleName = self._currentModuleName
         for v in self.module.values():
+            self._currentModuleName = v.__class__.name
             v.onNewImage(dataItemImage)
+        self._currentModuleName = oldModuleName
     
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:

@@ -237,9 +237,11 @@ class OverlayMgr():
     OverlayItems that have the autoAdd Property set to True are immediately added to the currently
     visible overlayWidget
     """
-    def __init__(self,  ilastik = None):
+    def __init__(self,  dataMgr, ilastik = None):
         self._dict = {}
         self.ilastik = ilastik
+        self.dataMgr = dataMgr
+        self.currentModuleName = ""
         
     def remove(self,  key):
         it = self._dict.pop(key,  None)
@@ -249,12 +251,12 @@ class OverlayMgr():
                 self.ilastik.labelWidget.overlayWidget.removeOverlay(key)
             
     def __setitem__(self,  key,  value):
-        addToWidget = False
+        itemNew = False
         if issubclass(value.__class__,  OverlayItem):
             if not self._dict.has_key(key):
                 #set the name of the overlayItem to the last part of the key
                 value.name = key.split('/')[-1]
-                addToWidget = True
+                itemNew = True
                 self._dict.__setitem__( key,  value)
                 res = value
             else:
@@ -265,8 +267,8 @@ class OverlayMgr():
                 res = it
             #update the key
             res.key = key
-        if addToWidget:
-            self._addToWidget(res)
+        if itemNew:
+            self._addReference(res)
         return res
     
     def keys(self):
@@ -274,10 +276,18 @@ class OverlayMgr():
     
     def values(self):
         return self._dict.values()
-
-    def _addToWidget(self,  value):
-        if self.ilastik != None and value.autoAdd is True:
-            self.ilastik.labelWidget.overlayWidget.addOverlayRef(value.getRef())
+    
+    def _addReference(self,  value):
+        print "adding new overlay", value, value.key
+        if value.autoAdd is True and self.dataMgr is not None:
+            if self.ilastik != None and value.dataItemImage == self.ilastik._activeImage:
+                print "adding to very active image"
+                self.ilastik.labelWidget.overlayWidget.addOverlayRef(value.getRef())
+            else:
+                print "current Module :", self.dataMgr._currentModuleName
+                print "adding to non active image", value.dataItemImage
+                if value.dataItemImage.module[self.dataMgr._currentModuleName] is not None:
+                    value.dataItemImage.module[self.dataMgr._currentModuleName].addOverlayRef(value.getRef())
             
             
     def __getitem__(self,  key):

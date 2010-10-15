@@ -17,6 +17,7 @@ try:
     class ConsoleTab(IlastikTabBase, QtGui.QWidget):
         name = 'Interactive Console'
         position = 1
+        moduleName = "Interactive_Console" 
         
         def __init__(self, parent=None):
             IlastikTabBase.__init__(self, parent)
@@ -30,7 +31,7 @@ try:
         def on_activation(self):
             if self.ilastik.project is None:
                 return
-            ovs = self.ilastik._activeImage._dataVol.projectOverlays
+            ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
             if len(ovs) == 0:
                 raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
                 if raw is not None:
@@ -38,7 +39,7 @@ try:
             
             self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
     
-            overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.projectOverlays)
+            overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  ovs)
             self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
             
             self.ilastik.labelWidget.setLabelWidget(DummyLabelWidget())

@@ -10,6 +10,7 @@ from ilastik.gui.overlayWidget import OverlayWidget
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Example'  #the name of your ribbon
     position = 101    #the position in the tabbar
+    moduleName = "Example"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)

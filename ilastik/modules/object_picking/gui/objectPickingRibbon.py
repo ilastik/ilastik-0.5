@@ -17,6 +17,7 @@ from objectWidget import ObjectListWidget
 
 class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     name = 'Objects'
+    moduleName = "Object_Picking"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
@@ -28,7 +29,7 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik._activeImage.Object_Picking.overlays
+        ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         if len(ovs) == 0:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None:
@@ -36,7 +37,7 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.Object_Picking,  self.ilastik._activeImage.Object_Picking.overlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.Object_Picking,  ovs)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.objectLabels = ObjectListWidget(self.ilastik._activeImage.Object_Picking,  self.ilastik._activeImage.Object_Picking.objects,  self.ilastik.labelWidget) 

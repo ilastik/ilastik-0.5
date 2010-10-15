@@ -17,6 +17,7 @@ import ilastik.gui.volumeeditor as ve
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Auto Segmentation'
     position = 2
+    moduleName = "Automatic_Segmentation"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
@@ -29,7 +30,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik._activeImage._dataVol.autosegOverlays
+        ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         if len(ovs) == 0:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None:
@@ -37,7 +38,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.autosegOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  ovs)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())

@@ -6,7 +6,7 @@ from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
 
 from ilastik.core.dataMgr import  PropertyMgr
-from ilastik.core.overlayMgr import OverlayItem, OverlayReferenceMgr
+from ilastik.core.overlayMgr import OverlayItem
 
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.iconMgr import ilastikIcons
@@ -21,6 +21,7 @@ from ilastik.modules.classification.gui.classifierSelectionDialog import Classif
 class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Classification'
     position = 1
+    moduleName = "Classification"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
@@ -34,12 +35,10 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             return
         if self.ilastik._activeImage.module[self.name] is None:
             self.ilastik._activeImage.module[self.name] = PropertyMgr(self.ilastik._activeImage)
-        if  self.ilastik._activeImage.module[self.name]["overlayReferences"] is None:
-            self.ilastik._activeImage.module[self.name]["overlayReferences"] = OverlayReferenceMgr()
         
-        ovs = self.ilastik._activeImage.module[self.name]["overlayReferences"]
+        ovs = self.ilastik._activeImage.module[self.name].getOverlayRefs()
         
-        if len(ovs) == 0:
+        if len(ovs) < 2:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None:
                 ovs.append(raw.getRef())

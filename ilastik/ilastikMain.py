@@ -290,7 +290,9 @@ class MainWindow(QtGui.QMainWindow):
         """
         self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
         self.ribbon.currentTabNumber = index
-
+        #change current module name, so that overlays are stored at the right place
+        if self.project is not None:
+            self.project.dataMgr._currentModuleName = self.ribbon.widget(index).__class__.name 
         self.ribbon.widget(index).on_activation()
 
         if self.labelWidget is not None:

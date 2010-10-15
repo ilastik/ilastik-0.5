@@ -636,10 +636,7 @@ class ClassifierPredictThread(ThreadBase):
                 
     def generateOverlays(self, activeImage = None):
         for itemindex, activeItem in enumerate(self.dataMgr):
-            display = False
-            if activeImage == activeItem:
-                display = True
-            
+
             prediction = self._prediction
             descriptions =  self.dataMgr.module["Classification"]["labelDescriptions"]
             classifiers = self.dataMgr.module["Classification"]["classificationMgr"].classifiers
@@ -648,7 +645,7 @@ class ClassifierPredictThread(ThreadBase):
                 foregrounds = []
                 for p_i, p_num in enumerate(classifiers[0].unique_vals):
                     #create Overlay for _prediction:
-                    ov = overlayMgr.OverlayItem(activeItem, prediction[itemindex][:,:,:,:,p_i],  color = long(descriptions[p_num-1].color), alpha = 0.4, colorTable = None, autoAdd = display, autoVisible = display, min = 0, max = 1)
+                    ov = overlayMgr.OverlayItem(activeItem, prediction[itemindex][:,:,:,:,p_i],  color = long(descriptions[p_num-1].color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1)
                     ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                     activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
                     ov = activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
@@ -659,7 +656,7 @@ class ClassifierPredictThread(ThreadBase):
                 
                 if len(foregrounds) > 1:
                     if activeItem.overlayMgr["Classification/Segmentation"] is None:
-                        ov = tho.ThresHoldOverlay(activeItem, foregrounds, [], autoVisible = display)
+                        ov = tho.ThresHoldOverlay(activeItem, foregrounds, [], autoAdd = True, autoVisible = True)
                         activeItem.overlayMgr["Classification/Segmentation"] = ov
                     else:
                         ov = activeItem.overlayMgr["Classification/Segmentation"]
@@ -680,7 +677,7 @@ class ClassifierPredictThread(ThreadBase):
                     margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
 
                     #create Overlay for uncertainty:
-                    ov = overlayMgr.OverlayItem(activeItem, margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = display, autoVisible = False, min = 0, max = 1)
+                    ov = overlayMgr.OverlayItem(activeItem, margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
                     activeItem.overlayMgr["Classification/Uncertainty"] = ov
             else:
                 print "Prediction for item ", itemindex, "is None, not generating Overlays"

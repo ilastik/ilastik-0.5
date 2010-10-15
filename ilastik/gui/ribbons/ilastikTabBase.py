@@ -6,6 +6,9 @@ class IlastikTabBase(object):
     homepage = "http://hci.iwr.uni-heidelberg.de"
     position = 99 #position of the tab
     
+    moduleName = "Module Name" # you have to set this to the module that handles this tab
+                                # displayed overlays get stored there
+    
     def __init__(self, parent=None):
         self.ilastik = self.parent = parent
 

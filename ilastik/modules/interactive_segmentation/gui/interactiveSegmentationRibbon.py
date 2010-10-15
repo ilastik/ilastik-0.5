@@ -22,6 +22,7 @@ from ilastik.modules.interactive_segmentation.core.segmentationMgr import Segmen
 class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Interactive Segmentation'
     position = 3
+    moduleName = "Interactive_Segmentation"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
@@ -32,7 +33,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
-        ovs = self.ilastik._activeImage.Interactive_Segmentation.overlays
+        ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         if len(ovs) == 0:
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None:
