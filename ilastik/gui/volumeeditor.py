@@ -1615,7 +1615,7 @@ class ImageScene( QtGui.QGraphicsView):
 
     def cleanUp(self):
         #print "stopping ImageSCeneRenderThread", str(self.axis)
-        
+        del self.drawTimer
         self.thread.stopped = True
         self.thread.dataPending.set()
         self.thread.wait()

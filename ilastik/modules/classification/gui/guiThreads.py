@@ -36,6 +36,7 @@ class FeatureComputation(object):
         self.myFeatureProgressBar.setValue(val)
         if not self.ilastik.project.dataMgr.Classification.featureMgr.featureProcess.isRunning():
             self.myTimer.stop()
+            del self.myTimer
             self.terminateFeatureProgressBar()
             self.ilastik.project.dataMgr.Classification.featureMgr.joinCompute(self.parent.project.dataMgr)   
 
