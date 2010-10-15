@@ -184,6 +184,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <widget class="QPushButton" name="loadStack">
+          <property name="toolTip">
+           <string>This allows to create a 3D volume from files stored in a folder.</string>
+          </property>
           <property name="text">
            <string>Load Stack</string>
           </property>
@@ -197,6 +200,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item>
          <widget class="QPushButton" name="loadFileButton">
+          <property name="toolTip">
+           <string>Advanced options for loading an image or volume from a file. You can create multi-channel files from single files.</string>
+          </property>
           <property name="text">
            <string>Load File</string>
           </property>
