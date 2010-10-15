@@ -125,7 +125,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
             
             #create Overlay for segmentation:
             if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Auto Segmentation/Segmentation"] is None:
-                ov = OverlayItem(res, color = 0, alpha = 1.0, colorTable = colortable, autoAdd = True, autoVisible = True)
+                ov = OverlayItem(self.parent._activeImage, res, color = 0, alpha = 1.0, colorTable = colortable, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Auto Segmentation/Segmentation"] = ov
             else:
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Auto Segmentation/Segmentation"]._data = DataAccessor(res)

@@ -377,6 +377,7 @@ class VolumeEditor(QtGui.QWidget):
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
             
+            
         self.grid.addWidget(self.overview, 1, 1)
         
         self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
@@ -519,32 +520,83 @@ class VolumeEditor(QtGui.QWidget):
         self.changeSliceZ(numpy.floor((self.image.shape[3] - 1) / 2))
 
         ##undo/redo and other shortcuts
-        self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo, context = QtCore.Qt.WidgetShortcut) 
+        self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo) 
         shortcutManager.register(self.shortcutUndo, "_history undo")
         
-        self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo, context = QtCore.Qt.WidgetShortcut)
+        
+        self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo)
         shortcutManager.register(self.shortcutRedo, "_history redo")
         
-        self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo, context = QtCore.Qt.WidgetShortcut)
+        self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo)
         shortcutManager.register(self.shortcutRedo2, "_history redo")
         
-        self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction, context = QtCore.Qt.WidgetShortcut)
+        self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction)
         shortcutManager.register(self.togglePredictionSC, "toggle prediction overlays")
         
-        self.shortcutNextLabel = QtGui.QShortcut(QtGui.QKeySequence("l"), self, self.nextLabel, self.nextLabel, context = QtCore.Qt.WidgetShortcut)
+        self.shortcutNextLabel = QtGui.QShortcut(QtGui.QKeySequence("l"), self, self.nextLabel, self.nextLabel)
         shortcutManager.register(self.shortcutNextLabel, "go to next label (cyclic, forward)")
         
-        self.shortcutPrevLabel = QtGui.QShortcut(QtGui.QKeySequence("k"), self, self.prevLabel, self.prevLabel, context = QtCore.Qt.WidgetShortcut)
+        self.shortcutPrevLabel = QtGui.QShortcut(QtGui.QKeySequence("k"), self, self.prevLabel, self.prevLabel )
         shortcutManager.register(self.shortcutPrevLabel, "go to previous label (cyclic, backwards)")
         
-        self.shortcutToggleFullscreenX = QtGui.QShortcut(QtGui.QKeySequence("x"), self, self.toggleFullscreenX, self.toggleFullscreenX, context = QtCore.Qt.WidgetShortcut)
+        self.shortcutToggleFullscreenX = QtGui.QShortcut(QtGui.QKeySequence("x"), self, self.toggleFullscreenX, self.toggleFullscreenX )
         shortcutManager.register(self.shortcutToggleFullscreenX, "enlarge slice view x to full size")
         
-        self.shortcutToggleFullscreenY = QtGui.QShortcut(QtGui.QKeySequence("y"), self, self.toggleFullscreenY, self.toggleFullscreenY, context = QtCore.Qt.WidgetShortcut)
+        self.shortcutToggleFullscreenY = QtGui.QShortcut(QtGui.QKeySequence("y"), self, self.toggleFullscreenY, self.toggleFullscreenY )
         shortcutManager.register(self.shortcutToggleFullscreenY, "enlarge slice view y to full size")
         
-        self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ, context = QtCore.Qt.WidgetShortcut)
+        self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ )
         shortcutManager.register(self.shortcutToggleFullscreenZ, "enlarge slice view z to full size")
+
+
+        for index, scene in enumerate(self.imageScenes):
+            scene.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), scene, scene.zoomIn, scene.zoomIn )
+            scene.shortcutZoomIn.setContext(QtCore.Qt.WidgetShortcut)
+            
+            scene.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), scene, scene.zoomOut, scene.zoomOut )
+            scene.shortcutZoomOut.setContext(QtCore.Qt.WidgetShortcut)
+            
+            scene.shortcutSliceUp = QtGui.QShortcut(QtGui.QKeySequence("p"), scene, scene.sliceUp, scene.sliceUp )
+            scene.shortcutSliceUp.setContext(QtCore.Qt.WidgetShortcut)
+            
+            scene.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("o"), scene, scene.sliceDown, scene.sliceDown )
+            scene.shortcutSliceDown.setContext(QtCore.Qt.WidgetShortcut)
+
+            scene.shortcutSliceUp2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Up"), scene, scene.sliceUp, scene.sliceUp )
+            scene.shortcutSliceUp2.setContext(QtCore.Qt.WidgetShortcut)
+
+            scene.shortcutSliceDown2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Down"), scene, scene.sliceDown, scene.sliceDown )
+            scene.shortcutSliceDown2.setContext(QtCore.Qt.WidgetShortcut)
+
+
+            scene.shortcutSliceUp10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Up"), scene, scene.sliceUp10, scene.sliceUp10 )
+            scene.shortcutSliceUp10.setContext(QtCore.Qt.WidgetShortcut)
+
+            scene.shortcutSliceDown10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Down"), scene, scene.sliceDown10, scene.sliceDown10 )
+            scene.shortcutSliceDown10.setContext(QtCore.Qt.WidgetShortcut)
+
+            scene.shortcutBrushSizeUp = QtGui.QShortcut(QtGui.QKeySequence("n"), scene, scene.brushSmaller)
+            scene.shortcutBrushSizeUp.setContext(QtCore.Qt.WidgetShortcut)
+
+            scene.shortcutBrushSizeDown = QtGui.QShortcut(QtGui.QKeySequence("m"), scene, scene.brushBigger)
+            scene.shortcutBrushSizeDown.setContext(QtCore.Qt.WidgetShortcut)
+
+
+        #add shortcuts of the imagescenes to the help text szstem
+        shortcutManager.register(self.imageScenes[0].shortcutZoomIn, "zoom in")
+        shortcutManager.register(self.imageScenes[0].shortcutZoomOut, "zoom out")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceUp, "slice up")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceDown, "slice down")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceUp2, "slice up")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceDown2, "slice down")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceUp10, "10 slices up")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceDown10, "10 slices down")
+        shortcutManager.register(self.imageScenes[0].shortcutBrushSizeUp, "increase brush size")
+        shortcutManager.register(self.imageScenes[0].shortcutBrushSizeDown, "decrease brush size")
+
+
+
+
         
         self.shortcutUndo.setContext(QtCore.Qt.ApplicationShortcut )
         self.shortcutRedo.setContext(QtCore.Qt.ApplicationShortcut )
@@ -1515,48 +1567,21 @@ class ImageScene( QtGui.QGraphicsView):
         # For screen recording BlankCursor dont work
         #self.hiddenCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
         
+        print "creating imageScene 1"
         self.thread = ImageSceneRenderThread(self)
         self.connect(self.thread, QtCore.SIGNAL('finishedPatch(int)'),self.redrawPatch)
         self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.clearTempitems)
         self.thread.start()
         
         #self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
-
-        self.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), self, self.zoomIn, self.zoomIn, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutZoomIn, "zoom in")
-
-        self.shortcutZoomOut = QtGui.QShortcut(QtGui.QKeySequence("-"), self, self.zoomOut, self.zoomOut, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutZoomOut, "zoom out")
-        
-        self.shortcutSliceUp = QtGui.QShortcut(QtGui.QKeySequence("p"), self, self.sliceUp, self.sliceUp, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutSliceUp, "slice up")
-        
-        self.shortcutSliceDown = QtGui.QShortcut(QtGui.QKeySequence("o"), self, self.sliceDown, self.sliceDown, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutSliceDown, "slice down")
-
-        self.shortcutSliceUp2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Up"), self, self.sliceUp, self.sliceUp, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutSliceUp2, "slice up")
-
-        self.shortcutSliceDown2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Down"), self, self.sliceDown, self.sliceDown, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutSliceDown2, "slice down")
+        print "creating imageScene 2"
 
 
-        self.shortcutSliceUp10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Up"), self, self.sliceUp10, self.sliceUp10, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutSliceUp10, "10 slices up")
-
-        self.shortcutSliceDown10 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Down"), self, self.sliceDown10, self.sliceDown10, context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutSliceDown10, "10 slices down")
-
-
-        self.shortcutBrushSizeUp = QtGui.QShortcut(QtGui.QKeySequence("n"), self, self.brushSmaller,  context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutBrushSizeUp, "increase brush size")
-        self.shortcutBrushSizeDown = QtGui.QShortcut(QtGui.QKeySequence("m"), self, self.brushBigger,  context = QtCore.Qt.WidgetShortcut)
-        shortcutManager.register(self.shortcutBrushSizeDown, "decrease brush size")
- 
         self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
         self.crossHairCursor.setZValue(100)
         self.scene.addItem(self.crossHairCursor)
         self.crossHairCursor.setBrushSize(self.drawManager.brushSize)
+        print "creating imageScene 6"
 
         self.tempErase = False
 
