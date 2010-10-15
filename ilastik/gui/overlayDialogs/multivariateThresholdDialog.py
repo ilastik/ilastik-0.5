@@ -47,7 +47,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         self.buildDialog()
         
         self.acceptButton = QtGui.QPushButton("Ok")
-        self.connect(self.acceptButton, QtCore.SIGNAL('clicked()'), self.accept)
+        self.connect(self.acceptButton, QtCore.SIGNAL('clicked()'), self.okClicked)
         self.mainlayout.addWidget(self.acceptButton)
         
     def buildDialog(self):
@@ -171,7 +171,12 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         self.overlayItem.setThresholds(thresholds)
         self.volumeEditor.repaint()
         
-        
+    
+    def okClicked(self):
+        if len(self.overlayItem.dsets) >= 2:
+            self.accept()
+        else:
+            QtGui.QMessageBox.warning(self, "Error", "Please select more than one Overlay for thresholding - either more than one foreground overlays, or one foreground and one background overlay !")
         
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
