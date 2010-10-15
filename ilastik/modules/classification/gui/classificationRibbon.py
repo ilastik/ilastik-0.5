@@ -39,10 +39,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         ovs = self.ilastik._activeImage.module[self.name].getOverlayRefs()
         
-        if len(ovs) < 2:
-            raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
-            if raw is not None:
-                ovs.append(raw.getRef())
+        raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
+        ovs.append(raw.getRef())
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
         
