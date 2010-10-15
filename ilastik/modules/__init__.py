@@ -73,4 +73,4 @@ def loadModuleGuis():
                 traceback.print_exc(file=sys.stdout)
                 pass
             
-    print ilastik.gui.ribbons.ilastikTabBase.IlastikTabBase.__subclasses__()
+    # print ilastik.gui.ribbons.ilastikTabBase.IlastikTabBase.__subclasses__()
