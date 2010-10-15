@@ -14,6 +14,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.modules.classification.gui import *
 from ilastik.modules.classification.gui.batchProcess import BatchProcess
 
+from ilastik.gui import volumeeditor as ve
 
 class AutomateTab(IlastikTabBase, QtGui.QWidget):
     name = 'Automate'
@@ -28,8 +29,14 @@ class AutomateTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
     
     def on_activation(self):
-        pass
-                        
+        
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
+        overlayWidget.setVisible(False)
+        
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+                                
     def on_deActivation(self):
         pass
         

@@ -10,6 +10,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.shortcutmanager import shortcutManager
+from ilastik.gui import volumeeditor as ve
 
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Help'
@@ -24,10 +25,13 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        print 'Changed to Tab: ', self.__class__.name
-       
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
+        overlayWidget.setVisible(False)
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
+               
     def on_deActivation(self):
-        print 'Left Tab ', self.__class__.name
+        pass
         
     def _initContent(self):
 
