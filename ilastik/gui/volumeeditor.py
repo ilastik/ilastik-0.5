@@ -2097,7 +2097,7 @@ class ImageScene( QtGui.QGraphicsView):
         for ind, bSizes in enumerate(defaultBrushSizes):
             b = bSizes[0]
             desc = bSizes[1]
-            act = QtGui.QAction(str(b) + desc, brushGroup)
+            act = QtGui.QAction("brush size " + str(b) + desc, brushGroup)
             act.setCheckable(True)
             self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
             if b == self.drawManager.getBrushSize():
