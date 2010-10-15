@@ -628,13 +628,14 @@ class VolumeEditor(QtGui.QWidget):
         QtGui.QApplication.processEvents()
         print "VolumeEditor: cleaning up "
         for index, s in enumerate( self.imageScenes ):
-            #s.cleanUp()
+            s.cleanUp()
             s.close()
             s.deleteLater()
         self.imageScenes = []
         self.save_thread.stopped = True
         self.save_thread.imagePending.set()
         self.save_thread.wait()
+        QtGui.QApplication.processEvents()
         print "finished saving thread"
 
 
@@ -1519,7 +1520,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.clearTempitems)
         self.thread.start()
         
-        self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
+        #self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
 
         self.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), self, self.zoomIn, self.zoomIn, context = QtCore.Qt.WidgetShortcut)
         shortcutManager.register(self.shortcutZoomIn, "zoom in")
@@ -1619,6 +1620,10 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.stopped = True
         self.thread.dataPending.set()
         self.thread.wait()
+        self.ticker.stop()
+        self.ticker = None
+        self.drawTimer.stop()
+        self.drawTimer = None
         print "finished thread"
 
     def updatePatches(self, patchNumbers ,image, overlays = []):
