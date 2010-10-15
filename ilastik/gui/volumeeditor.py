@@ -425,7 +425,7 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin = QtGui.QSpinBox()
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceX)
-        if self.image.shape[2] > 1 and self.image.shape[3] > 1: #only show when needed
+        if self.image.shape[1] > 1 and self.image.shape[2] > 1 and self.image.shape[3] > 1: #only show when needed
             tempLay = QtGui.QHBoxLayout()
             tempLay.addWidget(QtGui.QLabel("<pre>X:</pre>"))
             tempLay.addWidget(sliceSpin, 1)
