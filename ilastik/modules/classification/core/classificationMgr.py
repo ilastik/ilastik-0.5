@@ -682,7 +682,7 @@ class ClassifierPredictThread(ThreadBase):
                     margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
 
                     #create Overlay for uncertainty:
-                    ov = overlayMgr.OverlayItem(activeItem, margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
+                    ov = overlayMgr.OverlayItem(activeItem, margin, color = long(16535 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
                     activeItem.overlayMgr["Classification/Uncertainty"] = ov
             else:
                 print "Prediction for item ", itemindex, "is None, not generating Overlays"
