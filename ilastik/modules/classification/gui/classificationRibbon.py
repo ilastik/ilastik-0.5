@@ -31,6 +31,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        print "on activation!!"
         if self.ilastik.project is None:
             return
         if self.ilastik._activeImage.module[self.name] is None:
@@ -45,7 +46,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
         
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  ovs)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         

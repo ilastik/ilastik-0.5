@@ -15,13 +15,16 @@ class InteractiveConsoleItemModuleMgr(BaseModuleDataItemMgr):
         pass
     
 
-class INteractiveConsoleModuleMgr(BaseModuleMgr):
+class InteractiveConsoleModuleMgr(BaseModuleMgr):
     name = "Interactive_Console"
         
     def __init__(self, dataMgr):
         BaseModuleMgr.__init__(self, dataMgr)
         self.dataMgr = dataMgr
-
+        
+        for i, im in enumerate(self.dataMgr):
+            self.onNewImage(im)
+            
     def onNewImage(self, dataItemImage):
         pass
     
