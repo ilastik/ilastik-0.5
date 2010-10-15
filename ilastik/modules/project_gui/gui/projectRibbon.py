@@ -35,6 +35,8 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
+        overlayWidget.setVisible(False)
+        
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())

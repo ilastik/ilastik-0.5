@@ -194,8 +194,8 @@ class ClassificationModuleMgr(BaseModuleMgr):
             prediction = dataItemImage.Classification["prediction"]
             for index, descr in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
                 ov = overlayMgr.OverlayItem(dataItemImage, DataAccessor(prediction[:,:,:,:,index:index+1], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
-                dataItemImage.overlayMgr["Classification/Prediction/" + descr.name] = ov
                 ov.setColorGetter(descr.getColor, descr)
+                dataItemImage.overlayMgr["Classification/Prediction/" + descr.name] = ov
             margin = activeLearning.computeEnsembleMargin(prediction[:,:,:,:,:])
             ov = overlayMgr.OverlayItem(dataItemImage, DataAccessor(margin), alpha = 1.0, color = long(16535)<<16, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
             dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
@@ -685,7 +685,7 @@ class ClassifierPredictThread(ThreadBase):
                     margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
 
                     #create Overlay for uncertainty:
-                    ov = overlayMgr.OverlayItem(activeItem, margin, color = long(255 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
+                    ov = overlayMgr.OverlayItem(activeItem, margin, color = long(16535 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
                     activeItem.overlayMgr["Classification/Uncertainty"] = ov
             else:
                 print "Prediction for item ", itemindex, "is None, not generating Overlays"

@@ -49,11 +49,11 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
         
-        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Border Indicator')
+        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Border Probability Overlay')
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
         #self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Segmentors Options')
         
-        self.btnChooseWeights.setToolTip('Choose the border indicator for the segmentation task')
+        self.btnChooseWeights.setToolTip('Choose the input overlay that contains border probabilities')
         self.btnSegment.setToolTip('Segment the image')
         #self.btnSegmentorsOptions.setToolTip('Select a segmentation plugin and change settings')
         
@@ -84,15 +84,15 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     
             #real_weights = numpy.zeros(volume.shape + (3,))        
             
-            borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness"],  editable = False)
+            borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select border ndicator type", "Select the border probability type : \n (Normal: bright pixels mean high border probability, Inverted: dark pixels mean high border probability) ",  ["Normal",  "Inverted"],  editable = False)
             borderIndicator = str(borderIndicator[0])
             
             sigma = 1.0
             normalizePotential = True
             #TODO: this , until now, only supports gray scale and 2D!
-            if borderIndicator == "Brightness":
+            if borderIndicator == "Normal":
                 weights = volume[:,:,:]
-            elif borderIndicator == "Darkness":
+            elif borderIndicator == "Inverted":
                 weights = (255 - volume[:,:,:])
     
             if normalizePotential == True:

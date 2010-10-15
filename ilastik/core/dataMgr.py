@@ -370,19 +370,6 @@ class DataItemImage(DataItemBase):
         ov = overlayMgr.OverlayItem(self, self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False, min = 0, max = 255)
         self.overlayMgr["Raw Data"] = ov
 
-#        if self._dataVol.labels is not None:
-#            #create an overlay for labels
-#            ov = overlayMgr.OverlayItem(self._dataVol.labels._data, color = 0, alpha = 1.0, colorTable = self._dataVol.labels.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-#            self.overlayMgr["Classification/Labels"] = ov
-#            for p_i, descr in enumerate(self._dataVol.labels.descriptions):
-#                #create Overlay for _prediction:
-#                ov = overlayMgr.OverlayItem(descr._prediction, color = QtGui.QColor.fromRgba(long(descr.color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True)
-#                self.overlayMgr["Classification/Prediction/" + descr.name] = ov
-#
-#        if self._dataVol.uncertainty is not None:
-#            #create Overlay for uncertainty:
-#            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
-#            self.overlayMgr["Classification/Uncertainty"] = ov
 
             
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
