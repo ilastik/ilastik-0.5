@@ -285,7 +285,7 @@ class OverlayMgr():
                 self.ilastik.labelWidget.overlayWidget.addOverlayRef(value.getRef())
             else:
                 print "current Module :", self.dataMgr._currentModuleName
-                print "adding to non active image", value.dataItemImage.name
+                #print "adding to non active image", value.dataItemImage
                 if value.dataItemImage.module[self.dataMgr._currentModuleName] is not None:
                     value.dataItemImage.module[self.dataMgr._currentModuleName].addOverlayRef(value.getRef())
             
