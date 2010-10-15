@@ -9,6 +9,8 @@ from PyQt4.QtOpenGL import QGLWidget
 from ilastik.gui.iconMgr import ilastikIcons
 import ilastik.gui.overlayDialogs as overlayDialogs
 import ilastik
+import numpy
+
 
 class MyListWidgetItem(QListWidgetItem):
     def __init__(self, item):
@@ -95,6 +97,8 @@ class MyTreeWidgetItem(QTreeWidgetItem):
 class OverlaySelectionDialog(QDialog):
     def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[]):
         QWidget.__init__(self, ilastik)
+        
+        self.pixmapImage = None
         
         # init
         # ------------------------------------------------
@@ -361,12 +365,46 @@ class OverlaySelectionDialog(QDialog):
 
     def drawPreview(self):
         currentItem = self.treeWidget.currentItem()
+        if self.pixmapImage is not None:
+            self.grscene.removeItem(self.pixmapImage)
+            
+        item = currentItem.item
+        
         if isinstance(currentItem, MyTreeWidgetItem):
-            imageArray = currentItem.item._data[0, self.sliceValue, :, :, currentItem.item.channel]
-            if currentItem.item.min is not None:
-                self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (currentItem.item.min, currentItem.item.max))))
+            itemdata = imageArray = currentItem.item._data[0, self.sliceValue, :, :, currentItem.item.channel]
+            if item.getColorTab() is not None:
+                if item.dtype != 'uint8':
+                    """
+                    if the item is larger we take the values module 256
+                    since QImage supports only 8Bit Indexed images
+                    """
+                    olditemdata = itemdata           
+                    itemdata = numpy.ndarray(olditemdata.shape, 'uint8')
+                    if olditemdata.dtype == 'uint32':
+                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+                    elif olditemdata.dtype == 'uint64':
+                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+                    elif olditemdata.dtype == 'int32':
+                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+                    elif olditemdata.dtype == 'int64':
+                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+                    elif olditemdata.dtype == 'uint16':
+                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
+                    else:
+                        raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
+                   
+                if len(itemdata.shape) > 2 and itemdata.shape[2] > 1:
+                    image0 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                else:
+                    image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
+                    image0.setColorTable(item.getColorTab() [:])
+                self.pixmapImage = self.grscene.addPixmap(QPixmap.fromImage(image0))
             else:
-                self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray)))
+                
+                if currentItem.item.min is not None:
+                    self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (currentItem.item.min, currentItem.item.max))))
+                else:
+                    self.pixmapImage = self.grscene.addPixmap(QPixmap(qimage2ndarray.gray2qimage(imageArray)))
             self.grview.setScene(self.grscene)
 
 

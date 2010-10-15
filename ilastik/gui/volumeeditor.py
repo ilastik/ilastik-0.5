@@ -1235,8 +1235,8 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 if len(itemdata.shape) > 2 and itemdata.shape[2] > 1:
                                     image0 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
                                 else:
-                                        image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                        image0.setColorTable(itemcolorTable[:])
+                                    image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                    image0.setColorTable(itemcolorTable[:])
                                 
                             else:
                                 if origitem.min is not None and origitem.max is not None:
