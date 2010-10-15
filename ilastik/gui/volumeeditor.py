@@ -417,7 +417,12 @@ class VolumeEditor(QtGui.QWidget):
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
 
-
+        #Save the current images button
+        self.saveAsImageBtn = QtGui.QPushButton('Export View')
+        self.saveAsImageBtn.setToolTip("Export the currently rendered view as an image stack")
+        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
+        self.toolBoxLayout.addWidget(self.saveAsImageBtn)
+        
         self.toolBoxLayout.addSpacing(30)
 
         #Slice Selector Combo Box in right side toolbox
@@ -425,7 +430,7 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin = QtGui.QSpinBox()
         sliceSpin.setEnabled(True)
         self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.changeSliceX)
-        if self.image.shape[2] > 1 and self.image.shape[3] > 1: #only show when needed
+        if self.image.shape[1] > 1 and self.image.shape[2] > 1 and self.image.shape[3] > 1: #only show when needed
             tempLay = QtGui.QHBoxLayout()
             tempLay.addWidget(QtGui.QLabel("<pre>X:</pre>"))
             tempLay.addWidget(sliceSpin, 1)
@@ -455,6 +460,8 @@ class VolumeEditor(QtGui.QWidget):
             self.toolBoxLayout.addLayout(tempLay)
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
+
+        self.toolBoxLayout.addStretch()
 
 
         self.selSlices = []
@@ -490,13 +497,6 @@ class VolumeEditor(QtGui.QWidget):
         #Overlay selector
         self.overlayWidget = DummyOverlayListWidget(self)
         self.toolBoxLayout.addWidget( self.overlayWidget)
-
-        #Save the current images button
-        self.saveAsImageBtn = QtGui.QPushButton('Export Images')
-        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
-        self.toolBoxLayout.addWidget(self.saveAsImageBtn)
-        
-        self.toolBoxLayout.addStretch()
 
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
@@ -674,8 +674,8 @@ class VolumeEditor(QtGui.QWidget):
         return True
         
     def widgetDestroyed(self):
-        print "volumeeditor destroyed"
-
+        pass
+    
     def cleanUp(self):
         QtGui.QApplication.processEvents()
         print "VolumeEditor: cleaning up "
@@ -777,7 +777,7 @@ class VolumeEditor(QtGui.QWidget):
             del self.labelWidget
         self.labelWidget = widget
         self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
+        self.toolBoxLayout.insertWidget( 0, self.labelWidget)        
     
     def setOverlayWidget(self,  widget):
         """
@@ -789,7 +789,7 @@ class VolumeEditor(QtGui.QWidget):
             del self.overlayWidget
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
-        self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
+        self.toolBoxLayout.insertWidget( 1, self.overlayWidget)        
         self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr.ilastik = self.ilastik
 
 
@@ -1210,6 +1210,13 @@ class ImageSceneRenderThread(QtCore.QThread):
                             p.setOpacity(origitem.alpha)
                             itemcolorTable = origitem.colorTable
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+                            
+                            origitemColor = None
+                            if isinstance(origitem.color,  long):
+                                origitemColor = QtGui.QColor.fromRgba(origitem.color)
+                            else:
+                                origitemColor = origitem.color
+                            
                             if itemcolorTable != None:         
                                 if itemdata.dtype != 'uint8':
                                     """
@@ -1250,18 +1257,15 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         image0 = image1
                                     else:
                                         tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'uint8')
-                                        tempdat[:,:,0] = origitem.color.redF()*itemdata[:]
-                                        tempdat[:,:,1] = origitem.color.greenF()*itemdata[:]
-                                        tempdat[:,:,2] = origitem.color.blueF()*itemdata[:]
+                                        tempdat[:,:,0] = origitemColor.redF()*itemdata[:]
+                                        tempdat[:,:,1] = origitemColor.greenF()*itemdata[:]
+                                        tempdat[:,:,2] = origitemColor.blueF()*itemdata[:]
                                         image1 = qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
                                         image0 = image1
                                 else:
                                     image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
                                     image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                    if isinstance(origitem.color,  long):
-                                        image0.fill(origitem.color)
-                                    else: #shold be QColor then !
-                                        image0.fill(origitem.color.rgba())
+                                    image0.fill(origitemColor.rgba())
                                     image0.setAlphaChannel(image1)
                             p.drawImage(0,0, image0)
 
@@ -1567,21 +1571,18 @@ class ImageScene( QtGui.QGraphicsView):
         # For screen recording BlankCursor dont work
         #self.hiddenCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
         
-        print "creating imageScene 1"
         self.thread = ImageSceneRenderThread(self)
         self.connect(self.thread, QtCore.SIGNAL('finishedPatch(int)'),self.redrawPatch)
         self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.clearTempitems)
         self.thread.start()
         
         #self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
-        print "creating imageScene 2"
 
 
         self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
         self.crossHairCursor.setZValue(100)
         self.scene.addItem(self.crossHairCursor)
         self.crossHairCursor.setBrushSize(self.drawManager.brushSize)
-        print "creating imageScene 6"
 
         self.tempErase = False
 
@@ -2097,7 +2098,7 @@ class ImageScene( QtGui.QGraphicsView):
         for ind, bSizes in enumerate(defaultBrushSizes):
             b = bSizes[0]
             desc = bSizes[1]
-            act = QtGui.QAction(str(b) + desc, brushGroup)
+            act = QtGui.QAction("brush size " + str(b) + desc, brushGroup)
             act.setCheckable(True)
             self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
             if b == self.drawManager.getBrushSize():

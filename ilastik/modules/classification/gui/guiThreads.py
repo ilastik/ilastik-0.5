@@ -42,6 +42,9 @@ class FeatureComputation(object):
 
             
     def terminateFeatureProgressBar(self):
+        self.myTimer.stop()
+        del self.myTimer
+        
         self.parent.statusBar().removeWidget(self.myFeatureProgressBar)
         self.parent.statusBar().hide()
         self.parent.project.dataMgr.module["Classification"]["classificationMgr"].buildTrainingMatrix()
@@ -104,6 +107,7 @@ class ClassificationTrain(QtCore.QObject):
             
     def finalize(self):
         self.classificationTimer.stop()
+        del self.classificationTimer
         self.classificationProcess.wait()
         self.terminateClassificationProgressBar()
         self.parent.setTabBusy(False)
@@ -259,6 +263,8 @@ class ClassificationPredict(object):
             self.terminateClassificationProgressBar()
 
     def finalize(self):
+        self.classificationTimer.stop()
+        del self.classificationTimer 
         self.classificationPredict.generateOverlays(self.parent._activeImage)
         self.parent.labelWidget.repaint()
         self.parent.setTabBusy(False)
