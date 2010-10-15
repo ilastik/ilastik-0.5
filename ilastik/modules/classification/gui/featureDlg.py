@@ -63,7 +63,7 @@ class FeatureDlg(QtGui.QDialog):
         pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
         self.circle = self.grscene.addEllipse(96, 96, 0, 0)
-        self.circle.setPen(QtGui.QPen(self.hudColor))
+        self.circle.setPen(QtGui.QPen(self.hudColor,1))
         self.graphicsView.setScene(self.grscene)
         self.graphicsView.scale(2, 2)
         self.graphicsView.viewport().installEventFilter(self)
@@ -122,7 +122,7 @@ class FeatureDlg(QtGui.QDialog):
         #self.featureTable.resizeRowsToContents()
         #self.featureTable.resizeColumnsToContents()
         for c in range(self.featureTable.columnCount()):
-            self.featureTable.horizontalHeader().resizeSection(c, 54)#(0, QtGui.QHeaderView.Stretch)
+            self.featureTable.horizontalHeader().resizeSection(c, 100)#(0, QtGui.QHeaderView.Stretch)
 
         #self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.featureTable.setShowGrid(False)
@@ -148,7 +148,7 @@ class FeatureDlg(QtGui.QDialog):
         for i in range(self.featureTable.columnCount()):
             item = self.featureTable.horizontalHeaderItem(i)
             size = len(item.text()) * 11
-            self.featureTable.setColumnWidth(i, size)
+            self.featureTable.setColumnWidth(i, 70)
 
     #oli todo
     def testSome(self):
@@ -231,15 +231,15 @@ class FeatureDlg(QtGui.QDialog):
         if action == red:
             self.hudColor = QtGui.QColor("red")
             self.sizeText.setStyleSheet("color: red")
-            self.circle.setPen(QtGui.QPen(self.hudColor))
+            self.circle.setPen(QtGui.QPen(self.hudColor,1))
         elif action == green:
             self.hudColor = QtGui.QColor("green")
             self.sizeText.setStyleSheet("color: green")
-            self.circle.setPen(QtGui.QPen(self.hudColor))
+            self.circle.setPen(QtGui.QPen(self.hudColor,1))
         elif action == blue:
             self.hudColor = QtGui.QColor("blue")
             self.sizeText.setStyleSheet("color: blue")
-            self.circle.setPen(QtGui.QPen(self.hudColor))
+            self.circle.setPen(QtGui.QPen(self.hudColor,1))
         elif action == zoomx1:
             self.zoom = 1
             self.graphicsView.scale(.5, .5)
@@ -257,7 +257,7 @@ class FeatureDlg(QtGui.QDialog):
             # self.grscene.removeItem(self.circle)
             self.circle.setRect(96/self.zoom - (self.size/2), 96/self.zoom - (self.size/2), self.size, self.size)
             self.circle.setPos(self.graphicsView.mapToScene(0, 0))
-            self.circle.setPen(QtGui.QPen(self.hudColor))
+            self.circle.setPen(QtGui.QPen(self.hudColor,1))
             self.sizeText.setText("Size: " + str(self.size))
         
     #oli todo

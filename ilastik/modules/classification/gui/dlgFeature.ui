@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>782</width>
+    <width>827</width>
     <height>285</height>
    </rect>
   </property>
@@ -91,7 +91,7 @@ p, li { white-space: pre-wrap; }
        <item>
         <widget class="QLabel" name="memReq">
          <property name="text">
-          <string>                       </string>
+          <string/>
          </property>
         </widget>
        </item>
