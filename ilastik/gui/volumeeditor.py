@@ -418,7 +418,8 @@ class VolumeEditor(QtGui.QWidget):
         self.setLabelWidget(DummyLabelWidget())
 
         #Save the current images button
-        self.saveAsImageBtn = QtGui.QPushButton('Export Images')
+        self.saveAsImageBtn = QtGui.QPushButton('Export View')
+        self.saveAsImageBtn.setToolTip("Export the currently rendered view as an image stack")
         self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
         self.toolBoxLayout.addWidget(self.saveAsImageBtn)
         
@@ -776,7 +777,7 @@ class VolumeEditor(QtGui.QWidget):
             del self.labelWidget
         self.labelWidget = widget
         self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 1, self.labelWidget)        
+        self.toolBoxLayout.insertWidget( 0, self.labelWidget)        
     
     def setOverlayWidget(self,  widget):
         """
@@ -788,7 +789,7 @@ class VolumeEditor(QtGui.QWidget):
             del self.overlayWidget
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
-        self.toolBoxLayout.insertWidget( 2, self.overlayWidget)        
+        self.toolBoxLayout.insertWidget( 1, self.overlayWidget)        
         self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr.ilastik = self.ilastik
 
 
