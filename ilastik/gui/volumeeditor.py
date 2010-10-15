@@ -417,7 +417,11 @@ class VolumeEditor(QtGui.QWidget):
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
 
-
+        #Save the current images button
+        self.saveAsImageBtn = QtGui.QPushButton('Export Images')
+        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
+        self.toolBoxLayout.addWidget(self.saveAsImageBtn)
+        
         self.toolBoxLayout.addSpacing(30)
 
         #Slice Selector Combo Box in right side toolbox
@@ -456,6 +460,8 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
 
+        self.toolBoxLayout.addStretch()
+
 
         self.selSlices = []
         self.selSlices.append(0)
@@ -490,13 +496,6 @@ class VolumeEditor(QtGui.QWidget):
         #Overlay selector
         self.overlayWidget = DummyOverlayListWidget(self)
         self.toolBoxLayout.addWidget( self.overlayWidget)
-
-        #Save the current images button
-        self.saveAsImageBtn = QtGui.QPushButton('Export Images')
-        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
-        self.toolBoxLayout.addWidget(self.saveAsImageBtn)
-        
-        self.toolBoxLayout.addStretch()
 
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
@@ -777,7 +776,7 @@ class VolumeEditor(QtGui.QWidget):
             del self.labelWidget
         self.labelWidget = widget
         self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 4, self.labelWidget)        
+        self.toolBoxLayout.insertWidget( 1, self.labelWidget)        
     
     def setOverlayWidget(self,  widget):
         """
@@ -789,7 +788,7 @@ class VolumeEditor(QtGui.QWidget):
             del self.overlayWidget
         self.overlayWidget = widget
         self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
-        self.toolBoxLayout.insertWidget( 5, self.overlayWidget)        
+        self.toolBoxLayout.insertWidget( 2, self.overlayWidget)        
         self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr.ilastik = self.ilastik
 
 
