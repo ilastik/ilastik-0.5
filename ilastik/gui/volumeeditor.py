@@ -1570,21 +1570,18 @@ class ImageScene( QtGui.QGraphicsView):
         # For screen recording BlankCursor dont work
         #self.hiddenCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
         
-        print "creating imageScene 1"
         self.thread = ImageSceneRenderThread(self)
         self.connect(self.thread, QtCore.SIGNAL('finishedPatch(int)'),self.redrawPatch)
         self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.clearTempitems)
         self.thread.start()
         
         #self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
-        print "creating imageScene 2"
 
 
         self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
         self.crossHairCursor.setZValue(100)
         self.scene.addItem(self.crossHairCursor)
         self.crossHairCursor.setBrushSize(self.drawManager.brushSize)
-        print "creating imageScene 6"
 
         self.tempErase = False
 
