@@ -361,8 +361,8 @@ class VolumeEditor(QtGui.QWidget):
 
         self._history = HistoryManager(self)
 
-        self.layout = QtGui.QHBoxLayout()
-        self.setLayout(self.layout)
+        self.layout_ = QtGui.QHBoxLayout()
+        self.setLayout(self.layout_)
 
 
         self.grid = QtGui.QGridLayout()
@@ -404,7 +404,7 @@ class VolumeEditor(QtGui.QWidget):
         labelLayout.addWidget(self.pixelValuesLabel)
         labelLayout.addStretch()
         tempLayout.addLayout(labelLayout)
-        self.layout.addLayout(tempLayout)
+        self.layout_.addLayout(tempLayout)
 
         #right side toolbox
         self.toolBox = QtGui.QWidget()
@@ -500,7 +500,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
 
-        self.layout.addWidget(self.toolBox)
+        self.layout_.addWidget(self.toolBox)
 
         # Make the dialog act as a window and stay on top
         if self.embedded == False:

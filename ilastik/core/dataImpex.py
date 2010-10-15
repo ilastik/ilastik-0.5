@@ -68,7 +68,11 @@ class DataImpex(object):
             # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
             data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
-            #_data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
+            
+            # Check for bug in Olympus microscopes
+            if data.max() > 2**15 and fExt in ['.tif','.tiff']:
+                print "Detected Olympus microscope bug..."
+                data = ((data - 2**15)/4095*255).astype(numpy.uint8)
 
             dataAcc = DataAccessor(data)
             theDataItem._dataVol = Volume(dataAcc)
