@@ -31,7 +31,6 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
-        print "on activation!!"
         if self.ilastik.project is None:
             return
         if self.ilastik._activeImage.module[self.name] is None:
