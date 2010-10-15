@@ -67,10 +67,10 @@ class SegmentorBase(HasTraits):
             labelIndices = labelIndices.astype('uint32')
 
         
-        if labelVolume.shape[0] > 1:
-            return self.segment3D(labelVolume, labelValues, labelIndices)
-        else:
-            res = self.segment2D(labelVolume, labelValues, labelIndices)
+        #if labelVolume.shape[0] > 1:
+        return self.segment3D(labelVolume, labelValues, labelIndices)
+        #else:
+        #    res = self.segment2D(labelVolume, labelValues, labelIndices)
 
     def setupWeights(self, weights):
         """

@@ -40,7 +40,6 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         ovs = self.ilastik._activeImage.module[self.name].getOverlayRefs()
         
         raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
-        ovs.append(raw.getRef())
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
         
@@ -51,7 +50,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         ov = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
         
         overlayWidget.addOverlayRef(ov.getRef())
-        
+        overlayWidget.addOverlayRef(raw.getRef())
+                
         self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.dataMgr.module["Classification"].labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
     
     def on_deActivation(self):

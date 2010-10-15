@@ -374,7 +374,6 @@ class OverlayWidget(QtGui.QGroupBox):
         return self.overlayListWidget.removeOverlay(item)
         
     def addOverlayRef(self, overlayRef, duplicateAllowed = False):
-        
         if duplicateAllowed is False:
             for o in self.overlays:
                 if o.key == overlayRef.key:
