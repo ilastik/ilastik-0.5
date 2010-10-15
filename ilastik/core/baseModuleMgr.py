@@ -58,7 +58,10 @@ class BaseModuleDataItemMgr(PropertyMgr):
         self.overlayReferences.insert(position, ov)
 
     def addOverlayRef(self, ov):
-        self.overlayReferences.insert(0, ov)
+        if len(self.overlayReferences) >= 1:
+            self.overlayReferences.insert(1, ov)
+        else:
+            self.overlayReferences.insert(0, ov)
             
     def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         pass

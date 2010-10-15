@@ -166,8 +166,27 @@ class ClassificationModuleMgr(BaseModuleMgr):
         #clear features and training
         self.classificationMgr.clearFeaturesAndTrainingForImage(dataItemImage)
         
-        dataItemImage.Classification.addOverlayRef(dataItemImage.overlayMgr["Raw Data"].getRef())
+        #handle obsolete file formats:
+        if dataItemImage.Classification["labels"] is not None:
+            labels = dataItemImage.Classification["labels"]
+            ov = overlayMgr.OverlayItem(dataItemImage, labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False, linkColorTable = True)
+            dataItemImage.overlayMgr["Classification/Labels"] = ov
+            if len(self.dataMgr.module["Classification"]["labelDescriptions"]) == 0: 
+                for d in labels.descriptions:
+                    self.dataMgr.module["Classification"]["labelDescriptions"].append(d)
+            dataItemImage.Classification["labels"]  = None     
+
+
+        #create LabelOverlay
+        if dataItemImage.overlayMgr["Classification/Labels"] is None:
+            data = numpy.zeros(dataItemImage.shape[0:-1]+(1,),'uint8')
+            ov = overlayMgr.OverlayItem(dataItemImage, data, color = 0, alpha = 1.0, colorTable = self.dataMgr.module["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+            dataItemImage.overlayMgr["Classification/Labels"] = ov        
         
+        
+        dataItemImage.Classification.addOverlayRef(dataItemImage.overlayMgr["Raw Data"].getRef())
+
+                    
         if dataItemImage.Classification["prediction"] is not None:
             prediction = dataItemImage.Classification["prediction"]
             for index, descr in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
@@ -179,21 +198,6 @@ class ClassificationModuleMgr(BaseModuleMgr):
             dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
             dataItemImage.Classification["prediction"] = None
 
-        #create LabelOverlay
-        if dataItemImage.overlayMgr["Classification/Labels"] is None:
-            data = numpy.zeros(dataItemImage.shape[0:-1]+(1,),'uint8')
-            ov = overlayMgr.OverlayItem(dataItemImage, data, color = 0, alpha = 1.0, colorTable = self.dataMgr.module["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-            dataItemImage.overlayMgr["Classification/Labels"] = ov
-            
-        #handle obsolete file formats:
-        if dataItemImage.Classification["labels"] is not None:
-            labels = dataItemImage.Classification["labels"]
-            ov = overlayMgr.OverlayItem(dataItemImage, labels._data, alpha = 1.0, colorTable = labels.getColorTab(), autoAdd = True, autoVisible = True, autoAlphaChannel = False, linkColorTable = True)
-            dataItemImage.overlayMgr["Classification/Labels"] = ov
-            if len(self.dataMgr.module["Classification"]["labelDescriptions"]) == 0: 
-                for d in labels.descriptions:
-                    self.dataMgr.module["Classification"]["labelDescriptions"].append(d)
-            dataItemImage.Classification["labels"]  = None        
             
 #        if self._dataVol.uncertainty is not None:
 #            #create Overlay for uncertainty:
