@@ -1210,6 +1210,13 @@ class ImageSceneRenderThread(QtCore.QThread):
                             p.setOpacity(origitem.alpha)
                             itemcolorTable = origitem.colorTable
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+                            
+                            origitemColor = None
+                            if isinstance(origitem.color,  long):
+                                origitemColor = QtGui.QColor.fromRgba(origitem.color)
+                            else:
+                                origitemColor = origitem.color
+                            
                             if itemcolorTable != None:         
                                 if itemdata.dtype != 'uint8':
                                     """
@@ -1250,18 +1257,15 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         image0 = image1
                                     else:
                                         tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'uint8')
-                                        tempdat[:,:,0] = origitem.color.redF()*itemdata[:]
-                                        tempdat[:,:,1] = origitem.color.greenF()*itemdata[:]
-                                        tempdat[:,:,2] = origitem.color.blueF()*itemdata[:]
+                                        tempdat[:,:,0] = origitemColor.redF()*itemdata[:]
+                                        tempdat[:,:,1] = origitemColor.greenF()*itemdata[:]
+                                        tempdat[:,:,2] = origitemColor.blueF()*itemdata[:]
                                         image1 = qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
                                         image0 = image1
                                 else:
                                     image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
                                     image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                    if isinstance(origitem.color,  long):
-                                        image0.fill(origitem.color)
-                                    else: #shold be QColor then !
-                                        image0.fill(origitem.color.rgba())
+                                    image0.fill(origitemColor.rgba())
                                     image0.setAlphaChannel(image1)
                             p.drawImage(0,0, image0)
 
