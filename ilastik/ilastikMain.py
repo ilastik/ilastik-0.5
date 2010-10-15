@@ -41,7 +41,7 @@ import os
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
-from ilastik.core.projectMgr import ILASTIK_VERSION
+from ilastik.core import ILASTIK_VERSION
 import ilastik.modules
 
 #load core functionality
@@ -64,7 +64,10 @@ from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 #import ilastik.gui.ribbons.standardRibbons
 
 import threading
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 import getopt
 
 
@@ -77,9 +80,9 @@ from ilastik.gui.shortcutmanager import shortcutManager, shortcutManagerDlg, sho
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
+        
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)

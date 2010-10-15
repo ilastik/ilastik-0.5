@@ -30,7 +30,10 @@
 import numpy
 import threading 
 import os
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 
 from collections import deque
 

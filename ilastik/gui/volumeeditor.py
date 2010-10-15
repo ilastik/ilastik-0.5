@@ -45,7 +45,7 @@ from PyQt4 import QtCore, QtGui, QtOpenGL
 import sip
 import vigra, numpy
 import qimage2ndarray
-import h5py
+
 import copy
 import os.path
 from collections import deque

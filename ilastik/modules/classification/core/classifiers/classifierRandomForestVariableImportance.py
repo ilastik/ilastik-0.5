@@ -1,5 +1,8 @@
 from classifierBase import *
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 
 class ClassifierRandomForestVariableImportance(ClassifierBase):
     #human readable information

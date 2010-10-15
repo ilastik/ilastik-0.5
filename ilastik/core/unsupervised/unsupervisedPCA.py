@@ -1,4 +1,4 @@
-from unsupervisedBase import *
+from ilastik.core.unsupervised.unsupervisedBase import UnsupervisedBase
 import numpy, scipy
 
 class UnsupervisedPCA(UnsupervisedBase):

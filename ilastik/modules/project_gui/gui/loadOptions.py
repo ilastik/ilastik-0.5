@@ -2,7 +2,10 @@ import os, glob
 import vigra
 import sys
 import getopt
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 
 from ilastik.core import dataImpex
 from PyQt4 import QtCore, QtGui, uic
