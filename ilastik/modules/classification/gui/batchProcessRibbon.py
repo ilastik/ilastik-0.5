@@ -18,6 +18,7 @@ from ilastik.modules.classification.gui.batchProcess import BatchProcess
 class AutomateTab(IlastikTabBase, QtGui.QWidget):
     name = 'Automate'
     position = 100
+    moduleName = "Classification"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)

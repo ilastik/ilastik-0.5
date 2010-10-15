@@ -625,6 +625,7 @@ class VolumeEditor(QtGui.QWidget):
         print "volumeeditor destroyed"
 
     def cleanUp(self):
+        QtGui.QApplication.processEvents()
         print "VolumeEditor: cleaning up "
         for index, s in enumerate( self.imageScenes ):
             #s.cleanUp()

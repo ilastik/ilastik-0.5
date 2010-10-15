@@ -266,13 +266,16 @@ class OverlayListWidget(QtGui.QListWidget):
 
 
 class OverlayWidget(QtGui.QGroupBox):
-    def __init__(self,parent, overlayMgr,  overlays):
+    def __init__(self,parent, dataMgr):
         QtGui.QGroupBox.__init__(self,  "Overlays")
         self.setLayout(QtGui.QHBoxLayout())
+        self.dataMgr = dataMgr
+
         self.volumeEditor = parent
-        self.overlayMgr = overlayMgr
+        self.overlayMgr = self.dataMgr._activeImage.overlayMgr
         
-        self.overlays = overlays
+        print "OverlayWidget, current Module Name ", self.dataMgr._currentModuleName
+        self.overlays = self.dataMgr._activeImage.module[self.dataMgr._currentModuleName].getOverlayRefs()
 
         self.overlayListWidget = OverlayListWidget(parent, self)
        

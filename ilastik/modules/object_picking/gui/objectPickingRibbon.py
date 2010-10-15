@@ -37,7 +37,7 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.Object_Picking,  ovs)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.objectLabels = ObjectListWidget(self.ilastik._activeImage.Object_Picking,  self.ilastik._activeImage.Object_Picking.objects,  self.ilastik.labelWidget) 

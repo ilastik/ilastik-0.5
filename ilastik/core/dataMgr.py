@@ -434,6 +434,7 @@ class DataMgr():
         self.featureLock = threading.Semaphore(1) #prevent chaining of _activeImageNumber during thread stuff
         self._dataItemsLoaded = []
         self.channels = -1
+        self._activeImage = None
         self._activeImageNumber = 0
         self._currentModuleName = None
         #TODO: Maybe it shouldn't be here...

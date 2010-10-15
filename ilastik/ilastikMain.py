@@ -201,14 +201,9 @@ class MainWindow(QtGui.QMainWindow):
     
     def changeImage(self, number):
         self.fileSelectorList.setEnabled(False)
-        self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
+        
         self.activeImageLock.acquire()
         QtCore.QCoreApplication.processEvents()
-        if hasattr(self, "classificationInteractive"):
-            #self.labelWidget.disconnect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
-            self.classificationInteractive.stop()
-            del self.classificationInteractive
-            self.classificationInteractive = True
         if self.labelWidget is not None:
             self.labelWidget._history.volumeEditor = None
 
@@ -220,17 +215,15 @@ class MainWindow(QtGui.QMainWindow):
         self._activeImage = self.project.dataMgr[number]
         
         self.project.dataMgr._activeImageNumber = number
+        self.project.dataMgr._activeImage = self._activeImage
         
         self.createImageWindows( self.project.dataMgr[number]._dataVol)
         
         self.labelWidget.repaint() #for overlays
         self.activeImageLock.release()
-        if hasattr(self, "classificationInteractive"):
-            self.classificationInteractive = ClassificationInteractive(self)
-            #self.labelWidget.connect(self.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.classificationInteractive.updateThreadQueues)
-            self.classificationInteractive.updateThreadQueues()
+        
         # Notify tabs
-        self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()        
+        self.ribbon.widget(self.ribbon.currentIndex()).on_activation()        
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
         self.fileSelectorList.setEnabled(True)
             
@@ -292,7 +285,7 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.currentTabNumber = index
         #change current module name, so that overlays are stored at the right place
         if self.project is not None:
-            self.project.dataMgr._currentModuleName = self.ribbon.widget(index).__class__.name 
+            self.project.dataMgr._currentModuleName = self.ribbon.widget(index).__class__.moduleName 
         self.ribbon.widget(index).on_activation()
 
         if self.labelWidget is not None:
@@ -309,7 +302,10 @@ class MainWindow(QtGui.QMainWindow):
                     
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
+        
         self.project.dataMgr._activeImageNumber = self._activeImageNumber
+        self.project.dataMgr._activeImage = self._activeImage
+        
         self._activeImage = self.project.dataMgr[self._activeImageNumber]
      
     def initImageWindows(self):
@@ -330,7 +326,10 @@ class MainWindow(QtGui.QMainWindow):
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
-
+        
+        if self.project.dataMgr._currentModuleName is None:
+            self.project.dataMgr._currentModuleName = "Project"
+        
         self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()
 
         self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval

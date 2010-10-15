@@ -39,7 +39,7 @@ try:
             
             self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
     
-            overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  ovs)
+            overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
             self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
             
             self.ilastik.labelWidget.setLabelWidget(DummyLabelWidget())

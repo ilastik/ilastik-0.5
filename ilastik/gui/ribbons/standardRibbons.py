@@ -44,7 +44,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.unsupervisedOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
@@ -124,7 +124,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
             if raw is not None:
                 ovs.append(raw.getRef())
                         
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik._activeImage.overlayMgr,  self.ilastik._activeImage._dataVol.backgroundOverlays)
+        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         
