@@ -417,12 +417,6 @@ class VolumeEditor(QtGui.QWidget):
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
 
-        #Save the current images button
-        self.saveAsImageBtn = QtGui.QPushButton('Export View')
-        self.saveAsImageBtn.setToolTip("Export the currently rendered view as an image stack")
-        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.on_saveAsImage)
-        self.toolBoxLayout.addWidget(self.saveAsImageBtn)
-        
         self.toolBoxLayout.addSpacing(30)
 
         #Slice Selector Combo Box in right side toolbox
@@ -2074,40 +2068,52 @@ class ImageScene( QtGui.QGraphicsView):
        
         menu.addSeparator()
         labelList = []
-        volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
-        for index, item in enumerate(volumeLabel):
-            labelColor = QtGui.QColor.fromRgb(long(item.color))
-            labelIndex = item.number
-            labelName = item.name
-            pixmap = QtGui.QPixmap(16, 16)
-            pixmap.fill(labelColor)
-            icon = QtGui.QIcon(pixmap)
+        
+        if type(self.volumeEditor.labelWidget) != DummyLabelWidget:
+            volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
+    
+            for index, item in enumerate(volumeLabel):
+                labelColor = QtGui.QColor.fromRgb(long(item.color))
+                labelIndex = item.number
+                labelName = item.name
+                pixmap = QtGui.QPixmap(16, 16)
+                pixmap.fill(labelColor)
+                icon = QtGui.QIcon(pixmap)
+                
+                act = QtGui.QAction(icon, labelName, menu)
+                i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
+                # print self.volumeEditor.labelView.selectionModel()
+                self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
+                labelList.append(menu.addAction(act))
+                
+            if self.drawManager.erasing is False:
+                eraseAct = QtGui.QAction("Enable eraser", menu)
+                menu.addAction(eraseAct)
+                self.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: self.drawManager.toggleErase())
+            else:
+                eraseAct = QtGui.QAction("Disable eraser", menu)
+                menu.addAction(eraseAct)
+                self.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: self.drawManager.toggleErase())
+                
+            menu.addSeparator()
+            # brushM = labeling.addMenu("Brush size")
+            brushGroup = QtGui.QActionGroup(self)
             
-            act = QtGui.QAction(icon, labelName, menu)
-            i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
-            # print self.volumeEditor.labelView.selectionModel()
-            self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
-            labelList.append(menu.addAction(act))
-
-        menu.addSeparator()
-        # brushM = labeling.addMenu("Brush size")
-        brushGroup = QtGui.QActionGroup(self)
-        
-        defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
-        brush = []
-        for ind, bSizes in enumerate(defaultBrushSizes):
-            b = bSizes[0]
-            desc = bSizes[1]
-            act = QtGui.QAction("brush size " + str(b) + desc, brushGroup)
-            act.setCheckable(True)
-            self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
-            if b == self.drawManager.getBrushSize():
-                act.setChecked(True)
-            brush.append(menu.addAction(act))
-        
-        menu.setTearOffEnabled(True)
-
-        action = menu.exec_(QtGui.QCursor.pos())
+            defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
+            brush = []
+            for ind, bSizes in enumerate(defaultBrushSizes):
+                b = bSizes[0]
+                desc = bSizes[1]
+                act = QtGui.QAction("brush size " + str(b) + desc, brushGroup)
+                act.setCheckable(True)
+                self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
+                if b == self.drawManager.getBrushSize():
+                    act.setChecked(True)
+                brush.append(menu.addAction(act))
+            
+            menu.setTearOffEnabled(True)
+    
+            action = menu.exec_(QtGui.QCursor.pos())
 
 
 

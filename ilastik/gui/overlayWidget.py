@@ -327,6 +327,13 @@ class OverlayWidget(QtGui.QGroupBox):
         #tl0.addLayout(tl3)
         
         tl1.addLayout(tl0)
+        
+        #Save the current images button
+        self.saveAsImageBtn = QtGui.QPushButton('Export View')
+        self.saveAsImageBtn.setToolTip("Export the currently rendered view as an image stack")
+        tl1.addWidget(self.saveAsImageBtn)
+        self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.volumeEditor.on_saveAsImage)
+        
         self.layout().addLayout(tl1)
         
     def buttonUpClicked(self):
