@@ -1621,9 +1621,9 @@ class ImageScene( QtGui.QGraphicsView):
         self.thread.dataPending.set()
         self.thread.wait()
         self.ticker.stop()
-        self.ticker = None
+        del self.ticker
         self.drawTimer.stop()
-        self.drawTimer = None
+        del self.drawTimer
         print "finished thread"
 
     def updatePatches(self, patchNumbers ,image, overlays = []):

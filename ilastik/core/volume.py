@@ -330,16 +330,11 @@ class Volume():
         
         #self.labels = labels
 
-        
-        self.projectOverlays = []
-        
         #self.labelOverlays = []
 
         self.backgroundOverlays = []
-        self.autosegOverlays = []
         self.unsupervisedOverlays = []
         
-        self.uncertainty = uncertainty
         self.background = background
         self.unsupervised = unsupervised
         
@@ -347,9 +342,6 @@ class Volume():
 #            l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
 #            self.labels = VolumeLabels(l)
             
-        if self.uncertainty is None:
-            self.uncertainty = numpy.zeros(self._data.shape[0:-1],  'uint8')
-
         if self.background is None:
             l = numpy.zeros(self._data.shape[0:-1], 'uint8')
             self.background = VolumeLabels(l)
