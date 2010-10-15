@@ -1616,14 +1616,15 @@ class ImageScene( QtGui.QGraphicsView):
 
     def cleanUp(self):
         #print "stopping ImageSCeneRenderThread", str(self.axis)
-        del self.drawTimer
         self.thread.stopped = True
         self.thread.dataPending.set()
         self.thread.wait()
+        
         self.ticker.stop()
-        self.ticker = None
         self.drawTimer.stop()
-        self.drawTimer = None
+        del self.drawTimer
+        del self.ticker
+        
         print "finished thread"
 
     def updatePatches(self, patchNumbers ,image, overlays = []):
