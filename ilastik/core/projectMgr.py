@@ -51,7 +51,7 @@ from ilastik.core import connectedComponents
 
 class Project(object):
     """
-    Import/Export for the whole project, including any data, settings, lables etc.
+    Import/Export for the whole project, including any data, settings, labels etc.
     """
     def __init__(self, name, labeler, description, dataMgr, labelNames=None, labelColors=None):
         if labelNames is None:
@@ -91,7 +91,7 @@ class Project(object):
                 
             fileHandle = h5py.File(fileName,'w')
             
-            fileHandle.create_dataset('ilastikVersion', data=ilastik.core.ILASTIK_VERSION)
+            fileHandle.create_dataset('ilastikVersion', data=ILASTIK_VERSION)
             
             # get project settings
             projectG = fileHandle.create_group('Project') 
