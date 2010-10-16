@@ -186,8 +186,9 @@ class ClassificationModuleMgr(BaseModuleMgr):
             ov = overlayMgr.OverlayItem(dataItemImage, data, color = 0, alpha = 1.0, colorTable = self.dataMgr.module["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
             dataItemImage.overlayMgr["Classification/Labels"] = ov        
         
-        
-        dataItemImage.Classification.addOverlayRef(dataItemImage.overlayMgr["Raw Data"].getRef())
+        #add the raw data
+        if dataItemImage.overlayMgr["Raw Data"] is not None:
+            dataItemImage.Classification.addOverlayRef(dataItemImage.overlayMgr["Raw Data"].getRef())
 
                     
         if dataItemImage.Classification["prediction"] is not None:
