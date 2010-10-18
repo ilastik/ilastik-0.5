@@ -14,7 +14,7 @@ class FeatureComputation(object):
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)        
         self.parent.project.dataMgr.featureLock.acquire()
-        self.myTimer = QtCore.QTimer()
+        self.myTimer = QtCore.QTimer(self.ilastik)
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
         self.parent.project.dataMgr.module["Classification"]["classificationMgr"].clearFeaturesAndTraining()
         numberOfJobs = self.ilastik.project.dataMgr.Classification.featureMgr.prepareCompute(self.parent.project.dataMgr)   
@@ -79,7 +79,7 @@ class ClassificationTrain(QtCore.QObject):
         if len(newLabels) > 0:
             self.parent.project.dataMgr.updateTrainingMatrix(newLabels)
         
-        self.classificationTimer = QtCore.QTimer()
+        self.classificationTimer = QtCore.QTimer(self.ilastik)
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         numberOfJobs = 10                 
         self.initClassificationProgress(numberOfJobs)
@@ -201,13 +201,14 @@ class ClassificationInteractive(object):
     def stop(self):
         self.classificationInteractive.stopped = True
         
+        self.classificationInteractive.dataPending.set() #wake up thread one last time before his death
+        
+        self.classificationInteractive.wait()
+        self.finalize()
+
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
-
-        self.classificationInteractive.dataPending.set() #wake up thread one last time before his death
-        self.classificationInteractive.wait()
-        self.finalize()
         
         self.terminateClassificationProgressBar()
         self.parent.setTabBusy(False)

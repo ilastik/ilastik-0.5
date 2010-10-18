@@ -1433,7 +1433,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.lastPanPoint = QtCore.QPoint()
         self.dragMode = False
         self.deltaPan = QtCore.QPointF(0,0)
-        self.ticker = QtCore.QBasicTimer()
+        self.ticker = QtCore.QBasicTimer(self)
         self.x = 0.0
         self.y = 0.0
         
@@ -1548,7 +1548,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.allBorder.setZValue(99)
 
         #label updates while drawing, needed for interactive segmentation
-        self.drawTimer = QtCore.QTimer()
+        self.drawTimer = QtCore.QTimer(self)
         self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.updateLabels)
         
         # invisible cursor to enable custom cursor
@@ -1836,12 +1836,12 @@ class ImageScene( QtGui.QGraphicsView):
                 self.doScale(scaleFactor)
             else:
                 self.changeSlice(-1)
-
-        mousePosAfterScale = self.mapToScene(event.pos())
-        offset = self.mousePos - mousePosAfterScale
-        newGrviewCenter = grviewCenter + offset
-        self.centerOn(newGrviewCenter)
-        self.mouseMoveEvent(event)
+        if k_ctrl is True:
+            mousePosAfterScale = self.mapToScene(event.pos())
+            offset = self.mousePos - mousePosAfterScale
+            newGrviewCenter = grviewCenter + offset
+            self.centerOn(newGrviewCenter)
+            self.mouseMoveEvent(event)
 
     def zoomOut(self):
         self.doScale(0.9)
