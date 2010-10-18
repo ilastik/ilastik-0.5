@@ -81,6 +81,7 @@ class FeatureDlg(QtGui.QDialog):
         tempLayoutZoom.addStretch()
         tempLayoutZoomV.addLayout(tempLayoutZoom)
         tempLayoutZoomV.addStretch()
+        self.featureComputation = None
 
 
     def initDlg(self):
@@ -300,9 +301,7 @@ class FeatureDlg(QtGui.QDialog):
             #print "features have maximum needed margin of:", self.parent.project.dataMgr.Classification.featureMgr.maxSigma*3
             self.parent.labelWidget.setBorderMargin(int(self.parent.project.dataMgr.Classification.featureMgr.maxContext))
             self.computeMemoryRequirement(featureSelectionList)
-            self.close()
-            if self.parent.project.dataMgr.Classification.featureMgr is not None:
-                self.featureComputation = FeatureComputation(self.ilastik)
+            self.accept() 
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
             return False

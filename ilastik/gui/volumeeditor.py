@@ -656,7 +656,9 @@ class VolumeEditor(QtGui.QWidget):
             self.focusAxis -= 1
             if self.focusAxis < 0:
                 self.focusAxis = 2
-        self.imageScenes[self.focusAxis].setFocus()
+                
+        if len(self.imageScenes) > 2:
+            self.imageScenes[self.focusAxis].setFocus()
         return True
         
     def widgetDestroyed(self):
@@ -1408,7 +1410,7 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
 
 
 
-class ImageScene( QtGui.QGraphicsView):
+class ImageScene(QtGui.QGraphicsView):
     def __borderMarginIndicator__(self, margin):
         """
         update the border margin indicator (left, right, top, bottom)
