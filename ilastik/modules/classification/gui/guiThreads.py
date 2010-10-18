@@ -201,13 +201,14 @@ class ClassificationInteractive(object):
     def stop(self):
         self.classificationInteractive.stopped = True
         
+        self.classificationInteractive.dataPending.set() #wake up thread one last time before his death
+        
+        self.classificationInteractive.wait()
+        self.finalize()
+
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
-
-        self.classificationInteractive.dataPending.set() #wake up thread one last time before his death
-        self.classificationInteractive.wait()
-        self.finalize()
         
         self.terminateClassificationProgressBar()
         self.parent.setTabBusy(False)

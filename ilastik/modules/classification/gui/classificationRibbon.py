@@ -110,7 +110,6 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             self.classificationInteractive = ClassificationInteractive(self.ilastik)
         else:
             self.classificationInteractive.stop()
-            del self.classificationInteractive
             self.ilastik.ribbon.getTab('Classification').btnStartLive.setText('Start Live Prediction')
         
     def on_btnTrainPredict_clicked(self):
