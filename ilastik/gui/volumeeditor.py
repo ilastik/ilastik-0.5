@@ -1433,7 +1433,7 @@ class ImageScene( QtGui.QGraphicsView):
         self.lastPanPoint = QtCore.QPoint()
         self.dragMode = False
         self.deltaPan = QtCore.QPointF(0,0)
-        self.ticker = QtCore.QBasicTimer(self)
+        self.ticker = QtCore.QTimer(self)
         self.x = 0.0
         self.y = 0.0
         
