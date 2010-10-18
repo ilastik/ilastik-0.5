@@ -225,15 +225,15 @@ class ClassificationModuleMgr(BaseModuleMgr):
             
             if 'classifiers' in h5group.keys():
                 del h5group['classifiers']
-                print "overwrite classifiers"
+                print "Overwrite existing classifiers"
                 
             h5group.create_group('classifiers')
             h5file.close()
             
             for i, c in enumerate(self.classificationMgr.classifiers):
                 print pathToGroup + "/classifiers/rf_%03d" % i
-                tmp = c.RF.writeHDF5(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
-                print "Write Random Forest # %03d -> %d" % (i,tmp)
+                c.serialize(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
+                print "Write random forest #%03d" % i
             
     def importClassifiers(self, fileName):
         hf = h5py.File(fileName,'r')

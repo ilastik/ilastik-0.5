@@ -274,7 +274,7 @@ class OverlayWidget(QtGui.QGroupBox):
         self.volumeEditor = parent
         self.overlayMgr = self.dataMgr._activeImage.overlayMgr
         
-        print "OverlayWidget, current Module Name ", self.dataMgr._currentModuleName
+        print "OverlayWidget, current Module Name", self.dataMgr._currentModuleName
         self.overlays = self.dataMgr._activeImage.module[self.dataMgr._currentModuleName].getOverlayRefs()
 
         self.overlayListWidget = OverlayListWidget(parent, self)
