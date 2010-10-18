@@ -107,7 +107,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def createLabel(self):
         name = "Label " + len(self.items).__str__()
         number = len(self.items)
-        if number > len(self.labelColorTable):
+        if number >= len(self.labelColorTable):
             color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
         else:
             color = self.labelColorTable[number]
