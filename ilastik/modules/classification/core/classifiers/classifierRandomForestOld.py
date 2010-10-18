@@ -2,8 +2,8 @@ from classifierBase import *
 
 class ClassifierRandomForestOld(ClassifierBase):
     #human readable information
-    name = "RandomForest classifier stable" 
-    description = "Basic RandomForest classifier"
+    name = "Random forest classifier (stable)" 
+    description = "Random forest classifier"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
@@ -48,11 +48,9 @@ class ClassifierRandomForestOld(ClassifierBase):
         else:
             return None
         
-#    def serialize(self, fileName, pathInFile):
-#        # cannot serilaze into grp because can not pass h5py handle to vigra yet
-#        # works only with new RF version
-#        self.RF.writeHDF5(fileName, pathInFile, True)
-#
+    def serialize(self, fileName, pathInFile, overWriteFlage):
+        raise IOError('This classifier cannot be saved.')
+
 #    @classmethod
 #    def deserialize(cls, fileName, pathInFile):
 #        classifier = cls()

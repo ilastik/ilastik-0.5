@@ -7,7 +7,7 @@ with warnings.catch_warnings():
 class ClassifierRandomForestVariableImportance(ClassifierBase):
     #human readable information
     name = "Random forest classifier with variable importance" 
-    description = "Basic RandomForest classifier with computation of variable importance"
+    description = "Random forest classifier with computation of variable importance"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
@@ -63,15 +63,14 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
         else:
             return None
         
-    def serialize(self, fileName, pathInFile):
+    def serialize(self, fileName, pathInFile, overWriteFlag=False):
         # cannot serialize into group because can not pass h5py handle to vigra yet
         # works only with new RF version
-        tmp = self.RF.writeHDF5(fileName, pathInFile, True)
+        tmp = self.RF.writeHDF5(fileName, pathInFile, overWriteFlag)
         f = h5py.File(fileName, 'r+')
         f.create_dataset(pathInFile+'/Variable importance', data=self.variableImportance)
         f.create_dataset(pathInFile+'/OOB', data=self.oob)
         f.close()
-        return tmp
 
     @classmethod
     def deserialize(cls, fileName, pathInFile):

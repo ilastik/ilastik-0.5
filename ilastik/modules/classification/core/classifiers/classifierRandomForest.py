@@ -1,9 +1,10 @@
 from classifierBase import *
 
+
 class ClassifierRandomForest(ClassifierBase):
     #human readable information
     name = "Random forest classifier" 
-    description = "Basic RandomForest classifier with extensions"
+    description = "Basic random forest classifier with extensions"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
@@ -41,7 +42,9 @@ class ClassifierRandomForest(ClassifierBase):
         self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
         
         oob = self.RF.learnRF(features, labels)
-        print "Out-of-bag error %f" % oob
+        ClassifierBase.printLock.acquire()
+        print "Out-of-bag error %4.3f" % oob
+        ClassifierBase.printLock.release()
         
     def predict(self, features):
         #3d: check that only 1D data arrives here
@@ -52,10 +55,10 @@ class ClassifierRandomForest(ClassifierBase):
         else:
             return None
         
-    def serialize(self, fileName, pathInFile):
+    def serialize(self, fileName, pathInFile, overwriteFlag=False):
         # cannot serilaze into grp because can not pass h5py handle to vigra yet
         # works only with new RF version
-        self.RF.writeHDF5(fileName, pathInFile, True)
+        self.RF.writeHDF5(fileName, pathInFile, overwriteFlag)
 
     @classmethod
     def deserialize(cls, fileName, pathInFile):
@@ -64,6 +67,4 @@ class ClassifierRandomForest(ClassifierBase):
         classifier.treeCount = classifier.RF.treeCount
         return classifier
 
-
-#NEW RandomForest from Raoul: (reenable when new RF performance bug is fixed) :
 
