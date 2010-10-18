@@ -37,10 +37,12 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
 
         tl = QtGui.QHBoxLayout()      
         self.btnShortcuts = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Help),'Shortcuts')
+        self.btnAbout = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Help),'About')
       
         self.btnShortcuts.setToolTip('Show a list of ilastik shortcuts')
         
         tl.addWidget(self.btnShortcuts)
+        tl.addWidget(self.btnAbout)
         tl.addStretch()
         
         self.setLayout(tl)

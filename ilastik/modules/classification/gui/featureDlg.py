@@ -287,8 +287,9 @@ class FeatureDlg(QtGui.QDialog):
             self.contextMenuGraphicsView(event.pos())
         
         if event.type() == QtCore.QEvent.Leave:
-            self.circle.setVisible(False)
-            self.sizeText.setVisible(False)
+            #self.circle.setVisible(False)
+            #self.sizeText.setVisible(False)
+            pass
 
         return False
 

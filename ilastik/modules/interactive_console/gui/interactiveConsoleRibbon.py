@@ -77,7 +77,7 @@ try:
                 self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
             
         def _initContent(self):
-            pass
+            self.setLayout(QtGui.QHBoxLayout())
         
         def _initConnects(self):
             pass

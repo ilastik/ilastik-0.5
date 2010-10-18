@@ -344,7 +344,7 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.setRgbMode(self.project.rgbData)
         
         
-        dock = QtGui.QDockWidget("Ilastik Label Widget", self)
+        dock = QtGui.QDockWidget(' ilastik GUI', self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
         
