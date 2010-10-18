@@ -138,12 +138,9 @@ class OverlaySelectionDialog(QtGui.QDialog):
         #self.treeWidget.customContextMenuRequested.connect(self.contextMenuTree)
 
         treeButtonsLayout = QtGui.QHBoxLayout()
-        self.expandAllButton = QtGui.QPushButton("Expand All")
-        self.connect(self.expandAllButton, QtCore.SIGNAL('clicked()'), self.expandAll)
-        self.createNewButton = QtGui.QPushButton("Create New")
-        self.connect(self.createNewButton, QtCore.SIGNAL('clicked()'), self.createNew)
-        treeButtonsLayout.addWidget(self.expandAllButton)
-        treeButtonsLayout.addWidget(self.createNewButton)
+        self.expandCollapseButton = QtGui.QPushButton("Collapse All")
+        self.connect(self.expandCollapseButton, QtCore.SIGNAL('clicked()'), self.expandOrCollapse)
+        treeButtonsLayout.addWidget(self.expandCollapseButton)
         treeButtonsLayout.addStretch()
         treeAndButtonsLayout.addWidget(self.treeWidget)
         treeAndButtonsLayout.addLayout(treeButtonsLayout)
@@ -249,6 +246,8 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.layout.addLayout(tempLayout)
         
         self.addOverlaysToTreeWidget()
+        self.treeWidget.expandAll()
+        self.treeWidgetExpanded = True
         
     # methods
     # ------------------------------------------------
@@ -471,11 +470,24 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.drawPreview()
 
 
+    def expandOrCollapse(self):
+        if self.treeWidgetExpanded == True:
+            self.collapseAll()
+            self.expandCollapseButton.setText('Expand All')
+            self.treeWidgetExpanded = False
+        else:
+            self.expandAll()
+            self.treeWidgetExpanded = True
+            self.expandCollapseButton.setText('Collapse All')
+            
+    
+
+    def collapseAll(self):
+        self.treeWidget.collapseAll()
+    
+
     def expandAll(self):
-        it = MyQTreeWidgetIter(self.treeWidget, QtGui.QTreeWidgetItemIterator.HasChildren)
-        while (it.value()):
-            it.value().setExpanded(True)
-            it.next()
+        self.treeWidget.expandAll()
 
 
     def createNew(self):
