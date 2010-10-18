@@ -28,37 +28,30 @@
 #    or implied, of their employers.
 
 from ilastik.core import dataMgr as dataMgrModule
+from ilastik.core import ILASTIK_VERSION
 import numpy
 import traceback
-import cPickle as pickle
-import h5py
+
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 from ilastik.core.utilities import irange, debug
 from ilastik.core.overlayMgr import OverlayItem
 
 from vigra import arraytypes as at
 from PyQt4 import QtGui
 
-from ilastik.core.volume import DataAccessor,  Volume
 
-from ilastik.core import activeLearning
-
-from ilastik.core import unsupervisedMgr
 
 from ilastik.core import backgroundMgr
-from ilastik.core import overlayMgr  
+ 
 from ilastik.core import connectedComponents
-from ilastik.core.unsupervised import unsupervisedPCA
-
-from ilastik import core 
-
-
-ILASTIK_VERSION = 0.5
-
-
+#from ilastik.core.unsupervised import unsupervisedPCA
 
 class Project(object):
     """
-    Import/Export for the whole project, including any data, settings, lables etc.
+    Import/Export for the whole project, including any data, settings, labels etc.
     """
     def __init__(self, name, labeler, description, dataMgr, labelNames=None, labelColors=None):
         if labelNames is None:
@@ -84,7 +77,7 @@ class Project(object):
         self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
 
         self.connector = connectedComponents.ConnectedComponents()
-        self.unsupervisedDecomposer = unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()
+        #self.unsupervisedDecomposer = None # unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()
         
  
     def saveToDisk(self, fileName = None):

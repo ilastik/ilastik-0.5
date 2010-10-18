@@ -151,7 +151,7 @@ class OverlayListWidget(QtGui.QListWidget):
         index = self.indexAt(pos)
 
         if not index.isValid():
-           return
+            return
 
         item = self.itemAt(pos)
         name = item.text()

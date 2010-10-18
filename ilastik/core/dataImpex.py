@@ -2,7 +2,10 @@
 import numpy
 import vigra
 import os
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor as DataAccessor

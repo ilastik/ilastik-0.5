@@ -14,7 +14,10 @@ import sys
 
 import vigra
 import getopt
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 import glob
 import traceback
 

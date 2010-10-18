@@ -9,7 +9,10 @@ import os, glob
 import vigra
 import sys
 import getopt
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 import numpy
 
 import loadOptions

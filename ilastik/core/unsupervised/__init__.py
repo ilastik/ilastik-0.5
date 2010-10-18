@@ -45,14 +45,15 @@ if load:
         for f in os.listdir(os.path.abspath(pathext)):
             module_name, ext = os.path.splitext(f) # Handles no-extension files, etc.
             if ext == '.py': # Important, ignore .pyc/other files.
-                module = __import__('core.unsupervised.' + module_name)
+                module = __import__('ilastik.core.unsupervised.' + module_name)
     except Exception, e:
         #traceback.print_exc(file=sys.stdout)
         pass
 
+    print unsupervisedBase.UnsupervisedBase.__subclasses__()
     for i, c in enumerate(unsupervisedBase.UnsupervisedBase.__subclasses__()):
         print "Loaded spectral features ", c.name
-        pass
+        
         
     unsupervisedClasses = unsupervisedBase.UnsupervisedBase.__subclasses__()
     if len(unsupervisedClasses) == 0:

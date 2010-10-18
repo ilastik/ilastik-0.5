@@ -30,7 +30,10 @@
 import numpy
 import threading 
 import os
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 
 from collections import deque
 
@@ -73,7 +76,7 @@ except Exception, e:
     pass
 
 for i, c in enumerate(classifiers.classifierBase.ClassifierBase.__subclasses__()):
-    print "Loaded classifier ", c.name
+    print "Loaded classifier", c.name
 
 
 def interactiveMessagePrint(* args):
@@ -183,8 +186,9 @@ class ClassificationModuleMgr(BaseModuleMgr):
             ov = overlayMgr.OverlayItem(dataItemImage, data, color = 0, alpha = 1.0, colorTable = self.dataMgr.module["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
             dataItemImage.overlayMgr["Classification/Labels"] = ov        
         
-        
-        dataItemImage.Classification.addOverlayRef(dataItemImage.overlayMgr["Raw Data"].getRef())
+        #add the raw data
+        if dataItemImage.overlayMgr["Raw Data"] is not None:
+            dataItemImage.Classification.addOverlayRef(dataItemImage.overlayMgr["Raw Data"].getRef())
 
                     
         if dataItemImage.Classification["prediction"] is not None:

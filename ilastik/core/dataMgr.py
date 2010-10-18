@@ -34,7 +34,10 @@ from Queue import Queue as queue
 from copy import copy
 import os
 import threading
-import h5py
+import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import h5py
 from utilities import irange, debug, irangeIfTrue
 try:
     from PyQt4 import QtGui

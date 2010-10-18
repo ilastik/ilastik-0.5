@@ -28,3 +28,4 @@
 #    or implied, of their employers.
 
 print "Load ilastik Core"
+ILASTIK_VERSION = 0.5
