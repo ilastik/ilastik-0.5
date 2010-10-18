@@ -256,12 +256,12 @@ class OverlayListWidget(QtGui.QListWidget):
     def wheelEvent(self, event):
         pos = event.pos()
         item = self.itemAt(pos)
-        
-        if event.delta() > 0:
-            item.overlayItemReference.incChannel()
-        else:
-            item.overlayItemReference.decChannel()
-        self.volumeEditor.repaint()
+        if item is not None:
+            if event.delta() > 0:
+                item.overlayItemReference.incChannel()
+            else:
+                item.overlayItemReference.decChannel()
+            self.volumeEditor.repaint()
         
 
 
