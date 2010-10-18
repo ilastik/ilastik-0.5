@@ -341,7 +341,7 @@ class ClassificationMgr(object):
                     if len(indices.shape) == 1:
                         indices.shape = indices.shape + (1,)
 
-                    mask = numpy.setmember1d(prop["trainingIndices"].ravel(),indices.ravel())
+                    mask = numpy.in1d(prop["trainingIndices"].ravel(),indices.ravel(), assume_unique=True)
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         tt = numpy.delete(prop["trainingIndices"],nonzero)
@@ -407,7 +407,7 @@ class ClassificationMgr(object):
                         count *= s
                         indices += indic[-loopc]*count
 
-                    mask = numpy.setmember1d(prop["trainingIndices"].ravel(),indices.ravel())
+                    mask = numpy.in1d(prop["trainingIndices"].ravel(),indices.ravel(),assume_unique=True)
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         if prop["trainingF"] is not None:
