@@ -2092,13 +2092,19 @@ class ImageScene(QtGui.QGraphicsView):
             menu.addSeparator()
             # brushM = labeling.addMenu("Brush size")
             brushGroup = QtGui.QActionGroup(self)
+
+            act = menu.addAction("Brush Size")
+            act.setEnabled(False)
+            font = QtGui.QFont( "Helvetica", 11, QtGui.QFont.Bold, True)
+            act.setFont(font)
+            menu.addSeparator()
             
             defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
             brush = []
             for ind, bSizes in enumerate(defaultBrushSizes):
                 b = bSizes[0]
                 desc = bSizes[1]
-                act = QtGui.QAction("brush size " + str(b) + desc, brushGroup)
+                act = QtGui.QAction("  " + str(b) + desc, brushGroup)
                 act.setCheckable(True)
                 self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
                 if b == self.drawManager.getBrushSize():
