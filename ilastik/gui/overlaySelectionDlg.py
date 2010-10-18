@@ -132,10 +132,6 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.treeWidget.itemSelectionChanged.connect(self.treeItemSelectionChanged)
         self.connect(self.treeWidget, QtCore.SIGNAL('itemChanged(QTreeWidgetItem *,int)'), self.treeItemChanged)
 
-        #self.treeWidget ContextMenu
-        self.treeWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self.treeWidget, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.contextMenuTree)
-        #self.treeWidget.customContextMenuRequested.connect(self.contextMenuTree)
 
         treeButtonsLayout = QtGui.QHBoxLayout()
         self.expandCollapseButton = QtGui.QPushButton("Collapse All")
@@ -257,25 +253,6 @@ class OverlaySelectionDialog(QtGui.QDialog):
                 self.sliceSpinbox.setValue(self.sliceSpinbox.value() + 1)
             elif event.delta() < 0:
                 self.sliceSpinbox.setValue(self.sliceSpinbox.value() - 1)
-                
-
-    def contextMenuTree(self, position):
-        menu = QtGui.QMenu(self.treeWidget)
-        addOverlay = menu.addAction("add new overlay")
-        printOverlayName = menu.addAction("print overlay's name")
-        action = menu.exec_(self.treeWidget.mapToGlobal(position))
-        if action == addOverlay:
-            self.createNew()
-        elif action == printOverlayName:
-            if self.treeWidget.itemAt(position):
-                item = self.treeWidget.itemAt(position)
-                print item.text(0)
-        
-
-    def eventFilter(self, obj, event):
-        if(event.type() == QtCore.QEvent.ContextMenu):
-            self.contextMenuTree(event.pos())
-        return False
 
     
     def addOverlaysToTreeWidget(self):
