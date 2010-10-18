@@ -4,8 +4,9 @@ from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import overlayMgr
 from ilastik.core import activeLearning
 
-class FeatureComputation(object):
+class FeatureComputation(QtCore.QObject):
     def __init__(self, parent):
+        QtCore.QObject.__init__(self)
         self.ilastik = self.parent = parent
         self.featureCompute() 
     
@@ -14,7 +15,7 @@ class FeatureComputation(object):
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)        
         self.parent.project.dataMgr.featureLock.acquire()
-        self.myTimer = QtCore.QTimer(self.ilastik)
+        self.myTimer = QtCore.QTimer(self)
         self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
         self.parent.project.dataMgr.module["Classification"]["classificationMgr"].clearFeaturesAndTraining()
         numberOfJobs = self.ilastik.project.dataMgr.Classification.featureMgr.prepareCompute(self.parent.project.dataMgr)   
@@ -77,9 +78,9 @@ class ClassificationTrain(QtCore.QObject):
         
         newLabels = self.parent.labelWidget.getPendingLabels()
         if len(newLabels) > 0:
-            self.parent.project.dataMgr.updateTrainingMatrix(newLabels)
+            self.parent.project.dataMgr.Classification.classificationMgr.updateTrainingMatrix(newLabels)
         
-        self.classificationTimer = QtCore.QTimer(self.ilastik)
+        self.classificationTimer = QtCore.QTimer(self)
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
         numberOfJobs = 10                 
         self.initClassificationProgress(numberOfJobs)
@@ -220,8 +221,9 @@ class ClassificationInteractive(object):
         self.classificationInteractive =  None
         
 
-class ClassificationPredict(object):
+class ClassificationPredict(QtCore.QObject):
     def __init__(self, parent):
+        QtCore.QObject.__init__(self)
         self.parent = parent
         self.start()
     
@@ -233,7 +235,7 @@ class ClassificationPredict(object):
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
         
         
-        self.classificationTimer = QtCore.QTimer()
+        self.classificationTimer = QtCore.QTimer(self)
         self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
                     
         self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.dataMgr)

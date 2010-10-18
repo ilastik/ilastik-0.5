@@ -1,6 +1,7 @@
 import numpy, vigra, h5py
 import random
 import code
+import gc
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
@@ -101,8 +102,14 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnSelectFeatures_clicked(self):
         preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
-        self.parent.newFeatureDlg = FeatureDlg(self.ilastik, preview)
-
+        newFeatureDlg = FeatureDlg(self.ilastik, preview)
+        answer = newFeatureDlg.exec_()
+        if answer == QtGui.QDialog.Accepted:
+            self.featureComputation = FeatureComputation(self.ilastik)
+        newFeatureDlg.close()
+        newFeatureDlg.deleteLater()
+        del newFeatureDlg
+        gc.collect()
                     
     def on_btnStartLive_clicked(self, state):
         if state:
