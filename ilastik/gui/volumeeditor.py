@@ -60,7 +60,7 @@ from shortcutmanager import *
 from ilastik.gui.overlayWidget import OverlayListWidget
 import ilastik.gui.exportDialog as exportDialog
 
-from ilastik.gui.iconMgr import ilastikIcons # oli todo
+from ilastik.gui.iconMgr import ilastikIcons 
 # Local import
 #from spyderlib.config import get_icon, get_font
 
@@ -80,16 +80,6 @@ def rgb(r, g, b):
     # use qRgb to pack the colors, and then turn the resulting long
     # into a negative integer with the same bitpattern.
     return (QtGui.qRgb(r, g, b) & 0xffffff) - 0x1000000
-
-
-
-# oli todo
-class MyQLabel(QtGui.QLabel):
-    def __init(self, parent):
-        QtGui.QLabel.__init__(self, parent)
-    #enabling clicked signal for QLable
-    def mouseReleaseEvent(self, ev):
-        self.emit(QtCore.SIGNAL('clicked()'))
         
 
 class PatchAccessor():
@@ -1582,7 +1572,7 @@ class ImageScene( QtGui.QGraphicsView):
 
         self.tempErase = False
 
-    def imageSceneFullScreen(self): #oli todo
+    def imageSceneFullScreen(self):
         if self.volumeEditor.imageScenes[0] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenX()
         if self.volumeEditor.imageScenes[1] == self.fullScreenButton.parent():
@@ -1590,7 +1580,7 @@ class ImageScene( QtGui.QGraphicsView):
         if self.volumeEditor.imageScenes[2] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenZ()
 
-    def setImageSceneFullScreenLabel(self): #oli todo
+    def setImageSceneFullScreenLabel(self):
         self.allVisible = True
         a = range(3)
         for i in a:
