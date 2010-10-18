@@ -1836,12 +1836,12 @@ class ImageScene( QtGui.QGraphicsView):
                 self.doScale(scaleFactor)
             else:
                 self.changeSlice(-1)
-
-        mousePosAfterScale = self.mapToScene(event.pos())
-        offset = self.mousePos - mousePosAfterScale
-        newGrviewCenter = grviewCenter + offset
-        self.centerOn(newGrviewCenter)
-        self.mouseMoveEvent(event)
+        if k_ctrl is True:
+            mousePosAfterScale = self.mapToScene(event.pos())
+            offset = self.mousePos - mousePosAfterScale
+            newGrviewCenter = grviewCenter + offset
+            self.centerOn(newGrviewCenter)
+            self.mouseMoveEvent(event)
 
     def zoomOut(self):
         self.doScale(0.9)
