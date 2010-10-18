@@ -121,12 +121,13 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         vl.descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"]
         vl.serialize(h5g, "labels", destbegin, destend, srcbegin, srcend, destshape)
 
-        
-        prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
-        for d in vl.descriptions:
-            prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
-        prediction = DataAccessor(prediction)
-        prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape )
+        if len(vl.descriptions) > 0:
+            prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
+            for d in vl.descriptions:
+                if self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name] is not None:
+                    prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+            prediction = DataAccessor(prediction)
+            prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape )
         
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
         labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
