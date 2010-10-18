@@ -144,15 +144,12 @@ class FeatureDlg(QtGui.QDialog):
         self.selectedItemList = []
         self.boolSelection = False
         self.boolTest = True
+        self.printComputeMemoryRequirement = True
 
         for i in range(self.featureTable.columnCount()):
             item = self.featureTable.horizontalHeaderItem(i)
             size = len(item.text()) * 11
             self.featureTable.setColumnWidth(i, 70)
-
-    #oli todo
-    def testSome(self):
-        print "moving"
 
 
     @QtCore.pyqtSignature("")
@@ -198,9 +195,10 @@ class FeatureDlg(QtGui.QDialog):
                             featureMgr.ilastikFeatureGroups.selection[i.row()][i.column()] = False
                         i.setSelected(False)
                     self.boolTest = True
-        
-        memReq = self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
-        self.memReq.setText("%8.2f MB" % memReq)
+
+        if self.printComputeMemoryRequirement:
+            memReq = self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
+            self.memReq.setText("%8.2f MB" % memReq)
 
     def deselectAllTableItems(self):
         iColumn = self.featureTable.columnCount()
@@ -265,9 +263,11 @@ class FeatureDlg(QtGui.QDialog):
         if(event.type()==QtCore.QEvent.MouseButtonPress):
             if event.button() == QtCore.Qt.LeftButton:
                 self.boolSelection = True
+                self.printComputeMemoryRequirement = True
                 
         if(event.type()==QtCore.QEvent.MouseButtonRelease):
             if event.button() == QtCore.Qt.LeftButton:
+                self.printComputeMemoryRequirement = False
                 self.selectedItemList = []
                 self.deselectAllTableItems()
                 self.boolSelection = False
