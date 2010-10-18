@@ -121,12 +121,13 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         vl.descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"]
         vl.serialize(h5g, "labels", destbegin, destend, srcbegin, srcend, destshape)
 
-        
-        prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
-        for d in vl.descriptions:
-            prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
-        prediction = DataAccessor(prediction)
-        prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape )
+        if len(vl.descriptions) > 0:
+            prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
+            for d in vl.descriptions:
+                if self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name] is not None:
+                    prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+            prediction = DataAccessor(prediction)
+            prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape )
         
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
         labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
@@ -345,7 +346,7 @@ class ClassificationMgr(object):
                     if len(indices.shape) == 1:
                         indices.shape = indices.shape + (1,)
 
-                    mask = numpy.setmember1d(prop["trainingIndices"].ravel(),indices.ravel())
+                    mask = numpy.in1d(prop["trainingIndices"].ravel(),indices.ravel(), assume_unique=True)
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         tt = numpy.delete(prop["trainingIndices"],nonzero)
@@ -411,7 +412,7 @@ class ClassificationMgr(object):
                         count *= s
                         indices += indic[-loopc]*count
 
-                    mask = numpy.setmember1d(prop["trainingIndices"].ravel(),indices.ravel())
+                    mask = numpy.in1d(prop["trainingIndices"].ravel(),indices.ravel(),assume_unique=True)
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         if prop["trainingF"] is not None:
