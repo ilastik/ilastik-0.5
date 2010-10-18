@@ -315,17 +315,20 @@ class MainWindow(QtGui.QMainWindow):
         self.labelDocks = []
         
     def destroyImageWindows(self):
-        self.volumeEditorDock = None
-        self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
-        for dock in self.labelDocks:
-            self.removeDockWidget(dock)
-        self.labelDocks = []
+
         if self.labelWidget is not None:
             self.labelWidget.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
             self.labelWidget.cleanUp()
             self.labelWidget.close()
             self.labelWidget.deleteLater()
+                    
+        self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
+        
+        for dock in self.labelDocks:
+            self.removeDockWidget(dock)
+        self.labelDocks = []
 
+        self.volumeEditorDock = None
                 
     def createImageWindows(self, dataVol):
         self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
