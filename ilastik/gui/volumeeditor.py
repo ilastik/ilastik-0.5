@@ -362,7 +362,6 @@ class VolumeEditor(QtGui.QWidget):
         self._history = HistoryManager(self)
 
         self.layout_ = QtGui.QHBoxLayout()
-        self.setLayout(self.layout_)
 
 
         self.grid = QtGui.QGridLayout()
@@ -394,11 +393,11 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[2].setVisible(False)
             self.overview.setVisible(False)
 
-        self.gridWidget = QtGui.QWidget()
-        self.gridWidget.setLayout(self.grid)
-        tempLayout = QtGui.QVBoxLayout(self)
-        tempLayout.addWidget(self.gridWidget)
+        tempLayout = QtGui.QVBoxLayout()
+        tempLayout.addLayout(self.grid)
+        
         labelLayout = QtGui.QHBoxLayout()
+        
         self.posLabel = QtGui.QLabel()
         self.pixelValuesLabel = QtGui.QLabel()
         labelLayout.addWidget(self.posLabel)
@@ -604,6 +603,9 @@ class VolumeEditor(QtGui.QWidget):
         self.connect(self, QtCore.SIGNAL("destroyed()"), self.widgetDestroyed)
         
         self.focusAxis =  0
+        
+        self.setLayout(self.layout_)
+        
 
     def toggleFullscreenX(self):
         self.maximizeSliceView(0)
