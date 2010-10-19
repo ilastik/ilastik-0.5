@@ -63,8 +63,10 @@ class LabelMgr(object):
         self.dataMgr.featureLock.acquire()
         self.classificationMgr.clearFeaturesAndTraining()
         ldnr = -1
+        labelDescriptionToBeRemoved = None
         for labelIndex,  labelItem in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
             if labelItem.number == number:
+                labelDescriptionToBeRemoved = labelItem
                 ldnr = labelIndex
                 self.dataMgr.module["Classification"]["labelDescriptions"].pop(ldnr)
                 
@@ -82,11 +84,11 @@ class LabelMgr(object):
                     item.module["Classification"]["labelHistory"].removeLabel(number)
                 
                 #remove overlays
-                o = item.overlayMgr["Classification/Prediction/Label " + str(ldnr)]
+            if labelDescriptionToBeRemoved is not None:
+                o = item.overlayMgr["Classification/Prediction/" + labelDescriptionToBeRemoved.name]
                 if o is not None:
-                    print "removing overlay"
-                    item.overlayMgr.remove("Classification/Prediction/Label " + str(ldnr))                    
-        
+                    item.overlayMgr.remove("Classification/Prediction/" + labelDescriptionToBeRemoved.name)                    
+        del labelDescriptionToBeRemoved
         self.dataMgr.featureLock.release()
         
     def newLabels(self,  newLabels):

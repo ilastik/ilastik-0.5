@@ -251,9 +251,9 @@ class OverlayMgr():
     def remove(self,  key):
         it = self._dict.pop(key,  None)
         if it != None:
-            it.remove()
             if self.ilastik != None:
                 self.ilastik.labelWidget.overlayWidget.removeOverlay(key)
+            it.remove()
             
     def __setitem__(self,  key,  value):
         itemNew = False
