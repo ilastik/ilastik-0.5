@@ -3,7 +3,7 @@ from classifierBase import *
 class ClassifierRandomForestOld(ClassifierBase):
     #human readable information
     name = "Random forest classifier (stable)" 
-    description = "Random forest classifier"
+    description = "Basic random forest classifier (no extensions)"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 
