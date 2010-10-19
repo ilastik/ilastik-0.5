@@ -4,7 +4,7 @@ from classifierBase import *
 class ClassifierRandomForest(ClassifierBase):
     #human readable information
     name = "Random forest classifier" 
-    description = "Basic random forest classifier with extensions"
+    description = "Random forest classifier with extensions"
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
 

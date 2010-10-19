@@ -260,7 +260,7 @@ class FeatureGroups(object):
     def createGroups(self):
         for c in FeatureBase.__subclasses__():
             for g in c.groups:
-                print "Adding", c.__name__, " to Group", g
+                print "Adding", c.name, "to Group", g
                 if g in self.groups:
                     self.groups[g].append(c)
                 else:

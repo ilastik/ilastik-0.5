@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import traceback,  os,  sys
+import traceback, os,  sys
 from ilastik.core.baseModuleMgr import BaseModuleMgr
 #
 #Import other segmentation plugins dynamically
@@ -68,7 +68,7 @@ def loadModuleGuis():
             module_name = f # Handles no-extension files, etc.
             try:
                 module = __import__('ilastik.modules.' + module_name + '.gui')
-                print "Loaded GUI part of module " , module_name
+                print "Loaded GUI part of module:" , module_name
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 pass
