@@ -170,7 +170,7 @@ class FeatureMgr():
                     max = numpy.max(rawdata)
                     data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
                     
-                    ov = OverlayItem(di, data, color = long(16535 << 16), alpha = 1.0,  autoAdd = False, autoVisible = False)
+                    ov = OverlayItem(di, data, color = long(65535 << 16), alpha = 1.0,  autoAdd = False, autoVisible = False)
                     ov.min = min
                     ov.max = max
                     di.overlayMgr[ feature.getKey(c)] = ov
