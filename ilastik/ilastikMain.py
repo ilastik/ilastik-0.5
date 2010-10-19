@@ -38,6 +38,10 @@ except:
 import sys
 import os
 
+from PyQt4 import QtCore, QtOpenGL, QtGui
+
+app = QtGui.QApplication(sys.argv) #(sys.argv
+
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
 
@@ -71,7 +75,6 @@ with warnings.catch_warnings():
 import getopt
 
 
-from PyQt4 import QtCore, QtOpenGL, QtGui
 
 # Please no import *
 from ilastik.gui.shortcutmanager import shortcutManager, shortcutManagerDlg, shortcutManager
@@ -549,8 +552,6 @@ class UnsupervisedDecomposition(object):
         
 
 if __name__ == "__main__":
-    app = QtGui.QApplication.instance() #(sys.argv
-    
     splashImage = QtGui.QPixmap("logo/ilastik-splash.png")
 
     splashScreen = QtGui.QSplashScreen(splashImage)
