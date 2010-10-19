@@ -68,6 +68,13 @@ class LabelMgr(object):
                 ldata[:,:,:,:,:] = temp[:,:,:,:,:]
                 if item.module["Classification"]["labelHistory"] is not None:
                     item.module["Classification"]["labelHistory"].removeLabel(number)
+                
+                #remove overlays
+                o = item.overlayMgr["Classification/Prediction/Label " + str(ldnr)]
+                if o is not None:
+                    print "removing overlay"
+                    item.overlayMgr.remove("Classification/Prediction/Label " + str(ldnr))                    
+        
         self.dataMgr.featureLock.release()
         
     def newLabels(self,  newLabels):
