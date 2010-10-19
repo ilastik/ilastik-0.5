@@ -302,10 +302,10 @@ class OverlayMgr():
         print "Adding new overlay", value.key
         if value.autoAdd is True and self.dataMgr is not None:
             if self.ilastik != None and value.dataItemImage == self.ilastik._activeImage:
-                print "Adding to active image"
+                #print "Adding to active image"
                 self.ilastik.labelWidget.overlayWidget.addOverlayRef(value.getRef())
             else:
-                print "Current Module:", self.dataMgr._currentModuleName
+                #print "Current Module:", self.dataMgr._currentModuleName
                 #print "adding to non active image", value.dataItemImage
                 if value.dataItemImage.module[self.dataMgr._currentModuleName] is not None:
                     value.dataItemImage.module[self.dataMgr._currentModuleName].addOverlayRef(value.getRef())
