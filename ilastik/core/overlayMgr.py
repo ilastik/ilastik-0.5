@@ -97,7 +97,7 @@ class OverlayItemReference(object):
         
     def __getattr__(self,  name):
         if name == "colorTable":
-            return self.overlayItem.colorTable
+            return self.overlayItem.getColorTab()
         elif name == "color":
             return self.overlayItem.getColor()
         elif name == "_data":

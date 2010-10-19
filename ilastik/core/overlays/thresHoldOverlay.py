@@ -57,7 +57,8 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.setBackgrounds(backgrounds)
                       
         accessor = MultivariateThresholdAccessor(self)
-        overlayMgr.OverlayItem.__init__(self, self.dataItemImage, accessor, alpha = 1.0, autoAdd = autoAdd, autoVisible = autoVisible,  linkColorTable = True)        
+        overlayMgr.OverlayItem.__init__(self, self.dataItemImage, accessor, alpha = 1.0, autoAdd = autoAdd, autoVisible = autoVisible,  linkColorTable = True)
+        self.linkColorTable = True
         self.color = None
         
     def getColorTab(self):
@@ -72,6 +73,10 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         return colorTab
         
 
+    def __getattr__(self,  name):
+        if name == "colorTable":
+            return self.getColorTab()
+        raise AttributeError,  name
     
     def setForegrounds(self, foregrounds):
         b = min(len(self.backgrounds),1)

@@ -384,7 +384,7 @@ class VolumeEditor(QtGui.QWidget):
             self.overview.setVisible(False)
 
         tempLayout = QtGui.QVBoxLayout()
-        tempLayout.addLayout(self.grid)
+        #tempLayout.addLayout(self.grid)
         
         labelLayout = QtGui.QHBoxLayout()
         
@@ -400,8 +400,8 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
         self.toolBox.setLayout(self.toolBoxLayout)
-        self.toolBox.setMaximumWidth(190)
-        self.toolBox.setMinimumWidth(190)
+        #self.toolBox.setMaximumWidth(190)
+        #self.toolBox.setMinimumWidth(190)
 
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
@@ -594,7 +594,15 @@ class VolumeEditor(QtGui.QWidget):
         
         self.focusAxis =  0
         
-        self.setLayout(self.layout_)
+        #self.setLayout(self.layout_)
+        self.splitter = QtGui.QSplitter()
+        tempWidget = QtGui.QWidget()
+        tempWidget.setLayout(self.grid)
+        self.splitter.addWidget(tempWidget)
+        self.splitter.addWidget(self.toolBox)
+        splitterLayout = QtGui.QVBoxLayout()
+        splitterLayout.addWidget(self.splitter)
+        self.setLayout(splitterLayout)
         
 
     def toggleFullscreenX(self):
