@@ -101,11 +101,14 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(0,0), QtGui.QItemSelectionModel.ClearAndSelect)
 
 
-    def changeText(self, text):
-        self.volumeLabelDescriptions[self.currentRow()].name = text
+    def changeLabelName(self, index, name):
+        self.labelMgr.changeLabelName(index, name)
         
     def createLabel(self):
         name = "Label " + len(self.items).__str__()
+        for index, item in enumerate(self.items):
+            if str(item.text()) == name:
+                name = name + "-2"
         number = len(self.items)
         if number >= len(self.labelColorTable):
             color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
@@ -131,12 +134,13 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.labelMgr.removeLabel(item.number)
         
         self.volumeEditor._history.removeLabel(item.number)
+        
         self.items.remove(item)
         it = self.listWidget.takeItem(index.row())
+        del it
         for ii, it in enumerate(self.items):
             if it.number > item.number:
                 it.number -= 1
-        del it
         self.buildColorTab()
         self.volumeEditor.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
         self.volumeEditor.repaint()
@@ -159,10 +163,17 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
 
         removeAction = menu.addAction("Remove")
         colorAction = menu.addAction("Change Color")
+        renameAction = menu.addAction("Change Name")
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
             self.removeLabel(item,  index)
+        elif action == renameAction:
+            newName, ok = QtGui.QInputDialog.getText(self, "Enter Labelname", "Labelname:", text = item.text())
+            if ok:
+                item.setText(newName)
+                result = self.labelMgr.changeLabelName(index.row(),str(newName))
+                print result
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
@@ -175,7 +186,6 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             self.volumeEditor.repaint()
 
     def nextLabel(self):
-        print "next label"
         i = self.listWidget.selectedIndexes()[0].row()
         if i+1 == self.listWidget.model().rowCount():
             i = self.listWidget.model().index(0,0)
@@ -184,7 +194,6 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
 
     def prevLabel(self):
-        print "prev label"
         i = self.listWidget.selectedIndexes()[0].row()
         if i >  0:
             i = self.listWidget.model().index(i-1,0)

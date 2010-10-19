@@ -41,12 +41,24 @@ class LabelMgr(object):
         self.dataMgr.module["Classification"]["labelDescriptions"].append(description)
             
 
-    def changedLabel(self,  label):
-        for labelIndex,  labelItem in self.dataMgr.module["Classification"]["labelDescriptions"]:
-            labelItem.name = label.name
-            labelItem.number = label.number
-            labelItem.color = label.color
-                
+    def changeLabelName(self,  index, newName):
+        labelItem = self.dataMgr.module["Classification"]["labelDescriptions"][index]
+        ok = True
+        for ii, it in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
+            if it.name == newName:
+                ok = False
+        if ok:
+            oldName = labelItem.name
+            labelItem.name = newName
+            for index, item in enumerate(self.dataMgr):
+                #rename overlays
+                o = item.overlayMgr["Classification/Prediction/" + oldName]
+                if o is not None:
+                    o.changeKey("Classification/Prediction/" + newName)
+            return True
+        else:
+            return False
+                                    
     def removeLabel(self, number):
         self.dataMgr.featureLock.acquire()
         self.classificationMgr.clearFeaturesAndTraining()

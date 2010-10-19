@@ -237,7 +237,11 @@ class OverlayListWidget(QtGui.QListWidget):
                     item.overlayItemReference.setChannel(index)
                     self.volumeEditor.repaint()
 
-
+    def changeOverlayName(self, overlayItem, newName):
+        for index in range(self.count()):
+            item = self.item(index)
+            if item.overlayItemReference.overlayItem == overlayItem:
+                item.setText(newName)
 
 
     def getLabelNames(self):
@@ -384,6 +388,9 @@ class OverlayWidget(QtGui.QGroupBox):
         item can be a string, e.g. the item name, or a number
         """
         return self.overlayListWidget.removeOverlay(item)
+    
+    def changeOverlayName(self, overlayItem, newName):
+        self.overlayListWidget.changeOverlayName(overlayItem, newName)
         
     def addOverlayRef(self, overlayRef, duplicateAllowed = False):
         if duplicateAllowed is False:

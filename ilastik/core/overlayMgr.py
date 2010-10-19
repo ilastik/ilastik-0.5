@@ -68,7 +68,6 @@ class OverlayItemReference(object):
     """    
     def __init__(self, overlayItem):
         self.overlayItem = overlayItem
-        self.name = self.overlayItem.name
         self.visible = True
         self.alpha = self.overlayItem.alpha
         self.linkColor = self.overlayItem.linkColor
@@ -77,7 +76,6 @@ class OverlayItemReference(object):
         self.autoAlphaChannel = self.overlayItem.autoAlphaChannel
         if self.overlayItem.linkColorTable is False:
             self.colorTable = self.overlayItem.getColorTab()
-        self.key = self.overlayItem.key
         self.channel = 0
         self.numChannels = self.overlayItem._data.shape[4]
 
@@ -112,6 +110,10 @@ class OverlayItemReference(object):
             return self._data.dtype
         elif name == "shape":
             return self._data.shape
+        elif name == "name":
+            return self.overlayItem.name
+        elif name == "key":
+            return self.overlayItem.key
         raise AttributeError,  name
         
         
@@ -222,6 +224,9 @@ class OverlayItem(object):
         self._data = None
 
 
+    def changeKey(self, newKey):
+        self.dataItemImage.overlayMgr.changeKey(self.key, newKey)
+        
     def setData(self,  data):
         self.overlayItem._data = data
 
@@ -270,6 +275,22 @@ class OverlayMgr():
         if itemNew:
             self._addReference(res)
         return res
+    
+    def changeKey(self, oldKey, newKey):
+        o = self[oldKey]
+        if o is not None:
+            if self[newKey] is None:
+                print oldKey, newKey
+                o.key = newKey
+                o.name = newKey.split('/')[-1]
+                self._dict.pop(oldKey)
+                self._dict[newKey] = o
+                if self.ilastik is not None:
+                    self.ilastik.labelWidget.overlayWidget.changeOverlayName(o, o.name)
+                    print o.name
+                return True
+        return False
+            
     
     def keys(self):
         return self._dict.keys()
