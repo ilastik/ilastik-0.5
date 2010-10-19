@@ -25,6 +25,12 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_activation(self):
+        ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
+        if len(ovs) == 0:
+            raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
+            if raw is not None:
+                ovs.append(raw.getRef())
+                
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         overlayWidget.setVisible(False)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
