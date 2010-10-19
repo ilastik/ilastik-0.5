@@ -111,7 +111,7 @@ class FeatureMgr():
                 traceback.print_exc(file=sys.stdout)
                 return False
         else:
-            print "setFeatureItems(): no features selected"
+           pass
         return True
     
     def exportFeatureItems(self, h5featGrp):
