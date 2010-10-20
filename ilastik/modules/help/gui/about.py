@@ -3,7 +3,6 @@ from PyQt4 import QtCore, QtGui
 from PyQt4 import uic
 import sys, os
 import webbrowser
-import subprocess
 
 class Licence(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -60,32 +59,37 @@ class About(QtGui.QDialog):
 
         # init
         # ------------------------------------------------
-        self.setWindowTitle('About')
+        self.buttonsMinimumWidth = 150
+        self.buttonsMaximumWidth = 150
         
         # widgets and layouts
         # ------------------------------------------------
-        self.setMinimumWidth(500)
-        self.setMaximumWidth(500)
-        self.setMinimumHeight(390)
-        self.setMaximumHeight(390)
+        self.setWindowTitle('About')
 
         background = QtGui.QLabel("", self)
         pixmap = QtGui.QPixmap("logo/ilastik-splash.png")
         background.setPixmap(pixmap)
         background.adjustSize()
 
+        self.setMinimumWidth(pixmap.size().width())
+        self.setMaximumWidth(pixmap.size().width())
+        self.setMinimumHeight(pixmap.size().height() + 30)
+        self.setMaximumHeight(pixmap.size().height() + 30)
+
         self.buildLabel = QtGui.QLabel("", self)
         self.buildLabel.move(270, 100)
 
         self.licenceButton = QtGui.QPushButton("License", self)
         self.connect(self.licenceButton, QtCore.SIGNAL('clicked()'), self.openLicence)
-        self.licenceButton.move(190, 360)
-        self.licenceButton.setMinimumWidth(150)
+        self.licenceButton.setMinimumWidth(self.buttonsMinimumWidth)
+        self.licenceButton.setMaximumWidth(self.buttonsMaximumWidth)
+        self.licenceButton.move(pixmap.size().width() - self.buttonsMinimumWidth* 2 -8, pixmap.size().height() + 4)
 
         self.webSiteButton = QtGui.QPushButton("Visit Website", self)
         self.connect(self.webSiteButton, QtCore.SIGNAL('clicked()'), self.openWebSite)
-        self.webSiteButton.move(345, 360)
-        self.webSiteButton.setMinimumWidth(150)
+        self.webSiteButton.setMinimumWidth(self.buttonsMinimumWidth)
+        self.webSiteButton.setMaximumWidth(self.buttonsMaximumWidth)
+        self.webSiteButton.move(pixmap.size().width() - self.buttonsMinimumWidth -4, pixmap.size().height() + 4)
 
         self.readInBuildInfo()
     
