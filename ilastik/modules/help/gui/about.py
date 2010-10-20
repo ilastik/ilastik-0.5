@@ -4,7 +4,7 @@ from PyQt4 import uic
 import sys, os
 import webbrowser
 
-class Licence(QtGui.QDialog):
+class License(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)
 
@@ -15,7 +15,7 @@ class Licence(QtGui.QDialog):
 
         # widgets and layouts
         # ------------------------------------------------
-        self.setWindowTitle('Licence')
+        self.setWindowTitle('License')
         self.setMinimumWidth(self.windowSizeWidth)
         self.setMaximumWidth(self.windowSizeWidth)
         self.setMinimumHeight(self.windowSizeHeight)
@@ -28,24 +28,24 @@ class Licence(QtGui.QDialog):
         self.te.setMinimumHeight(self.windowSizeHeight)
         self.te.setMaximumHeight(self.windowSizeHeight)
 
-        self.readInLicence()
+        self.readInLicense()
 
         
     # methods
     # ------------------------------------------------
-    def readInLicence(self):
-        licenceFile = QtCore.QFile('license.txt')
-        if (not licenceFile.exists()):
+    def readInLicense(self):
+        licenseFile = QtCore.QFile('license.txt')
+        if (not licenseFile.exists()):
             self.te.append("Warning: The license file does not exist. \n Please visit the ilastik website for license informations \n http://www.ilastik.org/")
             print "The license file does not exist."
-        if (not licenceFile.open(QtCore.QIODevice.ReadOnly) and licenceFile.exists()):
+        if (not licenseFile.open(QtCore.QIODevice.ReadOnly) and licenseFile.exists()):
             self.te.append("Warning: Failed to open license file. \n Please visit the ilastik website for license informations \n http://www.ilastik.org/")
             print "Failed to open license file."
-        inp = QtCore.QTextStream(licenceFile)
+        inp = QtCore.QTextStream(licenseFile)
         while (not inp.atEnd()):
             line = inp.readLine()
             self.te.append(line)
-        licenceFile.close()
+        licenseFile.close()
 
 class WritableObject:
     def __init__(self):
@@ -79,11 +79,11 @@ class About(QtGui.QDialog):
         self.buildLabel = QtGui.QLabel("", self)
         self.buildLabel.move(270, 100)
 
-        self.licenceButton = QtGui.QPushButton("License", self)
-        self.connect(self.licenceButton, QtCore.SIGNAL('clicked()'), self.openLicence)
-        self.licenceButton.setMinimumWidth(self.buttonsMinimumWidth)
-        self.licenceButton.setMaximumWidth(self.buttonsMaximumWidth)
-        self.licenceButton.move(pixmap.size().width() - self.buttonsMinimumWidth* 2 -8, pixmap.size().height() + 4)
+        self.licenseButton = QtGui.QPushButton("License", self)
+        self.connect(self.licenseButton, QtCore.SIGNAL('clicked()'), self.openLicense)
+        self.licenseButton.setMinimumWidth(self.buttonsMinimumWidth)
+        self.licenseButton.setMaximumWidth(self.buttonsMaximumWidth)
+        self.licenseButton.move(pixmap.size().width() - self.buttonsMinimumWidth* 2 -8, pixmap.size().height() + 4)
 
         self.webSiteButton = QtGui.QPushButton("Visit Website", self)
         self.connect(self.webSiteButton, QtCore.SIGNAL('clicked()'), self.openWebSite)
@@ -109,9 +109,9 @@ class About(QtGui.QDialog):
         self.buildLabel.setText("Build: " + inp.readLine())
         buildInfo.close()
 
-    def openLicence(self):
-        licence = Licence()
-        licence.exec_()
+    def openLicense(self):
+        license = License(self)
+        license.exec_()
 
     def openWebSite(self):
         webbrowser.open('http://www.ilastik.org/')
