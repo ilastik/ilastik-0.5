@@ -193,7 +193,7 @@ class OverlayListWidget(QtGui.QListWidget):
         action = menu.exec_(QtGui.QCursor.pos())
         if action == show3dAction:
             print "Loading vtk ..."
-            from mayaviWidget import *
+            from mayaviWidget import MayaviQWidget
             print "vtk running marching cubes..."
 #            mlab.contour3d(item._data[0,:,:,:,0], opacity=0.6)
 #            mlab.outline()
