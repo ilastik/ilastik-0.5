@@ -3,6 +3,8 @@ from PyQt4 import QtCore, QtGui
 from PyQt4 import uic
 import sys, os
 import webbrowser
+from ilastik.core import readInBuildInfo
+
 
 class License(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -91,23 +93,11 @@ class About(QtGui.QDialog):
         self.webSiteButton.setMaximumWidth(self.buttonsMaximumWidth)
         self.webSiteButton.move(pixmap.size().width() - self.buttonsMinimumWidth -4, pixmap.size().height() + 4)
 
-        self.readInBuildInfo()
+        self.buildLabel.setText(readInBuildInfo())
     
         
     # methods
     # ------------------------------------------------
-    def readInBuildInfo(self):
-        buildInfo = QtCore.QFile('build.info')
-        if (not buildInfo.exists()):
-            self.buildLabel.setText("Build from source")
-            return
-        if (not buildInfo.open(QtCore.QIODevice.ReadOnly) and buildInfo.exists()):
-            self.buildLabel.setText("Build is unknown")
-            print "Failed to open build.info file."
-            return
-        inp = QtCore.QTextStream(buildInfo)
-        self.buildLabel.setText("Build: " + inp.readLine())
-        buildInfo.close()
 
     def openLicense(self):
         license = License(self)

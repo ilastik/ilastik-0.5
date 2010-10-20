@@ -29,3 +29,20 @@
 
 print "Load ilastik Core"
 ILASTIK_VERSION = 0.5
+
+def readInBuildInfo():
+    try:
+        buildInfo = open('build.info','r')
+        buildMsg = buildInfo.readline()
+        buildInfo.close()
+        try:
+            import platform
+            a = platform.system()
+            b = platform.architecture()[0]
+            buildMsg = buildMsg + " (%s %s)" % (a,b)
+        except:
+            pass
+            
+        return 'Build: ' + buildMsg
+    except:
+        return "Source version"

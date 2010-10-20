@@ -553,6 +553,10 @@ class UnsupervisedDecomposition(object):
 
 if __name__ == "__main__":
     splashImage = QtGui.QPixmap("logo/ilastik-splash.png")
+    painter = QtGui.QPainter()
+    painter.begin(splashImage)
+    painter.drawText(QtCore.QPointF(270,110), ilastik.core.readInBuildInfo())
+    painter.end()
 
     splashScreen = QtGui.QSplashScreen(splashImage)
     splashScreen.show();
