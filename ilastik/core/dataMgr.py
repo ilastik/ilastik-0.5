@@ -38,7 +38,7 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
-from utilities import irange, debug, irangeIfTrue
+
 try:
     from PyQt4 import QtGui
     have_qt = True
@@ -505,7 +505,7 @@ class DataMgr():
         self._dataItemsLoaded[ind] = True
     
     def getIndexFromFileName(self, fileName):
-        for k, dataItem in irange(self._dataItems):
+        for k, dataItem in enumerate(self._dataItems):
             if fileName == dataItem.fileName:
                 return k
         return False
