@@ -104,7 +104,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.setMinimumWidth(600)
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
-        self.layoutWidget = QtGui.QWidget(self)
+        #self.layoutWidget = QtGui.QWidget(self)
         self.selectedOverlaysList = []
         self.ilastik = ilastik
         self.christophsDict = ilastik.project.dataMgr[ilastik._activeImageNumber].overlayMgr
