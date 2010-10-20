@@ -266,8 +266,12 @@ class ClassificationPredict(QtCore.QObject):
     def finalize(self):
         self.classificationTimer.stop()
         del self.classificationTimer 
-        self.classificationPredict.generateOverlays(self.parent._activeImage)
-        self.parent.labelWidget.repaint()
+        try:
+            self.classificationPredict.generateOverlays(self.parent._activeImage)
+            self.parent.labelWidget.repaint()
+        except MemoryError,e:
+            print "Out of memory:", e
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory to create all classification results")
         self.parent.setTabBusy(False)
         
     def terminateClassificationProgressBar(self):

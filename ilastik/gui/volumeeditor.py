@@ -383,7 +383,7 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[2].setVisible(False)
             self.overview.setVisible(False)
 
-        tempLayout = QtGui.QVBoxLayout()
+        self.viewingLayout = QtGui.QVBoxLayout()
         #tempLayout.addLayout(self.grid)
         
         labelLayout = QtGui.QHBoxLayout()
@@ -393,8 +393,8 @@ class VolumeEditor(QtGui.QWidget):
         labelLayout.addWidget(self.posLabel)
         labelLayout.addWidget(self.pixelValuesLabel)
         labelLayout.addStretch()
-        tempLayout.addLayout(labelLayout)
-        self.layout_.addLayout(tempLayout)
+        self.viewingLayout.addLayout(self.grid)
+        self.viewingLayout.addLayout(labelLayout)
 
         #right side toolbox
         self.toolBox = QtGui.QWidget()
@@ -484,7 +484,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
 
-        self.layout_.addWidget(self.toolBox)
+        #self.layout_.addWidget(self.toolBox)
 
         # Make the dialog act as a window and stay on top
         if self.embedded == False:
@@ -597,7 +597,7 @@ class VolumeEditor(QtGui.QWidget):
         #self.setLayout(self.layout_)
         self.splitter = QtGui.QSplitter()
         tempWidget = QtGui.QWidget()
-        tempWidget.setLayout(self.grid)
+        tempWidget.setLayout(self.viewingLayout)
         self.splitter.addWidget(tempWidget)
         self.splitter.addWidget(self.toolBox)
         splitterLayout = QtGui.QVBoxLayout()

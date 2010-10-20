@@ -96,7 +96,7 @@ class DataImpex(object):
         except Exception, e:
             #QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
             #TODO: test if it really throws correctly
-            print e
+            print "Out of memory:", e
             raise MemoryError
         
         #loop over provided images
