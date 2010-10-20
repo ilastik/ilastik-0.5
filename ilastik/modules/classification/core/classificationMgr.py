@@ -102,6 +102,12 @@ def unravelIndices(indices, shape):
     return ti    
 
 
+def setintersectionmask(a,b):
+    if int(numpy.__version__.split('.')[1])>= 4:
+        return numpy.in1d(a,b, assume_unique=True)
+    else:
+        return numpy.intersect1d(a,b, assume_unique=True)
+
 class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Classification"
     
@@ -346,7 +352,7 @@ class ClassificationMgr(object):
                     if len(indices.shape) == 1:
                         indices.shape = indices.shape + (1,)
 
-                    mask = numpy.in1d(prop["trainingIndices"].ravel(),indices.ravel(), assume_unique=True)
+                    mask = setintersectionmask(prop["trainingIndices"].ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         tt = numpy.delete(prop["trainingIndices"],nonzero)
@@ -412,7 +418,7 @@ class ClassificationMgr(object):
                         count *= s
                         indices += indic[-loopc]*count
 
-                    mask = numpy.in1d(prop["trainingIndices"].ravel(),indices.ravel(),assume_unique=True)
+                    mask = setintersectionmask(prop["trainingIndices"].ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         if prop["trainingF"] is not None:
@@ -747,6 +753,9 @@ class ClassifierInteractiveThread(ThreadBase):
 
 
     def run(self):
+        self.ilastik.activeImageLock.acquire()
+        F, L = self.classificationMgr.getTrainingMatrix()
+        self.ilastik.activeImageLock.release()
         self.dataPending.set()
         while not self.stopped:
             self.dataPending.wait()
