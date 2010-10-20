@@ -1557,6 +1557,7 @@ class ImageScene(QtGui.QGraphicsView):
         self.allBorder.setZValue(99)
 
         self.ticker = QtCore.QTimer(self)
+        self.connect(self.ticker, QtCore.SIGNAL("timeout()"), self.tickerEvent)
         #label updates while drawing, needed for interactive segmentation
         self.drawTimer = QtCore.QTimer(self)
         self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.updateLabels)
@@ -1922,7 +1923,7 @@ class ImageScene(QtGui.QGraphicsView):
         if event.button() == QtCore.Qt.MidButton:
             self.lastPanPoint = QtCore.QPoint()
             self.dragMode = False
-            self.ticker.start(20, self)
+            self.ticker.start(20)
         if self.drawing == True:
             mousePos = self.mapToScene(event.pos())
             self.endDraw(mousePos)
@@ -1960,7 +1961,7 @@ class ImageScene(QtGui.QGraphicsView):
         return max(min(current, maxVal), minVal)
 
     #oli todo
-    def timerEvent(self, event):
+    def tickerEvent(self):
         if self.deltaPan.x() == 0.0 and self.deltaPan.y() == 0.0 or self.dragMode == True:
             self.ticker.stop()
             cursor = QtGui.QCursor()
