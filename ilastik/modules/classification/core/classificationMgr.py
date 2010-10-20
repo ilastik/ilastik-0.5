@@ -256,7 +256,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
             userSelection = h5G['FeatureSelection']['UserSelection']
             featureMgr.ilastikFeatureGroups.selection = userSelection.value
         except:
-            traceback.print_exc()
+            pass
         
 
 
