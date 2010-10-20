@@ -1715,8 +1715,8 @@ class ImageScene(QtGui.QGraphicsView):
             self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
 
             #if we are in opengl 2d render mode, update the texture
-            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
             if self.openglWidget is not None:
+                self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
                 for patchNr in self.thread.outQueue:
                     t = self.scene.tex
                     #self.scene.tex = -1

@@ -164,9 +164,9 @@ class MainWindow(QtGui.QMainWindow):
 
             help_text = "<b>OpenGL + OpenGL Overview</b> allows for fastest rendering if OpenGL is correctly installed.<br> If visualization is slow or incomplete, try the <b>Software + OpenGL</b> mode."
             if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software only'], 0, False)
             elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['Software + OpenGL Overview'], 0, False)
+                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['Software only'], 0, False)
             else:
                 dl = []
                 dl.append("")
@@ -176,9 +176,9 @@ class MainWindow(QtGui.QMainWindow):
             if dl[0] == "OpenGL + OpenGL Overview":
                 self.opengl = True
                 self.openglOverview = True
-            elif dl[0] == "Software + OpenGL Overview":
+            elif dl[0] == "Software only":
                 self.opengl = False
-                self.openglOverview = True
+                self.openglOverview = False
 
         self.project = None
         if project != None:
