@@ -1921,7 +1921,11 @@ class ImageScene(QtGui.QGraphicsView):
     #oli todo
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
-            self.lastPanPoint = QtCore.QPoint()
+            releasePoint = event.pos()
+            self.deltaPanRatioX = float(releasePoint.x()) / (float(releasePoint.x()) + float(releasePoint.y()))
+            self.deltaPanRatioY = float(releasePoint.y()) / (float(releasePoint.x()) + float(releasePoint.y()))
+            
+            self.lastPanPoint = releasePoint
             self.dragMode = False
             self.ticker.start(20)
         if self.drawing == True:
@@ -1943,17 +1947,17 @@ class ImageScene(QtGui.QGraphicsView):
         
         
     #oli todo
-    def deaccelerate(self, speed, a=1, maxVal=64):
+    def deaccelerate(self, speed, a=2, maxVal=64):
         x = self.qBound(-maxVal, speed.x(), maxVal)
         y = self.qBound(-maxVal, speed.y(), maxVal)
         if x > 0:
-            x = max(0, x - a)
+            x = max(0.0, x - a*self.deltaPanRatioX)
         elif x < 0:
-            x = min(0, x + a)
+            x = min(0.0, x + a*self.deltaPanRatioX)
         if y > 0:
-            y = max(0, y - a)
+            y = max(0.0, y - a*self.deltaPanRatioY)
         elif y < 0:
-            y = min(0, y + a)
+            y = min(0.0, y + a*self.deltaPanRatioY)
         return QtCore.QPointF(x, y)
 
     #oli todo
