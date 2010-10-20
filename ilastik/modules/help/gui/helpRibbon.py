@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy, vigra
 import random
 
@@ -11,6 +12,7 @@ from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.shortcutmanager import shortcutManager
 from ilastik.gui import volumeeditor as ve
+from ilastik.modules.help.gui.about import About
 
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Help'
@@ -56,6 +58,11 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         
     def _initConnects(self):
         self.connect(self.btnShortcuts, QtCore.SIGNAL('clicked()'), self.on_btnShortcuts_clicked)
+        self.connect(self.btnAbout, QtCore.SIGNAL('clicked()'), self.on_btnAbout_clicked)
         
     def on_btnShortcuts_clicked(self):
         shortcutManager.showDialog(self.ilastik)
+
+    def on_btnAbout_clicked(self):
+        about = About(self.ilastik)
+        about.show()
