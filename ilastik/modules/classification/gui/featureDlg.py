@@ -285,6 +285,9 @@ class FeatureDlg(QtGui.QDialog):
                 self.drawPreview()
         if(event.type() == QtCore.QEvent.ContextMenu and self.graphicsView.underMouse()):
             self.contextMenuGraphicsView(event.pos())
+
+        if(event.type()==QtCore.QEvent.Wheel):
+            return True
         
         if event.type() == QtCore.QEvent.Leave:
             #self.circle.setVisible(False)
