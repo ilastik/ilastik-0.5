@@ -65,6 +65,7 @@ class ClassifierRandomForest(ClassifierBase):
         classifier = cls()
         classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
         classifier.treeCount = classifier.RF.treeCount
+        classifier.unique_vals = range(2)
         return classifier
 
 

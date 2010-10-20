@@ -305,7 +305,7 @@ class FeatureDlg(QtGui.QDialog):
             self.accept() 
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
-            return False
+            self.reject()
 
 
 
