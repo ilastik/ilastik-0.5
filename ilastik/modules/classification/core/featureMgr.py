@@ -106,12 +106,12 @@ class FeatureMgr():
                 for i, di in enumerate(self.dataMgr):
                     di.module["Classification"]["featureM"] = numpy.zeros(di.shape[0:-1] + (totalSize,),'float32')
 
-            except Exception, e:
+            except MemoryError, e:
                 print e
                 traceback.print_exc(file=sys.stdout)
                 return False
         else:
-           pass
+            pass
         return True
     
     def exportFeatureItems(self, h5featGrp):

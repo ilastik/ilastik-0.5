@@ -101,7 +101,7 @@ class ProjectDlg(QtGui.QDialog):
         try:  
             theDataItem = dataImpex.DataImpex.importDataItem(fileList, options)
         except MemoryError:
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller Subvolume. Much smaller !! since you may also want to calculate some features...")
+            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller sub-volume. Much smaller, since you may also want to calculate some features...")
         if theDataItem is not None:   
             # file name
             dirname = os.path.basename(os.path.dirname(path))

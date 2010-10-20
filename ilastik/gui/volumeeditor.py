@@ -2074,6 +2074,12 @@ class ImageScene(QtGui.QGraphicsView):
         if type(self.volumeEditor.labelWidget) != DummyLabelWidget:
             volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
     
+            act = menu.addAction("Labels")
+            act.setEnabled(False)
+            font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
+            act.setFont(font)
+            menu.addSeparator()
+            
             for index, item in enumerate(volumeLabel):
                 labelColor = QtGui.QColor.fromRgb(long(item.color))
                 labelIndex = item.number
@@ -2101,9 +2107,9 @@ class ImageScene(QtGui.QGraphicsView):
             # brushM = labeling.addMenu("Brush size")
             brushGroup = QtGui.QActionGroup(self)
 
-            act = menu.addAction("Brush Size")
+            act = menu.addAction("Brush Sizes")
             act.setEnabled(False)
-            font = QtGui.QFont( "Helvetica", 11, QtGui.QFont.Bold, True)
+            font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
             act.setFont(font)
             menu.addSeparator()
             
