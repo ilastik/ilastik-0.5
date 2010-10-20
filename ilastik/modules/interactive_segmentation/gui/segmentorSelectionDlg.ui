@@ -69,7 +69,7 @@
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
-           <string>homepage</string>
+           <string>Homepage</string>
           </property>
          </widget>
         </item>
@@ -91,9 +91,9 @@
          <widget class="QTextBrowser" name="description"/>
         </item>
         <item>
-         <widget class="QToolButton" name="settingsButton">
+         <widget class="QPushButton" name="settingsButton">
           <property name="text">
-           <string>Classifier Settings</string>
+           <string>Settings</string>
           </property>
          </widget>
         </item>

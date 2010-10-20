@@ -384,7 +384,7 @@ class VolumeEditor(QtGui.QWidget):
             self.overview.setVisible(False)
 
         tempLayout = QtGui.QVBoxLayout()
-        tempLayout.addLayout(self.grid)
+        #tempLayout.addLayout(self.grid)
         
         labelLayout = QtGui.QHBoxLayout()
         
@@ -400,8 +400,8 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
         self.toolBox.setLayout(self.toolBoxLayout)
-        self.toolBox.setMaximumWidth(190)
-        self.toolBox.setMinimumWidth(190)
+        #self.toolBox.setMaximumWidth(190)
+        #self.toolBox.setMinimumWidth(190)
 
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
@@ -594,7 +594,15 @@ class VolumeEditor(QtGui.QWidget):
         
         self.focusAxis =  0
         
-        self.setLayout(self.layout_)
+        #self.setLayout(self.layout_)
+        self.splitter = QtGui.QSplitter()
+        tempWidget = QtGui.QWidget()
+        tempWidget.setLayout(self.grid)
+        self.splitter.addWidget(tempWidget)
+        self.splitter.addWidget(self.toolBox)
+        splitterLayout = QtGui.QVBoxLayout()
+        splitterLayout.addWidget(self.splitter)
+        self.setLayout(splitterLayout)
         
 
     def toggleFullscreenX(self):
@@ -1435,7 +1443,6 @@ class ImageScene(QtGui.QGraphicsView):
         self.lastPanPoint = QtCore.QPoint()
         self.dragMode = False
         self.deltaPan = QtCore.QPointF(0,0)
-        self.ticker = QtCore.QTimer(self)
         self.x = 0.0
         self.y = 0.0
         
@@ -1549,6 +1556,7 @@ class ImageScene(QtGui.QGraphicsView):
         self.allBorder.setVisible(False)
         self.allBorder.setZValue(99)
 
+        self.ticker = QtCore.QTimer(self)
         #label updates while drawing, needed for interactive segmentation
         self.drawTimer = QtCore.QTimer(self)
         self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.updateLabels)
@@ -1707,8 +1715,8 @@ class ImageScene(QtGui.QGraphicsView):
             self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
 
             #if we are in opengl 2d render mode, update the texture
-            self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
             if self.openglWidget is not None:
+                self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
                 for patchNr in self.thread.outQueue:
                     t = self.scene.tex
                     #self.scene.tex = -1

@@ -42,7 +42,6 @@ class IlastikTabWidget(QtGui.QTabWidget):
         if orientation == QtCore.Qt.Vertical: 
             self.setTabPosition(self.West)
         for tab in self.tabDict.values():
-            print tab
             lo = tab.layout()
             if orientation == 1:
                 orientation = 0

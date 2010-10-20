@@ -111,7 +111,7 @@ class FeatureMgr():
                 traceback.print_exc(file=sys.stdout)
                 return False
         else:
-            print "setFeatureItems(): no features selected"
+           pass
         return True
     
     def exportFeatureItems(self, h5featGrp):
@@ -170,7 +170,7 @@ class FeatureMgr():
                     max = numpy.max(rawdata)
                     data = DataAccessor(rawdata,  channels = True,  autoRgb = False)
                     
-                    ov = OverlayItem(di, data, color = long(16535 << 16), alpha = 1.0,  autoAdd = False, autoVisible = False)
+                    ov = OverlayItem(di, data, color = long(65535 << 16), alpha = 1.0,  autoAdd = False, autoVisible = False)
                     ov.min = min
                     ov.max = max
                     di.overlayMgr[ feature.getKey(c)] = ov
@@ -260,7 +260,7 @@ class FeatureGroups(object):
     def createGroups(self):
         for c in FeatureBase.__subclasses__():
             for g in c.groups:
-                print "Adding", c.__name__, " to Group", g
+                print "Adding", c.name, "to Group", g
                 if g in self.groups:
                     self.groups[g].append(c)
                 else:

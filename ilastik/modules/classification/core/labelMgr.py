@@ -41,18 +41,32 @@ class LabelMgr(object):
         self.dataMgr.module["Classification"]["labelDescriptions"].append(description)
             
 
-    def changedLabel(self,  label):
-        for labelIndex,  labelItem in self.dataMgr.module["Classification"]["labelDescriptions"]:
-            labelItem.name = label.name
-            labelItem.number = label.number
-            labelItem.color = label.color
-                
+    def changeLabelName(self,  index, newName):
+        labelItem = self.dataMgr.module["Classification"]["labelDescriptions"][index]
+        ok = True
+        for ii, it in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
+            if it.name == newName:
+                ok = False
+        if ok:
+            oldName = labelItem.name
+            labelItem.name = newName
+            for index, item in enumerate(self.dataMgr):
+                #rename overlays
+                o = item.overlayMgr["Classification/Prediction/" + oldName]
+                if o is not None:
+                    o.changeKey("Classification/Prediction/" + newName)
+            return True
+        else:
+            return False
+                                    
     def removeLabel(self, number):
         self.dataMgr.featureLock.acquire()
         self.classificationMgr.clearFeaturesAndTraining()
         ldnr = -1
+        labelDescriptionToBeRemoved = None
         for labelIndex,  labelItem in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
             if labelItem.number == number:
+                labelDescriptionToBeRemoved = labelItem
                 ldnr = labelIndex
                 self.dataMgr.module["Classification"]["labelDescriptions"].pop(ldnr)
                 
@@ -68,6 +82,13 @@ class LabelMgr(object):
                 ldata[:,:,:,:,:] = temp[:,:,:,:,:]
                 if item.module["Classification"]["labelHistory"] is not None:
                     item.module["Classification"]["labelHistory"].removeLabel(number)
+                
+                #remove overlays
+            if labelDescriptionToBeRemoved is not None:
+                o = item.overlayMgr["Classification/Prediction/" + labelDescriptionToBeRemoved.name]
+                if o is not None:
+                    item.overlayMgr.remove("Classification/Prediction/" + labelDescriptionToBeRemoved.name)                    
+        del labelDescriptionToBeRemoved
         self.dataMgr.featureLock.release()
         
     def newLabels(self,  newLabels):

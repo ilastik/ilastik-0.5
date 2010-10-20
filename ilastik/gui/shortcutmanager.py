@@ -13,6 +13,7 @@ class shortcutManager():
 class shortcutManagerDlg(QtGui.QDialog):
     def __init__(self, s, parent=None):
         QtGui.QDialog.__init__(self, parent)
+        self.setModal(False)
         self.setWindowTitle("Shortcuts")
         if len(s.shortcuts)>0:
             l = QtGui.QGridLayout(self)
@@ -23,11 +24,11 @@ class shortcutManagerDlg(QtGui.QDialog):
                 l.addWidget(QtGui.QLabel(str(sc)), i,0)
                 l.addWidget(QtGui.QLabel(desc), i,1)
             self.setLayout(l)
-            self.exec_()
+            self.show()
         else:
             l = QtGui.QVBoxLayout()
             l.addWidget(QtGui.QLabel("Load the data by pressing the \"New\" button in the project dialog"))
             self.setLayout(l)
-            self.exec_()
+            self.show()
             
 shortcutManager = shortcutManager()

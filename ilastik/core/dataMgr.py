@@ -381,7 +381,7 @@ class DataItemImage(DataItemBase):
             
         for k in self.module.keys():
             if hasattr(self.module[k], "deserialize"):
-                print "deserializing ", k
+                print "Deserializing", k
                 self.module[k].deserialize(h5G, offsets, shape)
 
         self.updateOverlays()

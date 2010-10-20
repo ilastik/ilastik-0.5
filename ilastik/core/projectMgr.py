@@ -143,12 +143,16 @@ class Project(object):
         dataMgr = dataMgrModule.DataMgr(featureCache);
 
         for k in dataMgr.module.keys():
-            print "deserializing Module ", dataMgr.module[k].name
+            print "Deserializing Module", dataMgr.module[k].name
             dataMgr.module[k].deserialize(projectG)
 
         
         for name in fileHandle['DataSets']:
-            print "Loading image ", name
+            try:
+                dName = fileHandle['DataSets'][name].attrs['Name']
+            except:
+                dName = name
+            print "Loading image", dName
             activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
             activeItem.deserialize(fileHandle['DataSets'][name])
             #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
