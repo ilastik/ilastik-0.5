@@ -110,7 +110,7 @@ class About(QtGui.QDialog):
         buildInfo.close()
 
     def openLicence(self):
-        licence = Licence()
+        licence = Licence(self)
         licence.exec_()
 
     def openWebSite(self):
