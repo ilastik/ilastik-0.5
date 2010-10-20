@@ -175,7 +175,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
         grviewHudZoomElementsLayout.addStretch()
         grviewHudLayout.addLayout(grviewHudZoomElementsLayout)
         
-        grviewSpinboxLayout = QtGui.QHBoxLayout(self)
+        grviewSpinboxLayout = QtGui.QHBoxLayout()
         self.channelSpinboxLabel = QtGui.QLabel("Channel")
         self.channelSpinbox = QtGui.QSpinBox(self)
         self.channelSpinbox.setEnabled(False)
