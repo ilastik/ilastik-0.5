@@ -697,10 +697,14 @@ class VolumeEditor(QtGui.QWidget):
             self.ilastik.project.dataMgr.selectedChannels = result
 
     def togglePrediction(self):
-        labelNames = self.labelWidget.volumeLabels.getLabelNames()
         for index,  item in enumerate(self.overlayWidget.overlays):
-            if item.name in labelNames:
-                self.overlayWidget.toggleVisible(index)
+            item.visible = not(item.visible)
+            s = None
+            if item.visible:
+                s = QtCore.Qt.Checked
+            else:
+                s = QtCore.Qt.Unchecked
+            self.overlayWidget.overlayListWidget.item(index).setCheckState(s)
         self.repaint()
         
 

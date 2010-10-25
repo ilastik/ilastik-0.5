@@ -251,7 +251,7 @@ class OverlayListWidget(QtGui.QListWidget):
         return labelNames
        
       
-    def toggleVisible(self,  index):
+    def toggleVisible(self,  item):
         state = not(item.overlayItemReference.visible)
         item.overlayItemReference.visible = state
         item.setCheckState(item.overlayItemReference.visible * 2)
@@ -420,8 +420,8 @@ class OverlayWidget(QtGui.QGroupBox):
     def getLabelNames(self):
         return self.overlayListWidget.getLabelNames()
        
-    def toggleVisible(self,  index):
-        return self.overlayListWidget.toggleVisible(index)
+    def toggleVisible(self,  item):
+        return self.overlayListWidget.toggleVisible(item)
 
     def setVisibility(self, key, visible):
         i = -1
