@@ -1807,6 +1807,7 @@ class ImageScene(QtGui.QGraphicsView):
 
         if self.volumeEditor.drawUpdateInterval > 0:
             self.drawTimer.start(self.volumeEditor.drawUpdateInterval) #update labels every some ms
+        self.volumeEditor.labelWidget.ensureLabelOverlayVisible()
         
     def endDraw(self, pos):
         self.drawTimer.stop()

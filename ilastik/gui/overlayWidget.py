@@ -256,6 +256,12 @@ class OverlayListWidget(QtGui.QListWidget):
         item.overlayItemReference.visible = state
         item.setCheckState(item.overlayItemReference.visible * 2)
         
+    def setVisibility(self,  index, visible):
+        item = self.item(index)
+        state = item.overlayItemReference.visible
+        item.overlayItemReference.visible = visible
+        item.setCheckState(item.overlayItemReference.visible * 2)
+        return state
         
     def wheelEvent(self, event):
         pos = event.pos()
@@ -416,6 +422,16 @@ class OverlayWidget(QtGui.QGroupBox):
        
     def toggleVisible(self,  index):
         return self.overlayListWidget.toggleVisible(index)
+
+    def setVisibility(self, key, visible):
+        i = -1
+        for i,o in enumerate(self.overlays):
+            if o.key == key:
+                break
+        if i != -1:
+            oldState = self.overlayListWidget.setVisibility(i, visible)
+            if oldState != visible:
+                self.volumeEditor.repaint()
 
     def getOverlayRef(self,  key):
         """
