@@ -92,6 +92,10 @@ class LoadOptionsWidget(QtGui.QWidget):
         
         tempLayout = QtGui.QHBoxLayout()
         self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
+        
+        # TODO: renable this as soon its impemented
+        self.resCheck.setVisible(False)
+        
         self.connect(self.resCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleResolution)
         tempLayout.addWidget(self.resCheck)
         self.layout.addLayout(tempLayout) 
