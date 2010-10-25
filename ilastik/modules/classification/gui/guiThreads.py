@@ -3,6 +3,7 @@ from PyQt4 import QtGui, QtCore
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import overlayMgr
 from ilastik.core import activeLearning
+import ilastik.core.overlays.thresHoldOverlay as tho
 
 class FeatureComputation(QtCore.QObject):
     def __init__(self, parent):
@@ -143,6 +144,9 @@ class ClassificationInteractive(object):
         descriptions =  self.parent.project.dataMgr.module["Classification"]["labelDescriptions"]
         activeImage = self.parent._activeImage
         
+        
+        foregrounds = []
+        
         for p_num,pd in enumerate(descriptions):
             #create Overlay for _prediction if not there:
             if activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] is None:
@@ -150,6 +154,8 @@ class ClassificationInteractive(object):
                 ov = overlayMgr.OverlayItem(activeImage, data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                 activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
+                ov = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
+                foregrounds.append(ov)
                 
 
         #create Overlay for uncertainty:
@@ -157,6 +163,14 @@ class ClassificationInteractive(object):
             data = numpy.zeros(activeImage.shape[0:-1] + (1,), 'float32')
             ov = overlayMgr.OverlayItem(activeImage, data, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
             activeImage.overlayMgr["Classification/Uncertainty"] = ov
+
+        if len(foregrounds) > 1:
+            if activeImage.overlayMgr["Classification/Segmentation"] is None:
+                ov = tho.ThresHoldOverlay(activeImage, foregrounds, [], autoAdd = True, autoVisible = False)
+                activeImage.overlayMgr["Classification/Segmentation"] = ov
+            else:
+                ov = activeImage.overlayMgr["Classification/Segmentation"]
+                ov.setForegrounds(foregrounds)
         
         self.start()
     
