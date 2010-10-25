@@ -76,6 +76,8 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
     def __getattr__(self,  name):
         if name == "colorTable":
             return self.getColorTab()
+        elif name == "dtype":
+            return numpy.uint8
         raise AttributeError,  name
     
     def setForegrounds(self, foregrounds):
