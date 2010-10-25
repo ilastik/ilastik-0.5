@@ -34,6 +34,9 @@ class BaseLabelWidget(object):
         self.colorTab = None
         self.overlays = []
         
+    def ensureLabelOverlayVisible(self):
+        pass
+        
     def currentItem(self):
         return None
         
