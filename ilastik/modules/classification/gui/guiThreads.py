@@ -154,8 +154,8 @@ class ClassificationInteractive(object):
                 ov = overlayMgr.OverlayItem(activeImage, data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                 activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
-                ov = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
-                foregrounds.append(ov)
+            ov = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
+            foregrounds.append(ov)
                 
 
         #create Overlay for uncertainty:
