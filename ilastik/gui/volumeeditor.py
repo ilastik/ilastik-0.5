@@ -2007,7 +2007,7 @@ class ImageScene(QtGui.QGraphicsView):
         #posX = 0
         #posY = 0
         #posZ = 0
-        if x > 0 and x < self.image.width() and y > 0 and y < self.image.height():
+        if x > 0 and x < self.image.width() and y > 0 and y < self.image.height() and len(self.volumeEditor.overlayWidget.overlays) > 0:
             
             #should we hide the cursor only when entering once ? performance?
             #self.setCursor(self.hiddenCursor)

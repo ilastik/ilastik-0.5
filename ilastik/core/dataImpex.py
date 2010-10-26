@@ -193,7 +193,7 @@ class DataImpex(object):
         fBase, fExt = os.path.splitext(filename)
         if fExt == '.h5':
             f = h5py.File(filename, 'r')
-            shape = f["volume/_data"].shape
+            shape = f["volume/data"].shape
             if shape[1] == 1:
                 #2d _data looks like (1, 1, x, y, c)
                 return (shape[2], shape[3], 1, shape[4])

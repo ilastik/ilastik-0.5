@@ -350,7 +350,7 @@ class MainWindow(QtGui.QMainWindow):
         dock = QtGui.QDockWidget(' ilastik GUI', self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
-        
+        dock.setFeatures(dock.features() & (not QtGui.QDockWidget.DockWidgetClosable))
         self.volumeEditorDock = dock
 
         self.connect(self.labelWidget, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
