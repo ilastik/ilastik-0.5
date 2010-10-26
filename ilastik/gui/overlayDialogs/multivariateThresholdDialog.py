@@ -100,13 +100,14 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             
             self.hbox.addLayout(l)
 
+        
         l = QtGui.QVBoxLayout()
-        w = QtGui.QPushButton("Select Foreground")
-        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectForegrounds)
-        l.addWidget(w)
-        w = QtGui.QPushButton("Select Background")
-        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectBackgrounds)
-        l.addWidget(w)
+        #w = QtGui.QPushButton("Select Foreground")
+        #self.connect(w, QtCore.SIGNAL("clicked()"), self.selectForegrounds)
+        #l.addWidget(w)
+        #w = QtGui.QPushButton("Select Background")
+        #self.connect(w, QtCore.SIGNAL("clicked()"), self.selectBackgrounds)
+        #l.addWidget(w)
         
         l2 = QtGui.QHBoxLayout()
         self.smoothing = QtGui.QCheckBox("Smooth")
