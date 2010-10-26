@@ -297,7 +297,7 @@ class previewTable(QtGui.QDialog):
         self.fileList = fileList
         self.fileListTable = QtGui.QTableWidget()
         self.fillFileTable()        
-        self.fileListTable.setHorizontalHeaderLabels(["red", "green", "blue"])
+        self.fileListTable.setHorizontalHeaderLabels(["channel 1", "channel 2", "channel 3"])
         self.fileListTable.resizeRowsToContents()
         self.fileListTable.resizeColumnsToContents()
         self.layout.addWidget(self.fileListTable)
