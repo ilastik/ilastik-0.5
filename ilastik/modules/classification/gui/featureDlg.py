@@ -197,9 +197,9 @@ class FeatureDlg(QtGui.QDialog):
                         i.setSelected(False)
                     self.boolTest = True
 
-        if self.printComputeMemoryRequirement:
-            memReq = self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
-            self.memReq.setText("%8.2f MB" % memReq)
+        
+        memReq = self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
+        self.memReq.setText("%8.2f MB" % memReq)
 
     def deselectAllTableItems(self):
         iColumn = self.featureTable.columnCount()
@@ -332,10 +332,12 @@ class FeatureDlg(QtGui.QDialog):
             numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
 
             memoryReq = numOfPixels * (numOfEffectiveFeatures*4.0) /1024.0**2
-            print "Feature memory demand: %8.2f MB. For feature vector of length %d" % (memoryReq, numOfEffectiveFeatures)
+            if self.printComputeMemoryRequirement:
+                print "Feature memory demand: %8.2f MB. For feature vector of length %d" % (memoryReq, numOfEffectiveFeatures)
         else:
             memoryReq = 0.0
-            print "No features selected"
+            if self.printComputeMemoryRequirement:
+                print "No features selected"
         return memoryReq
 
 

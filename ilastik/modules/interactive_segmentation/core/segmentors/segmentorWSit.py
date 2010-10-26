@@ -46,7 +46,7 @@ try:
 except Exception, e:
     pass
 
-if ok:
+if 0:
     class SegmentorWSiter(SegmentorBase):
         name = "Watershed Segmentation (incremental)"
         description = "Segmentation plugin using sparse Basin graph"
