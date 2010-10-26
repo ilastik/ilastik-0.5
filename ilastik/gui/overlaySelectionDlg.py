@@ -207,10 +207,10 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.overlayItemSizeLabel = QtGui.QLabel("Size: 123 bytes")
         self.overlayItemPageOutLabel = QtGui.QLabel("Memory/Hard drive")
         infoScrollArea = QtGui.QScrollArea()
-        self.overlayItemDependencyLabel = QtGui.QLabel("Dependency: a, b, c, d,...")
+        #self.overlayItemDependencyLabel = QtGui.QLabel("Dependency: a, b, c, d,...")
         infoLayout.addWidget(self.overlayItemLabel)
         infoLayout.addWidget(self.overlayItemPageOutLabel)
-        infoScrollArea.setWidget(self.overlayItemDependencyLabel)
+        #infoScrollArea.setWidget(self.overlayItemDependencyLabel)
         infoLayout.addWidget(infoScrollArea)
         infoGroupBox.setLayout(infoLayout)
 
