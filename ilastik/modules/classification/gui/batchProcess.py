@@ -30,7 +30,7 @@ import ilastik.gui.volumeeditor as ve
 from ilastik.core import dataMgr
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.core.volume import DataAccessor
-
+from ilastik.core import  dataImpex
 from ilastik.modules.classification.core import featureMgr
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.modules.classification.core import classificationMgr
@@ -90,7 +90,7 @@ class BatchProcess(QtGui.QDialog):
 
 
     def slotDir(self):
-        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 Files", filter = "HDF5 (*.h5)")
+        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "HDF5 (*.h5), Images (*.jpg *.tiff *.tif *.png *.jpeg)")
         self.filenames.extend(selection)
         for f in selection:
             self.filesView.addItem(f)
@@ -118,27 +118,77 @@ class BatchProcess(QtGui.QDialog):
         z = 0
         allok = True
         for filename in fileNames:
-            try:
-                self.printStuff("Processing " + str(filename) + "\n")
-                
-                fr = h5py.File(str(filename), 'r')
-                dr = fr["volume/data"]
-                mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 128, 30)
-                
-
-                #save results            
-                fw = h5py.File(str(filename) + '_processed.h5', 'w')
-                gw = fw.create_group("volume")
-
-                for blockNr in range(mpa.getBlockCount()):
+            if filename[-2:] == ".h5":
+                try:
+                    self.printStuff("Processing " + str(filename) + "\n")
                     
-                    self.printStuff("Part " + str(blockNr) + "/" + str(mpa.getBlockCount()) + " " )
+                    fr = h5py.File(str(filename), 'r')
+                    dr = fr["volume/data"]
+                    mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 128, 30)
+                    
+    
+                    #save results            
+                    fw = h5py.File(str(filename) + '_processed.h5', 'w')
+                    gw = fw.create_group("volume")
+    
+                    for blockNr in range(mpa.getBlockCount()):
+                        
+                        self.printStuff("Part " + str(blockNr) + "/" + str(mpa.getBlockCount()) + " " )
+                                                
+                        dm = dataMgr.DataMgr()
+                                        
+                        di = mpa.getDataItem(blockNr)
+                        dm.append(di, alreadyLoaded = True)
+                                  
+                        fm = dm.Classification.featureMgr      
+                        #fm = featureMgr.FeatureMgr(dm)
+                        #cm = classificationMgr.ClassificationModuleMgr(dm)
+                        fm.setFeatureItems(self.ilastik.project.dataMgr.Classification.featureMgr.featureItems)
+        
+                        gc.collect()
+        
+                        fm.prepareCompute(dm)
+                        fm.triggerCompute()
+                        fm.joinCompute(dm)
+        
+        
+                        dm.module["Classification"]["classificationMgr"].classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
+                        dm.module["Classification"]["labelDescriptions"] = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
+        
+                        classificationPredict = classificationMgr.ClassifierPredictThread(dm)
+                        classificationPredict.start()
+                        classificationPredict.wait()
+                        
+                        classificationPredict.generateOverlays()
+                        
+                        dm[0].serialize(gw)
+                        self.printStuff(" done\n")
                                             
+                    fw.close()
+                    fr.close()
+                except Exception, e:
+                    print "######Exception"
+                    traceback.print_exc(file=sys.stdout)
+                    print e
+                    allok = False
+                    self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
+                    self.logger.appendPlainText("")      
+                                        
+            else: #other file extensions, e.g. .jpg, .tif etc
+                try:
+                    self.printStuff("Processing " + str(filename) + "\n")
+                    filename = str(filename)
+                    theDataItem = dataImpex.DataImpex.importDataItem(filename, None)
+                    if theDataItem is None:
+                        print "No _data item loaded"
+                    
                     dm = dataMgr.DataMgr()
-                                    
-                    di = mpa.getDataItem(blockNr)
-                    dm.append(di, alreadyLoaded = True)
-                              
+                    dm.append(theDataItem, True)                    
+    
+                    #save results            
+                    fw = h5py.File(str(filename) + '_processed.h5', 'w')
+                    gw = fw.create_group("volume")
+
                     fm = dm.Classification.featureMgr      
                     #fm = featureMgr.FeatureMgr(dm)
                     #cm = classificationMgr.ClassificationModuleMgr(dm)
@@ -162,17 +212,16 @@ class BatchProcess(QtGui.QDialog):
                     
                     dm[0].serialize(gw)
                     self.printStuff(" done\n")
-                                        
-                fw.close()
-                fr.close()
-                
-            except Exception, e:
-                print "######Exception"
-                traceback.print_exc(file=sys.stdout)
-                print e
-                allok = False
-                self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
-                self.logger.appendPlainText("")                
+
+                    fw.close()
+                    
+                except Exception, e:
+                    print "######Exception"
+                    traceback.print_exc(file=sys.stdout)
+                    print e
+                    allok = False
+                    self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
+                    self.logger.appendPlainText("")                
             
             
         if allok:
