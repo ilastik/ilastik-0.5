@@ -73,6 +73,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             self.sliderReceivers.append(SliderReceiver(self,index,self.overlayItem.thresholds[index] * 1000))
             
             w = QtGui.QSlider(QtCore.Qt.Vertical)
+            w.setToolTip("Change the threshold for " + str(t.name) + "\n a low threshold compared to the other thresholds means a high class probability")
             w.setRange(0,999)
             w.setSingleStep(1)
             w.setValue(self.overlayItem.thresholds[index] * 1000)
@@ -111,14 +112,17 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         
         l2 = QtGui.QHBoxLayout()
         self.smoothing = QtGui.QCheckBox("Smooth")
+        self.smoothing.setToolTip("Smooth the input overlays with the specified pixel sigma using a gaussian\n Smoothing may take a while depending on the size of the data...")
         self.smoothing.setCheckState(self.overlayItem.smoothing * 2)
         self.connect(self.smoothing, QtCore.SIGNAL("stateChanged(int)"), self.smoothingChanged)
         self.sigma = QtGui.QLineEdit(str(self.overlayItem.sigma))
+        self.sigma.setToolTip("sigma in pixels")
         l2.addWidget(self.smoothing)
         l2.addWidget(self.sigma)
         l.addLayout(l2)
     
         self.hbox.addLayout(l)
+        self.setMinimumHeight(300)
         
     def smoothingChanged(self, state):
         sigma = self.overlayItem.sigma
