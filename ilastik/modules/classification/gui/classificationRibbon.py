@@ -78,11 +78,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnExportClassifier.setToolTip('Save current classifier and its feature settings')
         self.btnClassifierOptions.setToolTip('Select a classifier and change its settings')
         
-        self.btnSelectFeatures.setEnabled(True)
-        self.btnStartLive.setEnabled(False)
-        self.btnTrainPredict.setEnabled(False)
-        self.btnExportClassifier.setEnabled(False)
-        self.btnClassifierOptions.setEnabled(True)
+        self.on_otherProject()
         
         tl.addWidget(self.btnSelectFeatures)
         tl.addWidget(self.btnStartLive)
@@ -93,12 +89,20 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         self.setLayout(tl)
         
+        
     def _initConnects(self):
         self.connect(self.btnSelectFeatures, QtCore.SIGNAL('clicked()'), self.on_btnSelectFeatures_clicked)
         self.connect(self.btnStartLive, QtCore.SIGNAL('toggled(bool)'), self.on_btnStartLive_clicked)
         self.connect(self.btnTrainPredict, QtCore.SIGNAL('clicked()'), self.on_btnTrainPredict_clicked)
         self.connect(self.btnExportClassifier, QtCore.SIGNAL('clicked()'), self.on_btnExportClassifier_clicked)
         self.connect(self.btnClassifierOptions, QtCore.SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
+        
+    def on_otherProject(self):
+        self.btnSelectFeatures.setEnabled(True)
+        self.btnStartLive.setEnabled(False)
+        self.btnTrainPredict.setEnabled(False)
+        self.btnExportClassifier.setEnabled(False)
+        self.btnClassifierOptions.setEnabled(True)
         
     def on_btnSelectFeatures_clicked(self):
         preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]

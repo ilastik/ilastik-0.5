@@ -36,6 +36,7 @@ from ilastik.modules.classification.core import featureMgr, classificationMgr
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
 from ilastik.modules.classification.core.featureMgr import ilastikFeatureGroups
+import copy
 
 from ilastik.modules.classification.gui.guiThreads import FeatureComputation
 
@@ -152,6 +153,8 @@ class FeatureDlg(QtGui.QDialog):
             item = self.featureTable.horizontalHeaderItem(i)
             size = len(item.text()) * 11
             self.featureTable.setColumnWidth(i, 70)
+            
+        self.oldSelectedFeatures = copy.deepcopy(featureMgr.ilastikFeatureGroups.selection)
 
 
     @QtCore.pyqtSignature("")
@@ -312,14 +315,11 @@ class FeatureDlg(QtGui.QDialog):
             self.reject()
 
 
-
-
-
     @QtCore.pyqtSignature("")
     def on_confirmButtons_rejected(self):
-        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
-        self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
-        self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
+        for i in range(len(self.oldSelectedFeatures)):
+            for j in range(len(self.oldSelectedFeatures[i])):
+                featureMgr.ilastikFeatureGroups.selection[i][j] = self.oldSelectedFeatures[i][j]
         self.reject()
 
     def computeMemoryRequirement(self, featureSelectionList):

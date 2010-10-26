@@ -358,6 +358,10 @@ class MainWindow(QtGui.QMainWindow):
         area = QtCore.Qt.BottomDockWidgetArea
         self.addDockWidget(area, dock)
         self.labelDocks.append(dock)
+        
+    def on_otherProject(self):
+        for i in range(self.ribbon.count()):
+            self.ribbon.widget(i).on_otherProject()
 
     def labelRemoved(self, number):
         self.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)

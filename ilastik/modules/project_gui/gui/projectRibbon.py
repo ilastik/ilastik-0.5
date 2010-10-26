@@ -113,6 +113,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.btnEdit.setEnabled(True)
             self.btnOptions.setEnabled(True)
             self.parent.updateFileSelector()
+            self.parent.on_otherProject()
             self.ilastik.setTabBusy(False)
             ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
             gc.collect()

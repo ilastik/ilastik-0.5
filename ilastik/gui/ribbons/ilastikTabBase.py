@@ -21,6 +21,9 @@ class IlastikTabBase(object):
         #print "Tab changed: on_deActivation() not implementated by this tab"
         pass
 
+    def on_otherProject(self):
+        pass
+
     
     def on_imageChanged(self):
         #print "Image changed: on_imageChanged() not implementated by this tab"
