@@ -504,32 +504,32 @@ class VolumeEditor(QtGui.QWidget):
 
         ##undo/redo and other shortcuts
         self.shortcutUndo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Z"), self, self.historyUndo, self.historyUndo) 
-        shortcutManager.register(self.shortcutUndo, "_history undo")
+        shortcutManager.register(self.shortcutUndo, "Labeling", "History undo")
         
         
         self.shortcutRedo = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+Z"), self, self.historyRedo, self.historyRedo)
-        shortcutManager.register(self.shortcutRedo, "_history redo")
+        shortcutManager.register(self.shortcutRedo, "Labeling", "History redo")
         
         self.shortcutRedo2 = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Y"), self, self.historyRedo, self.historyRedo)
-        shortcutManager.register(self.shortcutRedo2, "_history redo")
+        shortcutManager.register(self.shortcutRedo2, "Labeling", "History redo")
         
         self.togglePredictionSC = QtGui.QShortcut(QtGui.QKeySequence("Space"), self, self.togglePrediction, self.togglePrediction)
-        shortcutManager.register(self.togglePredictionSC, "toggle prediction overlays")
+        shortcutManager.register(self.togglePredictionSC, "Overlays", "Invert overlay visibility")
         
         self.shortcutNextLabel = QtGui.QShortcut(QtGui.QKeySequence("l"), self, self.nextLabel, self.nextLabel)
-        shortcutManager.register(self.shortcutNextLabel, "go to next label (cyclic, forward)")
+        shortcutManager.register(self.shortcutNextLabel, "Labeling", "Go to next label (cyclic, forward)")
         
         self.shortcutPrevLabel = QtGui.QShortcut(QtGui.QKeySequence("k"), self, self.prevLabel, self.prevLabel )
-        shortcutManager.register(self.shortcutPrevLabel, "go to previous label (cyclic, backwards)")
+        shortcutManager.register(self.shortcutPrevLabel, "Labeling", "Go to previous label (cyclic, backwards)")
         
         self.shortcutToggleFullscreenX = QtGui.QShortcut(QtGui.QKeySequence("x"), self, self.toggleFullscreenX, self.toggleFullscreenX )
-        shortcutManager.register(self.shortcutToggleFullscreenX, "enlarge slice view x to full size")
+        shortcutManager.register(self.shortcutToggleFullscreenX, "Navigation", "Enlarge slice view x to full size")
         
         self.shortcutToggleFullscreenY = QtGui.QShortcut(QtGui.QKeySequence("y"), self, self.toggleFullscreenY, self.toggleFullscreenY )
-        shortcutManager.register(self.shortcutToggleFullscreenY, "enlarge slice view y to full size")
+        shortcutManager.register(self.shortcutToggleFullscreenY, "Navigation", "Enlarge slice view y to full size")
         
         self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ )
-        shortcutManager.register(self.shortcutToggleFullscreenZ, "enlarge slice view z to full size")
+        shortcutManager.register(self.shortcutToggleFullscreenZ, "Navigation", "Enlarge slice view z to full size")
 
 
         for index, scene in enumerate(self.imageScenes):
@@ -566,16 +566,16 @@ class VolumeEditor(QtGui.QWidget):
 
 
         #add shortcuts of the imagescenes to the help text szstem
-        shortcutManager.register(self.imageScenes[0].shortcutZoomIn, "zoom in")
-        shortcutManager.register(self.imageScenes[0].shortcutZoomOut, "zoom out")
-        shortcutManager.register(self.imageScenes[0].shortcutSliceUp, "slice up")
-        shortcutManager.register(self.imageScenes[0].shortcutSliceDown, "slice down")
-        shortcutManager.register(self.imageScenes[0].shortcutSliceUp2, "slice up")
-        shortcutManager.register(self.imageScenes[0].shortcutSliceDown2, "slice down")
-        shortcutManager.register(self.imageScenes[0].shortcutSliceUp10, "10 slices up")
-        shortcutManager.register(self.imageScenes[0].shortcutSliceDown10, "10 slices down")
-        shortcutManager.register(self.imageScenes[0].shortcutBrushSizeUp, "increase brush size")
-        shortcutManager.register(self.imageScenes[0].shortcutBrushSizeDown, "decrease brush size")
+        shortcutManager.register(self.imageScenes[0].shortcutZoomIn, "Navigation", "Zoom in")
+        shortcutManager.register(self.imageScenes[0].shortcutZoomOut, "Navigation", "Zoom out")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceUp, "Navigation", "Slice up")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceDown, "Navigation", "Slice down")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceUp2, "Navigation", "Slice up")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceDown2, "Navigation", "Slice down")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceUp10, "Navigation", "10 slices up")
+        shortcutManager.register(self.imageScenes[0].shortcutSliceDown10, "Navigation", "10 slices down")
+        shortcutManager.register(self.imageScenes[0].shortcutBrushSizeUp, "Labeling", "Increase brush size")
+        shortcutManager.register(self.imageScenes[0].shortcutBrushSizeDown, "Labeling", "Decrease brush size")
 
 
 
