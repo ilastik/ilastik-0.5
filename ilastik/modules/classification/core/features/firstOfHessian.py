@@ -1,5 +1,5 @@
-from ilastik.core.features.featureBase import *
-import vigra
+from featureBase import *
+import vigra, numpy
 
 class HessianOfGaussianEigenvaluesFirst(FeatureBase):
     name = "First Eigenvalue of Hessian matrix of Gaussian"

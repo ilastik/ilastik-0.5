@@ -130,13 +130,23 @@ class FeatureDlg(QtGui.QDialog):
         #self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.featureTable.setShowGrid(False)
 
-
-        for r in range(self.featureTable.rowCount()):
-            for c in range(self.featureTable.columnCount()):
-                item = QtGui.QTableWidgetItem()
-                if featureMgr.ilastikFeatureGroups.selection[r][c]:
-                    item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
-                self.featureTable.setItem(r, c, item)
+        if len(featureMgr.ilastikFeatureGroups.selection) == self.featureTable.rowCount() and len(featureMgr.ilastikFeatureGroups.selection[0]) ==  self.featureTable.columnCount():
+                for r in range(self.featureTable.rowCount()):
+                    for c in range(self.featureTable.columnCount()):
+                        item = QtGui.QTableWidgetItem()
+                        if featureMgr.ilastikFeatureGroups.selection[r][c]:
+                            item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
+                        self.featureTable.setItem(r, c, item)
+        else:
+            print "Selected and available features differ(project saved with different verison of ilastik or other features), resetting featuretable...."
+            featureMgr.ilastikFeatureGroups.selection = []
+            for r in range(self.featureTable.rowCount()):
+                featureMgr.ilastikFeatureGroups.selection.append([])
+                for c in range(self.featureTable.columnCount()):
+                    featureMgr.ilastikFeatureGroups.selection[r].append(False)
+                    item = QtGui.QTableWidgetItem()
+                    self.featureTable.setItem(r, c, item)
+            
         self.setStyleSheet("selection-background-color: qlineargradient(x1: 0, y1: 0, x2: 0.5, y2: 0.5, stop: 0 #BBBBDD, stop: 1 white)")
         self.show()
 
