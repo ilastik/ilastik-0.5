@@ -90,7 +90,7 @@ class BatchProcess(QtGui.QDialog):
 
 
     def slotDir(self):
-        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "HDF5 (*.h5), Images (*.jpg *.tiff *.tif *.png *.jpeg)")
+        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "HDF5 (*.h5);; Images (*.jpg *.tiff *.tif *.png *.jpeg)")
         self.filenames.extend(selection)
         for f in selection:
             self.filesView.addItem(f)
