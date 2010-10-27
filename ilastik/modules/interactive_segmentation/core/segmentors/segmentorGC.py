@@ -47,7 +47,7 @@ except Exception, e:
     pass
 
 
-if 0:
+if ok:
 
     class SegmentorGC(SegmentorBase):
         name = "GraphCut Segmentation"

@@ -77,7 +77,7 @@ try:
 except Exception, e:
     pass
 
-if 0:
+if ik:
     class SegmentorPW(SegmentorBase):
         name = "Powerwatershed Segmentation"
         description = "Segmentation plugin using the cool Powerwatershed formalism of Cuprie and Grady"

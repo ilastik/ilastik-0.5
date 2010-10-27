@@ -84,15 +84,5 @@ class SegmentorBase(HasTraits):
     def settings(self):
         self.configure_traits( kind = 'modal')
         
-    def segment3D(self, labelVolume, labelValues, labelIndices):
-            seeds = numpy.zeros(labelVolume.shape[0:-1], 'uint32')
-            seeds[:,:,:] = labelVolume[:,:,:,0]
-           
-            wat = vigra.analysis.watersheds(self.weights, seeds=seeds)
-            
-            ret = numpy.zeros(labelVolume.shape[0:-1], 'uint8')
-            ret[:] = wat[:]#.swapaxes(0,2).view(numpy.ndarray)
-            
-            ret.shape = ret.shape + (1,)
-            return ret
+
 

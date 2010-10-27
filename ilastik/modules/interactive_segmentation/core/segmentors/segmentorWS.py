@@ -45,7 +45,7 @@ try:
 except Exception, e:
     pass
 
-if 0:
+if ok:
     class SegmentorWS(SegmentorBase):
         name = "Watershed Segmentation (normal)"
         description = "Segmentation plugin using seeded Region Growing Watershed algorithm"
