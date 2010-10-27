@@ -118,7 +118,7 @@ class BatchProcess(QtGui.QDialog):
         z = 0
         allok = True
         for filename in fileNames:
-            if filename[-2:] == ".h5":
+            if filename[-3:] == ".h5":
                 try:
                     self.printStuff("Processing " + str(filename) + "\n")
                     
