@@ -1000,12 +1000,24 @@ class DrawManager(QtCore.QObject):
 
     def toggleErase(self):
         self.erasing = not(self.erasing)
+        self.updateCrossHair()
 
     def setErasing(self):
         self.erasing = True
+        self.updateCrossHair()
     
     def disableErasing(self):
         self.erasing = False
+        self.updateCrossHair()
+
+    def updateCrossHair(self):
+        if self.erasing == True:
+            color = QtGui.QColor("black") 
+        else:
+            color = self.volumeEditor.labelWidget.currentItem().color
+        
+        for i in range(3):
+            self.volumeEditor.imageScenes[i].crossHairCursor.setColor(color)
 
     def setBrushSize(self, size):
         for i in range(3):
