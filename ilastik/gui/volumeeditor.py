@@ -2114,7 +2114,7 @@ class ImageScene(QtGui.QGraphicsView):
                 act = QtGui.QAction(icon, labelName, menu)
                 i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
                 # print self.volumeEditor.labelView.selectionModel()
-                self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect))
+                self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.onContextSetLabel(i))
                 labelList.append(menu.addAction(act))
                 
             if self.drawManager.erasing is False:
@@ -2152,6 +2152,9 @@ class ImageScene(QtGui.QGraphicsView):
     
             action = menu.exec_(QtGui.QCursor.pos())
 
+    def onContextSetLabel(self, i):
+        self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
+        self.drawManager.updateCrossHair()
 
 
 
