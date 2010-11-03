@@ -106,7 +106,7 @@ def setintersectionmask(a,b):
     if int(numpy.__version__.split('.')[1])>= 4:
         return numpy.in1d(a,b, assume_unique=True)
     else:
-        return numpy.intersect1d(a,b, assume_unique=True)
+        return numpy.intersect1d(a,b)
 
 class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Classification"
