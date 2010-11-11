@@ -128,10 +128,10 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
                 for t in range(d.shape[0]):
                     for c in range(d.shape[-1]):
                         if d.shape[1] > 1:                   
-                            dRaw = d[t,:,:,:,c].astype('float32').view(vigra.ScalarVolume)           
+                            dRaw = d[t,:,:,:,c].astype(numpy.float32).view(vigra.ScalarVolume)           
                             data[t,:,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
                         else:
-                            dRaw = d[t,0,:,:,c].astype('float32').view(vigra.ScalarImage)           
+                            dRaw = d[t,0,:,:,c].astype(numpy.float32).view(vigra.ScalarImage)           
                             data[t,0,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma) 
     
                 dataAcc = DataAccessor(data)
