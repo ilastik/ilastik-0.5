@@ -59,6 +59,8 @@ class ilastikIcons(object):
     Help = iconPath + "status/weather-storm.png"
     ZoomIn = iconPath + 'actions/zoom-in.png'
     ZoomOut = iconPath + 'actions/zoom-out.png'
+    Cut = iconPath + 'actions/edit-cut.png'
+    Find = iconPath + 'actions/edit-find.png'
     
     Ilastik = iconPath + 'ilastik-icon.png'
     
