@@ -70,17 +70,31 @@ class DataImpex(object):
         else:
             # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
-            data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
             
-            # Check for bug in Olympus microscopes
-            if data.max() > 2**15 and fExt in ['.tif','.tiff']:
-                print "Detected Olympus microscope bug..."
-                data = ((data - 2**15)/4095*255).astype(numpy.uint8)
+            data = DataImpex.vigraReadImageWrapper(fileName)
 
             dataAcc = DataAccessor(data)
             theDataItem._dataVol = Volume(dataAcc)
         theDataItem.updateOverlays()
         return theDataItem
+    
+    @staticmethod
+    def vigraReadImageWrapper(fileName):
+        data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
+        fBase, fExt = os.path.splitext(fileName)
+        
+        # Check for bug in Olympus microscopes
+        if data.max() > 2**15 and fExt in ['.tif','.tiff']:
+            print "Detected Olympus microscope bug..."
+            data = data - 2**15
+ 
+        # uint16
+        if data.max() > 255 and data.max() < 4096:
+            data = ((data)/4095.0*255.0).astype(numpy.uint8)
+            
+        return data
+        
+        
 
     @staticmethod
     def loadStack(fileList, options, logger = None):
@@ -106,17 +120,17 @@ class DataImpex(object):
         for index, filename in enumerate(firstlist):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                 try:
-                    img_data = vigra.impex.readImage(filename).swapaxes(0,1)
+                    img_data = DataImpex.vigraReadImageWrapper(filename)
                     if options.rgb > 1:
                         image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
                     else:
                         image[:,:, z-options.offsets[2],options.channels[0]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                         #load other channels if needed
                         if (len(options.channels)>1):
-                            img_data = vigra.impex.readImage(fileList[options.channels[1]][index]).swapaxes(0,1)
+                            img_data = DataImpex.vigraReadImageWrapper(fileList[options.channels[1]][index])
                             image[:,:,z-options.offsets[2],options.channels[1]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             if (len(options.channels)>2):                                
-                                img_data = vigra.impex.readImage(fileList[options.channels[2]][index]).swapaxes(0,1)
+                                img_data = DataImpex.vigraReadImageWrapper(fileList[options.channels[2]][index])
                                 image[:,:,z-options.offsets[2],options.channels[2]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
                             else:
                                 #only 2 channels are selected. Fill the 3d channel with zeros
@@ -161,7 +175,7 @@ class DataImpex(object):
             image = image.view(numpy.ndarray)
             result = numpy.average(image, axis = 3)
             options.rgb = 1
-            image = result.astype('uint8')
+            image = result.astype(numpy.uint8)
             image.reshape(image.shape + (1,))
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
@@ -202,7 +216,7 @@ class DataImpex(object):
                 return (shape[1], shape[2], shape[3], shape[4])
         else :
             try:
-                tempimage = vigra.impex.readImage(filename).swapaxes(0,1)
+                tempimage = DataImpex.vigraReadImageWrapper(filename)
             except Exception, e:
                 print e
                 raise

@@ -202,7 +202,7 @@ class FeatureThread(ThreadBase):
             try:
                 overlap = feature.minContext
                 bounds = featureBlockAccessor.getBlockBounds(blockNum, overlap)
-                dataInput = image[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype('float32')
+                dataInput = image[t_ind,bounds[0]:bounds[1],bounds[2]:bounds[3],bounds[4]:bounds[5], :].astype(numpy.float32)
                 
                 result = feature.compute(dataInput[..., self.dataMgr.selectedChannels])
                 bounds1 = featureBlockAccessor.getBlockBounds(blockNum,0)

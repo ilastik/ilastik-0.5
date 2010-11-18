@@ -14,6 +14,7 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 import numpy
+import ilastik.gui
 
 import loadOptions
 
@@ -202,20 +203,23 @@ class FileLoader(QtGui.QDialog):
             self.path.setText(QtCore.QString(path_to_display))
         
     def slotRedPath(self):
-        path = self.redPath.text()
+        path = ilastik.gui.LAST_DIRECTORY
         filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
         self.redPath.setText(filename)
         #self.redPathChanged(filename)
         
     def slotGreenPath(self):
-        path = self.greenPath.text()
+        path = ilastik.gui.LAST_DIRECTORY
         filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
         self.greenPath.setText(filename)
         #self.greenPathChanged(filename)
     
     def slotBluePath(self):
-        path = self.bluePath.text()
+        path = ilastik.gui.LAST_DIRECTORY
         filename = QtGui.QFileDialog.getOpenFileName(self, "",path)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
         self.bluePath.setText(filename)
         #self.bluePathChanged(filename)
     
