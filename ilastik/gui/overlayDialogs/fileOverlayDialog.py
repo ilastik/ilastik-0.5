@@ -8,10 +8,10 @@ import traceback
 
 class FileOverlayDialog(overlayDialogBase.OverlayDialogBase):
     configuresClass = "ilastik.core.overlays.fileOverlayDialog.FileOverlayDialog"
-    name = "File(s) Overlay"
+    name = "Add File(s) Overlay"
     author = "C. N. S."
     homepage = "hci"
-    description = "add new overlays from files"    
+    description = "add a new overlays from files"    
 
             
     
