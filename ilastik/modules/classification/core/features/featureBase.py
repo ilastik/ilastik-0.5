@@ -117,9 +117,9 @@ class FeatureBase(object):
         h5grp.create_dataset('name',data=self.name)
         h5grp.create_dataset('class',data=self.__class__.__name__)
         h5grp.create_dataset('sigma',data=self.sigma)
-        #h5grp.create_dataset('number of 2d channels',data=self.__class__.numOutputChannels2d)
-        #h5grp.create_dataset('number of 3d channels',data=self.__class__.numOutputChannels3d)
-        #h5grp.create_dataset('groups',','.join(self.groups))
+        h5grp.create_dataset('number of 2d channels',data=self.__class__.numOutputChannels2d)
+        h5grp.create_dataset('number of 3d channels',data=self.__class__.numOutputChannels3d)
+        h5grp.create_dataset('groups',data=','.join(self.groups))
 
     @classmethod
     def deserialize(cls, h5grp):
