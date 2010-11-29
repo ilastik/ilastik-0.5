@@ -82,7 +82,7 @@ def printUsage():
     print "Usage: getImportantVariables.py classFile nDims [nSel [plotName]]"
     print "classFile: Name of the file with the exported RF classifiers with variable importance info"
     print "nDims: Number of dimensions of the image data, must be either 2 or 3"
-    print "nSel: Number of input arguments to be selected"
+    print "nSel: Number of features to be selected"
     print "plotName: File name of output plot to be created"
 
 if __name__ == '__main__':
