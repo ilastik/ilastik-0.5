@@ -28,6 +28,7 @@
 #    or implied, of their employers.
 
 import glob
+import os
 
 import loadOptions
 
@@ -129,19 +130,22 @@ class StackLoader(QtGui.QDialog):
         else:
             #not all channels have to be filled
             if (len(str(self.redChannelId.text()))>0):
-                pathred = str(self.path.text())+"*"+str(self.redChannelId.text())+"*"
+                temp = os.path.splitext(str(self.path.text()))[0]
+                pathred = temp+"*"+str(self.redChannelId.text())+"*"
                 self.fileList.append(sorted(glob.glob(pathred), key=str.lower))
                 self.options.channels.append(0)
             else:
                 self.fileList.append([])    
             if (len(str(self.greenChannelId.text()))>0):
-                pathgreen = str(self.path.text())+"*"+str(self.greenChannelId.text())+"*"
+                temp = os.path.splitext(str(self.path.text()))[0]
+                pathgreen = temp+"*"+str(self.greenChannelId.text())+"*"
                 self.fileList.append(sorted(glob.glob(pathgreen), key=str.lower))
                 self.options.channels.append(1)
             else:
                 self.fileList.append([])
             if (len(str(self.blueChannelId.text()))>0):
-                pathblue = str(self.path.text())+"*"+str(self.blueChannelId.text())+"*"
+                temp = os.path.splitext(str(self.path.text()))[0]
+                pathblue = temp+"*"+str(self.blueChannelId.text())+"*"
                 self.fileList.append(sorted(glob.glob(pathblue), key=str.lower))
                 self.options.channels.append(2)
             else:
