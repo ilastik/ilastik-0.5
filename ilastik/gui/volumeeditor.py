@@ -1236,7 +1236,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     since QImage supports only 8Bit Indexed images
                                     """
                                     olditemdata = itemdata              
-                                    itemdata = numpy.ndarray(olditemdata.shape, 'uint8')
+                                    itemdata = numpy.ndarray(olditemdata.shape, 'float32')
                                     if olditemdata.dtype == 'uint32':
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
                                     elif olditemdata.dtype == 'uint64':
