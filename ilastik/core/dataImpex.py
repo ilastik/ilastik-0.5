@@ -91,7 +91,12 @@ class DataImpex(object):
         # uint16
         if data.max() > 255 and data.max() < 4096:
             data = ((data)/4095.0*255.0).astype(numpy.uint8)
-            
+        
+        #remove alpha channel
+        if len(data.shape) == 3:
+            if data.shape[2] == 4:
+                data = data[:,:,0:-1]
+        
         return data
         
         
