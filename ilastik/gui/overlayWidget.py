@@ -319,11 +319,11 @@ class OverlayWidget(QtGui.QGroupBox):
         
 
         tl2 = QtGui.QHBoxLayout()
-        #self.buttonCreate = QtGui.QPushButton()
-        #self.buttonCreate.setToolTip("Create a completely new overlay from data")
-        #self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
-        #self.connect(self.buttonCreate,  QtCore.SIGNAL('clicked()'),  self.buttonCreateClicked)
-        #tl2.addWidget(self.buttonCreate)
+        self.buttonCreate = QtGui.QPushButton()
+        self.buttonCreate.setToolTip("Create a completely new overlay from data")
+        self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
+        self.connect(self.buttonCreate,  QtCore.SIGNAL('clicked()'),  self.buttonCreateClicked)
+        tl2.addWidget(self.buttonCreate)
         tl2.addStretch()
         self.buttonDown = QtGui.QPushButton()
         self.buttonDown.setToolTip("Move the selected overlay down in the view")

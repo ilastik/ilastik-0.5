@@ -16,7 +16,7 @@ with warnings.catch_warnings():
 import numpy
 import ilastik.gui
 
-import loadOptions
+from ilastik.gui import loadOptions
 
 from PyQt4 import QtCore, QtGui, uic
 

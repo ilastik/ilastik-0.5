@@ -1,10 +1,11 @@
 from PyQt4 import QtCore, QtGui, uic
 from ilastik.core import  dataMgr, projectMgr, dataImpex
 import ilastik.gui
-import stackloader, fileloader
+import fileloader
 import os, sys
 import traceback
 import gc
+from ilastik.gui import stackloader
 from ilastik.gui.iconMgr import ilastikIcons
 
 class ProjectDlg(QtGui.QDialog):
