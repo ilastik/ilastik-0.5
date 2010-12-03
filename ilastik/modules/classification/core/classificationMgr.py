@@ -242,7 +242,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
                 print "Write random forest #%03d" % i
         
     @staticmethod    
-    def importClassifiers(self, fileName):
+    def importClassifiers(fileName):
         hf = h5py.File(fileName,'r')
         temp = hf['classifiers'].keys()
         hf.close()
