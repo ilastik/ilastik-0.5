@@ -243,8 +243,12 @@ class ClassificationModuleMgr(BaseModuleMgr):
             
     def importClassifiers(self, fileName):
         hf = h5py.File(fileName,'r')
+        temp = hf['classifiers'].keys()
+        hf.close()
+        del hf
+        
         classifiers = []
-        for cid in hf['classifiers']:
+        for cid in temp:
             classifiers.append(classifiers.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
         self.classificationMgr.classifiers = classifiers
         
