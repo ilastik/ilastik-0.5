@@ -53,7 +53,7 @@ from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescrip
 from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
-import classifiers.classifierRandomForest
+import classifiers.classifierRandomForest as defaultRF
 from ilastik.core.dataMgr import BlockAccessor
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
@@ -250,7 +250,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
         
         classifiers = []
         for cid in temp:
-            classifiers.append(classifiers.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
+            classifiers.append(defaultRF.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
         return classifiers
         
         
