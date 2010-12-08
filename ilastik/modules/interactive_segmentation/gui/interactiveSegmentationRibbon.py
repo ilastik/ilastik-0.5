@@ -97,12 +97,20 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
         self.connect(self.btnChooseDimensions, QtCore.SIGNAL('clicked()'), self.on_btnDimensions)
         self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
+
+        self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, self.on_btnSegment_clicked, self.on_btnSegment_clicked)
+        #shortcutManager.register(self.shortcutNextLabel, "Labeling", "Go to next label (cyclic, forward)")
         
     
     def on_btnDimensions(self):
         self.only2D = not self.only2D
         if self.only2D:
+            ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]
+            if ov is not None:
+                zerod = numpy.zeros(ov._data.shape, numpy.uint8)
+                ov._data = DataAccessor(zerod)
             self.btnChooseDimensions.setText('Using 2D')
+                        
         else:
             self.btnChooseDimensions.setText('Using 3D')
         self.setupWeights()
@@ -174,6 +182,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def clearSeeds(self):
         self._seedL = None
         self._seedIndices = None
+
+
+    def mouseReleaseEvent(self, event):
+        """
+        mouse button release event
+        """
+        button = event.button()
+        # select an item on which we clicked
 
         
     def on_btnSegment_clicked(self):

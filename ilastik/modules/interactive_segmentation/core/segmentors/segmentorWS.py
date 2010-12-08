@@ -54,6 +54,10 @@ if ok:
 
         twsAlgorithm = Enum("tws", "twsParallel")
 
+        bias = Float(0.95)
+        biasedLabel = Int(1)
+        
+        view = View( Item('bias'),  Item('biasedLabel'), buttons = ['OK', 'Cancel'],  )        
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
             seeds = numpy.zeros(labelVolume.shape[0:-1], 'uint32')
@@ -61,7 +65,7 @@ if ok:
            
             #pws = vigra.analysis.watersheds(real_weights, neighborhood=6, seeds = seeds.swapaxes(0,2).view(vigra.ScalarVolume))
             if self.twsAlgorithm == "tws":
-                pws = vigra.tws.tws(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = vigra.tws.tws(self.weights, seeds, self.biasedLabel, self.bias)#.swapaxes(0,2).view(vigra.ScalarVolume))
             else:
                 pws = vigra.tws.twsParallel(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
             
