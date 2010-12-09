@@ -42,11 +42,6 @@ from ilastik.core.overlayMgr import OverlayItem
 from vigra import arraytypes as at
 from PyQt4 import QtGui
 
-
-
-from ilastik.core import backgroundMgr
- 
-from ilastik.core import connectedComponents
 #from ilastik.core.unsupervised import unsupervisedPCA
 
 class Project(object):
@@ -73,10 +68,6 @@ class Project(object):
         self.trainingLabels = None
         self.trainingFeatureNames = None
 
-        
-        self.backgroundMgr = backgroundMgr.BackgroundMgr(self.dataMgr)
-
-        self.connector = connectedComponents.ConnectedComponents()
         #self.unsupervisedDecomposer = None # unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()
         
  

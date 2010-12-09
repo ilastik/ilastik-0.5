@@ -327,28 +327,19 @@ class VolumeLabels():
             return None
         
 class Volume():
-    def __init__(self,  data,  uncertainty = None,  background = None, objects = None, unsupervised = None):
+    def __init__(self,  data,  uncertainty = None, objects = None, unsupervised = None):
         self._data = data
         self.shape = data.shape
         self.dtype = data.dtype
-        
-        #self.labels = labels
 
-        #self.labelOverlays = []
-
-        self.backgroundOverlays = []
         self.unsupervisedOverlays = []
         
-        self.background = background
         self.unsupervised = unsupervised
         
 #        if self.labels is None:
 #            l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
 #            self.labels = VolumeLabels(l)
             
-        if self.background is None:
-            l = numpy.zeros(self._data.shape[0:-1], 'uint8')
-            self.background = VolumeLabels(l)
     
         if self.unsupervised is None:
             self.unsupervised = numpy.zeros(self._data.shape[0:-1],  'uint8')
