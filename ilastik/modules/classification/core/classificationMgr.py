@@ -53,7 +53,7 @@ from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescrip
 from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
-import classifiers.classifierRandomForest
+import classifiers.classifierRandomForest as defaultRF
 from ilastik.core.dataMgr import BlockAccessor
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
@@ -240,13 +240,18 @@ class ClassificationModuleMgr(BaseModuleMgr):
                 print pathToGroup + "/classifiers/rf_%03d" % i
                 c.serialize(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
                 print "Write random forest #%03d" % i
-            
-    def importClassifiers(self, fileName):
+        
+    @staticmethod    
+    def importClassifiers(fileName):
         hf = h5py.File(fileName,'r')
+        temp = hf['classifiers'].keys()
+        hf.close()
+        del hf
+        
         classifiers = []
-        for cid in hf['classifiers']:
-            classifiers.append(classifiers.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
-        self.classificationMgr.classifiers = classifiers
+        for cid in temp:
+            classifiers.append(defaultRF.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
+        return classifiers
         
         
     def serialize(self, h5G):

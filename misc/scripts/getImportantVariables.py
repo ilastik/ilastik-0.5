@@ -16,7 +16,7 @@ def getImportantVariables(classFile, nDims, nSel, plotName):
     for a in allGroupAbbrv:
         for k in kernelAbbrv:
             abbrv.append(a+k)
-    fid = h5py.File(classFile)
+    fid = h5py.File(classFile,'r')
     gid = fid['features']
     nFeats = len(gid)
     nChannels = zeros((nFeats, ))
