@@ -103,7 +103,7 @@ class JobMachine(object):
         self.sem.release()
         
     
-    def process(self, jobs):
+    def process2(self, jobs):
         self.numWorkers = GLOBAL_WM.threads
         self.sem = threading.Semaphore(self.numWorkers)
         for j in jobs:
@@ -121,7 +121,7 @@ class JobMachine(object):
         return results
         
     
-    def process2(self, jobs):
+    def process(self, jobs):
         """this function is blocking"""
         
         self.numWorkers = GLOBAL_WM.threads
