@@ -138,6 +138,7 @@ class BlockAccessor():
             self._fileBacked = True
         
     def getBlockBounds(self, blockNum, overlap):
+        self._lock.acquire()
         z = int(numpy.floor(blockNum / (self._cX*self._cY)))
         rest = blockNum % (self._cX*self._cY)
         y = int(numpy.floor(rest / self._cX))
@@ -157,24 +158,20 @@ class BlockAccessor():
         endz = min(self._data.shape[3], (z+1)*self._blockSize + overlap)
         if z+1 >= self._cZ:
             endz = self._data.shape[3]
-        return [startx,endx,starty,endy,startz,endz]
+        res = (startx,endx,starty,endy,startz,endz,)
+        self._lock.release()
+        return res
 
     def __getitem__(self, args):
-        if self._fileBacked is False:
-            return self._data[args]
-        else:
-            self._lock.acquire()
-            temp =  self._data[args]
-            self._lock.release()
-            return temp
+        self._lock.acquire()
+        res =  self._data[args]
+        self._lock.release()
+        return res
 
     def __setitem__(self, args, data):
-        if self._fileBacked is False:
-            self._data[args] = data
-        else:
-            self._lock.acquire()
-            self._data[args] = data
-            self._lock.release()
+        self._lock.acquire()
+        self._data[args] = data
+        self._lock.release()
             
 class BlockAccessor2D():
     def __init__(self, data, blockSize = 128):
@@ -209,6 +206,8 @@ class BlockAccessor2D():
 
 
     def getBlockBounds(self, blockNum, overlap):
+        self._lock.acquire()
+        
         z = int(numpy.floor(blockNum / (self._cX*self._cY)))
         rest = blockNum % (self._cX*self._cY)
         y = int(numpy.floor(rest / self._cX))
@@ -224,26 +223,22 @@ class BlockAccessor2D():
         if y+1 >= self._cY:
             endy = self._data.shape[1]
 
+        res = (startx,endx,starty,endy,)
+        self._lock.release()
 
-        return [startx,endx,starty,endy]
+        return res
 
 
     def __getitem__(self, args):
-        if self._fileBacked is False:
-            return self._data[args]
-        else:
-            self._lock.acquire()
-            temp =  self._data[args]
-            self._lock.release()
-            return temp
+        self._lock.acquire()
+        temp =  self._data[args]
+        self._lock.release()
+        return temp
             
     def __setitem__(self, args, data):
-        if self._fileBacked is False:
-            self._data[args] = data
-        else:
-            self._lock.acquire()
-            self._data[args] = data
-            self._lock.release()
+        self._lock.acquire()
+        self._data[args] = data
+        self._lock.release()
 
     
 class DataItemImage(DataItemBase):

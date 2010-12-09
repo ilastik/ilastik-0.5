@@ -1,14 +1,15 @@
 import os, sys
 import threading
+import thread
 import traceback
 
-try:
-    from PyQt4 import QtCore
-    ThreadBase = QtCore.QThread
-    have_qt = True
-except:
-    ThreadBase = threading.Thread
-    have_qt = False
+#try:
+    #from PyQt4 import QtCore
+    #ThreadBase = QtCore.QThread
+    #have_qt = True
+#except:
+ThreadBase = threading.Thread
+have_qt = False
 
 
 from collections import deque
@@ -96,7 +97,31 @@ class JobMachine(object):
     def __init__(self):
         self.results = deque()
     
+    def procFunc(self, job):
+        result = job.target(*job.args)
+        self.results.append(result)
+        self.sem.release()
+        
+    
     def process(self, jobs):
+        self.numWorkers = GLOBAL_WM.threads
+        self.sem = threading.Semaphore(self.numWorkers)
+        for j in jobs:
+            self.sem.acquire()
+            thread.start_new_thread(self.procFunc, (j,))
+        #make sure all workers finished:    
+        for i in range(self.numWorkers):
+            self.sem.acquire()
+
+        #release the semaphore finally:    
+        for i in range(self.numWorkers):
+            self.sem.release()                   
+        results = self.results
+        self.results = deque()    
+        return results
+        
+    
+    def process2(self, jobs):
         """this function is blocking"""
         
         self.numWorkers = GLOBAL_WM.threads
