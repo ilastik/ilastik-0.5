@@ -293,7 +293,7 @@ class DummyOverlayListWidget(QtGui.QWidget):
 class VolumeEditor(QtGui.QWidget):
     """Array Editor Dialog"""
     def __init__(self, image, parent,  name="", font=None,
-                 readonly=False, size=(400, 300), opengl = True, openglOverview = True):
+                 readonly=False, size=(400, 300), sharedOpenglWidget = None):
         QtGui.QWidget.__init__(self, parent)
         self.ilastik = parent
         self.name = name
@@ -313,17 +313,11 @@ class VolumeEditor(QtGui.QWidget):
         #this settings controls the timer interval during interactive mode
         #set to 0 to wait for complete brushstrokes !
         self.drawUpdateInterval = 300
-
-        self.opengl = opengl
-        self.openglOverview = openglOverview
-        if self.opengl is True:
-            #print "Using OpenGL Slice rendering"
-            pass
-        else:
-            #print "Using Software Slice rendering"
-            pass
-        if self.openglOverview is True:
-            #print "Enabling OpenGL Overview rendering"
+        
+        self.sharedOpenGLWidget = sharedOpenglWidget
+        
+        if self.sharedOpenGLWidget is not None:
+            #print "Enabling OpenGL rendering"
             pass
         
         self.embedded = True
@@ -360,8 +354,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.imageScenes = []
 
-        if self.openglOverview is True:
-            self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
+        if self.sharedOpenGLWidget is True:
             self.overview = OverviewScene(self, self.image.shape[1:4])
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
@@ -1174,12 +1167,12 @@ class ImageSceneRenderThread(QtCore.QThread):
         self.freeQueue = threading.Event()
         self.freeQueue.clear()
         self.stopped = False
-        if self.imageScene.openglWidget is not None:
-            self.contextPixmap = QtGui.QPixmap(2,2)
-            self.context = QtOpenGL.QGLContext(self.imageScene.openglWidget.context().format(), self.contextPixmap)
-            self.context.create(self.imageScene.openglWidget.context())
-        else:
-            self.context = None
+        #if self.imageScene.openglWidget is not None:
+        #    self.contextPixmap = QtGui.QPixmap(2,2)
+        #    self.context = QtOpenGL.QGLContext(self.imageScene.openglWidget.context().format(), self.contextPixmap)
+        #    self.context.create(self.imageScene.openglWidget.context())
+        #else:
+        #    self.context = None
         
             
     def run(self):
@@ -1487,7 +1480,7 @@ class ImageScene(QtGui.QGraphicsView):
         
         self.openglWidget = None
         ##enable OpenGL acceleratino
-        if self.volumeEditor.opengl is True:
+        if self.volumeEditor.sharedOpenGLWidget is not None:
             self.openglWidget = QtOpenGL.QGLWidget(shareWidget = self.volumeEditor.sharedOpenGLWidget)
             self.setViewport(self.openglWidget)
             self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
@@ -1681,7 +1674,7 @@ class ImageScene(QtGui.QGraphicsView):
         #to get a fast update on slice change
         if image is not None:
             #TODO: This doing something twice (see below)
-            if fastPreview is True and self.volumeEditor.opengl is True and len(image.shape) == 2:
+            if fastPreview is True and self.volumeEditor.sharedOpenGLWidget is not None and len(image.shape) == 2:
                 self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
                 t = self.scene.tex
                 ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
@@ -2181,11 +2174,11 @@ class OverviewScene(QtOpenGL.QGLWidget):
         self.tex.append(-1)
         self.tex.append(-1)
         self.tex.append(-1)
-        if self.volumeEditor.openglOverview is False:
+        if self.volumeEditor.sharedOpenGLWidget is None:
             self.setVisible(False)
 
     def display(self, axis):
-        if self.volumeEditor.openglOverview is True:  
+        if self.volumeEditor.sharedOpenGLWidget is not None:  
             if self.initialized is True:
                 #self.initializeGL()
                 self.makeCurrent()
@@ -2193,7 +2186,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
                 self.swapBuffers()
             
     def redisplay(self):
-        if self.volumeEditor.openglOverview is True:
+        if self.volumeEditor.sharedOpenGLWidget is not None:
             if self.initialized is True:
                 for i in range(3):
                     self.makeCurrent()
@@ -2201,7 +2194,7 @@ class OverviewScene(QtOpenGL.QGLWidget):
                 self.swapBuffers()        
 
     def paintGL(self, axis = None):
-        if self.volumeEditor.openglOverview is True:
+        if self.volumeEditor.sharedOpenGLWidget is not None:
             '''
             Drawing routine
             '''

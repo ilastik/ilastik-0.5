@@ -160,7 +160,7 @@ class MainWindow(QtGui.QMainWindow):
             gl_version =  glGetString(GL_VERSION)
             if gl_version is None:
                 gl_version = '0'
-            del w
+            
 
 
             help_text = "<b>OpenGL + OpenGL Overview</b> allows for fastest rendering if OpenGL is correctly installed.<br> If visualization is slow or incomplete, try the <b>Software + OpenGL</b> mode."
@@ -177,9 +177,11 @@ class MainWindow(QtGui.QMainWindow):
             if dl[0] == "OpenGL + OpenGL Overview":
                 self.opengl = True
                 self.openglOverview = True
+                self.sharedOpenGLWidget = w
             elif dl[0] == "Software only":
                 self.opengl = False
                 self.openglOverview = False
+                self.sharedOpenGLWidget = None
 
         self.project = None
         if project != None:
@@ -335,7 +337,7 @@ class MainWindow(QtGui.QMainWindow):
         self.volumeEditorDock = None
                 
     def createImageWindows(self, dataVol):
-        self.labelWidget = ve.VolumeEditor(dataVol, self,  opengl = self.opengl, openglOverview = self.openglOverview)
+        self.labelWidget = ve.VolumeEditor(dataVol, self,  sharedOpenglWidget = self.sharedOpenGLWidget)
         
         if self.project.dataMgr._currentModuleName is None:
             self.project.dataMgr._currentModuleName = "Project"
