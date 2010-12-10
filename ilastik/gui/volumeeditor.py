@@ -354,7 +354,7 @@ class VolumeEditor(QtGui.QWidget):
 
         self.imageScenes = []
 
-        if self.sharedOpenGLWidget is True:
+        if self.sharedOpenGLWidget is not None:
             self.overview = OverviewScene(self, self.image.shape[1:4])
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
@@ -1261,7 +1261,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
                                         image0 = image1
                                     else:
-                                        tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'uint8')
+                                        tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'float32')
                                         tempdat[:,:,0] = origitemColor.redF()*itemdata[:]
                                         tempdat[:,:,1] = origitemColor.greenF()*itemdata[:]
                                         tempdat[:,:,2] = origitemColor.blueF()*itemdata[:]

@@ -236,15 +236,17 @@ class DataImpex(object):
             filename = filename + "." + format
             f = h5py.File(filename, 'a')
             path = overlayItemReference.key
-            pathparts = path.split("/")
-            pathparts.pop()
-            prevgr = f.create_group(pathparts.pop(0))
-            for item in pathparts:
-                prevgr = prevgr.create_group(item)
-            try:
-                dataset = prevgr.create_dataset(overlayItemReference.name, data=overlayItemReference.overlayItem._data[0,:,:,:,:])
-            except Exception, e:
-                print e
+            #pathparts = path.split("/")
+            #pathparts.pop()
+            #prevgr = f.create_group(pathparts.pop(0))
+            #for item in pathparts:
+            prevgr = f.create_group("volume")
+            #try:
+            dataset = prevgr.create_dataset("data", data=overlayItemReference.overlayItem._data[:,:,:,:,:])
+            dataset.attrs["overlayKey"] = str(overlayItemReference.key)
+            #overlayItemReference.name, data=overlayItemReference.overlayItem._data[0,:,:,:,:])
+            #except Exception, e:
+            #    print e
             f.close()
             return
         
