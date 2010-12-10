@@ -38,6 +38,7 @@ except:
 
 import sys
 import os
+import gc
 
 from PyQt4 import QtCore, QtOpenGL, QtGui
 
@@ -337,6 +338,7 @@ class MainWindow(QtGui.QMainWindow):
         self.volumeEditorDock = None
                 
     def createImageWindows(self, dataVol):
+        gc.collect()
         self.labelWidget = ve.VolumeEditor(dataVol, self,  sharedOpenglWidget = self.sharedOpenGLWidget)
         
         if self.project.dataMgr._currentModuleName is None:
