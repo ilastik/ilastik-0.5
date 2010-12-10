@@ -242,7 +242,7 @@ class DataImpex(object):
             #for item in pathparts:
             prevgr = f.create_group("volume")
             #try:
-            dataset = prevgr.create_dataset("data", data=overlayItemReference.overlayItem._data[:,:,:,:,:])
+            dataset = prevgr.create_dataset("data", compression = "gzip", data=overlayItemReference.overlayItem._data[:,:,:,:,:])
             dataset.attrs["overlayKey"] = str(overlayItemReference.key)
             #overlayItemReference.name, data=overlayItemReference.overlayItem._data[0,:,:,:,:])
             #except Exception, e:
