@@ -297,34 +297,6 @@ class DataItemImage(DataItemBase):
         else:
             raise AttributeError, name
         
-    
-    def updateBackground(self, newLabels, key):
-        """
-        This function returns the classes which correspond to background
-        """
-        setAdd = set()
-        setRemove = set()
-        for nl in newLabels:
-            try:
-                indic =  list(numpy.nonzero(nl._data))
-                indic[0] = indic[0] + nl.offsets[0]
-                indic[1] += nl.offsets[1]
-                indic[2] += nl.offsets[2]
-                indic[3] += nl.offsets[3]
-                indic[4] += nl.offsets[4]
-                for i in range(0, len(indic[0])):
-                    backclass = self.overlayMgr[key]._data[(indic[0][i],indic[1][i],indic[2][i],indic[3][i],indic[4][i])]
-                    if nl.erasing == False:
-                        setAdd.add(backclass)
-                    else:
-                        setRemove.add(backclass)
-            except Exception, e:
-                print e
-                traceback.print_exc(file=sys.stdout)
-        
-        return setAdd, setRemove
-
-
     def unLoadData(self):
         # TODO: delete permanently here for better garbage collection
         self._dataVol = None

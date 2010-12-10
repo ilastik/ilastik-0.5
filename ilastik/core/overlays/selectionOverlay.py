@@ -30,7 +30,7 @@ class SelectionAccessor(object):
         
 
 class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
-    def __init__(self, inputData, color):
+    def __init__(self, dataItem, inputData, color):
         overlayBase.OverlayBase.__init__(self)
         
         self.color = color
@@ -44,7 +44,7 @@ class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         self.generateColorTab()
         
-        overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, color = self.color, colorTable = self.colorTable, autoAdd = True, autoVisible = True,  linkColorTable = True)        
+        overlayMgr.OverlayItem.__init__(self, dataItem, accessor, alpha = 1.0, color = self.color, colorTable = self.colorTable, autoAdd = True, autoVisible = True,  linkColorTable = True)        
 
     def generateColorTab(self):
         colorTab = []

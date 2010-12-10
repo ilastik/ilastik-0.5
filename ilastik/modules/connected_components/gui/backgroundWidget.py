@@ -30,6 +30,8 @@
 from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
+from ilastik.core.overlayMgr import OverlayItem
+
 class BackgroundItem(QtGui.QListWidgetItem):
     def __init__(self, name, number, color):
         QtGui.QListWidgetItem.__init__(self, name)
@@ -53,20 +55,13 @@ class BackgroundItem(QtGui.QListWidgetItem):
 
 
 class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
-    def __init__(self,  backgroundMgr,  volumeLabels,  volumeEditor,  overlayItem):
+    def __init__(self,  backgroundMgr,  volumeLabels,  volumeEditor):
         QtGui.QGroupBox.__init__(self,  "Background")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
         self.listWidget = QtGui.QListWidget(self)
         self.items = []
-        self.overlayItem = overlayItem
         
-        #Label selector
-        #self.addLabelButton = QtGui.QPushButton("")
-        
-        #self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
-
-        #self.layout().addWidget(self.addLabelButton)
         self.layout().addWidget(self.listWidget)
         
         self.volumeEditor = volumeEditor
@@ -84,7 +79,7 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
             self.initFromVolumeLabels(volumeLabels)
         else:
             self.addLabel("Background", 1, self.labelColorTable[0])
-            
+        self.overlayItem = OverlayItem(self.volumeEditor.ilastik._activeImage, self.labelMgr.background._data)    
     def currentItem(self):
         return self.listWidget.currentItem()
     
@@ -105,16 +100,6 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def changeText(self, text):
         self.volumeLabel.descriptions[self.currentRow()].name = text
         
-#    def createLabel(self):
-#        name = "Seed " + len(self.items).__str__()
-#        number = len(self.items)
-#        if number > len(self.labelColorTable):
-#            color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
-#        else:
-#            color = self.labelColorTable[number]
-#        number +=1
-#        self.addLabel(name, number, color)
-#        self.buildColorTab()
         
     def addLabel(self, labelName, labelNumber, color):
         self.labelMgr.addLabel(labelName,  labelNumber,  color.rgba())
@@ -129,13 +114,16 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
         
         
     def buildColorTab(self):
-        self.overlayItem.colorTable = self.colorTab = self.volumeLabels.getColorTab()
+        self.colorTab = self.volumeLabels.getColorTab()
+        
+    def getColorTab(self):
+        return self.colorTab 
 
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)
 
         if not index.isValid():
-           return
+            return
 
         item = self.listWidget.itemAt(pos)
         name = item.text()
@@ -162,22 +150,4 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
                 self.labelPropertiesChanged_callback()
             self.buildColorTab()
             self.volumeEditor.repaint()
-
-#    def nextLabel(self):
-#        print "next seed"
-#        i = self.listWidget.selectedIndexes()[0].row()
-#        if i+1 == self.listWidget.model().rowCount():
-#            i = self.listWidget.model().index(0,0)
-#        else:
-#            i = self.listWidget.model().index(i+1,0)
-#        self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
-#
-#    def prevLabel(self):
-#        print "prev seed"
-#        i = self.listWidget.selectedIndexes()[0].row()
-#        if i >  0:
-#            i = self.listWidget.model().index(i-1,0)
-#        else:
-#            i = self.listWidget.model().index(self.listWidget.model().rowCount()-1,0)
-#        self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
 
