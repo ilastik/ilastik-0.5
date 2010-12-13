@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy, vigra, os
 import traceback, h5py
-
+import time
 
 from ilastik.core import dataImpex
 
@@ -105,6 +105,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
         self.btnFinishSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Finish Object')
         self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Segmentors Options')
+        self.editBias = QtGui.QLineEdit()
         
         self.only2D = False
         
@@ -117,6 +118,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.btnChooseWeights)
         tl.addWidget(self.btnChooseDimensions)
         tl.addWidget(self.btnSegment)
+        tl.addWidget(self.editBias)
         tl.addWidget(self.btnFinishSegment)
         tl.addStretch()
         tl.addWidget(self.btnSegmentorsOptions)
@@ -132,10 +134,18 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnFinishSegment, QtCore.SIGNAL('clicked()'), self.on_btnFinishSegment_clicked)
         self.connect(self.btnChooseDimensions, QtCore.SIGNAL('clicked()'), self.on_btnDimensions)
         self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
-
+        self.connect(self.editBias, QtCore.SIGNAL("textChanged(QString)"), self.biasChanged)
         self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, self.on_btnSegment_clicked, self.on_btnSegment_clicked)
         #shortcutManager.register(self.shortcutNextLabel, "Labeling", "Go to next label (cyclic, forward)")
         
+    def biasChanged(self, biasString):
+        try:
+            bias = float(str(biasString))
+            if hasattr(self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor, "bias"):
+                self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias = bias
+            
+        except:
+            pass
     
     def on_btnDimensions(self):
         self.only2D = not self.only2D
@@ -275,6 +285,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
 
         
     def on_btnSegment_clicked(self):
+        if hasattr(self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor, "bias"):
+            bias = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias            
+            s = "%f: segment(bias) %f" % (time.clock(),bias)
+            self.ilastik.labelWidget.interactionLog.append(s)
+            
         if self.only2D:
             self.segmentationSegment = Segmentation2D(self.ilastik)
         else:
@@ -287,7 +302,13 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         if answer != None:
             self.parent.project.dataMgr.Interactive_Segmentation.segmentor = answer
             self.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber].Interactive_Segmentation._segmentationWeights)
-            
+
+        if hasattr(self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor, "bias"):
+            bias = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias            
+            self.editBias.setText(str(bias))
+            self.editBias.setVisible(True)
+        else:
+            self.editBias.setVisible(False)            
             
             
             
