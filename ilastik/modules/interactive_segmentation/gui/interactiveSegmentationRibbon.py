@@ -281,6 +281,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             self.ilastik.labelWidget._history.serialize(f)
             f.close()
             
+            
+            self.ilastik._activeImage.Interactive_Segmentation.clearSeeds()
+            self.ilastik._activeImage.Interactive_Segmentation._buildSeedsWhenNotThere()
+            
             self.ilastik.labelWidget.repaint()
 
         

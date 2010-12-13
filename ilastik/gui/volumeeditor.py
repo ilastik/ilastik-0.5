@@ -162,9 +162,9 @@ class State():
 
 
 class LabelState(State):
-    def __init__(self, title, axis, num, offsets, shape, time, volumeEditor, erasing, labels, labelNumber):
+    def __init__(self, title, axis, num, offsets, shape, timeAxis, volumeEditor, erasing, labels, labelNumber):
         self.title = title
-        self.time = time
+        self.time = timeAxis
         self.num = num
         self.offsets = offsets
         self.axis = axis
