@@ -231,19 +231,21 @@ class DataImpex(object):
                 return (tempimage.shape[0], tempimage.shape[1], 1, 1)
         
     @staticmethod
-    def exportOverlay(filename, format, overlayItemReference, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
+    def exportOverlay(filename, format, overlayItem, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
         if format == "h5":
             filename = filename + "." + format
-            f = h5py.File(filename, 'a')
-            path = overlayItemReference.key
+            f = h5py.File(filename, 'w')
+            path = overlayItem.key
             #pathparts = path.split("/")
             #pathparts.pop()
             #prevgr = f.create_group(pathparts.pop(0))
             #for item in pathparts:
             prevgr = f.create_group("volume")
             #try:
-            dataset = prevgr.create_dataset("data", compression = "gzip", data=overlayItemReference.overlayItem._data[:,:,:,:,:])
-            dataset.attrs["overlayKey"] = str(overlayItemReference.key)
+            data = numpy.ndarray(overlayItem._data.shape, overlayItem._data.dtype)
+            data[0,:,:,:,:] = overlayItem._data[0,:,:,:,:]
+            dataset = prevgr.create_dataset("data", compression = "gzip", data=data)
+            dataset.attrs["overlayKey"] = str(overlayItem.key)
             #overlayItemReference.name, data=overlayItemReference.overlayItem._data[0,:,:,:,:])
             #except Exception, e:
             #    print e

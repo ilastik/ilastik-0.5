@@ -54,7 +54,7 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase):
                         
 
                 except Exception, e:
-                    traceback.print_exc(file=sys.stdout)
+                    traceback.print_exc()
                     print e
                     QtGui.QErrorMessage.qtHandler().showMessage(str(e))        
         return None        

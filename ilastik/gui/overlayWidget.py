@@ -228,7 +228,7 @@ class OverlayListWidget(QtGui.QListWidget):
             try:
                 tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
                 filename = str(QtCore.QDir.convertSeparators(tempname))
-                dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
+                dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference.overlayItem, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
             except:
                 pass
         else:

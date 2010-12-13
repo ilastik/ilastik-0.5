@@ -33,6 +33,7 @@ Dataset Editor Dialog based on PyQt4
 import qimage2ndarray.qimageview
 import math
 import ctypes 
+import time
 
 try:
     from OpenGL.GL import *
@@ -170,6 +171,7 @@ class LabelState(State):
         self.erasing = erasing
         self.labelNumber = labelNumber
         self.labels = labels
+        self.clock = time.clock()
         self.dataBefore = volumeEditor.labelWidget.overlayItem.getSubSlice(self.offsets, self.labels.shape, self.num, self.axis, self.time, 0).copy()
         
     def restore(self, volumeEditor):
@@ -230,6 +232,7 @@ class HistoryManager(QtCore.QObject):
             histItemGrp.create_dataset('offsets',data=hist.offsets)
             histItemGrp.create_dataset('time',data=hist.time)
             histItemGrp.create_dataset('erasing',data=hist.erasing)
+            histItemGrp.create_dataset('clock',data=hist.clock)
 
 
     def removeLabel(self, number):
@@ -251,6 +254,9 @@ class HistoryManager(QtCore.QObject):
             it = self._history[val]
             self._history.__delitem__(val)
             del it
+            
+    def clear(self):
+        self._history = []
 
 class VolumeUpdate():
     def __init__(self, data, offsets, sizes, erasing):
@@ -298,6 +304,8 @@ class VolumeEditor(QtGui.QWidget):
         self.ilastik = parent
         self.name = name
         title = name
+        
+        self.interactionLog = None
         
         self.labelsAlpha = 1.0
 
@@ -852,6 +860,8 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[axis].thread.freeQueue.set()
 
     def changeSlice(self, num, axis):
+        if self.interactionLog is not None:
+            self.interactionLog.append("%f: changeSlice(axis,number) %d,%d" % (time.clock(),axis,num))
         self.selSlices[axis] = num
         tempImage = None
         tempLabels = None
@@ -1037,7 +1047,7 @@ class DrawManager(QtCore.QObject):
         painter.setPen(self.penVis)
         painter.drawPoint(QtGui.Q)
 
-    def beginDraw(self, pos, shape):        
+    def beginDraw(self, pos, shape):
         self.shape = shape
         self.initBoundingBox()
         self.scene.clear()
@@ -1474,7 +1484,8 @@ class ImageScene(QtGui.QGraphicsView):
         self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_RGB888) #Format_ARGB32
         self.border = None
         self.allBorder = None
-
+        self.factor = 1.0
+        
         self.min = 0
         self.max = 255
         
@@ -1620,7 +1631,9 @@ class ImageScene(QtGui.QGraphicsView):
             self.drawManager.beginDraw(self.mousePos, self.imShape)
 
         self.volumeEditor.sliceSelectors[self.axis].stepBy(delta)
-
+        if self.volumeEditor.interactionLog is not None:
+            lm = "%f: changeSlice(axis, num) %d, %d" % (time.clock(), self.axis, self.volumeEditor.sliceSelectors[self.axis].value())
+            self.volumeEditor.interactionLog.append(lm)
 
     def sliceUp(self):
         self.changeSlice(1)
@@ -1807,6 +1820,9 @@ class ImageScene(QtGui.QGraphicsView):
         
     
     def beginDraw(self, pos):
+        if self.volumeEditor.interactionLog is not None:
+            lm = "%f: endDraw()" % (time.clock())
+            self.volumeEditor.interactionLog.append(lm)        
         self.mousePos = pos
         self.drawing  = True
         line = self.drawManager.beginDraw(pos, self.imShape)
@@ -1819,6 +1835,9 @@ class ImageScene(QtGui.QGraphicsView):
         self.volumeEditor.labelWidget.ensureLabelOverlayVisible()
         
     def endDraw(self, pos):
+        if self.volumeEditor.interactionLog is not None:
+            lm = "%f: endDraw()" % (time.clock())
+            self.volumeEditor.interactionLog.append(lm)        
         self.drawTimer.stop()
         result = self.drawManager.endDraw(pos)
         image = result[2]
@@ -1872,6 +1891,10 @@ class ImageScene(QtGui.QGraphicsView):
         self.doScale(1.1)
 
     def doScale(self, factor):
+        self.factor = self.factor * factor
+        if self.volumeEditor.interactionLog is not None:
+            lm = "%f: zoomFactor(factor) %f" % (time.clock(), self.factor)
+            self.volumeEditor.interactionLog.append(lm)        
         self.view.scale(factor, factor)
 
 
