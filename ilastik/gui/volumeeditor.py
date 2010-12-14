@@ -1714,7 +1714,6 @@ class ImageScene(QtGui.QGraphicsView):
         
     def saveSlice(self, filename):
         print "Saving in ", filename, "slice #", self.sliceNumber, "axis", self.axis
-        
         result_image = QtGui.QImage(self.scene.image.size(), self.scene.image.format())
         p = QtGui.QPainter(result_image)
         for patchNr in range(self.patchAccessor.patchCount):
@@ -1724,6 +1723,11 @@ class ImageScene(QtGui.QGraphicsView):
             else:
                 p.drawImage(bounds[0], bounds[2], self.imagePatches[patchNr])
         p.end()
+        #horrible way to transpose an image. but it works.
+        transform = QtGui.QTransform()
+        transform.rotate(90)
+        result_image = result_image.mirrored()
+        result_image = result_image.transformed(transform)
         result_image.save(QtCore.QString(filename))
 
     def display(self, image, overlays = []):
