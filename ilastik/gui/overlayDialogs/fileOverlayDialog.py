@@ -48,6 +48,8 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase):
                         if theDataItem.shape[0:-1] == activeItem.shape[0:-1]:
                             data = theDataItem[:,:,:,:,:]
                             ov = overlayMgr.OverlayItem(activeItem, data, color = long(65535 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 255)
+                            ov.min = numpy.min(data)
+                            ov.max = numpy.max(data)
                             activeItem.overlayMgr["File Overlays/" + theDataItem.fileName] = ov
                         else:
                             print "Cannot add " + theDataItem.fileName + " due to dimensionality mismatch"

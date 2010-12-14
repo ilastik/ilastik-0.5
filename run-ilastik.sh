@@ -3,4 +3,5 @@ SCRIPT=$(readlink -f $0)
 # Absolute path this script is in. /home/user/bin
 SCRIPTPATH=`dirname $SCRIPT`
 
-PYTHONPATH=. gdb --args /usr/bin/python $SCRIPTPATH/ilastik/ilastikMain.py
+#PYTHONPATH=. gdb --args /usr/bin/python $SCRIPTPATH/ilastik/ilastikMain.py
+PYTHONPATH=. /usr/bin/python $SCRIPTPATH/ilastik/ilastikMain.py
