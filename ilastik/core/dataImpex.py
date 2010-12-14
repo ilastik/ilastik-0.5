@@ -252,29 +252,29 @@ class DataImpex(object):
             f.close()
             return
         
-        if overlayItemReference._data.shape[1]>1:
+        if overlayItem._data.shape[1]>1:
             #3d _data
-            for t in range(overlayItemReference._data.shape[0]):
-                for z in range(overlayItemReference._data.shape[3]):
-                    for c in range(overlayItemReference._data.shape[-1]):
+            for t in range(overlayItem._data.shape[0]):
+                for z in range(overlayItem._data.shape[3]):
+                    for c in range(overlayItem._data.shape[-1]):
                         fn = filename
-                        data = overlayItemReference._data[t,:,:,z,c]
-                        if overlayItemReference._data.shape[0]>1:
+                        data = overlayItem._data[t,:,:,z,c]
+                        if overlayItem._data.shape[0]>1:
                             fn = fn + ("_time%03i" %(t+timeOffset))
                         fn = fn + ("_z%05i" %(z+sliceOffset))
-                        if overlayItemReference._data.shape[-1]>1:
+                        if overlayItem._datashape[-1]>1:
                             fn = fn + ("_channel%03i" %(c+channelOffset))
                         fn = fn + "." + format
                         vigra.impex.writeImage(data, fn)
                         print "Exported file ", fn
         else:
-            for t in range(overlayItemReference._data.shape[0]):
-                for c in range(overlayItemReference._data.shape[-1]):
+            for t in range(overlayItem._data.shape[0]):
+                for c in range(overlayItem._data.shape[-1]):
                     fn = filename
-                    data = overlayItemReference._data[t, 0, :, :, c]
-                    if overlayItemReference._data.shape[0]>1:
+                    data = overlayItem._data[t, 0, :, :, c]
+                    if overlayItem._data.shape[0]>1:
                         fn = fn + ("_time%03i" %(t+timeOffset))
-                    if overlayItemReference._data.shape[-1]>1:
+                    if overlayItem._data.shape[-1]>1:
                         fn = fn + ("_channel%03i" %(c+channelOffset))
                     fn = fn + "." + format
                     vigra.impex.writeImage(data.swapaxes(0,1), fn)
