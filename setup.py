@@ -38,15 +38,31 @@ rootdir = 'ilastik/gui/icons/'
 for root, subFolders, files in os.walk(rootdir):
     for file in files:
         iconFileList.append(os.path.join(root[12:],file))
+        
+logoFileList = []
+rootdir = 'ilastik/gui/logos/'
+for root, subFolders, files in os.walk(rootdir):
+    for file in files:
+        logoFileList.append(os.path.join(root[12:],file))
 
-uiFileList  = []
+uiFileListGUI  = []
 rootdir = 'ilastik/gui/'
 for root, subFolders, files in os.walk(rootdir):
     for file in files:
         if '.ui' in file:
-            uiFileList.append(os.path.join(root[12:],file))
-        
-iconFileList.extend(uiFileList)
+            uiFileListGUI.append(os.path.join(root[len(rootdir):],file))
+      
+uiFileListModules  = []      
+rootdir = 'ilastik/modules/'
+for root, subFolders, files in os.walk(rootdir):
+    for file in files:
+        if '.ui' in file:
+            uiFileListModules.append(os.path.join(root[len(rootdir):],file))
+            
+
+iconFileList.extend(logoFileList)   
+iconFileList.extend(uiFileListGUI)
+
 
 setup(name = 'ilastik',
       version = '0.5',
@@ -58,5 +74,5 @@ setup(name = 'ilastik',
       keywords = ['segmentation', 'numpy', 'ndarray', 'image', 'classification', 'PyQt4'],
       packages = find_packages(),
       py_modules = ['ilastik/ilastikMain'],
-      package_data = {'ilastik.gui' : iconFileList},
+      package_data = {'ilastik.gui' : iconFileList, 'ilastik.modules' : uiFileListModules},
       long_description = ''' ''')
