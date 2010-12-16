@@ -72,6 +72,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             try:
                 activeItem = self.ilastik._activeImage
                 file_name = path + "done.h5"
+                dataImpex.DataImpex.importOverlay(activeItem, file_name)
+                
+                """
                 theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
                 if theDataItem is None:
                     print "No _data item loaded"
@@ -82,6 +85,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                         activeItem.overlayMgr["Segmentation/Done"] = ov
                     else:
                         print "Cannot add " + theDataItem.fileName + " due to dimensionality mismatch"
+                """
             except:
                 traceback.print_exc()
 

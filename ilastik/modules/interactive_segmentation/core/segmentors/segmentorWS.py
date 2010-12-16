@@ -40,7 +40,7 @@ from enthought.traits.ui.api import *
 ok = False
 
 try:
-    import vigra.tws
+    import vigra.twsb
     ok = True
 except Exception, e:
     pass
@@ -65,9 +65,9 @@ if ok:
            
             #pws = vigra.analysis.watersheds(real_weights, neighborhood=6, seeds = seeds.swapaxes(0,2).view(vigra.ScalarVolume))
             if self.twsAlgorithm == "tws":
-                pws = vigra.tws.tws(self.weights, seeds, self.biasedLabel, self.bias)#.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = vigra.twsb.twsb(self.weights, seeds, self.biasedLabel, self.bias)#.swapaxes(0,2).view(vigra.ScalarVolume))
             else:
-                pws = vigra.tws.twsParallel(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
+                pws = vigra.twsb.twsParallel(self.weights, seeds)#.swapaxes(0,2).view(vigra.ScalarVolume))
             
             ret = numpy.zeros(labelVolume.shape[0:-1], 'uint8')
             ret[:] = pws[:]#.swapaxes(0,2).view(numpy.ndarray)

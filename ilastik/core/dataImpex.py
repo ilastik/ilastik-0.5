@@ -3,6 +3,8 @@ import numpy
 import vigra
 import os
 import warnings
+import pickle
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
@@ -10,6 +12,7 @@ with warnings.catch_warnings():
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.volume import Volume as Volume
+from ilastik.core.overlayMgr import OverlayItem
 
 class DataImpex(object):
     """
@@ -229,6 +232,58 @@ class DataImpex(object):
                 return (tempimage.shape[0], tempimage.shape[1], 1, tempimage.shape[2])
             else:
                 return (tempimage.shape[0], tempimage.shape[1], 1, 1)
+
+    @staticmethod                
+    def importOverlay(dataItem, filename):
+        theDataItem = DataImpex.importDataItem(filename, None)
+        if theDataItem is None:
+            print "could not load", filename
+            return None
+        else:
+            data = theDataItem[:,:,:,:,:]
+            color = long(65535) << 16
+            alpha = 0.5
+            colorTable = None
+            autoAdd = True
+            autoVisible = True
+            omin = 1.0
+            omax = 2.0
+            key = "Unknown Key"
+            
+            f = h5py.File(filename, 'r')
+            dataset = f["volume/data"]
+            
+            if "overlayKey" in dataset.attrs.keys():
+                key = dataset.attrs["overlayKey"]
+                
+            if "overlayColor" in dataset.attrs.keys():
+                color = pickle.loads(dataset.attrs["overlayColor"])
+                
+            if "overlayColortable" in dataset.attrs.keys():
+                colorTable = pickle.loads(dataset.attrs["overlayColortable"])
+                
+            if "overlayMin" in dataset.attrs.keys():
+                omin = pickle.loads(dataset.attrs["overlayMin"])
+                
+            if "overlayMax" in dataset.attrs.keys():
+                omax = pickle.loads(dataset.attrs["overlayMax"])
+
+            if "overlayAutovisible" in dataset.attrs.keys():
+                autoVisible = pickle.loads(dataset.attrs["overlayAutovisible"])
+
+            if "overlayAdd" in dataset.attrs.keys():
+                autoAdd = pickle.loads(dataset.attrs["overlayAdd"])
+                
+            if "overlayAlpha" in dataset.attrs.keys():
+                alpha = pickle.loads(dataset.attrs["overlayAlpha"])
+                
+            if data.shape[0:-1] == dataItem.shape[0:-1]:
+                ov = OverlayItem(dataItem, data, color = color, alpha = alpha, colorTable = colorTable, autoAdd = autoAdd, autoVisible = autoVisible, min = omin, max = omax)
+                ov.key = key
+                dataItem.overlayMgr[ov.key] = ov            
+                return ov
+            return None
+
         
     @staticmethod
     def exportOverlay(filename, format, overlayItem, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
@@ -246,6 +301,14 @@ class DataImpex(object):
             data[0,:,:,:,:] = overlayItem._data[0,:,:,:,:]
             dataset = prevgr.create_dataset("data", compression = "gzip", data=data)
             dataset.attrs["overlayKey"] = str(overlayItem.key)
+            dataset.attrs["overlayColor"] = pickle.dumps(overlayItem.color)
+            print "akdajksd", dataset.attrs["overlayColor"]
+            dataset.attrs["overlayColortable"] = pickle.dumps(overlayItem.colorTable)
+            dataset.attrs["overlayMin"] = pickle.dumps(overlayItem.min)
+            dataset.attrs["overlayMax"] = pickle.dumps(overlayItem.max)
+            dataset.attrs["overlayAutoadd"] = pickle.dumps(overlayItem.autoAdd)
+            dataset.attrs["overlayAutovisible"] = pickle.dumps(overlayItem.autoVisible)
+            dataset.attrs["overlayAlpha"] = pickle.dumps(overlayItem.alpha)
             #overlayItemReference.name, data=overlayItemReference.overlayItem._data[0,:,:,:,:])
             #except Exception, e:
             #    print e
