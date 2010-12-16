@@ -252,7 +252,7 @@ class DataImpex(object):
             
             f = h5py.File(filename, 'r')
             dataset = f["volume/data"]
-            
+
             if "overlayKey" in dataset.attrs.keys():
                 key = dataset.attrs["overlayKey"]
                 
@@ -261,7 +261,7 @@ class DataImpex(object):
                 
             if "overlayColortable" in dataset.attrs.keys():
                 colorTable = pickle.loads(dataset.attrs["overlayColortable"])
-                
+
             if "overlayMin" in dataset.attrs.keys():
                 omin = pickle.loads(dataset.attrs["overlayMin"])
                 
@@ -280,7 +280,7 @@ class DataImpex(object):
             if data.shape[0:-1] == dataItem.shape[0:-1]:
                 ov = OverlayItem(dataItem, data, color = color, alpha = alpha, colorTable = colorTable, autoAdd = autoAdd, autoVisible = autoVisible, min = omin, max = omax)
                 ov.key = key
-                dataItem.overlayMgr[ov.key] = ov            
+                dataItem.overlayMgr["File Overlays/"+ov.key] = ov            
                 return ov
             return None
 
@@ -302,7 +302,6 @@ class DataImpex(object):
             dataset = prevgr.create_dataset("data", compression = "gzip", data=data)
             dataset.attrs["overlayKey"] = str(overlayItem.key)
             dataset.attrs["overlayColor"] = pickle.dumps(overlayItem.color)
-            print "akdajksd", dataset.attrs["overlayColor"]
             dataset.attrs["overlayColortable"] = pickle.dumps(overlayItem.colorTable)
             dataset.attrs["overlayMin"] = pickle.dumps(overlayItem.min)
             dataset.attrs["overlayMax"] = pickle.dumps(overlayItem.max)
