@@ -91,5 +91,21 @@ class LabelMgr(object):
         del labelDescriptionToBeRemoved
         self.dataMgr.featureLock.release()
         
+        
+    def clearLabel(self, number):
+        self.dataMgr.featureLock.acquire()
+        self.classificationMgr.clearFeaturesAndTraining()
+
+        di = self.dataMgr[self.dataMgr._activeImageNumber]
+        ov = di.overlayMgr["Classification/Labels"] 
+        
+        if ov is not None:        
+            data = ov[:,:,:,:,:]
+            
+            data = numpy.where(data == number, 0, data)
+            ov[:,:,:,:,:] = data
+        self.dataMgr.featureLock.release()
+
+        
     def newLabels(self,  newLabels):
         self.classificationMgr.updateTrainingMatrix(newLabels)

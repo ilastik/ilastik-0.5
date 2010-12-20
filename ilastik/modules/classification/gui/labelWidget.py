@@ -179,11 +179,8 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         elif action == clearAction:
             if QtGui.QMessageBox.question(self, "Clear label", "Really clear label" + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)  != QtGui.QMessageBox.Cancel:
                 number = self.volumeLabelDescriptions[index.row()].number
-    
-                data = self.overlayItem[:,:,:,:,:]
-                
-                data = numpy.where(data == number, 0, data)
-                self.overlayItem[:,:,:,:,:] = data
+                self.labelMgr.clearLabel(number)                
+
             
             
         elif action == colorAction:
