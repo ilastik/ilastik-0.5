@@ -164,16 +164,28 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         removeAction = menu.addAction("Remove")
         colorAction = menu.addAction("Change Color")
         renameAction = menu.addAction("Change Name")
+        clearAction = menu.addAction("Clear Label")
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
-            self.removeLabel(item,  index)
+            if QtGui.QMessageBox.question(self, "Remove label", "Really remove label" + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)  != QtGui.QMessageBox.Cancel:
+                self.removeLabel(item,  index)
         elif action == renameAction:
             newName, ok = QtGui.QInputDialog.getText(self, "Enter Labelname", "Labelname:", text = item.text())
             if ok:
                 item.setText(newName)
                 result = self.labelMgr.changeLabelName(index.row(),str(newName))
                 print result
+        elif action == clearAction:
+            if QtGui.QMessageBox.question(self, "Clear label", "Really clear label" + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)  != QtGui.QMessageBox.Cancel:
+                number = self.volumeLabelDescriptions[index.row()].number
+    
+                data = self.overlayItem[:,:,:,:,:]
+                
+                data = numpy.where(data == number, 0, data)
+                self.overlayItem[:,:,:,:,:] = data
+            
+            
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
