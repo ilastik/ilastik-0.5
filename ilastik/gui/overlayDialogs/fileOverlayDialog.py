@@ -39,21 +39,9 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase):
                 gui.LAST_DIRECTORY = QtCore.QFileInfo(file_name).path()
                 try:
                     file_name = str(file_name)
-
-                    #theDataItem = dataMgr.DataItemImage(file_name)
-                    theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
-                    if theDataItem is None:
+                    ov = dataImpex.DataImpex.importOverlay(activeItem, file_name)
+                    if ov is None:
                         print "No _data item loaded"
-                    else:
-                        if theDataItem.shape[0:-1] == activeItem.shape[0:-1]:
-                            data = theDataItem[:,:,:,:,:]
-                            ov = overlayMgr.OverlayItem(activeItem, data, color = long(65535 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 255)
-                            ov.min = numpy.min(data)
-                            ov.max = numpy.max(data)
-                            activeItem.overlayMgr["File Overlays/" + theDataItem.fileName] = ov
-                        else:
-                            print "Cannot add " + theDataItem.fileName + " due to dimensionality mismatch"
-                        
 
                 except Exception, e:
                     traceback.print_exc()
