@@ -91,10 +91,6 @@ class DataImpex(object):
             print "Detected Olympus microscope bug..."
             data = data - 2**15
  
-        # uint16
-        if data.max() > 255 and data.max() < 4096:
-            data = ((data)/4095.0*255.0).astype(numpy.uint8)
-        
         #remove alpha channel
         if len(data.shape) == 3:
             if data.shape[2] == 4:
