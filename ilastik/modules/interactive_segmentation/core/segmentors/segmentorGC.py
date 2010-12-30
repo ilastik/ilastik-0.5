@@ -46,26 +46,50 @@ except Exception, e:
     pass
 
 if ok:
-    class SegmentorWS(SegmentorBase):
+    class SegmentorGC(SegmentorBase):
         name = "GraphCut Segmentation"
         description = "Segmentation plugin using the Graph Cut algorithm "
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         gamma = Float(10)
+        difference = Bool(False)
+        useHistogram = Bool(False)
+        alpha = Float(10)
         
-        view = View( Item('gamma'), buttons = ['OK', 'Cancel'],  )       
+        view = View( Item('gamma'), Item('difference'), Item('useHistogram'), Item('alpha'), buttons = ['OK', 'Cancel'],  )       
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
             tweights = numpy.zeros(self.weights.shape[0:-1] + (2,), numpy.float32)
+            
+            
+            weights = numpy.exp( - (self.weights)**2 / self.gamma**2)
 
-            a = numpy.where(labelVolume == 1, 99999999, 0)
+            b = numpy.ndarray(self.weights.shape[0:-1] + (1,) , numpy.float32)
+            b[:,:,:,0] = (weights[:,:,:,0] + weights[:,:,:,1] + weights[:,:,:,2]) * 2
+            b[1:,:,:,0] += weights[:-1,:,:,0] * 2
+            b[:,1:,:,0] += weights[:,:-1,:,1] * 2
+            b[:,:,1:,0] += weights[:,:,:-1,2] * 2
+            
+            b[:,:,:,0] += 99999
+            
+            a = numpy.where(labelVolume == 1, b, 0)
             tweights[:,:,:,0] = a[:,:,:,0]
-            a = numpy.where(labelVolume == 2, 99999999, 0)
+            a = numpy.where(labelVolume == 2, b, 0)
             tweights[:,:,:,1] = a[:,:,:,0]
 
+            if self.useHistogram:
+                middle, larger, smaller = self.calculateSeparation(self.origWeights, labelVolume)
+                tw = self.origWeights - middle
+                tw1 = numpy.where(tw > 0, tw * self.alpha, 0)
+                tw2 = numpy.where(tw < 0, - tw * self.alpha, 0)
+                tweights[:,:,:,larger - 1] += tw1
+                tweights[:,:,:,smaller - 1] += tw2
+                
             print "Executing Graph cut with gamma ", self.gamma
-            res = vigra.cutKolmogorov.cutKolmogorov(tweights, numpy.exp( - (self.weights)**2 / self.gamma**2))
+            print "shapes : ", tweights.shape
+            
+            res = vigra.cutKolmogorov.cutKolmogorov(tweights, weights)
                       
             res.shape = res.shape + (1,)
             
@@ -77,9 +101,13 @@ if ok:
 
 
         def setupWeights(self, weights):
+            self.origWeights = weights
             #self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)
             self.weights = numpy.ndarray(weights.shape + (3,), numpy.float32)
+            
             tw = numpy.ndarray(weights.shape, numpy.float32)
+            
+            
             
             tw[:] = weights[:]
             
@@ -87,6 +115,33 @@ if ok:
             self.weights[:,-1,:,1] = 0
             self.weights[0,:,-1,2] = 0
             
-            self.weights[:-1,:,:,0] = tw[1:,:,:] - tw[:-1,:,:]
-            self.weights[:,:-1,:,1] = tw[:,1:,:] - tw[:,0:-1,:]
-            self.weights[:,:,:-1,2] = tw[:,:,1:] - tw[:,:,0:-1]
+            if self.difference:
+                self.weights[0:-1,:,:,0] = numpy.abs(tw[1:,:,:] - tw[0:-1,:,:])
+                self.weights[:,0:-1,:,1] = numpy.abs(tw[:,1:,:] - tw[:,0:-1,:])
+                self.weights[:,:,0:-1,2] = numpy.abs(tw[:,:,1:] - tw[:,:,0:-1])
+            else:
+                self.weights[0:-1,:,:,0] = 1 - numpy.abs(tw[1:,:,:] + tw[0:-1,:,:]) / 2 
+                self.weights[:,0:-1,:,1] = 1 - numpy.abs(tw[:,1:,:] + tw[:,0:-1,:]) / 2
+                self.weights[:,:,0:-1,2] = 1 - numpy.abs(tw[:,:,1:] + tw[:,:,0:-1]) / 2
+                
+                
+                
+        def calculateSeparation(self, image, labelVolume):
+            lv = labelVolume[:,:,:,0]
+            indices = numpy.nonzero(numpy.where(lv == 1, 1, 0))
+            values = image[indices]
+            avg1 = numpy.average(values)
+            
+            indices = numpy.nonzero(numpy.where(lv == 2, 1, 0))
+            values = image[indices]
+            avg2 = numpy.average(values)
+            
+            larger = 1
+            smaller = 2
+            
+            if avg2 > avg1:
+                larger = 2
+                smaller = 1                
+                
+            return (avg1 + avg2) / 2.0, larger, smaller
+            

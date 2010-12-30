@@ -53,9 +53,10 @@ if ok:
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         gamma = Float(10)
+        difference = Bool(False)
         lisOptions = String("-p saamg -tol 1.0e-4")
         
-        view = View( Item('gamma'), Item('lisOptions'), buttons = ['OK', 'Cancel'],  )       
+        view = View( Item('gamma'),  Item('difference'), Item('lisOptions'), buttons = ['OK', 'Cancel'],  )       
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
             seeds = numpy.zeros(labelVolume.shape[0:-1], numpy.uint8)
@@ -88,8 +89,12 @@ if ok:
             self.weights[:,-1,:,1] = 0
             self.weights[0,:,-1,2] = 0
             
-            self.weights[:-1,:,:,0] = tw[1:,:,:] - tw[:-1,:,:]
-            self.weights[:,:-1,:,1] = tw[:,1:,:] - tw[:,0:-1,:]
-            self.weights[:,:,:-1,2] = tw[:,:,1:] - tw[:,:,0:-1]
-            
-
+            if self.difference:
+                self.weights[0:-1,:,:,0] = numpy.abs(tw[1:,:,:] - tw[0:-1,:,:])
+                self.weights[:,0:-1,:,1] = numpy.abs(tw[:,1:,:] - tw[:,0:-1,:])
+                self.weights[:,:,0:-1,2] = numpy.abs(tw[:,:,1:] - tw[:,:,0:-1])
+            else:
+                self.weights[0:-1,:,:,0] = 1 - numpy.abs(tw[1:,:,:] + tw[0:-1,:,:]) / 2 
+                self.weights[:,0:-1,:,1] = 1 - numpy.abs(tw[:,1:,:] + tw[:,0:-1,:]) / 2
+                self.weights[:,:,0:-1,2] = 1 - numpy.abs(tw[:,:,1:] + tw[:,:,0:-1]) / 2
+                
