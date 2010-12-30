@@ -89,7 +89,7 @@ class DataImpex(object):
         # Check for bug in Olympus microscopes
         if data.max() > 2**15 and fExt in ['.tif','.tiff']:
             print "Detected Olympus microscope bug..."
-            data = data - 2**15
+            data = (data - 2**15).astype(numpy.uint16)
  
         #remove alpha channel
         if len(data.shape) == 3:
