@@ -27,7 +27,8 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import vigra, numpy
+import vigra
+import numpy
 import traceback, sys
 import threading
 from ilastik.core.volume import VolumeLabels, VolumeLabelDescription
@@ -132,26 +133,27 @@ class ConnectedComponents():
         vol, back_value = self.transformToVigra(inputData, background)
         res = None
         if back_value is not None:
-            res = vigra.analysis.labelVolumeWithBackground(vol, 6, float(back_value))
+            #FIXME: this assumes that the background value is an int
+            #otherwise something does not work with vigrapython
+            res = vigra.analysis.labelVolumeWithBackground(vol, 6, int(back_value))
         else:
             res = vigra.analysis.labelVolume(vol)
         if res is not None:
-            res = res.swapaxes(0,2).view(vigra.ScalarVolume)
+            res = res.swapaxes(0,2).view()
             res = res.reshape(res.shape + (1,))
-            return numpy.array(res)
+            return res
         
     def transformToVigra(self, vol, background):
         if len(background)==0:
-            return vigra.ScalarVolume(vol), None
+            return vol.swapaxes(0,2).view(), None
         else:
             vol_merged = vol
             back_value = background.pop()
-            #for i in range(len(background)):
             while len(background)>0:
                 back_value_temp = background.pop()
                 ind = numpy.where(vol_merged==back_value_temp)
-                vol_merged[ind]=float(back_value)
-            return vigra.ScalarVolume(vol_merged), back_value
+                vol_merged[ind]=back_value
+            return vol_merged.swapaxes(0,2).view(), back_value
 
 
 class ConnectedComponentsThread(QtCore.QThread):
@@ -177,13 +179,14 @@ class ConnectedComponentsThread(QtCore.QThread):
             self.result = range(0,self._data.shape[0])
             jobs = []
             for i in range(self._data.shape[0]):
-                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, self._data[i,:,:,:,0], self.backgroundSet])
+                part = numpy.asarray(self._data[i, :, :, :, 0], dtype=self._data.dtype)               
+                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, part, self.backgroundSet])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)
             self.dataMgr.featureLock.release()
         except Exception, e:
-            print "######### Exception in ClassifierTrainThread ##########"
+            print "######### Exception in ConnectedComponentsThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)
             self.dataMgr.featureLock.release()
