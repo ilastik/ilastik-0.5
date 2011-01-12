@@ -85,6 +85,50 @@ from ilastik.gui.shortcutmanager import shortcutManager, shortcutManagerDlg, sho
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+class RenderChoiceDialog(QtGui.QDialog):
+    def __init__(self):
+        #Test for OpenGL Version
+        gl2 = False
+        w = QtOpenGL.QGLWidget()
+        w.setVisible(False)
+        w.makeCurrent()
+        gl_version =  glGetString(GL_VERSION)
+        if gl_version is None:
+            gl_version = '0'
+        
+        allowChoosingOpenGL = False
+        if int(gl_version[0]) >= 2:
+            allowChoosingOpenGL = True
+        elif int(gl_version[0]) > 0:
+            allowChoosingOpenGL = False
+        else:
+            raise RuntimeError("Absolutely no OpenGL available")
+        
+        super(RenderChoiceDialog, self).__init__()
+        layout = QtGui.QVBoxLayout(self)
+        choicesGroup = QtGui.QButtonGroup(self)
+        self.openglChoice   = QtGui.QRadioButton("Open GL")
+        self.softwareChoice = QtGui.QRadioButton("Software + OpenGL")
+        okButton = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok, QtCore.Qt.Vertical)
+        label = QtGui.QLabel("""<b>OpenGL + OpenGL Overview</b> allows
+                    for fastest rendering if OpenGL is correctly installed.
+                    <br> If visualization is slow or incomplete,
+                    try the <b>Software + OpenGL</b> mode.""")
+        
+        layout.addWidget(label)
+        layout.addWidget(self.openglChoice)
+        layout.addWidget(self.softwareChoice)
+        layout.addWidget(okButton)
+        self.setLayout(layout)
+        
+        if allowChoosingOpenGL:
+            self.openglChoice.setChecked(True)
+        else:
+            self.openglChoice.setEnabled(False)
+            self.softwareChoice.setChecked(True)
+        
+        QtCore.QObject.connect(okButton, QtCore.SIGNAL("accepted()"), self, QtCore.SLOT("accept()"))
+
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
         
@@ -153,36 +197,24 @@ class MainWindow(QtGui.QMainWindow):
                 
 
         if self.opengl == None:   #no command line option for opengl was given, ask user interactively
-            #test for opengl version
-            gl2 = False
-            w = QtOpenGL.QGLWidget()
-            w.setVisible(False)
-            w.makeCurrent()
-            gl_version =  glGetString(GL_VERSION)
-            if gl_version is None:
-                gl_version = '0'
-            
+            dlg = RenderChoiceDialog()
+            dlg.exec_()
 
-
-            help_text = "<b>OpenGL + OpenGL Overview</b> allows for fastest rendering if OpenGL is correctly installed.<br> If visualization is slow or incomplete, try the <b>Software + OpenGL</b> mode."
-            if int(gl_version[0]) >= 2:
-                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['OpenGL + OpenGL Overview', 'Software only'], 0, False)
-            elif int(gl_version[0]) > 0:
-                dl = QtGui.QInputDialog.getItem(self,'ilastik: Graphics Setup', help_text, ['Software only'], 0, False)
-            else:
-                dl = []
-                dl.append("")
-                
             self.opengl = False
             self.openglOverview = False
-            if dl[0] == "OpenGL + OpenGL Overview":
+            if dlg.openglChoice.isChecked():
                 self.opengl = True
                 self.openglOverview = True
-                self.sharedOpenGLWidget = w
-            elif dl[0] == "Software only":
+            elif dlg.softwareChoice.isChecked():
                 self.opengl = False
                 self.openglOverview = False
-                self.sharedOpenGLWidget = None
+            else:
+                raise RuntimeError("Unhandled choice in dialog")
+        
+        #if we have OpenGL, a shared QGLWidget is set up,
+        self.sharedOpenGLWidget = None
+        if self.openglOverview:
+            self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
 
         self.project = None
         if project != None:
