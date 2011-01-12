@@ -101,29 +101,29 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
                 
             ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
     
+    def openProject(self, fileName):
+        labelWidget = None
+        self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
+        self.btnSave.setEnabled(True)
+        self.btnEdit.setEnabled(True)
+        self.btnOptions.setEnabled(True)
+        self.parent.updateFileSelector()
+        self.parent.on_otherProject()
+        self.ilastik.setTabBusy(False)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
+        gc.collect()
+        if labelWidget is not None:
+            if labelWidget() is not None:
+                refs =  gc.get_referrers(labelWidget())
+                for i,r in enumerate(refs):
+                    print type(r)
+                    print "##################################################################"
+                    print r
+                    
     def on_btnOpen_clicked(self):
         fileName = QtGui.QFileDialog.getOpenFileName(self, "Open Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
         if str(fileName) != "":
-            labelWidget = None
-            #if self.parent.project is not None:
-            #    if len(self.parent.project.dataMgr) > self.parent._activeImageNumber:
-            #        labelWidget = weakref.ref(self.parent.project.dataMgr[self.parent._activeImageNumber])#.featureBlockAccessor)
-            self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
-            self.btnSave.setEnabled(True)
-            self.btnEdit.setEnabled(True)
-            self.btnOptions.setEnabled(True)
-            self.parent.updateFileSelector()
-            self.parent.on_otherProject()
-            self.ilastik.setTabBusy(False)
-            ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
-            gc.collect()
-            if labelWidget is not None:
-                if labelWidget() is not None:
-                    refs =  gc.get_referrers(labelWidget())
-                    for i,r in enumerate(refs):
-                        print type(r)
-                        print "##################################################################"
-                        print r
+            self.openProject(fileName)
    
     def on_btnEdit_clicked(self):
         self.parent.projectDlg = ProjectDlg(self.parent, False)
