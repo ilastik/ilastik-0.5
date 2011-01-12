@@ -59,6 +59,7 @@ ilastik.modules.loadModuleCores()
 from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
+from ilastik.core import projectMgr
 
 #from ilastik.core import connectedComponentsMgr
 #from ilastik.core import projectMgr
