@@ -55,6 +55,12 @@ class ClassifierBase(object):
 
     @classmethod
     def deserialize(cls, h5G):
+        """Reimplement this method to load the classifier from the project file
+        
+           parameters:
+           cls: Derived class
+           h5G: Name of the group in which the classifier was serialized"""
+           
         pass
 
 

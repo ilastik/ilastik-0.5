@@ -79,6 +79,9 @@ class ClassifierRandomForest(ClassifierBase):
 
     @classmethod
     def deserialize(cls, h5G):
+        """FIXME: we do not load the complete random forest here, but require the user to re-train
+           after loading the project file. The only thing we do load is the total number of
+           trees (in a very hackish way)."""
         thisForestPath = h5G.name
         allForestsPath = thisForestPath[0:thisForestPath.rfind("/")]
       
