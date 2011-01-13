@@ -209,7 +209,6 @@ class ClassificationModuleMgr(BaseModuleMgr):
             dataItemImage.overlayMgr["Classification/Uncertainty"] = ov
             dataItemImage.Classification["prediction"] = None
 
-            
 #        if self._dataVol.uncertainty is not None:
 #            #create Overlay for uncertainty:
 #            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
@@ -240,20 +239,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
                 print pathToGroup + "/classifiers/rf_%03d" % i
                 c.serialize(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
                 print "Write random forest #%03d" % i
-        
-    @staticmethod    
-    def importClassifiers(fileName):
-        hf = h5py.File(fileName,'r')
-        temp = hf['classifiers'].keys()
-        hf.close()
-        del hf
-        
-        classifiers = []
-        for cid in temp:
-            classifiers.append(defaultRF.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
-        return classifiers
-        
-        
+          
     def serialize(self, h5G):
         featureG = h5G.create_group('FeatureSelection')        
         try:
@@ -263,15 +249,26 @@ class ClassificationModuleMgr(BaseModuleMgr):
             traceback.print_exc()
         
     def deserialize(self, h5G):
+        print "ClassificationModuleMgr::deserialize"
+        
+        #some old file version might not have these keys
         try:
             userSelection = h5G['FeatureSelection']['UserSelection']
             featureMgr.ilastikFeatureGroups.selection = userSelection.value
         except:
-            pass
+            print """Could not find entry FeatureSelection/UserSelection in project file
+                     Probably this file is too old. Skipping..."""
+          
+        classifiers = []
+        f = h5G.file
+        g = h5G.name + '/classifiers'
+        print "  -> looking for classifiers in", g
+        if g in f:
+          classifiers = f[g].keys()
         
-
-
-
+        for cid in classifiers:
+            self.classifier.deserialize(f[h5G.name +  '/classifiers/' + cid])
+        
 class ClassificationMgr(object):
     def __init__(self, dataMgr):
         self.dataMgr = dataMgr         
@@ -478,7 +475,7 @@ class ClassificationMgr(object):
         self._trainingL = trainingL
         self._trainingF = trainingF
         self._trainingIndices = indices     
-    
+
     def getTrainingMatrix(self, sigma = 0):
         """
         sigma: trainig _data that is within sigma to the image borders is not considered to prevent
@@ -529,7 +526,9 @@ class ClassificationMgr(object):
 
     
 class ClassifierTrainThread(ThreadBase):
-    def __init__(self, queueSize, dataMgr, classifier = classifiers.classifierRandomForest.ClassifierRandomForest, classifierOptions = (10,)):
+    def __init__(self, queueSize, dataMgr,
+                 classifier = classifiers.classifierRandomForest.ClassifierRandomForest,
+                 classifierOptions = ()):
         ThreadBase.__init__(self, None)
         self.numClassifiers = queueSize
         self.dataMgr = dataMgr
@@ -542,8 +541,10 @@ class ClassifierTrainThread(ThreadBase):
         self.jobMachine = jobMachine.JobMachine()
         self.classifiers = deque()
 
-    def trainClassifier(self, F, L):
+    def trainClassifier(self, F, L, workerNumber, numWorkers):
+        #Construct classifier
         classifier = self.classifier(*self.classifierOptions)
+        classifier.setWorker(workerNumber, numWorkers)
         classifier.train(F, L, False) # not interactive
         self.count += 1
         self.classifiers.append(classifier)
@@ -555,10 +556,9 @@ class ClassifierTrainThread(ThreadBase):
             F, L = self.classificationMgr.getTrainingMatrix()
             if F is not None and L is not None and F.shape[0] > 0:
                 self.count = 0
-
                 jobs = []
                 for i in range(self.numClassifiers):
-                    job = jobMachine.IlastikJob(ClassifierTrainThread.trainClassifier, [self, F, L])
+                    job = jobMachine.IlastikJob(ClassifierTrainThread.trainClassifier, [self, F, L, i, self.numClassifiers])
                     jobs.append(job)
                 self.jobMachine.process(jobs)
                 
