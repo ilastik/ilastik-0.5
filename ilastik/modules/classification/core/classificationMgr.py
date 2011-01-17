@@ -239,6 +239,18 @@ class ClassificationModuleMgr(BaseModuleMgr):
                 print pathToGroup + "/classifiers/rf_%03d" % i
                 c.serialize(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
                 print "Write random forest #%03d" % i
+                
+    @staticmethod    
+    def importClassifiers(fileName):
+        hf = h5py.File(fileName,'r')
+        temp = hf['classifiers'].keys()
+        hf.close()
+        del hf
+        
+        classifiers = []
+        for cid in temp:
+            classifiers.append(defaultRF.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
+        return classifiers
           
     def serialize(self, h5G):
         featureG = h5G.create_group('FeatureSelection')        
