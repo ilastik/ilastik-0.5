@@ -394,9 +394,6 @@ class DataMgr():
         self._activeImage = None
         self._activeImageNumber = 0
         self._currentModuleName = None
-        #TODO: Maybe it shouldn't be here...
-        self.connCompBackgroundKey = ""    
-        self.connCompBackgroundClasses = set()
         
         self.initModules()
         
@@ -446,17 +443,6 @@ class DataMgr():
         self._dataItems = []
         gc.collect()
         
-    
-    def updateBackground(self, newLabels, imageNr = None):
-        if self.connCompBackgroundKey == "":
-            #TODO: make a real error message
-            print "Select an overlay first!"
-            return
-        if imageNr is None:
-            imageNr = self._activeImageNumber
-        setAdd, setRemove = self[imageNr].updateBackground(newLabels, self.connCompBackgroundKey)
-        self.connCompBackgroundClasses = self.connCompBackgroundClasses.union(setAdd)
-        self.connCompBackgroundClasses = self.connCompBackgroundClasses.difference(setRemove)
 
     def getDataList(self):
         return self._dataItems
@@ -470,12 +456,6 @@ class DataMgr():
     def __setitem__(self, ind, val):
         self._dataItems[ind] = val
         self._dataItemsLoaded[ind] = True
-    
-    def getIndexFromFileName(self, fileName):
-        for k, dataItem in enumerate(self._dataItems):
-            if fileName == dataItem.fileName:
-                return k
-        return False
     
     def remove(self, dataItemIndex):
         del self._dataItems[dataItemIndex]
