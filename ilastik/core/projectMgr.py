@@ -83,29 +83,15 @@ class Project(object):
             fileHandle = h5py.File(fileName,'w')
             
             fileHandle.create_dataset('ilastikVersion', data=ILASTIK_VERSION)
-            
-            # get project settings
+
             projectG = fileHandle.create_group('Project') 
-            dataSetG = fileHandle.create_group('DataSets') 
-    
+            dataSetG = fileHandle.create_group('DataSets')             
+            
             projectG.create_dataset('Name', data=str(self.name))
             projectG.create_dataset('Labeler', data=str(self.labeler))
             projectG.create_dataset('Description', data=str(self.description))
                 
-            for k in self.dataMgr.module.keys():
-                print "serializing Module ", self.dataMgr.module[k].name
-                self.dataMgr.module[k].serialize(projectG)
-            
-            # save raw data and labels
-            for k, item in enumerate(self.dataMgr):
-                # create group for dataItem
-                print "creating group", k
-                dk = dataSetG.create_group('dataItem%02d' % k)
-                dk.attrs["fileName"] = str(item.fileName)
-                dk.attrs["Name"] = str(item._name)
-                # save raw data
-                item.serialize(dk)
-            
+            self.dataMgr.serialize(projectG, dataSetG)
             # Save to hdf5 file
             fileHandle.close()
             
@@ -125,37 +111,16 @@ class Project(object):
         
         # extract basic project settings
         projectG = fileHandle['Project']
+        dataG = fileHandle['DataSets']
         name = projectG['Name'].value
         labeler = projectG['Labeler'].value 
         description = projectG['Description'].value
         # init dataMgr 
         
-        n = len(fileHandle['DataSets'])
-        dataMgr = dataMgrModule.DataMgr(featureCache);
-
-        for k in dataMgr.module.keys():
-            print "Deserializing Module", dataMgr.module[k].name
-            dataMgr.module[k].deserialize(projectG)
-
+        n = len(dataG)
         
-        for name in fileHandle['DataSets']:
-            try:
-                dName = fileHandle['DataSets'][name].attrs['Name']
-            except:
-                dName = name
-            print "Loading image", dName
-            activeItem = dataMgrModule.DataItemImage(fileHandle['DataSets'][name].attrs['Name'])
-            activeItem.deserialize(fileHandle['DataSets'][name])
-            #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
-            #activeItem._dataVol = dataVol
-            activeItem.fileName = fileHandle['DataSets'][name].attrs['fileName']
-            activeItem.name = activeItem.fileName
-            
-            activeItem.updateOverlays()
-                            
-            dataMgr.append(activeItem,alreadyLoaded=True)
-           
-        
+        dataMgr = dataMgrModule.DataMgr.deserialize(projectG, dataG)
+
         
         project = Project( name, labeler, description, dataMgr)
         project.filename = fileName

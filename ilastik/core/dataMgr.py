@@ -486,15 +486,51 @@ class DataMgr():
     def __len__(self):
         return len(self._dataItems)
     
-    def serialize(self, h5grp):
-        for v in self.module.values():
-            v.serialize(h5grp)
+    def serialize(self, projectG, dataSetG):
+        #for v in self.module.values():
+        #    v.serialize(h5grp)
+            
+        for k in self.module.keys():
+            print "serializing Module ", self.module[k].name
+            self.module[k].serialize(projectG)
+        
+        # save raw data and labels
+        for k, item in enumerate(self):
+            # create group for dataItem
+            print "creating group", k
+            dk = dataSetG.create_group('dataItem%02d' % k)
+            dk.attrs["fileName"] = str(item.fileName)
+            dk.attrs["Name"] = str(item._name)
+            # save raw data
+            item.serialize(dk)
+        
         
     @staticmethod
-    def deserialize(self):
-        pass
-
+    def deserialize(projectG, dataG):
+        dataMgr = DataMgr()
         
+        for k in dataMgr.module.keys():
+            print "Deserializing Module", dataMgr.module[k].name
+            dataMgr.module[k].deserialize(projectG)
+        
+        for name in dataG:
+            try:
+                dName = dataG[name].attrs['Name']
+            except:
+                dName = name
+            print "Loading image", dName
+            activeItem = DataItemImage(dataG[name].attrs['Name'])
+            activeItem.deserialize(dataG[name])
+            #dataVol = Volume.deserialize(activeItem, fileHandle['DataSets'][name])
+            #activeItem._dataVol = dataVol
+            activeItem.fileName = dataG[name].attrs['fileName']
+            activeItem.name = activeItem.fileName
+            
+            activeItem.updateOverlays()
+                            
+            dataMgr.append(activeItem,alreadyLoaded=True)
+        
+        return dataMgr
     
     
         
