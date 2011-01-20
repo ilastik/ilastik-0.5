@@ -277,6 +277,15 @@ class FeatureGroups(object):
                         resList.append(fc)
         return resList
     
+    def createListRestr(self, groupNames, sigmaVals):
+        resList = []
+        for i, groupName in irange(groupNames):
+            for feature in self.groups[groupName]:
+                fc = feature(sigmaVals[i])
+                resList.append(fc)
+        return resList
+
+    
 ilastikFeatureGroups = FeatureGroups()
 ilastikFeatures = ilastikFeatureGroups.createList()
 
