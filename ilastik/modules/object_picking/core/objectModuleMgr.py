@@ -30,7 +30,7 @@
 import vigra, numpy
 import traceback, os, sys
 
-from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
+from ilastik.core.volume import DataAccessor, VolumeLabels, VolumeLabelDescription
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.core.overlayMgr import OverlayItem
 
