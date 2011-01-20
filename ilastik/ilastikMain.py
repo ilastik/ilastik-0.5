@@ -28,6 +28,10 @@
 #    or implied, of their employers.
 
 import vigra
+vigraVersion = vigra.version.split('.')
+if vigraVersion[0] < 1 or vigraVersion[1] < 7 or vigraVersion[2] < 1:
+    raise RuntimeError("At least vigra version 1.7.1 is required")
+print "Using vigra version %s ... ok" % (vigra.version)
 
 from OpenGL.GL import *
 try:
