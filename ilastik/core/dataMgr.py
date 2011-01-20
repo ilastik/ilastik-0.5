@@ -46,7 +46,7 @@ except:
     have_qt = False
 
 from ilastik.core.volume import DataAccessor as DataAccessor
-from ilastik.core.volume import Volume as Volume, VolumeLabels, VolumeLabelDescriptionMgr
+from ilastik.core.volume import VolumeLabels, VolumeLabelDescriptionMgr
 
 from ilastik.core import activeLearning
 from ilastik.core import overlayMgr
@@ -319,7 +319,7 @@ class DataItemImage(DataItemBase):
             srcend =  self._readEnd
             destshape = self._writeShape
             
-            self._dataVol.serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+            self._dataVol.serialize(h5G, "data", destbegin, destend, srcbegin, srcend, destshape)
         else:
             self._dataVol.serialize(h5G)
             
@@ -340,7 +340,7 @@ class DataItemImage(DataItemBase):
 
             
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
-        self._dataVol = Volume.deserialize(self, h5G, offsets, shape)
+        self._dataVol = DataAccessor.deserialize(h5G, "data", offsets, shape)
         
         #load obsolete file format parts (pre version 0.5)
         #and store them in the properties
@@ -369,7 +369,7 @@ class MultiPartDataItemAccessor(object):
         di = DataItemImage("block " + str(blockNr))
         boundsa = self._blockAccessor.getBlockBounds(blockNr, self.overlap)
         tempdata = DataAccessor(self._data[:,boundsa[0]:boundsa[1],boundsa[2]:boundsa[3],boundsa[4]:boundsa[5],:])
-        di.setDataVol(Volume(tempdata))
+        di.setDataVol(tempdata)
         boundsb = self._blockAccessor.getBlockBounds(blockNr, 0)
         di.setWriteBounds( (boundsb[0], boundsb[2], boundsb[4]), (boundsb[1], boundsb[3], boundsb[5]), self._data.shape[1:-1])
         di.setReadBounds( (boundsb[0]-boundsa[0], boundsb[2]-boundsa[2], boundsb[4]-boundsa[4]), (boundsb[0]-boundsa[0] + boundsb[1] - boundsb[0], boundsb[2]-boundsa[2] + boundsb[3] - boundsb[2], boundsb[4]-boundsa[4] + boundsb[5] - boundsb[4]))

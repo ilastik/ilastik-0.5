@@ -330,39 +330,3 @@ class VolumeLabels():
             return vl
         else:
             return None
-        
-class Volume():
-    def __init__(self,  data,  uncertainty = None, objects = None, unsupervised = None):
-        self._data = data
-        self.shape = data.shape
-        self.dtype = data.dtype
-
-        self.unsupervisedOverlays = []
-        
-        self.unsupervised = unsupervised
-        
-#        if self.labels is None:
-#            l = numpy.zeros(self._data.shape[0:-1] + (1, ),  'uint8')
-#            self.labels = VolumeLabels(l)
-            
-    
-        if self.unsupervised is None:
-            self.unsupervised = numpy.zeros(self._data.shape[0:-1],  'uint8')
-
-        #TODO: There should probably be an argument for that in the __init__ to enable reading from file
-        #do this along with serialize/deserialize
-        #self.selectedObjects = {}
-        #self.selectedObjectsOverlay = None
-
-    def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0)):
-        self._data.serialize(h5G, "data", destbegin, destend, srcbegin, srcend, destshape )
-
-        
-    @staticmethod
-    def deserialize(dataItemImage, h5G, offsets = (0,0,0), shape=(0,0,0)):
-        data = DataAccessor.deserialize(h5G, "data", offsets, shape)
-        #seeds = VolumeLabels.deserialize(h5G,  "seeds")
-        v =  Volume(data)
-        return v
-
-

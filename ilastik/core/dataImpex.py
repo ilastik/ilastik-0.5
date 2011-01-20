@@ -11,7 +11,6 @@ with warnings.catch_warnings():
 
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor as DataAccessor
-from ilastik.core.volume import Volume as Volume
 from ilastik.core.overlayMgr import OverlayItem
 
 class DataImpex(object):
@@ -77,7 +76,7 @@ class DataImpex(object):
             data = DataImpex.vigraReadImageWrapper(fileName)
 
             dataAcc = DataAccessor(data)
-            theDataItem._dataVol = Volume(dataAcc)
+            theDataItem._dataVol = dataAcc
         theDataItem.updateOverlays()
         return theDataItem
     
@@ -200,7 +199,7 @@ class DataImpex(object):
     @staticmethod
     def initDataItemFromArray(image, name):
         dataItem = dataMgr.DataItemImage(name)
-        dataItem._dataVol = Volume(DataAccessor(image, True))
+        dataItem._dataVol = DataAccessor(image, True)
         dataItem.updateOverlays()
         return dataItem
 
