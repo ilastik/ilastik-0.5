@@ -47,7 +47,7 @@ from ilastik.core import overlayMgr
 import sys, traceback
 from ilastik.core.dataMgr import BlockAccessor
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, PropertyMgr
-from ilastik.core.volume import Volume, VolumeLabels
+from ilastik.core.volume import VolumeLabels
 
 import seedMgr
 from segmentors import segmentorBase

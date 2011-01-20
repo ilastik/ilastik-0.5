@@ -29,7 +29,7 @@
 
 import vigra, numpy
 
-from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
+from ilastik.core.volume import DataAccessor, VolumeLabels, VolumeLabelDescription
 
 class SeedMgr(object):
     """
