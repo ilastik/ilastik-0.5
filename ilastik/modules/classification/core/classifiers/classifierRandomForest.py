@@ -33,9 +33,11 @@ class ClassifierRandomForest(ClassifierBase):
         print "setting number of trees to", cls.treeCount
 
     def train(self, features, labels, isInteractive):
+        assert self.numWorkers > 0, "Need at least one worker. Use setWorker() method..."
+
         thisTreeCount = int(self.treeCount/self.numWorkers)
         if(self.workerNumber == self.numWorkers-1):
-            thisTreeCount += self.treeCount % self.numWorkers
+            thisTreeCount += int(self.treeCount % self.numWorkers)
         #print "RandomForest training [%d of %d] with %d trees" % (self.workerNumber, self.numWorkers, thisTreeCount)
         
         self.RF = None
