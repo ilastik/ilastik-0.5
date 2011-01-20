@@ -171,8 +171,13 @@ class DataAccessor():
                 shape = (self._data.shape[0], destshape[0], destshape[1],destshape[2], self._data.shape[-1] )
             else:
                 shape = self._data.shape
+
+            chunkprop = [1,256,256,256,256]
+
+            for i in range(len(chunkprop)):
+                chunkprop[i] = min(chunkprop[i], self._data.shape[i])
                 
-            h5G.create_dataset(name, shape, self._data.dtype)
+            h5G.create_dataset(name, shape, self._data.dtype, chunks = tuple(chunkprop) )
             
         h5d = h5G[name]
         

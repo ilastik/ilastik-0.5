@@ -415,6 +415,14 @@ class DataMgr():
             self._currentModuleName = v.__class__.name
             v.onNewImage(dataItemImage)
         self._currentModuleName = oldModuleName
+
+    def onRemoveImage(self, dataItemIndex):
+        dataItemImage.overlayMgr.dataMgr = self
+        oldModuleName = self._currentModuleName
+        for v in self.module.values():
+            self._currentModuleName = v.__class__.name
+            v.onRemoveImage(dataItemImage)
+        self._currentModuleName = oldModuleName
     
     def append(self, dataItem, alreadyLoaded=False):
         if alreadyLoaded == False:
@@ -458,6 +466,7 @@ class DataMgr():
         self._dataItemsLoaded[ind] = True
     
     def remove(self, dataItemIndex):
+        self.onRemoveImage(dataItemIndex)
         del self._dataItems[dataItemIndex]
         del self._dataItemsLoaded[dataItemIndex]
         if len(self) == 0:
