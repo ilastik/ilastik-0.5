@@ -10,7 +10,7 @@ from ilastik.modules.classification.core.featureMgr import FeatureMgr
 
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import dataImpex
-
+from ilastik.core import jobMachine
 
 import traceback
 import getopt
@@ -127,7 +127,8 @@ class MainBatch():
             
             
 class BatchOptions(object):
-    def __init__(self, outputDir, classifierFile, fileList):
+    def __init__(self, inputDir, outputDir, classifierFile, fileList):
+        self.inputDir = inputDir
         self.outputDir = outputDir
         self.classifierFile = classifierFile
         self.fileList = fileList
@@ -137,7 +138,7 @@ class BatchOptions(object):
         self.writeSegmentation = False
         self.writeHDF5 = True
         self.writeImages = False
-        self.serializeProcessing = True
+        self.serializeProcessing = False
         
         self.featureList = None
         self.classifiers = None
@@ -158,95 +159,38 @@ class BatchOptions(object):
         
         self.isReady = True
     
-    @classmethod
-    def __initFromJSon(cls, jsonFile):
-        return cls('','',(1,2,3))
-        """
-        initialFile = ""
-    images = ""
-    groupNames = []
-    sigmaVals = []
+    @staticmethod
+    def initFromJSon(jsonFile=None):
+        if not jsonFile:
+            raise RuntimeError("initFromJSon(): No json file provided")
     
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "", ["config_file="])
-        for o, a in opts:
-            if o in ("--config_file"):
-                initialFile = str(a)
-    except getopt.GetoptError, err:
-        print str(err)
-        sys.exit()
-
-    if not initialFile:
-        print "no session file provided"
-        sys.exit()
-
-    fin = open(initialFile, 'r')
-    json_str = fin.read()
-    json_input = json.loads(json_str)
-
-    sessionFile = str(json_input.get("session", None))
-    if sessionFile is None:
-        print "no session file provided"
-        sys.exit()
-
-    images = json_input.get("images", None)
-    if images is None:
-        print "no images provided"
-        sys.exit()
-
-    features = json_input.get("features", None)
-    if features is None:
-        print "no features provided"
-        sys.exit()
+        fin = open(jsonFile, 'r')
+        json_str = fin.read()
+        json_input = json.loads(json_str)
     
-    for feature in features:
-        groupNames.append(str(feature[0]))
-        sigmaVals.append(float(feature[1]))
-
-    project = projectMgr.Project.loadFromDisk(sessionFile, None)
-
-    # create feature list from options -- use createList as a template
-    featureList = featureMgr.ilastikFeatureGroups.createListRestr(groupNames, sigmaVals)
+        classifierFile = str(json_input.get("session", None))
+        if classifierFile is None:
+            raise RuntimeError("initFromJSon(): No classifier provided in json file")
     
-    if not featureList:
-        print "No features loaded"
-        sys.exit()
+        images = json_input.get("images", None)
+        if images is None:
+            raise RuntimeError("initFromJSon(): No images provided in json file")
+        fileList = []
+        for image in images:
+            fileList.append(image.get("name", None))
+    
+        inputDir = json_input.get("input_dir", None)
+        if inputDir is not None:
+            inputDir = str(inputDir) 
+            
+        outputDir = json_input.get("output_dir", None)
+        if outputDir is not None:
+            outputDir = str(outputDir)
+            
+        return BatchOptions(inputDir, outputDir, classifierFile, fileList)
 
-    baseDir = json_input.get("input_dir", None)
-    if baseDir is not None:
-        inputPath = str(baseDir) 
-    baseDir = json_input.get("output_dir", None)
-    if baseDir is not None:
-        outputPath = str(baseDir) 
+    
 
-    print "generate features"
-    project.dataMgr.module["Classification"]["classificationMgr"].clearFeaturesAndTraining()
-    project.dataMgr.Classification.featureMgr = featureMgr.FeatureMgr(project.dataMgr, featureList)
-    numberOfJobs = project.dataMgr.Classification.featureMgr.prepareCompute(project.dataMgr)
-    project.dataMgr.Classification.featureMgr.triggerCompute()
-    project.dataMgr.Classification.featureMgr.joinCompute(project.dataMgr)
-    print "generated features"   
-
-    print "generate classifiers"   
-    numberOfJobs = 10
-    classificationProcess = classificationMgr.ClassifierTrainThread(numberOfJobs, project.dataMgr)
-    classificationProcess.start()
-    classificationProcess.wait()
-
-    classificationPredict = classificationMgr.ClassifierPredictThread(project.dataMgr)
-    classificationPredict.start()
-    classificationPredict.wait()
-    print "generated classifiers"   
-    #time.sleep(10)
-
-    for image in images:
-        # run batch process function with filename
-        batch = MainBatch(project, image)
-        batch.process()
-        gc.collect()
-
-    del jobMachine.GLOBAL_WM
-        """
     
 class BatchProcessCore(object):
     def __init__(self, batchOptions):
@@ -257,7 +201,7 @@ class BatchProcessCore(object):
         
     def process(self):
         for i, filename in enumerate(self.batchOptions.fileList):
-            filename = str(filename)
+            filename = self.batchOptions.inputDir + str(filename)
             try:
                 # input handle
                 theDataItem = dataImpex.DataImpex.importDataItem(filename, None)
@@ -330,5 +274,28 @@ class BatchProcessCore(object):
                 print e
 
             yield filename
+
+if __name__ == "__main__":   
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "", ["config_file="])
+        for o, a in opts:
+            if o in ("--config_file"):
+                jsonFile = str(a)
+
+    except getopt.GetoptError, err:
+        print str(err)
+        sys.exit()
+        
+    batchOptions = BatchOptions.initFromJSon(jsonFile)
+    batchOptions.setFeaturesAndClassifier()
+    batchProcess = BatchProcessCore(batchOptions)
+    for i in batchProcess.process():
+        print "Processing " + str(i) + "\n"
+    
+    del jobMachine.GLOBAL_WM
+    
+    
+    
+    
         
 

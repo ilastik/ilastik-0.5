@@ -128,7 +128,8 @@ class FeatureMgr():
         
         self.setFeatureItems(featureItems)
         
-    def loadFeatureItemsFromFile(self, fileName):
+    @staticmethod
+    def loadFeatureItemsFromFile(fileName):
         featureItems = []
         f = h5py.File(fileName,'r')
         for fgrp in f['features'].values():

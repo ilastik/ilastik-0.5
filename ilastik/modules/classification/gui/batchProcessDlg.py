@@ -102,8 +102,8 @@ class BatchProcess(QtGui.QDialog):
 
     def slotProcess(self):
         # self.process(self.filenames)
-        outputDir = os.path.split(str(self.filenames[0]))[0]
-        self.process(BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames))
+        outputDir, filename = os.path.split(str(self.filenames[0]))
+        self.process(BatchOptions(outputDir, outputDir, 'gui-mode-no-file-name-needed', filename))
     
     
     def printStuff(self, stuff):
