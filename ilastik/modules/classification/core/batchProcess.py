@@ -4,26 +4,23 @@ import ilastik.modules
 ilastik.modules.loadModuleCores()
 from ilastik.core.volume import DataAccessor
 from ilastik.core import dataMgr
-from ilastik.modules.classification.core import featureMgr
+
 from ilastik.modules.classification.core.classificationMgr import ClassificationModuleMgr
 from ilastik.modules.classification.core.featureMgr import FeatureMgr
-from ilastik.core import  dataImpex
 
-from ilastik.gui import volumeeditor as ve
-from ilastik.core import jobMachine
+from ilastik.modules.classification.core import classificationMgr
+from ilastik.core import dataImpex
 
-from ilastik.core import projectMgr
 
 import traceback
 import getopt
 import h5py
-import time
-import math
 import fileinput
 import errno
 import gc
 import json
 from ilastik.gui import loadOptions
+
 
 
 inputPath=""
@@ -140,19 +137,24 @@ class BatchOptions(object):
         self.writeSegmentation = False
         self.writeHDF5 = True
         self.writeImages = False
-        self.serializeProcessing = False
+        self.serializeProcessing = True
         
         self.featureList = None
         self.classifiers = None
         
         self.isReady = False
         
-    def makeReady(self, classifiers=None, featureList=None):
+    def setFeaturesAndClassifier(self, classifiers=None, featureList=None):
         # get Classifers
         if classifiers is None:
             self.classifiers = ClassificationModuleMgr.importClassifiers(self.classifierFile)
+        else:
+            self.classifiers = classifiers
+            
         if featureList is None:
             self.featureList = FeatureMgr.loadFeatureItemsFromFile(self.classifierFile)
+        else:
+            self.featureList = featureList
         
         self.isReady = True
     
@@ -246,12 +248,87 @@ class BatchOptions(object):
     del jobMachine.GLOBAL_WM
         """
     
-class BatchProcess(object):
+class BatchProcessCore(object):
     def __init__(self, batchOptions):
         self.batchOptions = batchOptions
         
+    def printStuff(self, stuff):
+        print stuff
+        
     def process(self):
-        for i, fileName in enumerate(self.batchOptions.fileList):
-            yield i
+        for i, filename in enumerate(self.batchOptions.fileList):
+            filename = str(filename)
+            try:
+                # input handle
+                theDataItem = dataImpex.DataImpex.importDataItem(filename, None)
+                
+                # output handle           
+                fw = h5py.File(str(filename) + '_processed.h5', 'w')
+                gw = fw.create_group("volume")
+                
+                if self.batchOptions.serializeProcessing:
+                    mpa = dataMgr.MultiPartDataItemAccessor(theDataItem, 128, 30)
+
+                    for blockNr in range(mpa.getBlockCount()):                       
+                        self.printStuff("Part " + str(blockNr) + "/" + str(mpa.getBlockCount()) + " " )
+                                                
+                        dm = dataMgr.DataMgr()
+                                        
+                        di = mpa.getDataItem(blockNr)
+                        dm.append(di, alreadyLoaded = True)
+                                  
+                        fm = dm.Classification.featureMgr      
+                        fm.setFeatureItems(self.batchOptions.featureList)
+                        
+        
+                        fm.prepareCompute(dm)
+                        fm.triggerCompute()
+                        fm.joinCompute(dm)
+        
+                        dm.module["Classification"]["classificationMgr"].classifiers = self.batchOptions.classifiers
+                        
+                        classificationPredict = classificationMgr.ClassifierPredictThread(dm)
+                        classificationPredict.start()
+                        classificationPredict.wait()
+
+                        dm[0].serialize(gw)
+                        self.printStuff(" done\n")
+                        
+                        del fm
+                        del dm
+                        gc.collect()
+                     
+                else: # non serialized
+                    dm = dataMgr.DataMgr()
+                    dm.append(theDataItem, True)                    
+    
+                    fm = dm.Classification.featureMgr      
+                    fm.setFeatureItems(self.batchOptions.featureList)
+    
+                    fm.prepareCompute(dm)
+                    fm.triggerCompute()
+                    fm.joinCompute(dm)
+    
+                    dm.module["Classification"]["classificationMgr"].classifiers = self.batchOptions.classifiers
+    
+                    classificationPredict = classificationMgr.ClassifierPredictThread(dm)
+                    classificationPredict.start()
+                    classificationPredict.wait()
+                    
+                    dm[0].serialize(gw)
+                    self.printStuff(" done\n")
+                    
+                    del fm
+                    del dm
+                    gc.collect()
+
+                fw.close()
+                    
+            except Exception, e:
+                print "Error: BatchProcessCore.proces() "
+                traceback.print_exc(file=sys.stdout)
+                print e
+
+            yield filename
         
 

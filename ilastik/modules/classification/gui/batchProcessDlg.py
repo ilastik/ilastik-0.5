@@ -26,7 +26,7 @@ from PyQt4 import QtCore, QtGui, uic
 import sys, gc
 
 import ilastik.gui.volumeeditor as ve
-from ilastik.modules.classification.core.batchProcess import BatchOptions
+from ilastik.modules.classification.core.batchProcess import BatchOptions, BatchProcessCore
 
 from ilastik.core import dataMgr
 from ilastik.gui.iconMgr import ilastikIcons
@@ -102,8 +102,8 @@ class BatchProcess(QtGui.QDialog):
 
     def slotProcess(self):
         # self.process(self.filenames)
-        outputDir = os.path.split(self.filenames[0])[0]
-        self.process(BatchOptions(outputDir, 'gui-moode', self.filenames))
+        outputDir = os.path.split(str(self.filenames[0]))[0]
+        self.process(BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames))
     
     
     def printStuff(self, stuff):
@@ -114,128 +114,19 @@ class BatchProcess(QtGui.QDialog):
         QtGui.QApplication.instance().processEvents()
                         
     def process(self, batchOptions):
-        classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
-        featureList = self.ilastik.project.dataMgr.Classification.featureMgr.featureItems
-        batchOptions.makeReady(classifiers, featureList)
-        for i in batchOptions.procss():
-            print i
-        """
         self.logger.clear()
         self.logger.setVisible(True)
+        
+        classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
+        featureList = self.ilastik.project.dataMgr.Classification.featureMgr.featureItems
+        batchOptions.setFeaturesAndClassifier(classifiers, featureList)
+        batchProcess = BatchProcessCore(batchOptions)
+        for i in batchProcess.process():
+            self.printStuff("Processing " + str(i) + "\n")
+        
+        """
   
-        #loop over provided images an put them in the hdf5
-        z = 0
-        allok = True
-        for filename in fileNames:
-            if filename[-3:] == ".h5":
-                try:
-                    self.printStuff("Processing " + str(filename) + "\n")
-                    
-                    fr = h5py.File(str(filename), 'r')
-                    dr = fr["volume/data"]
-                    mpa = dataMgr.MultiPartDataItemAccessor(DataAccessor(dr), 128, 30)
-                    
-    
-                    #save results            
-                    fw = h5py.File(str(filename) + '_processed.h5', 'w')
-                    gw = fw.create_group("volume")
-    
-                    for blockNr in range(mpa.getBlockCount()):
-                        
-                        self.printStuff("Part " + str(blockNr) + "/" + str(mpa.getBlockCount()) + " " )
-                                                
-                        dm = dataMgr.DataMgr()
-                                        
-                        di = mpa.getDataItem(blockNr)
-                        dm.append(di, alreadyLoaded = True)
-                                  
-                        fm = dm.Classification.featureMgr      
-                        #fm = featureMgr.FeatureMgr(dm)
-                        #cm = classificationMgr.ClassificationModuleMgr(dm)
-                        fm.setFeatureItems(self.ilastik.project.dataMgr.Classification.featureMgr.featureItems)
         
-                        gc.collect()
-        
-                        fm.prepareCompute(dm)
-                        fm.triggerCompute()
-                        fm.joinCompute(dm)
-        
-        
-                        dm.module["Classification"]["classificationMgr"].classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
-                        dm.module["Classification"]["labelDescriptions"] = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
-        
-                        classificationPredict = classificationMgr.ClassifierPredictThread(dm)
-                        classificationPredict.start()
-                        classificationPredict.wait()
-                        
-                        classificationPredict.generateOverlays()
-                        
-                        dm[0].serialize(gw)
-                        self.printStuff(" done\n")
-                                            
-                    fw.close()
-                    fr.close()
-                except Exception, e:
-                    print "######Exception"
-                    traceback.print_exc(file=sys.stdout)
-                    print e
-                    allok = False
-                    self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
-                    self.logger.appendPlainText("")      
-                                        
-            else: #other file extensions, e.g. .jpg, .tif etc
-                try:
-                    self.printStuff("Processing " + str(filename) + "\n")
-                    filename = str(filename)
-                    theDataItem = dataImpex.DataImpex.importDataItem(filename, None)
-                    if theDataItem is None:
-                        print "No _data item loaded"
-                    
-                    dm = dataMgr.DataMgr()
-                    dm.append(theDataItem, True)                    
-    
-                    #save results            
-                    fw = h5py.File(str(filename) + '_processed.h5', 'w')
-                    gw = fw.create_group("volume")
-
-                    fm = dm.Classification.featureMgr      
-                    #fm = featureMgr.FeatureMgr(dm)
-                    #cm = classificationMgr.ClassificationModuleMgr(dm)
-                    fm.setFeatureItems(self.ilastik.project.dataMgr.Classification.featureMgr.featureItems)
-    
-                    gc.collect()
-    
-                    fm.prepareCompute(dm)
-                    fm.triggerCompute()
-                    fm.joinCompute(dm)
-    
-    
-                    dm.module["Classification"]["classificationMgr"].classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
-                    dm.module["Classification"]["labelDescriptions"] = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
-    
-                    classificationPredict = classificationMgr.ClassifierPredictThread(dm)
-                    classificationPredict.start()
-                    classificationPredict.wait()
-                    
-                    classificationPredict.generateOverlays()
-                    
-                    dm[0].serialize(gw)
-                    self.printStuff(" done\n")
-
-                    fw.close()
-                    
-                except Exception, e:
-                    print "######Exception"
-                    traceback.print_exc(file=sys.stdout)
-                    print e
-                    allok = False
-                    self.logger.appendPlainText("Error processing file " + filename + ", " + str(e))
-                    self.logger.appendPlainText("")                
-            
-            
-        if allok:
-            self.printStuff("Batch processing finished")            
-            self.okButton.setEnabled(True)
         """
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:

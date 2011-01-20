@@ -12,7 +12,7 @@ from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.modules.classification.gui import *
-from ilastik.modules.classification.gui.batchProcess import BatchProcess
+from ilastik.modules.classification.gui.batchProcessDlg import BatchProcess
 
 from ilastik.gui import volumeeditor as ve
 
