@@ -5,7 +5,8 @@ ilastik.modules.loadModuleCores()
 from ilastik.core.volume import DataAccessor
 from ilastik.core import dataMgr
 from ilastik.modules.classification.core import featureMgr
-from ilastik.modules.classification.core import classificationMgr
+from ilastik.modules.classification.core.classificationMgr import ClassificationModuleMgr
+from ilastik.modules.classification.core.featureMgr import FeatureMgr
 from ilastik.core import  dataImpex
 
 from ilastik.gui import volumeeditor as ve
@@ -146,15 +147,20 @@ class BatchOptions(object):
         
         self.isReady = False
         
-    def makeReady(self):
+    def makeReady(self, classifiers=None, featureList=None):
         # get Classifers
+        if classifiers is None:
+            self.classifiers = ClassificationModuleMgr.importClassifiers(self.classifierFile)
+        if featureList is None:
+            self.featureList = FeatureMgr.loadFeatureItemsFromFile(self.classifierFile)
         
-            
-
-
-if __name__=="__main__":
-    # load options: past session, image to classify, group name and sigma list
-    initialFile = ""
+        self.isReady = True
+    
+    @classmethod
+    def __initFromJSon(cls, jsonFile):
+        return cls('','',(1,2,3))
+        """
+        initialFile = ""
     images = ""
     groupNames = []
     sigmaVals = []
@@ -238,6 +244,14 @@ if __name__=="__main__":
         gc.collect()
 
     del jobMachine.GLOBAL_WM
-
-
+        """
+    
+class BatchProcess(object):
+    def __init__(self, batchOptions):
+        self.batchOptions = batchOptions
+        
+    def process(self):
+        for i, fileName in enumerate(self.batchOptions.fileList):
+            yield i
+        
 

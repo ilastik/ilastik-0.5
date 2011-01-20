@@ -26,6 +26,7 @@ from PyQt4 import QtCore, QtGui, uic
 import sys, gc
 
 import ilastik.gui.volumeeditor as ve
+from ilastik.modules.classification.core.batchProcess import BatchOptions
 
 from ilastik.core import dataMgr
 from ilastik.gui.iconMgr import ilastikIcons
@@ -100,7 +101,9 @@ class BatchProcess(QtGui.QDialog):
         self.filesView.clear()
 
     def slotProcess(self):
-        self.process(self.filenames)
+        # self.process(self.filenames)
+        outputDir = os.path.split(self.filenames[0])[0]
+        self.process(BatchOptions(outputDir, 'gui-moode', self.filenames))
     
     
     def printStuff(self, stuff):
@@ -110,7 +113,13 @@ class BatchProcess(QtGui.QDialog):
         self.logger.repaint()
         QtGui.QApplication.instance().processEvents()
                         
-    def process(self, fileNames):
+    def process(self, batchOptions):
+        classifiers = self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
+        featureList = self.ilastik.project.dataMgr.Classification.featureMgr.featureItems
+        batchOptions.makeReady(classifiers, featureList)
+        for i in batchOptions.procss():
+            print i
+        """
         self.logger.clear()
         self.logger.setVisible(True)
   
@@ -227,7 +236,7 @@ class BatchProcess(QtGui.QDialog):
         if allok:
             self.printStuff("Batch processing finished")            
             self.okButton.setEnabled(True)
-        
+        """
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
             return  self.image

@@ -249,7 +249,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
         
         classifiers = []
         for cid in temp:
-            classifiers.append(defaultRF.ClassifierRandomForest.deserialize(fileName, 'classifiers/' + cid))   
+            classifiers.append(defaultRF.ClassifierRandomForest.loadRFfromFile(fileName, 'classifiers/' + cid))   
         return classifiers
           
     def serialize(self, h5G):

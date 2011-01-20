@@ -35,6 +35,7 @@ from ilastik.core.utilities import irange
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
+import h5py
 
 import copy
 import traceback
@@ -126,6 +127,14 @@ class FeatureMgr():
             featureItems.append(FeatureBase.deserialize(fgrp))
         
         self.setFeatureItems(featureItems)
+        
+    def loadFeatureItemsFromFile(self, fileName):
+        featureItems = []
+        f = h5py.File(fileName,'r')
+        for fgrp in f['features'].values():
+            featureItems.append(FeatureBase.deserialize(fgrp))
+            
+        return featureItems
 
     
     def prepareCompute(self, dataMgr):
