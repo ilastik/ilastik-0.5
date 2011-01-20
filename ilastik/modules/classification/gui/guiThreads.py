@@ -151,7 +151,7 @@ class ClassificationInteractive(object):
             #create Overlay for _prediction if not there:
             if activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] is None:
                 data = numpy.zeros(activeImage.shape[0:-1] + (1,), 'float32')
-                ov = overlayMgr.OverlayItem(activeImage, data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
+                ov = overlayMgr.OverlayItem(data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                 activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
             ov = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
@@ -161,7 +161,7 @@ class ClassificationInteractive(object):
         #create Overlay for uncertainty:
         if activeImage.overlayMgr["Classification/Uncertainty"] is None:
             data = numpy.zeros(activeImage.shape[0:-1] + (1,), 'float32')
-            ov = overlayMgr.OverlayItem(activeImage, data, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
+            ov = overlayMgr.OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
             activeImage.overlayMgr["Classification/Uncertainty"] = ov
 
         if len(foregrounds) > 1:

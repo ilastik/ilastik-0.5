@@ -51,7 +51,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
         #create SeedsOverlay
-        ov = OverlayItem(self.ilastik._activeImage, self.ilastik._activeImage.Interactive_Segmentation.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage.Interactive_Segmentation.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        ov = OverlayItem(self.ilastik._activeImage.Interactive_Segmentation.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage.Interactive_Segmentation.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = ov
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
 
@@ -81,7 +81,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                 else:
                     if theDataItem.shape[0:-1] == activeItem.shape[0:-1]:
                         data = theDataItem[:,:,:,:,:]
-                        ov = OverlayItem(activeItem, data, color = QtGui.QColor(0,0,255), alpha = 0.5, colorTable = None, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
+                        ov = OverlayItem(data, color = QtGui.QColor(0,0,255), alpha = 0.5, colorTable = None, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
                         activeItem.overlayMgr["Segmentation/Done"] = ov
                     else:
                         print "Cannot add " + theDataItem.fileName + " due to dimensionality mismatch"
@@ -268,7 +268,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                     #create Old Overlays if not there
                     shape = self.ilastik._activeImage.shape
                     data = DataAccessor(numpy.zeros((shape), numpy.uint8))
-                    ov = OverlayItem(self.ilastik._activeImage, data, color = QtGui.QColor(0,0,255), alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
+                    ov = OverlayItem(data, color = QtGui.QColor(0,0,255), alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
                     self.ilastik._activeImage.overlayMgr["Segmentation/Done"] = ov
                 data = ov[0,:,:,:,:]
                 seg = ovs[0,:,:,:,:]
@@ -368,7 +368,7 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem, activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
+            ov = OverlayItem(activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem.Interactive_Segmentation.segmentation)
@@ -414,7 +414,7 @@ class Segmentation2D(object):
         ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]
         if ov is None:
             zerod = numpy.zeros(dataItem.shape[0:-1], numpy.uint8)
-            ov = OverlayItem(dataItem, zerod, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
+            ov = OverlayItem(zerod, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         
         ov[0,:,:,zValue,0] = segmentation[:,:,0,0]

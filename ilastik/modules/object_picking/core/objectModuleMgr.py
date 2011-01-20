@@ -36,9 +36,9 @@ from ilastik.core.overlayMgr import OverlayItem
 
 
 class ObjectOverlayItem(OverlayItem):
-    def __init__(self, dataitemImage, objectListWidget, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
+    def __init__(self, objectListWidget, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
         self.objectListWidget = objectListWidget
-        OverlayItem.__init__(self, dataitemImage, data, color, alpha, autoAdd, autoVisible,  linkColorTable, autoAlphaChannel, min, max)
+        OverlayItem.__init__(self, data, color, alpha, autoAdd, autoVisible,  linkColorTable, autoAlphaChannel, min, max)
         
     def getColorTab(self):
         return self.objectListWidget.getColorTab()

@@ -273,7 +273,7 @@ class DataImpex(object):
                 alpha = pickle.loads(dataset.attrs["overlayAlpha"])
                 
             if data.shape[0:-1] == dataItem.shape[0:-1]:
-                ov = OverlayItem(dataItem, data, color = color, alpha = alpha, colorTable = colorTable, autoAdd = autoAdd, autoVisible = autoVisible, min = omin, max = omax)
+                ov = OverlayItem(data, color = color, alpha = alpha, colorTable = colorTable, autoAdd = autoAdd, autoVisible = autoVisible, min = omin, max = omax)
                 ov.key = key
                 dataItem.overlayMgr["File Overlays/"+ov.key] = ov            
                 return ov

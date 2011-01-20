@@ -129,7 +129,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         
         
         #create background overlay
-        ov = OverlayItem(self.ilastik._activeImage, self.ilastik._activeImage._dataVol.background._data, color=0, alpha=1.0, colorTable = self.ilastik._activeImage._dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
+        ov = OverlayItem(self.ilastik._activeImage._dataVol.background._data, color=0, alpha=1.0, colorTable = self.ilastik._activeImage._dataVol.background.getColorTab(), autoAdd = True, autoVisible = True, linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Connected Components/Background"] = ov
         ov = self.ilastik._activeImage.overlayMgr["Connected Components/Background"]
         

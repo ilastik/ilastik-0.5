@@ -151,9 +151,8 @@ class OverlayItem(object):
     A Item that holds some scalar or multichannel _data and their drawing related settings.
     OverlayItems are held by the OverlayMgr
     """
-    def __init__(self, dataItemImage, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
+    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
         self._data = DataAccessor(data)
-        self.dataItemImage = dataItemImage
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
         self.defaultColor = color
@@ -170,6 +169,7 @@ class OverlayItem(object):
         self.references = []
         self.min = min
         self.max = max
+        self.overlayMgr = None
 
     def __getitem__(self, args):
         return self._data[args]
@@ -184,6 +184,8 @@ class OverlayItem(object):
             return self._data.dtype
         elif name == "shape":
             return self._data.shape
+        elif name == "dataItemImage":
+            return self.overlayMgr.dataItem
         else:
             raise AttributeError, name
 
@@ -225,7 +227,8 @@ class OverlayItem(object):
 
 
     def changeKey(self, newKey):
-        self.dataItemImage.overlayMgr.changeKey(self.key, newKey)
+        if self.overlayMgr is not None:
+            self.overlayMgr.changeKey(self.key, newKey)
         
     def setData(self,  data):
         self.overlayItem._data = data
@@ -242,12 +245,18 @@ class OverlayMgr():
     OverlayItems that have the autoAdd Property set to True are immediately added to the currently
     visible overlayWidget
     """
-    def __init__(self,  dataMgr, ilastik = None):
+    def __init__(self,  dataItem, ilastik = None):
         self._dict = {}
         self.ilastik = ilastik
-        self.dataMgr = dataMgr
+        self.dataItem = dataItem
         self.currentModuleName = ""
         
+    def __getattr__(self,name):
+        if name == "dataMgr":
+            return self.dataItem.dataMgr
+        elif name == "dataItemImage":
+            return self.dataItem
+    
     def remove(self,  key):
         it = self._dict.pop(key,  None)
         if it != None:
@@ -257,6 +266,7 @@ class OverlayMgr():
             
     def __setitem__(self,  key,  value):
         itemNew = False
+        value.overlayMgr = self
         if issubclass(value.__class__,  OverlayItem):
             if not self._dict.has_key(key):
                 #set the name of the overlayItem to the last part of the key

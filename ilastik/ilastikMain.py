@@ -485,7 +485,7 @@ class UnsupervisedDecomposition(object):
                 data2 = 255/dmax*data2
                 data2 = data2.astype(numpy.uint8)
                 
-                ov = OverlayItem(self.parent._activeImage, data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+                ov = OverlayItem(data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname + " component %d" % (o+1)] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname]._data = DataAccessor(self.ud.result)
