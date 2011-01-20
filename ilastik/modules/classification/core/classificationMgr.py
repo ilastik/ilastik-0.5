@@ -751,9 +751,10 @@ class ClassifierInteractiveThread(ThreadBase):
     def classifierListFull(self):
         return self.numberOfClassifiers == len(self.classifiers)
     
-    def trainClassifier(self, F, L):
-        classifier = self.classifier(*self.classifierOptions)
-        classifier.train(F, L, True) # is interactive
+    def trainClassifier(self, F, L, workerNumber, numWorkers):
+        classifier = self.classifier()
+        classifier.setWorker(workerNumber, numWorkers)
+        classifier.train(F, L, True) # is interactive        
         self.classifiers.append(classifier)
 
 
@@ -796,7 +797,7 @@ class ClassifierInteractiveThread(ThreadBase):
                             #self.classifiers = deque()
                             jobs = []
                             for i in range(self.numberOfClassifiers):
-                                job = jobMachine.IlastikJob(ClassifierInteractiveThread.trainClassifier, [self, features, labels])
+                                job = jobMachine.IlastikJob(ClassifierInteractiveThread.trainClassifier, [self, features, labels, i, self.numberOfClassifiers])
                                 jobs.append(job)
                             self.jobMachine.process(jobs)                        
                         else:
