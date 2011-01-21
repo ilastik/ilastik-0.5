@@ -737,9 +737,9 @@ class VolumeEditor(QtGui.QWidget):
             tempoverlays = []   
             for index, item in enumerate(reversed(self.overlayWidget.overlays)):
                 if item.visible:
-                    tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, 0)) 
+                    tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, item.channel)) 
             if len(self.overlayWidget.overlays) > 0:
-                tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.selectedChannel)
+                tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.overlays[-1].channel)
             else:
                 tempImage = None
 #            if self.labelWidget.volumeLabels is not None:
@@ -837,6 +837,11 @@ class VolumeEditor(QtGui.QWidget):
         self.changeSlice(num, 2)
 
     def setChannel(self, channel):
+        if len(self.overlayWidget.overlays) > 0:
+            ov = self.overlayWidget.overlays[-1]
+            if ov.shape[-1] == self.image.shape[-1]:
+                self.overlayWidget.overlays[-1].channel = channel
+            
         self.selectedChannel = channel
         for i in range(3):
             self.changeSlice(self.selSlices[i], i)
@@ -871,7 +876,7 @@ class VolumeEditor(QtGui.QWidget):
 
         for index, item in enumerate(reversed(self.overlayWidget.overlays)):
             if item.visible:
-                tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, 0)) 
+                tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, item.channel)) 
         
         if len(self.overlayWidget.overlays) > 0:
             tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
