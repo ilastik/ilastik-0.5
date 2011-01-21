@@ -44,7 +44,7 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setLabelWidget(self.objectLabels)
         
         #create ObjectsOverlay
-        ov = ObjectOverlayItem(self.ilastik._activeImage, self.objectLabels, self.ilastik._activeImage.Object_Picking.objects._data, color = 0, alpha = 1.0, autoAdd = True, autoVisible = True,  linkColorTable = True)
+        ov = ObjectOverlayItem(self.objectLabels, self.ilastik._activeImage.Object_Picking.objects._data, color = 0, alpha = 1.0, autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Objects/Selection"] = ov
         ov = self.ilastik._activeImage.overlayMgr["Objects/Selection"]
         

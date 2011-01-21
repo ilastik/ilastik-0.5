@@ -79,7 +79,7 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
             self.initFromVolumeLabels(volumeLabels)
         else:
             self.addLabel("Background", 1, self.labelColorTable[0])
-        self.overlayItem = OverlayItem(self.volumeEditor.ilastik._activeImage, self.labelMgr.background._data)    
+        self.overlayItem = OverlayItem(self.labelMgr.background._data)    
     def currentItem(self):
         return self.listWidget.currentItem()
     

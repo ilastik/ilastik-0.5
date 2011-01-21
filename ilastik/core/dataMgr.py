@@ -253,8 +253,10 @@ class DataItemImage(DataItemBase):
         self._writeBegin = (0,0,0)
         self._writeEnd = (0,0,0)
         
-        self.overlayMgr = overlayMgr.OverlayMgr(None)
+        self.overlayMgr = overlayMgr.OverlayMgr(self)
 
+        self.dataMgr = None        
+        
         self.initModules()
     
     def initModules(self):
@@ -334,7 +336,7 @@ class DataItemImage(DataItemBase):
                     print "couldn't serialize something"
                     
     def updateOverlays(self):
-        ov = overlayMgr.OverlayItem(self, self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False, min = 0, max = 255)
+        ov = overlayMgr.OverlayItem(self._dataVol._data, color = QtGui.QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False, min = 0, max = 255)
         self.overlayMgr["Raw Data"] = ov
 
 
@@ -425,6 +427,9 @@ class DataMgr():
         self._currentModuleName = oldModuleName
     
     def append(self, dataItem, alreadyLoaded=False):
+
+        dataItem.dataMgr = self
+        
         if alreadyLoaded == False:
             try:
                 dataItem.loadFromFile()
