@@ -138,7 +138,7 @@ class BatchOptions(object):
         self.writeSegmentation = False
         self.writeHDF5 = True
         self.writeImages = False
-        self.serializeProcessing = False
+        self.serializeProcessing = True
         
         self.featureList = None
         self.classifiers = None
