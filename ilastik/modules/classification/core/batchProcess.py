@@ -210,8 +210,8 @@ class BatchProcessCore(object):
                     mpa = dataMgr.MultiPartDataItemAccessor(theDataItem, 128, 30)
 
                     for blockNr in range(mpa.getBlockCount()):                       
-                        self.printStuff("Part " + str(blockNr) + "/" + str(mpa.getBlockCount()) + " " )
-                                                
+
+                        yield "Block " + str(blockNr)+1 + "/" + str(mpa.getBlockCount())                        
                         dm = dataMgr.DataMgr()
                                         
                         di = mpa.getDataItem(blockNr)
