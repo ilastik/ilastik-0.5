@@ -142,6 +142,7 @@ class BatchProcess(QtGui.QDialog):
         batchProcess = BatchProcessCore(batchOptions)
         for i in batchProcess.process():
             self.printStuff("Finished: " + str(i) + "\n")
+        self.okButton.setEnabled(True)
 
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:

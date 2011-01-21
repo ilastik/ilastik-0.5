@@ -195,6 +195,22 @@ class BatchProcessCore(object):
     def printStuff(self, stuff):
         print stuff
         
+    def writeSegmentationToDish(self):
+        """
+        to be implemented
+        take care that also single files and/or hdf5 output should be supported
+        """
+        
+    def writeFeaturesToDish(self):
+        """
+        to be implemented
+        """
+        
+    def writePredictionToDish(self):
+        """
+        to be implemented
+        """
+        
     def process(self):
         for i, filename in enumerate(self.batchOptions.fileList):
             try:
@@ -211,7 +227,7 @@ class BatchProcessCore(object):
 
                     for blockNr in range(mpa.getBlockCount()):                       
 
-                        yield "Block " + str(blockNr)+1 + "/" + str(mpa.getBlockCount())                        
+                        yield "Block " + str(blockNr +1 ) + "/" + str(mpa.getBlockCount())                        
                         dm = dataMgr.DataMgr()
                                         
                         di = mpa.getDataItem(blockNr)
@@ -271,15 +287,40 @@ class BatchProcessCore(object):
 
             yield filename
 
-if __name__ == "__main__":   
+if __name__ == "__main__": 
+    if len(sys.argv) == 1:
+        print """ Usage: --config_file=<json-file>
+                  
+                  The json file should look like this:
+                  
+                {
+                    "output_dir" : "<abs path output dir>",
+                    "session" : "<abs path to your classifier or project file>",
+                    "images" : [
+                        { "name" : "<abs path to your file1>"},
+                        { "name" : "<abs path to your file1>"}
+                    ]
+                }
+                """
+        sys.exit()
+        
+                
+      
     try:
         opts, args = getopt.getopt(sys.argv[1:], "", ["config_file="])
-        for o, a in opts:
-            if o in ("--config_file"):
-                jsonFile = str(a)
+        print opts
+        print args
+        if len(opts) == 0:
+            raise(IOError("Usage: --config_file=<json-file>"))
+            
+        o, a = opts[0]
+        if o != "--config_file":
+            raise(IOError("Usage: --config_file=<json-file>"))
+        else:
+            jsonFile = str(a)
 
     except getopt.GetoptError, err:
-        print str(err)
+        raise(IOError(err))
         sys.exit()
         
     batchOptions = BatchOptions.initFromJSon(jsonFile)
