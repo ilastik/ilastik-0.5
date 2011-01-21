@@ -176,11 +176,8 @@ class BatchOptions(object):
             raise RuntimeError("initFromJSon(): No images provided in json file")
         fileList = []
         for image in images:
-            fileList.append(image.get("name", None))
+            fileList.append(str(image.get("name", None)))
     
-        inputDir = json_input.get("input_dir", None)
-        if inputDir is not None:
-            inputDir = str(inputDir) 
             
         outputDir = json_input.get("output_dir", None)
         if outputDir is not None:

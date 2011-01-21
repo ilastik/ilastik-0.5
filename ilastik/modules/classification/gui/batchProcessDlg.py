@@ -52,6 +52,10 @@ class BatchProcess(QtGui.QDialog):
         self.outputDir = QtGui.QLineEdit("")
         self.writeSegmentation = QtGui.QCheckBox("Write segmentation")
         self.writeFeatures = QtGui.QCheckBox("Write features")
+        
+        self.writeSegmentation.setEnabled(False)
+        self.writeFeatures.setEnabled(False)
+        
         self.serializeProcessing = QtGui.QCheckBox("Blockwise processing (saves memory)")
         self.serializeProcessing.setCheckState(False)
         
@@ -114,7 +118,11 @@ class BatchProcess(QtGui.QDialog):
 
     def slotProcess(self):
         outputDir = os.path.split(str(self.filenames[0]))[0]
-        self.process(BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames))
+        bo = BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames)
+        bo.writeFeatures = self.writeFeatures.isChecked()
+        bo.writeSegmentation = self.writeSegmentation.isChecked()
+        bo.serializeProcessing = self.serializeProcessing.isChecked()
+        self.process(bo)
     
     
     def printStuff(self, stuff):
