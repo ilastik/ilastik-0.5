@@ -1255,6 +1255,9 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
                                     else:
                                         #raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
+                                        # TODO: Workaround: tried to fix the problem
+                                        # with the segmentation display, somehow it arrieves
+                                        # here in float32
                                         print TypeError(str(olditemdata.dtype) + ': unsupported dtype of overlay in ImageSceneRenderThread.run()')
                                         continue
                                    
