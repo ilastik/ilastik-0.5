@@ -127,8 +127,7 @@ class MainBatch():
             
             
 class BatchOptions(object):
-    def __init__(self, inputDir, outputDir, classifierFile, fileList):
-        self.inputDir = inputDir
+    def __init__(self, outputDir, classifierFile, fileList):
         self.outputDir = outputDir
         self.classifierFile = classifierFile
         self.fileList = fileList
@@ -187,7 +186,7 @@ class BatchOptions(object):
         if outputDir is not None:
             outputDir = str(outputDir)
             
-        return BatchOptions(inputDir, outputDir, classifierFile, fileList)
+        return BatchOptions(outputDir, classifierFile, fileList)
 
     
 
@@ -201,9 +200,9 @@ class BatchProcessCore(object):
         
     def process(self):
         for i, filename in enumerate(self.batchOptions.fileList):
-            filename = self.batchOptions.inputDir + str(filename)
             try:
                 # input handle
+                
                 theDataItem = dataImpex.DataImpex.importDataItem(filename, None)
                 
                 # output handle           

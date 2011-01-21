@@ -34,7 +34,7 @@ from ilastik.core.volume import DataAccessor
 from ilastik.core import  dataImpex
 from ilastik.modules.classification.core import featureMgr
 from ilastik.modules.classification.core import classificationMgr
-from ilastik.modules.classification.core import classificationMgr
+
 
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -48,6 +48,12 @@ class BatchProcess(QtGui.QDialog):
 
         self.filesView = QtGui.QListWidget()
         self.filesView.setMinimumHeight(300)
+        
+        self.outputDir = QtGui.QLineEdit("")
+        self.writeSegmentation = QtGui.QCheckBox("Write segmentation")
+        self.writeFeatures = QtGui.QCheckBox("Write features")
+        self.serializeProcessing = QtGui.QCheckBox("Blockwise processing (saves memory)")
+        self.serializeProcessing.setCheckState(False)
         
         self.pathButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel), "Add to selection")
         self.clearSelectionBtn = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.RemSel), "Clear all")
@@ -64,6 +70,9 @@ class BatchProcess(QtGui.QDialog):
         
         self.layout.addLayout(tempLayout)
         self.layout.addWidget(self.filesView)
+        self.layout.addWidget(self.writeFeatures)
+        self.layout.addWidget(self.writeSegmentation)
+        self.layout.addWidget(self.serializeProcessing)
 
 
         tempLayout = QtGui.QHBoxLayout()
@@ -92,9 +101,9 @@ class BatchProcess(QtGui.QDialog):
 
     def slotDir(self):
         selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "HDF5 (*.h5);; Images (*.jpg *.tiff *.tif *.png *.jpeg)")
+        
         for s in selection:
-            pureFile = os.path.split(str(s))[1] 
-            self.filenames.append(pureFile)
+            self.filenames.append(str(s))
             
         for f in selection:
             self.filesView.addItem(f)
@@ -104,10 +113,8 @@ class BatchProcess(QtGui.QDialog):
         self.filesView.clear()
 
     def slotProcess(self):
-        # self.process(self.filenames)
         outputDir = os.path.split(str(self.filenames[0]))[0]
-
-        self.process(BatchOptions(outputDir, outputDir, 'gui-mode-no-file-name-needed', self.filenames))
+        self.process(BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames))
     
     
     def printStuff(self, stuff):
@@ -126,12 +133,8 @@ class BatchProcess(QtGui.QDialog):
         batchOptions.setFeaturesAndClassifier(classifiers, featureList)
         batchProcess = BatchProcessCore(batchOptions)
         for i in batchProcess.process():
-            self.printStuff("Processing " + str(i) + "\n")
-        
-        """
-  
-        
-        """
+            self.printStuff("Finished: " + str(i) + "\n")
+
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
             return  self.image
