@@ -5,10 +5,8 @@ import os
 from overlaySelectionDlg import OverlaySelectionDialog
 
 
-from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
+from ilastik.core.volume import DataAccessor,  VolumeLabels, VolumeLabelDescription
 from ilastik.core.overlayMgr import OverlayMgr,  OverlayItem, OverlaySlice
-from ilastik.core.volume import DataAccessor, Volume, VolumeLabels, VolumeLabelDescription
-
 
 from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
 from enthought.traits.ui.api import View, Item, Group
