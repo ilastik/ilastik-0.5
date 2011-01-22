@@ -61,7 +61,10 @@ from shortcutmanager import *
 from ilastik.gui.overlayWidget import OverlayListWidget
 import ilastik.gui.exportDialog as exportDialog
 
-from ilastik.gui.iconMgr import ilastikIcons 
+from ilastik.gui.iconMgr import ilastikIcons
+
+from ilastik.gui.view3d import OverviewScene
+
 # Local import
 #from spyderlib.config import get_icon, get_font
 
@@ -367,7 +370,6 @@ class VolumeEditor(QtGui.QWidget):
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
             
-            
         self.grid.addWidget(self.overview, 1, 1)
         
         self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
@@ -615,6 +617,16 @@ class VolumeEditor(QtGui.QWidget):
     def toggleFullscreenZ(self):
         self.maximizeSliceView(2)
 
+    def toggleFullscreen3D(self):
+        v = [self.imageScenes[i].isVisible() for i in range(3)]
+        
+        if any(v):
+            for i in range(3):
+                self.imageScenes[i].setVisible(False)
+        else:
+            for i in range(3):
+                self.imageScenes[i].setVisible(True)
+
     def maximizeSliceView(self, axis):
         if self.image.shape[1] > 1:
             visible = True
@@ -626,6 +638,7 @@ class VolumeEditor(QtGui.QWidget):
                 for i in a:
                     self.imageScenes[i].setVisible(False)
                 self.imageScenes[axis].setVisible(True)
+                self.overview.setVisible(False)
             else:
                 if self.imageScenes[axis].isVisible():
                     for i in a:
@@ -634,7 +647,8 @@ class VolumeEditor(QtGui.QWidget):
                     for i in a:
                         self.imageScenes[i].setVisible(False)
                     self.imageScenes[axis].setVisible(True)
-                    
+                self.overview.setVisible(True)
+                
             self.imageScenes[axis].setFocus()
             for i in a:
                 self.imageScenes[i].setImageSceneFullScreenLabel()
@@ -2197,7 +2211,7 @@ class OverviewSceneDummy(QtGui.QWidget):
     def redisplay(self):
         pass
     
-class OverviewScene(QtOpenGL.QGLWidget):
+class OverviewSceneOld(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
         QtOpenGL.QGLWidget.__init__(self, shareWidget = parent.sharedOpenGLWidget)
         self.sceneShape = shape
