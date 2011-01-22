@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+.swp.*
 *.backup
 nbproject
 *~
