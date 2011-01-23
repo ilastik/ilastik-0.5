@@ -3,14 +3,49 @@ from vtk import vtkRenderer, vtkConeSource, vtkPolyDataMapper, vtkActor, \
                 vtkObject, vtkPNGReader, vtkImageActor, QVTKWidget, \
                 vtkRenderWindow, vtkOrientationMarkerWidget, vtkAxesActor, \
                 vtkTransform, vtkPolyData, vtkPoints, vtkCellArray, \
-                vtkTubeFilter
-                
+                vtkTubeFilter, vtkQImageToImageSource, vtkImageImport, \
+                vtkDiscreteMarchingCubes, vtkWindowedSincPolyDataFilter, \
+                vtkMaskFields, vtkGeometryFilter, vtkThreshold, vtkDataObject, \
+                vtkDataSetAttributes, vtkCutter, vtkPlane, vtkPropAssembly
+
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 from PyQt4.QtCore import SIGNAL
                 
 import qimage2ndarray
 
-class SlicingPlanesWidget(vtkObject):
+def toVtkImageData(a):
+    importer = vtkImageImport()
+    importer.SetDataScalarTypeToUnsignedChar()
+    importer.SetDataExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
+    importer.SetWholeExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
+    importer.SetImportVoidPointer(a)
+    importer.Update()
+    return importer.GetOutput()
+
+class Outliner(vtkPropAssembly):
+    def __init__(self, mesh):
+        self.cutter = vtkCutter()
+        self.cutter.SetCutFunction(vtkPlane())
+        self.tubes = vtkTubeFilter()
+        self.tubes.SetInputConnection(self.cutter.GetOutputPort())
+        self.tubes.SetRadius(1)
+        self.tubes.SetNumberOfSides(8)
+        self.tubes.CappingOn()
+        self.mapper = vtkPolyDataMapper()
+        self.mapper.SetInputConnection(self.tubes.GetOutputPort())
+        self.actor = vtkActor()
+        self.actor.SetMapper(self.mapper)
+        self.cutter.SetInput(mesh)
+        self.AddPart(self.actor)
+    
+    def GetOutlineProperty(self):
+        return self.actor.GetProperty()
+        
+    def SetPlane(self, plane):
+        self.cutter.SetCutFunction(plane)
+        self.cutter.Update()
+
+class SlicingPlanesWidget(vtkPropAssembly):
     def __init__(self, dataShape):
         self.dataShape = dataShape
         self.planes = []
@@ -59,7 +94,30 @@ class SlicingPlanesWidget(vtkObject):
             pw.AddObserver("InteractionEvent", self.planesCallback)
             
             self.planes.append(pw)
+            
+        tubes = vtkTubeFilter()
+        tubes.SetNumberOfSides(16)
+        tubes.SetInput(self.cross)
+        tubes.SetRadius(1.0)
+        
+        crossMapper = vtkPolyDataMapper()
+        crossMapper.SetInput(self.cross)
+        crossActor = vtkActor()
+        crossActor.SetMapper(crossMapper)
+        crossActor.GetProperty().SetColor(0,0,0)
+        self.AddPart(crossActor)
     
+    def Plane(self, axis):
+        p = vtkPlane()
+        self.planes[axis].GetRepresentation().GetPlane(p)
+        return p
+    def PlaneX(self):
+        return self.Plane(0)
+    def PlaneY(self):
+        return self.Plane(1)
+    def PlaneZ(self):
+        return self.Plane(2)
+        
     def ShowPlaneWidget(self, axis, show):
         self.planes[axis].SetEnabled(show)
     
@@ -71,19 +129,6 @@ class SlicingPlanesWidget(vtkObject):
         for i in range(3):
             self.planes[i].SetInteractor(interactor)
             self.planes[i].On()
-            
-    def SetRenderer(self, renderer):
-        tubes = vtkTubeFilter()
-        tubes.SetNumberOfSides(16)
-        tubes.SetInput(self.cross)
-        tubes.SetRadius(1.0)
-        
-        crossMapper = vtkPolyDataMapper()
-        crossMapper.SetInput(self.cross)
-        crossActor = vtkActor()
-        crossActor.SetMapper(crossMapper)
-        crossActor.GetProperty().SetColor(0,0,0)
-        renderer.AddActor(crossActor)
     
     def GetCoordinate(self):
         return self.coordinate
@@ -115,13 +160,19 @@ class SlicingPlanesWidget(vtkObject):
             self.InvokeEvent("CoordinatesEvent")
         
 class OverviewScene(QWidget):
-    def slicingCallback(self, obj, event):
+    def slicingCallback(self, obj, event):        
         newCoordinate = obj.GetCoordinate()
-        oldCoordinate = self.volumeEditor.selSlices
+        oldCoordinate = [-1,-1,-1]
+        if self.volumeEditor:
+            oldCoordinate = self.volumeEditor.selSlices
         
         for i in range(3):
             if newCoordinate[i] != oldCoordinate[i]:
-                self.volumeEditor.changeSlice(int(newCoordinate[i]), i)
+                if self.volumeEditor:
+                    self.volumeEditor.changeSlice(int(newCoordinate[i]), i)
+                print "update", i
+                self.cutter[i].SetPlane(self.planes.Plane(i))
+        self.qvtk.update()
     
     def ShowPlaneWidget(self, axis, show):
         self.planes.ShowPlane(axis, show)
@@ -139,6 +190,11 @@ class OverviewScene(QWidget):
     
     def __init__(self, parent, shape):
         super(OverviewScene, self).__init__(parent)
+        
+        self.sceneShape = shape
+        self.volumeEditor = parent
+        self.sceneItems = []
+        self.cutter = 3*[None]
         
         layout = QVBoxLayout()
         self.qvtk = QVTKWidget()
@@ -159,18 +215,14 @@ class OverviewScene(QWidget):
         hbox.addWidget(b4)
         layout.addLayout(hbox)
         
-        self.connect(b4, SIGNAL("clicked()"), parent.toggleFullscreen3D)
+        if self.volumeEditor:
+            self.connect(b4, SIGNAL("clicked()"), parent.toggleFullscreen3D)
         
-        self.sceneShape = shape
-        self.volumeEditor = parent
-        self.images = parent.imageScenes
-        self.sceneItems = []
-        
-        ren = vtkRenderer()
-        ren.SetBackground(1,1,1)
+        self.renderer = vtkRenderer()
+        self.renderer.SetBackground(1,1,1)
 
         win2 = vtkRenderWindow()
-        win2.AddRenderer(ren)
+        win2.AddRenderer(self.renderer)
         self.qvtk.SetRenderWindow(win2)
 
         renwin = self.qvtk.GetRenderWindow()
@@ -180,6 +232,7 @@ class OverviewScene(QWidget):
 
         self.planes.AddObserver("CoordinatesEvent", self.slicingCallback)
         
+        ## Add RGB arrow axes
         self.axes = vtkAxesActor();
         self.axes.AxisLabelsOff()
         self.axes.SetTotalLength(0.5*shape[0], 0.5*shape[1], 0.5*shape[2])
@@ -187,18 +240,108 @@ class OverviewScene(QWidget):
         #transform = vtkTransform()
         #transform.Translate(-0.125*shape[0], -0.125*shape[1], -0.125*shape[2])
         #self.axes.SetUserTransform(transform)
-        ren.AddActor(self.axes)
-            
+        self.renderer.AddActor(self.axes)
+        
         self.connect(b1, SIGNAL("clicked()"), self.TogglePlaneWidgetX)
         self.connect(b2, SIGNAL("clicked()"), self.TogglePlaneWidgetY)
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
         
-        self.planes.SetRenderer(ren)
-        ren.ResetCamera() 
+        #self.planes.SetRenderer(self.renderer)
+        self.renderer.AddActor(self.planes)
+        self.renderer.ResetCamera() 
     
     def display(self, axis):
-        self.planes.SetCoordinate(self.volumeEditor.selSlices)
+        if self.volumeEditor:
+            self.planes.SetCoordinate(self.volumeEditor.selSlices)
         self.qvtk.update()
             
     def redisplay(self):
         self.qvtk.update()
+        
+    def DisplayObjectMeshes(self, v):
+        #
+        # SEE
+        # http://www.vtk.org/Wiki/VTK/Examples/Cxx/Medical/GenerateModelsFromLabels
+        #
+        
+        vol = toVtkImageData(v)
+        
+        #histogram = vtkImageAccumulate()
+        discreteCubes = vtkDiscreteMarchingCubes()
+        smoother = vtkWindowedSincPolyDataFilter()
+        selector = vtkThreshold()
+        scalarsOff = vtkMaskFields()
+        geometry = vtkGeometryFilter()
+
+        #http://www.vtk.org/Wiki/VTK/Examples/Cxx/Medical/GenerateModelsFromLabels
+        startLabel = 2
+        endLabel = 2
+        smoothingIterations = 15
+        passBand = 0.001
+        featureAngle = 120.0
+
+        discreteCubes.SetInput(vol)
+        discreteCubes.GenerateValues(endLabel-startLabel+1, startLabel, endLabel)
+
+        smoother.SetInput(discreteCubes.GetOutput())
+        smoother.SetNumberOfIterations(smoothingIterations)
+        smoother.BoundarySmoothingOff()
+        smoother.FeatureEdgeSmoothingOff()
+        smoother.SetFeatureAngle(featureAngle)
+        smoother.SetPassBand(passBand)
+        smoother.NonManifoldSmoothingOn()
+        smoother.NormalizeCoordinatesOn()
+        smoother.Update()
+
+        selector.SetInput(smoother.GetOutput())
+        selector.SetInputArrayToProcess(0, 0, 0,
+                                        vtkDataObject.FIELD_ASSOCIATION_CELLS,
+                                        vtkDataSetAttributes.SCALARS);
+
+        scalarsOff.SetInput(selector.GetOutput());
+        scalarsOff.CopyAttributeOff(vtkMaskFields.POINT_DATA,
+                                    vtkDataSetAttributes.SCALARS);
+        scalarsOff.CopyAttributeOff(vtkMaskFields.CELL_DATA,
+                                    vtkDataSetAttributes.SCALARS);
+
+        geometry.SetInput(scalarsOff.GetOutput())
+
+        selector.ThresholdBetween(2, 2)
+
+        #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
+        self.cutter[0] = Outliner(geometry.GetOutput())
+        self.cutter[0].GetOutlineProperty().SetColor(1,0,0)
+        self.cutter[1] = Outliner(geometry.GetOutput())
+        self.cutter[1].GetOutlineProperty().SetColor(0,1,0)
+        self.cutter[2] = Outliner(geometry.GetOutput())
+        self.cutter[2].GetOutlineProperty().SetColor(0,0,1)
+
+        self.renderer.AddActor(self.cutter[0])
+        self.renderer.AddActor(self.cutter[1])
+        self.renderer.AddActor(self.cutter[2])
+
+        mapper = vtkPolyDataMapper()
+        mapper.SetInput(geometry.GetOutput())
+        actor = vtkActor()
+        actor.SetMapper(mapper)
+        self.renderer.AddActor(actor)
+        self.qvtk.update()
+
+if __name__ == '__main__':
+    from PyQt4.QtGui import QApplication
+    import sys, h5py
+
+    app = QApplication(sys.argv)
+
+    o = OverviewScene(None, [100,100,100])
+    o.show()
+    o.resize(600,600)
+    
+    f=h5py.File("/home/thorben/phd/src/vtkqt-test/seg.h5")
+    seg=f['volume/data'][0,:,:,:,0]
+    f.close()
+    
+    o.DisplayObjectMeshes(seg)
+    
+    app.exec_()
