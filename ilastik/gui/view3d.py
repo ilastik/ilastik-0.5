@@ -9,8 +9,7 @@ from PyQt4.QtCore import SIGNAL
 import qimage2ndarray
 
 class SlicingPlanesWidget(vtkObject):
-    def __init__(self, parent, dataShape):
-        self.parent = parent
+    def __init__(self, dataShape):
         self.planes = []
         self.coordinate = [0,0,0]
         for i in range(3):
@@ -42,7 +41,6 @@ class SlicingPlanesWidget(vtkObject):
     def TogglePlaneWidget(self, axis):
         show = not self.planes[axis].GetEnabled()
         self.planes[axis].SetEnabled(show)
-        self.parent.qvtk.update()
     
     def SetInteractor(self, interactor):
         for i in range(3):
@@ -66,22 +64,25 @@ class SlicingPlanesWidget(vtkObject):
 class OverviewScene(QWidget):
     def slicingCallback(self, obj, event):
         newCoordinate = obj.GetCoordinate()
-        oldCoordinate = obj.parent.volumeEditor.selSlices
+        oldCoordinate = self.volumeEditor.selSlices
         
         for i in range(3):
             if newCoordinate[i] != oldCoordinate[i]:
-                obj.parent.volumeEditor.changeSlice(int(newCoordinate[i]), i)
+                self.volumeEditor.changeSlice(int(newCoordinate[i]), i)
     
     def ShowPlaneWidget(self, axis, show):
         self.planes.ShowPlane(axis, show)
+        self.qvtk.update()
         
     def TogglePlaneWidgetX(self):
         self.planes.TogglePlaneWidget(0)
+        self.qvtk.update()
     def TogglePlaneWidgetY(self):
         self.planes.TogglePlaneWidget(1)
+        self.qvtk.update()
     def TogglePlaneWidgetZ(self):
         self.planes.TogglePlaneWidget(2)
-    
+        self.qvtk.update()
     
     def __init__(self, parent, shape):
         super(OverviewScene, self).__init__(parent)
@@ -123,7 +124,7 @@ class OverviewScene(QWidget):
 
         renwin = self.qvtk.GetRenderWindow()
 
-        self.planes = SlicingPlanesWidget(self, shape)
+        self.planes = SlicingPlanesWidget(shape)
         self.planes.SetInteractor(self.qvtk.GetInteractor())
 
         self.planes.AddObserver("CoordinatesEvent", self.slicingCallback)
