@@ -192,13 +192,21 @@ class OverlayListWidget(QtGui.QListWidget):
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == show3dAction:
+            """
             print "Loading vtk ..."
             from mayaviWidget import MayaviQWidget
             print "vtk running marching cubes..."
-#            mlab.contour3d(item._data[0,:,:,:,0], opacity=0.6)
-#            mlab.outline()
+            #mlab.contour3d(item._data[0,:,:,:,0], opacity=0.6)
+            #mlab.outline()
             self.my_model = MayaviQWidget(self.volumeEditor, item.overlayItemReference, self.volumeEditor.image[0,:,:,:,0])
             self.my_model.show()
+            """
+            vol = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
+            print self.volumeEditor.overview.__class__
+            print vol.shape
+            
+            self.volumeEditor.overview.DisplayObjectMeshes(vol)
+            
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.overlayItemReference.colorTable = None
