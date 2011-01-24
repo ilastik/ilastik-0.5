@@ -1600,7 +1600,7 @@ class ImageScene(QtGui.QGraphicsView):
         
         self.thread = ImageSceneRenderThread(self)
         self.connect(self.thread, QtCore.SIGNAL('finishedPatch(int)'),self.redrawPatch)
-        self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.clearTempitems)
+        self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.renderingThreadFinished)
         self.thread.start()
         
         #self.connect(self, QtCore.SIGNAL("destroyed()"),self.cleanUp)
@@ -1744,7 +1744,7 @@ class ImageScene(QtGui.QGraphicsView):
         self.thread.queue.clear()
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 
-    def clearTempitems(self):
+    def renderingThreadFinished(self):
         #only proceed if htere is no new _data already in the rendering thread queue
         if not self.thread.dataPending.isSet():
             #if, in slicing direction, we are within the margin of the image border
