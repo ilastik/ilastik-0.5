@@ -48,11 +48,11 @@ except Exception, e:
 if ok:
     class SegmentorGC(SegmentorBase):
         name = "GraphCut Segmentation"
-        description = "Segmentation plugin using the Graph Cut algorithm "
+        description = "Segmentation plug-in using the Graph Cut algorithm"
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        gamma = Float(10)
+        gamma = Float(30)
         difference = Bool(False)
         useHistogram = Bool(False)
         alpha = Float(10)

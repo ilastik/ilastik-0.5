@@ -1214,21 +1214,14 @@ class ImageSceneRenderThread(QtCore.QThread):
                         else:
                             p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
                         
-#                        if origimage is not None:
-#                            image = origimage[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-#    
-#                            if image.dtype == 'uint16':
-#                                image = (image / 255).astype(numpy.uint8)
-#    
-#                            temp_image = qimage2ndarray.array2qimage(image.swapaxes(0,1), normalize=(min,max))
-#                            p.drawImage(0,0,temp_image)
-#                        else:
                         p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
 
                         #add overlays
                         for index, origitem in enumerate(overlays):
                             p.setOpacity(origitem.alpha)
                             itemcolorTable = origitem.colorTable
+                            
+                            
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                             
                             origitemColor = None
@@ -1261,7 +1254,12 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     elif olditemdata.dtype == 'uint16':
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
                                     else:
-                                        raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
+                                        #raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
+                                        # TODO: Workaround: tried to fix the problem
+                                        # with the segmentation display, somehow it arrieves
+                                        # here in float32
+                                        print TypeError(str(olditemdata.dtype) + ': unsupported dtype of overlay in ImageSceneRenderThread.run()')
+                                        continue
                                    
                                 if len(itemdata.shape) > 2 and itemdata.shape[2] > 1:
                                     image0 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
@@ -1682,14 +1680,14 @@ class ImageScene(QtGui.QGraphicsView):
         
         print "finished thread"
 
-    def updatePatches(self, patchNumbers ,image, overlays = []):
+    def updatePatches(self, patchNumbers ,image, overlays = ()):
         stuff = [patchNumbers,image, overlays, self.min, self.max]
         #print patchNumbers
         if patchNumbers is not None:
             self.thread.queue.append(stuff)
             self.thread.dataPending.set()
 
-    def displayNewSlice(self, image, overlays = [], fastPreview = True):
+    def displayNewSlice(self, image, overlays = (), fastPreview = True):
         self.thread.queue.clear()
         self.thread.newerDataPending.set()
 
@@ -1740,7 +1738,7 @@ class ImageScene(QtGui.QGraphicsView):
         result_image = result_image.transformed(transform)
         result_image.save(QtCore.QString(filename))
 
-    def display(self, image, overlays = []):
+    def display(self, image, overlays = ()):
         self.thread.queue.clear()
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
 

@@ -47,7 +47,7 @@ try:
 except Exception, e:
     pass
 
-if ok:
+if 0:
     class SegmentorSV2(SegmentorBase):
         name = "Supervoxel Segmentation 2"
         description = "Segmentation plugin using sparse Basin graph"

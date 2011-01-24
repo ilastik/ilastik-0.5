@@ -48,8 +48,8 @@ except Exception, e:
 
 if ok:
     class SegmentorWSiter(SegmentorBase):
-        name = "Supervoxel Segmentation"
-        description = "Segmentation plugin using sparse Basin graph"
+        name = "Sparse biased watershed"
+        description = "Segmentation plug-in using sparse basin graph"
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
