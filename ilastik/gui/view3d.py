@@ -1,12 +1,13 @@
 from vtk import vtkRenderer, vtkConeSource, vtkPolyDataMapper, vtkActor, \
                 vtkImplicitPlaneWidget2, vtkImplicitPlaneRepresentation, \
-                vtkObject, vtkPNGReader, vtkImageActor, QVTKWidget, \
+                vtkObject, vtkPNGReader, vtkImageActor, QVTKWidget2, \
                 vtkRenderWindow, vtkOrientationMarkerWidget, vtkAxesActor, \
                 vtkTransform, vtkPolyData, vtkPoints, vtkCellArray, \
                 vtkTubeFilter, vtkQImageToImageSource, vtkImageImport, \
                 vtkDiscreteMarchingCubes, vtkWindowedSincPolyDataFilter, \
                 vtkMaskFields, vtkGeometryFilter, vtkThreshold, vtkDataObject, \
-                vtkDataSetAttributes, vtkCutter, vtkPlane, vtkPropAssembly
+                vtkDataSetAttributes, vtkCutter, vtkPlane, vtkPropAssembly, \
+                vtkGenericOpenGLRenderWindow, QVTKWidget
 
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 from PyQt4.QtCore import SIGNAL
@@ -151,7 +152,7 @@ class SlicingPlanesWidget(vtkPropAssembly):
         p.SetPoint(5,  x,y,Z)
         self.cross.Modified()
         
-    def planesCallback(self, obj, event):
+    def planesCallback(self, obj, event):        
         newCoordinate = [self.planes[i].GetRepresentation().GetOrigin()[i] \
                          for i in range(3)]
         if self.coordinate != newCoordinate:
@@ -160,7 +161,9 @@ class SlicingPlanesWidget(vtkPropAssembly):
             self.InvokeEvent("CoordinatesEvent")
         
 class OverviewScene(QWidget):
-    def slicingCallback(self, obj, event):        
+    def slicingCallback(self, obj, event):
+        print "planesCallback: GetLastRenderingUsedDepthPeeling() = ",  self.renderer.GetLastRenderingUsedDepthPeeling()
+        
         newCoordinate = obj.GetCoordinate()
         oldCoordinate = [-1,-1,-1]
         if self.volumeEditor:
@@ -197,7 +200,8 @@ class OverviewScene(QWidget):
         self.cutter = 3*[None]
         
         layout = QVBoxLayout()
-        self.qvtk = QVTKWidget()
+        self.qvtk = QVTKWidget2()
+        #self.qvtk = QVTKWidget()
         layout.addWidget(self.qvtk)
         self.setLayout(layout)
         
@@ -219,11 +223,14 @@ class OverviewScene(QWidget):
             self.connect(b4, SIGNAL("clicked()"), parent.toggleFullscreen3D)
         
         self.renderer = vtkRenderer()
+        self.renderer.SetUseDepthPeeling(1); ####
         self.renderer.SetBackground(1,1,1)
 
-        win2 = vtkRenderWindow()
-        win2.AddRenderer(self.renderer)
-        self.qvtk.SetRenderWindow(win2)
+        #self.renderWindow = vtkRenderWindow()
+        self.renderWindow = vtkGenericOpenGLRenderWindow()
+        self.renderWindow.SetAlphaBitPlanes(True) ####
+        self.renderWindow.AddRenderer(self.renderer)
+        self.qvtk.SetRenderWindow(self.renderWindow)
 
         renwin = self.qvtk.GetRenderWindow()
 
@@ -245,10 +252,24 @@ class OverviewScene(QWidget):
         self.connect(b1, SIGNAL("clicked()"), self.TogglePlaneWidgetX)
         self.connect(b2, SIGNAL("clicked()"), self.TogglePlaneWidgetY)
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
+        self.connect(self.volumeEditor, SIGNAL('changedSlice(int, int)'), self.ChangeSlice)
         
         #self.planes.SetRenderer(self.renderer)
         self.renderer.AddActor(self.planes)
         self.renderer.ResetCamera() 
+    
+    def ChangeSlice(self, num, axis):
+        print "TADDDAAAAA"
+        c = self.planes.coordinate
+        c[axis] = num
+        self.planes.SetCoordinate(c)
+        for i in range(3):
+            if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
+        print "setting size to", self.qvtk.width(), 'x', self.qvtk.height()
+        
+        #FIXME set this in a reimplemented resized virtual function
+        self.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
+        self.qvtk.update()
     
     def display(self, axis):
         if self.volumeEditor:
@@ -321,6 +342,22 @@ class OverviewScene(QWidget):
         self.renderer.AddActor(self.cutter[1])
         self.renderer.AddActor(self.cutter[2])
 
+
+
+        ## 1. Use a render window with alpha bits (as initial value is 0 (false)):
+        #self.renderWindow.SetAlphaBitPlanes(True);
+        ## 2. Force to not pick a framebuffer with a multisample buffer
+        ## (as initial value is 8):
+        #self.renderWindow.SetMultiSamples(0);
+        ## 3. Choose to use depth peeling (if supported) (initial value is 0 (false)):
+        #self.renderer.SetUseDepthPeeling(True);
+        ## 4. Set depth peeling parameters
+        ## - Set the maximum number of rendering passes (initial value is 4):
+        #self.renderer.SetMaximumNumberOfPeels(100);
+        ## - Set the occlusion ratio (initial value is 0.0, exact image):
+        #self.renderer.SetOcclusionRatio(0.0);
+
+
         mapper = vtkPolyDataMapper()
         mapper.SetInput(geometry.GetOutput())
         actor = vtkActor()
@@ -345,3 +382,8 @@ if __name__ == '__main__':
     o.DisplayObjectMeshes(seg)
     
     app.exec_()
+    
+
+# [vtkusers] Depth peeling not used, but I can't see why.
+# http://public.kitware.com/pipermail/vtkusers/2010-August/111040.html
+
