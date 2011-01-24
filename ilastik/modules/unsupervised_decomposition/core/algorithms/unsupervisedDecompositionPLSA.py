@@ -1,7 +1,8 @@
-from unsupervisedBase import *
+from unsupervisedDecompositionBase import UnsupervisedDecompositionBase
+from PyQt4.QtGui import QInputDialog
 import numpy
-
-class UnsupervisedPLSA(UnsupervisedBase):
+        
+class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     #human readable information
     name = "probabilistic Latent Semantic Analysis (pLSA)"
     shortname = "pLSA" 
@@ -14,7 +15,15 @@ class UnsupervisedPLSA(UnsupervisedBase):
     maxIterations = 100
     
     def __init__(self):
-        UnsupervisedBase.__init__(self)
+        UnsupervisedDecompositionBase.__init__(self)
+        
+    @classmethod
+    def settings(ud):
+        (number, ok) = QInputDialog.getInt(None, "pLSA parameters", "Number of components", ud.numComponents, 1, 10)
+        if ok:
+          ud.numComponents = number
+        
+        print "setting number of components to", ud.numComponents        
         
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
         # sanity checks
@@ -58,5 +67,4 @@ class UnsupervisedPLSA(UnsupervisedBase):
     # Helper function
     def normalizeColumn(self, X):
         res = X / (numpy.ones((X.shape[0], 1)) * numpy.sum(X, 0) + numpy.finfo(float).eps)
-        return res
-    
+        return res            

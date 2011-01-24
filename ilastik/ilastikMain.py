@@ -33,6 +33,12 @@ if vigraVersion[0] < 1 or vigraVersion[1] < 7 or vigraVersion[2] < 1:
     raise RuntimeError("At least vigra version 1.7.1 is required")
 print "Using vigra version %s ... ok" % (vigra.version)
 
+import numpy
+numpyVersion = numpy.__version__.split('.')
+if numpyVersion[0] < 1 or numpyVersion[1] < 5 or numpyVersion[2] < 1:
+    raise RuntimeError("At least numpy version 1.5.1 is required")
+print "Using numpy version %s ... ok" % (numpy.__version__)
+
 from OpenGL.GL import *
 try:
     from OpenGL.GLX import *
@@ -57,9 +63,9 @@ import ilastik.modules
 #load core functionality
 ilastik.modules.loadModuleCores()
 
-#from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr, unsupervisedMgr
+#from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
 #import ilastik.gui
-#from ilastik.core import projectMgr, unsupervisedMgr, activeLearning
+#from ilastik.core import projectMgr, activeLearning
 from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
@@ -417,11 +423,6 @@ class MainWindow(QtGui.QMainWindow):
     def on_shortcutsDlg(self):
         shortcutManager.showDialog()
 
-    def on_unsupervisedDecomposition(self, overlays):
-        self.unsDec = UnsupervisedDecomposition(self)
-        #self.unsDec.selection_key = self.project.dataMgr.connCompBackgroundKey
-        self.unsDec.start(overlays)
-        
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No, QtGui.QMessageBox.Cancel)
         if reply == QtGui.QMessageBox.Yes:
@@ -432,73 +433,6 @@ class MainWindow(QtGui.QMainWindow):
         else:
             event.ignore()
     
-class UnsupervisedDecomposition(object):
-    
-    def __init__(self, parent):
-        self.parent = parent
-        self.ilastik = parent
-
-    def start(self, overlays):
-        self.parent.ribbon.getTab('Unsupervised').btnDecompose.setEnabled(False)
-        
-        self.timer = QtCore.QTimer()
-        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
-
-        self.ud = unsupervisedMgr.UnsupervisedThread(self.parent.project.dataMgr, overlays, self.parent.project.unsupervisedDecomposer)
-        numberOfJobs = self.ud.numberOfJobs
-        self.initDecompositionProgress(numberOfJobs)
-        self.ud.start()
-        self.timer.start(200)
-
-    def initDecompositionProgress(self, numberOfJobs):
-        statusBar = self.parent.statusBar()
-        self.progressBar = QtGui.QProgressBar()
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(numberOfJobs)
-        self.progressBar.setFormat(' Unsupervised Decomposition... %p%')
-        statusBar.addWidget(self.progressBar)
-        statusBar.show()
-
-    def updateProgress(self):
-        val = self.ud.count
-        self.progressBar.setValue(val)
-        if not self.ud.isRunning():
-            self.timer.stop()
-            self.ud.wait()
-            self.finalize()
-            self.terminateProgressBar()
-
-    def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
-        activeItem._dataVol.unsupervised = self.ud.result
-
-        #create Overlay for unsupervised decomposition:
-        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA"] is None:
-            data = self.ud.result[:,:,:,:,:]
-            colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
-            for o in range(0, data.shape[4]):
-                # transform to uint8
-                data2 = data[:,:,:,:,o:(o+1)]
-                dmin = numpy.min(data2)
-                data2 -= dmin
-                dmax = numpy.max(data2)
-                data2 = 255/dmax*data2
-                data2 = data2.astype(numpy.uint8)
-                
-                ov = OverlayItem(data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
-                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname + " component %d" % (o+1)] = ov
-        else:
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.unsupervisedDecomposer.shortname]._data = DataAccessor(self.ud.result)
-        self.ilastik.labelWidget.repaint()
-
-        
-    def terminateProgressBar(self):
-        self.parent.statusBar().removeWidget(self.progressBar)
-        self.parent.statusBar().hide()
-        self.parent.ribbon.getTab('Unsupervised').btnDecompose.setEnabled(True)
-
-        
-
 if __name__ == "__main__":
     splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")
     painter = QtGui.QPainter()

@@ -35,7 +35,7 @@ class MultivariateThresholdAccessor(object):
             next_best = numpy.where(current_guess < i, current_best, self.probabilities[i][key])
             current_best = next_best
             
-        answer = current_guess + 1
+        answer = (current_guess + 1)
         return answer
     
     def __setitem__(self, key, data):
