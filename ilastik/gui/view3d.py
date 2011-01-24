@@ -219,6 +219,7 @@ class OverviewScene(QWidget):
     def __init__(self, parent, shape):
         super(OverviewScene, self).__init__(parent)
         
+        self.anaglyph = False
         self.sceneShape = shape
         self.sceneItems = []
         self.cutter = 3*[None]
@@ -236,9 +237,13 @@ class OverviewScene(QWidget):
         b2.setCheckable(True); b2.setChecked(True)
         b3 = QPushButton("Z")
         b3.setCheckable(True); b3.setChecked(True)
+        bAnaglyph = QPushButton("A")
+        bAnaglyph.setCheckable(True); bAnaglyph.setChecked(False)
+        
         hbox.addWidget(b1)
         hbox.addWidget(b2)
         hbox.addWidget(b3)
+        hbox.addWidget(bAnaglyph)
         spacer = QSpacerItem(5,5, QSizePolicy.Expanding)
         hbox.addItem(spacer)
         b4 = QPushButton("FS")
@@ -267,8 +272,20 @@ class OverviewScene(QWidget):
         self.connect(b1, SIGNAL("clicked()"), self.TogglePlaneWidgetX)
         self.connect(b2, SIGNAL("clicked()"), self.TogglePlaneWidgetY)
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
+        self.connect(bAnaglyph, SIGNAL("clicked()"), self.ToggleAnaglyph3D)
         
         self.qvtk.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
+    
+    def ToggleAnaglyph3D(self):
+        self.anaglyph = not self.anaglyph
+        if self.anaglyph:
+            print 'setting stero mode ON'
+            self.qvtk.renderWindow.StereoRenderOn()
+            self.qvtk.renderWindow.SetStereoTypeToAnaglyph()
+        else:
+            print 'setting stero mode OFF'
+            self.qvtk.renderWindow.StereoRenderOff()
+        self.qvtk.update()
     
     def OnFullscreen(self):
          self.emit(SIGNAL('fullscreenToggled()'))
