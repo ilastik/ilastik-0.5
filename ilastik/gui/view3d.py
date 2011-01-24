@@ -10,7 +10,7 @@ from vtk import vtkRenderer, vtkConeSource, vtkPolyDataMapper, vtkActor, \
                 vtkGenericOpenGLRenderWindow, QVTKWidget
 
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
-                        QSizePolicy
+                        QSizePolicy, QSpacerItem
 from PyQt4.QtCore import SIGNAL
 
 import qimage2ndarray
@@ -239,6 +239,8 @@ class OverviewScene(QWidget):
         hbox.addWidget(b1)
         hbox.addWidget(b2)
         hbox.addWidget(b3)
+        spacer = QSpacerItem(5,5, QSizePolicy.Expanding)
+        hbox.addItem(spacer)
         b4 = QPushButton("FS")
         hbox.addWidget(b4)
         layout.addLayout(hbox)
