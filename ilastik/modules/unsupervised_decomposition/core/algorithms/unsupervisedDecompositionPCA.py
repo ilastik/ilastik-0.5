@@ -1,7 +1,8 @@
-from ilastik.core.unsupervised.unsupervisedBase import UnsupervisedBase
-import numpy, scipy
+from unsupervisedDecompositionBase import UnsupervisedDecompositionBase
+from PyQt4.QtGui import QInputDialog
+import numpy
 
-class UnsupervisedPCA(UnsupervisedBase):
+class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
     #human readable information
     name = "Principal Component Analysis (PCA)" 
     shortname = "PCA"
@@ -9,10 +10,18 @@ class UnsupervisedPCA(UnsupervisedBase):
     author = "HCI, University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
     
-    numComponents = 10
+    numComponents = 3
     
     def __init__(self):
-        UnsupervisedBase.__init__(self)
+        UnsupervisedDecompositionBase.__init__(self)
+        
+    @classmethod
+    def settings(ud):
+        (number, ok) = QInputDialog.getInt(None, "PCA parameters", "Number of components", ud.numComponents, 1, 10)
+        if ok:
+          ud.numComponents = number
+        
+        print "setting number of components to", ud.numComponents        
         
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
         # sanity checks
@@ -36,4 +45,3 @@ class UnsupervisedPCA(UnsupervisedBase):
     # helper method
     def meanData(self, X):
         return numpy.ones((X.shape[0],1)) * numpy.mean(X, 0)
-        
