@@ -9,7 +9,8 @@ from vtk import vtkRenderer, vtkConeSource, vtkPolyDataMapper, vtkActor, \
                 vtkDataSetAttributes, vtkCutter, vtkPlane, vtkPropAssembly, \
                 vtkGenericOpenGLRenderWindow, QVTKWidget
 
-from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
+                        QSizePolicy
 from PyQt4.QtCore import SIGNAL
 
 import qimage2ndarray
@@ -25,6 +26,8 @@ class QVTKOpenGLWidget(QVTKWidget2):
         self.renderWindow.SetAlphaBitPlanes(True) ####
         self.renderWindow.AddRenderer(self.renderer)
         self.SetRenderWindow(self.renderWindow)
+        
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def resizeEvent(self, event):
         w,h = self.width(), self.height()
