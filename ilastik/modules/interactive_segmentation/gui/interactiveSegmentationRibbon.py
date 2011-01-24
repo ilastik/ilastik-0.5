@@ -63,7 +63,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
-        if ov is None:
+        if ov == "hamster": #is None:
             path = os.path.expanduser("~/test-segmentation/")
             try:
                 os.makedirs(path)
@@ -124,6 +124,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.btnSegment)
         tl.addWidget(self.editBias)
         tl.addWidget(self.btnFinishSegment)
+        self.btnFinishSegment.setVisible(False)
         tl.addStretch()
         tl.addWidget(self.btnSegmentorsOptions)
         
