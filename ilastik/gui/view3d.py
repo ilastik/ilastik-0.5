@@ -14,6 +14,31 @@ from PyQt4.QtCore import SIGNAL
                 
 import qimage2ndarray
 
+class QVTKOpenGLWidget(QVTKWidget2):
+    def __init__(self, parent = None):
+        QVTKWidget2.__init__(self, parent)
+
+        self.renderer = vtkRenderer()
+        self.renderer.SetUseDepthPeeling(1); ####
+        self.renderer.SetBackground(1,1,1)
+        self.renderWindow = vtkGenericOpenGLRenderWindow()
+        self.renderWindow.SetAlphaBitPlanes(True) ####
+        self.renderWindow.AddRenderer(self.renderer)
+        self.SetRenderWindow(self.renderWindow)
+
+    def resizeEvent(self, event):
+        w,h = self.width(), self.height()
+        self.w = w
+        self.h = h
+        self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
+        QVTKWidget2.resizeEvent(self,event)
+        
+    def update(self):
+        #for some reason the size of the interactor is reset all the time
+        #fix this
+        self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
+        QVTKWidget2.update(self)
+
 def toVtkImageData(a):
     importer = vtkImageImport()
     importer.SetDataScalarTypeToUnsignedChar()
@@ -162,7 +187,7 @@ class SlicingPlanesWidget(vtkPropAssembly):
         
 class OverviewScene(QWidget):
     def slicingCallback(self, obj, event):
-        print "planesCallback: GetLastRenderingUsedDepthPeeling() = ",  self.renderer.GetLastRenderingUsedDepthPeeling()
+        #print "planesCallback: GetLastRenderingUsedDepthPeeling() = ",  self.renderer.GetLastRenderingUsedDepthPeeling()
         
         newCoordinate = obj.GetCoordinate()
         oldCoordinate = [-1,-1,-1]
@@ -173,8 +198,8 @@ class OverviewScene(QWidget):
             if newCoordinate[i] != oldCoordinate[i]:
                 if self.volumeEditor:
                     self.volumeEditor.changeSlice(int(newCoordinate[i]), i)
-                print "update", i
-                self.cutter[i].SetPlane(self.planes.Plane(i))
+                #print "update", i
+                if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
         self.qvtk.update()
     
     def ShowPlaneWidget(self, axis, show):
@@ -200,7 +225,7 @@ class OverviewScene(QWidget):
         self.cutter = 3*[None]
         
         layout = QVBoxLayout()
-        self.qvtk = QVTKWidget2()
+        self.qvtk = QVTKOpenGLWidget()
         #self.qvtk = QVTKWidget()
         layout.addWidget(self.qvtk)
         self.setLayout(layout)
@@ -219,25 +244,10 @@ class OverviewScene(QWidget):
         hbox.addWidget(b4)
         layout.addLayout(hbox)
         
-        if self.volumeEditor:
-            self.connect(b4, SIGNAL("clicked()"), parent.toggleFullscreen3D)
-        
-        self.renderer = vtkRenderer()
-        self.renderer.SetUseDepthPeeling(1); ####
-        self.renderer.SetBackground(1,1,1)
-
-        #self.renderWindow = vtkRenderWindow()
-        self.renderWindow = vtkGenericOpenGLRenderWindow()
-        self.renderWindow.SetAlphaBitPlanes(True) ####
-        self.renderWindow.AddRenderer(self.renderer)
-        self.qvtk.SetRenderWindow(self.renderWindow)
-
-        renwin = self.qvtk.GetRenderWindow()
-
         self.planes = SlicingPlanesWidget(shape)
         self.planes.SetInteractor(self.qvtk.GetInteractor())
-
         self.planes.AddObserver("CoordinatesEvent", self.slicingCallback)
+        self.planes.SetCoordinate([0,0,0])
         
         ## Add RGB arrow axes
         self.axes = vtkAxesActor();
@@ -247,28 +257,27 @@ class OverviewScene(QWidget):
         #transform = vtkTransform()
         #transform.Translate(-0.125*shape[0], -0.125*shape[1], -0.125*shape[2])
         #self.axes.SetUserTransform(transform)
-        self.renderer.AddActor(self.axes)
+        self.qvtk.renderer.AddActor(self.axes)
         
+        self.qvtk.renderer.AddActor(self.planes)
+        self.qvtk.renderer.ResetCamera() 
+        
+        if self.volumeEditor:
+            self.connect(b4, SIGNAL("clicked()"), parent.toggleFullscreen3D)
         self.connect(b1, SIGNAL("clicked()"), self.TogglePlaneWidgetX)
         self.connect(b2, SIGNAL("clicked()"), self.TogglePlaneWidgetY)
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
         self.connect(self.volumeEditor, SIGNAL('changedSlice(int, int)'), self.ChangeSlice)
         
-        #self.planes.SetRenderer(self.renderer)
-        self.renderer.AddActor(self.planes)
-        self.renderer.ResetCamera() 
+        self.qvtk.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
     
     def ChangeSlice(self, num, axis):
-        print "TADDDAAAAA"
+        #print "OverviewScene::ChangeSlice"
         c = self.planes.coordinate
         c[axis] = num
         self.planes.SetCoordinate(c)
         for i in range(3):
             if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
-        print "setting size to", self.qvtk.width(), 'x', self.qvtk.height()
-        
-        #FIXME set this in a reimplemented resized virtual function
-        self.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
         self.qvtk.update()
     
     def display(self, axis):
@@ -338,9 +347,9 @@ class OverviewScene(QWidget):
         self.cutter[2] = Outliner(geometry.GetOutput())
         self.cutter[2].GetOutlineProperty().SetColor(0,0,1)
 
-        self.renderer.AddActor(self.cutter[0])
-        self.renderer.AddActor(self.cutter[1])
-        self.renderer.AddActor(self.cutter[2])
+        self.qvtk.renderer.AddActor(self.cutter[0])
+        self.qvtk.renderer.AddActor(self.cutter[1])
+        self.qvtk.renderer.AddActor(self.cutter[2])
 
 
 
@@ -362,7 +371,7 @@ class OverviewScene(QWidget):
         mapper.SetInput(geometry.GetOutput())
         actor = vtkActor()
         actor.SetMapper(mapper)
-        self.renderer.AddActor(actor)
+        self.qvtk.renderer.AddActor(actor)
         self.qvtk.update()
 
 if __name__ == '__main__':
