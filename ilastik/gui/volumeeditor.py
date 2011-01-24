@@ -367,6 +367,12 @@ class VolumeEditor(QtGui.QWidget):
 
         if self.sharedOpenGLWidget is not None:
             self.overview = OverviewScene(self, self.image.shape[1:4])
+            self.connect(self.overview, QtCore.SIGNAL("changedSlice(int,int)"), self.changeSlice)
+            self.connect(self.overview, QtCore.SIGNAL("fullscreenToggled()"), self.toggleFullscreen3D)
+            self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
+            #this call ensures that the object is properly initialized
+            #TODO get rid of this
+            self.overview.qvtk.update()
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
             

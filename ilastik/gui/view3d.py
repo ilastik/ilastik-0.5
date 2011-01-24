@@ -11,7 +11,7 @@ from vtk import vtkRenderer, vtkConeSource, vtkPolyDataMapper, vtkActor, \
 
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton
 from PyQt4.QtCore import SIGNAL
-                
+
 import qimage2ndarray
 
 class QVTKOpenGLWidget(QVTKWidget2):
@@ -76,6 +76,7 @@ class SlicingPlanesWidget(vtkPropAssembly):
         self.dataShape = dataShape
         self.planes = []
         self.coordinate = [0,0,0]
+        self.lastChangedAxis = -1
         for i in range(3):
             p = vtkImplicitPlaneRepresentation()
             p.SetPlaceFactor(1.0)
@@ -117,7 +118,7 @@ class SlicingPlanesWidget(vtkPropAssembly):
             
             pw = vtkImplicitPlaneWidget2()
             pw.SetRepresentation(p)
-            pw.AddObserver("InteractionEvent", self.planesCallback)
+            pw.AddObserver("InteractionEvent", self.__PlanePositionCallback)
             
             self.planes.append(pw)
             
@@ -176,31 +177,27 @@ class SlicingPlanesWidget(vtkPropAssembly):
         p.SetPoint(4,  x,y,0)
         p.SetPoint(5,  x,y,Z)
         self.cross.Modified()
-        
-    def planesCallback(self, obj, event):        
-        newCoordinate = [self.planes[i].GetRepresentation().GetOrigin()[i] \
+    
+    def __PlanePositionCallback(self, obj, event):
+        newCoordinate = [int(self.planes[i].GetRepresentation().GetOrigin()[i]) \
                          for i in range(3)]
-        if self.coordinate != newCoordinate:
-            self.__UpdateCross()
-            self.coordinate = newCoordinate
-            self.InvokeEvent("CoordinatesEvent")
+        axis = -1
+        for i in range(3):
+            if newCoordinate[i] != self.coordinate[i]: axis = i; break
+        if axis < 0: return
+                         
+        self.__UpdateCross()
+        self.lastChangedAxis = axis
+        self.coordinate = newCoordinate
+        #print "__PlanePositionCallback: setting coordinate to", self.coordinate
+        self.InvokeEvent("CoordinatesEvent")
         
 class OverviewScene(QWidget):
     def slicingCallback(self, obj, event):
-        #print "planesCallback: GetLastRenderingUsedDepthPeeling() = ",  self.renderer.GetLastRenderingUsedDepthPeeling()
-        
-        newCoordinate = obj.GetCoordinate()
-        oldCoordinate = [-1,-1,-1]
-        if self.volumeEditor:
-            oldCoordinate = self.volumeEditor.selSlices
-        
-        for i in range(3):
-            if newCoordinate[i] != oldCoordinate[i]:
-                if self.volumeEditor:
-                    self.volumeEditor.changeSlice(int(newCoordinate[i]), i)
-                #print "update", i
-                if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
-        self.qvtk.update()
+        num = obj.coordinate[obj.lastChangedAxis]
+        axis = obj.lastChangedAxis
+        #print "OverviewScene emits 'changedSlice(%d,%d)'" % (num,axis)
+        self.emit(SIGNAL('changedSlice(int, int)'), num, axis)
     
     def ShowPlaneWidget(self, axis, show):
         self.planes.ShowPlane(axis, show)
@@ -220,7 +217,6 @@ class OverviewScene(QWidget):
         super(OverviewScene, self).__init__(parent)
         
         self.sceneShape = shape
-        self.volumeEditor = parent
         self.sceneItems = []
         self.cutter = 3*[None]
         
@@ -262,14 +258,15 @@ class OverviewScene(QWidget):
         self.qvtk.renderer.AddActor(self.planes)
         self.qvtk.renderer.ResetCamera() 
         
-        if self.volumeEditor:
-            self.connect(b4, SIGNAL("clicked()"), parent.toggleFullscreen3D)
+        self.connect(b4, SIGNAL("clicked()"), self.OnFullscreen)
         self.connect(b1, SIGNAL("clicked()"), self.TogglePlaneWidgetX)
         self.connect(b2, SIGNAL("clicked()"), self.TogglePlaneWidgetY)
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
-        self.connect(self.volumeEditor, SIGNAL('changedSlice(int, int)'), self.ChangeSlice)
         
         self.qvtk.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
+    
+    def OnFullscreen(self):
+         self.emit(SIGNAL('fullscreenToggled()'))
     
     def ChangeSlice(self, num, axis):
         #print "OverviewScene::ChangeSlice"
@@ -281,8 +278,6 @@ class OverviewScene(QWidget):
         self.qvtk.update()
     
     def display(self, axis):
-        if self.volumeEditor:
-            self.planes.SetCoordinate(self.volumeEditor.selSlices)
         self.qvtk.update()
             
     def redisplay(self):
