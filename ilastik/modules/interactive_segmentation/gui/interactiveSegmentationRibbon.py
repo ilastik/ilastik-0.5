@@ -2,6 +2,7 @@
 import numpy, vigra, os
 import traceback, h5py
 import time
+import copy
 
 from ilastik.core import dataImpex
 
@@ -369,7 +370,9 @@ class Segmentation(object):
         
         #create Overlay for segmentation:
         if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            ov = OverlayItem(activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
+            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
+            origColorTable[1] = 255
+            ov = OverlayItem(activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem.Interactive_Segmentation.segmentation)
