@@ -54,6 +54,7 @@ class Project(object):
         if labelColors is None:
             labelColors = {}     
         self.filename = None
+        self.fastRepaint = True
         self.useBorderMargin = False
         self.normalizeData = False
         self.drawUpdateInterval = 300
