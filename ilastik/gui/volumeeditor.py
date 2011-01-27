@@ -305,6 +305,9 @@ class VolumeEditor(QtGui.QWidget):
         self.name = name
         title = name
         
+        #Controls the trade-off of speed and flickering when scrolling through this slice view
+        self.fastRepaint = True
+        
         self.interactionLog = None
         
         self.labelsAlpha = 1.0
@@ -313,7 +316,6 @@ class VolumeEditor(QtGui.QWidget):
         #labels are not used for trainig
         self.useBorderMargin = False
         self.borderMargin = 0
-
 
         #this setting controls the rescaling of the displayed _data to the full 0-255 range
         self.normalizeData = False
@@ -604,7 +606,6 @@ class VolumeEditor(QtGui.QWidget):
         splitterLayout = QtGui.QVBoxLayout()
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
-        
 
     def toggleFullscreenX(self):
         self.maximizeSliceView(0)
@@ -811,6 +812,9 @@ class VolumeEditor(QtGui.QWidget):
     def setUseBorderMargin(self, use):
         self.useBorderMargin = use
         self.setBorderMargin(self.borderMargin)
+
+    def setFastRepaint(self, fastRepaint):
+        self.fastRepaint = fastRepaint
 
     def setBorderMargin(self, margin):
         if self.useBorderMargin is True:
@@ -1188,8 +1192,7 @@ class ImageSceneRenderThread(QtCore.QThread):
         #    self.context.create(self.imageScene.openglWidget.context())
         #else:
         #    self.context = None
-        
-            
+    
     def run(self):
         #self.context.makeCurrent()
 
@@ -1691,6 +1694,8 @@ class ImageScene(QtGui.QGraphicsView):
         self.thread.queue.clear()
         self.thread.newerDataPending.set()
 
+        fastPreview = fastPreview and self.volumeEditor.fastRepaint
+        
         #if we are in opengl 2d render mode, quickly update the texture without any overlays
         #to get a fast update on slice change
         if image is not None:

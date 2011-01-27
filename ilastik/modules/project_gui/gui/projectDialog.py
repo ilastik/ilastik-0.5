@@ -339,6 +339,10 @@ class ProjectSettingsDlg(QtGui.QDialog):
         self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin * 2)
         self.layout.addWidget(self.borderMarginCheckbox)
 
+        self.fastRepaintCheckbox = QtGui.QCheckBox("Speed up painting of slice views by tolerating flickering")
+        self.fastRepaintCheckbox.setCheckState(self.project.fastRepaint * 2)
+        self.layout.addWidget(self.fastRepaintCheckbox)
+
         self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)
         self.normalizeCheckbox.setCheckState(self.project.normalizeData*2)
 
@@ -365,9 +369,12 @@ class ProjectSettingsDlg(QtGui.QDialog):
 
 
     def ok(self):
+        self.project.fastRepaint = False
         self.project.useBorderMargin = False
         self.project.normalizeData = False
         self.project.rgbData = False
+        if self.fastRepaintCheckbox.checkState() == QtCore.Qt.Checked:
+            self.project.fastRepaint = True
         if self.normalizeCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.normalizeData = True
         if self.borderMarginCheckbox.checkState() == QtCore.Qt.Checked:
@@ -379,6 +386,7 @@ class ProjectSettingsDlg(QtGui.QDialog):
             self.ilastik.labelWidget.normalizeData = self.project.normalizeData
             self.ilastik.labelWidget.setRgbMode(self.project.rgbData)
             self.ilastik.labelWidget.setUseBorderMargin(self.project.useBorderMargin)
+            self.ilastik.labelWidget.setFastRepaint(self.project.fastRepaint)
             self.ilastik.labelWidget.repaint()
             
         self.close()
