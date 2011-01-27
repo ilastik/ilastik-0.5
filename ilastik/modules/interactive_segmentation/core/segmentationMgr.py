@@ -78,6 +78,7 @@ class ListOfNDArraysAsNDArray:
                 print "########### ERROR ListOfNDArraysAsNDArray all array items should have same dtype and shape (array: ", self.dtype, self.shape, " item : ",it.dtype, it.shape , ")"
 
     def __getitem__(self, key):
+        print key
         return self.ndarrays[key[0]][tuple(key[1:])]
 
     def __setitem__(self, key, data):

@@ -33,6 +33,7 @@ Watershed iterative segmentation plugin
 
 
 import vigra, numpy
+
 from segmentorBase import *
 import traceback
 from enthought.traits.api import *
@@ -41,22 +42,33 @@ from enthought.traits.ui.api import *
 ok = False
 
 try:
-    import vigra.tws
+    import vigra.svs
     ok = True
 except Exception, e:
-    pass
+    print "####################################"
+    print
+    print "    please update to the latest"
+    print "    private viga repo !!!"
+    print
+    print "####################################"
 
 if ok:
     class SegmentorWSiter(SegmentorBase):
-        name = "Sparse biased watershed"
+        name = "Supervoxel Segmentation"
         description = "Segmentation plug-in using sparse basin graph"
         author = "HCI, University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
+        showBorders = Bool(False)
+        edgeWeights = Enum("Average", "Difference")
+        algorithm = Enum("Graphcut", "Watershed")        
         bias = Float(0.95)
         biasedLabel = Int(1)
+        sigma = Float(0.2)
         
-        view = View( Item('bias'),  Item('biasedLabel'), buttons = ['OK', 'Cancel'],  )        
+        view = View( Item('showBorders'), Item('edgeWeights'), Item('algorithm'), Item('bias'),  Item('biasedLabel'), Item('sigma'), buttons = ['OK', 'Cancel'],  )        
+        
+        lastBorderState = False        
         
         class IndexedAccessor:
             """
@@ -77,22 +89,32 @@ if ok:
                 print "##########ERROR ######### : SegmentationDataAccessor setitem should not be called"
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
-            self.ws.setBias(self.bias,  self.biasedLabel)
-            self.basinLabels = self.ws.flood(labelValues, labelIndices)
+            print "setting seeds"
+            self.segmentor.setSeeds(labelValues, labelIndices)
+            if self.algorithm == "Graphcut":
+                print "Executing Graphcut with sigma = %d"  % (self.sigma,)
+                self.basinLabels = self.segmentor.doGC(self.sigma)
+            elif self.algorithm == "Watershed":
+                print "Executing Watershed with bias %d and biasedLabel %d" % (self.bias,  self.biasedLabel,)
+                self.basinLabels = self.segmentor.doWS(self.bias,  self.biasedLabel)
+
+            if self.lastBorderState != self.showBorders:
+                self.getBasins()
+            
             self.acc = SegmentorWSiter.IndexedAccessor(self.volumeBasins, self.basinLabels)
             return self.acc
 
         def segment2D(self, labels):
-            #TODO: implement
-            return labelVolume
+            pass
 
 
         def setupWeights(self, weights):
-            print "Incoming weights :", weights.shape
+            self.weights = weights
             #self.weights = numpy.average(weights, axis = 3).astype(numpy.uint8)#.swapaxes(0,2).view(vigra.ScalarVolume)#
             if weights.dtype != numpy.uint8:
                 print "converting weights to uint8"
                 self.weights = weights.astype(numpy.uint8)
+                
 #            self.weights = numpy.zeros(weights.shape[0:-1], 'uint8')
 #            self.weights[:] = 3
 #            self.weights[:,:,0::4] = 10
@@ -100,8 +122,30 @@ if ok:
 #            self.weights[0::4,:,:] = 10
 #            self.weights = self.weights
 
-            self.ws = vigra.tws.IncrementalWS(self.weights)
-            self.volumeBasins = self.ws.getVolumeBasins() #WithBorders()
+            #self.ws = vigra.tws.IncrementalWS(self.weights, 0)
+            print "Incoming weights :", self.weights.dtype, self.weights.shape
+
+            if hasattr(self, "segmentor"):
+                del self.segmentor
+                del self.volumeBasins
+            
+
+            if self.edgeWeights == "Difference":
+                useDifference = True
+            else:                
+                useDifference = False
+            
+            self.segmentor = vigra.svs.segmentor(self.weights, useDifference, 0, 255, 2048)
+            
+            self.getBasins()
+            
             print "Outgoing weights :", self.volumeBasins.shape
 
             self.volumeBasins.shape = self.volumeBasins.shape + (1,)
+
+        def getBasins(self):
+            self.lastBorderState = self.showBorders
+            if self.showBorders:
+                self.volumeBasins = self.segmentor.getVolumeBasinsWithBorders() #WithBorders()
+            else:
+                self.volumeBasins = self.segmentor.getVolumeBasins()            

@@ -42,6 +42,7 @@ class BaseModuleDataItemMgr(PropertyMgr):
     name =  "BaseModuleDataItemMgr"
     
     def __init__(self, dataItemImage):
+        self.dataItem = dataItemImage        
         PropertyMgr.__init__(self, dataItemImage)
         self.overlayReferences = OverlayReferenceMgr()
         
