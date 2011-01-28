@@ -144,9 +144,7 @@ if ok:
             
             self.getBasins()
             
-            print "Outgoing weights :", self.volumeBasins.shape
-
-            self.volumeBasins.shape = self.volumeBasins.shape + (1,)
+            
 
         def getBasins(self):
             self.lastBorderState = self.showBorders
@@ -154,3 +152,5 @@ if ok:
                 self.volumeBasins = self.segmentor.getVolumeBasinsWithBorders() #WithBorders()
             else:
                 self.volumeBasins = self.segmentor.getVolumeBasins()            
+                
+            self.volumeBasins.shape = self.volumeBasins.shape + (1,)

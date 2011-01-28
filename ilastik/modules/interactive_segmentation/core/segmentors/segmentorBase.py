@@ -45,6 +45,8 @@ class SegmentorBase(HasTraits):
 
     def __init__(self):
         self.weights = None
+        self.volumeBasinsWithBorders = None
+        self.volumeBasins = None
 
     def segment(self, labelVolume, labelValues, labelIndices):
         """

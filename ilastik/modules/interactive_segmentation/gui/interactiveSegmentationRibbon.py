@@ -374,8 +374,12 @@ class Segmentation(object):
             ov = OverlayItem(activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
         else:
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(activeItem.Interactive_Segmentation.segmentation)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = self.parent.labelWidget.labelWidget.colorTab
+            res = activeItem.Interactive_Segmentation.segmentation
+            print "tralalal", res.shape, res.dtype
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(res)
+            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
+            origColorTable[1] = 255            
+            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = origColorTable
         self.ilastik.labelWidget.repaint()
         self.parent.setTabBusy(False)
 
