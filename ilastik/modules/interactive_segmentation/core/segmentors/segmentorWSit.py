@@ -61,12 +61,13 @@ if ok:
 
         showBorders = Bool(False)
         edgeWeights = Enum("Average", "Difference")
-        algorithm = Enum("Graphcut", "Watershed")        
+        algorithm = Enum("Watershed", "Graphcut", "Random Walk")        
         bias = Float(0.95)
         biasedLabel = Int(1)
         sigma = Float(0.2)
+        lis_options = String("-i bicgstab -tol 1.0e-9")
         
-        view = View( Item('showBorders'), Item('edgeWeights'), Item('algorithm'), Item('bias'),  Item('biasedLabel'), Item('sigma'), buttons = ['OK', 'Cancel'],  )        
+        view = View( Item('showBorders'), Item('edgeWeights'), Item('algorithm'), Item('bias'),  Item('biasedLabel'), Item('sigma'), Item('lis_options'),buttons = ['OK', 'Cancel'],  )        
         
         lastBorderState = False        
         
@@ -97,6 +98,10 @@ if ok:
             elif self.algorithm == "Watershed":
                 print "Executing Watershed with bias %d and biasedLabel %d" % (self.bias,  self.biasedLabel,)
                 self.basinLabels = self.segmentor.doWS(self.bias,  self.biasedLabel)
+            elif self.algorithm == "Random Walk":
+                print "Executing Random Walk with sigma %f, and lis options %s" % (self.sigma,  self.lis_options,)
+                self.basinLabels = self.segmentor.doRW(self.sigma,  self.lis_options)
+                
 
             if self.lastBorderState != self.showBorders:
                 self.getBasins()
