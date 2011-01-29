@@ -36,6 +36,7 @@ class InlineSettingsWidget(QtGui.QWidget):
         
     def changeWidget(self, ui):
         if self.ui is not None:
+            self.ui.close()
             self.childWidget.removeWidget(self.ui)
             del self.ui
         self.ui = None
