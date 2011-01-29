@@ -61,16 +61,24 @@ if ok:
 
         showBorders = Bool(False)
         edgeWeights = Enum("Average", "Difference")
-        algorithm = Enum("Watershed", "Graphcut", "Random Walk")        
+        algorithm = Enum("Watershed", "Graphcut", "Randomwalk")        
         bias = Float(0.95)
+        biasThreshold = Float(128)
         biasedLabel = Int(1)
         sigma = Float(0.2)
         lis_options = String("-i bicgstab -tol 1.0e-9")
         
-        view = View( Item('showBorders'), Item('edgeWeights'), Item('algorithm'), Item('bias'),  Item('biasedLabel'), Item('sigma'), Item('lis_options'),buttons = ['OK', 'Cancel'],  )        
+        viewWS = Group(Item('bias'),Item('biasThreshold'),  Item('biasedLabel'), visible_when = 'algorithm=="Watershed"')
+        viewRW = Group(Item('sigma'), Item('lis_options'), visible_when = 'algorithm=="Randomwalk"')
+        viewGC = Group(Item('sigma'), visible_when = 'algorithm=="Graphcut"')
+
+        view = View( Item('showBorders'), Item('edgeWeights'), Item('algorithm'), buttons = ['OK', 'Cancel'],  )        
+
+        inlineConfig = View(Item('algorithm'), Group(viewWS, viewRW, viewGC))
         
         lastBorderState = False        
         
+                
         class IndexedAccessor:
             """
             Helper class that behaves like an ndarray, but does a Lookuptable access
@@ -81,7 +89,7 @@ if ok:
                 self.basinLabels = basinLabels
                 self.dtype = basinLabels.dtype
                 self.shape = volumeBasins.shape
-
+                print "Indexaccessor:", volumeBasins.shape
             def __getitem__(self, key):
                 return self.basinLabels[self.volumeBasins[tuple(key)]]
 
@@ -97,14 +105,16 @@ if ok:
                 self.basinLabels = self.segmentor.doGC(self.sigma)
             elif self.algorithm == "Watershed":
                 print "Executing Watershed with bias %d and biasedLabel %d" % (self.bias,  self.biasedLabel,)
-                self.basinLabels = self.segmentor.doWS(self.bias,  self.biasedLabel)
-            elif self.algorithm == "Random Walk":
+                self.basinLabels = self.segmentor.doWS(self.bias,  self.biasThreshold, self.biasedLabel)
+            elif self.algorithm == "Randomwalk":
                 print "Executing Random Walk with sigma %f, and lis options %s" % (self.sigma,  self.lis_options,)
                 self.basinLabels = self.segmentor.doRW(self.sigma,  self.lis_options)
                 
 
             if self.lastBorderState != self.showBorders:
                 self.getBasins()
+
+            self.getBasins()
             
             self.acc = SegmentorWSiter.IndexedAccessor(self.volumeBasins, self.basinLabels)
             return self.acc
@@ -143,7 +153,7 @@ if ok:
             self.segmentor = vigra.svs.segmentor(self.weights, useDifference, 0, 255, 2048)
             
             self.getBasins()
-            
+            self.volumeBasins.shape = self.volumeBasins.shape + (1,)
             
 
         def getBasins(self):
@@ -153,4 +163,4 @@ if ok:
             else:
                 self.volumeBasins = self.segmentor.getVolumeBasins()            
                 
-            self.volumeBasins.shape = self.volumeBasins.shape + (1,)
+            

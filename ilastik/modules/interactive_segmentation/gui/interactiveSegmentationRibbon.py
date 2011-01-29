@@ -23,6 +23,28 @@ from segmentorSelectionDlg import SegmentorSelectionDlg
 
 from ilastik.modules.interactive_segmentation.core.segmentationMgr import SegmentationThread
 
+
+class InlineSettingsWidget(QtGui.QWidget):
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        # The edit_traits call will generate the widget to embed.
+        self.childWidget = QtGui.QHBoxLayout(self)
+        self.childWidget.setMargin(0)
+        self.childWidget.setSpacing(0)
+        
+        self.ui = None
+        
+    def changeWidget(self, ui):
+        if self.ui is not None:
+            self.childWidget.removeWidget(self.ui)
+            del self.ui
+        self.ui = None
+        if ui is not None:
+            self.ui = ui
+            self.childWidget.addWidget(self.ui)
+            self.ui.setParent(self)
+
+
 class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Interactive Segmentation'
     position = 3
@@ -60,7 +82,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  self.ilastik._activeImage.Interactive_Segmentation.seeds,  self.ilastik.labelWidget,  ov))
 
-        self.btnSegmentorsOptions.setEnabled(True)  
         
         
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
@@ -109,8 +130,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnChooseDimensions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Using 3D')
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
         self.btnFinishSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Finish Object')
-        self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Segmentors Options')
-        self.editBias = QtGui.QLineEdit()
+        self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Select Segmentor')
+        
+        self.inlineSettings = InlineSettingsWidget(self)
         
         self.only2D = False
         
@@ -121,14 +143,17 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         
         tl.addWidget(self.btnChooseWeights)
+        tl.addWidget(self.btnSegmentorsOptions)
         tl.addWidget(self.btnChooseDimensions)
         tl.addWidget(self.btnSegment)
-        tl.addWidget(self.editBias)
         tl.addWidget(self.btnFinishSegment)
+        tl.addWidget(self.inlineSettings)
         tl.addStretch()
-        tl.addWidget(self.btnSegmentorsOptions)
+        
         
         self.btnSegment.setEnabled(False)
+        self.btnFinishSegment.setEnabled(False)
+        self.btnChooseDimensions.setEnabled(False)
         self.btnSegmentorsOptions.setEnabled(False)
         
         self.setLayout(tl)
@@ -139,18 +164,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnFinishSegment, QtCore.SIGNAL('clicked()'), self.on_btnFinishSegment_clicked)
         self.connect(self.btnChooseDimensions, QtCore.SIGNAL('clicked()'), self.on_btnDimensions)
         self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
-        self.connect(self.editBias, QtCore.SIGNAL("textChanged(QString)"), self.biasChanged)
         self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, self.on_btnSegment_clicked, self.on_btnSegment_clicked)
         #shortcutManager.register(self.shortcutNextLabel, "Labeling", "Go to next label (cyclic, forward)")
         
-    def biasChanged(self, biasString):
-        try:
-            bias = float(str(biasString))
-            if hasattr(self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor, "bias"):
-                self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias = bias
-            
-        except:
-            pass
     
     def on_btnDimensions(self):
         self.only2D = not self.only2D
@@ -180,32 +196,32 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             #real_weights = numpy.zeros(volume.shape + (3,))        
             
             borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness", "Gradient Magnitude"],  editable = False)
-            borderIndicator = str(borderIndicator[0])
+            if borderIndicator[1]:
+                borderIndicator = str(borderIndicator[0])
+                
+                sigma = 1.0
+                normalizePotential = True
+                #TODO: this , until now, only supports gray scale and 2D!
+                if borderIndicator == "Brightness":
+                    weights = volume[:,:,:].view(vigra.ScalarVolume)
+                elif borderIndicator == "Darkness":
+                    weights = (255 - volume[:,:,:]).view(vigra.ScalarVolume)
+                elif borderIndicator == "Gradient Magnitude":
+                    weights = numpy.ndarray(volume.shape, numpy.float32)
+                    if weights.shape[0] == 1:
+                        weights[0,:,:] = vigra.filters.gaussianGradientMagnitude((volume[0,:,:]).astype(numpy.float32), 1.0 )
+                    else:
+                        weights = vigra.filters.gaussianGradientMagnitude((volume[:,:,:]).astype(numpy.float32), 1.0 )
+        
+                if normalizePotential == True:
+                    min = numpy.min(volume)
+                    max = numpy.max(volume)
+                    print "Weights min/max :", min, max
+                    weights = (weights - min)*(255.0 / (max - min))
+        
+                self.setupWeights(weights)
+                self.btnSegmentorsOptions.setEnabled(True)
             
-            sigma = 1.0
-            normalizePotential = True
-            #TODO: this , until now, only supports gray scale and 2D!
-            if borderIndicator == "Brightness":
-                weights = volume[:,:,:].view(vigra.ScalarVolume)
-            elif borderIndicator == "Darkness":
-                weights = (255 - volume[:,:,:]).view(vigra.ScalarVolume)
-            elif borderIndicator == "Gradient Magnitude":
-                weights = numpy.ndarray(volume.shape, numpy.float32)
-                if weights.shape[0] == 1:
-                    weights[0,:,:] = vigra.filters.gaussianGradientMagnitude((volume[0,:,:]).astype(numpy.float32), 1.0 )
-                else:
-                    weights = vigra.filters.gaussianGradientMagnitude((volume[:,:,:]).astype(numpy.float32), 1.0 )
-    
-            if normalizePotential == True:
-                min = numpy.min(volume)
-                max = numpy.max(volume)
-                print "Weights min/max :", min, max
-                weights = (weights - min)*(255.0 / (max - min))
-    
-            self.setupWeights(weights)
-            
-            self.btnSegment.setEnabled(True)
-
 
     def setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []
@@ -311,13 +327,15 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         if answer != None:
             self.parent.project.dataMgr.Interactive_Segmentation.segmentor = answer
             self.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber].Interactive_Segmentation._segmentationWeights)
+            self.btnSegment.setEnabled(True)
+            self.btnFinishSegment.setEnabled(True)
+            
+            ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget)
 
-        if hasattr(self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor, "bias"):
-            bias = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias            
-            self.editBias.setText(str(bias))
-            self.editBias.setVisible(True)
-        else:
-            self.editBias.setVisible(False)            
+            self.inlineSettings.changeWidget(ui)
+            
+            
+            
             
             
             

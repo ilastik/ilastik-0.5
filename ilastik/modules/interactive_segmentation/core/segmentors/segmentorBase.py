@@ -86,3 +86,12 @@ class SegmentorBase(HasTraits):
     def settings(self):
         self.configure_traits( kind = 'modal')
 
+    def getInlineSettingsWidget(self, parent):
+        try:
+            ui = self.edit_traits(view = 'inlineConfig', 
+                                                parent=parent,
+                                                kind='subpanel').control
+            return ui
+        except:
+            print "No inline settings provided for ", self.name
+            return None

@@ -58,7 +58,8 @@ if ok:
         biasedLabel = Int(1)
         
         view = View( Item('bias'),  Item('biasedLabel'), buttons = ['OK', 'Cancel'],  )        
-
+        inlineConfig = View(Item('bias'),  Item('biasedLabel'))
+        
         def segment3D(self, labelVolume, labelValues, labelIndices):
             seeds = numpy.zeros(labelVolume.shape[0:-1], 'uint32')
             seeds[:,:,:] = labelVolume[:,:,:,0]
