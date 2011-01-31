@@ -140,6 +140,7 @@ class ConnectedComponents():
             res = vigra.analysis.labelVolume(vol)
         if res is not None:
             res = res.swapaxes(0,2).view()
+            res = numpy.asarray(res)
             res = res.reshape(res.shape + (1,))
             return res
         
