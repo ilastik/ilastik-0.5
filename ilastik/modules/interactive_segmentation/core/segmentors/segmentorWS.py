@@ -47,9 +47,9 @@ except Exception, e:
 
 if ok:
     class SegmentorWS(SegmentorBase):
-        name = "Watershed Segmentation (normal)"
+        name = "Biased Watershed Segmentation"
         description = "Segmentation plugin using seeded Region Growing Watershed algorithm"
-        author = "HCI, University of Heidelberg"
+        author = "C. N. Straehle, HCI - University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         twsAlgorithm = Enum("tws", "twsParallel")

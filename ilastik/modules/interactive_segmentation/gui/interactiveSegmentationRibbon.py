@@ -243,7 +243,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                 seg.setupWeights(w.view(vigra.ScalarVolume))
                 self.ilastik.project.dataMgr.Interactive_Segmentation.segmentors.append(seg)
         else:
-            self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.setupWeights(weights)
+            if self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor is not None:
+                self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.setupWeights(weights)
 
 
 

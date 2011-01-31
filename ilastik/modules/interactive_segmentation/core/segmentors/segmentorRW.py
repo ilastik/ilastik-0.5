@@ -49,7 +49,7 @@ if ok:
     class SegmentorWS(SegmentorBase):
         name = "Random Walk Segmentation"
         description = "Segmentation plugin using the Random Walk algorithm "
-        author = "HCI, University of Heidelberg"
+        author = "C. N. Straehle, HCI - University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         gamma = Float(10)

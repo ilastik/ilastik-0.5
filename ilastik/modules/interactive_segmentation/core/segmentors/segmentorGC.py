@@ -49,7 +49,7 @@ if ok:
     class SegmentorGC(SegmentorBase):
         name = "GraphCut Segmentation"
         description = "Segmentation plug-in using the Graph Cut algorithm"
-        author = "HCI, University of Heidelberg"
+        author = "C. N. Straehle, HCI - University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         gamma = Float(30)

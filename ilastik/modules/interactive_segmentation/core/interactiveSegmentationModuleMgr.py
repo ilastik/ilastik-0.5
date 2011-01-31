@@ -244,7 +244,7 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
     def __init__(self, dataMgr):
         BaseModuleMgr.__init__(self, dataMgr)
         self.dataMgr = dataMgr
-        self.segmentor = segmentorClasses[0]()
+        self.segmentor = None
         self.segmentorClasses = segmentorClasses
         self.seedMgr = seedMgr.SeedMgr(self.dataMgr)
                             

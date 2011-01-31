@@ -56,7 +56,7 @@ if ok:
     class SegmentorWSiter(SegmentorBase):
         name = "Supervoxel Segmentation"
         description = "Segmentation plug-in using sparse basin graph"
-        author = "HCI, University of Heidelberg"
+        author = "C. N. Straehle, HCI - University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         showBorders = Bool(False)
