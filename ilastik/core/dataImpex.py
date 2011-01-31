@@ -319,7 +319,7 @@ class DataImpex(object):
                         if overlayItem._data.shape[0]>1:
                             fn = fn + ("_time%03i" %(t+timeOffset))
                         fn = fn + ("_z%05i" %(z+sliceOffset))
-                        if overlayItem._datashape[-1]>1:
+                        if overlayItem._data.shape[-1]>1:
                             fn = fn + ("_channel%03i" %(c+channelOffset))
                         fn = fn + "." + format
                         vigra.impex.writeImage(data, fn)
