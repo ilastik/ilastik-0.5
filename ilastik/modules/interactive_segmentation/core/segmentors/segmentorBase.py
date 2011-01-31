@@ -84,7 +84,7 @@ class SegmentorBase(HasTraits):
         self.weights = weights
 
     def settings(self):
-        self.configure_traits( kind = 'modal')
+        self.configure_traits( kind = 'modal', view='view')
 
     def getInlineSettingsWidget(self, parent):
         try:

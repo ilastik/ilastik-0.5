@@ -72,7 +72,7 @@ if ok:
         viewRW = Group(Item('sigma'), Item('lis_options'), visible_when = 'algorithm=="Randomwalk"')
         viewGC = Group(Item('sigma'), visible_when = 'algorithm=="Graphcut"')
 
-        view = View( Item('showBorders'), Item('edgeWeights'), Item('algorithm'), buttons = ['OK', 'Cancel'],  )        
+        view = View( Item('edgeWeights'), Item('algorithm'), buttons = ['OK', 'Cancel'],  )        
 
         inlineConfig = View(Item('algorithm'), Group(viewWS, viewRW, viewGC))
         
