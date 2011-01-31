@@ -419,11 +419,11 @@ class DataMgr():
         self._currentModuleName = oldModuleName
 
     def onRemoveImage(self, dataItemIndex):
-        dataItemImage.overlayMgr.dataMgr = self
+        self._dataItems[dataItemIndex].overlayMgr.dataMgr = self
         oldModuleName = self._currentModuleName
         for v in self.module.values():
             self._currentModuleName = v.__class__.name
-            v.onRemoveImage(dataItemImage)
+            v.onDeleteImage(self._dataItems[dataItemIndex])
         self._currentModuleName = oldModuleName
     
     def append(self, dataItem, alreadyLoaded=False):
