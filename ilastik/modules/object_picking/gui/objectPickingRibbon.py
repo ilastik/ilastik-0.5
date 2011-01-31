@@ -6,6 +6,7 @@ from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
 
+import ilastik.gui
 from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
@@ -61,24 +62,36 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
         
-        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
-        self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'3D')
+        self.btnChooseOverlay = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
+        self.btn3D = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'3D')
+        self.btnReport = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play), 'Generate report')
+        self.btnSelectAll = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select), 'Select all')
+        self.btnClearAll = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select), 'Clear all')
         
-        self.btnChooseWeights.setToolTip('Choose the edge weights for the segmentation task')
-        self.btnSegment.setToolTip('Segment the image into foreground/background')
+        self.btnChooseOverlay.setToolTip('Choose the overlay with objects')
+        self.btn3D.setToolTip('Display the currently selected objects in 3D')
+        self.btnReport.setToolTip('Generate a report for all currently selected objects')
         
-        tl.addWidget(self.btnChooseWeights)
-        tl.addWidget(self.btnSegment)
+        self.btnSelectAll.setToolTip('Select all the objects')
+        self.btnClearAll.setToolTip('Clear selection')
+        
+        tl.addWidget(self.btnChooseOverlay)
+        tl.addWidget(self.btn3D)
+        tl.addWidget(self.btnReport)
         tl.addStretch()
+        tl.addWidget(self.btnSelectAll)
+        tl.addWidget(self.btnClearAll)
         
         self.setLayout(tl)
         
     def _initConnects(self):
-        self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
-        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
+        self.connect(self.btnChooseOverlay, QtCore.SIGNAL('clicked()'), self.on_btnChooseOverlay_clicked)
+        self.connect(self.btn3D, QtCore.SIGNAL('clicked()'), self.on_btn3D_clicked)
+        self.connect(self.btnReport, QtCore.SIGNAL('clicked()'), self.on_btnReport_clicked)
+        self.connect(self.btnSelectAll, QtCore.SIGNAL('clicked()'), self.on_btnSelectAll_clicked)
+        self.connect(self.btnClearAll, QtCore.SIGNAL('clicked()'), self.on_btnClearAll_clicked)
         
-        
-    def on_btnChooseWeights_clicked(self):
+    def on_btnChooseOverlay_clicked(self):
         dlg = OverlaySelectionDialog(self.parent,  singleSelection = True)
         answer = dlg.exec_()
         
@@ -97,5 +110,17 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
                 
             self.parent.labelWidget.repaint()
 
-    def on_btnSegment_clicked(self):
+    def on_btn3D_clicked(self):
         pass
+
+    def on_btnSelectAll_clicked(self):
+        self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Object_Picking.selectAll()
+
+    def on_btnClearAll_clicked(self):
+        self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Object_Picking.clearAll()
+
+    def on_btnReport_clicked(self):
+        fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Report", ilastik.gui.LAST_DIRECTORY, "Reports (*.html)")
+        fn = str(QtCore.QDir.convertSeparators(fileName))
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
+        self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Object_Picking.generateReport(fn)

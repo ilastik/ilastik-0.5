@@ -16,6 +16,10 @@ class ListOfNDArraysAsNDArray:
         for idx, it in enumerate(ndarrays):
             if it.dtype != self.dtype or self.shape[1:] != it.shape:
                 print "########### ERROR ListOfNDArraysAsNDArray all array items should have same dtype and shape (array: ", self.dtype, self.shape, " item : ",it.dtype, it.shape , ")"
+        #Yes, this is horrible. But otherwise we have to copy.
+        if len(self.ndarrays)==1:
+            self.flat = self.ndarrays[0].flat
+
 
     def __getitem__(self, key):     
         return self.ndarrays[key[0]][tuple(key[1:])]  

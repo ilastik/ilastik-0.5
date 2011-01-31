@@ -20,8 +20,12 @@ class SelectionAccessor(object):
         else:
             answer = 0
         
-        for index, num in enumerate(self.overlay.selectedNumbers):
-            answer = numpy.where(input == num, num, answer)
+        #old version, faster for few selections
+        #for index, num in enumerate(self.overlay.selectedNumbers):
+        #    answer = numpy.where(input == num, num, answer)
+        
+        #new version, faster for many selections
+        answer = numpy.where(numpy.vectorize(lambda x: x in self.overlay.selectedNumbersSet)(input), input, answer)
             
         return answer
     
@@ -39,6 +43,7 @@ class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
 
         self.inputData = inputData
         self.selectedNumbers = []
+        self.selectedNumbersSet = set([])
                       
         accessor = SelectionAccessor(self)
         
@@ -52,11 +57,13 @@ class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
             colorTab.append(long(0))
 
         for index,item in enumerate(self.selectedNumbers):
-                colorTab[item % 256] = self.color
-
+            colorTab[item % 256] = self.color
+        colorTab[0]=long(0)
         self.colorTable = colorTab
         
         
     def setSelectedNumbers(self, numbers):
         self.selectedNumbers = numbers
+        self.selectedNumbersSet = set(self.selectedNumbers)
+        print "Total objects selected: ", len(numbers)
         self.generateColorTab()
