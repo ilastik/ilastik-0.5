@@ -12,7 +12,8 @@ from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
 
 from ilastik.gui.iconMgr import ilastikIcons
-
+from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
+from ilastik.modules.connected_components.gui.guiThread import CC
 
 from seedWidget import SeedListWidget
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
@@ -85,6 +86,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
+        ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
         if ov is None:
             path = os.path.expanduser("~/test-segmentation/")
             try:
@@ -94,7 +96,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             try:
                 activeItem = self.ilastik._activeImage
                 file_name = path + "done.h5"
-                dataImpex.DataImpex.importOverlay(activeItem, file_name)
+                dataImpex.DataImpex.importOverlay(activeItem, file_name, "")
                 
                 """
                 theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
@@ -111,7 +113,13 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             except:
                 traceback.print_exc()
 
-    
+        ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
+        if ov is not None:
+            colorTableCC = CC.makeColorTab()
+            ov_cc = OverlayItem(ov._data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
+            self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
+            #ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
+
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
@@ -269,18 +277,36 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             
             if ovs is not None:
                 ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
+                ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
                 if ov is None:
                     #create Old Overlays if not there
                     shape = self.ilastik._activeImage.shape
                     data = DataAccessor(numpy.zeros((shape), numpy.uint8))
-                    ov = OverlayItem(data, color = QtGui.QColor(0,0,255), alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
+                    bluetable = []
+                    bluetable.append(long(0))
+                    for i in range(0, 16):
+                        bluetable.append(QtGui.qRgb(0, 0, 255))
+                    bluetable.pop()
+                    ov = OverlayItem(data, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
+                    colorTableCC = CC.makeColorTab()
+                    ov_cc = OverlayItem(data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
                     self.ilastik._activeImage.overlayMgr["Segmentation/Done"] = ov
+                    self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
+
                 data = ov[0,:,:,:,:]
                 seg = ovs[0,:,:,:,:]
-                res = numpy.where(seg > 1, seg, data)
-                ov[0,:,:,:,:] = res[:]
+                cc_object = ConnectedComponents()
+                background = set()
+                background.add(1)
+                prev_max = numpy.max(data)
+                #print "components before: ", prev_max
+                res_cc = cc_object.connect(ovs[0, :, :, :, 0], background)                
+                #res = numpy.where(seg > 1, seg, data)
+                res = numpy.where(res_cc>0, res_cc+prev_max, data)
+                ov[0,:,:,:,:] = res[:]             
                 #save the current done state
                 ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
+                ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
                 dataImpex.DataImpex.exportOverlay(path + "/../done", "h5", ov)
             
             if ovseed is not None:
