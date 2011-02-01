@@ -30,6 +30,7 @@
 from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
+import numpy
         
 class SeedListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
@@ -105,7 +106,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def createLabel(self):
         name = "Seed " + len(self.items).__str__()
         number = len(self.items)
-        if number > len(self.labelColorTable):
+        if number >= len(self.labelColorTable):
             color = QtGui.QColor.fromRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
         else:
             color = self.labelColorTable[number]
