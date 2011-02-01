@@ -266,6 +266,7 @@ class DataItemImage(DataItemBase):
         
         for m in mods:
             self.module[m.name] = m(self) 
+            self.module[m.name].overlayMgr = self.overlayMgr
          
 
                 
@@ -413,6 +414,8 @@ class DataMgr():
     def onNewImage(self, dataItemImage):
         dataItemImage.overlayMgr.dataMgr = self
         oldModuleName = self._currentModuleName
+        for v in dataItemImage.module.values():
+            v.globalMgr = self.module[v.name]
         for v in self.module.values():
             self._currentModuleName = v.__class__.name
             v.onNewImage(dataItemImage)

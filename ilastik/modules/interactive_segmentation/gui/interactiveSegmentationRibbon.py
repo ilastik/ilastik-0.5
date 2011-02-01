@@ -3,6 +3,7 @@ import numpy, vigra, os
 import traceback, h5py
 import time
 import copy
+import random
 
 from ilastik.core import dataImpex
 
@@ -20,8 +21,6 @@ from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor
 
 from segmentorSelectionDlg import SegmentorSelectionDlg
-
-from ilastik.modules.interactive_segmentation.core.segmentationMgr import SegmentationThread
 
 
 class InlineSettingsWidget(QtGui.QWidget):
@@ -227,24 +226,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []
         if weights is None:
-            weights = self.ilastik._activeImage.Interactive_Segmentation._segmentationWeights
+            weights = self.localMgr._segmentationWeights
         else:
-            self.ilastik._activeImage.Interactive_Segmentation._segmentationWeights = weights
-        if self.only2D:
-            self.ilastik.project.dataMgr.Interactive_Segmentation.segmentors = []
-            
-            segClass = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.__class__
-             
-            for z in range(weights.shape[2]):
-                seg = segClass()
-                w = weights[:,:,z]
-                w.shape = w.shape + (1,)
-                
-                seg.setupWeights(w.view(vigra.ScalarVolume))
-                self.ilastik.project.dataMgr.Interactive_Segmentation.segmentors.append(seg)
-        else:
-            if self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor is not None:
-                self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.setupWeights(weights)
+            self.localMgr._segmentationWeights = weights
+        if self.globalMgr.segmentor is not None:
+            self.globalMgr.segmentor.setupWeights(weights)
 
 
 
@@ -317,11 +303,41 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             s = "%f: segment(bias) %f" % (time.clock(),bias)
             self.ilastik.labelWidget.interactionLog.append(s)
             
-        if self.only2D:
-            self.segmentationSegment = Segmentation2D(self.ilastik)
-        else:
-            self.segmentationSegment = Segmentation(self.ilastik)
+        self.localMgr.segment()
 
+        #create Overlay for segmentation:
+        if self.activeImage.overlayMgr["Segmentation/Segmentation"] is None:
+            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
+            origColorTable[1] = 255
+            ov = OverlayItem(self.localMgr.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
+            self.activeImage.overlayMgr["Segmentation/Segmentation"] = ov
+        else:
+            res = self.localMgr.segmentation
+            self.activeImage.overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(res)
+            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
+            origColorTable[1] = 255            
+            self.activeImage.overlayMgr["Segmentation/Segmentation"].colorTable = origColorTable
+            
+        if self.localMgr.potentials is not None:
+            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
+            ov = OverlayItem(self.localMgr.potentials,color = origColorTable[1], alpha = 1.0, autoAdd = True, autoVisible = True, min = 0.0, max = 1.0)
+            self.activeImage.overlayMgr["Segmentation/Potentials"] = ov
+        else:
+            self.activeImage.overlayMgr.remove("Segmentation/Potentials")
+            
+        if self.localMgr.borders is not None:
+            #colorTab = []
+            #for i in range(256):
+            #    color = QtGui.QColor(random.randint(0,255),random.randint(0,255),random.randint(0,255)).rgba()
+            #    colorTab.append(color)
+                
+            ov = OverlayItem(self.localMgr.borders, color = QtGui.QColor(), alpha = 1.0, autoAdd = True, autoVisible = False, min = 0, max = 1.0)
+            self.activeImage.overlayMgr["Segmentation/Supervoxels"] = ov
+        else:
+            self.activeImage.overlayMgr.remove("Segmentation/Supervoxels")
+            
+        self.parent.labelWidget.repaint()
+            
         
     def on_btnSegmentorsOptions_clicked(self):
         dialog = SegmentorSelectionDlg(self.parent)
@@ -335,153 +351,3 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget)
 
             self.inlineSettings.changeWidget(ui)
-            
-            
-            
-            
-            
-            
-            
-class Segmentation(object):
-
-    def __init__(self, parent):
-        self.parent = parent
-        self.ilastik = parent
-        self.start()
-
-    def start(self):
-        self.parent.setTabBusy(True)
-        self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(False)
-        
-        self.timer = QtCore.QTimer()
-        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
-
-        self.segmentation = SegmentationThread(self.parent.project.dataMgr, self.parent.project.dataMgr[self.ilastik._activeImageNumber], self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor)
-        numberOfJobs = self.segmentation.numberOfJobs
-        self.initClassificationProgress(numberOfJobs)
-        self.segmentation.start()
-        self.timer.start(200)
-
-    def initClassificationProgress(self, numberOfJobs):
-        statusBar = self.parent.statusBar()
-        self.progressBar = QtGui.QProgressBar()
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(numberOfJobs)
-        self.progressBar.setFormat(' Segmentation... %p%')
-        statusBar.addWidget(self.progressBar)
-        statusBar.show()
-
-    def updateProgress(self):
-        val = self.segmentation.count
-        self.progressBar.setValue(val)
-        if not self.segmentation.isRunning():
-            print "finalizing segmentation"
-            self.timer.stop()
-            self.segmentation.wait()
-            self.finalize()
-            self.terminateProgressBar()
-
-    def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
-        activeItem.Interactive_Segmentation.segmentation = self.segmentation.result
-
-        #temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
-        
-        #create Overlay for segmentation:
-        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] is None:
-            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
-            origColorTable[1] = 255
-            ov = OverlayItem(activeItem.Interactive_Segmentation.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
-        else:
-            res = activeItem.Interactive_Segmentation.segmentation
-            print "tralalal", res.shape, res.dtype
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(res)
-            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
-            origColorTable[1] = 255            
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"].colorTable = origColorTable
-        self.ilastik.labelWidget.repaint()
-        self.parent.setTabBusy(False)
-
-
-        
-    def terminateProgressBar(self):
-        self.parent.statusBar().removeWidget(self.progressBar)
-        self.parent.statusBar().hide()
-        self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(True)
-        
-        
-class Segmentation2D(object):
-
-    def __init__(self, parent):
-        self.parent = parent
-        self.ilastik = parent
-        self.start()
-
-    def start(self):
-        self.parent.setTabBusy(True)
-        #self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(False)
-        
-        self.timer = QtCore.QTimer()
-        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
-        zValue = self.ilastik.labelWidget.sliceSelectors[2].value()
-        
-        dataItem = self.parent.project.dataMgr[self.ilastik._activeImageNumber]
-        lvol = dataItem.Interactive_Segmentation.seeds._data[0,:,:,zValue]
-        lvol.shape = lvol.shape + (1,)
-        
-        segmentor = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentors[zValue]
-        if hasattr(segmentor, "bias"):
-            segmentor.bias = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias
-        lInd = numpy.nonzero(lvol.ravel())
-        lValues = lvol.ravel()[lInd]
-        lInd = lInd[0]
-        segmentation = segmentor.segment(lvol, lValues, lInd)
-        
-        ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"]
-        if ov is None:
-            zerod = numpy.zeros(dataItem.shape[0:-1], numpy.uint8)
-            ov = OverlayItem(zerod, color = 0, alpha = 1.0, colorTable = self.parent.labelWidget.labelWidget.colorTab, autoAdd = True, autoVisible = True, linkColorTable = True)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Segmentation/Segmentation"] = ov
-        
-        ov[0,:,:,zValue,0] = segmentation[:,:,0,0]
-                    
-        self.ilastik.labelWidget.repaint()
-        self.parent.setTabBusy(False)
-
-
-        
-
-    def initClassificationProgress(self, numberOfJobs):
-        statusBar = self.parent.statusBar()
-        self.progressBar = QtGui.QProgressBar()
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(numberOfJobs)
-        self.progressBar.setFormat(' Segmentation... %p%')
-        statusBar.addWidget(self.progressBar)
-        statusBar.show()
-
-    def updateProgress(self):
-        val = self.segmentation.count
-        self.progressBar.setValue(val)
-        if not self.segmentation.isRunning():
-            print "finalizing segmentation"
-            self.timer.stop()
-            self.segmentation.wait()
-            self.finalize()
-            self.terminateProgressBar()
-
-    def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
-        activeItem.Interactive_Segmentation.segmentation = self.segmentation.result
-
-        #temp = activeItem._dataVol.segmentation[0, :, :, :, 0]
-        
-        #create Overlay for segmentation:
-
-
-        
-    def terminateProgressBar(self):
-        self.parent.statusBar().removeWidget(self.progressBar)
-        self.parent.statusBar().hide()
-        self.parent.ribbon.getTab('Interactive Segmentation').btnSegment.setEnabled(True)                        

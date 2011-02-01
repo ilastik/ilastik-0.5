@@ -47,6 +47,7 @@ class SegmentorBase(HasTraits):
         self.weights = None
         self.volumeBasinsWithBorders = None
         self.volumeBasins = None
+        self.segmentation = None
 
     def segment(self, labelVolume, labelValues, labelIndices):
         """
@@ -70,7 +71,8 @@ class SegmentorBase(HasTraits):
 
         
         #if labelVolume.shape[0] > 1:
-        return self.segment3D(labelVolume, labelValues, labelIndices)
+        self.segmentation = self.segment3D(labelVolume, labelValues, labelIndices)
+        return self.segmentation
         #else:
         #    res = self.segment2D(labelVolume, labelValues, labelIndices)
 

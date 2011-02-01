@@ -45,6 +45,7 @@ class BaseModuleDataItemMgr(PropertyMgr):
         self.dataItem = dataItemImage        
         PropertyMgr.__init__(self, dataItemImage)
         self.overlayReferences = OverlayReferenceMgr()
+        self.globalMgr = None
         
     def onModuleStart(self):
         pass

@@ -59,7 +59,7 @@ if ok:
         author = "C. N. Straehle, HCI - University of Heidelberg"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
-        showBorders = Bool(False)
+        dontUseSuperVoxels = Bool(False)
         edgeWeights = Enum("Average", "Difference")
         algorithm = Enum("Watershed", "Graphcut", "Randomwalk")        
         bias = Float(0.95)
@@ -72,7 +72,7 @@ if ok:
         viewRW = Group(Item('sigma'), Item('lis_options'), visible_when = 'algorithm=="Randomwalk"')
         viewGC = Group(Item('sigma'), visible_when = 'algorithm=="Graphcut"')
 
-        view = View( Item('edgeWeights'), Item('algorithm'), buttons = ['OK', 'Cancel'],  )        
+        view = View( Item('edgeWeights'), Item('dontUseSuperVoxels'), Item('algorithm'), buttons = ['OK', 'Cancel'],  )        
 
         inlineConfig = View(Item('algorithm'), Group(viewWS, viewRW, viewGC))
         
@@ -95,7 +95,27 @@ if ok:
 
             def __setitem__(self, key, data):
                 #self.data[tuple(key)] = data
-                print "##########ERROR ######### : SegmentationDataAccessor setitem should not be called"
+                print "##########ERROR ######### : IndexAccessor setitem should not be called"
+
+        class IndexedAccessorWithChannel:
+            """
+            Helper class that behaves like an ndarray, but does a Lookuptable access
+            """
+
+            def __init__(self, volumeBasins, basinLabels):
+                self.volumeBasins = volumeBasins
+                self.basinLabels = basinLabels
+                self.dtype = basinLabels.dtype
+                self.shape = volumeBasins.shape[:-1] + (basinLabels.shape[1],)
+                
+            def __getitem__(self, key):
+                return self.basinLabels[:,key[-1]][self.volumeBasins[tuple(key[:-1])]]
+
+            def __setitem__(self, key, data):
+                #self.data[tuple(key)] = data
+                print "##########ERROR ######### : IndexAccessor setitem should not be called"
+
+
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
             print "setting seeds"
@@ -110,18 +130,21 @@ if ok:
                 print "Executing Random Walk with sigma %f, and lis options %s" % (self.sigma,  self.lis_options,)
                 self.basinLabels = self.segmentor.doRW(self.sigma,  self.lis_options)
                 
-
-            if self.lastBorderState != self.showBorders:
-                self.getBasins()
-
+                self.basinPotentials = self.segmentor.getBasinPotentials()
+                
+                self.potentials = SegmentorWSiter.IndexedAccessorWithChannel(self.volumeBasins,self.basinPotentials)
+                
             self.getBasins()
             
-            self.acc = SegmentorWSiter.IndexedAccessor(self.volumeBasins, self.basinLabels)
-            return self.acc
+            self.segmentation = SegmentorWSiter.IndexedAccessor(self.volumeBasins, self.basinLabels)
+            return self.segmentation
 
         def segment2D(self, labels):
             pass
 
+        @on_trait_change('dontUseSuperVoxels')
+        def recalculateWeights(self):
+            self.setupWeights(self.weights)
 
         def setupWeights(self, weights):
             self.weights = weights
@@ -150,17 +173,19 @@ if ok:
             else:                
                 useDifference = False
             
-            self.segmentor = vigra.svs.segmentor(self.weights, useDifference, 0, 255, 2048)
+            #print self.dontUseSuperVoxels
+            self.segmentor = vigra.svs.segmentor(self.weights, useDifference, 0, 255, 2048, self.dontUseSuperVoxels)
+    
             
             self.getBasins()
             self.volumeBasins.shape = self.volumeBasins.shape + (1,)
+
+            self.borders = self.segmentor.getBorderVolume()   
+            self.borders.shape = self.borders.shape + (1,)
+            #self.borders = self.volumeBasins
             
 
         def getBasins(self):
-            self.lastBorderState = self.showBorders
-            if self.showBorders:
-                self.volumeBasins = self.segmentor.getVolumeBasinsWithBorders() #WithBorders()
-            else:
-                self.volumeBasins = self.segmentor.getVolumeBasins()            
+            self.volumeBasins = self.segmentor.getVolumeBasins()            
                 
             

@@ -2,17 +2,17 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
-#    
+#
 #    Redistribution and use in source and binary forms, with or without modification, are
 #    permitted provided that the following conditions are met:
-#    
+#
 #       1. Redistributions of source code must retain the above copyright notice, this list of
 #          conditions and the following disclaimer.
-#    
+#
 #       2. Redistributions in binary form must reproduce the above copyright notice, this list
 #          of conditions and the following disclaimer in the documentation and/or other materials
 #          provided with the distribution.
-#    
+#
 #    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
 #    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
 #    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
@@ -22,7 +22,7 @@
 #    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 #    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 #    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#    
+#
 #    The views and conclusions contained in the software and documentation are those of the
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
@@ -106,7 +106,7 @@ class RenderChoiceDialog(QtGui.QDialog):
         gl_version =  glGetString(GL_VERSION)
         if gl_version is None:
             gl_version = '0'
-        
+
         allowChoosingOpenGL = False
         if int(gl_version[0]) >= 2:
             allowChoosingOpenGL = True
@@ -114,7 +114,7 @@ class RenderChoiceDialog(QtGui.QDialog):
             allowChoosingOpenGL = False
         else:
             raise RuntimeError("Absolutely no OpenGL available")
-        
+
         super(RenderChoiceDialog, self).__init__()
         layout = QtGui.QVBoxLayout(self)
         choicesGroup = QtGui.QButtonGroup(self)
@@ -125,24 +125,24 @@ class RenderChoiceDialog(QtGui.QDialog):
                     for fastest rendering if OpenGL is correctly installed.
                     <br> If visualization is slow or incomplete,
                     try the <b>Software + OpenGL</b> mode.""")
-        
+
         layout.addWidget(label)
         layout.addWidget(self.openglChoice)
         layout.addWidget(self.softwareChoice)
         layout.addWidget(okButton)
         self.setLayout(layout)
-        
+
         if allowChoosingOpenGL:
             self.openglChoice.setChecked(True)
         else:
             self.openglChoice.setEnabled(False)
             self.softwareChoice.setChecked(True)
-        
+
         QtCore.QObject.connect(okButton, QtCore.SIGNAL("accepted()"), self, QtCore.SLOT("accept()"))
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
-        
+
         QtGui.QMainWindow.__init__(self)
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
@@ -150,25 +150,25 @@ class MainWindow(QtGui.QMainWindow):
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Ilastik))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
-        
+
         self.previousTabText = ""
-        
+
         self.labelWidget = None
         self._activeImageNumber = 0
         self._activeImage = None
-        
+
         self.createRibbons()
         self.initImageWindows()
 
         self.createFeatures()
-              
+
         self.classificationProcess = None
         self.classificationOnline = None
-        
+
         self.featureCache = None
         self.opengl = None
-        project = None        
-        
+        project = None
+
         try:
             opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project=", "featureCache="])
             for o, a in opts:
@@ -194,18 +194,18 @@ class MainWindow(QtGui.QMainWindow):
                         self.openglOverview = True
                     else:
                         print "invalid --render option"
-                        sys.exit()                                         
+                        sys.exit()
                 elif o in ("--project"):
                     project = a
                 elif o in ("--featureCache"):
                     self.featureCache = h5py.File(a, 'w')
                 else:
                     assert False, "unhandled option"
-            
+
         except getopt.GetoptError, err:
             # print help information and exit:
             print str(err) # will print something like "option -a not recognized"
-                
+
 
         if self.opengl == None:   #no command line option for opengl was given, ask user interactively
             dlg = RenderChoiceDialog()
@@ -221,7 +221,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.openglOverview = False
             else:
                 raise RuntimeError("Unhandled choice in dialog")
-        
+
         #if we have OpenGL, a shared QGLWidget is set up,
         self.sharedOpenGLWidget = None
         if self.openglOverview:
@@ -234,75 +234,75 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
             self._activeImageNumber = 0
             self.projectModified()
-        
-        self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject) 
+
+        self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject)
         self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
         self.tabChanged(0)
-    
+
     def showFullscreen(self):
         if self.fullScreen:
             self.showNormal()
         else:
             self.showFullScreen()
         self.fullScreen = not self.fullScreen
-                
+
     def updateFileSelector(self):
         self.fileSelectorList.blockSignals(True)
         self.fileSelectorList.clear()
         self.fileSelectorList.blockSignals(False)
         for item in self.project.dataMgr:
             self.fileSelectorList.addItem(item._name)
-    
+
     def changeImage(self, number):
         self.fileSelectorList.setEnabled(False)
-        
+
         self.activeImageLock.acquire()
         QtCore.QCoreApplication.processEvents()
         if self.labelWidget is not None:
             self.labelWidget._history.volumeEditor = None
 
 
-        
+
         self.destroyImageWindows()
-        
+
         self._activeImageNumber = number
         self._activeImage = self.project.dataMgr[number]
-        
+
         self.project.dataMgr._activeImageNumber = number
         self.project.dataMgr._activeImage = self._activeImage
-        
+
         self.createImageWindows( self.project.dataMgr[number]._dataVol)
-        
+
         self.labelWidget.repaint() #for overlays
         self.activeImageLock.release()
-        
+
         # Notify tabs
-        self.ribbon.widget(self.ribbon.currentIndex()).on_activation()        
+        self.ribbon.widget(self.ribbon.currentIndex()).on_activation()
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
         self.fileSelectorList.setEnabled(True)
-            
+
     def historyUndo(self):
         if self.labelWidget is not None:
             self.labelWidget.historyUndo
-        
+
     def historyRedo(self):
         if self.labelWidget is not None:
             self.labelWidget.historyRedo
-    
-    def createRibbons(self):                        
+
+    def createRibbons(self):
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
-        
+
         self.ribbon = ctrlRibbon.IlastikTabWidget(self.ribbonToolbar)
-        
+
         self.ribbonToolbar.addWidget(self.ribbon)
-        
+
         self.ribbonsTabs =  sorted(IlastikTabBase.__subclasses__(), key=lambda tab: tab.position)
 
         for tab in self.ribbonsTabs:
             print "Adding ribbon", tab.name
             self.ribbon.addTab(tab(self), tab.name)
-        
-   
+
+
         self.fileSelectorList = QtGui.QComboBox()
         widget = QtGui.QWidget()
         self.fileSelectorList.setMinimumWidth(140)
@@ -331,7 +331,7 @@ class MainWindow(QtGui.QMainWindow):
     def tabChanged(self,  index):
         """
         update the overlayWidget of the volumeEditor and switch the _history
-        between seeds and labels, also make sure the 
+        between seeds and labels, also make sure the
         seed/label widget has a reference to the overlay in the overlayWidget
         they correspond to.
         """
@@ -339,13 +339,22 @@ class MainWindow(QtGui.QMainWindow):
         self.ribbon.currentTabNumber = index
         #change current module name, so that overlays are stored at the right place
         if self.project is not None:
-            self.project.dataMgr._currentModuleName = self.ribbon.widget(index).__class__.moduleName 
-        self.ribbon.widget(index).on_activation()
+            moduleName = self.project.dataMgr._currentModuleName = self.ribbon.widget(index).__class__.moduleName
+
+            ribbonWidget = self.ribbon.widget(index)
+    
+            #for convenience of the module
+            ribbonWidget.dataMgr = self.project.dataMgr
+            ribbonWidget.activeImage = self.project.dataMgr[self.project.dataMgr._activeImageNumber]
+            ribbonWidget.localMgr =  ribbonWidget.activeImage.module[moduleName]
+            ribbonWidget.globalMgr = ribbonWidget.dataMgr.module[moduleName]
+    
+            ribbonWidget.on_activation()
 
         if self.labelWidget is not None:
-            self.labelWidget.repaint()     
-        
-        
+            self.labelWidget.repaint()
+
+
     def saveProject(self):
         if hasattr(self,'project'):
             if self.project.filename is not None:
@@ -353,18 +362,18 @@ class MainWindow(QtGui.QMainWindow):
             else:
                 self.saveProjectDlg()
             print "saved Project to ", self.project.filename
-                    
+
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
-        
+
         self.project.dataMgr._activeImageNumber = self._activeImageNumber
         self.project.dataMgr._activeImage = self._activeImage
-        
+
         self._activeImage = self.project.dataMgr[self._activeImageNumber]
-     
+
     def initImageWindows(self):
         self.labelDocks = []
-        
+
     def destroyImageWindows(self):
 
         if self.labelWidget is not None:
@@ -372,30 +381,30 @@ class MainWindow(QtGui.QMainWindow):
             self.labelWidget.cleanUp()
             self.labelWidget.close()
             self.labelWidget.deleteLater()
-                    
+
         self.ribbon.widget(self.ribbon.currentTabNumber).on_deActivation()
-        
+
         for dock in self.labelDocks:
             self.removeDockWidget(dock)
         self.labelDocks = []
 
         self.volumeEditorDock = None
-                
+
     def createImageWindows(self, dataVol):
         gc.collect()
         self.labelWidget = ve.VolumeEditor(dataVol, self,  sharedOpenglWidget = self.sharedOpenGLWidget)
-        
+
         if self.project.dataMgr._currentModuleName is None:
             self.project.dataMgr._currentModuleName = "Project"
-        
+
         self.ribbon.widget(self.ribbon.currentTabNumber).on_activation()
 
         self.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval
         self.labelWidget.normalizeData = self.project.normalizeData
         self.labelWidget.useBorderMargin = self.project.useBorderMargin
         self.labelWidget.setRgbMode(self.project.rgbData)
-        
-        
+
+
         dock = QtGui.QDockWidget(' ilastik GUI', self)
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
@@ -403,11 +412,11 @@ class MainWindow(QtGui.QMainWindow):
         self.volumeEditorDock = dock
 
         self.connect(self.labelWidget, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
-        
+
         area = QtCore.Qt.BottomDockWidgetArea
         self.addDockWidget(area, dock)
         self.labelDocks.append(dock)
-        
+
     def on_otherProject(self):
         for i in range(self.ribbon.count()):
             self.ribbon.widget(i).on_otherProject()
@@ -419,7 +428,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createFeatures(self):
         self.featureList = featureMgr.ilastikFeatures
-        
+
     def on_shortcutsDlg(self):
         shortcutManager.showDialog()
 
@@ -432,7 +441,7 @@ class MainWindow(QtGui.QMainWindow):
             event.accept()
         else:
             event.ignore()
-    
+
 if __name__ == "__main__":
     splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")
     painter = QtGui.QPainter()
@@ -448,8 +457,8 @@ if __name__ == "__main__":
 
     mainwindow = MainWindow(sys.argv)
     mainwindow.setStyleSheet("QSplitter::handle { background-color: #d6d6d6;}");
-    
-    mainwindow.show() 
+
+    mainwindow.show()
     splashScreen.finish(mainwindow)
     app.exec_()
     print "cleaning up..."
@@ -461,5 +470,4 @@ if __name__ == "__main__":
 
     del ilastik.core.jobMachine.GLOBAL_WM
 
-    
 

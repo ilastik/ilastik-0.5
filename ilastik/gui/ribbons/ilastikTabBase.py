@@ -11,7 +11,13 @@ class IlastikTabBase(object):
     
     def __init__(self, parent=None):
         self.ilastik = self.parent = parent
-
+        # these properties are assigned and available 
+        # when the tab is active
+        self.localMgr = None
+        self.globalMgr = None
+        self.dataMgr = None
+        self.activeImage = None
+        
     def on_activation(self):
         #print "Tab changed: on_activation() not implementated by this tab"
         pass

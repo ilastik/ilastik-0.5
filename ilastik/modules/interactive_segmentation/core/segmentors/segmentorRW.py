@@ -46,7 +46,7 @@ except Exception, e:
     pass
 
 if ok:
-    class SegmentorWS(SegmentorBase):
+    class SegmentorRW(SegmentorBase):
         name = "Random Walk Segmentation"
         description = "Segmentation plugin using the Random Walk algorithm "
         author = "C. N. Straehle, HCI - University of Heidelberg"
@@ -64,6 +64,8 @@ if ok:
 
             print "Executing Random walker with gamma ", self.gamma
             res = vigra.rw.randomWalk(numpy.exp( - (self.weights)**2 / self.gamma**2) , seeds, self.lisOptions)#.swapaxes(0,2).view(vigra.ScalarVolume))
+            
+            self.potentials = res        
             
             ret = numpy.argmax(res, 3) + 1
             

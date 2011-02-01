@@ -1246,6 +1246,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                     """
                                     olditemdata = itemdata              
                                     itemdata = numpy.ndarray(olditemdata.shape, 'float32')
+                                    #print "moduo", olditemdata.shape, olditemdata.dtype
                                     if olditemdata.dtype == 'uint32':
                                         itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
                                     elif olditemdata.dtype == 'uint64':

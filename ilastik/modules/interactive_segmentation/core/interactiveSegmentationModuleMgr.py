@@ -33,6 +33,7 @@ import time
 import sys
 import os
 import warnings
+import copy
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
@@ -87,6 +88,30 @@ def unravelIndices(indices, shape):
     return ti    
 
 
+class ListOfNDArraysAsNDArray:
+    """
+    Helper class that behaves like an ndarray, but consists of an array of ndarrays
+    """
+
+    def __init__(self, ndarrays):
+        self.ndarrays = ndarrays
+        self.dtype = ndarrays[0].dtype
+        self.shape = (len(ndarrays),) + ndarrays[0].shape
+        for idx, it in enumerate(ndarrays):
+            if it.dtype != self.dtype or self.shape[1:] != it.shape:
+                print "########### ERROR ListOfNDArraysAsNDArray all array items should have same dtype and shape (array: ", self.dtype, self.shape, " item : ",it.dtype, it.shape , ")"
+
+    def __getitem__(self, key):
+        print key
+        return self.ndarrays[key[0]][tuple(key[1:])]
+
+    def __setitem__(self, key, data):
+        self.ndarrays[key[0]][tuple(key[1:])] = data
+        print "##########ERROR ######### : ListOfNDArraysAsNDArray not implemented"
+
+
+
+
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
     
@@ -100,7 +125,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self._segmentationWeights = None
         self._seedL = None#numpy.zeros((0, 1), 'uint8')
         self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
-        
+        self.segmentorInstance = None
+        self.potentials = None
     
     def setModuleMgr(self, interactiveSegmentationModuleMgr):
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
@@ -224,7 +250,21 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                 print self._trainingF.shape
                 print nonzero
 
-
+    def segment(self):
+        labels, indices = self.getSeeds()
+        self.globalMgr.segmentor.segment(self.seeds._data[0,:,:,:], labels, indices)
+        self.segmentation = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.segmentation])
+        if(hasattr(self.globalMgr.segmentor, "potentials")):
+            self.potentials = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.potentials])
+        else:
+            self.potentials = None
+        if(hasattr(self.globalMgr.segmentor, "borders")):
+            self.borders = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.borders])
+        else:
+            self.borders = None
+            
+        
+        
 
 
         
