@@ -229,7 +229,7 @@ class DataImpex(object):
                 return (tempimage.shape[0], tempimage.shape[1], 1, 1)
 
     @staticmethod                
-    def importOverlay(dataItem, filename):
+    def importOverlay(dataItem, filename, prefix="File Overlays/"):
         theDataItem = DataImpex.importDataItem(filename, None)
         if theDataItem is None:
             print "could not load", filename
@@ -275,7 +275,10 @@ class DataImpex(object):
             if data.shape[0:-1] == dataItem.shape[0:-1]:
                 ov = OverlayItem(data, color = color, alpha = alpha, colorTable = colorTable, autoAdd = autoAdd, autoVisible = autoVisible, min = omin, max = omax)
                 ov.key = key
-                dataItem.overlayMgr["File Overlays/"+ov.key] = ov            
+                if len(prefix) > 0:
+                    if prefix[-1] != "/":
+                        prefix = prefix + "/"
+                dataItem.overlayMgr[prefix + ov.key] = ov            
                 return ov
             return None
 
