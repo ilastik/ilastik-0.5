@@ -1,5 +1,7 @@
 from classifierBase import *
 import warnings
+import numpy
+import vigra
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py

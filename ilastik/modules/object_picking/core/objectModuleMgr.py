@@ -33,7 +33,7 @@ import traceback, os, sys
 from ilastik.core.volume import DataAccessor, VolumeLabels, VolumeLabelDescription
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.core.overlayMgr import OverlayItem
-
+from objectStatisticsReport import ObjectStatisticsReport
 
 class ObjectOverlayItem(OverlayItem):
     def __init__(self, objectListWidget, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
@@ -55,6 +55,7 @@ class ObjectPickingItemModuleMgr(BaseModuleDataItemMgr):
         self.selectedObjects = {}
         self.selectionAccessor = None
         self.inputData = None
+        self.allObjects = None
         
     def onAppend(self):
         if self.objects is None:
@@ -119,7 +120,58 @@ class ObjectPickingItemModuleMgr(BaseModuleDataItemMgr):
     def setInputData(self, data):
         self.inputData = data
 
+    def selectAll(self):
+        #we define it on the item manager level, so it only selects for the curren item
+        #TODO: later on, an overall selection can also be implemented
+        
+        ov = self.dataItemImage.overlayMgr["Objects/Selection Result"]
+        if ov is not None:
+            numbers = numpy.unique(self.inputData._data.flat)
+            
+            for iobj in numbers:
+                self.selectedObjects[int(iobj)]=int(iobj)
+            #remove the background
+            del self.selectedObjects[0]
+            ov.setSelectedNumbers(self.selectedObjects.values())
 
+    def clearAll(self):
+        ov = self.dataItemImage.overlayMgr["Objects/Selection Result"]
+        if ov is not None:
+            self.selectedObjects.clear()
+            ov.setSelectedNumbers([])
+            
+    def objectsSlow3d(self, input_overlay):
+        #returns a dictionary, where the key is the point "intensity" (i.e. connected component number)
+        #and the value is a list of point coordinates [[x], [y], [z]]
+        #FIXME: no support for the 2D case yet
+        
+        objs = {}
+
+        nzindex = numpy.nonzero(input_overlay[0, :, :, :, 0])
+        for i in range(len(nzindex[0])):
+            value = input_overlay[0, nzindex[0][i], nzindex[1][i], nzindex[2][i], 0]
+            if value > 0:
+                if value not in objs:
+                    objs[value] = [[], [], []]
+                objs[value][0].append(nzindex[0][i])
+                objs[value][1].append(nzindex[1][i])
+                objs[value][2].append(nzindex[2][i])
+                
+        return objs
+                
+    def generateReport(self, outputfile):
+        print "converting from coordinates to a list of objects"
+        if self.allObjects is None:
+            self.allObjects = self.objectsSlow3d(self.inputData)
+        tempObjects = {}
+        for key, value in self.allObjects.iteritems():
+            if key in self.selectedObjects.values():
+                tempObjects[key] = value
+        print "initializing object statistics functions"    
+        report = ObjectStatisticsReport(outputfile, tempObjects, self.dataItemImage.overlayMgr["Objects/Selection Result"], self.inputData, self.dataItemImage.overlayMgr["Raw Data"])
+        print "printing"
+        report.generate()
+        print "report saved in file", outputfile            
 
 
 
@@ -130,9 +182,7 @@ class ObjectPickingModuleMgr(BaseModuleMgr):
         BaseModuleMgr.__init__(self, dataMgr)
         self.dataMgr = dataMgr
         self.dataMgr = dataMgr
-        
-        
-        
+                
         
     def onNewImage(self, dataItemImage):
         dataItemImage.Object_Picking.onAppend()

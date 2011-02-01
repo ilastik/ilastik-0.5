@@ -29,8 +29,10 @@
 
 import glob
 import os
+import ilastik.gui
 
-import loadOptions
+from ilastik.gui import loadOptions
+
 
 from PyQt4 import QtCore, QtGui
 
@@ -153,8 +155,9 @@ class StackLoader(QtGui.QDialog):
         self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotDir(self):
-        path = self.path.text()
+        path = ilastik.gui.LAST_DIRECTORY
         filename = QtGui.QFileDialog.getExistingDirectory(self, "Image Stack Directory", path)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
         tempname = filename + "/*"
         #This is needed, because internally Qt always uses "/" separators,
         #which is a problem on Windows, as we don't use QDir to open dirs

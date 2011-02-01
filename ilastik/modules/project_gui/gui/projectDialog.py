@@ -227,7 +227,7 @@ class ProjectDlg(QtGui.QDialog):
         # Get row and fileName to remove
         row = self.tableWidget.currentRow()
         fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
-        print "remvoe Filename in row: ", fileName, " -- ", row
+        print "remove Filename in row: ", fileName, " -- ", row
         self.dataMgr.remove(row)
         print "Remove loaded File"
 
