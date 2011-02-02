@@ -94,6 +94,12 @@ class BaseModuleMgr(PropertyMgr):
     def onDeleteImage(self, dataItemImage):
         pass
     
+    def computeResults(self, input):
+        pass
+    
+    def finalizeResults(self):
+        pass
+    
     def serialize(self, h5g):
         pass
     

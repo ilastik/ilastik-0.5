@@ -5,9 +5,10 @@ import traceback, sys
 import threading
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core import jobMachine
-from PyQt4 import QtCore
+from PyQt4 import QtGui, QtCore
 import os
 import algorithms
+from ilastik.core.volume import DataAccessor
 #from algorithms.unsupervisedDecompositionBase import UnsupervisedDecompositionBase
 #from algorithms.unsupervisedDecompositionPCA import UnsupervisedDecompositionPCA
 #from algorithms.unsupervisedDecompositionPLSA import UnsupervisedDecompositionPLSA
@@ -45,7 +46,7 @@ class UnsupervisedItemModuleMgr(BaseModuleDataItemMgr):
         
     def setInputData(self, data):
         self.inputData = data
-            
+        
 class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
     name = "Unsupervised_Decomposition"
          
@@ -56,8 +57,33 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
         if self.dataMgr.module["Unsupervised_Decomposition"] is None:
             self.dataMgr.module["Unsupervised_Decomposition"] = self
 
-    def onNewImage(self, dataItemImage):
-        pass
+    def computeResults(self, inputOverlays):
+        self.ud = UnsupervisedDecompositionThread(self.dataMgr, inputOverlays, self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod)
+        self.ud.start()
+        return self.ud
+    
+    def finalizeResults(self):
+        activeItem = self.dataMgr[self.dataMgr._activeImageNumber]
+        activeItem._dataVol.unsupervised = self.ud.result
+
+        #create overlays for unsupervised decomposition:
+        if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname] is None:
+            data = self.ud.result[:,:,:,:,:]
+            colorTab = [QtGui.qRgb(i, i, i) for i in range(256)]
+            currColor = QtGui.QColor(255, 0, 0)
+            for o in range(0, data.shape[4]):
+                # transform to uint8
+                data2 = data[:,:,:,:,o:(o+1)]
+                dmin = numpy.min(data2)
+                data2 -= dmin
+                dmax = numpy.max(data2)
+                data2 = 255/dmax*data2
+                data2 = data2.astype(numpy.uint8)
+                
+                ov = OverlayItem(data2, color = currColor, alpha = 1.0, colorTable = colorTab, autoAdd = True, autoVisible = True)
+                self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %d" % (o+1)] = ov
+        else:
+            self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.ud.result)
             
 class UnsupervisedDecompositionThread(QtCore.QThread):
     def __init__(self, dataMgr, overlays, unsupervisedMethod = algorithms.unsupervisedDecompositionPCA.UnsupervisedDecompositionPCA, unsupervisedMethodOptions = None):

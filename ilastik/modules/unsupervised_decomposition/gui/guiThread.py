@@ -3,7 +3,6 @@ from PyQt4 import QtGui, QtCore
 from ilastik.core import overlayMgr
 from ilastik.core.overlayMgr import OverlayItem
 import numpy
-from ilastik.core.volume import DataAccessor
 
 class UnsupervisedDecomposition(object):
     
@@ -15,17 +14,17 @@ class UnsupervisedDecomposition(object):
         self.parent.ribbon.getTab('Unsupervised Decomposition').btnDecompose.setEnabled(False)
         
         self.timer = QtCore.QTimer()
-        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgress)
+        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgressBar)
 
-        #self.ud = unsupervisedMgr.UnsupervisedDecompositionThread(self.parent.project.dataMgr, overlays, self.parent.project.unsupervisedDecomposer)
-        self.ud = unsupervisedMgr.UnsupervisedDecompositionThread(self.parent.project.dataMgr, overlays, self.parent.project.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod)
+        # call core function
+        self.ud = self.parent.project.dataMgr.Unsupervised_Decomposition.computeResults(overlays)
 
-        numberOfJobs = self.ud.numberOfJobs
-        self.initDecompositionProgress(numberOfJobs)
-        self.ud.start()
+        # create and handle progress bar
         self.timer.start(200)
+        numberOfJobs = self.ud.numberOfJobs
+        self.initProgressBar(numberOfJobs)
         
-    def initDecompositionProgress(self, numberOfJobs):
+    def initProgressBar(self, numberOfJobs):
         statusBar = self.parent.statusBar()
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMinimum(0)
@@ -34,7 +33,7 @@ class UnsupervisedDecomposition(object):
         statusBar.addWidget(self.progressBar)
         statusBar.show()
 
-    def updateProgress(self):
+    def updateProgressBar(self):
         val = self.ud.count
         self.progressBar.setValue(val)
         if not self.ud.isRunning():
@@ -44,26 +43,7 @@ class UnsupervisedDecomposition(object):
             self.terminateProgressBar()
 
     def finalize(self):
-        activeItem = self.parent.project.dataMgr[self.parent._activeImageNumber]
-        activeItem._dataVol.unsupervised = self.ud.result
-
-        #create Overlay for unsupervised decomposition:
-        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/pLSA"] is None:
-            data = self.ud.result[:,:,:,:,:]
-            colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
-            for o in range(0, data.shape[4]):
-                # transform to uint8
-                data2 = data[:,:,:,:,o:(o+1)]
-                dmin = numpy.min(data2)
-                data2 -= dmin
-                dmax = numpy.max(data2)
-                data2 = 255/dmax*data2
-                data2 = data2.astype(numpy.uint8)
-                
-                ov = OverlayItem(data2, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
-                self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %d" % (o+1)] = ov
-        else:
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Unsupervised/" + self.parent.project.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.ud.result)
+        self.parent.project.dataMgr.Unsupervised_Decomposition.finalizeResults()
         self.ilastik.labelWidget.repaint()
 
     def terminateProgressBar(self):
