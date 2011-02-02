@@ -7,7 +7,7 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     name = "probabilistic Latent Semantic Analysis (pLSA)"
     shortname = "pLSA" 
     description = "Standard pLSA method as proposed by Hofmann 99"
-    author = "HCI, University of Heidelberg"
+    author = "M. Hanselmann, HCI - University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
     
     numComponents = 3
@@ -25,6 +25,7 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
         
         print "setting number of components to", ud.numComponents        
         
+    # NOTE: the pLSA will also be part of the upcoming vigra release
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
         # sanity checks
         self.numComponents = numpy.min((self.numComponents, features.shape[1]))

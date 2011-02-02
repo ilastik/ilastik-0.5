@@ -14,7 +14,7 @@ from ilastik.core.volume import DataAccessor
 from ilastik.core import overlayMgr
 from guiThread import UnsupervisedDecomposition
 from ilastik.modules.unsupervised_decomposition.gui.unsupervisedSelectionDlg import UnsupervisedSelectionDlg
-
+import ilastik.gui.volumeeditor as ve
 
 class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
     name = 'Unsupervised Decomposition'
@@ -43,6 +43,8 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+
+        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
         
         self.btnUnsupervisedOptions.setEnabled(True)     
                 

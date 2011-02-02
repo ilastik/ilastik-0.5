@@ -7,7 +7,7 @@ class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
     name = "Principal Component Analysis (PCA)" 
     shortname = "PCA"
     description = "also known as Karhunen-Loeve or Hotelling transform"
-    author = "HCI, University of Heidelberg"
+    author = "M. Hanselmann, HCI - University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
     
     numComponents = 3
@@ -31,6 +31,7 @@ class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
         # use singular value decomposition (SVD)
         meanData = self.meanData(features)
         features_centered = features - meanData
+        
         U,s,Vh = numpy.linalg.svd(features_centered, full_matrices=False)
         ZV = (U*s).T #equivalent: numpy.dot(Vh, features.T)
         FZ = Vh
@@ -44,4 +45,5 @@ class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
     
     # helper method
     def meanData(self, X):
-        return numpy.ones((X.shape[0],1)) * numpy.mean(X, 0)
+        return numpy.ones((X.shape[0],1)) * numpy.mean(X, axis=0)
+        
