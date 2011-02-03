@@ -21,7 +21,7 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     def settings(ud):
         (number, ok) = QInputDialog.getInt(None, "pLSA parameters", "Number of components", ud.numComponents, 1, 10)
         if ok:
-          ud.numComponents = number
+            ud.numComponents = number
         
         print "setting number of components to", ud.numComponents        
         

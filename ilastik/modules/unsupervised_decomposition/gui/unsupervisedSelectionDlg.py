@@ -35,7 +35,7 @@ class UnsupervisedSelectionDlg(QtGui.QDialog):
         self.homepage.setText(c.homepage)
         self.description.setText(c.description)
         self.author.setText(c.author)
-        #check wether the plugin writer provided a settings method
+        #check weather the plugin writer provided a settings method
         func = getattr(c, "settings", None)
         if callable(func):
             self.settingsButton.setVisible(True)
@@ -52,7 +52,6 @@ class UnsupervisedSelectionDlg(QtGui.QDialog):
             return self.previousUnsupervisedDecomposer        
 
 def test():
-    import numpy
     #from spyderlib.utils.qthelpers import qapplication
     app = QtGui.QApplication([""])
 

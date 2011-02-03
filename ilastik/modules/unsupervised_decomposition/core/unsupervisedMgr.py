@@ -65,11 +65,11 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
         #create overlays for unsupervised decomposition:
         if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname] is None:
             data = self.decompThread.result[:,:,:,:,:]
-            colorTab = OverlayItem.createDefaultColorTable("rgb")
+            myColor = OverlayItem.qrgb(0, 0, 0)
             for o in range(0, data.shape[4]):
                 data2 = OverlayItem.normalizeForDisplay(data[:,:,:,:,o:(o+1)])
                 # for some strange reason we have to invert the data before displaying it
-                ov = OverlayItem(255 - data2, color = colorTab[0], alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
+                ov = OverlayItem(255 - data2, color = myColor, alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
                 self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %d" % (o+1)] = ov
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.decompThread.result)
