@@ -51,6 +51,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     position = 3
     moduleName = "Interactive_Segmentation"
     
+    outputPath = os.path.expanduser("~/test-segmentation/")
+    
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
@@ -88,7 +90,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
         ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
         if ov is None:
-            path = os.path.expanduser("~/test-segmentation/")
+            path = self.outputPath
             try:
                 os.makedirs(path)
             except:
@@ -258,7 +260,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         res = QtGui.QInputDialog.getText(self, "Finish object", "Enter object name:")
         print res
         if res[1] == True:
-            path = os.path.expanduser("~/test-segmentation/"+str(res[0]))
+            path = self.outputPath+str(res[0])
             try:
                 os.makedirs(path)
             except:
