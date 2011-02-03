@@ -3,7 +3,7 @@ from PyQt4 import QtGui, QtCore
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import overlayMgr
 from ilastik.core import activeLearning
-import ilastik.core.overlays.thresHoldOverlay as tho
+import ilastik.core.overlays.thresholdOverlay as tho
 
 class FeatureComputation(QtCore.QObject):
     def __init__(self, parent):
@@ -166,7 +166,7 @@ class ClassificationInteractive(object):
 
         if len(foregrounds) > 1:
             if activeImage.overlayMgr["Classification/Segmentation"] is None:
-                ov = tho.ThresHoldOverlay(activeImage, foregrounds, [], autoAdd = True, autoVisible = False)
+                ov = tho.ThresholdOverlay(activeImage, foregrounds, [], autoAdd = True, autoVisible = False)
                 activeImage.overlayMgr["Classification/Segmentation"] = ov
             else:
                 ov = activeImage.overlayMgr["Classification/Segmentation"]

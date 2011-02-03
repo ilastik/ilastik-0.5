@@ -1,7 +1,7 @@
 from PyQt4 import QtCore, QtGui
 import overlayDialogBase
 import ilastik.gui.overlaySelectionDlg
-from ilastik.core.overlays.thresHoldOverlay import ThresHoldOverlay 
+from ilastik.core.overlays.thresholdOverlay import ThresholdOverlay 
 
 class SliderReceiver(QtCore.QObject):
     def __init__(self, dialog, index, oldValue):
@@ -15,7 +15,7 @@ class SliderReceiver(QtCore.QObject):
         self.oldValue = value
 
 class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
-    configuresClass = "ilastik.core.overlays.thresHoldOverlay.ThresHoldOverlay"
+    configuresClass = "ilastik.core.overlays.thresholdOverlay.ThresholdOverlay"
     name = "Thresholding Overlay"
     author = "C. N. S."
     homepage = "hci"
@@ -34,7 +34,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             ovm = self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr
             k = ovm.keys()[0]
             ov = ovm[k]
-            self.overlayItem = ThresHoldOverlay(self.ilastik._activeImage, [ov], [])
+            self.overlayItem = ThresholdOverlay([ov], [])
 
         self.volumeEditor = ilastik.labelWidget
         self.project = ilastik.project
@@ -67,9 +67,9 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         
         for index, t in enumerate(self.overlayItem.foregrounds):
             l = QtGui.QVBoxLayout()
-            print t.name
-            print len(self.overlayItem.thresholds)
-            print index
+            #print t.name
+            #print len(self.overlayItem.thresholds)
+            #print index
             self.sliderReceivers.append(SliderReceiver(self,index,self.overlayItem.thresholds[index] * 1000))
             
             w = QtGui.QSlider(QtCore.Qt.Vertical)
@@ -103,12 +103,12 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
 
         
         l = QtGui.QVBoxLayout()
-        #w = QtGui.QPushButton("Select Foreground")
-        #self.connect(w, QtCore.SIGNAL("clicked()"), self.selectForegrounds)
-        #l.addWidget(w)
-        #w = QtGui.QPushButton("Select Background")
-        #self.connect(w, QtCore.SIGNAL("clicked()"), self.selectBackgrounds)
-        #l.addWidget(w)
+        w = QtGui.QPushButton("Select Foreground")
+        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectForegrounds)
+        l.addWidget(w)
+        w = QtGui.QPushButton("Select Background")
+        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectBackgrounds)
+        l.addWidget(w)
         
         l2 = QtGui.QHBoxLayout()
         self.smoothing = QtGui.QCheckBox("Smooth")
