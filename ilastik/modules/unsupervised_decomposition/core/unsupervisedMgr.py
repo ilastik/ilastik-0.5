@@ -2,16 +2,12 @@ from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
 import numpy
 import traceback, sys
-import threading
-from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core import jobMachine
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtCore, QtGui
 import os
 import algorithms
 from ilastik.core.volume import DataAccessor
-#from algorithms.unsupervisedDecompositionBase import UnsupervisedDecompositionBase
-#from algorithms.unsupervisedDecompositionPCA import UnsupervisedDecompositionPCA
-#from algorithms.unsupervisedDecompositionPLSA import UnsupervisedDecompositionPLSA
+from ilastik.core.overlayMgr import OverlayItem
 
 """ Import all algorithm plugins"""
 pathext = os.path.dirname(__file__)
@@ -69,18 +65,11 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
         #create overlays for unsupervised decomposition:
         if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname] is None:
             data = self.decompThread.result[:,:,:,:,:]
-            colorTab = [QtGui.qRgb(i, i, i) for i in range(256)]
-            currColor = QtGui.QColor(255, 0, 0)
+            colorTab = OverlayItem.createDefaultColorTable("rgb")
             for o in range(0, data.shape[4]):
-                # transform to uint8
-                data2 = data[:,:,:,:,o:(o+1)]
-                dmin = numpy.min(data2)
-                data2 -= dmin
-                dmax = numpy.max(data2)
-                data2 = 255/dmax*data2
-                data2 = data2.astype(numpy.uint8)
-                
-                ov = OverlayItem(data2, color = currColor, alpha = 1.0, colorTable = colorTab, autoAdd = True, autoVisible = True)
+                data2 = OverlayItem.normalizeForDisplay(data[:,:,:,:,o:(o+1)])
+                # for some strange reason we have to invert the data before displaying it
+                ov = OverlayItem(255 - data2, color = colorTab[0], alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
                 self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %d" % (o+1)] = ov
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.decompThread.result)

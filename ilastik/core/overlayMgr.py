@@ -233,6 +233,36 @@ class OverlayItem(object):
     def setData(self,  data):
         self.overlayItem._data = data
 
+    @classmethod
+    def normalizeForDisplay(cls, data):
+        import numpy
+        dmin = numpy.min(data)
+        data = data - dmin
+        dmax = numpy.max(data)
+        data = 255*data/dmax
+        data = data.astype(numpy.uint8) # transform to uint8
+        return data
+
+    @classmethod
+    def qrgb(cls, r, g, b):
+        return (0xff << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff)
+    
+    @classmethod
+    def qgray(cls, r, g, b):
+        return (r*11+g*16+b*5)/32
+    
+    @classmethod
+    def createDefaultColorTable(cls, type, levels = 256):
+        typeCap = type.capitalize()
+        colorTab = []
+        if(typeCap == "GRAY"):
+            for i in range(levels):
+                colorTab.append(OverlayItem.qgray(i, i, i)) # see qGray function in QtGui
+        else:
+            #RGB
+            for i in range(levels):
+                colorTab.append(OverlayItem.qrgb(i, i, i)) # see gRGB function in QtGui
+        return colorTab        
 
 
 class OverlayMgr():

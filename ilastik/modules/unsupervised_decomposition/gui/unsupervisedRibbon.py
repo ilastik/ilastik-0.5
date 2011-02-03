@@ -8,10 +8,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
-#from ilastik.modules.unsupervised_decomposition.core.unsupervisedMgr import BackgroundOverlayItem
 from ilastik.core.volume import DataAccessor
-#import ilastik.gui.volumeeditor as ve
-from ilastik.core import overlayMgr
 from guiThread import UnsupervisedDecomposition
 from ilastik.modules.unsupervised_decomposition.gui.unsupervisedSelectionDlg import UnsupervisedSelectionDlg
 import ilastik.gui.volumeeditor as ve
@@ -49,12 +46,13 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         self.btnUnsupervisedOptions.setEnabled(True)     
                 
     def on_deActivation(self):
-        pass
+        self.btnDecompose.setEnabled(False)           
             
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
         
         self.btnChooseOverlays = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
+        
         self.btnDecompose = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'decompose')
         self.btnUnsupervisedOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Unsupervised Decomposition Options')
 
