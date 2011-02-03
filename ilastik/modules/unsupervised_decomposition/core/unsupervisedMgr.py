@@ -3,7 +3,7 @@ from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 import numpy
 import traceback, sys
 from ilastik.core import jobMachine
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtCore
 import os
 import algorithms
 from ilastik.core.volume import DataAccessor
