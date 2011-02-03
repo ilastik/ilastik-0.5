@@ -58,17 +58,17 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
             self.dataMgr.module["Unsupervised_Decomposition"] = self
 
     def computeResults(self, inputOverlays):
-        self.ud = UnsupervisedDecompositionThread(self.dataMgr, inputOverlays, self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod)
-        self.ud.start()
-        return self.ud
+        self.decompThread = UnsupervisedDecompositionThread(self.dataMgr, inputOverlays, self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod)
+        self.decompThread.start()
+        return self.decompThread
     
     def finalizeResults(self):
         activeItem = self.dataMgr[self.dataMgr._activeImageNumber]
-        activeItem._dataVol.unsupervised = self.ud.result
+        activeItem._dataVol.unsupervised = self.decompThread.result
 
         #create overlays for unsupervised decomposition:
         if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname] is None:
-            data = self.ud.result[:,:,:,:,:]
+            data = self.decompThread.result[:,:,:,:,:]
             colorTab = [QtGui.qRgb(i, i, i) for i in range(256)]
             currColor = QtGui.QColor(255, 0, 0)
             for o in range(0, data.shape[4]):
@@ -83,7 +83,7 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
                 ov = OverlayItem(data2, color = currColor, alpha = 1.0, colorTable = colorTab, autoAdd = True, autoVisible = True)
                 self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %d" % (o+1)] = ov
         else:
-            self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.ud.result)
+            self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.decompThread.result)
             
 class UnsupervisedDecompositionThread(QtCore.QThread):
     def __init__(self, dataMgr, overlays, unsupervisedMethod = algorithms.unsupervisedDecompositionPCA.UnsupervisedDecompositionPCA, unsupervisedMethodOptions = None):

@@ -1,8 +1,4 @@
-from ilastik.modules.unsupervised_decomposition.core import unsupervisedMgr
 from PyQt4 import QtGui, QtCore
-from ilastik.core import overlayMgr
-from ilastik.core.overlayMgr import OverlayItem
-import numpy
 
 class UnsupervisedDecomposition(object):
     
@@ -21,21 +17,23 @@ class UnsupervisedDecomposition(object):
 
         # create and handle progress bar
         self.timer.start(200)
-        numberOfJobs = self.ud.numberOfJobs
-        self.initProgressBar(numberOfJobs)
+        #numberOfJobs = self.ud.numberOfJobs         USE IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
+        self.initProgressBar()                     # USE (numberOfJobs) IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
         
-    def initProgressBar(self, numberOfJobs):
+    def initProgressBar(self):#, numberOfJobs):    # USE (.., numberOfJobs) IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
         statusBar = self.parent.statusBar()
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(numberOfJobs)
+        self.progressBar.setMaximum(0)             # USE (numberOfJobs) IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
+        self.progressBar.setValue(1)
+
         self.progressBar.setFormat(' Unsupervised Decomposition... %p%')
         statusBar.addWidget(self.progressBar)
         statusBar.show()
 
     def updateProgressBar(self):
-        val = self.ud.count
-        self.progressBar.setValue(val)
+        #val = self.ud.count                USE IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
+        #self.progressBar.setValue(val)     USE IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
         if not self.ud.isRunning():
             self.timer.stop()
             self.ud.wait()
