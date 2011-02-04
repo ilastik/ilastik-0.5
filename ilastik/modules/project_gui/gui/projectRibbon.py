@@ -7,7 +7,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 import ilastik.gui
 from projectDialog import ProjectDlg, ProjectSettingsDlg
-from ilastik.core import projectMgr
+from ilastik.core import projectClass
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui import volumeeditor as ve
 
@@ -103,7 +103,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
     
     def openProject(self, fileName):
         labelWidget = None
-        self.parent.project = projectMgr.Project.loadFromDisk(str(fileName), self.parent.featureCache)
+        self.parent.project = projectClass.Project.loadFromDisk(str(fileName), self.parent.featureCache)
         self.btnSave.setEnabled(True)
         self.btnEdit.setEnabled(True)
         self.btnOptions.setEnabled(True)

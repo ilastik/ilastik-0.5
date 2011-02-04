@@ -29,7 +29,6 @@
 
 from ilastik.core import dataMgr as dataMgrModule
 from ilastik.core import ILASTIK_VERSION
-import numpy
 import traceback
 
 import warnings
@@ -37,10 +36,8 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 from ilastik.core.utilities import irange, debug
-from ilastik.core.overlayMgr import OverlayItem
-
-from vigra import arraytypes as at
-from PyQt4 import QtGui
+from ilastik.core import dataImpex
+import os.path, sys
 
 #from ilastik.core.unsupervised import unsupervisedPCA
 
@@ -48,7 +45,7 @@ class Project(object):
     """
     Import/Export for the whole project, including any data, settings, labels etc.
     """
-    def __init__(self, name, labeler, description, dataMgr, labelNames=None, labelColors=None):
+    def __init__(self, name, labeler, description, dataMgr=None, labelNames=None, labelColors=None):
         if labelNames is None:
             labelNames = []
         if labelColors is None:
@@ -62,7 +59,11 @@ class Project(object):
         self.name = name
         self.labeler = labeler
         self.description = description
-        self.dataMgr = dataMgr
+        if dataMgr is not None:
+            self.dataMgr = dataMgr
+        else:
+            self.dataMgr = dataMgrModule.DataMgr()
+            
         self.labelNames = labelNames
         self.labelColors = labelColors
         self.trainingMatrix = None
@@ -73,7 +74,7 @@ class Project(object):
         
  
     def saveToDisk(self, fileName = None):
-        """ Save the whole project including data, feautues, labels and settings to 
+        """ Save the whole project including data, features, labels and settings to 
         and hdf5 file with ending ilp """
         try:
             if fileName is not None:
@@ -129,5 +130,57 @@ class Project(object):
         fileHandle.close()
         return project
         
-  
+    def loadStack(self, path, fileList, options):
+        #TODO: maybe get rid of path later on
+        
+        try:
+            theDataItem = dataImpex.DataImpex.importDataItem(fileList, options)
+        except MemoryError:
+            raise MemoryError
+        if theDataItem is not None:   
+            # file name
+            dirname = os.path.basename(os.path.dirname(path))
+            offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')'
+            theDataItem._name = dirname + ' ' + offsetstr
+            theDataItem.fileName = path   
+            try:
+                self.dataMgr.append(theDataItem, True)
+                self.dataMgr._dataItemsLoaded[-1] = True
 
+                theDataItem._hasLabels = True
+                theDataItem._isTraining = True
+                theDataItem._isTesting = True
+                
+            except Exception, e:
+                traceback.print_exc(file=sys.stdout)
+                print e
+                raise e
+        return True
+
+    def loadFile(self, fileList, options):
+        itemList = []
+        try:
+            itemList = dataImpex.DataImpex.importDataItems(fileList, options)
+        except Exception, e:
+            traceback.print_exc(file=sys.stdout)
+            print e
+            raise e
+        for index, item in enumerate(itemList):
+            self.dataMgr.append(item, True)
+        return True
+            
+    def addFile(self, fileList):
+        for file_name in fileList:
+            try:
+                file_name = str(file_name)
+                theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
+                self.dataMgr.append(theDataItem, True)
+            except Exception, e:
+                traceback.print_exc(file=sys.stdout)
+                print e
+                raise e
+        return True
+    
+    def removeFile(self, fileIndex):
+        self.dataMgr.remove(fileIndex)
+        

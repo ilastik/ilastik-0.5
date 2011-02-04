@@ -86,8 +86,7 @@ class DataItemBase():
         self._isTraining = True
         self._isTesting = False
         self._groupMember = []
-        self._projects = []
-        
+
         self.thumbnail = None
 
 
