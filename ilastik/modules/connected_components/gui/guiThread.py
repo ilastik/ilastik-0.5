@@ -90,11 +90,8 @@ class CC(object):
         colorlist = []
         colorlist.append(long(0))
         colorlist.extend(sublist)
-        print len(colorlist)
         for i in range(17, 256):
             color = QtGui.qRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
             colorlist.append(color)
-        
-        print len(colorlist)
         return colorlist
         
