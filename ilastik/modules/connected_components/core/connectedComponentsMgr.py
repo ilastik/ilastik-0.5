@@ -215,9 +215,12 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         sublist.append(OverlayItem.qrgb(240, 230, 140)) #khaki
         colorlist = []
         colorlist.append(long(0))
-        for i in range(0, 16):
-            colorlist.extend(sublist)
-        colorlist.pop()
+        colorlist.extend(sublist)
+        
+        for i in range(17, 256):
+            color = OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
+            colorlist.append(color)
+            
         return colorlist
     
     
