@@ -166,7 +166,7 @@ class ClassificationInteractive(object):
 
         if len(foregrounds) > 1:
             if activeImage.overlayMgr["Classification/Segmentation"] is None:
-                ov = tho.ThresholdOverlay(activeImage, foregrounds, [], autoAdd = True, autoVisible = False)
+                ov = tho.ThresholdOverlay(foregrounds, [], autoAdd = True, autoVisible = False)
                 activeImage.overlayMgr["Classification/Segmentation"] = ov
             else:
                 ov = activeImage.overlayMgr["Classification/Segmentation"]
