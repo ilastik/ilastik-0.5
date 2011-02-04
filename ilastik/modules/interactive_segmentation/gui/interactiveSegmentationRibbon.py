@@ -12,7 +12,7 @@ from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
 
 from ilastik.gui.iconMgr import ilastikIcons
-from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
+from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponentsModuleMgr, ConnectedComponents
 from ilastik.modules.connected_components.gui.guiThread import CC
 
 from seedWidget import SeedListWidget
@@ -117,7 +117,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
 
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
         if ov is not None:
-            colorTableCC = CC.makeColorTab()
+            colorTableCC = ConnectedComponentsModuleMgr.makeColorTab()
             ov_cc = OverlayItem(ov._data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
             self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
             #ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
@@ -290,7 +290,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                         bluetable.append(QtGui.qRgb(0, 0, 255))
                     bluetable.pop()
                     ov = OverlayItem(data, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
-                    colorTableCC = CC.makeColorTab()
+                    colorTableCC = ConnectedComponentsModuleMgr.makeColorTab() # cross-reference between modules to be removed (more flexible workflows!!!)
                     ov_cc = OverlayItem(data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
                     self.ilastik._activeImage.overlayMgr["Segmentation/Done"] = ov
                     self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
