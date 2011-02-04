@@ -35,7 +35,7 @@ from ilastik.core.volume import VolumeLabels, VolumeLabelDescription
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core import jobMachine
-from listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
+from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 from ilastik.core.volume import DataAccessor
 from ilastik.modules.connected_components.core.synapseDetectionFilter import SynapseFilterAndSegmentor 
 
