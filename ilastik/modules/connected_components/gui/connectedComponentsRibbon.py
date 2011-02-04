@@ -1,5 +1,3 @@
-import numpy
-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
@@ -9,13 +7,10 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.modules.connected_components.core.connectedComponentsMgr import BackgroundOverlayItem
-from ilastik.modules.connected_components.core.synapseDetectionFilter import SynapseFilterAndSegmentor 
-from ilastik.core.volume import DataAccessor
 #import ilastik.gui.volumeeditor as ve
 from backgroundWidget import BackgroundWidget
 from guiThread import CC
 from labelSelectionForm import LabelSelectionForm
-from ilastik.core import overlayMgr
 
 
 class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
@@ -126,16 +121,6 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = True)
         
     def on_btnFilter_clicked(self):
-        #This is a special function to filter synapses. First, it finds the sizes of labeled objects
-        #and throws away everything <0.1 of the smallest labeled object or >10 of the largest labeled
-        #object. Then, it assumes that the input overlay
-        #is a threhsold overlay and computes it for equal probabilities, and then dilates the
-        #the current connected components to the size of their counterparts in the equal 
-        #probability connected components.
-        
-        #FIXME: This function is very specific and is only put here until ilastik 0.6 allows 
-        #to make it into a special workflow. Remove as soon as possible!
-        
         descriptions =  self.parent.project.dataMgr.module["Classification"]["labelDescriptions"]
         desc_names = []
         for i, d in enumerate(descriptions):
@@ -144,38 +129,6 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         dlg = LabelSelectionForm(self.ilastik, desc_names)
         label = dlg.exec_()
         print label
-        parts = label.split(" ")
-        labelnum = int(parts[0])
-        labelname = parts[1]
-        thres = self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.inputData
-        cc = self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"]
-        if thres is None:
-            print "no threshold overlay"
-            return
-        if cc is None:
-            print "No cc overlay"
-            return
-        sfad = SynapseFilterAndSegmentor(self.parent, labelnum, cc, self.inputOverlay)
-        objs_user, goodsizes = sfad.computeSizes()
-        objs_ref = sfad.computeReferenceObjects()
-        goodsizes = [s for s in goodsizes if s>100]
-        
-        mingoodsize = min(goodsizes)
-        maxgoodsize = max(goodsizes)
-        objs_final = sfad.filterObjects(objs_user, objs_ref, mingoodsize, maxgoodsize)
-        #create a new, filtered overlay:
-        result = numpy.zeros(cc.shape, dtype = 'int32')
-        objcounter = 1
-        for iobj in objs_final:
-            for i in range(len(iobj[0])):
-                result[0, iobj[0][i], iobj[1][i], iobj[2][i], 0] = int(objcounter)
-            objcounter = objcounter +1
-        
-        if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] is None:
-            #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
-            colortab = CC.makeColorTab()
-            ov = overlayMgr.OverlayItem(result, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] = ov
-        else:
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC Filtered"]._data = DataAccessor(result)
+        # call core function
+        self.parent.project.dataMgr.Connected_Components.filterSynapses(self.inputOverlay, label)
         self.ilastik.labelWidget.repaint()
