@@ -64,26 +64,26 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.btnCC = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'CC')
         self.btnCCBack = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'CC with background')
         self.btnFilter = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'Filter synapses')
-        self.btnCCOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'Options')
+        #self.btnCCOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'Options')
         
         self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
         self.btnCC.setToolTip('Run connected components on the selected overlay')
         self.btnCCBack.setToolTip('Run connected components with background')
         self.btnFilter.setToolTip('Perform magic synapse filtering and dilation')
-        self.btnCCOptions.setToolTip('Set options')
+        #self.btnCCOptions.setToolTip('Set options')
         
         self.btnInputOverlay.setEnabled(True)
         self.btnCC.setEnabled(False)
         self.btnCCBack.setEnabled(False)
         self.btnFilter.setEnabled(False)
-        self.btnCCOptions.setEnabled(True)
+        #self.btnCCOptions.setEnabled(True)
         
         tl.addWidget(self.btnInputOverlay)
         tl.addWidget(self.btnCC)
         tl.addWidget(self.btnCCBack)
         tl.addStretch()
         tl.addWidget(self.btnFilter)
-        tl.addWidget(self.btnCCOptions)
+        #tl.addWidget(self.btnCCOptions)
         
         self.setLayout(tl)
         

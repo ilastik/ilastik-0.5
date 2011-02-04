@@ -37,9 +37,7 @@ from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core import jobMachine
 from listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 from ilastik.core.volume import DataAccessor
-from ilastik.core.overlayMgr import OverlayItem
 from ilastik.modules.connected_components.core.synapseDetectionFilter import SynapseFilterAndSegmentor 
-from ilastik.core.overlays import thresholdOverlay
 
 try:
     from PyQt4 import QtCore
@@ -188,7 +186,7 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
             colortab = ConnectedComponentsModuleMgr.makeColorTab()
             myColor = OverlayItem.qrgb(255, 0, 0) #QtGui.QColor(255, 0, 0)
             ov = OverlayItem(result, color = myColor, alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
-            self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] = ov
+            self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] = ov
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"]._data = DataAccessor(result)        
 

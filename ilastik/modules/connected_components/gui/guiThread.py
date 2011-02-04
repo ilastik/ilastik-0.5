@@ -49,4 +49,33 @@ class CC(object):
         self.parent.ribbon.tabDict['Connected Components'].btnCC.setEnabled(True)
         self.parent.ribbon.tabDict['Connected Components'].btnCCBack.setEnabled(True)
     
+    @classmethod
+    def makeColorTab(cls):
+        sublist = []
+        #sublist.append(QtGui.qRgb(0, 0, 0))
+        sublist.append(QtGui.qRgb(255, 255, 255))
+        sublist.append(QtGui.qRgb(255, 0, 0))
+        sublist.append(QtGui.qRgb(0, 255, 0))
+        sublist.append(QtGui.qRgb(0, 0, 255))
+        
+        sublist.append(QtGui.qRgb(255, 255, 0))
+        sublist.append(QtGui.qRgb(0, 255, 255))
+        sublist.append(QtGui.qRgb(255, 0, 255))
+        sublist.append(QtGui.qRgb(255, 105, 180)) #hot pink!
+        
+        sublist.append(QtGui.qRgb(102, 205, 170)) #dark aquamarine
+        sublist.append(QtGui.qRgb(165,  42,  42)) #brown        
+        sublist.append(QtGui.qRgb(0, 0, 128)) #navy
+        sublist.append(QtGui.qRgb(255, 165, 0)) #orange
+        
+        sublist.append(QtGui.qRgb(173, 255,  47)) #green-yellow
+        sublist.append(QtGui.qRgb(128,0, 128)) #purple
+        sublist.append(QtGui.qRgb(192, 192, 192)) #silver
+        sublist.append(QtGui.qRgb(240, 230, 140)) #khaki
+        colorlist = []
+        colorlist.append(long(0))
+        for i in range(0, 16):
+            colorlist.extend(sublist)
+        colorlist.pop()
+        return colorlist
         
