@@ -123,7 +123,6 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         dataItemImage.Connected_Components.onAppend()
 
 
-
 class ConnectedComponents():
     def __init__(self):
         self.inputdata = None
