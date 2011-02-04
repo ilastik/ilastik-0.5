@@ -2,6 +2,7 @@ import numpy, vigra
 import overlayBase
 import ilastik.core.overlayMgr as overlayMgr
 from ilastik.core.volume import DataAccessor
+import datetime
 
 class MultivariateThresholdAccessor(object):
     def __init__(self, thresholdOverlay):
@@ -35,20 +36,23 @@ class MultivariateThresholdAccessor(object):
             next_best = numpy.where(current_guess < i, current_best, self.probabilities[i][key])
             current_best = next_best
             
-        answer = (current_guess + 1)
+        answer = current_guess + 1
         return answer
     
     def __setitem__(self, key, data):
         raise Exception('yeah sure', 'no setting of multivariathresholdaccessor _data')
         
 
-class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
-    def __init__(self, dataItemImage, foregrounds, backgrounds, autoAdd = True, autoVisible = True):
+class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
+    def __init__(self, foregrounds, backgrounds, sigma = -1, autoAdd = True, autoVisible = True):
         overlayBase.OverlayBase.__init__(self)
-        self.dataItemImage = dataItemImage
         self._data = None
-        self.sigma = 1.5
-        self.smoothing = False
+        if sigma<0:
+            self.sigma = 1.5
+            self.smoothing = False
+        else:
+            self.sigma = sigma
+            self.smoothing = True
         
         self.dsets = []
         self.foregrounds = []
@@ -58,7 +62,7 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.setBackgrounds(backgrounds)
                       
         accessor = MultivariateThresholdAccessor(self)
-        overlayMgr.OverlayItem.__init__(self, self.dataItemImage, accessor, alpha = 1.0, autoAdd = autoAdd, autoVisible = autoVisible,  linkColorTable = True)
+        overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, autoAdd = autoAdd, autoVisible = autoVisible,  linkColorTable = True)
         self.linkColorTable = True
         self.color = None
         
@@ -72,14 +76,6 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
                 colorTab[index+1] = item.getColor()
 
         return colorTab
-        
-
-    def __getattr__(self,  name):
-        if name == "colorTable":
-            return self.getColorTab()
-        elif name == "dtype":
-            return numpy.uint8
-        raise AttributeError,  name
     
     def setForegrounds(self, foregrounds):
         b = min(len(self.backgrounds),1)
@@ -96,17 +92,17 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
             dsets.append(back)
 
         self.foregrounds = foregrounds
-        self.calculateDsets(dsets)
+        self.calculateDsets(dsets, True)
         self.recalculateThresholds() 
         
 
 
     def setBackgrounds(self, backgrounds):
         dsets = []
-        for i,f in enumerate(self.foregrounds):
-            dsets.append(f._data)
-
-        
+        for index, d in enumerate(self.dsets):
+                if index < len(self.foregrounds):
+                    dsets.append(d)
+                    
         if len(backgrounds)>0:
             background = numpy.zeros(backgrounds[0]._data.shape, backgrounds[0]._data.dtype)
             for b in backgrounds:
@@ -115,29 +111,36 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
                           
         
         self.backgrounds = backgrounds
-        self.calculateDsets(dsets)
+        self.calculateDsets(dsets, False)
         self.recalculateThresholds()
 
-    def calculateDsets(self, dsets):
+    def calculateDsets(self, dsets, new_fg = True):
         """
         eventually smooth the dataSets before doing the threshold. sad sad world.
+        no point in re-smoothing the foreground, if only the background has changed
         """
-        if self.smoothing is True:            
+        if self.smoothing is True:   
             dsets_new = []
+            #smooth only the foreground!
             for index, d in enumerate(dsets):
-                data = numpy.ndarray(d.shape, 'float32')
-                for t in range(d.shape[0]):
-                    for c in range(d.shape[-1]):
-                        if d.shape[1] > 1:                   
-                            dRaw = d[t,:,:,:,c].astype(numpy.float32).view(vigra.ScalarVolume)           
-                            data[t,:,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
-                        else:
-                            dRaw = d[t,0,:,:,c].astype(numpy.float32).view(vigra.ScalarImage)           
-                            data[t,0,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma) 
-    
-                dataAcc = DataAccessor(data)
-                dsets_new.append(dataAcc)
-                
+                if index < len(self.foregrounds) and new_fg is True:
+                    data = numpy.ndarray(d.shape, 'float32')
+                    for t in range(d.shape[0]):
+                        for c in range(d.shape[-1]):
+                            if d.shape[1] > 1:
+                                start_time = datetime.datetime.now()           
+                                dRaw = numpy.asarray(d[t, :, :, :, c])
+                                dRaw = dRaw.swapaxes(0, 2).view()
+                                res = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
+                                res = res.swapaxes(0, 2).view()
+                                data[t, :, :, :, c] = res                                          
+                            else:
+                                dRaw = d[t,0,:,:,c].astype('float32').view(vigra.ScalarImage)           
+                                data[t,0,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
+                    dataAcc = DataAccessor(data)
+                    dsets_new.append(dataAcc)
+                else:
+                    dsets_new.append(d)            
             self.dsets = dsets_new
         else:
             self.dsets = dsets
@@ -150,6 +153,8 @@ class ThresHoldOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         
     def setThresholds(self, thresholds):
+        if (len(thresholds)==2):
+            print "setting probability ratio threshold to: ", thresholds[0]/thresholds[1]
         self.thresholds = numpy.zeros((len(self.dsets)),'float32' )
         for index, t in enumerate(thresholds):
             self.thresholds[index] = t

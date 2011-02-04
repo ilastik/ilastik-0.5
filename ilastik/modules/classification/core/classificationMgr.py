@@ -685,11 +685,11 @@ class ClassifierPredictThread(ThreadBase):
                     ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                     foregrounds.append(ov)
     
-                import ilastik.core.overlays.thresHoldOverlay as tho
+                import ilastik.core.overlays.thresholdOverlay as tho
                 
                 if len(foregrounds) > 1:
                     if activeItem.overlayMgr["Classification/Segmentation"] is None:
-                        ov = tho.ThresHoldOverlay(activeItem, foregrounds, [], autoAdd = True, autoVisible = True)
+                        ov = tho.ThresholdOverlay(foregrounds, [], autoAdd = True, autoVisible = True)
                         activeItem.overlayMgr["Classification/Segmentation"] = ov
                     else:
                         ov = activeItem.overlayMgr["Classification/Segmentation"]

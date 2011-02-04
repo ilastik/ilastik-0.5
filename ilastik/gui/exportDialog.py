@@ -28,6 +28,7 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui
+import ilastik.gui
 
 class ExportDialog(QtGui.QDialog):
     def __init__(self, formatList, timeOffset, sliceOffset, channelOffset, parent=None):
@@ -88,8 +89,9 @@ class ExportDialog(QtGui.QDialog):
         
 
     def slotDir(self):
-        path = self.path.text()
+        path = ilastik.gui.LAST_DIRECTORY
         dir = QtGui.QFileDialog.getExistingDirectory(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(dir).path()
         self.path.setText(dir)
             
     def export(self):
