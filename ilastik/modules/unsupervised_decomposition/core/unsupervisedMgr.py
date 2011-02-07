@@ -85,6 +85,7 @@ class UnsupervisedDecompositionThread(QtCore.QThread):
         self.unsupervisedMethod = unsupervisedMethod
         self.unsupervisedMethodOptions = unsupervisedMethodOptions
         self.jobMachine = jobMachine.JobMachine()
+        self.result = []
 
     def reshapeToFeatures(self, overlays):
         # transform to feature matrix
