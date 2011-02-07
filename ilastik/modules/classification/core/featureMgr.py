@@ -115,11 +115,24 @@ class FeatureMgr():
             pass
         return True
     
-    def exportFeatureItems(self, h5featGrp):
-        if hasattr(self, 'featureItems'):
-            for k, feat in enumerate(self.featureItems):
-                itemGroup = h5featGrp.create_group('feature_%03d' % k)
-                feat.serialize(itemGroup)
+    def exportFeatureItems(self, fileName):
+        try:
+            h5file = h5py.File(str(fileName),'a')
+            if 'features' in h5file.keys():
+                del h5file['features']
+            h5featGrp = h5file.create_group('features')
+           
+            if hasattr(self, 'featureItems'):
+                for k, feat in enumerate(self.featureItems):
+                    itemGroup = h5featGrp.create_group('feature_%03d' % k)
+                    feat.serialize(itemGroup)
+
+            h5file.close()
+        except RuntimeError as e:
+            h5file.close()
+            print e
+            raise e
+            return            
             
     def importFeatureItems(self, h5featGrp):
         featureItems = []
@@ -185,6 +198,24 @@ class FeatureMgr():
                     ov.max = max
                     di.overlayMgr[ feature.getKey(c)] = ov
   
+    def computeMemoryRequirement(self, featureSelectionList):
+        if featureSelectionList != []:
+            dataMgr = self.dataMgr
+
+            numOfEffectiveFeatures =  0
+            for f in featureSelectionList:
+                numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0]._dataVol._data.shape)
+
+            numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
+
+            memoryReq = numOfPixels * (numOfEffectiveFeatures*4.0) /1024.0**2
+            if self.printComputeMemoryRequirement:
+                print "Feature memory demand: %8.2f MB. For feature vector of length %d" % (memoryReq, numOfEffectiveFeatures)
+        else:
+            memoryReq = 0.0
+            if self.printComputeMemoryRequirement:
+                print "No features selected"
+        return memoryReq  
 
     def __getstate__(self): 
         # Delete This Instance for pickleling
