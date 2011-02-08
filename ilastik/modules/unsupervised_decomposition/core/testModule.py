@@ -9,7 +9,7 @@ class Tests():
     def __init__(self, parent = None):
         self.parent = parent
     
-    def test(self):
+    def testWholeModule(self):
         # create project
         project = Project('Project Name', 'Labeler', 'Description')
         dataMgr = project.dataMgr
@@ -39,22 +39,19 @@ class Tests():
         
         self.testThread = TestThread(self.parent, unsupervisedMgr, listOfResultOverlays, listOfFilenames)
         self.testThread.start(inputOverlays)
+        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.collectOutcomes)
         
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.ende)
-        
-        #pca1 = unsupervisedMgr.dataMgr[dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component 1"]._data
-        #pca2 = unsupervisedMgr.dataMgr[dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component 2"]._data
-        #pca3 = unsupervisedMgr.dataMgr[dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component 3"]._data
 
-    def ende(self):
-        print "ende2"
+    def collectOutcomes(self):
+        print "Test outcomes:"
         print self.testThread.passedTest
+        print "Done."
 
 if __name__ == "__main__":
     app = QtCore.QCoreApplication(sys.argv)
         
     myTests = Tests(app)
-    myTests.test()
+    myTests.testWholeModule()
 
     app.exec_()
     sys.exit()
