@@ -47,7 +47,7 @@ class Tests():
         #pca3 = unsupervisedMgr.dataMgr[dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component 3"]._data
 
     def ende(self):
-        print "ende"
+        print "ende2"
         print self.testThread.passedTest
 
 if __name__ == "__main__":
