@@ -75,6 +75,7 @@ if ok:
         view = View( Item('edgeWeights'), Item('dontUseSuperVoxels'), Item('algorithm'), buttons = ['OK', 'Cancel'],  )        
 
         inlineConfig = View(Item('algorithm'), Group(viewWS, viewRW, viewGC))
+        default = View(Item('bias'))
         
         lastBorderState = False        
         
