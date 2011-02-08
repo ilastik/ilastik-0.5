@@ -37,15 +37,18 @@ class Tests():
         listOfFilenames.append("unsupervised_PCA_component_2.h5")
         listOfFilenames.append("unsupervised_PCA_component_3.h5")
         
-        testThread = TestThread(self.parent, unsupervisedMgr, listOfResultOverlays, listOfFilenames)
-        testThread.start(inputOverlays)
+        self.testThread = TestThread(self.parent, unsupervisedMgr, listOfResultOverlays, listOfFilenames)
+        self.testThread.start(inputOverlays)
         
-        print "stop"
+        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.ende)
         
         #pca1 = unsupervisedMgr.dataMgr[dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component 1"]._data
         #pca2 = unsupervisedMgr.dataMgr[dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component 2"]._data
         #pca3 = unsupervisedMgr.dataMgr[dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component 3"]._data
 
+    def ende(self):
+        print "ende"
+        print self.testThread.passedTest
 
 if __name__ == "__main__":
     app = QtCore.QCoreApplication(sys.argv)
