@@ -89,6 +89,7 @@ if ok:
                 self.basinLabels = basinLabels
                 self.dtype = basinLabels.dtype
                 self.shape = volumeBasins.shape
+                self.flat = None
                 print "Indexaccessor:", volumeBasins.shape
             def __getitem__(self, key):
                 return self.basinLabels[self.volumeBasins[tuple(key)]]
