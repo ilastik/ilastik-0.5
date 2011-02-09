@@ -4,7 +4,7 @@ from ilastik.core.projectClass import Project
 from ilastik.core.testThread import TestThread
 from ilastik.modules.unsupervised_decomposition.core.unsupervisedMgr import UnsupervisedDecompositionModuleMgr
 import unittest
-
+from ilastik.core import jobMachine
 
 class Tests(unittest.TestCase):
      
@@ -19,17 +19,20 @@ class Tests(unittest.TestCase):
         self.app.connect(t, QtCore.SIGNAL('timeout()'), self.WholeModule)        
         t.start()
         self.app.exec_()
-        self.WholeModule()
-        #self.assertEqual(True, True)
+        
+    def tearDown(self):
+        print "tearDown"
+        jobMachine.GLOBAL_WM.stopWorkers()
         
     def WholeModule(self):
         print "WholeModule"
+        
         # create project
         project = Project('Project Name', 'Labeler', 'Description')
         dataMgr = project.dataMgr
     
         # create file list and load data
-        path = '../../../../sims_aligned_s7_32.h5'    
+        path = '../../../../testdata/sims_aligned_s7_32.h5'    
         fileList = []
         fileList.append(path)
         project.addFile(fileList)
@@ -47,25 +50,25 @@ class Tests(unittest.TestCase):
         listOfResultOverlays.append("Unsupervised/PCA component 2")
         listOfResultOverlays.append("Unsupervised/PCA component 3")
         listOfFilenames = []
-        listOfFilenames.append("unsupervised_PCA_component_1.h5")
-        listOfFilenames.append("unsupervised_PCA_component_2.h5")
-        listOfFilenames.append("unsupervised_PCA_component_3.h5")
+        listOfFilenames.append("../../../../testdata/unsupervised_PCA_component_1.h5")
+        listOfFilenames.append("../../../../testdata/unsupervised_PCA_component_2.h5")
+        listOfFilenames.append("../../../../testdata/unsupervised_PCA_component_3.h5")
         
         self.testThread = TestThread(unsupervisedMgr, listOfResultOverlays, listOfFilenames)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.collectOutcomes)
         self.testThread.start(inputOverlays)
+        self.assertEqual(True, True)
 
     def collectOutcomes(self):
-        print "Test outcomes:"
-        print self.testThread.passedTest
-        print "Done."
-        print self.testThread.myTestThread.isFinished()
+        #print "Test outcomes:"
+        #print self.testThread.passedTest
+        #print "Done."
+        #print self.testThread.myTestThread.isFinished()
         self.assertEqual(self.testThread.passedTest, True)
-        #del self.app
-        #self.app.quit()
-        #self.app.exit()
+        self.app.quit()
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

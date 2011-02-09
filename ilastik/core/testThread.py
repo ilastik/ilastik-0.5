@@ -22,9 +22,6 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
         # call core function
         self.myTestThread = self.baseMgr.computeResults(input)
         self.timer.start(100)
-
-    def __del__(self):
-        print "TestThread dies", self.myTestThread
         
     def updateProgress(self):
         if not self.myTestThread.isRunning():
