@@ -168,6 +168,7 @@ class Project(object):
         return True
             
     def addFile(self, fileList):
+        fileList = sorted(fileList)
         for file_name in fileList:
             try:
                 file_name = str(file_name)
