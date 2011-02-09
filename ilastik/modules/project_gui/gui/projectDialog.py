@@ -217,9 +217,9 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):
-        projectName = self.projectName
-        labeler = self.labeler
-        description = self.description
+        self.project.name = self.projectName.text()
+        self.project.labeler = self.labeler.text()
+        self.project.description = self.description.toPlainText()
         gc.collect()
         self.ilastik.project = self.project
         self.accept()

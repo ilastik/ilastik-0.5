@@ -69,8 +69,6 @@ class Project(object):
         self.trainingMatrix = None
         self.trainingLabels = None
         self.trainingFeatureNames = None
-
-        #self.unsupervisedDecomposer = None # unsupervisedPCA.UnsupervisedPCA() #core.unsupervised.unsupervisedClasses[0]()
         
  
     def saveToDisk(self, fileName = None):
