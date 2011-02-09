@@ -15,6 +15,8 @@ from PyQt4.QtCore import SIGNAL
 
 import qimage2ndarray
 
+from numpy2vtk import toVtkImageData
+
 class QVTKOpenGLWidget(QVTKWidget2):
     def __init__(self, parent = None):
         QVTKWidget2.__init__(self, parent)
@@ -41,15 +43,6 @@ class QVTKOpenGLWidget(QVTKWidget2):
         #fix this
         self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
         QVTKWidget2.update(self)
-
-def toVtkImageData(a):
-    importer = vtkImageImport()
-    importer.SetDataScalarTypeToUnsignedChar()
-    importer.SetDataExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
-    importer.SetWholeExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
-    importer.SetImportVoidPointer(a)
-    importer.Update()
-    return importer.GetOutput()
 
 class Outliner(vtkPropAssembly):
     def __init__(self, mesh):
