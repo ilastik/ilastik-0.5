@@ -243,11 +243,8 @@ class OverviewScene(QWidget):
         hbox.addWidget(b1)
         hbox.addWidget(b2)
         hbox.addWidget(b3)
+        hbox.addStretch()
         hbox.addWidget(bAnaglyph)
-        spacer = QSpacerItem(5,5, QSizePolicy.Expanding)
-        hbox.addItem(spacer)
-        b4 = QPushButton("FS")
-        hbox.addWidget(b4)
         layout.addLayout(hbox)
         
         self.planes = SlicingPlanesWidget(shape)
@@ -268,7 +265,6 @@ class OverviewScene(QWidget):
         self.qvtk.renderer.AddActor(self.planes)
         self.qvtk.renderer.ResetCamera() 
         
-        self.connect(b4, SIGNAL("clicked()"), self.OnFullscreen)
         self.connect(b1, SIGNAL("clicked()"), self.TogglePlaneWidgetX)
         self.connect(b2, SIGNAL("clicked()"), self.TogglePlaneWidgetY)
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
@@ -286,9 +282,6 @@ class OverviewScene(QWidget):
             print 'setting stero mode OFF'
             self.qvtk.renderWindow.StereoRenderOff()
         self.qvtk.update()
-    
-    def OnFullscreen(self):
-         self.emit(SIGNAL('fullscreenToggled()'))
     
     def ChangeSlice(self, num, axis):
         #print "OverviewScene::ChangeSlice"
