@@ -385,12 +385,16 @@ class OverviewScene(QWidget):
         self.qvtk.update()
 
 if __name__ == '__main__':
+    def updateSlice(num, axis):
+        o.ChangeSlice(num,axis)
+    
     from PyQt4.QtGui import QApplication
     import sys, h5py
 
     app = QApplication(sys.argv)
 
     o = OverviewScene(None, [100,100,100])
+    o.connect(o, SIGNAL("changedSlice(int,int)"), updateSlice)
     o.show()
     o.resize(600,600)
     
