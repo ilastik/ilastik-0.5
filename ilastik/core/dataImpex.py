@@ -64,6 +64,7 @@ class DataImpex(object):
     def loadFromFile(fileName):
         # Load an image or a stack from a single file
         theDataItem = dataMgr.DataItemImage(fileName)
+        print fileName
         fBase, fExt = os.path.splitext(fileName)
         if fExt == '.h5':
             f = h5py.File(fileName, 'r')
