@@ -59,6 +59,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self._initContent()
         self._initConnects()
         self.interactionLog = []
+        self.defaultSegmentor = False
         
     def on_activation(self):
         if self.ilastik.project is None:
@@ -84,7 +85,17 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         overlayWidget.addOverlayRef(ov.getRef())
         
         self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  self.ilastik._activeImage.Interactive_Segmentation.seeds,  self.ilastik.labelWidget,  ov))
-
+        
+        if self.parent.project.dataMgr.Interactive_Segmentation.segmentor is None:
+            segmentors = self.parent.project.dataMgr.Interactive_Segmentation.segmentorClasses
+            for i, seg in enumerate(segmentors):
+                if seg.name == "Supervoxel Segmentation":
+                    self.parent.project.dataMgr.Interactive_Segmentation.segmentor = seg()
+                    ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget, view='default')
+                    self.inlineSettings.changeWidget(ui)
+                    self.defaultSegmentor = True
+                    break            
+            
         
         
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
@@ -140,7 +151,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnChooseDimensions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Using 3D')
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
         self.btnFinishSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Finish Object')
-        self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Select Segmentor')
+        self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Change Segmentor')
         
         self.inlineSettings = InlineSettingsWidget(self)
         
@@ -153,13 +164,13 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         
         tl.addWidget(self.btnChooseWeights)
-        tl.addWidget(self.btnSegmentorsOptions)
-        tl.addWidget(self.btnChooseDimensions)
-        tl.addWidget(self.btnSegment)
-        tl.addWidget(self.btnFinishSegment)
-        tl.addWidget(self.inlineSettings)
-        tl.addStretch()
         
+        #tl.addWidget(self.btnChooseDimensions)
+        tl.addWidget(self.btnSegment)        
+        tl.addWidget(self.inlineSettings)
+        tl.addWidget(self.btnFinishSegment)
+        tl.addStretch()
+        tl.addWidget(self.btnSegmentorsOptions)
         
         self.btnSegment.setEnabled(False)
         self.btnFinishSegment.setEnabled(False)
@@ -231,6 +242,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
                 self.setupWeights(weights)
                 self.btnSegmentorsOptions.setEnabled(True)
+                self.btnSegment.setEnabled(True)
+                self.btnFinishSegment.setEnabled(True)
             
 
     def setupWeights(self, weights = None):
@@ -379,3 +392,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget)
 
             self.inlineSettings.changeWidget(ui)
+            self.defaultSegmentor = False
+        elif self.defaultSegmentor is True:
+            ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget)
+            self.inlineSettings.changeWidget(ui)
+            self.defaultSegmentor = False
+            

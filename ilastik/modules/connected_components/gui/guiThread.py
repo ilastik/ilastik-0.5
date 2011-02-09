@@ -2,6 +2,7 @@ from ilastik.modules.connected_components.core import connectedComponentsMgr
 from PyQt4 import QtGui, QtCore
 from ilastik.core import overlayMgr
 from ilastik.core.volume import DataAccessor
+import numpy
 
 class CC(object):
     #Connected components
@@ -88,8 +89,9 @@ class CC(object):
         sublist.append(QtGui.qRgb(240, 230, 140)) #khaki
         colorlist = []
         colorlist.append(long(0))
-        for i in range(0, 16):
-            colorlist.extend(sublist)
-        colorlist.pop()
+        colorlist.extend(sublist)
+        for i in range(17, 256):
+            color = QtGui.qRgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
+            colorlist.append(color)
         return colorlist
         

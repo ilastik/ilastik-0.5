@@ -405,7 +405,10 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.setRgbMode(self.project.rgbData)
 
 
-        dock = QtGui.QDockWidget(' ilastik GUI', self)
+        dock = QtGui.QDockWidget(self)
+        #save space, but makes thi dock widget undockable
+        #at the moment we do not support undocking anyway, so...
+        dock.setTitleBarWidget(QtGui.QWidget())
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
         dock.setFeatures(dock.features() & (not QtGui.QDockWidget.DockWidgetClosable))
@@ -437,8 +440,12 @@ class MainWindow(QtGui.QMainWindow):
         if reply == QtGui.QMessageBox.Yes:
             self.saveProject()
             event.accept()
+            if self.labelWidget.grid:
+                self.labelWidget.grid.deleteUndocked()
         elif reply == QtGui.QMessageBox.No:
             event.accept()
+            if self.labelWidget.grid:
+                self.labelWidget.grid.deleteUndocked()
         else:
             event.ignore()
 

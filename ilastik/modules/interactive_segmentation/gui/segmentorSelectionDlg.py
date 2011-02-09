@@ -36,9 +36,9 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         QtGui.QWidget.__init__(self, ilastik)
         self.setWindowTitle("Select Segmentation Algorithm")
         self.ilastik = ilastik
+        
         self.previousSegmentor = self.currentSegmentor = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor
-
-
+        
         #get the absolute path of the 'ilastik' module
         path = os.path.dirname(__file__)
         uic.loadUi(path + '/segmentorSelectionDlg.ui', self)

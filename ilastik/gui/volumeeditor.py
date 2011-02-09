@@ -58,6 +58,8 @@ from ilastik.core.volume import DataAccessor
 
 from shortcutmanager import *
 
+from ilastik.gui.quadsplitter import QuadView
+
 from ilastik.gui.overlayWidget import OverlayListWidget
 import ilastik.gui.exportDialog as exportDialog
 
@@ -300,6 +302,8 @@ class DummyOverlayListWidget(QtGui.QWidget):
 
 
 class VolumeEditor(QtGui.QWidget):
+    grid = None #in 3D mode hold the quad view widget, otherwise remains none
+    
     """Array Editor Dialog"""
     def __init__(self, image, parent,  name="", font=None,
                  readonly=False, size=(400, 300), sharedOpenglWidget = None):
@@ -360,42 +364,34 @@ class VolumeEditor(QtGui.QWidget):
 
         self.layout_ = QtGui.QHBoxLayout()
 
-
-        self.grid = QtGui.QGridLayout()
-
         self.drawManager = DrawManager(self)
 
         self.imageScenes = []
-
-        if self.sharedOpenGLWidget is not None:
-            self.overview = OverviewScene(self, self.image.shape[1:4])
-            self.connect(self.overview, QtCore.SIGNAL("changedSlice(int,int)"), self.changeSlice)
-            self.connect(self.overview, QtCore.SIGNAL("fullscreenToggled()"), self.toggleFullscreen3D)
-            self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
-            #this call ensures that the object is properly initialized
-            #TODO get rid of this
-            self.overview.qvtk.update()
+        self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
+        
+        if self.image.shape[1] != 1:
+            if self.sharedOpenGLWidget is not None:
+                self.overview = OverviewScene(self, self.image.shape[1:4])
+                self.connect(self.overview, QtCore.SIGNAL("changedSlice(int,int)"), self.changeSlice)
+                self.connect(self.overview, QtCore.SIGNAL("fullscreenToggled()"), self.toggleFullscreen3D)
+                self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
+                #this call ensures that the object is properly initialized
+                #TODO get rid of this
+                self.overview.qvtk.update()
+            else:
+                self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
+            
+            self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
+            self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[2], self.image.shape[3]), 2 ,self.drawManager))
+            self.grid = QuadView(self)
+            self.grid.addWidget(0, self.imageScenes[2])
+            self.grid.addWidget(1, self.imageScenes[0])
+            self.grid.addWidget(2, self.imageScenes[1])
+            self.grid.addWidget(3, self.overview)
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
-            
-        self.grid.addWidget(self.overview, 1, 1)
-        
-        self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
-        self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
-        self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[2], self.image.shape[3]), 2 ,self.drawManager))
-        
-        self.grid.addWidget(self.imageScenes[2], 0, 0)
-        self.grid.addWidget(self.imageScenes[0], 0, 1)
-        self.grid.addWidget(self.imageScenes[1], 1, 0)
-
-
-        if self.image.shape[1] == 1:
-            self.imageScenes[1].setVisible(False)
-            self.imageScenes[2].setVisible(False)
-            self.overview.setVisible(False)
 
         self.viewingLayout = QtGui.QVBoxLayout()
-        #tempLayout.addLayout(self.grid)
         
         labelLayout = QtGui.QHBoxLayout()
         
@@ -404,7 +400,11 @@ class VolumeEditor(QtGui.QWidget):
         labelLayout.addWidget(self.posLabel)
         labelLayout.addWidget(self.pixelValuesLabel)
         labelLayout.addStretch()
-        self.viewingLayout.addLayout(self.grid)
+        #self.viewingLayout.addLayout(self.grid)
+        if self.image.shape[1] != 1:
+            self.viewingLayout.addWidget(self.grid)
+        else:
+            self.viewingLayout.addWidget(self.imageScenes[0])
         self.viewingLayout.addLayout(labelLayout)
 
         #right side toolbox
@@ -614,6 +614,11 @@ class VolumeEditor(QtGui.QWidget):
         splitterLayout = QtGui.QVBoxLayout()
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
+        
+        self.updateGeometry()
+        self.update()
+        if self.grid:
+            self.grid.update()
 
     def toggleFullscreenX(self):
         self.maximizeSliceView(0)
@@ -635,30 +640,12 @@ class VolumeEditor(QtGui.QWidget):
                 self.imageScenes[i].setVisible(True)
 
     def maximizeSliceView(self, axis):
-        if self.image.shape[1] > 1:
-            visible = True
-            a = range(3)
-            for i in a:
-                if not self.imageScenes[i].isVisible():
-                    visible = False
-            if visible:
-                for i in a:
-                    self.imageScenes[i].setVisible(False)
-                self.imageScenes[axis].setVisible(True)
-                self.overview.setVisible(False)
-            else:
-                if self.imageScenes[axis].isVisible():
-                    for i in a:
-                        self.imageScenes[i].setVisible(True)
-                else:
-                    for i in a:
-                        self.imageScenes[i].setVisible(False)
-                    self.imageScenes[axis].setVisible(True)
-                self.overview.setVisible(True)
-                
-            self.imageScenes[axis].setFocus()
-            for i in a:
-                self.imageScenes[i].setImageSceneFullScreenLabel()
+        if axis == 2:
+            self.grid.toggleMaximized(0)
+        if axis == 1:
+            self.grid.toggleMaximized(2)
+        if axis == 0:
+            self.grid.toggleMaximized(1)
     
     def nextLabel(self):
         self.labelWidget.nextLabel()
@@ -766,7 +753,8 @@ class VolumeEditor(QtGui.QWidget):
 #            if self.labelWidget.volumeLabels is not None:
 #                if self.labelWidget.volumeLabels.data is not None:
 #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
-            self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
+            if len(self.imageScenes) > i:
+                self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False)
 
     def on_saveAsImage(self):
         sliceOffsetCheck = False
@@ -913,8 +901,9 @@ class VolumeEditor(QtGui.QWidget):
 #                tempLabels = self.labelWidget.volumeLabels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
-        self.imageScenes[axis].sliceNumber = num
-        self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
+        if len(self.imageScenes) > axis:
+            self.imageScenes[axis].sliceNumber = num
+            self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
@@ -2087,10 +2076,11 @@ class ImageScene(QtGui.QGraphicsView):
                 posX = self.volumeEditor.selSlices[0]
                 colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
-                yView = self.volumeEditor.imageScenes[1].crossHairCursor
-                zView = self.volumeEditor.imageScenes[2].crossHairCursor
-                yView.setVisible(False)
-                zView.showYPosition(x, y)
+                if len(self.volumeEditor.imageScenes) > 2:
+                    yView = self.volumeEditor.imageScenes[1].crossHairCursor
+                    zView = self.volumeEditor.imageScenes[2].crossHairCursor
+                    yView.setVisible(False)
+                    zView.showYPosition(x, y)
                 
                 
             elif self.axis == 1:
@@ -2226,6 +2216,7 @@ class OverviewSceneDummy(QtGui.QWidget):
 class OverviewSceneOld(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
         QtOpenGL.QGLWidget.__init__(self, shareWidget = parent.sharedOpenGLWidget)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.sceneShape = shape
         self.volumeEditor = parent
         self.images = parent.imageScenes
