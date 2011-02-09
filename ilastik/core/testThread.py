@@ -3,13 +3,13 @@ import numpy
 from ilastik.core import dataImpex
 
 # this is the core replacement of the guiThread used to test module functionality
-class TestThread(QtCore.QThread):
+class TestThread(QtCore.QObject):#QtCore.QThread):
     
-    def __init__(self, parent, baseMgr, listOfResultOverlays, listOfFilenames):
+    def __init__(self, baseMgr, listOfResultOverlays, listOfFilenames):
         __pyqtSignals__ = ( "done()")
 
-        QtCore.QThread.__init__(self, parent)
-        self.parent = parent
+        #QtCore.QThread.__init__(self, parent)
+        QtCore.QObject.__init__(self)
         self.baseMgr = baseMgr
         self.listOfResultOverlays = listOfResultOverlays
         self.listOfFilenames = listOfFilenames
@@ -21,7 +21,10 @@ class TestThread(QtCore.QThread):
 
         # call core function
         self.myTestThread = self.baseMgr.computeResults(input)
-        self.timer.start(200)
+        self.timer.start(100)
+
+    def __del__(self):
+        print "TestThread dies", self.myTestThread
         
     def updateProgress(self):
         if not self.myTestThread.isRunning():
