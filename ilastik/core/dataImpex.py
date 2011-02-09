@@ -52,6 +52,8 @@ class DataImpex(object):
             g = f['volume']
             theDataItem.deserialize(g, options.offsets, options.shape)
             itemList.append(theDataItem)
+        elif fExt == '.lif':
+            print "data Impex, here we are"
         else:
             image = DataImpex.loadStack(fileList, options, None)
             if image is not None:

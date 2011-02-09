@@ -127,7 +127,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                 traceback.print_exc()
 
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
-        if ov is not None:
+        if ov is not None and ov_cc is None:
             colorTableCC = CC.makeColorTab()
             ov_cc = OverlayItem(ov._data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
             self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
@@ -289,10 +289,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                 f.write(l + "\n")
             f.close()
             self.ilastik.labelWidget.interactionLog = []
-            
+            ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
+            ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
+            if ov is None:
+                pass
             if ovs is not None:
-                ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
-                ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
                 if ov is None:
                     #create Old Overlays if not there
                     shape = self.ilastik._activeImage.shape
