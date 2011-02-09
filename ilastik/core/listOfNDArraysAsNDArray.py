@@ -41,7 +41,7 @@ class ListOfNDArraysAsNDArray:
             if it.dtype != self.dtype or self.shape[1:] != it.shape:
                 print "########### ERROR ListOfNDArraysAsNDArray all array items should have same dtype and shape (array: ", self.dtype, self.shape, " item : ",it.dtype, it.shape , ")"
         #Yes, this is horrible. But otherwise we have to copy.
-        if len(self.ndarrays)==1:
+        if len(self.ndarrays)==1 and self.ndarrays[0].flat is not None:
             self.flat = self.ndarrays[0].flat
             
     def __getitem__(self, key):

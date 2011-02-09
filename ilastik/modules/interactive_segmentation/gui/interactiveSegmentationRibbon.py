@@ -63,6 +63,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
+        
+        if self.ilastik._activeImage.Interactive_Segmentation.seeds is None:
+            self.ilastik._activeImage.Interactive_Segmentation.createSeedsData()
+        
         self.ilastik.labelWidget.interactionLog = self.interactionLog
         
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()

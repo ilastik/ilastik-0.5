@@ -108,6 +108,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def setModuleMgr(self, interactiveSegmentationModuleMgr):
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         
+    def createSeedsData(self):
         if self.seeds is None:
             l = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seeds = VolumeLabels(l)
@@ -246,8 +247,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
 
         
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+        print "serializing interactive segmentation"
         if self.seeds is not None:
-            self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )        
+            print "seeds are not None!!!"
+            self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )
+        else:
+            print "seeds are None!!!"      
 
     def deserialize(self, h5G, offsets = (0,0,0), shape=(0,0,0)):
         if "seeds" in h5G.keys():
