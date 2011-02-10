@@ -49,7 +49,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         self.btnUnsupervisedOptions.setEnabled(True)     
                 
     def on_deActivation(self):
-        pass
+        self.btnDecompose.setEnabled(False)
             
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -90,7 +90,10 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
                 self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
                 
             self.parent.labelWidget.repaint()
-            self.btnDecompose.setEnabled(True)            
+            self.btnDecompose.setEnabled(True) 
+        else:
+            self.btnDecompose.setEnabled(False)
+                           
         
     def on_btnDecompose_clicked(self):
         self.unsDec = UnsupervisedDecomposition(self.ilastik)
@@ -106,4 +109,4 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         dialog = UnsupervisedSelectionDlg(self.parent)
         answer = dialog.exec_()
         if answer != None:
-            self.parent.project.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod = answer                
+            self.parent.project.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod = answer  
