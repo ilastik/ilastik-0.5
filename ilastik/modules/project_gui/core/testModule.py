@@ -21,9 +21,11 @@ class Tests(unittest.TestCase):
         fileList = [str(self.testdir + "colorballs.jpg"), str(self.testdir + "zebra.jpg")]
         #fileList = [str(self.testdir + "zebra.jpg"), str(self.testdir + "zebra.jpg")]
         project.addFile(fileList)
+        print str(self.testdir + "test_two_images.ilp")
+        print str(self.testdir + "syswywy.ilp")
         project.saveToDisk(str(self.testdir + "test_two_images.ilp"))
         same = TestHelperFunctions.compareH5Files(str(self.testdir + "test_two_images.ilp"), 
-                                           str(self.testdir + "gt_two_images.ilp"))
+                                           str(self.testdir + "syswywy.ilp"))
         self.assertEqual(same, True)
         
         

@@ -7,7 +7,7 @@ from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDeco
 import unittest
 from ilastik.core import jobMachine
 
-class TestWholeModuleDefaultDecomposer(unittest.TestCase): # PCA with 3 components
+class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decomposer: PCA with 3 components
      
     def setUp(self):
         #print "setUp"
@@ -118,10 +118,8 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
 
     def finalizeTest(self):
         # results comparison
-        #print self.testThread.myTestThread.isFinished()
         self.assertEqual(self.testThread.passedTest, True)
         
-        # other conditions
         # exactly 3 computed overlays + 3 ground truth overlays were added
         self.numOverlaysAfter = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
         self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, 10)
