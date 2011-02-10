@@ -86,7 +86,9 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
                 self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
                 
             self.parent.labelWidget.repaint()
-            self.btnDecompose.setEnabled(True)            
+            self.btnDecompose.setEnabled(True)
+        else:
+            self.btnDecompose.setEnabled(False)         
         
     def on_btnDecompose_clicked(self):
         self.unsDec = UnsupervisedDecomposition(self.ilastik)
