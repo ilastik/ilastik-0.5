@@ -22,7 +22,7 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
 
         # call core function
         self.myTestThread = self.baseMgr.computeResults(input)
-        self.timer.start(100)
+        self.timer.start(200)
         
     def updateProgress(self):
         if not self.myTestThread.isRunning():
@@ -37,18 +37,25 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
         self.passedTest = TestHelperFunctions.compareResultsWithFile(self.baseMgr, self.listOfResultOverlays, self.listOfFilenames)
         # announce that we are done
         self.emit(QtCore.SIGNAL("done()"))
-       
+        
+        '''
+        # in case you want to create ground truth overlays, use the following code instead of the above
+        for i in range(len(self.listOfResultOverlays)):
+            obtained = self.baseMgr.dataMgr[self.baseMgr.dataMgr._activeImageNumber].overlayMgr["Unsupervised/pLSA component %d" % (i+1)]
+            dataImpex.DataImpex.exportOverlay(self.listOfFilenames[i], "h5", obtained)
+        '''
 
 class TestHelperFunctions():
     @staticmethod
     def compareResultsWithFile(baseMgr, listOfResultOverlays, listOfFilenames):
         equalOverlays = True
         for i in range(len(listOfResultOverlays)):
-            obtained = baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber].overlayMgr["Unsupervised/PCA component %d" % (i+1)]
+            obtained = baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber].overlayMgr[listOfResultOverlays[i]]
             prefix = "Ground_Truth/"
             dataImpex.DataImpex.importOverlay(baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber], listOfFilenames[i], prefix)
-            groundTruth = baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber].overlayMgr[prefix + "Unsupervised/PCA component %d" % (i+1)]
+            groundTruth = baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber].overlayMgr[prefix + listOfResultOverlays[i]]
             equalOverlays = equalOverlays & TestHelperFunctions.compareOverlayData(obtained, groundTruth)
+        print "all ", str(len(listOfResultOverlays)), " compared overlays are equal: ", equalOverlays
         return equalOverlays        
     
     @staticmethod
@@ -71,5 +78,7 @@ class TestHelperFunctions():
             print e
             return False
         return True
-            
-        
+    
+    @staticmethod
+    def getRandomSeed():
+        return 42

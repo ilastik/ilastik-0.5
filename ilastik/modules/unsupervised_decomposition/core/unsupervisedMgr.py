@@ -52,7 +52,7 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
         self.unsupervisedMethod = algorithms.unsupervisedDecompositionPCA.UnsupervisedDecompositionPCA
         if self.dataMgr.module["Unsupervised_Decomposition"] is None:
             self.dataMgr.module["Unsupervised_Decomposition"] = self
-
+            
     def computeResults(self, inputOverlays):
         self.decompThread = UnsupervisedDecompositionThread(self.dataMgr, inputOverlays, self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod)
         self.decompThread.start()

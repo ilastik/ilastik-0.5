@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui, uic
 import ilastik
 from ilastik.modules.unsupervised_decomposition.core.algorithms import unsupervisedDecompositionBase
+from PyQt4.QtGui import QInputDialog
 
 import os
 
@@ -36,14 +37,17 @@ class UnsupervisedSelectionDlg(QtGui.QDialog):
         self.description.setText(c.description)
         self.author.setText(c.author)
         #check weather the plugin writer provided a settings method
-        func = getattr(c, "settings", None)
+        func = getattr(c, "setNumberOfComponents", None)
         if callable(func):
             self.settingsButton.setVisible(True)
         else:
             self.settingsButton.setVisible(False)
 
     def unsupervisedSettings(self):
-        self.currentUnsupervisedDecomposer.settings()
+        (number, ok) = QInputDialog.getInt(None, str(self.currentUnsupervisedDecomposer.shortname + " parameters"), "Number of components", 3, 1, 10)
+        if ok:
+            self.currentUnsupervisedDecomposer.setNumberOfComponents(number)
+            print "setting number of components to", self.currentUnsupervisedDecomposer.numComponents        
 
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
