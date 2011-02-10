@@ -7,13 +7,15 @@ from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDeco
 from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDecompositionPCA import UnsupervisedDecompositionPCA
 import unittest
 from ilastik.core import jobMachine
+from ilastik import __path__ as ilastikpath
 
 class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decomposer
      
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
-        self.testdir = "../../../../testdata/"
+        self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
+        print self.testdir
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
@@ -76,7 +78,7 @@ class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
-        self.testdir = "../../../../testdata/"
+        self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
@@ -138,7 +140,7 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) 
-        self.testdir = "../../../../testdata/"
+        self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
