@@ -7,7 +7,7 @@ class Tests(unittest.TestCase):
     
     def setUp(self):
         #self.app = QtCore.QCoreApplication(sys.argv)
-        self.testdir = "/home/akreshuk/ilastik-main/ilastik/testdata/"
+        self.testdir = "../../../../testdata/"
         
         print "setUp"
         
