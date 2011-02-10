@@ -1,3 +1,5 @@
+#authors Luca Fiaschi, Christoph Sommer
+
 import numpy
 import jpype
 import os
@@ -5,12 +7,17 @@ import os
 
 def reader(fileName=None):
     """ Function to read LIF (Leica Image Format) files. The function expects a filenames a returns a list of 5D data objects
-        on item for each series contained in the LIF file. The funciton expects to find a running Java Virtual Machine. This Machine
+        on item for each series contained in the LIF file. The function expects to find a running Java Virtual Machine. This Machine
         should only be started ones, so make sure it is started outside this function before you call it.
 		
 		This function requires jpype to be installed.
 	"""
-    pathtoLOCI=os.getcwd() + "/core/loci_tools.jar"
+    #the switch is added to work also inside eclipse
+    pathtoLOCI=os.getcwd() 
+    if pathtoLOCI[-7:]!= 'ilastik':
+        pathtoLOCI=os.getcwd()+ "/ilastik/core/loci_tools.jar"
+    else:
+        pathtoLOCI= os.getcwd() + '/core/loci_tools.jar'
 
     try:
         if not jpype.isJVMStarted():
