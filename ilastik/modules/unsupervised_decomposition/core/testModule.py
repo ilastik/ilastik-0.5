@@ -4,6 +4,7 @@ from ilastik.core.projectClass import Project
 from ilastik.core.testThread import TestThread
 from ilastik.modules.unsupervised_decomposition.core.unsupervisedMgr import UnsupervisedDecompositionModuleMgr
 from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDecompositionPLSA import UnsupervisedDecompositionPLSA
+from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDecompositionPCA import UnsupervisedDecompositionPCA
 import unittest
 from ilastik.core import jobMachine
 
@@ -43,7 +44,7 @@ class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decompo
         # overlay lists and filenames
         listOfResultOverlays = []
         listOfFilenames = []
-        for i in range(3):
+        for i in range(UnsupervisedDecompositionPCA.numComponents):
             listOfResultOverlays.append("Unsupervised/PCA component %d" % (i+1))
             listOfFilenames.append(str(self.testdir + "unsupervised_PCA_component_%d.h5" % (i+1)))
         
