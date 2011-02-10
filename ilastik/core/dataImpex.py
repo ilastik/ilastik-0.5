@@ -12,6 +12,7 @@ with warnings.catch_warnings():
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
+from ilastik.core.LOCIwrapper import reader as LOCIreader
 
 class DataImpex(object):
     """
@@ -52,11 +53,22 @@ class DataImpex(object):
             g = f['volume']
             theDataItem.deserialize(g, options.offsets, options.shape)
             itemList.append(theDataItem)
-        else:
+       
+        elif fExt == ".tiff" or fExt == ".gif" or fExt == ".jpeg" or fExt == ".gif" or fExt == ".jpg" or fExt == ".tif":
             image = DataImpex.loadStack(fileList, options, None)
             if image is not None:
                 for item in range(image.shape[3]):
                     theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[options.channels[0]][item])
+                    itemList.append(theDataItem)
+        else:
+
+            for file in fileList:
+                seriesList=LOCIreader(file[0])
+                i=1
+                for series in seriesList:
+         
+                    theDataItem = DataImpex.initDataItemFromArray(series,"series"+str(i))
+                    i+=1
                     itemList.append(theDataItem)
         return itemList
         
@@ -70,6 +82,7 @@ class DataImpex(object):
             f = h5py.File(fileName, 'r')
             g = f['volume']
             theDataItem.deserialize(g)
+
         else:
             # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
@@ -218,6 +231,9 @@ class DataImpex(object):
             else:
                 #3d data looks like (1, x, y, z, c)
                 return (shape[1], shape[2], shape[3], shape[4])
+        
+        
+        
         else :
             try:
                 tempimage = DataImpex.vigraReadImageWrapper(filename)

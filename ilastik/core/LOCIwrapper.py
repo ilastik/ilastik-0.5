@@ -22,7 +22,7 @@ def reader(fileName=None):
         
     r = jpype.JClass('loci.formats.ChannelFiller')()
     r = jpype.JClass('loci.formats.ChannelSeparator')(r)
-
+    print fileName
     r.setId(fileName)
 
     seriesData = []

@@ -17,6 +17,8 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
         self.rgb = 1
+        
+    
         self.layout.addWidget(QtGui.QLabel("Select a subvolume:"))
         #tempGrid = QtGui.QGridLayout()
         #tempForm = QtGui.QFormLayout()
