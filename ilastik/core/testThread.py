@@ -2,6 +2,7 @@ from PyQt4 import QtCore
 import numpy
 from ilastik.core import dataImpex
 import shlex, subprocess
+from ilastik import __path__ as ilastikpath
 
 # this is the core replacement of the guiThread used to test module functionality
 class TestThread(QtCore.QObject):#QtCore.QThread):
