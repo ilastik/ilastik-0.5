@@ -340,7 +340,7 @@ class ClassificationMgr(object):
     def updateTrainingMatrixForImage(self, newLabels, dataItemImage):
         """
         This method updates the current training Matrix with new labels.
-        newlabels can contain completey new labels, changed labels and deleted labels
+        newlabels can contain completely new labels, changed labels and deleted labels
         """
         self.matrixLock.acquire()
         prop = dataItemImage.module["Classification"]
