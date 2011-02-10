@@ -1,5 +1,6 @@
 import numpy
 import jpype
+import os
 
 
 def reader(fileName=None):
@@ -9,9 +10,11 @@ def reader(fileName=None):
 		
 		This function requires jpype to be installed.
 	"""
+    pathtoLOCI=os.getcwd() + "/core/loci_tools.jar"
+
     try:
         if not jpype.isJVMStarted():
-            jpype.startJVM(jpype.getDefaultJVMPath(),'-Djava.class.path=/Applications/ImageJ/plugins/loci_tools.jar')
+            jpype.startJVM(jpype.getDefaultJVMPath(),'-Djava.class.path=' + pathtoLOCI)
     except:
         print "JVM Start failed, propably it has been started already..."	
 
