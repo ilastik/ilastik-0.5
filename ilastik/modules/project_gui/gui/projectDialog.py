@@ -145,10 +145,12 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")
     def on_loadFileButton_clicked(self):
+
         fl = fileloader.FileLoader(self)
         #imageData = sl.exec_()
         fl.exec_()
         itemList = []
+        print fl.fileList
         try:
             itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
         except Exception, e:
@@ -163,9 +165,10 @@ class ProjectDlg(QtGui.QDialog):
             theFlag = QtCore.Qt.ItemIsEnabled
             flagON = ~theFlag | theFlag
             flagOFF = ~theFlag
-
+            
+      
             # file name
-            r = QtGui.QTableWidgetItem(fl.fileList[fl.options.channels[0]][index])
+            r = QtGui.QTableWidgetItem(fl.fileList[fl.options.channels[0]][0]+"_series_"+str(index))
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             # labels
             r = QtGui.QTableWidgetItem()
@@ -175,7 +178,8 @@ class ProjectDlg(QtGui.QDialog):
 
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
-            self.initThumbnail(fl.fileList[fl.options.channels[0]][index])
+            #self.initThumbnail(fl.fileList[fl.options.channels[0]][index])
+            self.initThumbnail(fl.fileList[fl.options.channels[0]][0]+"_series_"+str(index))
             self.tableWidget.setCurrentCell(0, 0)
 
     @QtCore.pyqtSignature("")     
