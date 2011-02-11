@@ -32,6 +32,8 @@ class QVTKOpenGLWidget(QVTKWidget2):
         self.SetRenderWindow(self.renderWindow)
         
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        
+        self.picker = vtkPropPicker()
 
     def resizeEvent(self, event):
         w,h = self.width(), self.height()
@@ -45,8 +47,25 @@ class QVTKOpenGLWidget(QVTKWidget2):
         #fix this
         self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
         QVTKWidget2.update(self)
+        
+    def mousePressEvent(self, e):
+        if e.type() == QEvent.MouseButtonDblClick:
+            print "double clicked"
+            res = self.picker.Pick(e.pos().x(), e.pos().y(), 0, self.renderer)
+            if res > 0:
+                c = self.picker.GetPickPosition()
+                print c
+                self.emit(SIGNAL("objectPicked"), c)
+        else:
+            QVTKWidget2.mouseReleaseEvent(self, e)
 
 class Outliner(vtkPropAssembly):
+    def SetPickable(self, pickable):
+        props = self.GetParts()
+        props.InitTraversal();
+        for i in range(props.GetNumberOfItems()):
+            props.GetNextProp().SetPickable(pickable)
+    
     def __init__(self, mesh):
         self.cutter = vtkCutter()
         self.cutter.SetCutFunction(vtkPlane())
@@ -70,6 +89,12 @@ class Outliner(vtkPropAssembly):
         self.cutter.Update()
 
 class SlicingPlanesWidget(vtkPropAssembly):
+    def SetPickable(self, pickable):
+        props = self.GetParts()
+        props.InitTraversal();
+        for i in range(props.GetNumberOfItems()):
+            props.GetNextProp().SetPickable(pickable)
+    
     def __init__(self, dataShape):
         self.dataShape = dataShape
         self.planes = []
@@ -189,7 +214,7 @@ class SlicingPlanesWidget(vtkPropAssembly):
         self.coordinate = newCoordinate
         #print "__PlanePositionCallback: setting coordinate to", self.coordinate
         self.InvokeEvent("CoordinatesEvent")
-        
+   
 class OverviewScene(QWidget):
     colorTable = None
     
@@ -212,6 +237,19 @@ class OverviewScene(QWidget):
     def TogglePlaneWidgetZ(self):
         self.planes.TogglePlaneWidget(2)
         self.qvtk.update()
+    
+    
+    #vtkInteractorStyleTrackballCamera style
+    #style AddObserver LeftButtonReleaseEvent cbLBR
+    #style AddObserver LeftButtonReleaseEvent {style OnLeftButtonUp}
+
+    #proc cbLBR {} {
+
+    #if {[iren GetRepeatCount] == 1} {
+        #eval picker Pick [iren GetEventPosition] 0 ren1
+    #}
+
+    #}
     
     def __init__(self, parent, shape):
         super(OverviewScene, self).__init__(parent)
@@ -248,6 +286,7 @@ class OverviewScene(QWidget):
         self.planes.SetInteractor(self.qvtk.GetInteractor())
         self.planes.AddObserver("CoordinatesEvent", self.slicingCallback)
         self.planes.SetCoordinate([0,0,0])
+        self.planes.SetPickable(False)
         
         ## Add RGB arrow axes
         self.axes = vtkAxesActor();
@@ -267,7 +306,17 @@ class OverviewScene(QWidget):
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
         self.connect(bAnaglyph, SIGNAL("clicked()"), self.ToggleAnaglyph3D)
         
+        self.connect(self.qvtk, SIGNAL("objectPicked"), self.__onObjectPicked)
+        
         self.qvtk.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
+
+    def __onObjectPicked(self, coor):
+        self.ChangeSlice( coor[0], 0)
+        self.ChangeSlice( coor[1], 1)
+        self.ChangeSlice( coor[2], 2)
+        
+    def __onLeftButtonReleased(self):
+        print "CLICK"
     
     def ToggleAnaglyph3D(self):
         self.anaglyph = not self.anaglyph
@@ -320,6 +369,8 @@ class OverviewScene(QWidget):
         self.cutter[1].GetOutlineProperty().SetColor(0,1,0)
         self.cutter[2] = Outliner(self.polygonAppender.GetOutput())
         self.cutter[2].GetOutlineProperty().SetColor(0,0,1)
+        for c in self.cutter:
+            c.SetPickable(False)
 
         self.qvtk.renderer.AddActor(self.cutter[0])
         self.qvtk.renderer.AddActor(self.cutter[1])
