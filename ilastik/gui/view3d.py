@@ -17,6 +17,8 @@ import qimage2ndarray
 
 from numpy2vtk import toVtkImageData
 
+from GenerateModelsFromLabels_thread import *
+
 class QVTKOpenGLWidget(QVTKWidget2):
     def __init__(self, parent = None):
         QVTKWidget2.__init__(self, parent)
@@ -189,6 +191,8 @@ class SlicingPlanesWidget(vtkPropAssembly):
         self.InvokeEvent("CoordinatesEvent")
         
 class OverviewScene(QWidget):
+    colorTable = None
+    
     def slicingCallback(self, obj, event):
         num = obj.coordinate[obj.lastChangedAxis]
         axis = obj.lastChangedAxis
@@ -291,71 +295,36 @@ class OverviewScene(QWidget):
     def redisplay(self):
         self.qvtk.update()
         
-    def DisplayObjectMeshes(self, v):
-        #
-        # SEE
-        # http://www.vtk.org/Wiki/VTK/Examples/Cxx/Medical/GenerateModelsFromLabels
-        #
+    def DisplayObjectMeshes(self, v, suppressLabels=()):
+        print "OverviewScene::DisplayObjectMeshes"
+        self.dlg = MeshExtractorDialog(self)
+        self.connect(self.dlg, SIGNAL('done()'), self.onObjectMeshesComputed)
+        self.dlg.show()
+        self.dlg.run(v)
+    
+    def SetColorTable(self, table):
+        self.colorTable = table
+    
+    def onObjectMeshesComputed(self):
+        self.dlg.accept()
+        print "onObjectMeshesComputed"
+        g = self.dlg.extractor.meshes[2]
         
-        vol = toVtkImageData(v)
+        self.polygonAppender = vtkAppendPolyData()
+        for g in self.dlg.extractor.meshes.values():
+            self.polygonAppender.AddInput(g)
         
-        #histogram = vtkImageAccumulate()
-        discreteCubes = vtkDiscreteMarchingCubes()
-        smoother = vtkWindowedSincPolyDataFilter()
-        selector = vtkThreshold()
-        scalarsOff = vtkMaskFields()
-        geometry = vtkGeometryFilter()
-
-        #http://www.vtk.org/Wiki/VTK/Examples/Cxx/Medical/GenerateModelsFromLabels
-        startLabel = 2
-        endLabel = 2
-        smoothingIterations = 15
-        passBand = 0.001
-        featureAngle = 120.0
-
-        discreteCubes.SetInput(vol)
-        discreteCubes.GenerateValues(endLabel-startLabel+1, startLabel, endLabel)
-
-        smoother.SetInput(discreteCubes.GetOutput())
-        smoother.SetNumberOfIterations(smoothingIterations)
-        smoother.BoundarySmoothingOff()
-        smoother.FeatureEdgeSmoothingOff()
-        smoother.SetFeatureAngle(featureAngle)
-        smoother.SetPassBand(passBand)
-        smoother.NonManifoldSmoothingOn()
-        smoother.NormalizeCoordinatesOn()
-        smoother.Update()
-
-        selector.SetInput(smoother.GetOutput())
-        selector.SetInputArrayToProcess(0, 0, 0,
-                                        vtkDataObject.FIELD_ASSOCIATION_CELLS,
-                                        vtkDataSetAttributes.SCALARS);
-
-        scalarsOff.SetInput(selector.GetOutput());
-        scalarsOff.CopyAttributeOff(vtkMaskFields.POINT_DATA,
-                                    vtkDataSetAttributes.SCALARS);
-        scalarsOff.CopyAttributeOff(vtkMaskFields.CELL_DATA,
-                                    vtkDataSetAttributes.SCALARS);
-
-        geometry.SetInput(scalarsOff.GetOutput())
-
-        selector.ThresholdBetween(2, 2)
-
-        #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        
-        self.cutter[0] = Outliner(geometry.GetOutput())
+        self.cutter[0] = Outliner(self.polygonAppender.GetOutput())
         self.cutter[0].GetOutlineProperty().SetColor(1,0,0)
-        self.cutter[1] = Outliner(geometry.GetOutput())
+        self.cutter[1] = Outliner(self.polygonAppender.GetOutput())
         self.cutter[1].GetOutlineProperty().SetColor(0,1,0)
-        self.cutter[2] = Outliner(geometry.GetOutput())
+        self.cutter[2] = Outliner(self.polygonAppender.GetOutput())
         self.cutter[2].GetOutlineProperty().SetColor(0,0,1)
 
         self.qvtk.renderer.AddActor(self.cutter[0])
         self.qvtk.renderer.AddActor(self.cutter[1])
         self.qvtk.renderer.AddActor(self.cutter[2])
-
-
-
+        
         ## 1. Use a render window with alpha bits (as initial value is 0 (false)):
         #self.renderWindow.SetAlphaBitPlanes(True);
         ## 2. Force to not pick a framebuffer with a multisample buffer
@@ -369,15 +338,23 @@ class OverviewScene(QWidget):
         ## - Set the occlusion ratio (initial value is 0.0, exact image):
         #self.renderer.SetOcclusionRatio(0.0);
 
-
-        mapper = vtkPolyDataMapper()
-        mapper.SetInput(geometry.GetOutput())
-        actor = vtkActor()
-        actor.SetMapper(mapper)
-        self.qvtk.renderer.AddActor(actor)
+        for i, g in self.dlg.extractor.meshes.items():
+            mapper = vtkPolyDataMapper()
+            mapper.SetInput(g)
+            actor = vtkActor()
+            actor.SetMapper(mapper)
+            if self.colorTable:
+                c = self.colorTable[i]
+                c = QColor.fromRgba(c)
+                actor.GetProperty().SetColor(c.red()/255.0, c.green()/255.0, c.blue()/255.0)
+            
+            self.qvtk.renderer.AddActor(actor)
+        
         self.qvtk.update()
 
 if __name__ == '__main__':
+    import numpy
+    
     def updateSlice(num, axis):
         o.ChangeSlice(num,axis)
     
@@ -391,15 +368,22 @@ if __name__ == '__main__':
     o.show()
     o.resize(600,600)
     
-    f=h5py.File("/home/thorben/phd/src/vtkqt-test/seg.h5")
-    seg=f['volume/data'][0,:,:,:,0]
-    f.close()
+    #f=h5py.File("/home/thorben/phd/src/vtkqt-test/seg.h5")
+    #seg=f['volume/data'][0,:,:,:,0]
+    #f.close()
     
-    o.DisplayObjectMeshes(seg)
+    seg = numpy.ones((100,100,100), dtype=numpy.uint8)
+    seg[20:40,20:40,20:40] = 2
+    seg[50:70,50:70,50:70] = 3
+    seg[80:100,80:100,80:100] = 4
+    seg[80:100,80:100,20:50] = 5
     
+    colorTable = [qRgb(255,0,0), qRgb(0,255,0), qRgb(255,255,0), qRgb(255,0,255), qRgb(0,0,255), qRgb(128,0,128)]
+    o.SetColorTable(colorTable)
+    
+    QTimer.singleShot(0, partial(o.DisplayObjectMeshes, seg))
     app.exec_()
     
 
 # [vtkusers] Depth peeling not used, but I can't see why.
 # http://public.kitware.com/pipermail/vtkusers/2010-August/111040.html
-

@@ -203,9 +203,10 @@ class OverlayListWidget(QtGui.QListWidget):
             """
             vol = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
             print self.volumeEditor.overview.__class__
-            print vol.shape
+            print vol.shape, vol.dtype
             
-            self.volumeEditor.overview.DisplayObjectMeshes(vol)
+            self.volumeEditor.overview.SetColorTable(item.overlayItemReference.colorTable)
+            self.volumeEditor.overview.DisplayObjectMeshes(vol, (0,1,))
             
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
