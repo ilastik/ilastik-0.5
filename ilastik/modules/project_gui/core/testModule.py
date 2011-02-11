@@ -27,6 +27,7 @@ class Tests(unittest.TestCase):
         project.addFile(fileList)
         project.saveToDisk(self.outputfile)
         same = TestHelperFunctions.compareH5Files(self.outputfile, self.groundtruthfile)
+        print "test add file result: ", same
         self.assertEqual(same, True)
         
         
