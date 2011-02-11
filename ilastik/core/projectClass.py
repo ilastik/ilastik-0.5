@@ -96,7 +96,8 @@ class Project(object):
             fileHandle.close()
             
             #TODO, integrate somehow into serialization scheme
-            self.dataMgr.module["Classification"].exportClassifiers(fileName,'Project/')
+            if self.dataMgr.module["Classification"] is not None:
+                self.dataMgr.module["Classification"].exportClassifiers(fileName,'Project/')
             
         except Exception as e:
             print e.message
