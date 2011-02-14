@@ -31,7 +31,8 @@ import glob
 import os
 import ilastik.gui
 
-from ilastik.gui import loadOptions
+from ilastik.gui import loadOptionsWidget
+from ilastik.core import loadOptionsMgr
 
 
 from PyQt4 import QtCore, QtGui
@@ -48,7 +49,7 @@ class StackLoader(QtGui.QDialog):
         #internally, it's a list of lists of filenames
         #for each channel
         self.fileList = []
-        self.options = loadOptions.loadOptions()
+        self.options = loadOptionsMgr.loadOptions()
 
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
@@ -90,7 +91,7 @@ class StackLoader(QtGui.QDialog):
         self.layout.addWidget(self.multiChannelFrame)        
 
         tempLayout = QtGui.QHBoxLayout()
-        self.optionsWidget = loadOptions.LoadOptionsWidget()
+        self.optionsWidget = loadOptionsWidget.LoadOptionsWidget()
         tempLayout.addWidget(self.optionsWidget)
         self.layout.addLayout(tempLayout)
 
@@ -165,7 +166,7 @@ class StackLoader(QtGui.QDialog):
         
 
     def slotPreviewFiles(self):
-        self.fileTableWidget = loadOptions.previewTable(self.fileList)
+        self.fileTableWidget = loadOptionsWidget.previewTable(self.fileList)
         self.fileTableWidget.exec_()
 
     def slotLoad(self):

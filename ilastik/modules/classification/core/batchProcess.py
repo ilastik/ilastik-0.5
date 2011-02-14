@@ -19,7 +19,7 @@ import fileinput
 import errno
 import gc
 import json
-from ilastik.gui import loadOptions
+from ilastik.core import loadOptionsMgr
 
 
 
@@ -31,7 +31,7 @@ class MainBatch():
         grp = None
         self.dataMgr = dataMgr.DataMgr(grp)
         self.project = project
-        self.options = loadOptions.loadOptions()
+        self.options = loadOptionsMgr.loadOptions()
         self.options.channels = []
         self.options.channels.append(0)
         self.json_input = json_input

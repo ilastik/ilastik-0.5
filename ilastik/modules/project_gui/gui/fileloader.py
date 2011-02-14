@@ -16,7 +16,8 @@ with warnings.catch_warnings():
 import numpy
 import ilastik.gui
 
-from ilastik.gui import loadOptions
+from ilastik.gui import loadOptionsWidget
+from ilastik.core import loadOptionsMgr
 
 from PyQt4 import QtCore, QtGui, uic
 
@@ -29,7 +30,7 @@ class FileLoader(QtGui.QDialog):
         self.setLayout(self.layout)
         
         self.fileList = []
-        self.options = loadOptions.loadOptions()
+        self.options = loadOptionsMgr.loadOptions()
         
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
@@ -88,7 +89,7 @@ class FileLoader(QtGui.QDialog):
         
         self.optionsFrame = QtGui.QFrame()
         tempLayout = QtGui.QHBoxLayout()
-        self.optionsWidget = loadOptions.LoadOptionsWidget()
+        self.optionsWidget = loadOptionsWidget.LoadOptionsWidget()
         tempLayout.addWidget(self.optionsWidget)
         self.optionsFrame.setLayout(tempLayout)
         self.optionsFrame.setVisible(False)
@@ -246,7 +247,7 @@ class FileLoader(QtGui.QDialog):
                 self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotPreviewFiles(self):
-        self.fileTableWidget = loadOptions.previewTable(self.fileList)
+        self.fileTableWidget = loadOptionsWidget.previewTable(self.fileList)
         self.fileTableWidget.exec_()
                 
     def slotLoad(self):
