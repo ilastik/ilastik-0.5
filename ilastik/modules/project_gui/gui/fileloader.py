@@ -6,20 +6,16 @@ Created on Mon Aug 23 10:38:02 2010
 """
 
 import os, glob
-import vigra
-import sys
-import getopt
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
-import numpy
 import ilastik.gui
 
 from ilastik.gui import loadOptionsWidget
 from ilastik.core import loadOptionsMgr
 
-from PyQt4 import QtCore, QtGui, uic
+from PyQt4 import QtCore, QtGui
 
 class FileLoader(QtGui.QDialog):
     def __init__(self, parent=None):

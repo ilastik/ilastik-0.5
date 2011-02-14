@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
-import numpy, vigra
-import random
-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
 
 from ilastik.gui.iconMgr import ilastikIcons
 
-from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.shortcutmanager import shortcutManager
 from ilastik.gui import volumeeditor as ve

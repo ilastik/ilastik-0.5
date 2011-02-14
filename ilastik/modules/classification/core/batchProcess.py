@@ -2,7 +2,6 @@ import os
 import sys
 import ilastik.modules
 ilastik.modules.loadModuleCores()
-from ilastik.core.volume import DataAccessor
 from ilastik.core import dataMgr
 
 from ilastik.modules.classification.core.classificationMgr import ClassificationModuleMgr
@@ -10,12 +9,10 @@ from ilastik.modules.classification.core.featureMgr import FeatureMgr
 
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import dataImpex
-from ilastik.core import jobMachine
 
 import traceback
 import getopt
 import h5py
-import fileinput
 import errno
 import gc
 import json

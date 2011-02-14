@@ -35,11 +35,8 @@ import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
-from ilastik.core.utilities import irange, debug
 from ilastik.core import dataImpex
 import os.path, sys
-
-#from ilastik.core.unsupervised import unsupervisedPCA
 
 class Project(object):
     """
