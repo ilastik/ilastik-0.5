@@ -18,7 +18,7 @@ class MeshExtractor(QObject):
     numpyVolume = None
     meshes = dict()
     elapsed = QElapsedTimer()
-    suppressedLabels = list()
+    suppressLabels = list()
     
     skipped = 0
     emitted = 0
@@ -40,7 +40,8 @@ class MeshExtractor(QObject):
     def SetInput(self, numpyVolume):
         self.numpyVolume = numpyVolume.copy()
     def SuppressLabels(self, labelList):
-        self.suppressedLabels = labelList
+        print "will suppress labels =", labelList
+        self.suppressLabels = labelList
     
     @pyqtSignature("run()")
     def run(self):
@@ -131,8 +132,11 @@ class MeshExtractor(QObject):
         for i in range(startLabel, endLabel+1):
             self.maybeEmitProgress((i-startLabel+1)/float(endLabel-startLabel+1))
             
-            if i in self.suppressedLabels:
+            if i in self.suppressLabels:
+                print "SUPPRESSSSSSED label:",i
                 continue
+            else:
+                print self.suppressLabels
             
             #print "elapsed since: ",t.elapsed()
             #count +=1
@@ -205,6 +209,8 @@ class MeshExtractorDialog(QDialog):
         l.addWidget(self.currentStepLabel)
         l.addWidget(self.currentStepProgress)
         
+        self.extractor = MeshExtractor(None)
+        
         self.update()
 
     def onNewStep(self, description):
@@ -220,11 +226,9 @@ class MeshExtractorDialog(QDialog):
         self.currentStepProgress.setValue( round(100.0*progress) )
         self.update()
 
-    def run(self, segVolume, suppressedLabels=()):
+    def run(self, segVolume):
         self.thread = QThread(self)
-        self.extractor = MeshExtractor(None)
         self.extractor.SetInput(segVolume)
-        self.extractor.SuppressLabels(suppressedLabels)
         #m.start()
         self.connect(self.extractor, SIGNAL("newStep"), self.onNewStep)#, Qt.BlockingQueuedConnection)
         self.connect(self.extractor, SIGNAL("currentStepProgressChanged"), self.onCurrentStepProgressChanged)#, Qt.BlockingQueuedConnection)

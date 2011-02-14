@@ -20,6 +20,8 @@ from numpy2vtk import toVtkImageData
 from GenerateModelsFromLabels_thread import *
 
 class QVTKOpenGLWidget(QVTKWidget2):
+    wireframe = False
+    
     def __init__(self, parent = None):
         QVTKWidget2.__init__(self, parent)
 
@@ -33,7 +35,15 @@ class QVTKOpenGLWidget(QVTKWidget2):
         
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
-        self.picker = vtkPropPicker()
+        self.actors = vtkPropCollection()
+        #self.picker = vtkCellPicker()
+        #self.picker = vtkPointPicker()
+        #self.picker.PickFromListOn()
+        
+    def registerObject(self, o):
+        print "add item to prop collection"
+        self.actors.AddItem(o)
+        #self.picker.AddPickList(o)
 
     def resizeEvent(self, event):
         w,h = self.width(), self.height()
@@ -47,15 +57,35 @@ class QVTKOpenGLWidget(QVTKWidget2):
         #fix this
         self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
         QVTKWidget2.update(self)
-        
+    
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_W:
+            self.actors.InitTraversal();
+            for i in range(self.actors.GetNumberOfItems()):
+                if self.wireframe:
+                    "to surface"
+                    self.actors.GetNextProp().GetProperty().SetRepresentationToSurface()
+                else:
+                    self.actors.GetNextProp().GetProperty().SetRepresentationToWireframe()
+            self.wireframe = not self.wireframe
+            self.update()
+    
     def mousePressEvent(self, e):
         if e.type() == QEvent.MouseButtonDblClick:
             print "double clicked"
-            res = self.picker.Pick(e.pos().x(), e.pos().y(), 0, self.renderer)
+            #self.picker.SetTolerance(0.05)
+            picker = vtkCellPicker()
+            #picker.SetTolerance(0.05)
+            res = picker.Pick(e.pos().x(), e.pos().y(), 0, self.renderer)
             if res > 0:
-                c = self.picker.GetPickPosition()
-                print c
-                self.emit(SIGNAL("objectPicked"), c)
+                c = picker.GetPickPosition()
+                print res, c
+                
+                #c = [0,0,0,0]
+                #vtkInteractorObserver.ComputeDisplayToWorld(self.renderer, e.pos().x(), e.pos().y(), 0, c)
+                #print c
+                
+                self.emit(SIGNAL("objectPicked"), c[0:3])
         else:
             QVTKWidget2.mouseReleaseEvent(self, e)
 
@@ -309,6 +339,8 @@ class OverviewScene(QWidget):
         self.connect(self.qvtk, SIGNAL("objectPicked"), self.__onObjectPicked)
         
         self.qvtk.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
+        
+        self.qvtk.setFocus()
 
     def __onObjectPicked(self, coor):
         self.ChangeSlice( coor[0], 0)
@@ -345,8 +377,9 @@ class OverviewScene(QWidget):
         self.qvtk.update()
         
     def DisplayObjectMeshes(self, v, suppressLabels=()):
-        print "OverviewScene::DisplayObjectMeshes"
+        print "OverviewScene::DisplayObjectMeshes", suppressLabels
         self.dlg = MeshExtractorDialog(self)
+        self.dlg.extractor.SuppressLabels(suppressLabels)
         self.connect(self.dlg, SIGNAL('done()'), self.onObjectMeshesComputed)
         self.dlg.show()
         self.dlg.run(v)
@@ -390,10 +423,13 @@ class OverviewScene(QWidget):
         #self.renderer.SetOcclusionRatio(0.0);
 
         for i, g in self.dlg.extractor.meshes.items():
+            print "xxx", i
             mapper = vtkPolyDataMapper()
             mapper.SetInput(g)
             actor = vtkActor()
             actor.SetMapper(mapper)
+            if i>=2:
+                self.qvtk.registerObject(actor)
             if self.colorTable:
                 c = self.colorTable[i]
                 c = QColor.fromRgba(c)
@@ -423,7 +459,7 @@ if __name__ == '__main__':
     #seg=f['volume/data'][0,:,:,:,0]
     #f.close()
     
-    seg = numpy.ones((100,100,100), dtype=numpy.uint8)
+    seg = numpy.ones((120,120,120), dtype=numpy.uint8)
     seg[20:40,20:40,20:40] = 2
     seg[50:70,50:70,50:70] = 3
     seg[80:100,80:100,80:100] = 4
@@ -432,7 +468,7 @@ if __name__ == '__main__':
     colorTable = [qRgb(255,0,0), qRgb(0,255,0), qRgb(255,255,0), qRgb(255,0,255), qRgb(0,0,255), qRgb(128,0,128)]
     o.SetColorTable(colorTable)
     
-    QTimer.singleShot(0, partial(o.DisplayObjectMeshes, seg))
+    QTimer.singleShot(0, partial(o.DisplayObjectMeshes, seg, suppressLabels=(1,)))
     app.exec_()
     
 
