@@ -46,11 +46,16 @@ class QVTKOpenGLWidget(QVTKWidget2):
         #self.picker.AddPickList(o)
 
     def resizeEvent(self, event):
+        #ordering is important here
+        #1.) Let the QVTKWidget2 resize itself
+        QVTKWidget2.resizeEvent(self,event)
+        
+        #2.) Make sure the interactor is assigned a correct new size
+        #    This works around a bug in VTK.
         w,h = self.width(), self.height()
         self.w = w
         self.h = h
-        self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
-        QVTKWidget2.resizeEvent(self,event)
+        self.renderWindow.GetInteractor().SetSize(w,h)
         
     def update(self):
         #for some reason the size of the interactor is reset all the time
