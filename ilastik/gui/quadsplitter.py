@@ -92,14 +92,32 @@ class QuadView(QWidget):
     maximized = False
     
     def horizontalSplitterMoved(self):
+        w, h = self.size().width()-self.splitHorizontal1.handleWidth(), self.size().height()-self.splitVertical.handleWidth()
+        
+        w1  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [0,2] ]
+        w2  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [1,3] ]
+        wLeft  = max(w1)
+        wRight = max(w2)
+        
+        #print "moved"
         if self.sender().objectName() == "splitter1":
-            self.splitHorizontal2.setSizes( self.splitHorizontal1.sizes() )
+            s = self.splitHorizontal1.sizes()
+            if s[0] < wLeft or s[1] < wRight:
+                self.splitHorizontal1.setSizes(self.splitHorizontal2.sizes())
+            else:
+                self.splitHorizontal2.setSizes( self.splitHorizontal1.sizes() )
 
         if self.sender().objectName() == "splitter2":
-            self.splitHorizontal1.setSizes( self.splitHorizontal2.sizes() )
+            s = self.splitHorizontal2.sizes()
+            if s[0] < wLeft or s[1] < wRight:
+                self.splitHorizontal2.setSizes( self.splitHorizontal1.sizes() )
+            else:
+                self.splitHorizontal1.setSizes( self.splitHorizontal2.sizes() )
     
     def addWidget(self, i, widget):
         assert 0 <= i < 4, "range of i"
+        
+        #widget.setMinimumSize(QSize(0,0))
 
         w = self.dockableContainer[i]
         oldMainWidget = w.mainWidget
@@ -112,11 +130,14 @@ class QuadView(QWidget):
 
         #split up <-> down
         self.splitVertical    = QSplitter(Qt.Vertical, self)
+        self.splitVertical.setChildrenCollapsible(False)
         #split left <-> right
         self.splitHorizontal1 = QSplitter(Qt.Horizontal, self.splitVertical)
+        self.splitHorizontal1.setChildrenCollapsible(False)
         self.splitHorizontal1.setObjectName("splitter1")
         self.splitHorizontal2 = QSplitter(Qt.Horizontal, self.splitVertical)
         self.splitHorizontal2.setObjectName("splitter2")
+        self.splitHorizontal2.setChildrenCollapsible(False)
         
         for i in range(4):
             if i<2:
@@ -186,9 +207,27 @@ class QuadView(QWidget):
             self.firstTime=False
     
     def __resizeEqual(self):
-        w, h = self.size().width(), self.size().height()
-        self.splitHorizontal1.setSizes([w/2, w/2])
-        self.splitHorizontal2.setSizes([w/2, w/2])
+        w, h = self.size().width()-self.splitHorizontal1.handleWidth(), self.size().height()-self.splitVertical.handleWidth()
+        
+        w1  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [0,2] ]
+        w2  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [1,3] ]
+        print w1, w2
+        wLeft  = max(w1)
+        wRight = max(w2)
+        print 'wLeft=',wLeft, 'wRight=',wRight
+        if wLeft > wRight and wLeft > w/2:
+            wRight = w - wLeft
+        elif wRight >= wLeft and wRight > w/2:
+            wLeft = w - wRight
+        else:
+            wLeft = w/2
+            wRight = w/2
+        print 'wLeft=',wLeft, 'wRight=',wRight
+        self.splitHorizontal1.setSizes([wLeft, wRight+10])
+        self.splitHorizontal2.setSizes([wLeft, wRight+10])
+        print "width=",w
+        #self.splitHorizontal1.setSizes([500, w-500])
+        #self.splitHorizontal2.setSizes([500, w-500])
         self.splitVertical.setSizes([h/2, h/2])
     
     def undockContainer(self):
@@ -253,6 +292,8 @@ if __name__ == "__main__":
             for i in range(4):
                 edit = QTextEdit()
                 edit.setDocument(QTextDocument("view %d" % (i)))
+                edit.setMinimumSize(200+100*i,200+100*i)
+                print "setting minimum size to", 200+100*i, 200+100*i
                 self.q.addWidget(i, edit)
             
             mainLayout.addWidget(self.q)
