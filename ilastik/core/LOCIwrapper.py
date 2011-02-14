@@ -1,7 +1,11 @@
 #authors Luca Fiaschi, Christoph Sommer
 
 import numpy
-import jpype
+
+try:
+    import jpype
+except:
+    print "Please install jpype if you want to read microscopy formats images like LIF."
 import os
 
 
