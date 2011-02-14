@@ -27,17 +27,18 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     def setNumberOfComponents(cls, numComponents):
         cls.numComponents = numComponents
         
-    @classmethod
-    def setRandomSeed(cls):
-        seed = TestHelperFunctions.getRandomSeed()
-        numpy.random.seed(seed)
-        
     # NOTE: the pLSA will also be part of the upcoming vigra release
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
         # sanity checks
         self.numComponents = numpy.min((self.numComponents, features.shape[1]))
         self.numComponents = numpy.max((self.numComponents, 1))
-                
+        
+        # random seed
+        from ilastik.core.randomSeed import RandomSeed
+        seed = RandomSeed.getRandomSeed()
+        if seed is not None:
+            numpy.random.seed(seed)
+                        
         features = features.T
         numFeatures, numVoxels = features.shape # this should be the shape of features!
         # initialize result matrices

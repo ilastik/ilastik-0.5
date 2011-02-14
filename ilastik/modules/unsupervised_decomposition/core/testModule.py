@@ -164,10 +164,13 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
         # create unsupervised manager
         self.unsupervisedMgr = UnsupervisedDecompositionModuleMgr(self.dataMgr)
         
+        # fix random seed
+        from ilastik.core.randomSeed import RandomSeed
+        RandomSeed.setRandomSeed(42)
+        
         # setup decomposition algorithm
         self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod = UnsupervisedDecompositionPLSA
         self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.setNumberOfComponents(5)
-        self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.setRandomSeed()
     
         # setup inputs, compute results
         inputOverlays = []

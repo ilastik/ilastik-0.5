@@ -183,46 +183,13 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         
         if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] is None:
             #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
-            colortab = ConnectedComponentsModuleMgr.makeColorTab()
+            colortab = OverlayItem.createDefault16ColorColorTable()
             myColor = OverlayItem.qrgb(255, 0, 0) #QtGui.QColor(255, 0, 0)
             ov = OverlayItem(result, color = myColor, alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] = ov
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"]._data = DataAccessor(result)        
 
-    @classmethod
-    def makeColorTab(cls):
-        sublist = []
-        #sublist.append(QtGui.qRgb(0, 0, 0))
-        sublist.append(OverlayItem.qrgb(255, 255, 255))
-        sublist.append(OverlayItem.qrgb(255, 0, 0))
-        sublist.append(OverlayItem.qrgb(0, 255, 0))
-        sublist.append(OverlayItem.qrgb(0, 0, 255))
-        
-        sublist.append(OverlayItem.qrgb(255, 255, 0))
-        sublist.append(OverlayItem.qrgb(0, 255, 255))
-        sublist.append(OverlayItem.qrgb(255, 0, 255))
-        sublist.append(OverlayItem.qrgb(255, 105, 180)) #hot pink!
-        
-        sublist.append(OverlayItem.qrgb(102, 205, 170)) #dark aquamarine
-        sublist.append(OverlayItem.qrgb(165,  42,  42)) #brown        
-        sublist.append(OverlayItem.qrgb(0, 0, 128)) #navy
-        sublist.append(OverlayItem.qrgb(255, 165, 0)) #orange
-        
-        sublist.append(OverlayItem.qrgb(173, 255,  47)) #green-yellow
-        sublist.append(OverlayItem.qrgb(128,0, 128)) #purple
-        sublist.append(OverlayItem.qrgb(192, 192, 192)) #silver
-        sublist.append(OverlayItem.qrgb(240, 230, 140)) #khaki
-        colorlist = []
-        colorlist.append(long(0))
-        colorlist.extend(sublist)
-        
-        for i in range(17, 256):
-            color = OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
-            colorlist.append(color)
-            
-        return colorlist
-    
     
 class ConnectedComponents():
     def __init__(self):

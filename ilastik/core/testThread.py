@@ -78,7 +78,3 @@ class TestHelperFunctions():
             print e
             return False
         return True
-    
-    @staticmethod
-    def getRandomSeed():
-        return 42

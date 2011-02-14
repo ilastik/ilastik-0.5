@@ -260,9 +260,48 @@ class OverlayItem(object):
                 colorTab.append(OverlayItem.qgray(i, i, i)) # see qGray function in QtGui
         else:
             #RGB
+            import numpy
+            from ilastik.core.randomSeed import RandomSeed
+            seed = RandomSeed.getRandomSeed()
+            if seed is not None:
+                numpy.random.seed(seed)
             for i in range(levels):
-                colorTab.append(OverlayItem.qrgb(i, i, i)) # see gRGB function in QtGui
+                colorTab.append(OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))) # see gRGB function in QtGui
         return colorTab        
+    
+    @classmethod
+    def createDefault16ColorColorTable(cls):
+        sublist = []
+        #sublist.append(QtGui.qRgb(0, 0, 0))
+        sublist.append(OverlayItem.qrgb(255, 255, 255))
+        sublist.append(OverlayItem.qrgb(255, 0, 0))
+        sublist.append(OverlayItem.qrgb(0, 255, 0))
+        sublist.append(OverlayItem.qrgb(0, 0, 255))
+        
+        sublist.append(OverlayItem.qrgb(255, 255, 0))
+        sublist.append(OverlayItem.qrgb(0, 255, 255))
+        sublist.append(OverlayItem.qrgb(255, 0, 255))
+        sublist.append(OverlayItem.qrgb(255, 105, 180)) #hot pink!
+        
+        sublist.append(OverlayItem.qrgb(102, 205, 170)) #dark aquamarine
+        sublist.append(OverlayItem.qrgb(165,  42,  42)) #brown        
+        sublist.append(OverlayItem.qrgb(0, 0, 128)) #navy
+        sublist.append(OverlayItem.qrgb(255, 165, 0)) #orange
+        
+        sublist.append(OverlayItem.qrgb(173, 255,  47)) #green-yellow
+        sublist.append(OverlayItem.qrgb(128,0, 128)) #purple
+        sublist.append(OverlayItem.qrgb(192, 192, 192)) #silver
+        sublist.append(OverlayItem.qrgb(240, 230, 140)) #khaki
+        colorlist = []
+        colorlist.append(long(0))
+        colorlist.extend(sublist)
+        
+        import numpy
+        for i in range(17, 256):
+            color = OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
+            colorlist.append(color)
+            
+        return colorlist    
 
 
 class OverlayMgr():
