@@ -57,11 +57,18 @@ class QVTKOpenGLWidget(QVTKWidget2):
         self.h = h
         self.renderWindow.GetInteractor().SetSize(w,h)
         
+        #Work around a repaint bug on OS X
+        #This will trigger a paintGL call later which repaints the window correctly
+        self.update()
+        
     def update(self):
         #for some reason the size of the interactor is reset all the time
         #fix this
         self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
         QVTKWidget2.update(self)
+        
+        #Refresh the content, works around a bug on OS X
+        self.paintGL()
     
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_W:
