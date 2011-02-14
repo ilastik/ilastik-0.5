@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import numpy, vigra
-import random
-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
@@ -10,8 +7,6 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
-from ilastik.core.overlayMgr import OverlayItem
-from ilastik.core.volume import DataAccessor
 import ilastik.gui.volumeeditor as ve
                     
                     
@@ -75,23 +70,24 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
         answer = dlg.exec_()
         
+        from ilastik.core.randomSeed import RandomSeed
+        RandomSeed.setRandomSeed(42)
+        
         if len(answer) > 0:
             overlay = answer[0]
             self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
             
             volume = overlay._data[0,:,:,:,0]
-            print numpy.max(volume),  numpy.min(volume)
-    
-            #real_weights = numpy.zeros(volume.shape + (3,))        
             
             borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select border indicator type", "Select the border probability type : \n (Normal: bright pixels mean high border probability, Inverted: dark pixels mean high border probability) ",  ["Normal",  "Inverted"],  editable = False)
             borderIndicator = str(borderIndicator[0])
-            
-            weights = self.parent.project.dataMgr.Automatic_Segmentation.invertPotential()
-            weights = self.parent.project.dataMgr.Automatic_Segmentation.normalizePotential()
+            if borderIndicator == "Normal":
+                weights = volume[:,:,:]
+            elif borderIndicator == "Inverted":            
+                weights = self.parent.project.dataMgr.Automatic_Segmentation.invertPotential(volume)
+            weights = self.parent.project.dataMgr.Automatic_Segmentation.normalizePotential(weights)
 
             self.weights = weights
-            
         
     def on_btnSegment_clicked(self):
         
