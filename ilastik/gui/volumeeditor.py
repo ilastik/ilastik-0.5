@@ -534,6 +534,12 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ )
         shortcutManager.register(self.shortcutToggleFullscreenZ, "Navigation", "Enlarge slice view z to full size")
 
+        self.shortcutNextChannel = QtGui.QShortcut(QtGui.QKeySequence("q"), self, self.nextChannel, self.nextChannel )
+        shortcutManager.register(self.shortcutNextChannel, "Navigation", "Switch to next channel")
+
+        self.shortcutPreviousChannel = QtGui.QShortcut(QtGui.QKeySequence("a"), self, self.previousChannel, self.previousChannel )
+        shortcutManager.register(self.shortcutPreviousChannel, "Navigation", "Switch to previous channel")
+
 
         for index, scene in enumerate(self.imageScenes):
             scene.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), scene, scene.zoomIn, scene.zoomIn )
@@ -615,6 +621,12 @@ class VolumeEditor(QtGui.QWidget):
         
     def toggleFullscreenZ(self):
         self.maximizeSliceView(2)
+        
+    def nextChannel(self):
+        self.channelSpin.setValue(self.selectedChannel + 1)
+
+    def previousChannel(self):
+        self.channelSpin.setValue(self.selectedChannel - 1)
 
     def maximizeSliceView(self, axis):
         if self.image.shape[1] > 1:

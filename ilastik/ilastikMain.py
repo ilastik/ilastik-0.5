@@ -262,8 +262,6 @@ class MainWindow(QtGui.QMainWindow):
         if self.labelWidget is not None:
             self.labelWidget._history.volumeEditor = None
 
-
-
         self.destroyImageWindows()
 
         self._activeImageNumber = number

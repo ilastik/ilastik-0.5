@@ -48,6 +48,9 @@ class TestWholeModule(unittest.TestCase):
         input = border_indicator_ov._data[0,:,:,:,0]
         # ...normalize it
         input = self.automaticSegmentationMgr.normalizePotential(input)
+        # ...invert it twice, this should give us the original again :-)
+        input = self.automaticSegmentationMgr.invertPotential(input)
+        input = self.automaticSegmentationMgr.invertPotential(input)
         # ...compute results
         self.automaticSegmentationMgr.computeResults(input)
         # ...add overlays
