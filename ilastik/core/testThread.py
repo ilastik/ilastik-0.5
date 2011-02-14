@@ -1,7 +1,8 @@
 from PyQt4 import QtCore
 import numpy
 from ilastik.core import dataImpex
-import shlex, subprocess
+import shlex
+from subprocess import Popen, PIPE
 
 # this is the core replacement of the guiThread used to test module functionality
 class TestThread(QtCore.QObject):#QtCore.QThread):
@@ -69,12 +70,45 @@ class TestHelperFunctions():
     def compareH5Files(file1, file2):
         print "files to compare: ", file1, file2
         #have to spawn a subprocess, because h5diff has no wrapper in python
-        cl = "h5diff -c " + file1 + " " + file2
+        
+        cl = "h5diff -cv " + file1 + " " + file2
         args = shlex.split(cl)
-        #print args
+        '''
+        cl_header1 = "h5dump --header " + file1
+        args_header1 = shlex.split(cl_header1)
+        cl_header2 = "h5dump --header " + file2
+        args_header2 = shlex.split(cl_header2)
         try:
-            subprocess.Popen(args)
+            p1 = Popen(args_header1, stdout=PIPE, stderr=PIPE)
+            out1, err1 = p1.communicate()
+            p2 = Popen(args_header2, stdout=PIPE, stderr=PIPE)
+            out2, err2 = p2.communicate()
+            if out1 != out2:
+                print "different header dumps"
+                print out1
+                print ""
+                print out2
         except Exception, e:
             print e
             return False
+        #print args
+        '''
+        try:
+            p = Popen(args, stdout=PIPE, stderr=PIPE)
+            stdout, stderr = p.communicate()
+            print "RETURN CODE: ", p.returncode
+            if p.returncode >0:
+                print stdout
+                print stderr
+                print "sfsdfsfsfewrewrwre"
+                return False
+            else :
+                print "asdfsadfsadfaaa"
+                return True
+            
+        except Exception, e:
+            print e
+            print "kdjflsdjfsljfs"
+            return False
+        print "fskdjflsjfls"
         return True
