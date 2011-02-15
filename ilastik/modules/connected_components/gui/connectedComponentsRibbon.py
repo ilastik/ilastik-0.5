@@ -104,14 +104,13 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
             ref.setAlpha(0.4)
             self.inputOverlay = answer[0]
             self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
-            self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.setInputData(answer[0]._data)
+            self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.setInputOverlay(answer[0])
             self.parent.labelWidget.repaint()
             self.btnCC.setEnabled(True)
             self.btnCCBack.setEnabled(True)
         
     def on_btnCC_clicked(self):
-        self.connComp = CC(self.ilastik)
-        
+        self.connComp = CC(self.ilastik)       
         self.connComp.start(None)
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = False)
     def on_btnCCBack_clicked(self):

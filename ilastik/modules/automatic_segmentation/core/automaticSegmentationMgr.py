@@ -41,13 +41,18 @@ class AutomaticSegmentationModuleMgr(BaseModuleMgr):
     def computeResults(self, input):
         self.res = numpy.ndarray((1,) + input.shape + (1,), 'int32')
         if input.shape[0] > 1:
-            data = input.view(vigra.ScalarVolume)
-            self.res[0,:,:,:,0] = vigra.analysis.watersheds(data, neighborhood = 6)[0]
-        else:
-            data = input[0,:,:].view(vigra.ScalarImage)
+            borders = input.view(vigra.ScalarVolume)
             # this does NOT work if the border map is not smooth, e.g. vigra.filters.gaussianGradientMagnitude(border_image, 0.3) won't work ==> force smoothing!
-            data = vigra.filters.gaussianSmoothing(data, 2)
-            self.res[0,0,:,:,0] = vigra.analysis.watersheds(data, 4)[0]
+            borders = vigra.filters.gaussianSmoothing(borders, 2)
+            self.res[0,:,:,:,0] = vigra.analysis.watersheds(borders, neighborhood = 6)[0]
+        else:
+            borders = input[0,:,:].view(vigra.ScalarImage)
+            # this does NOT work if the border map is not smooth, e.g. vigra.filters.gaussianGradientMagnitude(border_image, 0.3) won't work ==> force smoothing!
+            borders = vigra.filters.gaussianSmoothing(borders, 2)
+            from ilastik.core import dataImpex
+            ov = OverlayItem(borders, color = 0, alpha = 1.0)
+            dataImpex.DataImpex.exportOverlay("C:/testtesttest", "h5", ov)
+            self.res[0,0,:,:,0] = vigra.analysis.watersheds(borders, 4)[0]
             #self.res[0,0,:,:,0] = input[0,:,:].view(vigra.ScalarImage)
     
     def finalizeResults(self):

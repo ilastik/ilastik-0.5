@@ -2,6 +2,7 @@ from PyQt4 import QtCore
 import numpy
 from ilastik.core import dataImpex
 import shlex
+from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 from subprocess import Popen, PIPE
 
 # this is the core replacement of the guiThread used to test module functionality
@@ -61,7 +62,14 @@ class TestHelperFunctions():
     
     @staticmethod
     def compareOverlayData(overlay1, overlay2):
-        if numpy.all(overlay1._data._data - overlay2._data._data == 0):
+        # overlay1._data._data can be a listOfNDArraysAsNDArray instance, overlay2._data._data is loaded from file, so it should be an NDArray
+        if isinstance(overlay1._data._data, ListOfNDArraysAsNDArray):
+            datatemp1 = overlay1._data._data.ndarrays
+        else:
+            datatemp1 = overlay1._data._data 
+        datatemp2 = overlay2._data._data
+        
+        if numpy.all(datatemp1 - datatemp2 == 0):
             return True
         else: 
             return False

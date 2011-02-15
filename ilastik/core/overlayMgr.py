@@ -297,6 +297,10 @@ class OverlayItem(object):
         colorlist.extend(sublist)
         
         import numpy
+        from ilastik.core.randomSeed import RandomSeed
+        seed = RandomSeed.getRandomSeed()
+        if seed is not None:
+            numpy.random.seed(seed)        
         for i in range(17, 256):
             color = OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
             colorlist.append(color)

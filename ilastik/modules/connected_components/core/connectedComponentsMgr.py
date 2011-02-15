@@ -111,8 +111,8 @@ class ConnectedComponentsItemModuleMgr(BaseModuleDataItemMgr):
         self.connCompBackgroundClasses = self.connCompBackgroundClasses.union(setAdd)
         self.connCompBackgroundClasses = self.connCompBackgroundClasses.difference(setRemove)
         
-    def setInputData(self, data):
-        self.inputData = data
+    def setInputOverlay(self, overlay):
+        self.inputOverlay = overlay
             
 class ConnectedComponentsModuleMgr(BaseModuleMgr):
     name = "Connected_Components"
@@ -125,7 +125,7 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         dataItemImage.Connected_Components.onAppend()
 
     def computeResults(self, backgroundClasses):
-        overlay = self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.inputData
+        overlay = self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.inputOverlay        
         if backgroundClasses is None:
             self.ccThread = ConnectedComponentsThread(self.dataMgr, overlay._data)
         else:
@@ -137,13 +137,13 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
     def finalizeResults(self):
         #create Overlay for connected components:
         if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"] is None:
-            colortab = self.makeColorTab()
+            colortab = OverlayItem.createDefault16ColorColorTable()
             myColor = OverlayItem.qrgb(255, 0, 0)
             ov = OverlayItem(self.ccThread.result, color = myColor, alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
-            self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"] = ov
+            self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"] = ov        
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"]._data = DataAccessor(self.ccThread.result)
-
+            
     def filterSynapses(self, inputOverlay, label):
         #This is a special function to filter synapses. First, it finds the sizes of labeled objects
         #and throws away everything <0.1 of the smallest labeled object or >10 of the largest labeled
