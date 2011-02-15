@@ -53,8 +53,6 @@ class MeshExtractor(QObject):
         if self.numpyVolume is None:
             raise RuntimeError("You need to call SetInput() first")
    
-        print "numpyVolume has shape =", self.numpyVolume.shape, self.numpyVolume.dtype
-   
         self.inputImage = toVtkImageData(self.numpyVolume)
    
         #Create all of the classes we will need   
@@ -137,10 +135,6 @@ class MeshExtractor(QObject):
             if i in self.suppressLabels:
                 print " - suppressed label:",i
                 continue
-            
-            #print "elapsed since: ",t.elapsed()
-            #count +=1
-            #print count
             
             #see if the label exists, if not skip it
             frequency = histogram.GetOutput().GetPointData().GetScalars().GetTuple1(i)
@@ -229,7 +223,7 @@ class MeshExtractorDialog(QDialog):
         #print 'MeshExtractorDialog::onMeshesExtracted'
         #print self.extractor.meshes.keys()
         
-        print self.extractor.skipped, self.extractor.emitted
+        #print self.extractor.skipped, self.extractor.emitted
         
         self.emit(SIGNAL('done()'))
 

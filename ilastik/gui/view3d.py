@@ -89,16 +89,11 @@ class QVTKOpenGLWidget(QVTKWidget2):
             print "double clicked"
             #self.picker.SetTolerance(0.05)
             picker = vtkCellPicker()
-            #picker.SetTolerance(0.05)
+            picker.SetTolerance(0.05)
             res = picker.Pick(e.pos().x(), e.pos().y(), 0, self.renderer)
             if res > 0:
                 c = picker.GetPickPosition()
-                print res, c
-                
-                #c = [0,0,0,0]
-                #vtkInteractorObserver.ComputeDisplayToWorld(self.renderer, e.pos().x(), e.pos().y(), 0, c)
-                #print c
-                
+                print " picked at coordinate =", c
                 self.emit(SIGNAL("objectPicked"), c[0:3])
         else:
             QVTKWidget2.mousePressEvent(self, e)
@@ -417,7 +412,7 @@ class OverviewScene(QWidget):
     
     def onObjectMeshesComputed(self):
         self.dlg.accept()
-        print "onObjectMeshesComputed"
+        print "*** Preparing 3D view ***"
         
         #Clean up possible previous 3D displays
         for c in self.cutter:
@@ -456,7 +451,7 @@ class OverviewScene(QWidget):
         #self.renderer.SetOcclusionRatio(0.0);
 
         for i, g in self.dlg.extractor.meshes.items():
-            print "adding object with label =", i
+            print " - showing object with label =", i
             mapper = vtkPolyDataMapper()
             mapper.SetInput(g)
             actor = vtkActor()
