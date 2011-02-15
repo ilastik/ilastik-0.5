@@ -45,6 +45,8 @@ class MeshExtractor(QObject):
     
     @pyqtSignature("run()")
     def run(self):
+        self.meshes = dict()
+        
         self.elapsed.restart()
         count = 0
         
@@ -133,10 +135,8 @@ class MeshExtractor(QObject):
             self.maybeEmitProgress((i-startLabel+1)/float(endLabel-startLabel+1))
             
             if i in self.suppressLabels:
-                print "SUPPRESSSSSSED label:",i
+                print " - suppressed label:",i
                 continue
-            else:
-                print self.suppressLabels
             
             #print "elapsed since: ",t.elapsed()
             #count +=1
@@ -145,44 +145,28 @@ class MeshExtractor(QObject):
             #see if the label exists, if not skip it
             frequency = histogram.GetOutput().GetPointData().GetScalars().GetTuple1(i)
             if frequency == 0.0:
+                print " - labels %d does not occur" % (i)
                 continue
 
-            qDebug("%d " % (i))
             #select the cells for a given label
             selector.ThresholdBetween(i, i)
             selector.Update()
-
-            #print "BLAAH"
-            #print geometry.GetOutput().GetNumberOfCells()
-            #print geometry.GetOutput().GetNumberOfPieces()
-            #print geometry.GetOutput().GetNumberOfPoints()
-            #print geometry.GetOutput().GetNumberOfPieces()
-            #print geometry.GetOutput().GetNumberOfPolys()
-            #print geometry.GetOutput().GetNumberOfVerts()
-            #print geometry.GetOutput().GetNumberOfStrips()
-            #print geometry.GetOutput().GetPiece()
-            #print geometry.GetOutput().GetMaxCellSize()
-
-            #print geometry.GetOutput()
             
             #this seems to be a bug in VTK, why should this call be necessary?
             geometry.GetOutput().Update()
             poly = vtkPolyData()
             poly.DeepCopy(geometry.GetOutput())
+            
+            print " - adding mesh for label %d" % (i)
             self.meshes[i] = poly
-
-            """
-            #output the polydata
-            fileName = "%s%d.vtp" % (filePrefix, i)
-            #print "%s writing %s" % (sys.argv[0], fileName)
-            writer.SetFileName(fileName)
-            writer.Write()
-            """
-        print "MeshExtractor::done"
+            
+        print " ==> list of labels:", self.meshes.keys()
+        #print "MeshExtractor::done"
         self.emit(SIGNAL('done()'))
 
 class MeshExtractorDialog(QDialog):
     currentStep = 0
+    extractor   = None
     
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
@@ -209,8 +193,6 @@ class MeshExtractorDialog(QDialog):
         l.addWidget(self.currentStepLabel)
         l.addWidget(self.currentStepProgress)
         
-        self.extractor = MeshExtractor(None)
-        
         self.update()
 
     def onNewStep(self, description):
@@ -226,9 +208,11 @@ class MeshExtractorDialog(QDialog):
         self.currentStepProgress.setValue( round(100.0*progress) )
         self.update()
 
-    def run(self, segVolume):
+    def run(self, segVolume, suppressLabels = list()):
         self.thread = QThread(self)
+        self.extractor = MeshExtractor(None)
         self.extractor.SetInput(segVolume)
+        self.extractor.SuppressLabels(suppressLabels)
         #m.start()
         self.connect(self.extractor, SIGNAL("newStep"), self.onNewStep)#, Qt.BlockingQueuedConnection)
         self.connect(self.extractor, SIGNAL("currentStepProgressChanged"), self.onCurrentStepProgressChanged)#, Qt.BlockingQueuedConnection)
@@ -242,10 +226,8 @@ class MeshExtractorDialog(QDialog):
         QMetaObject.invokeMethod(self.extractor, 'run')
 
     def onMeshesExtracted(self):
-        print 'MeshExtractorDialog::onMeshesExtracted'
-        print self.extractor.meshes.keys()
-        
-        print "print self.thread.isRunning() = ", self.thread.isRunning()
+        #print 'MeshExtractorDialog::onMeshesExtracted'
+        #print self.extractor.meshes.keys()
         
         print self.extractor.skipped, self.extractor.emitted
         

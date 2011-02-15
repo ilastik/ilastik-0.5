@@ -43,7 +43,7 @@ class QVTKOpenGLWidget(QVTKWidget2):
         #self.picker.PickFromListOn()
         
     def registerObject(self, o):
-        print "add item to prop collection"
+        #print "add item to prop collection"
         self.actors.AddItem(o)
         #self.picker.AddPickList(o)
 
@@ -316,6 +316,7 @@ class OverviewScene(QWidget):
         self.sceneShape = shape
         self.sceneItems = []
         self.cutter = 3*[None]
+        self.objects = []
         
         layout = QVBoxLayout()
         self.qvtk = QVTKOpenGLWidget()
@@ -407,10 +408,9 @@ class OverviewScene(QWidget):
     def DisplayObjectMeshes(self, v, suppressLabels=()):
         print "OverviewScene::DisplayObjectMeshes", suppressLabels
         self.dlg = MeshExtractorDialog(self)
-        self.dlg.extractor.SuppressLabels(suppressLabels)
         self.connect(self.dlg, SIGNAL('done()'), self.onObjectMeshesComputed)
         self.dlg.show()
-        self.dlg.run(v)
+        self.dlg.run(v, suppressLabels)
     
     def SetColorTable(self, table):
         self.colorTable = table
@@ -418,6 +418,12 @@ class OverviewScene(QWidget):
     def onObjectMeshesComputed(self):
         self.dlg.accept()
         print "onObjectMeshesComputed"
+        
+        #Clean up possible previous 3D displays
+        for c in self.cutter:
+            if c: self.qvtk.renderer.RemoveActor(c)
+        for a in self.objects:
+           self.qvtk.renderer.RemoveActor(a) 
         
         self.polygonAppender = vtkAppendPolyData()
         for g in self.dlg.extractor.meshes.values():
@@ -450,13 +456,13 @@ class OverviewScene(QWidget):
         #self.renderer.SetOcclusionRatio(0.0);
 
         for i, g in self.dlg.extractor.meshes.items():
-            print "xxx", i
+            print "adding object with label =", i
             mapper = vtkPolyDataMapper()
             mapper.SetInput(g)
             actor = vtkActor()
             actor.SetMapper(mapper)
-            if i>=2:
-                self.qvtk.registerObject(actor)
+            self.qvtk.registerObject(actor)
+            self.objects.append(actor)
             if self.colorTable:
                 c = self.colorTable[i]
                 c = QColor.fromRgba(c)

@@ -198,13 +198,18 @@ class OverlayListWidget(QtGui.QListWidget):
         action = menu.exec_(QtGui.QCursor.pos())
         if action == show3dAction:
             print "3D view"
-            suppress = item.overlayItemReference.overlayItem.backgroundClasses
-            vol      = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
+            suppress   = item.overlayItemReference.overlayItem.backgroundClasses
+            vol        = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
+            colorTable = item.overlayItemReference.colorTable
             
             print "  - will not extract the following labels:", suppress
-            print "  - volunme to show has shape", vol.shape, "and dtype =", vol.dtype
+            print "  - volume to show has shape", vol.shape, "and dtype =", vol.dtype
+            #print "  - color table"
+            #for i, c in enumerate(colorTable):
+                #c = QtGui.QColor.fromRgba(c)
+                #print "    %03d.) (%03d, %03d, %03d)" % (i, c.red(), c.green(), c.blue())
             
-            self.volumeEditor.overview.SetColorTable(item.overlayItemReference.colorTable)
+            self.volumeEditor.overview.SetColorTable(colorTable)
             self.volumeEditor.overview.DisplayObjectMeshes(vol, suppress)
             
         elif action == colorAction:
