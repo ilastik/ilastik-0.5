@@ -158,7 +158,12 @@ class OverlayListWidget(QtGui.QListWidget):
 
         menu = QtGui.QMenu(self)
 
-        show3dAction = menu.addAction("Display 3D")
+        #Only show the "Display 3D" entry when this overlay can be reasonably
+        #shown in 3D by extracting the meshes of the contained objects
+        show3dAction = QtGui.QAction(self)
+        if item.overlayItemReference.overlayItem.displayable3D:
+            show3dAction = menu.addAction("Display 3D")
+            
         if item.overlayItemReference.colorTable is None:
             colorAction = menu.addAction("Change Color")
             if item.overlayItemReference.linkColor is True:
@@ -192,21 +197,15 @@ class OverlayListWidget(QtGui.QListWidget):
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == show3dAction:
-            """
-            print "Loading vtk ..."
-            from mayaviWidget import MayaviQWidget
-            print "vtk running marching cubes..."
-            #mlab.contour3d(item._data[0,:,:,:,0], opacity=0.6)
-            #mlab.outline()
-            self.my_model = MayaviQWidget(self.volumeEditor, item.overlayItemReference, self.volumeEditor.image[0,:,:,:,0])
-            self.my_model.show()
-            """
-            vol = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
-            print self.volumeEditor.overview.__class__
-            print vol.shape, vol.dtype
+            print "3D view"
+            suppress = item.overlayItemReference.overlayItem.backgroundClasses
+            vol      = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
+            
+            print "  - will not extract the following labels:", suppress
+            print "  - volunme to show has shape", vol.shape, "and dtype =", vol.dtype
             
             self.volumeEditor.overview.SetColorTable(item.overlayItemReference.colorTable)
-            self.volumeEditor.overview.DisplayObjectMeshes(vol, (0,1,))
+            self.volumeEditor.overview.DisplayObjectMeshes(vol, suppress)
             
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()

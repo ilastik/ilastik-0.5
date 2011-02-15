@@ -29,7 +29,7 @@
 
 import vigra
 import numpy
-import traceback, sys
+import traceback, sys, copy
 import threading
 from ilastik.core.volume import VolumeLabels, VolumeLabelDescription
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
@@ -161,7 +161,7 @@ class ConnectedComponentsThread(QtCore.QThread):
     def __init__(self, dataMgr, image, background=set(), connector = ConnectedComponents(), connectorOptions = None):
         QtCore.QThread.__init__(self, None)
         self._data = image
-        self.backgroundSet = background
+        self.backgroundSet = copy.deepcopy(background) #make copy, because we alter the set later
         self.dataMgr = dataMgr
         self.count = 0
         self.numberOfJobs = self._data.shape[0]
