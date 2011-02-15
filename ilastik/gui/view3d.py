@@ -19,6 +19,8 @@ from numpy2vtk import toVtkImageData
 
 from GenerateModelsFromLabels_thread import *
 
+import platform #to check whether we are running on a Mac
+
 class QVTKOpenGLWidget(QVTKWidget2):
     wireframe = False
     
@@ -99,7 +101,7 @@ class QVTKOpenGLWidget(QVTKWidget2):
                 
                 self.emit(SIGNAL("objectPicked"), c[0:3])
         else:
-            QVTKWidget2.mouseReleaseEvent(self, e)
+            QVTKWidget2.mousePressEvent(self, e)
 
 class Outliner(vtkPropAssembly):
     def SetPickable(self, pickable):
@@ -216,6 +218,8 @@ class SlicingPlanesWidget(vtkPropAssembly):
     def TogglePlaneWidget(self, axis):
         show = not self.planes[axis].GetEnabled()
         self.planes[axis].SetEnabled(show)
+        
+
     
     def SetInteractor(self, interactor):
         for i in range(3):
@@ -259,6 +263,18 @@ class SlicingPlanesWidget(vtkPropAssembly):
    
 class OverviewScene(QWidget):
     colorTable = None
+    
+    def resizeEvent(self, event):
+        if platform.system() == 'Darwin':
+            QTimer.singleShot(0, self.__workaroundOSXRenderBug)
+        QWidget.resizeEvent(self,event)
+    
+    def __workaroundOSXRenderBug(self):
+        self.TogglePlaneWidgetX()
+        self.qvtk.update()
+        self.TogglePlaneWidgetX()
+        self.qvtk.update()
+        
     
     def slicingCallback(self, obj, event):
         num = obj.coordinate[obj.lastChangedAxis]
