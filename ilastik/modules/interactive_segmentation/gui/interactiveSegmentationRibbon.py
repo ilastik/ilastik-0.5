@@ -79,6 +79,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         #create SeedsOverlay
         ov = OverlayItem(self.ilastik._activeImage.Interactive_Segmentation.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage.Interactive_Segmentation.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        #be able to show the seeds in 3D
+        ov.displayable3D = True
+        ov.backgroundClasses = set([0])
+        ov.smooth3D = False
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = ov
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
 
