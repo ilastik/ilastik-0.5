@@ -418,7 +418,6 @@ class OverviewScene(QWidget):
     def onObjectMeshesComputed(self):
         self.dlg.accept()
         print "onObjectMeshesComputed"
-        g = self.dlg.extractor.meshes[2]
         
         self.polygonAppender = vtkAppendPolyData()
         for g in self.dlg.extractor.meshes.values():
