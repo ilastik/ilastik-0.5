@@ -100,6 +100,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
         ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
+        
         if ov is None:
             path = self.outputPath
             try:
@@ -293,6 +294,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             if ovs is not None:
                 ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
                 ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
+                
                 if ov is None:
                     #create Old Overlays if not there
                     shape = self.ilastik._activeImage.shape
@@ -352,6 +354,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             origColorTable[1] = 255
             ov = OverlayItem(self.localMgr.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.activeImage.overlayMgr["Segmentation/Segmentation"] = ov
+            
+            #this overlay can be shown in 3D
+            #the label 0 never occurs, label 1 is assigned to the background  class
+            ov.displayable3D = True
+            ov.backgroundClasses = set([1])
         else:
             res = self.localMgr.segmentation
             self.activeImage.overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(res)
