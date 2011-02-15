@@ -1,7 +1,6 @@
 from PyQt4 import QtCore
 import sys
 from ilastik.core.projectClass import Project
-from ilastik.core.testThread import TestHelperFunctions
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponentsModuleMgr
 import unittest
 from ilastik.core.testThread import TestThread
@@ -122,7 +121,7 @@ class TestWholeModuleWrongImage(unittest.TestCase): # tests if wrong input leads
 
     def finalizeTest(self):
         # results comparison
-        self.assertEqual(self.testThread.passedTest, False)
+        self.assertEqual(self.testThread.passedTest, False) # has to be different from ground truth result (wrong input data!)
         self.app.quit()
         
 class zzzTestDummy(unittest.TestCase): 

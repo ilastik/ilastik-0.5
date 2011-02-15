@@ -106,7 +106,7 @@ class TestWholeModuleWrongImage(unittest.TestCase): # this test tests if wrong i
         
         # compare obtained result to ground truth result
         equalOverlays = TestHelperFunctions.compareResultsWithFile(self.automaticSegmentationMgr, listOfResultOverlays, listOfFilenames)
-        self.assertEqual(equalOverlays, False)        
+        self.assertEqual(equalOverlays, False) # has to be different from ground truth result (wrong input data!)
         
 class zzzTestDummy(unittest.TestCase): 
      
