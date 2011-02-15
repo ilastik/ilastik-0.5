@@ -221,10 +221,11 @@ class OverlaySelectionDialog(QtGui.QDialog):
         GroupsLayout.addLayout(rightLayout)
         
         tempLayout = QtGui.QHBoxLayout()
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QtGui.QPushButton("&Cancel")
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-        self.addSelectedButton = QtGui.QPushButton("Add Selected")
+        self.addSelectedButton = QtGui.QPushButton("&Add Selected")
         self.addSelectedButton.setEnabled(False)
+        self.addSelectedButton.setDefault(True)
         self.connect(self.addSelectedButton, QtCore.SIGNAL('clicked()'), self.addSelected)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
