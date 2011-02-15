@@ -191,7 +191,11 @@ class ClassificationModuleMgr(BaseModuleMgr):
         if dataItemImage.overlayMgr["Classification/Labels"] is None:
             data = numpy.zeros(dataItemImage.shape[0:-1]+(1,),'uint8')
             ov = overlayMgr.OverlayItem(data, color = 0, alpha = 1.0, colorTable = self.dataMgr.module["Classification"]["labelDescriptions"].getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-            dataItemImage.overlayMgr["Classification/Labels"] = ov        
+            dataItemImage.overlayMgr["Classification/Labels"] = ov      
+        
+        #be able to show the labels in 3D
+        dataItemImage.overlayMgr["Classification/Labels"].displayable3D = True
+        dataItemImage.overlayMgr["Classification/Labels"].backgroundClasses = set([0])
         
         #add the raw data
         if dataItemImage.overlayMgr["Raw Data"] is not None:
