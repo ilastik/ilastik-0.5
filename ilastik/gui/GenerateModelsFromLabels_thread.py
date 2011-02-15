@@ -19,6 +19,7 @@ class MeshExtractor(QObject):
     meshes = dict()
     elapsed = QElapsedTimer()
     suppressLabels = list()
+    smooth = True
     
     skipped = 0
     emitted = 0
@@ -42,6 +43,8 @@ class MeshExtractor(QObject):
     def SuppressLabels(self, labelList):
         print "will suppress labels =", labelList
         self.suppressLabels = labelList
+    def Smooth(self, smooth):
+        self.smooth = smooth
     
     @pyqtSignature("run()")
     def run(self):
@@ -94,22 +97,26 @@ class MeshExtractor(QObject):
         discreteCubes.AddObserver(vtkCommand.ProgressEvent, self.progressCallback)
         discreteCubes.GenerateValues(endLabel - startLabel + 1, startLabel, endLabel)
 
-        self.emit(SIGNAL("newStep"), "Smoothing")
-        qDebug("*** Smoothing ***")
-        smoother.SetInput(discreteCubes.GetOutput())
-        smoother.AddObserver(vtkCommand.ProgressEvent, self.progressCallback)
-        smoother.SetNumberOfIterations(smoothingIterations)
-        smoother.BoundarySmoothingOff()
-        smoother.FeatureEdgeSmoothingOff()
-        smoother.SetFeatureAngle(featureAngle)
-        smoother.SetPassBand(passBand)
-        smoother.NonManifoldSmoothingOn()
-        smoother.NormalizeCoordinatesOn()
-        smoother.Update()
+        if self.smooth:
+            self.emit(SIGNAL("newStep"), "Smoothing")
+            qDebug("*** Smoothing ***")
+            smoother.SetInput(discreteCubes.GetOutput())
+            smoother.AddObserver(vtkCommand.ProgressEvent, self.progressCallback)
+            smoother.SetNumberOfIterations(smoothingIterations)
+            smoother.BoundarySmoothingOff()
+            smoother.FeatureEdgeSmoothingOff()
+            smoother.SetFeatureAngle(featureAngle)
+            smoother.SetPassBand(passBand)
+            smoother.NonManifoldSmoothingOn()
+            smoother.NormalizeCoordinatesOn()
+            smoother.Update()
 
         self.emit(SIGNAL("newStep"), "Preparing meshes")
         qDebug("*** Preparing meshes ***")
-        selector.SetInput(smoother.GetOutput())
+        if self.smooth:
+            selector.SetInput(smoother.GetOutput())
+        else:
+            selector.SetInput(discreteCubes.GetOutput())
         selector.SetInputArrayToProcess(0, 0, 0,
                                         vtkDataObject.FIELD_ASSOCIATION_CELLS,
                                         vtkDataSetAttributes.SCALARS)
@@ -202,11 +209,12 @@ class MeshExtractorDialog(QDialog):
         self.currentStepProgress.setValue( round(100.0*progress) )
         self.update()
 
-    def run(self, segVolume, suppressLabels = list()):
+    def run(self, segVolume, suppressLabels = list(), smooth=True):
         self.thread = QThread(self)
         self.extractor = MeshExtractor(None)
         self.extractor.SetInput(segVolume)
         self.extractor.SuppressLabels(suppressLabels)
+        self.extractor.Smooth(smooth)
         #m.start()
         self.connect(self.extractor, SIGNAL("newStep"), self.onNewStep)#, Qt.BlockingQueuedConnection)
         self.connect(self.extractor, SIGNAL("currentStepProgressChanged"), self.onCurrentStepProgressChanged)#, Qt.BlockingQueuedConnection)

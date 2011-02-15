@@ -158,6 +158,7 @@ class OverlayItem(object):
         #if this overlay can be shown in 3D, the list of labels
         #that should be suppressed (not shown)
         self.backgroundClasses = set()
+        self.smooth3D = True
         
         self._data = DataAccessor(data)
         self.linkColorTable = linkColorTable

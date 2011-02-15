@@ -400,12 +400,12 @@ class OverviewScene(QWidget):
     def redisplay(self):
         self.qvtk.update()
         
-    def DisplayObjectMeshes(self, v, suppressLabels=()):
+    def DisplayObjectMeshes(self, v, suppressLabels=(), smooth=True):
         print "OverviewScene::DisplayObjectMeshes", suppressLabels
         self.dlg = MeshExtractorDialog(self)
         self.connect(self.dlg, SIGNAL('done()'), self.onObjectMeshesComputed)
         self.dlg.show()
-        self.dlg.run(v, suppressLabels)
+        self.dlg.run(v, suppressLabels, smooth)
     
     def SetColorTable(self, table):
         self.colorTable = table

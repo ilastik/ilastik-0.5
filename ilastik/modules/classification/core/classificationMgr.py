@@ -196,6 +196,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
         #be able to show the labels in 3D
         dataItemImage.overlayMgr["Classification/Labels"].displayable3D = True
         dataItemImage.overlayMgr["Classification/Labels"].backgroundClasses = set([0])
+        dataItemImage.overlayMgr["Classification/Labels"].smooth3D = False
         
         #add the raw data
         if dataItemImage.overlayMgr["Raw Data"] is not None:

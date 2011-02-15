@@ -199,6 +199,7 @@ class OverlayListWidget(QtGui.QListWidget):
         if action == show3dAction:
             print "3D view"
             suppress   = item.overlayItemReference.overlayItem.backgroundClasses
+            smooth     = item.overlayItemReference.overlayItem.smooth3D
             vol        = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
             colorTable = item.overlayItemReference.colorTable
             
@@ -210,7 +211,7 @@ class OverlayListWidget(QtGui.QListWidget):
                 #print "    %03d.) (%03d, %03d, %03d)" % (i, c.red(), c.green(), c.blue())
             
             self.volumeEditor.overview.SetColorTable(colorTable)
-            self.volumeEditor.overview.DisplayObjectMeshes(vol, suppress)
+            self.volumeEditor.overview.DisplayObjectMeshes(vol, suppress, smooth)
             
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
