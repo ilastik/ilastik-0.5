@@ -49,9 +49,6 @@ class AutomaticSegmentationModuleMgr(BaseModuleMgr):
             borders = input[0,:,:].view(vigra.ScalarImage)
             # this does NOT work if the border map is not smooth, e.g. vigra.filters.gaussianGradientMagnitude(border_image, 0.3) won't work ==> force smoothing!
             borders = vigra.filters.gaussianSmoothing(borders, 2)
-            from ilastik.core import dataImpex
-            ov = OverlayItem(borders, color = 0, alpha = 1.0)
-            dataImpex.DataImpex.exportOverlay("C:/testtesttest", "h5", ov)
             self.res[0,0,:,:,0] = vigra.analysis.watersheds(borders, 4)[0]
             #self.res[0,0,:,:,0] = input[0,:,:].view(vigra.ScalarImage)
     
