@@ -155,8 +155,22 @@ class MeshExtractor(QObject):
             
             #this seems to be a bug in VTK, why should this call be necessary?
             geometry.GetOutput().Update()
+        
+            #FIXME
+            #In ILASTIK, the axes 0 and 2 are flipped.
+            #We have to correct for that here
+            #<begin> FIXME
+            f = vtkTransformPolyDataFilter()
+            t = vtkTransform()
+            t.Scale(1,1,-1)
+            t.RotateY(90)
+            f.SetTransform(t)
+            f.SetInput(geometry.GetOutput())
+            f.Update()
+            #<end> FIXME
+            
             poly = vtkPolyData()
-            poly.DeepCopy(geometry.GetOutput())
+            poly.DeepCopy(f.GetOutput())
             
             print " - adding mesh for label %d" % (i)
             self.meshes[i] = poly

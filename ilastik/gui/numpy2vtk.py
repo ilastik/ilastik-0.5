@@ -35,12 +35,19 @@ def __numpyTypeToVtkType(dtype):
 
 def toVtkImageData(a):    
     importer = vtkImageImport()
-    #if a.dtype == numpy.uint8:
-    #    importer.SetDataScalarTypeToUnsignedChar()
-    #elif a.dtype == numpy.uint32:
+
+    #FIXME
+    #In all cases I have seen, it is needed to reverse the shape here
+    #Does that hold universally, and do we understand why?
+    reverseShape = True
+    
     importer.SetDataScalarType(__numpyTypeToVtkType(a.dtype))
-    importer.SetDataExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
-    importer.SetWholeExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
+    if reverseShape:
+        importer.SetDataExtent(0,a.shape[2]-1,0,a.shape[1]-1,0,a.shape[0]-1)
+        importer.SetWholeExtent(0,a.shape[2]-1,0,a.shape[1]-1,0,a.shape[0]-1)
+    else:
+        importer.SetDataExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
+        importer.SetWholeExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
     importer.SetImportVoidPointer(a)
     importer.Update()
     return importer.GetOutput() 
