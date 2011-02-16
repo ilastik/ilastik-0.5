@@ -31,6 +31,7 @@ import vigra
 import numpy
 import traceback, sys
 import threading
+import copy
 from ilastik.core.volume import VolumeLabels, VolumeLabelDescription
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.core.overlayMgr import OverlayItem
@@ -248,7 +249,7 @@ class ConnectedComponentsThread(QtCore.QThread):
             jobs = []
             for i in range(self._data.shape[0]):
                 part = numpy.asarray(self._data[i, :, :, :, 0], dtype=self._data.dtype)               
-                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, part, self.backgroundSet])
+                job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, part, copy.deepcopy(self.backgroundSet)])
                 jobs.append(job)
             self.jobMachine.process(jobs)
             self.result = ListOfNDArraysAsNDArray(self.result)

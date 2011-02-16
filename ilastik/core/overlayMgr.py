@@ -273,7 +273,7 @@ class OverlayItem(object):
     def createDefault16ColorColorTable(cls):
         sublist = []
         #sublist.append(QtGui.qRgb(0, 0, 0))
-        sublist.append(OverlayItem.qrgb(255, 255, 255))
+        sublist.append(OverlayItem.qrgb(225, 225, 225))
         sublist.append(OverlayItem.qrgb(255, 0, 0))
         sublist.append(OverlayItem.qrgb(0, 255, 0))
         sublist.append(OverlayItem.qrgb(0, 0, 255))
