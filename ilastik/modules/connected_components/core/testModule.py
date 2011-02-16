@@ -8,12 +8,50 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
-class TestWholeModule(unittest.TestCase):
+class CCTestProject(object):
+    # this class is used to set up a default project which is then used for testing functionality, 
+    # hopefully, this will reduced code redundancy
+    def __init__(self, image_filename, thresholdoverlay_filename, groundtruth_filename):
+        
+        self.image_filename = image_filename
+        self.thresholdoverlay_filename = thresholdoverlay_filename
+        self.groundtruth_filename = groundtruth_filename
+        
+        self.testdir = ilastikpath[0] + "/testdata/connected_components/"
+        
+        # create project
+        self.project = Project('Project Name', 'Labeler', 'Description')
+        self.dataMgr = self.project.dataMgr
+    
+        # create file list and load data
+        path = str(self.testdir + self.image_filename) # the image is not really used since we load the threshold overlay from a file, however, we need it to set the correct dimensions 
+        fileList = []
+        fileList.append(path)
+        self.project.addFile(fileList)
+        
+        # create automatic segmentation manager
+        self.connectedComponentsMgr = ConnectedComponentsModuleMgr(self.dataMgr)
+    
+        # setup inputs, compute results
+        self.inputOverlays = []
+        self.inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
+        
+        # load precalculated threshold overlay from file
+        self.threshold_ov = dataImpex.DataImpex.importOverlay(self.dataMgr[self.dataMgr._activeImageNumber], str(self.testdir + self.thresholdoverlay_filename), "")
+        self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.setInputOverlay(self.threshold_ov)    
+        
+        # overlay lists and filenames
+        self.listOfResultOverlays = []
+        self.listOfFilenames = []
+        self.listOfResultOverlays.append("Connected Components/CC Results")
+        self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
+
+class TestWholeModule_NoBackground(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
-        self.testdir = ilastikpath[0] + "/testdata/connected_components/"
+        self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
@@ -24,38 +62,7 @@ class TestWholeModule(unittest.TestCase):
         self.app.exec_()
         
     def mainFunction(self):
-        # create project
-        self.project = Project('Project Name', 'Labeler', 'Description')
-        self.dataMgr = self.project.dataMgr
-    
-        # create file list and load data
-        path = str(self.testdir + "test_image.png") # the image is not really used since we load the threshold overlay from a file, however, we need it to set the correct dimensions 
-        fileList = []
-        fileList.append(path)
-        self.project.addFile(fileList)
-        
-        # create automatic segmentation manager
-        self.connectedComponentsMgr = ConnectedComponentsModuleMgr(self.dataMgr)
-    
-        # setup inputs, compute results
-        inputOverlays = []
-        inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
-        
-        # load precalculated threshold overlay from file
-        dataImpex.DataImpex.importOverlay(self.dataMgr[self.dataMgr._activeImageNumber], str(self.testdir + "cc_threshold_overlay.h5"), "")
-        
-        # overlay lists and filenames
-        listOfResultOverlays = []
-        listOfFilenames = []
-        listOfResultOverlays.append("Connected Components/CC Results")
-        listOfFilenames.append(self.testdir + "ground_truth_cc_without_background.h5")
-        
-        # calculate connected components results
-        # ...import threshold overlay
-        threshold_ov = self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Custom Overlays/Threshold Overlay"]
-        self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.setInputOverlay(threshold_ov)
-        
-        self.testThread = TestThread(self.connectedComponentsMgr, listOfResultOverlays, listOfFilenames)
+        self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(None) # ...compute connected components without background
 
@@ -64,12 +71,13 @@ class TestWholeModule(unittest.TestCase):
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
 
-class TestWholeModuleWrongImage(unittest.TestCase): # tests if wrong input leads to a test fail
+
+class TestWholeModule_NoBackgroundWrongImage(unittest.TestCase): # tests if wrong input leads to a test fail
      
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
-        self.testdir = ilastikpath[0] + "/testdata/connected_components/"
+        self.testProject = CCTestProject("test_image_mirrored.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
@@ -80,42 +88,13 @@ class TestWholeModuleWrongImage(unittest.TestCase): # tests if wrong input leads
         self.app.exec_()
         
     def mainFunction(self):
-        # create project
-        self.project = Project('Project Name', 'Labeler', 'Description')
-        self.dataMgr = self.project.dataMgr
-    
-        # create file list and load data
-        path = str(self.testdir + "test_image_mirrored.png") # the image is not really used since we load the threshold overlay from a file, however, we need it to set the correct dimensions 
-        fileList = []
-        fileList.append(path)
-        self.project.addFile(fileList)
-        
-        # create automatic segmentation manager
-        self.connectedComponentsMgr = ConnectedComponentsModuleMgr(self.dataMgr)
-    
-        # setup inputs, compute results
-        inputOverlays = []
-        inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
-        
-        # load precalculated threshold overlay from file
-        dataImpex.DataImpex.importOverlay(self.dataMgr[self.dataMgr._activeImageNumber], str(self.testdir + "cc_threshold_overlay.h5"), "")
-        
-        # overlay lists and filenames
-        listOfResultOverlays = []
-        listOfFilenames = []
-        listOfResultOverlays.append("Connected Components/CC Results")
-        listOfFilenames.append(self.testdir + "ground_truth_cc_without_background.h5")
-        
-        # calculate connected components results
-        # ...import threshold overlay
-        threshold_ov = self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Custom Overlays/Threshold Overlay"]
         # ...randomly exchange some pixels
         import numpy
         for i in range(10):
-            threshold_ov._data._data[numpy.random.randint(threshold_ov._data._data.shape[0]), numpy.random.randint(threshold_ov._data._data.shape[1]), numpy.random.randint(threshold_ov._data._data.shape[2]), numpy.random.randint(threshold_ov._data._data.shape[3]), numpy.random.randint(threshold_ov._data._data.shape[4])] = numpy.random.randint(255)
-        self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.setInputOverlay(threshold_ov)
+            self.testProject.threshold_ov._data._data[numpy.random.randint(self.testProject.threshold_ov._data._data.shape[0]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[1]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[2]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[3]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[4])] = numpy.random.randint(255)
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Connected_Components.setInputOverlay(self.testProject.threshold_ov)
         
-        self.testThread = TestThread(self.connectedComponentsMgr, listOfResultOverlays, listOfFilenames)
+        self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(None) # ...compute connected components without background
 
@@ -123,6 +102,7 @@ class TestWholeModuleWrongImage(unittest.TestCase): # tests if wrong input leads
         # results comparison
         self.assertEqual(self.testThread.passedTest, False) # has to be different from ground truth result (wrong input data!)
         self.app.quit()
+        
         
 class zzzTestDummy(unittest.TestCase): 
      
