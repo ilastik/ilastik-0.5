@@ -112,8 +112,8 @@ class ConnectedComponentsItemModuleMgr(BaseModuleDataItemMgr):
         self.connCompBackgroundClasses = self.connCompBackgroundClasses.union(setAdd)
         self.connCompBackgroundClasses = self.connCompBackgroundClasses.difference(setRemove)
         
-    def setInputOverlay(self, overlay):
-        self.inputOverlay = overlay
+    def setInputData(self, data):
+        self.inputData = data
             
 class ConnectedComponentsModuleMgr(BaseModuleMgr):
     name = "Connected_Components"
@@ -126,14 +126,14 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         dataItemImage.Connected_Components.onAppend()
 
     def computeResults(self, backgroundClasses):
-        overlay = self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.inputOverlay        
+        overlay = self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.inputData        
         if backgroundClasses is None:
             print "no background"
-            self.ccThread = ConnectedComponentsThread(self.dataMgr, overlay._data._data)
+            self.ccThread = ConnectedComponentsThread(self.dataMgr, overlay._data)
         else:
             print "background"
             print backgroundClasses
-            self.ccThread = ConnectedComponentsThread(self.dataMgr, overlay._data._data, backgroundClasses)
+            self.ccThread = ConnectedComponentsThread(self.dataMgr, overlay._data, backgroundClasses)
         
         self.ccThread.start()
         return self.ccThread
