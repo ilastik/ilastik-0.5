@@ -9,13 +9,59 @@ import unittest
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
+class UnsupervisedDecompositionTestProject(object):
+    # this class is used to set up a default project which is then used for testing functionality, 
+    # hopefully, this will reduced code redundancy
+    def __init__(self, image_filename, unsupervisedMethod = None, numComponents = None):
+        
+        self.image_filename = image_filename
+        
+        self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
+        
+        # create project
+        self.project = Project('Project Name', 'Labeler', 'Description')
+        self.dataMgr = self.project.dataMgr
+    
+        # create file list and load data
+        path = str(self.testdir + self.image_filename) # the image is not really used since we load the threshold overlay from a file, however, we need it to set the correct dimensions 
+        fileList = []
+        fileList.append(path)
+        self.project.addFile(fileList)
+        
+        # create automatic segmentation manager
+        self.unsupervisedMgr = UnsupervisedDecompositionModuleMgr(self.dataMgr)
+    
+        # setup inputs, compute results
+        self.inputOverlays = []
+        self.inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
+        
+        # use default decomposer
+        if unsupervisedMethod is None:
+            self.unsupervisedMethod = self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod
+        else:
+            self.unsupervisedMethod = self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod = unsupervisedMethod
+        if numComponents is not None:
+            self.unsupervisedMethod.setNumberOfComponents(numComponents)    
+            self.numIterations = numComponents
+        else:
+            self.numIterations = self.unsupervisedMethod.numComponents
+        
+        # overlay lists and filenames
+        self.listOfResultOverlays = []
+        self.listOfFilenames = []
+        for i in range(self.numIterations):
+            self.listOfResultOverlays.append(str("Unsupervised/" + self.unsupervisedMethod.shortname + " component %d" % (i+1)))
+            filename = str(self.testdir + "unsupervised_" + self.unsupervisedMethod.shortname + "_component_%d.h5" % (i+1))
+            print filename
+            self.listOfFilenames.append(filename)        
+
+
 class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decomposer
-     
+
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
-        self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
-        print self.testdir
+        self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5")
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
@@ -26,59 +72,26 @@ class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decompo
         self.app.exec_()
         
     def mainFunction(self):
-        # create project
-        self.project = Project('Project Name', 'Labeler', 'Description')
-        self.dataMgr = self.project.dataMgr
-    
-        # create file list and load data
-        path = str(self.testdir + "sims_aligned_s7_32.h5")    
-        fileList = []
-        fileList.append(path)
-        self.project.addFile(fileList)
-        
-        # create unsupervised manager
-        self.unsupervisedMgr = UnsupervisedDecompositionModuleMgr(self.dataMgr)
-    
-        # setup inputs, compute results
-        inputOverlays = []
-        inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
-        
-        # use default decomposer
-        unsupervisedMethod = self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod
-        
-        # overlay lists and filenames
-        listOfResultOverlays = []
-        listOfFilenames = []
-        for i in range(unsupervisedMethod.numComponents):
-            listOfResultOverlays.append(str("Unsupervised/" + unsupervisedMethod.shortname + " component %d" % (i+1)))
-            filename = str(self.testdir + "unsupervised_" + unsupervisedMethod.shortname + "_component_%d.h5" % (i+1))
-            print filename
-            listOfFilenames.append(filename)
-        
-        self.numOverlaysBefore = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
-        
-        self.testThread = TestThread(self.unsupervisedMgr, listOfResultOverlays, listOfFilenames)
+        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
-        self.testThread.start(inputOverlays)
+        self.testThread.start(self.testProject.inputOverlays)        
+
+        self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
 
     def finalizeTest(self):
         # results comparison
-        #print self.testThread.myTestThread.isFinished()
         self.assertEqual(self.testThread.passedTest, True)
-        
-        # other conditions
-        # exactly 3 computed overlays + 3 ground truth overlays were added
-        self.numOverlaysAfter = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
-        self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, 6)
                 
         self.app.quit()
+        
         
 class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with 3 components
      
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
-        self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
+        self.numComponents = 3
+        self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5", UnsupervisedDecompositionPCA, self.numComponents)
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
@@ -89,50 +102,21 @@ class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with
         self.app.exec_()
         
     def mainFunction(self):
-        # create project
-        self.project = Project('Project Name', 'Labeler', 'Description')
-        self.dataMgr = self.project.dataMgr
-    
-        # create file list and load data
-        path = str(self.testdir + "sims_aligned_s7_32.h5")    
-        fileList = []
-        fileList.append(path)
-        self.project.addFile(fileList)
-        
-        # create unsupervised manager
-        self.unsupervisedMgr = UnsupervisedDecompositionModuleMgr(self.dataMgr)
-    
-        # setup inputs, compute results
-        inputOverlays = []
-        inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
-        
-        # use PCA decomposer
-        self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod = UnsupervisedDecompositionPCA
-        self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.setNumberOfComponents(3)
-        
-        # overlay lists and filenames
-        listOfResultOverlays = []
-        listOfFilenames = []
-        for i in range(3):
-            listOfResultOverlays.append("Unsupervised/PCA component %d" % (i+1))
-            listOfFilenames.append(str(self.testdir + "unsupervised_PCA_component_%d.h5" % (i+1)))
-                  
-        self.numOverlaysBefore = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
-        
-        self.testThread = TestThread(self.unsupervisedMgr, listOfResultOverlays, listOfFilenames)
+        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
-        self.testThread.start(inputOverlays)
+        self.testThread.start(self.testProject.inputOverlays)        
+
+        self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
 
     def finalizeTest(self):
         # results comparison
-        #print self.testThread.myTestThread.isFinished()
         self.assertEqual(self.testThread.passedTest, True)
         
         # other conditions
-        # exactly 3 computed overlays + 3 ground truth overlays were added
-        self.numOverlaysAfter = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
-        self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, 6)
-                
+        # exactly self.numComponents computed overlays + self.numComponents ground truth overlays were added
+        self.numOverlaysAfter = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
+        self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, self.numComponents*2)
+
         self.app.quit()
         
 class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
@@ -140,7 +124,8 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) 
-        self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
+        self.numComponents = 5
+        self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5", UnsupervisedDecompositionPLSA, self.numComponents)
     
     def test_WholeModule(self):
         t = QtCore.QTimer()
@@ -151,51 +136,23 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
         self.app.exec_()
         
     def mainFunction(self):
-        # create project
-        self.project = Project('Project Name', 'Labeler', 'Description')
-        self.dataMgr = self.project.dataMgr
-    
-        # create file list and load data
-        path = str(self.testdir + "sims_aligned_s7_32.h5")    
-        fileList = []
-        fileList.append(path)
-        self.project.addFile(fileList)
-        
-        # create unsupervised manager
-        self.unsupervisedMgr = UnsupervisedDecompositionModuleMgr(self.dataMgr)
-        
         # fix random seed
         from ilastik.core.randomSeed import RandomSeed
         RandomSeed.setRandomSeed(42)
         
-        # setup decomposition algorithm
-        self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod = UnsupervisedDecompositionPLSA
-        self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.setNumberOfComponents(5)
-    
-        # setup inputs, compute results
-        inputOverlays = []
-        inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
-        
-        # overlay lists and filenames
-        listOfResultOverlays = []
-        listOfFilenames = []
-        for i in range(5):
-            listOfResultOverlays.append("Unsupervised/pLSA component %d" % (i+1))
-            listOfFilenames.append(str(self.testdir + "unsupervised_pLSA_component_%d.h5" % (i+1)))
-        
-        self.numOverlaysBefore = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
-        
-        self.testThread = TestThread(self.unsupervisedMgr, listOfResultOverlays, listOfFilenames)
+        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
-        self.testThread.start(inputOverlays)
+        self.testThread.start(self.testProject.inputOverlays)        
+
+        self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
 
     def finalizeTest(self):
         # results comparison
         self.assertEqual(self.testThread.passedTest, True)
         
-        # exactly 3 computed overlays + 3 ground truth overlays were added
-        self.numOverlaysAfter = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
-        self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, 10)
+        # exactly self.numComponents computed overlays + self.numComponents ground truth overlays were added
+        self.numOverlaysAfter = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
+        self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, self.numComponents*2)
                 
         self.app.quit()
 
