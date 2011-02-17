@@ -2126,74 +2126,12 @@ class ImageScene(QtGui.QGraphicsView):
             self.volumeEditor.changeSlice(y, 1)
 
     def onContext(self, pos):
-        menu = QtGui.QMenu('Labeling menu', self)
-       
-        menu.addSeparator()
-        labelList = []
-        
-        if type(self.volumeEditor.labelWidget) != DummyLabelWidget:
-            volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
-    
-            act = menu.addAction("Labels")
-            act.setEnabled(False)
-            font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
-            act.setFont(font)
-            menu.addSeparator()
-            
-            for index, item in enumerate(volumeLabel):
-                labelColor = QtGui.QColor.fromRgb(long(item.color))
-                labelIndex = item.number
-                labelName = item.name
-                pixmap = QtGui.QPixmap(16, 16)
-                pixmap.fill(labelColor)
-                icon = QtGui.QIcon(pixmap)
-                
-                act = QtGui.QAction(icon, labelName, menu)
-                i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
-                # print self.volumeEditor.labelView.selectionModel()
-                self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.onContextSetLabel(i))
-                labelList.append(menu.addAction(act))
-                
-            if self.drawManager.erasing is False:
-                eraseAct = QtGui.QAction("Enable eraser", menu)
-                menu.addAction(eraseAct)
-                self.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: self.drawManager.toggleErase())
-            else:
-                eraseAct = QtGui.QAction("Disable eraser", menu)
-                menu.addAction(eraseAct)
-                self.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: self.drawManager.toggleErase())
-                
-            menu.addSeparator()
-            # brushM = labeling.addMenu("Brush size")
-            brushGroup = QtGui.QActionGroup(self)
-
-            act = menu.addAction("Brush Sizes")
-            act.setEnabled(False)
-            font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
-            act.setFont(font)
-            menu.addSeparator()
-            
-            defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
-            brush = []
-            for ind, bSizes in enumerate(defaultBrushSizes):
-                b = bSizes[0]
-                desc = bSizes[1]
-                act = QtGui.QAction("  " + str(b) + desc, brushGroup)
-                act.setCheckable(True)
-                self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
-                if b == self.drawManager.getBrushSize():
-                    act.setChecked(True)
-                brush.append(menu.addAction(act))
-            
-            menu.setTearOffEnabled(True)
-    
-            action = menu.exec_(QtGui.QCursor.pos())
+        if type(self.volumeEditor.labelWidget) == DummyLabelWidget: return
+        self.volumeEditor.labelWidget.onImageSceneContext(self, pos)
 
     def onContextSetLabel(self, i):
         self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
         self.drawManager.updateCrossHair()
-
-
 
 class OverviewSceneDummy(QtGui.QWidget):
     def __init__(self, parent, shape):

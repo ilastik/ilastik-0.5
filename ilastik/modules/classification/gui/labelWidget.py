@@ -83,11 +83,68 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.labelPropertiesChanged_callback = None
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.initFromVolumeLabelDescriptions(volumeLabelDescriptions)
+    
+    def onImageSceneContext(self, imageScene, pos):        
+        menu = QtGui.QMenu('Labeling menu', self)
+       
+        labelList = []
+        
+        volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
+
+        act = menu.addAction("Labels")
+        act.setEnabled(False)
+        font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
+        act.setFont(font)
+        
+        for index, item in enumerate(volumeLabel):
+            labelColor = QtGui.QColor.fromRgb(long(item.color))
+            labelIndex = item.number
+            labelName = item.name
+            pixmap = QtGui.QPixmap(16, 16)
+            pixmap.fill(labelColor)
+            icon = QtGui.QIcon(pixmap)
             
+            act = QtGui.QAction(icon, labelName, menu)
+            i = imageScene.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
+            # print self.volumeEditor.labelView.selectionModel()
+            imageScene.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: imageScene.onContextSetLabel(i))
+            labelList.append(menu.addAction(act))
+            
+        if imageScene.drawManager.erasing is False:
+            eraseAct = QtGui.QAction("Enable eraser", menu)
+            menu.addAction(eraseAct)
+            imageScene.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: imageScene.drawManager.toggleErase())
+        else:
+            eraseAct = QtGui.QAction("Disable eraser", menu)
+            menu.addAction(eraseAct)
+            imageScene.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: imageScene.drawManager.toggleErase())
+            
+        menu.addSeparator()
+        # brushM = labeling.addMenu("Brush size")
+        brushGroup = QtGui.QActionGroup(self)
+
+        act = menu.addAction("Brush Sizes")
+        act.setEnabled(False)
+        font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
+        act.setFont(font)
+        menu.addSeparator()
+        
+        defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
+        brush = []
+        for ind, bSizes in enumerate(defaultBrushSizes):
+            b = bSizes[0]
+            desc = bSizes[1]
+            act = QtGui.QAction("  " + str(b) + desc, brushGroup)
+            act.setCheckable(True)
+            imageScene.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: imageScene.drawManager.setBrushSize(b))
+            if b == imageScene.drawManager.getBrushSize():
+                act.setChecked(True)
+            brush.append(menu.addAction(act))
+        
+        action = menu.exec_(QtGui.QCursor.pos())
+        
     def currentItem(self):
         return self.listWidget.currentItem()
-    
-    
     
     def initFromVolumeLabelDescriptions(self, volumeLabelDescriptions):
         self.volumeLabelDescriptions = volumeLabelDescriptions

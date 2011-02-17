@@ -33,7 +33,15 @@ class BaseLabelWidget(object):
     def __init__(self,  parent = None):
         self.colorTab = None
         self.overlays = []
-        
+     
+    def onImageSceneContext(self, imageScene, pos):
+        """ reimplement this method to provide a context menu at position pos
+            for any of the slice views (3D) or the one image view (2D)
+            
+            FIXME this function does not really belong in this class
+            move to somewhere more appropriate during refactoring"""
+        pass
+     
     def ensureLabelOverlayVisible(self):
         pass
         
