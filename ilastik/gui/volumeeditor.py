@@ -1568,6 +1568,9 @@ class ImageScene(QtGui.QGraphicsView):
         if self.axis is 2:
             self.setStyleSheet("QWidget:!focus { border: 2px solid blue; border-radius: 4px; } \
                                 QWidget:focus { border: 2px solid white; border-radius: 4px; }")
+        
+        #on right mouse press, the customContextMenuRequested() signal is
+        #_automatically_ emitted, no need to call onContext explicitly
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
 
@@ -1969,8 +1972,7 @@ class ImageScene(QtGui.QGraphicsView):
                 self.tempErase = True
             mousePos = self.mapToScene(event.pos())
             self.beginDraw(mousePos)
-        elif event.buttons() == QtCore.Qt.RightButton:
-            self.onContext(event.pos())
+            
     #oli todo
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
@@ -2037,8 +2039,7 @@ class ImageScene(QtGui.QGraphicsView):
             self.volumeEditor.pixelValuesLabel.setText("<b>R:</b> %03i  <b>G:</b> %03i  <b>B:</b> %03i" % (colorValues[0], colorValues[1], colorValues[2]))
         else:
             self.volumeEditor.pixelValuesLabel.setText("<b>Gray:</b> %03i" %int(colorValues))
-        
-        
+    
     #oli todo
     def mouseMoveEvent(self,event):
         if self.dragMode == True:

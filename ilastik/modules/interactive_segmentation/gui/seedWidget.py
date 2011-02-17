@@ -89,6 +89,14 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def currentItem(self):
         return self.listWidget.currentItem()
     
+    def onImageSceneContext(self, imageScene, pos):
+        overlayMgr = self.volumeEditor.ilastik._activeImage.overlayMgr
+        doneOverlay = overlayMgr["Segmentation/Done"]
+        if not doneOverlay: return
+        
+        c = self.volumeEditor.selSlices
+        print c, 'gray=', doneOverlay._data[0,c[0],c[1],c[2],0]
+    
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):

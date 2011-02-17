@@ -84,7 +84,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.initFromVolumeLabelDescriptions(volumeLabelDescriptions)
     
-    def onImageSceneContext(self, imageScene, pos):        
+    def onImageSceneContext(self, imageScene, pos):
         menu = QtGui.QMenu('Labeling menu', self)
        
         labelList = []
