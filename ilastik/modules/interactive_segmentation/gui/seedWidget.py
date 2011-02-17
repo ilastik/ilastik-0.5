@@ -93,10 +93,21 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         overlayMgr = self.volumeEditor.ilastik._activeImage.overlayMgr
         doneOverlay = overlayMgr["Segmentation/Done"]
         if not doneOverlay: return
+        c = imageScene.coordinateUnderCursor()
+        print c
+        label = doneOverlay._data[0,c[0],c[1],c[2],0]
+        if label == 0: return
         
-        c = self.volumeEditor.selSlices
-        print c, 'gray=', doneOverlay._data[0,c[0],c[1],c[2],0]
-    
+        menu = QtGui.QMenu("Object #%d" % (label), self)
+        act = menu.addAction("Object #%d" % (label))
+        act.setEnabled(False)
+        font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
+        act.setFont(font)
+        
+        act = menu.addAction("Display 3D")
+        act = menu.addAction("Correct")
+        menu.exec_(QtGui.QCursor.pos())
+
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):

@@ -2041,6 +2041,27 @@ class ImageScene(QtGui.QGraphicsView):
             self.volumeEditor.pixelValuesLabel.setText("<b>Gray:</b> %03i" %int(colorValues))
     
     #oli todo
+    
+    def coordinateUnderCursor(self):
+        """returns the coordinate that is defined by hovering with the mouse
+           over one of the slice views. It is _not_ the coordinate as defined
+           by the three slice views"""
+        
+        posX = posY = posZ = -1
+        if self.axis == 0:
+            posY = self.y
+            posZ = self.x
+            posX = self.volumeEditor.selSlices[0]
+        elif self.axis == 1:
+            posY = self.volumeEditor.selSlices[1]
+            posZ = self.y
+            posX = self.x
+        else:
+            posY = self.y
+            posZ = self.volumeEditor.selSlices[2]
+            posX = self.x
+        return (posX, posY, posZ)
+    
     def mouseMoveEvent(self,event):
         if self.dragMode == True:
             self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
@@ -2064,10 +2085,9 @@ class ImageScene(QtGui.QGraphicsView):
             self.crossHairCursor.showXYPosition(x,y)
             #self.crossHairCursor.setPos(x,y)
             
+            (posX, posY, posZ) = self.coordinateUnderCursor()
+            
             if self.axis == 0:
-                posY = y
-                posZ = x
-                posX = self.volumeEditor.selSlices[0]
                 colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 if len(self.volumeEditor.imageScenes) > 2:
@@ -2078,9 +2098,6 @@ class ImageScene(QtGui.QGraphicsView):
                 
                 
             elif self.axis == 1:
-                posY = self.volumeEditor.selSlices[1]
-                posZ = y
-                posX = x
                 colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
@@ -2089,9 +2106,6 @@ class ImageScene(QtGui.QGraphicsView):
                 zView.showXPosition(x, y)
                 xView.setVisible(False)
             else:
-                posY = y
-                posZ = posX = self.volumeEditor.selSlices[2]
-                posX = x
                 colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
