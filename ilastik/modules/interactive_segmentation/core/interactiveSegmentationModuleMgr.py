@@ -88,6 +88,11 @@ def unravelIndices(indices, shape):
         print shape
     return ti    
 
+def setintersectionmask(a,b):
+    if int(numpy.__version__.split('.')[1])>= 4:
+        return numpy.in1d(a,b, assume_unique=True)
+    else:
+        return numpy.intersect1d(a,b)
 
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
@@ -167,7 +172,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                     if len(indices.shape) == 1:
                         indices.shape = indices.shape + (1,)
 
-                    mask = numpy.in1d(self._seedIndices.ravel(),indices.ravel(),assume_unique=True)
+                    mask = setintersectionmask(self._seedIndices.ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         tt = numpy.delete(self._seedIndices,nonzero)
@@ -211,7 +216,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                         count *= s
                         indices += indic[-loopc]*count
 
-                    mask = numpy.in1d(self._seedIndices.ravel(),indices.ravel(),assume_unique=True)
+                    mask = setintersectionmask(self._seedIndices.ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
                         if self._seedIndices is not None:

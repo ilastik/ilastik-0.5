@@ -31,7 +31,7 @@ class UnsupervisedDecompositionTestProject(object):
         # create automatic segmentation manager
         self.unsupervisedMgr = UnsupervisedDecompositionModuleMgr(self.dataMgr)
     
-        # setup inputs, compute results
+        # setup inputs
         self.inputOverlays = []
         self.inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
         

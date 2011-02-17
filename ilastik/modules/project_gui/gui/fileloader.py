@@ -108,10 +108,17 @@ class FileLoader(QtGui.QDialog):
     def toggleOptions(self, int):
         if self.optionCheck.checkState() == 0:
             self.optionsFrame.setVisible(False)
-        else:
-            self.optionsFrame.setVisible(True)
-            self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
-        
+        elif self.fileList != [] :
+            #check if the file is the correct type for options
+            fBase, fExt = os.path.splitext(str(self.fileList[0]))
+            fExt=fExt[:-2]
+            if fExt == ".tiff" or fExt == ".gif" or fExt == ".jpeg" or fExt == ".gif" or fExt == ".jpg" or fExt == ".tif"or fExt ==".h5":
+                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
+                self.optionsFrame.setVisible(True)
+            else:
+                print fExt == ".h5"
+                print "No advanced options available for the selected type " + fExt
+            
     def toggleMultiChannel(self, int):
         if self.multiChannel.checkState() == 0:
             self.multiChannelFrame.setVisible(False)
@@ -248,6 +255,7 @@ class FileLoader(QtGui.QDialog):
                 
     def slotLoad(self):
         if self.optionCheck.checkState() == 0:
+         
             self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
             self.optionsWidget.fillDefaultOptions(self.options)
         else:
@@ -255,6 +263,7 @@ class FileLoader(QtGui.QDialog):
             #if self.options.shape == (0,0,0):
                 #self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
             self.optionsWidget.fillOptions(self.options)
+        
         self.accept()
     
     

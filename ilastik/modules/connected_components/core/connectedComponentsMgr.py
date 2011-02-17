@@ -251,6 +251,7 @@ class ConnectedComponentsThread(QtCore.QThread):
             self.result = range(0,self._data.shape[0])
             jobs = []
             for i in range(self._data.shape[0]):
+                #print self.backgroundSet
                 part = numpy.asarray(self._data[i, :, :, :, 0], dtype=self._data.dtype)               
                 job = jobMachine.IlastikJob(ConnectedComponentsThread.connect, [self, i, part, copy.deepcopy(self.backgroundSet)])
                 jobs.append(job)

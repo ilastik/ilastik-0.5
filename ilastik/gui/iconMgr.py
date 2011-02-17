@@ -74,5 +74,11 @@ class ilastikIcons(object):
     AddSelx16 = iconPath + "actions/list-add.png"
     RemSelx16 = iconPath + "actions/list-remove.png"
     
+    #10x10
+    iconPath = ilastikPath+'/gui/icons/10x10/'
+    ArrowUpx10   = iconPath + "actions/arrow_up.png"
+    ArrowDownx10 = iconPath + "actions/arrow_down.png"
+    Maximizex10  = iconPath + "actions/maximize.png"
+    
     
     

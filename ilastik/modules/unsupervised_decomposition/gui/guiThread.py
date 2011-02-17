@@ -25,8 +25,7 @@ class UnsupervisedDecomposition(object):
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMinimum(0)
         self.progressBar.setMaximum(0)             # USE (numberOfJobs) IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
-        self.progressBar.setValue(1)
-
+        self.progressBar.setValue(0)
         self.progressBar.setFormat(' Unsupervised Decomposition... %p%')
         statusBar.addWidget(self.progressBar)
         statusBar.show()

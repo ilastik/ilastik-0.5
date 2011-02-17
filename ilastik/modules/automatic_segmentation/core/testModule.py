@@ -6,19 +6,23 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
-class TestWholeModule(unittest.TestCase):
-     
-    def setUp(self):
-        #print "setUp"
+class AutomaticSegmentationTestProject(object):
+    # this class is used to set up a default project which is then used for testing functionality, 
+    # hopefully, this will reduced code redundancy
+    def __init__(self, image_filename, borderOverlay_filename, groundtruth_filename):
+        
+        self.image_filename = image_filename
+        self.borderOverlay_filename = borderOverlay_filename
+        self.groundtruth_filename = groundtruth_filename
+        
         self.testdir = ilastikpath[0] + "/testdata/automatic_segmentation/"
-    
-    def test_WholeModule(self):
+        
         # create project
         self.project = Project('Project Name', 'Labeler', 'Description')
         self.dataMgr = self.project.dataMgr
     
         # create file list and load data
-        path = str(self.testdir + "test_image.png")    
+        path = str(self.testdir + self.image_filename) # the image is not really used since we load the threshold overlay from a file, however, we need it to set the correct dimensions 
         fileList = []
         fileList.append(path)
         self.project.addFile(fileList)
@@ -26,86 +30,57 @@ class TestWholeModule(unittest.TestCase):
         # create automatic segmentation manager
         self.automaticSegmentationMgr = AutomaticSegmentationModuleMgr(self.dataMgr)
     
-        # setup inputs, compute results
-        inputOverlays = []
-        inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
-        
-        # load precalculated border indicators from file (we use precalculated border indicators since we want to avoid dependencies between the feature module and this one)
-        dataImpex.DataImpex.importOverlay(self.dataMgr[self.dataMgr._activeImageNumber], str(self.testdir + "borders_gaussianGradientMagnitude_sigma0.3_channel2.h5"), "")
-        
-        # overlay lists and filenames
-        listOfResultOverlays = []
-        listOfFilenames = []
-        listOfResultOverlays.append("Auto Segmentation/Segmentation")
-        listOfFilenames.append(self.testdir + "ground_truth_auto_segmentation.h5")
+        # setup inputs
+        self.inputOverlays = []
+        self.inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
         
         # calculate segmentation results
         # ...import border indicator
-        border_indicator_ov = self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["border_ind"]
-        input = border_indicator_ov._data[0,:,:,:,0]
+        self.border_indicator_ov = dataImpex.DataImpex.importOverlay(self.dataMgr[self.dataMgr._activeImageNumber], str(self.testdir + borderOverlay_filename), "")
+        self.input = self.border_indicator_ov._data[0,:,:,:,0]
         # ...normalize it
-        input = self.automaticSegmentationMgr.normalizePotential(input)
+        self.input = self.automaticSegmentationMgr.normalizePotential(self.input)
         # ...invert it twice, this should give us the original again :-)
-        input = self.automaticSegmentationMgr.invertPotential(input)
-        input = self.automaticSegmentationMgr.invertPotential(input)
-        # ...compute results
-        self.automaticSegmentationMgr.computeResults(input)
+        self.input = self.automaticSegmentationMgr.invertPotential(self.input)
+        self.input = self.automaticSegmentationMgr.invertPotential(self.input)
+        
+        # overlay lists and filenames
+        self.listOfResultOverlays = []
+        self.listOfFilenames = []
+        self.listOfResultOverlays.append("Auto Segmentation/Segmentation")
+        self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
+        
+
+class TestWholeModule(unittest.TestCase):
+     
+    def setUp(self):
+        #print "setUp"
+        self.testProject = AutomaticSegmentationTestProject("test_image.png", "borders_gaussianGradientMagnitude_sigma0.3_channel2.h5", "ground_truth_auto_segmentation.h5")
+    
+    def test_WholeModule(self):
+        # compute results
+        self.testProject.automaticSegmentationMgr.computeResults(self.testProject.input)
         # ...add overlays
-        self.automaticSegmentationMgr.finalizeResults()
+        self.testProject.automaticSegmentationMgr.finalizeResults()
         
         # compare obtained result to ground truth result
-        equalOverlays = TestHelperFunctions.compareResultsWithFile(self.automaticSegmentationMgr, listOfResultOverlays, listOfFilenames)
+        equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         self.assertEqual(equalOverlays, True)
         
 class TestWholeModuleWrongImage(unittest.TestCase): # this test tests if wrong input data leads to wrong results
      
     def setUp(self):
         #print "setUp"
-        self.testdir = ilastikpath[0] + "/testdata/automatic_segmentation/"
+        self.testProject = AutomaticSegmentationTestProject("test_image_mirrored.png", "borders_gaussianGradientMagnitude_sigma0.3_channel2_mirrored.h5", "ground_truth_auto_segmentation.h5")
     
     def test_WholeModule(self):
-        # create project
-        self.project = Project('Project Name', 'Labeler', 'Description')
-        self.dataMgr = self.project.dataMgr
-    
-        # create file list and load data
-        path = str(self.testdir + "test_image_mirrored.png")    
-        fileList = []
-        fileList.append(path)
-        self.project.addFile(fileList)
-        
-        # create automatic segmentation manager
-        self.automaticSegmentationMgr = AutomaticSegmentationModuleMgr(self.dataMgr)
-    
-        # setup inputs, compute results
-        inputOverlays = []
-        inputOverlays.append(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Raw Data"])
-        
-        # load precalculated border indicators from file (we use precalculated border indicators since we want to avoid dependencies between the feature module and this one)
-        dataImpex.DataImpex.importOverlay(self.dataMgr[self.dataMgr._activeImageNumber], str(self.testdir + "borders_gaussianGradientMagnitude_sigma0.3_channel2_mirrored.h5"), "")
-        
-        # overlay lists and filenames
-        listOfResultOverlays = []
-        listOfFilenames = []
-        listOfResultOverlays.append("Auto Segmentation/Segmentation")
-        listOfFilenames.append(self.testdir + "ground_truth_auto_segmentation.h5")
-        
-        # calculate segmentation results
-        # ...import border indicator
-        border_indicator_ov = self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["border_ind"]
-        input = border_indicator_ov._data[0,:,:,:,0]
-        # ...normalize it
-        input = self.automaticSegmentationMgr.normalizePotential(input)
-        # ...invert it twice, this should give us the original again :-)
-        input = self.automaticSegmentationMgr.invertPotential(input)
-        input = self.automaticSegmentationMgr.invertPotential(input)
-        # ...compute results
-        self.automaticSegmentationMgr.computeResults(input)
+        # compute results
+        self.testProject.automaticSegmentationMgr.computeResults(self.testProject.input)
         # ...add overlays
-        self.automaticSegmentationMgr.finalizeResults()
+        self.testProject.automaticSegmentationMgr.finalizeResults()
         
         # compare obtained result to ground truth result
-        equalOverlays = TestHelperFunctions.compareResultsWithFile(self.automaticSegmentationMgr, listOfResultOverlays, listOfFilenames)
+        equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         self.assertEqual(equalOverlays, False) # has to be different from ground truth result (wrong input data!)
         
 class zzzTestDummy(unittest.TestCase): 

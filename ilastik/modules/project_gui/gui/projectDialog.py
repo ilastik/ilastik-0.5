@@ -131,9 +131,11 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")
     def on_loadFileButton_clicked(self):
+
         fl = fileloader.FileLoader(self)
         #imageData = sl.exec_()
         fl.exec_()
+
         loaded = False
         try:
             self.project.loadFile(fl.fileList, fl.options)
@@ -152,6 +154,7 @@ class ProjectDlg(QtGui.QDialog):
             r.data(QtCore.Qt.CheckStateRole)
             r.setCheckState(QtCore.Qt.Checked)
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+
 
             self.initThumbnail(filename)
             self.tableWidget.setCurrentCell(0, 0)
