@@ -128,8 +128,11 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
     def computeResults(self, backgroundClasses):
         overlay = self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.inputOverlay        
         if backgroundClasses is None:
+            print "no background"
             self.ccThread = ConnectedComponentsThread(self.dataMgr, overlay._data)
         else:
+            print "background"
+            print backgroundClasses
             self.ccThread = ConnectedComponentsThread(self.dataMgr, overlay._data, backgroundClasses)
         
         self.ccThread.start()

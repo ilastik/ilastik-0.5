@@ -115,7 +115,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = False)
     def on_btnCCBack_clicked(self):
         self.connComp = CC(self.ilastik)
-        self.connComp.start(self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connCompBackgroundClasses)
+        self.connComp.start(self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.background)#.connCompBackgroundClasses)
         self.btnFilter.setEnabled(True)
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = True)
         
