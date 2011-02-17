@@ -61,6 +61,7 @@ class TestHelperFunctions():
         return equalOverlays        
     
     @staticmethod
+    # we only compare the data of the overlay, since we want to avoid dependence on color tables etc.
     def compareOverlayData(overlay1, overlay2):
         # overlay1._data._data can be a listOfNDArraysAsNDArray instance, overlay2._data._data is loaded from file, so it should be an NDArray
         if isinstance(overlay1._data._data, ListOfNDArraysAsNDArray):

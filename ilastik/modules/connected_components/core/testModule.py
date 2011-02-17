@@ -38,7 +38,7 @@ class CCTestProject(object):
         
         # load precalculated threshold overlay from file
         self.threshold_ov = dataImpex.DataImpex.importOverlay(self.dataMgr[self.dataMgr._activeImageNumber], str(self.testdir + self.thresholdoverlay_filename), "")
-        self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.setInputOverlay(self.threshold_ov)    
+        self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.setInputData(self.threshold_ov._data)    
         
         # overlay lists and filenames
         self.listOfResultOverlays = []
@@ -46,7 +46,7 @@ class CCTestProject(object):
         self.listOfResultOverlays.append("Connected Components/CC Results")
         self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
 
-class TestWholeModule_NoBackground(unittest.TestCase):
+class TestWholeModule_WithoutBackground(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
@@ -72,7 +72,7 @@ class TestWholeModule_NoBackground(unittest.TestCase):
         self.app.quit()
 
 
-class TestWholeModule_NoBackgroundWrongImage(unittest.TestCase): # tests if wrong input leads to a test fail
+class TestWholeModule_WithoutBackgroundWrongImage(unittest.TestCase): # tests if wrong input leads to a test fail
      
     def setUp(self):
         #print "setUp"
@@ -92,7 +92,7 @@ class TestWholeModule_NoBackgroundWrongImage(unittest.TestCase): # tests if wron
         import numpy
         for i in range(10):
             self.testProject.threshold_ov._data._data[numpy.random.randint(self.testProject.threshold_ov._data._data.shape[0]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[1]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[2]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[3]), numpy.random.randint(self.testProject.threshold_ov._data._data.shape[4])] = numpy.random.randint(255)
-        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Connected_Components.setInputOverlay(self.testProject.threshold_ov)
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Connected_Components.setInputData(self.testProject.threshold_ov._data)
         
         self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
@@ -104,6 +104,58 @@ class TestWholeModule_NoBackgroundWrongImage(unittest.TestCase): # tests if wron
         self.app.quit()
         
         
+class TestWholeModule_WithBackground1(unittest.TestCase):
+     
+    def setUp(self):
+        #print "setUp"
+        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_with_background.h5")
+    
+    def test_WholeModule(self):
+        t = QtCore.QTimer()
+        t.setSingleShot(True)
+        t.setInterval(0)
+        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        t.start()
+        self.app.exec_()
+        
+    def mainFunction(self):
+        self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        backgroundClasses = set([5, 6]) # use a non-empty background set
+        self.testThread.start(backgroundClasses) # ...compute connected components with background
+
+    def finalizeTest(self):
+        # results comparison
+        self.assertEqual(self.testThread.passedTest, True)
+        self.app.quit()
+ 
+class TestWholeModule_WithBackground2(unittest.TestCase):
+     
+    def setUp(self):
+        #print "setUp"
+        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
+    
+    def test_WholeModule(self):
+        t = QtCore.QTimer()
+        t.setSingleShot(True)
+        t.setInterval(0)
+        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        t.start()
+        self.app.exec_()
+        
+    def mainFunction(self):
+        self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        backgroundClasses = set([]) # use an empty background set - should then equal result without background
+        self.testThread.start(backgroundClasses) # ...compute connected components with background
+
+    def finalizeTest(self):
+        # results comparison
+        self.assertEqual(self.testThread.passedTest, True)
+        self.app.quit()
+                
 class zzzTestDummy(unittest.TestCase): 
      
     def test_dummy(self):

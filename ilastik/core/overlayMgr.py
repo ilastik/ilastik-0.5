@@ -270,10 +270,12 @@ class OverlayItem(object):
         return colorTab        
     
     @classmethod
+    # IMPORTANT: BE AWARE THAT CHANGING THE COLOR TABLE MAY AFFECT TESTS THAT WORK WITH GROUND TRUTH 
+    # DATA FROM EXPORTED OVERLAYS. TYPICALLY, ONLY THE DATA AND NOT THE COLOR TABLE OF AN OVERLAY IS
+    # COMPARED BUT BETTER MAKE SURE THAT THIS IS INDEED THE CASE.
     def createDefault16ColorColorTable(cls):
         sublist = []
-        #sublist.append(QtGui.qRgb(0, 0, 0))
-        sublist.append(OverlayItem.qrgb(225, 225, 225))
+        sublist.append(OverlayItem.qrgb(69, 69, 69)) # dark grey
         sublist.append(OverlayItem.qrgb(255, 0, 0))
         sublist.append(OverlayItem.qrgb(0, 255, 0))
         sublist.append(OverlayItem.qrgb(0, 0, 255))
