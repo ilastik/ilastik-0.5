@@ -169,6 +169,8 @@ class pc_projection_3d():
         fname = os.path.join(self.outputdir, fname)
         from enthought.mayavi import mlab
         azimuth, elevation, d, f = mlab.view()
+        el_deg = numpy.rad2deg(elevation)
+        az_deg = numpy.rad2deg(azimuth)
         mean = numpy.zeros((1, 3))
         if len(obj_points[0])>100:
             #TODO: This part is not really ready yet, but somehow works

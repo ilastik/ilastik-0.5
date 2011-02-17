@@ -2132,6 +2132,8 @@ class ImageScene(QtGui.QGraphicsView):
             self.volumeEditor.changeSlice(y, 1)
 
     def onContext(self, pos):
+        print self.volumeeditor.labelWidget        
+        
         menu = QtGui.QMenu('Labeling menu', self)
        
         menu.addSeparator()

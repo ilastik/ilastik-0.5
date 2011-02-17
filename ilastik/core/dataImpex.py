@@ -47,14 +47,15 @@ class DataImpex(object):
             return itemList
         fileName = fileList[options.channels[0]][0]
         fBase, fExt = os.path.splitext(fileName)
+        formatList = vigra.impex.listExtensions().split(' ')
+        formatList.append("h5")
         if fExt == '.h5':
             theDataItem = dataMgr.DataItemImage(fileName)
             f = h5py.File(fileName, 'r')
             g = f['volume']
             theDataItem.deserialize(g, options.offsets, options.shape)
-            itemList.append(theDataItem)
-       
-        elif fExt == ".tiff" or fExt == ".gif" or fExt == ".jpeg" or fExt == ".gif" or fExt == ".jpg" or fExt == ".tif":
+            itemList.append(theDataItem)       
+        elif str(fExt)[1:] in formatList:
             image = DataImpex.loadStack(fileList, options, None)
             if image is not None:
                 for item in range(image.shape[3]):
@@ -70,6 +71,7 @@ class DataImpex(object):
                     theDataItem = DataImpex.initDataItemFromArray(series,"series"+str(i))
                     i+=1
                     itemList.append(theDataItem)
+                    
         return itemList
         
     @staticmethod
