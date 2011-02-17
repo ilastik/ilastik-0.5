@@ -752,7 +752,8 @@ class VolumeEditor(QtGui.QWidget):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, item.channel)) 
             if len(self.overlayWidget.overlays) > 0:
-                tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.overlays[-1].channel)
+                #tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.overlays[-1].channel)
+                tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.getOverlayRef("Raw Data").channel)
             else:
                 tempImage = None
 #            if self.labelWidget.volumeLabels is not None:
@@ -855,9 +856,11 @@ class VolumeEditor(QtGui.QWidget):
 
     def setChannel(self, channel):
         if len(self.overlayWidget.overlays) > 0:
-            ov = self.overlayWidget.overlays[-1]
+            #ov = self.overlayWidget.overlays[-1]
+            ov = self.overlayWidget.getOverlayRef("Raw Data")
             if ov.shape[-1] == self.image.shape[-1]:
-                self.overlayWidget.overlays[-1].channel = channel
+                #self.overlayWidget.overlays[-1].channel = channel
+                self.overlayWidget.getOverlayRef("Raw Data").channel = channel
             
         self.selectedChannel = channel
         for i in range(3):
@@ -896,7 +899,11 @@ class VolumeEditor(QtGui.QWidget):
                 tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, item.channel)) 
         
         if len(self.overlayWidget.overlays) > 0:
-            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            print self.overlayWidget.overlays[-1]
+            print self.overlayWidget.overlays[-1].key
+            print self.overlayWidget.overlays[-1]._data
+            #tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
         #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
@@ -956,7 +963,8 @@ class VolumeEditor(QtGui.QWidget):
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
         if len(self.overlayWidget.overlays) > 0:
-            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            #tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
 
@@ -2079,7 +2087,8 @@ class ImageScene(QtGui.QGraphicsView):
                 posY = y
                 posZ = x
                 posX = self.volumeEditor.selSlices[0]
-                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
+                #colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
+                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 if len(self.volumeEditor.imageScenes) > 2:
                     yView = self.volumeEditor.imageScenes[1].crossHairCursor
@@ -2092,7 +2101,8 @@ class ImageScene(QtGui.QGraphicsView):
                 posY = self.volumeEditor.selSlices[1]
                 posZ = y
                 posX = x
-                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
+                #colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
+                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
@@ -2103,7 +2113,8 @@ class ImageScene(QtGui.QGraphicsView):
                 posY = y
                 posZ = posX = self.volumeEditor.selSlices[2]
                 posX = x
-                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
+                #colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
+                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
