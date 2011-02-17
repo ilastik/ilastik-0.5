@@ -259,7 +259,7 @@ class FileLoader(QtGui.QDialog):
     def slotLoad(self):
         if self.optionCheck.checkState() == 0:
          
-            #self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
+            self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
             self.optionsWidget.fillDefaultOptions(self.options)
         else:
             #options widget is open, the shape should be filled already
