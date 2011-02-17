@@ -1952,7 +1952,7 @@ class ImageScene(QtGui.QGraphicsView):
                 
         self.mouseMoveEvent(event)
 
-    #oli todo
+    #TODO oli
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
             self.lastPanPoint = event.pos()
@@ -1973,7 +1973,7 @@ class ImageScene(QtGui.QGraphicsView):
             mousePos = self.mapToScene(event.pos())
             self.beginDraw(mousePos)
             
-    #oli todo
+    #TODO oli
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
             releasePoint = event.pos()
@@ -1990,7 +1990,7 @@ class ImageScene(QtGui.QGraphicsView):
             self.drawManager.disableErasing()
             self.tempErase = False
 
-    #oli todo
+    #TODO oli
     def panning(self):
         hBar = self.horizontalScrollBar()
         vBar = self.verticalScrollBar()
@@ -2001,7 +2001,7 @@ class ImageScene(QtGui.QGraphicsView):
             hBar.setValue(hBar.value() - self.deltaPan.x())
         
         
-    #oli todo
+    #TODO oli
     def deaccelerate(self, speed, a=2, maxVal=64):
         x = self.qBound(-maxVal, speed.x(), maxVal)
         y = self.qBound(-maxVal, speed.y(), maxVal)
@@ -2015,11 +2015,11 @@ class ImageScene(QtGui.QGraphicsView):
             y = min(0.0, y + a*self.deltaPanRatioY)
         return QtCore.QPointF(x, y)
 
-    #oli todo
+    #TODO oli
     def qBound(self, minVal, current, maxVal):
         return max(min(current, maxVal), minVal)
 
-    #oli todo
+    #TODO oli
     def tickerEvent(self):
         if self.deltaPan.x() == 0.0 and self.deltaPan.y() == 0.0 or self.dragMode == True:
             self.ticker.stop()
@@ -2032,15 +2032,13 @@ class ImageScene(QtGui.QGraphicsView):
             self.deltaPan = self.deaccelerate(self.deltaPan)
             self.panning()
 
-    #oli todo
+    #TODO oli
     def updateInfoLabels(self, posX, posY, posZ, colorValues):
         self.volumeEditor.posLabel.setText("<b>x:</b> %03i  <b>y:</b> %03i  <b>z:</b> %03i" % (posX, posY, posZ))
         if isinstance(colorValues, numpy.ndarray):
             self.volumeEditor.pixelValuesLabel.setText("<b>R:</b> %03i  <b>G:</b> %03i  <b>B:</b> %03i" % (colorValues[0], colorValues[1], colorValues[2]))
         else:
             self.volumeEditor.pixelValuesLabel.setText("<b>Gray:</b> %03i" %int(colorValues))
-    
-    #oli todo
     
     def coordinateUnderCursor(self):
         """returns the coordinate that is defined by hovering with the mouse
@@ -2062,6 +2060,7 @@ class ImageScene(QtGui.QGraphicsView):
             posX = self.x
         return (posX, posY, posZ)
     
+    #TODO oli
     def mouseMoveEvent(self,event):
         if self.dragMode == True:
             self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
