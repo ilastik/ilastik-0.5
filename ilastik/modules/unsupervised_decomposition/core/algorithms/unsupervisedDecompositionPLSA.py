@@ -17,21 +17,11 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     def __init__(self):
         UnsupervisedDecompositionBase.__init__(self)
         self.numComponents = UnsupervisedDecompositionPLSA.numComponents
-        
-    # it is probably NOT a good idea to define this a class level (more than one PLSA 
-    # instance with different numbers of components might exist), but in the current 
-    # ilastik architecture  this method is called before the instance is even created,  
-    # so it HAS to be a class method for now
-    # workaround: set self.numComponents in init function
-    @classmethod   
-    def setNumberOfComponents(cls, numComponents):
-        cls.numComponents = numComponents
-        
+               
     # NOTE: the pLSA will also be part of the upcoming vigra release
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
         # sanity checks
-        self.numComponents = numpy.min((self.numComponents, features.shape[1]))
-        self.numComponents = numpy.max((self.numComponents, 1))
+        self.numComponents = self.checkNumComponents(features.shape[1], self.numComponents)
         
         # random seed
         from ilastik.core.randomSeed import RandomSeed
