@@ -23,6 +23,9 @@ from ilastik.core.volume import DataAccessor
 
 from segmentorSelectionDlg import SegmentorSelectionDlg
 
+#*******************************************************************************
+# I n l i n e S e t t i n g s W i d g e t                                      *
+#*******************************************************************************
 
 class InlineSettingsWidget(QtGui.QWidget):
     def __init__(self, parent):
@@ -45,6 +48,9 @@ class InlineSettingsWidget(QtGui.QWidget):
             self.childWidget.addWidget(self.ui)
             self.ui.setParent(self)
 
+#*******************************************************************************
+# I n t e r a c t i v e S e g m e n t a t i o n T a b                          *
+#*******************************************************************************
 
 class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Interactive Segmentation'
