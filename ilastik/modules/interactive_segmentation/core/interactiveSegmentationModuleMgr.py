@@ -231,6 +231,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         self.__rebuilddoneBinaryOverlay()
         
+        #write out done file again #FIXME
+        f = h5py.File(self.outputPath + "/done.h5", 'w')
+        f.create_group('volume')
+        f.create_dataset('volume/data', data=self.done)
+        f.close()
+        del f
+        
         self.emit(SIGNAL('overlaysChanged()'))
     
     def __rebuilddoneBinaryOverlay(self):
@@ -463,11 +470,14 @@ if __name__ == '__main__':
             self.ver = ver
         
         def segment(self, labelVolume, labelValues, labelIndices):
-            self.segmentation = numpy.zeros(labelVolume.shape[0:4], dtype=numpy.uint8)
+            #first fill with the background label '1' 
+            self.segmentation = numpy.ones(labelVolume.shape[0:4], dtype=numpy.uint8)
             if self.ver == 0:
-                self.segmentation[5:10,5:10,5:10,0] = 1
+                self.segmentation[5:10,5:10,5:10,0] = 2
             elif self.ver == 1:
+                self.segmentation[:] = 1
                 self.segmentation[5:30,5:20,8:17,0] = 3
+                self.segmentation[50:70,50:70,40:60,0] = 5
     
     # create project
     project = Project.loadFromDisk('/home/thorben/cube100.ilp', None)
@@ -527,12 +537,25 @@ if __name__ == '__main__':
 
     s.discardCurrentSegmentation()
     assert s.segmentation == None
+    assert numpy.where(s.seedLabelsVolume._data != 0) == ()
 
     #remove segment by key
     s.removeSegmentsByKey('one')
     assert numpy.array_equal(s.done, numpy.zeros(shape=s.done.shape, dtype=s.done.dtype))
-    #assert arrayEqual(s.segmentation[0,:,:,:,0], numpy.zeros(shape=shape3D, dtype=s.segmentation.dtype))
+    assert os.path.exists(s.outputPath)
+    assert os.path.exists(s.outputPath+'/done.h5')
+    assert os.path.exists(s.outputPath+'/mapping.dat')
+    assert not os.path.exists(s.outputPath+'/one')
     
+    segmentor.setVersion(1)
     s.segment()
+    assert arrayEqual(s.segmentation[0,:,:,:,:], segmentor.segmentation)
+    
+    s.saveCurrentSegmentsAs('two')
+    relabeledGT = segmentor.segmentation.copy()
+    relabeledGT[numpy.where(relabeledGT == 1)] = 0
+    relabeledGT[numpy.where(relabeledGT == 3)] = 1
+    relabeledGT[numpy.where(relabeledGT == 5)] = 2
+    assert arrayEqual(s.done.squeeze(), relabeledGT.squeeze().astype(numpy.uint32))
     
     
