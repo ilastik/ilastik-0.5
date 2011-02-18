@@ -28,19 +28,11 @@
 #    or implied, of their employers.
 
 import numpy
-import threading 
-import time
-import sys
-import os
-import warnings
-import copy
-import csv
-import shutil
+import sys, os, traceback, copy, csv, shutil, time, threading, warnings
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
-
 
 from ilastik.core import dataMgr as DM
 from ilastik.core import dataImpex
@@ -61,6 +53,9 @@ from PyQt4 import QtGui
 import seedMgr
 from segmentors import segmentorBase
 
+#*******************************************************************************
+# L o a d i n g   o f   S e g m e n t o r s                                    *
+#*******************************************************************************
 
 pathext = os.path.dirname(__file__)
 for f in os.listdir(os.path.abspath(pathext) + "/segmentors"):
@@ -80,9 +75,9 @@ segmentorClasses = segmentorBase.SegmentorBase.__subclasses__()
 if len(segmentorClasses) == 0:
     segmentorClasses = [segmentorBase.SegmentorBase]
 
-
-
-
+#*******************************************************************************
+# G l o b a l   f u n c t i o n s                                              *
+#*******************************************************************************
 
 def unravelIndices(indices, shape):
     if len(indices.shape) == 1:
@@ -100,7 +95,11 @@ def setintersectionmask(a,b):
         return numpy.in1d(a,b, assume_unique=True)
     else:
         return numpy.intersect1d(a,b)
-    
+
+#*****************************************************************************
+# L i s t O f N D A r r a y s A s N D A r r a y                              *
+#*****************************************************************************
+
 class ListOfNDArraysAsNDArray:
     """
     Helper class that behaves like an ndarray, but consists of an array of ndarrays
@@ -121,8 +120,9 @@ class ListOfNDArraysAsNDArray:
         self.ndarrays[key[0]][tuple(key[1:])] = data
         print "##########ERROR ######### : ListOfNDArraysAsNDArray not implemented"
 
-
-
+#*******************************************************************************
+# I n t e r a c t i v e S e g m e n t a t i o n I t e m M o d u l e M g r      *
+#*******************************************************************************
 
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
@@ -308,7 +308,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self._seedL = None
         self._seedIndices = None
 
-
     def _buildSeedsWhenNotThere(self):
         if self._seedL is None:
             tempL = []
@@ -428,12 +427,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.borders = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.borders])
         else:
             self.borders = None
-            
-        
-        
-
-
-        
+               
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         if self.seeds is not None:
             self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )        
@@ -442,7 +436,9 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         if "seeds" in h5G.keys():
             self.seeds = VolumeLabels.deserialize(h5G,  "seeds")
 
-
+#*******************************************************************************
+# I n t e r a c t i v e S e g m e n t a t i o n M o d u l e M g r              *
+#*******************************************************************************
 
 class InteractiveSegmentationModuleMgr(BaseModuleMgr):
     name = "Interactive_Segmentation"
@@ -456,4 +452,3 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
                             
     def onNewImage(self, dataItemImage):
         dataItemImage.Interactive_Segmentation.setModuleMgr(self)
-        
