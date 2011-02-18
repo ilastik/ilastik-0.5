@@ -49,6 +49,7 @@ from ilastik.core.overlayMgr import OverlayItem
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
 
 from PyQt4 import QtGui
+from PyQt4.QtCore import SIGNAL
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 
 import seedMgr
@@ -106,13 +107,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     
     #where to save segmentations to
     outputPath         = os.path.expanduser("~/test-segmentation")
-    
-    #Overlays for the current segmentation
-    segmentationOverlay = None
-    
-    #Overlays for already 'done', previous segmentations
-    doneBinaryOverlay   = None
-    doneObjectsOverlay  = None
+        
+    seedLabelsVolume = None
+    done = None
+    segmentation = None
     
     _mapLabelsToKeys = dict()
     _mapKeysToLabels = dict()
@@ -122,8 +120,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.dataItemImage = dataItemImage
         self.interactiveSegmentationModuleMgr = None 
         self.overlays = []
-        self.segmentation = None
-        self.seedLabelsVolume = None
+        
         self._segmentationWeights = None
         self._seedLabelsList = None#numpy.zeros((0, 1), 'uint8')
         self._seedIndicesList = None#numpy.zeros((0, 1), 'uint32')
@@ -139,17 +136,9 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.dataItemImage.Interactive_Segmentation._buildSeedsWhenNotThere()
     
     def __ensureOverlays(self):
-        if self.doneBinaryOverlay is None:
-            shape = self.dataItemImage.shape
-            data = DataAccessor(numpy.zeros((shape), numpy.uint8))
-            bluetable = []
-            bluetable.append(long(0))
-            for i in range(1, 256):
-                bluetable.append(QtGui.qRgb(0, 0, 255))
-            self.doneBinaryOverlay = OverlayItem(data, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
-            self.doneObjectsOverlay = OverlayItem(data, color=0, alpha=0.7, autoAdd=False, autoVisible=False)                    
-            self.dataItemImage.overlayMgr["Segmentation/Done"] = self.doneBinaryOverlay
-            self.dataItemImage.overlayMgr["Segmentation/Objects"] = self.doneObjectsOverlay
+        if self.done is None:
+            self.done = numpy.zeros(self.dataItemImage.shape, numpy.uint8)
+            self.emit(SIGNAL('doneOverlaysAvailable()'))
     
     def __loadMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
@@ -178,25 +167,37 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         path = self.outputPath+'/'+str(key)
         print " - saving to '%s'" % (path)
         os.makedirs(path)
+        
         print "   - segmentation"
-        dataImpex.DataImpex.exportOverlay(path + "/segmentation", "h5", self.segmentationOverlay)
+        f = h5py.File(path + "/segmentation.h5", 'w')
+        f.create_group('volume')
+        tmp = self.segmentation[0,:,:,:,0]
+        tmp.shape = (1,) + tmp.shape + (1,)
+        f.create_dataset('volume/data', data=tmp)
+        f.close()
+        del f
+        
         print "   - seeds"
         f = h5py.File(path + "/seeds.h5", 'w')
         f.create_group('volume')
-        f.create_dataset('volume/data', data=self.seedLabelsVolume._data)
+        f.create_dataset('volume/data', data=self.seedLabelsVolume._data[:,:,:,:,:])
         f.close()
+        del f
 
         #compute connected components on current segmentation
         print " - computing connected components of segments to be saved"  
-        done = self.doneBinaryOverlay[0,:,:,:,:]
-        seg  = self.segmentationOverlay[0,:,:,:,:]
         connectedComponentsComputer = ConnectedComponents()
-        prevMaxLabel = numpy.max(done)
+        prevMaxLabel = numpy.max(self.done)
         print "   - previous number of labels was %d" % (prevMaxLabel)
-        cc = connectedComponentsComputer.connect(seg, background=set([1]))            
-        newDone = numpy.where(cc>0, cc+int(prevMaxLabel), done)
-        self.doneBinaryOverlay[0,:,:,:,:] = newDone[:]        
-        dataImpex.DataImpex.exportOverlay(self.outputPath+'/'+'done', "h5", self.doneBinaryOverlay)
+        cc = connectedComponentsComputer.connect(self.segmentation[0,:,:,:,:], background=set([1]))            
+        newDone = numpy.where(cc>0, cc+int(prevMaxLabel), self.done)
+        self.done = newDone
+        
+        f = h5py.File(path + "/done.h5", 'w')
+        f.create_group('volume')
+        f.create_dataset('volume/data', data=self.done)
+        f.close()
+        del f
     
         numCC = numpy.max(cc)
         print "    - there are %d segments to be saved as '%s'" % (numCC, key)
@@ -278,15 +279,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         if self.seedLabelsVolume is None:
             l = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seedLabelsVolume = VolumeLabels(l)
-            
-        if self.segmentation is None:
-            self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')  
         
         if not os.path.exists(self.outputPath):
             os.makedirs(self.outputPath)
         
         doneFileName         = self.outputPath + "/done.h5"
         
+        #FIXME
         if os.path.exists(doneFileName):
             dataImpex.DataImpex.importOverlay(self.dataItemImage, doneFileName, "")
             self.doneBinaryOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]

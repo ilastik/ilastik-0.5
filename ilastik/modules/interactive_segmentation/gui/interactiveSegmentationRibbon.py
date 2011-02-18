@@ -60,6 +60,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     outputPath = os.path.expanduser("~/test-segmentation/")
     mapping = dict()
     
+    doneBinaryOverlay  = None
+    doneObjectsOverlay = None
+    
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
@@ -67,12 +70,23 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         self.interactionLog = []
         self.defaultSegmentor = False
+    
+    def on_doneOverlaysAvailable(self):
+        s = self.ilastik._activeImage.Interactive_Segmentation
         
+        bluetable = []
+        bluetable.append(long(0))
+        for i in range(1, 256):
+            bluetable.append(QtGui.qRgb(0, 0, 255))
+        self.doneBinaryOverlay = OverlayItem(s.done, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
+        self.doneObjectsOverlay = OverlayItem(s.done, color=0, alpha=0.7, autoAdd=False, autoVisible=False)
+                
     def on_activation(self):
         if self.ilastik.project is None: return
         
         s = self.ilastik._activeImage.Interactive_Segmentation
         self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.ilastik.labelWidget.repaint)
+        self.connect(s, QtCore.SIGNAL('doneOverlaysAvailable()'), self.on_doneOverlaysAvailable)
         s.init()
         
         #create 'Seeds' overlay
@@ -93,10 +107,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     
         #add 'Seeds' overlay
         overlayWidget.addOverlayRef(self.seedOverlay.getRef())
-        
-        #add 'Done' overlay if it exists
-        if s.doneBinaryOverlay is not None:
-            overlayWidget.addOverlayRef(s.doneBinaryOverlay.getRef())
         
         self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay))
         
@@ -298,6 +308,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         if self.activeImage.overlayMgr["Segmentation/Segmentation"] is None:
             origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
             origColorTable[1] = 255
+            
+            print self.localMgr.segmentation.__class__, self.localMgr.segmentation.shape 
+            
             segmentationOverlay = OverlayItem(self.localMgr.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
             self.activeImage.overlayMgr["Segmentation/Segmentation"] = segmentationOverlay
             self.localMgr.segmentationOverlay = segmentationOverlay #FIXME
