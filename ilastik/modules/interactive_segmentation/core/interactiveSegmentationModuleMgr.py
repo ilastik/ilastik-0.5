@@ -116,8 +116,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.segmentation = None
         self.seeds = None
         self._segmentationWeights = None
-        self._seedL = None#numpy.zeros((0, 1), 'uint8')
-        self._seedIndices = None#numpy.zeros((0, 1), 'uint32')
+        self._seedLabelsList = None#numpy.zeros((0, 1), 'uint8')
+        self._seedIndicesList = None#numpy.zeros((0, 1), 'uint32')
         self.segmentorInstance = None
         self.potentials = None
     
@@ -283,11 +283,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.__loadMapping()
         
     def clearSeeds(self):
-        self._seedL = None
-        self._seedIndices = None
+        self._seedLabelsList = None
+        self._seedIndicesList = None
 
     def _buildSeedsWhenNotThere(self):
-        if self._seedL is None:
+        if self._seedLabelsList is None:
             tempL = []
     
             tempd =  self.seeds._data[:, :, :, :, 0].ravel()
@@ -295,12 +295,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             tempL = self.seeds._data[:,:,:,:,0].ravel()[indices]
             tempL.shape += (1,)
                                    
-            self._seedIndices = indices
-            self._seedL = tempL
+            self._seedIndicesList = indices
+            self._seedLabelsList = tempL
     
     def getSeeds(self):
         self._buildSeedsWhenNotThere()
-        return self._seedL,  self._seedIndices
+        return self._seedLabelsList,  self._seedIndicesList
     
     def updateSeeds(self, newLabels):
         """
@@ -332,31 +332,31 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                     if len(indices.shape) == 1:
                         indices.shape = indices.shape + (1,)
 
-                    mask = setintersectionmask(self._seedIndices.ravel(),indices.ravel())
+                    mask = setintersectionmask(self._seedIndicesList.ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
-                        tt = numpy.delete(self._seedIndices,nonzero)
+                        tt = numpy.delete(self._seedIndicesList,nonzero)
                         if len(tt.shape) == 1:
                             tt.shape = tt.shape + (1,)
-                        self._seedIndices = numpy.concatenate((tt,indices))
+                        self._seedIndicesList = numpy.concatenate((tt,indices))
                         tempI = numpy.nonzero(nl._data)
                         tempL = nl._data[tempI]
                         tempL.shape += (1,)
-                        temp2 = numpy.delete(self._seedL,nonzero)
+                        temp2 = numpy.delete(self._seedLabelsList,nonzero)
                         temp2.shape += (1,)
-                        self._seedL = numpy.vstack((temp2,tempL))
+                        self._seedLabelsList = numpy.vstack((temp2,tempL))
 
 
                     elif indices.shape[0] > 0: #no intersection, just add everything...
-                        if len(self._seedIndices.shape) == 1:
-                            self._seedIndices.shape = self._seedIndices.shape + (1,)
-                        self._seedIndices = numpy.concatenate((self._seedIndices,indices))
+                        if len(self._seedIndicesList.shape) == 1:
+                            self._seedIndicesList.shape = self._seedIndicesList.shape + (1,)
+                        self._seedIndicesList = numpy.concatenate((self._seedIndicesList,indices))
 
                         tempI = numpy.nonzero(nl._data)
                         tempL = nl._data[tempI]
                         tempL.shape += (1,)
-                        temp2 = self._seedL
-                        self._seedL = numpy.vstack((temp2,tempL))
+                        temp2 = self._seedLabelsList
+                        self._seedLabelsList = numpy.vstack((temp2,tempL))
 
                 else: #erasing == True
                     indic =  list(numpy.nonzero(nl._data))
@@ -376,13 +376,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                         count *= s
                         indices += indic[-loopc]*count
 
-                    mask = setintersectionmask(self._seedIndices.ravel(),indices.ravel())
+                    mask = setintersectionmask(self._seedIndicesList.ravel(),indices.ravel())
                     nonzero = numpy.nonzero(mask)[0]
                     if len(nonzero) > 0:
-                        if self._seedIndices is not None:
-                            self._seedIndices = numpy.delete(self._seedIndices,nonzero)
-                            self._seedL  = numpy.delete(self._seedL,nonzero)
-                            self._seedL.shape += (1,) #needed because numpy.delete is stupid
+                        if self._seedIndicesList is not None:
+                            self._seedIndicesList = numpy.delete(self._seedIndicesList,nonzero)
+                            self._seedLabelsList  = numpy.delete(self._seedLabelsList,nonzero)
+                            self._seedLabelsList.shape += (1,) #needed because numpy.delete is stupid
                     else: #no intersection, in erase mode just pass
                         pass
             except Exception, e:
