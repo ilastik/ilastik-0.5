@@ -34,21 +34,13 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
-from ilastik.core import dataMgr as DM
 from ilastik.core import dataImpex
-from ilastik.core import activeLearning
 from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
-from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
-import sys, traceback
-from ilastik.core.dataMgr import BlockAccessor
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, PropertyMgr
-from ilastik.core.volume import VolumeLabels
 from ilastik.modules.connected_components.gui.guiThread import CC
-from ilastik.core.overlayMgr import OverlayItem
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
 
-from PyQt4 import QtGui
 from PyQt4.QtCore import SIGNAL
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 
@@ -119,7 +111,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
         self.dataItemImage = dataItemImage
         self.interactiveSegmentationModuleMgr = None 
-        self.overlays = []
         
         self._segmentationWeights = None
         self._seedLabelsList = None#numpy.zeros((0, 1), 'uint8')
@@ -193,7 +184,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         newDone = numpy.where(cc>0, cc+int(prevMaxLabel), self.done)
         self.done = newDone
         
-        f = h5py.File(path + "/done.h5", 'w')
+        f = h5py.File(self.outputPath + "/done.h5", 'w')
         f.create_group('volume')
         f.create_dataset('volume/data', data=self.done)
         f.close()
@@ -236,8 +227,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     
     def __rebuilddoneBinaryOverlay(self):
         print "rebuild 'done' overlay"
-        doneBinaryOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
-        doneBinaryOverlay[0,:,:,:,:] = 0 #clear 'done'
+        self.done[:] = 0 #clear 'done'
         maxLabel = 0
         
         keys = copy.deepcopy(self._mapKeysToLabels.keys())
@@ -253,7 +243,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             #FIXME: indexing in first and last dimension
             cc = connectedComponentsComputer.connect(f['volume/data'][0,:,:,:,0], background=set([1]))
             numNewLabels = numpy.max(cc)         
-            doneBinaryOverlay[0,:,:,:,:] = numpy.where(cc>0, cc+int(maxLabel), doneBinaryOverlay[0,:,:,:,:])
+            self.done = numpy.where(cc>0, cc+int(maxLabel), self.done)
             
             r = range(maxLabel+1, maxLabel+1+numNewLabels)
             self._mapKeysToLabels[key] = set(r)
@@ -445,3 +435,34 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
                             
     def onNewImage(self, dataItemImage):
         dataItemImage.Interactive_Segmentation.setModuleMgr(self)
+        
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   ' _ _ m a i n _ _ '                            *
+#*******************************************************************************
+
+if __name__ == '__main__':
+    from ilastik.core.projectClass import Project
+    from ilastik.modules.interactive_segmentation.core.segmentors.segmentorBase import SegmentorBase
+    
+    class TestSegmentor(SegmentorBase):
+        segmentation = None
+        def segment(self, labelVolume, labelValues, labelIndices):
+            self.segmentation = numpy.zeros(labelVolume.shape[0:4], dtype=numpy.uint8)
+            self.segmentation[10:10,10:10,10:10,0] = 1
+            return self.segmentation
+    
+    # create project
+    project = Project.loadFromDisk('/home/thorben/cube100.ilp', None)
+    dataMgr = project.dataMgr
+    dataMgr.Interactive_Segmentation.segmentor = TestSegmentor()
+    
+    s = dataMgr._activeImage.module["Interactive_Segmentation"]
+    
+    s.outputPath = '/tmp/seg'
+    s.init()
+    
+    s.segment()
+    s.saveCurrentSegmentsAs('label_tdfsfsddfwyyyo')
+    
+    print s._mapKeysToLabels
+    print s._mapLabelsToKeys

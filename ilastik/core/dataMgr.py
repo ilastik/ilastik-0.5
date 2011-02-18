@@ -411,6 +411,9 @@ class DataMgr():
                 
     
     def onNewImage(self, dataItemImage):
+        if len(self._dataItems) == 1:
+            self._activeImage = self._dataItems[0]
+            
         dataItemImage.overlayMgr.dataMgr = self
         oldModuleName = self._currentModuleName
         for v in dataItemImage.module.values():
