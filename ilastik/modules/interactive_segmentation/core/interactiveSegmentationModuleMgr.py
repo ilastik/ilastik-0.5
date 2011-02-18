@@ -104,6 +104,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     done = None
     segmentation = None
     
+    savingNeeded = False
+    
     _mapLabelsToKeys = dict()
     _mapKeysToLabels = dict()
     
@@ -123,8 +125,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.__createSeedsData()
     
     def __reset(self):
-        self.dataItemImage.Interactive_Segmentation.clearSeeds()
-        self.dataItemImage.Interactive_Segmentation._buildSeedsWhenNotThere()
+        self.clearSeeds()
+        self._buildSeedsWhenNotThere()
     
     def __ensureOverlays(self):
         if self.done is None:
@@ -203,6 +205,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.__saveMapping()
 
         self.__reset()
+    
+    def discardCurrentSegmentation(self):
+        self.segmentation = None
+        self.__reset()
         
     def removeSegmentsByKey(self, key):
         print "removing segment '%s'" % (key)
@@ -217,13 +223,15 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         print " - removing storage path '%s'" % (path)
         shutil.rmtree(path)
         
+        self.segmentation
+        
         self.__reset()
         
         self.__saveMapping()
         
         self.__rebuilddoneBinaryOverlay()
         
-        self.emit('overlaysChanged()')
+        self.emit(SIGNAL('overlaysChanged()'))
     
     def __rebuilddoneBinaryOverlay(self):
         print "rebuild 'done' overlay"
@@ -406,6 +414,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.borders = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.borders])
         else:
             self.borders = None
+            
+        self.savingNeeded = True
                
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         print "serializing interactive segmentation"
@@ -443,26 +453,86 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
 if __name__ == '__main__':
     from ilastik.core.projectClass import Project
     from ilastik.modules.interactive_segmentation.core.segmentors.segmentorBase import SegmentorBase
+    from PyQt4.QtCore import *
     
     class TestSegmentor(SegmentorBase):
         segmentation = None
+        ver = 0
+        
+        def setVersion(self, ver=0):
+            self.ver = ver
+        
         def segment(self, labelVolume, labelValues, labelIndices):
             self.segmentation = numpy.zeros(labelVolume.shape[0:4], dtype=numpy.uint8)
-            self.segmentation[10:10,10:10,10:10,0] = 1
-            return self.segmentation
+            if self.ver == 0:
+                self.segmentation[5:10,5:10,5:10,0] = 1
+            elif self.ver == 1:
+                self.segmentation[5:30,5:20,8:17,0] = 3
     
     # create project
     project = Project.loadFromDisk('/home/thorben/cube100.ilp', None)
     dataMgr = project.dataMgr
-    dataMgr.Interactive_Segmentation.segmentor = TestSegmentor()
+    segmentor = TestSegmentor()
+    dataMgr.Interactive_Segmentation.segmentor = segmentor
     
     s = dataMgr._activeImage.module["Interactive_Segmentation"]
     
-    s.outputPath = '/tmp/seg'
+    s.outputPath = str(QDir.tempPath())+"/tmpseg"
+    print s.outputPath
+    if os.path.exists(s.outputPath):
+        shutil.rmtree(s.outputPath)
+    os.makedirs(s.outputPath)
+        
     s.init()
+
+    #segment for the first time
+    segmentor.setVersion(0)    
+    s.segment()
+    s.saveCurrentSegmentsAs('one')
+    
+    shape3D = (120,120,120)
+    
+    assert os.path.exists(s.outputPath)
+    assert os.path.exists(s.outputPath+'/done.h5')
+    assert os.path.exists(s.outputPath+'/mapping.dat')
+    assert os.path.exists(s.outputPath+'/one/segmentation.h5')
+    assert os.path.exists(s.outputPath+'/one/seeds.h5')
+    
+    def h5equal(filename, a):
+        f = h5py.File(s.outputPath+'/one/segmentation.h5', 'r')
+        d = f['volume/data'].value.squeeze()
+        a = a.squeeze()        
+        assert a.shape == d.shape
+        assert a.dtype == d.dtype
+        assert numpy.array_equal(d, a)
+        return True
+        
+    def arrayEqual(a,b):
+        print a.shape,  b.shape, a.dtype, b.dtype
+        assert a.shape == b.shape
+        assert a.dtype == b.dtype
+        if not numpy.array_equal(a,b):
+            print a[numpy.where(a!=b)]
+            return False
+        return True
+        
+    h5equal(s.outputPath+'/one/segmentation.h5', segmentor.segmentation)
+    h5equal(s.outputPath+'/done.h5', segmentor.segmentation)
+    f = open(s.outputPath+'/mapping.dat')
+    assert f.readlines() == ['1|one\r\n']
+    f.close()
+    
+    assert s._mapKeysToLabels == {'one': set([1])}
+    assert s._mapLabelsToKeys == {1: 'one'}
+
+    s.discardCurrentSegmentation()
+    assert s.segmentation == None
+
+    #remove segment by key
+    s.removeSegmentsByKey('one')
+    assert numpy.array_equal(s.done, numpy.zeros(shape=s.done.shape, dtype=s.done.dtype))
+    #assert arrayEqual(s.segmentation[0,:,:,:,0], numpy.zeros(shape=shape3D, dtype=s.segmentation.dtype))
     
     s.segment()
-    s.saveCurrentSegmentsAs('label_tdfsfsddfwyyyo')
     
-    print s._mapKeysToLabels
-    print s._mapLabelsToKeys
+    
