@@ -1,5 +1,5 @@
-from unsupervisedDecompositionBase import UnsupervisedDecompositionBase
-from PyQt4.QtGui import QInputDialog
+from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDecompositionBase import UnsupervisedDecompositionBase
+from ilastik.core.testThread import TestHelperFunctions
 import numpy
         
 class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
@@ -16,21 +16,29 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     
     def __init__(self):
         UnsupervisedDecompositionBase.__init__(self)
+        self.numComponents = UnsupervisedDecompositionPLSA.numComponents
         
-    @classmethod
-    def settings(ud):
-        (number, ok) = QInputDialog.getInt(None, "pLSA parameters", "Number of components", ud.numComponents, 1, 10)
-        if ok:
-          ud.numComponents = number
-        
-        print "setting number of components to", ud.numComponents        
+    # it is probably NOT a good idea to define this a class level (more than one PLSA 
+    # instance with different numbers of components might exist), but in the current 
+    # ilastik architecture  this method is called before the instance is even created,  
+    # so it HAS to be a class method for now
+    # workaround: set self.numComponents in init function
+    @classmethod   
+    def setNumberOfComponents(cls, numComponents):
+        cls.numComponents = numComponents
         
     # NOTE: the pLSA will also be part of the upcoming vigra release
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
         # sanity checks
         self.numComponents = numpy.min((self.numComponents, features.shape[1]))
         self.numComponents = numpy.max((self.numComponents, 1))
-                
+        
+        # random seed
+        from ilastik.core.randomSeed import RandomSeed
+        seed = RandomSeed.getRandomSeed()
+        if seed is not None:
+            numpy.random.seed(seed)
+                        
         features = features.T
         numFeatures, numVoxels = features.shape # this should be the shape of features!
         # initialize result matrices

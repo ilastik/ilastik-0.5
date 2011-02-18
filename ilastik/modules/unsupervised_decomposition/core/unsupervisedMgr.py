@@ -2,15 +2,12 @@ from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
 import numpy
 import traceback, sys
-import threading
-from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core import jobMachine
 from PyQt4 import QtCore
 import os
 import algorithms
-#from algorithms.unsupervisedDecompositionBase import UnsupervisedDecompositionBase
-#from algorithms.unsupervisedDecompositionPCA import UnsupervisedDecompositionPCA
-#from algorithms.unsupervisedDecompositionPLSA import UnsupervisedDecompositionPLSA
+from ilastik.core.volume import DataAccessor
+from ilastik.core.overlayMgr import OverlayItem
 
 """ Import all algorithm plugins"""
 pathext = os.path.dirname(__file__)
@@ -45,7 +42,7 @@ class UnsupervisedItemModuleMgr(BaseModuleDataItemMgr):
         
     def setInputData(self, data):
         self.inputData = data
-            
+        
 class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
     name = "Unsupervised_Decomposition"
          
@@ -55,9 +52,27 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
         self.unsupervisedMethod = algorithms.unsupervisedDecompositionPCA.UnsupervisedDecompositionPCA
         if self.dataMgr.module["Unsupervised_Decomposition"] is None:
             self.dataMgr.module["Unsupervised_Decomposition"] = self
+            
+    def computeResults(self, inputOverlays):
+        self.decompThread = UnsupervisedDecompositionThread(self.dataMgr, inputOverlays, self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod)
+        self.decompThread.start()
+        return self.decompThread
+    
+    def finalizeResults(self):
+        activeItem = self.dataMgr[self.dataMgr._activeImageNumber]
+        activeItem._dataVol.unsupervised = self.decompThread.result
 
-    def onNewImage(self, dataItemImage):
-        pass
+        #create overlays for unsupervised decomposition:
+        if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname] is None:
+            data = self.decompThread.result[:,:,:,:,:]
+            myColor = OverlayItem.qrgb(0, 0, 0)
+            for o in range(0, data.shape[4]):
+                data2 = OverlayItem.normalizeForDisplay(data[:,:,:,:,o:(o+1)])
+                # for some strange reason we have to invert the data before displaying it
+                ov = OverlayItem(255 - data2, color = myColor, alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
+                self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %d" % (o+1)] = ov
+        else:
+            self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.decompThread.result)
             
 class UnsupervisedDecompositionThread(QtCore.QThread):
     def __init__(self, dataMgr, overlays, unsupervisedMethod = algorithms.unsupervisedDecompositionPCA.UnsupervisedDecompositionPCA, unsupervisedMethodOptions = None):
@@ -70,6 +85,7 @@ class UnsupervisedDecompositionThread(QtCore.QThread):
         self.unsupervisedMethod = unsupervisedMethod
         self.unsupervisedMethodOptions = unsupervisedMethodOptions
         self.jobMachine = jobMachine.JobMachine()
+        self.result = []
 
     def reshapeToFeatures(self, overlays):
         # transform to feature matrix

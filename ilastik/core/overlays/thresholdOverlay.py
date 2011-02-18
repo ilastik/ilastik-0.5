@@ -145,12 +145,6 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         else:
             self.dsets = dsets
 
-    def recalculateThresholds(self):
-        thres = []
-        for i in range(len(self.dsets)):
-            thres.append(1.0 / len(self.dsets))
-        self.setThresholds(thres)
-        
         
     def setThresholds(self, thresholds):
         if (len(thresholds)==2):
@@ -158,3 +152,10 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         self.thresholds = numpy.zeros((len(self.dsets)),'float32' )
         for index, t in enumerate(thresholds):
             self.thresholds[index] = t
+            
+    def recalculateThresholds(self):
+        thres = []
+        for i in range(len(self.dsets)):
+            thres.append(1.0 / len(self.dsets))
+        self.setThresholds(thres)
+        

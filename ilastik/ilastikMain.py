@@ -69,7 +69,8 @@ ilastik.modules.loadModuleCores()
 from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
-from ilastik.core import projectMgr
+from ilastik.core import projectClass
+from ilastik.core.randomSeed import RandomSeed 
 
 #from ilastik.core import connectedComponentsMgr
 #from ilastik.core import projectMgr
@@ -261,8 +262,6 @@ class MainWindow(QtGui.QMainWindow):
         if self.labelWidget is not None:
             self.labelWidget._history.volumeEditor = None
 
-
-
         self.destroyImageWindows()
 
         self._activeImageNumber = number
@@ -448,6 +447,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.labelWidget.grid.deleteUndocked()
         else:
             event.ignore()
+           
 
 if __name__ == "__main__":
     splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")
@@ -467,12 +467,15 @@ if __name__ == "__main__":
 
     mainwindow.show()
     splashScreen.finish(mainwindow)
+    
+    randomseed = RandomSeed()
+    
     app.exec_()
     print "cleaning up..."
     if mainwindow.labelWidget is not None:
         del mainwindow.labelWidget
     del mainwindow
-
+    del randomseed
 
 
     del ilastik.core.jobMachine.GLOBAL_WM

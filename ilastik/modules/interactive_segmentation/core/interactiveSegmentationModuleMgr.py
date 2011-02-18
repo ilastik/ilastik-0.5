@@ -49,6 +49,7 @@ from ilastik.core.overlayMgr import OverlayItem
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
 
 from PyQt4 import QtGui
+from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 
 import seedMgr
 from segmentors import segmentorBase
@@ -95,30 +96,6 @@ def setintersectionmask(a,b):
         return numpy.in1d(a,b, assume_unique=True)
     else:
         return numpy.intersect1d(a,b)
-
-#*****************************************************************************
-# L i s t O f N D A r r a y s A s N D A r r a y                              *
-#*****************************************************************************
-
-class ListOfNDArraysAsNDArray:
-    """
-    Helper class that behaves like an ndarray, but consists of an array of ndarrays
-    """
-
-    def __init__(self, ndarrays):
-        self.ndarrays = ndarrays
-        self.dtype = ndarrays[0].dtype
-        self.shape = (len(ndarrays),) + ndarrays[0].shape
-        for idx, it in enumerate(ndarrays):
-            if it.dtype != self.dtype or self.shape[1:] != it.shape:
-                print "########### ERROR ListOfNDArraysAsNDArray all array items should have same dtype and shape (array: ", self.dtype, self.shape, " item : ",it.dtype, it.shape , ")"
-
-    def __getitem__(self, key):
-        return self.ndarrays[key[0]][tuple(key[1:])]
-
-    def __setitem__(self, key, data):
-        self.ndarrays[key[0]][tuple(key[1:])] = data
-        print "##########ERROR ######### : ListOfNDArraysAsNDArray not implemented"
 
 #*******************************************************************************
 # I n t e r a c t i v e S e g m e n t a t i o n I t e m M o d u l e M g r      *
@@ -288,6 +265,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def setModuleMgr(self, interactiveSegmentationModuleMgr):
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         
+    def createSeedsData(self):
         if self.seeds is None:
             l = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seeds = VolumeLabels(l)
@@ -429,8 +407,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.borders = None
                
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+        print "serializing interactive segmentation"
         if self.seeds is not None:
-            self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )        
+            print "seeds are not None!!!"
+            self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )
+        else:
+            print "seeds are None!!!"      
 
     def deserialize(self, h5G, offsets = (0,0,0), shape=(0,0,0)):
         if "seeds" in h5G.keys():

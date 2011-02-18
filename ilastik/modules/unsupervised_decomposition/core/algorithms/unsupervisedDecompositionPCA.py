@@ -1,5 +1,4 @@
-from unsupervisedDecompositionBase import UnsupervisedDecompositionBase
-from PyQt4.QtGui import QInputDialog
+from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDecompositionBase import UnsupervisedDecompositionBase
 import numpy
 
 class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
@@ -14,14 +13,16 @@ class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
     
     def __init__(self):
         UnsupervisedDecompositionBase.__init__(self)
-        
-    @classmethod
-    def settings(ud):
-        (number, ok) = QInputDialog.getInt(None, "PCA parameters", "Number of components", ud.numComponents, 1, 10)
-        if ok:
-          ud.numComponents = number
-        
-        print "setting number of components to", ud.numComponents        
+        self.numComponents = UnsupervisedDecompositionPCA.numComponents
+    
+    # it is probably NOT a good idea to define this a class level (more than one PLSA 
+    # instance with different numbers of components might exist), but in the current 
+    # ilastik architecture this method is called before the instance is even created,  
+    # so it HAS to be a class method for now
+    # workaround: set self.numComponents in init function
+    @classmethod   
+    def setNumberOfComponents(cls, numComponents):
+        cls.numComponents = numComponents
         
     def decompose(self, features): # features are of dimension NUMVOXELSxNUMFEATURES
         # sanity checks

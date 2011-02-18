@@ -12,7 +12,7 @@ from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
 
 from ilastik.gui.iconMgr import ilastikIcons
-from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
+from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponentsModuleMgr, ConnectedComponents
 from ilastik.modules.connected_components.gui.guiThread import CC
 
 from seedWidget import SeedListWidget
@@ -65,6 +65,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None:
             return
+        
+        if self.ilastik._activeImage.Interactive_Segmentation.seeds is None:
+            self.ilastik._activeImage.Interactive_Segmentation.createSeedsData()
+        
         self.ilastik.labelWidget.interactionLog = self.interactionLog
         
         #initially add 'Raw Data' overlay
@@ -102,7 +106,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
         
         if ov is not None and ov_cc is None:
-            colorTableCC = CC.makeColorTab()
+            colorTableCC = OverlayItem.createDefault16ColorColorTable()
             ov_cc = OverlayItem(ov._data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
             self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
             #ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]

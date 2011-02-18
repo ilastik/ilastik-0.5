@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtCore, QtGui
-from PyQt4 import uic
-import sys, os
+import sys
 import webbrowser
 from ilastik.core import readInBuildInfo
 

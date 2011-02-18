@@ -256,7 +256,6 @@ class ClassificationModuleMgr(BaseModuleMgr):
         featureG = h5G.create_group('FeatureSelection')        
         try:
             featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
-            #self.featureMgr.exportFeatureItems(h5G)            
         except:
             traceback.print_exc()
         

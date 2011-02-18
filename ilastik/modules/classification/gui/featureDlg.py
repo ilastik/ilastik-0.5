@@ -157,7 +157,7 @@ class FeatureDlg(QtGui.QDialog):
         self.selectedItemList = []
         self.boolSelection = False
         self.boolTest = True
-        self.printComputeMemoryRequirement = True
+        self.ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = True
 
         for i in range(self.featureTable.columnCount()):
             item = self.featureTable.horizontalHeaderItem(i)
@@ -212,7 +212,7 @@ class FeatureDlg(QtGui.QDialog):
                     self.boolTest = True
 
         
-        memReq = self.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
+        memReq = self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureMgr.ilastikFeatureGroups.createList())
         self.memReq.setText("%8.2f MB" % memReq)
 
     def deselectAllTableItems(self):
@@ -278,11 +278,11 @@ class FeatureDlg(QtGui.QDialog):
         if(event.type()==QtCore.QEvent.MouseButtonPress):
             if event.button() == QtCore.Qt.LeftButton:
                 self.boolSelection = True
-                self.printComputeMemoryRequirement = True
+                self.ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = True
                 
         if(event.type()==QtCore.QEvent.MouseButtonRelease):
             if event.button() == QtCore.Qt.LeftButton:
-                self.printComputeMemoryRequirement = False
+                self.ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = False
                 self.selectedItemList = []
                 self.deselectAllTableItems()
                 self.boolSelection = False
@@ -318,7 +318,7 @@ class FeatureDlg(QtGui.QDialog):
         if res is True:
             #print "features have maximum needed margin of:", self.parent.project.dataMgr.Classification.featureMgr.maxSigma*3
             self.parent.labelWidget.setBorderMargin(int(self.parent.project.dataMgr.Classification.featureMgr.maxContext))
-            self.computeMemoryRequirement(featureSelectionList)
+            self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)           
             self.accept() 
         else:
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
@@ -332,23 +332,5 @@ class FeatureDlg(QtGui.QDialog):
                 featureMgr.ilastikFeatureGroups.selection[i][j] = self.oldSelectedFeatures[i][j]
         self.reject()
 
-    def computeMemoryRequirement(self, featureSelectionList):
-        if featureSelectionList != []:
-            dataMgr = self.parent.project.dataMgr
-
-            numOfEffectiveFeatures =  0
-            for f in featureSelectionList:
-                numOfEffectiveFeatures += f.computeSizeForShape(dataMgr[0]._dataVol._data.shape)
-
-            numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
-
-            memoryReq = numOfPixels * (numOfEffectiveFeatures*4.0) /1024.0**2
-            if self.printComputeMemoryRequirement:
-                print "Feature memory demand: %8.2f MB. For feature vector of length %d" % (memoryReq, numOfEffectiveFeatures)
-        else:
-            memoryReq = 0.0
-            if self.printComputeMemoryRequirement:
-                print "No features selected"
-        return memoryReq
 
 
