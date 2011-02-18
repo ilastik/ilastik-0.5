@@ -34,13 +34,16 @@ import sys
 import os
 import warnings
 import copy
+import csv
+import shutil
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
 
 from ilastik.core import dataMgr as DM
-
+from ilastik.core import dataImpex
 from ilastik.core import activeLearning
 from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
 from ilastik.core import jobMachine
@@ -49,6 +52,11 @@ import sys, traceback
 from ilastik.core.dataMgr import BlockAccessor
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, PropertyMgr
 from ilastik.core.volume import VolumeLabels
+from ilastik.modules.connected_components.gui.guiThread import CC
+from ilastik.core.overlayMgr import OverlayItem
+from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
+
+from PyQt4 import QtGui
 
 import seedMgr
 from segmentors import segmentorBase
@@ -107,7 +115,6 @@ class ListOfNDArraysAsNDArray:
                 print "########### ERROR ListOfNDArraysAsNDArray all array items should have same dtype and shape (array: ", self.dtype, self.shape, " item : ",it.dtype, it.shape , ")"
 
     def __getitem__(self, key):
-        print key
         return self.ndarrays[key[0]][tuple(key[1:])]
 
     def __setitem__(self, key, data):
@@ -119,6 +126,10 @@ class ListOfNDArraysAsNDArray:
 
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
+    
+    outputPath      = os.path.expanduser("~/test-segmentation")
+    mapLabelsToKeys = dict()
+    mapKeysToLabels = dict()
     
     def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
@@ -133,6 +144,147 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.segmentorInstance = None
         self.potentials = None
     
+    def __reset(self):
+        seedOverlay  = self.dataItemImage.overlayMgr["Segmentation/Seeds"]
+        
+        seedOverlay[0,:,:,:,:] = 0
+        self.dataItemImage.Interactive_Segmentation.clearSeeds()
+        self.dataItemImage.Interactive_Segmentation._buildSeedsWhenNotThere()
+    
+    def __ensureOverlays(self):
+        doneOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
+        if doneOverlay is None:
+            shape = self.dataItemImage.shape
+            data = DataAccessor(numpy.zeros((shape), numpy.uint8))
+            bluetable = []
+            bluetable.append(long(0))
+            for i in range(1, 256):
+                bluetable.append(QtGui.qRgb(0, 0, 255))
+            doneOverlay = OverlayItem(data, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
+            colorTableCC = CC.makeColorTab()
+            objectsOverlay = OverlayItem(data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
+            self.dataItemImage.overlayMgr["Segmentation/Done"] = doneOverlay
+            self.dataItemImage.overlayMgr["Segmentation/Objects"] = objectsOverlay
+    
+    def __loadMapping(self):
+        mappingFileName = self.outputPath + "/mapping.dat"
+        if os.path.exists(mappingFileName):
+            r = csv.reader(open(mappingFileName, 'r'), delimiter='|')
+            for entry in r:
+                key   = entry[1].strip()
+                label = int(entry[0])
+                self.mapLabelsToKeys[label] = key
+                if key not in self.mapKeysToLabels.keys():
+                    self.mapKeysToLabels[key] = set()
+                self.mapKeysToLabels[key].add(label)
+    def __saveMapping(self):
+        mappingFileName = self.outputPath + "/mapping.dat"
+        r = csv.writer(open(mappingFileName, 'w'), delimiter='|')
+        for i, key in self.mapLabelsToKeys.items():
+            r.writerow([i,key])
+    
+    def segmentName(self, label):
+        return self.mapLabelsToKeys[label]
+    def saveCurrentSegmentsAs(self, key):        
+        print "save current segments as '%s'" %  (key)
+        self.__ensureOverlays()
+        
+        segmentationOverlay = self.dataItemImage.overlayMgr["Segmentation/Segmentation"]
+        seedOverlay         = self.dataItemImage.overlayMgr["Segmentation/Seeds"]
+        doneOverlay         = self.dataItemImage.overlayMgr["Segmentation/Done"]
+        
+        #create directory to store the segment in     
+        path = self.outputPath+'/'+str(key)
+        print " - saving to '%s'" % (path)
+        os.makedirs(path)
+        print "   - segmentation"
+        dataImpex.DataImpex.exportOverlay(path + "/segmentation", "h5", segmentationOverlay)
+        print "   - seeds"
+        dataImpex.DataImpex.exportOverlay(path + "/seeds",        "h5", seedOverlay)
+
+        #compute connected components on current segmentation
+        print " - computing connected components of segments to be saved"  
+        done = doneOverlay[0,:,:,:,:]
+        seg  = segmentationOverlay[0,:,:,:,:]
+        connectedComponentsComputer = ConnectedComponents()
+        prevMaxLabel = numpy.max(done)
+        print "   - previous number of labels was %d" % (prevMaxLabel)
+        cc = connectedComponentsComputer.connect(seg, background=set([1]))            
+        newDone = numpy.where(cc>0, cc+int(prevMaxLabel), done)
+        doneOverlay[0,:,:,:,:] = newDone[:]        
+        dataImpex.DataImpex.exportOverlay(self.outputPath+'/'+'done', "h5", doneOverlay)
+    
+        numCC = numpy.max(cc)
+        print "    - there are %d segments to be saved as '%s'" % (numCC, key)
+        print " - saving"
+        for i in range(prevMaxLabel+1,prevMaxLabel+numCC+1):
+            print "   - label %d now known as '%s'" % (i, key)
+            self.mapLabelsToKeys[i] = key
+            if key not in self.mapKeysToLabels.keys():
+                self.mapKeysToLabels[key] = set()
+            self.mapKeysToLabels[key].add(i)
+
+        self.__saveMapping()
+
+        self.__reset()
+        
+    def removeSegmentsByKey(self, key):
+        print "removing segment '%s'" % (key)
+        labelsForKey = self.mapKeysToLabels[key]
+        print " - labels", [i for i in self.mapKeysToLabels[key]], "belong to '%s'" % (key)
+        
+        del self.mapKeysToLabels[key]
+        for l in labelsForKey:
+            del self.mapLabelsToKeys[l] 
+        
+        path = self.outputPath+'/'+str(key)
+        print " - removing storage path '%s'" % (path)
+        shutil.rmtree(path)
+        
+        self.__reset()
+        
+        self.__saveMapping()
+        
+        self.__rebuildDoneOverlay()
+    
+    def __rebuildDoneOverlay(self):
+        print "rebuild 'done' overlay"
+        doneOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
+        doneOverlay[0,:,:,:,:] = 0 #clear 'done'
+        maxLabel = 0
+        
+        keys = copy.deepcopy(self.mapKeysToLabels.keys())
+        self.mapKeysToLabels = dict()
+        self.mapLabelsToKeys = dict()
+        
+        for key in keys:
+            print " - segments '%s'" % (key)
+            path = self.outputPath+'/'+str(key)
+            
+            f = h5py.File(path+'/'+'segmentation.h5', 'r')            
+            connectedComponentsComputer = ConnectedComponents()
+            #FIXME: indexing in first and last dimension
+            cc = connectedComponentsComputer.connect(f['volume/data'][0,:,:,:,0], background=set([1]))
+            numNewLabels = numpy.max(cc)         
+            doneOverlay[0,:,:,:,:] = numpy.where(cc>0, cc+int(maxLabel), doneOverlay[0,:,:,:,:])
+            
+            r = range(maxLabel+1, maxLabel+1+numNewLabels)
+            self.mapKeysToLabels[key] = set(r)
+            for i in r:
+                print "   - label %d belongs to '%s'" % (i, key))
+                self.mapLabelsToKeys[i] = key
+            
+            maxLabel += numNewLabels
+        print " ==> there are now a total of %d segments stored as %d named groups" % (maxLabel, len(self.mapKeysToLabels.keys()))
+        
+    def activeSegment(self):
+        #get the label of the segment that we are currently 'carving'
+        pass
+    def activateSegment(self, label):
+        pass
+    def hasSegmentKey(self, key):
+        return key in self.mapLabelsToKeys.values()
+    
     def setModuleMgr(self, interactiveSegmentationModuleMgr):
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         
@@ -142,7 +294,16 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             
         if self.segmentation is None:
             self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')  
-            
+        
+        if not os.path.exists(self.outputPath):
+            os.makedirs(self.outputPath)
+        
+        doneFileName         = self.outputPath + "/done.h5"
+        
+        if os.path.exists(doneFileName):
+            dataImpex.DataImpex.importOverlay(self.dataItemImage, doneFileName, "")
+        self.__loadMapping()
+        
     def clearSeeds(self):
         self._seedL = None
         self._seedIndices = None
@@ -167,7 +328,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def updateSeeds(self, newLabels):
         """
         This method updates the seedMatrix with new seeds.
-        newlabels can contain completey new labels, changed labels and deleted labels
+        newlabels can contain completely new labels, changed labels and deleted labels
         """
         self._buildSeedsWhenNotThere()
         for nl in newLabels:
@@ -245,7 +406,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                             self._seedIndices = numpy.delete(self._seedIndices,nonzero)
                             self._seedL  = numpy.delete(self._seedL,nonzero)
                             self._seedL.shape += (1,) #needed because numpy.delete is stupid
-                    else: #no intersectoin, in erase mode just pass
+                    else: #no intersection, in erase mode just pass
                         pass
             except Exception, e:
                 print e

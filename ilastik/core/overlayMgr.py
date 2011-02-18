@@ -36,7 +36,7 @@ please also have a look at :
     gui/seedWidget.py
     gui/overlaySelectionDlg.py
 
-overlays seem to enjoy heavy usage in the gui part of the programm, 
+overlays seem to enjoy heavy usage in the gui part of the program, 
 still i decided to put them here in the core part!?!
 
 """

@@ -69,6 +69,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.layout().addWidget(self.addLabelButton)
         self.layout().addWidget(self.listWidget)
         
+        self.ilastik = volumeEditor.ilastik
         self.volumeEditor = volumeEditor
         self.labelMgr = labelMgr
         self.listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -98,15 +99,23 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         label = doneOverlay._data[0,c[0],c[1],c[2],0]
         if label == 0: return
         
-        menu = QtGui.QMenu("Object #%d" % (label), self)
-        act = menu.addAction("Object #%d" % (label))
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        
+        key = s.segmentName(label)
+        
+        menu = QtGui.QMenu(self)
+        act = menu.addAction("Object #%d [%s]" % (label, key))
         act.setEnabled(False)
         font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
         act.setFont(font)
         
-        act = menu.addAction("Display 3D")
-        act = menu.addAction("Correct")
+        display3dAction = menu.addAction("Display 3D")
+        correctAction   = menu.addAction("Correct")
+        removeAction    = menu.addAction("Remove")
+        imageScene.connect(removeAction, QtCore.SIGNAL("triggered()"), lambda key=key: s.removeSegmentsByKey(key))
         menu.exec_(QtGui.QCursor.pos())
+        
+        
 
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
