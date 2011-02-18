@@ -63,33 +63,31 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.defaultSegmentor = False
         
     def on_activation(self):
-        if self.ilastik.project is None:
-            return
+        if self.ilastik.project is None: return
         
-        if self.ilastik._activeImage.Interactive_Segmentation.seeds is None:
-            self.ilastik._activeImage.Interactive_Segmentation.createSeedsData()
-        
-        self.ilastik.labelWidget.interactionLog = self.interactionLog
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.ilastik.labelWidget.repaint)
+        s.init()
         
         #initially add 'Raw Data' overlay
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         if "Raw Data" in self.ilastik._activeImage.overlayMgr.keys():
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None: ovs.append(raw.getRef())
-                        
+        
+        self.ilastik.labelWidget.interactionLog = self.interactionLog        
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+    
+        #add 'Seeds' overlay
+        overlayWidget.addOverlayRef(s.seedOverlay.getRef())
+        #add 'Done' overlay if it exists
+        if s.doneBinaryOverlay is not None:
+            overlayWidget.addOverlayRef(s.doneBinaryOverlay.getRef())
         
-        #create 'Seeds' overlay
-        ov = OverlayItem(self.ilastik._activeImage.Interactive_Segmentation.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage.Interactive_Segmentation.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = ov
-        ov = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
-
-        overlayWidget.addOverlayRef(ov.getRef())
-        
-        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  self.ilastik._activeImage.Interactive_Segmentation.seeds,  self.ilastik.labelWidget,  ov))
+        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  s.seedOverlay))
         
         if self.parent.project.dataMgr.Interactive_Segmentation.segmentor is None:
             segmentors = self.parent.project.dataMgr.Interactive_Segmentation.segmentorClasses
@@ -101,7 +99,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                     self.defaultSegmentor = True
                     break            
             
-
+        """
         ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
         ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
         
@@ -110,6 +108,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             ov_cc = OverlayItem(ov._data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
             self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
             #ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
+        """
 
     def on_deActivation(self):
         if self.ilastik.project is None:
@@ -284,18 +283,20 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             
         self.localMgr.segment()
 
-        #create Overlay for segmentation:
+        #ensure that we have a 'Segmentation' overlay which will display the result of the segmentation algorithm
         if self.activeImage.overlayMgr["Segmentation/Segmentation"] is None:
             origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
             origColorTable[1] = 255
-            ov = OverlayItem(self.localMgr.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
-            self.activeImage.overlayMgr["Segmentation/Segmentation"] = ov
-        else:
-            res = self.localMgr.segmentation
-            self.activeImage.overlayMgr["Segmentation/Segmentation"]._data = DataAccessor(res)
-            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
-            origColorTable[1] = 255            
-            self.activeImage.overlayMgr["Segmentation/Segmentation"].colorTable = origColorTable
+            segmentationOverlay = OverlayItem(self.localMgr.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
+            self.activeImage.overlayMgr["Segmentation/Segmentation"] = segmentationOverlay
+            self.localMgr.segmentationOverlay = segmentationOverlay #FIXME
+
+        #create Overlay for segmentation:
+        res = self.localMgr.segmentation
+        self.localMgr.segmentationOverlay._data = DataAccessor(res)
+        origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
+        origColorTable[1] = 255            
+        self.localMgr.segmentationOverlay.colorTable = origColorTable
             
         if self.localMgr.potentials is not None:
             origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)

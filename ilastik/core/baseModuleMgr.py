@@ -1,5 +1,7 @@
 from ilastik.core.overlayMgr import OverlayReferenceMgr
 
+from PyQt4.QtCore import QObject
+
 class PropertyMgr(object):
     """
     Holds a bag of Properties that can be serialized and deserialized
@@ -35,7 +37,7 @@ class PropertyMgr(object):
             answer = None
         return answer
 
-class BaseModuleDataItemMgr(PropertyMgr):
+class BaseModuleDataItemMgr(PropertyMgr, QObject):
     """
     abstract base class for modules controlling a DataItem
     """
@@ -44,6 +46,7 @@ class BaseModuleDataItemMgr(PropertyMgr):
     def __init__(self, dataItemImage):
         self.dataItem = dataItemImage        
         PropertyMgr.__init__(self, dataItemImage)
+        QObject.__init__(self)
         self.overlayReferences = OverlayReferenceMgr()
         self.globalMgr = None
         
@@ -73,7 +76,7 @@ class BaseModuleDataItemMgr(PropertyMgr):
 
 
 
-class BaseModuleMgr(PropertyMgr):
+class BaseModuleMgr(PropertyMgr, QObject):
     """
     abstract base class for modules
     """
@@ -81,6 +84,7 @@ class BaseModuleMgr(PropertyMgr):
     
     def __init__(self, dataMgr):
         PropertyMgr.__init__(self, dataMgr)
+        QObject.__init__(self)
     
     def onModuleStart(self):
         pass

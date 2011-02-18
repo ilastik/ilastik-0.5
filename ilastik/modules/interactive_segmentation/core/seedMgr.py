@@ -45,7 +45,7 @@ class SeedMgr(object):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
             descr = description.clone()
             descr._prediction = numpy.zeros(imageItem._dataVol._data.shape[0:-1],  'uint8')
-            imageItem.Interactive_Segmentation.seeds.descriptions.append(descr)
+            imageItem.Interactive_Segmentation.seedLabelsVolume.descriptions.append(descr)
             
 
     def changedLabel(self,  label):
@@ -75,7 +75,6 @@ class SeedMgr(object):
             item.Interactive_Segmentation.clearSeeds()
             
         self.dataMgr.featureLock.release()
-
         
     def newLabels(self,  newLabels):
         self.dataMgr[self.dataMgr._activeImageNumber].Interactive_Segmentation.updateSeeds(newLabels)

@@ -104,9 +104,19 @@ def setintersectionmask(a,b):
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
     
-    outputPath      = os.path.expanduser("~/test-segmentation")
-    mapLabelsToKeys = dict()
-    mapKeysToLabels = dict()
+    #where to save segmentations to
+    outputPath         = os.path.expanduser("~/test-segmentation")
+    
+    #Overlays for the current segmentation
+    seedOverlay         = None
+    segmentationOverlay = None
+    
+    #Overlays for already 'done', previous segmentations
+    doneBinaryOverlay   = None
+    doneObjectsOverlay  = None
+    
+    _mapLabelsToKeys = dict()
+    _mapKeysToLabels = dict()
     
     def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
@@ -114,34 +124,37 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.interactiveSegmentationModuleMgr = None 
         self.overlays = []
         self.segmentation = None
-        self.seeds = None
+        self.seedLabelsVolume = None
         self._segmentationWeights = None
         self._seedLabelsList = None#numpy.zeros((0, 1), 'uint8')
         self._seedIndicesList = None#numpy.zeros((0, 1), 'uint32')
         self.segmentorInstance = None
         self.potentials = None
     
-    def __reset(self):
-        seedOverlay  = self.dataItemImage.overlayMgr["Segmentation/Seeds"]
+    def init(self):
+        """handles all the initialization that can be postponed until _activation_ of the module"""
+        self.__createSeedsData()
         
-        seedOverlay[0,:,:,:,:] = 0
+        #create 'Seeds' overlay
+        self.seedOverlay = OverlayItem(self.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = self.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.dataItemImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
+    
+    def __reset(self):
         self.dataItemImage.Interactive_Segmentation.clearSeeds()
         self.dataItemImage.Interactive_Segmentation._buildSeedsWhenNotThere()
     
     def __ensureOverlays(self):
-        doneOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
-        if doneOverlay is None:
+        if self.doneBinaryOverlay is None:
             shape = self.dataItemImage.shape
             data = DataAccessor(numpy.zeros((shape), numpy.uint8))
             bluetable = []
             bluetable.append(long(0))
             for i in range(1, 256):
                 bluetable.append(QtGui.qRgb(0, 0, 255))
-            doneOverlay = OverlayItem(data, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
-            colorTableCC = CC.makeColorTab()
-            objectsOverlay = OverlayItem(data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
-            self.dataItemImage.overlayMgr["Segmentation/Done"] = doneOverlay
-            self.dataItemImage.overlayMgr["Segmentation/Objects"] = objectsOverlay
+            self.doneBinaryOverlay = OverlayItem(data, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
+            self.doneObjectsOverlay = OverlayItem(data, color=0, alpha=0.7, autoAdd=False, autoVisible=False)                    
+            self.dataItemImage.overlayMgr["Segmentation/Done"] = self.doneBinaryOverlay
+            self.dataItemImage.overlayMgr["Segmentation/Objects"] = self.doneObjectsOverlay
     
     def __loadMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
@@ -150,56 +163,52 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             for entry in r:
                 key   = entry[1].strip()
                 label = int(entry[0])
-                self.mapLabelsToKeys[label] = key
-                if key not in self.mapKeysToLabels.keys():
-                    self.mapKeysToLabels[key] = set()
-                self.mapKeysToLabels[key].add(label)
+                self._mapLabelsToKeys[label] = key
+                if key not in self._mapKeysToLabels.keys():
+                    self._mapKeysToLabels[key] = set()
+                self._mapKeysToLabels[key].add(label)
     def __saveMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
         r = csv.writer(open(mappingFileName, 'w'), delimiter='|')
-        for i, key in self.mapLabelsToKeys.items():
+        for i, key in self._mapLabelsToKeys.items():
             r.writerow([i,key])
     
     def segmentName(self, label):
-        return self.mapLabelsToKeys[label]
+        return self._mapLabelsToKeys[label]
     def saveCurrentSegmentsAs(self, key):        
         print "save current segments as '%s'" %  (key)
         self.__ensureOverlays()
-        
-        segmentationOverlay = self.dataItemImage.overlayMgr["Segmentation/Segmentation"]
-        seedOverlay         = self.dataItemImage.overlayMgr["Segmentation/Seeds"]
-        doneOverlay         = self.dataItemImage.overlayMgr["Segmentation/Done"]
         
         #create directory to store the segment in     
         path = self.outputPath+'/'+str(key)
         print " - saving to '%s'" % (path)
         os.makedirs(path)
         print "   - segmentation"
-        dataImpex.DataImpex.exportOverlay(path + "/segmentation", "h5", segmentationOverlay)
+        dataImpex.DataImpex.exportOverlay(path + "/segmentation", "h5", self.segmentationOverlay)
         print "   - seeds"
-        dataImpex.DataImpex.exportOverlay(path + "/seeds",        "h5", seedOverlay)
+        dataImpex.DataImpex.exportOverlay(path + "/seeds",        "h5", self.seedOverlay)
 
         #compute connected components on current segmentation
         print " - computing connected components of segments to be saved"  
-        done = doneOverlay[0,:,:,:,:]
-        seg  = segmentationOverlay[0,:,:,:,:]
+        done = self.doneBinaryOverlay[0,:,:,:,:]
+        seg  = self.segmentationOverlay[0,:,:,:,:]
         connectedComponentsComputer = ConnectedComponents()
         prevMaxLabel = numpy.max(done)
         print "   - previous number of labels was %d" % (prevMaxLabel)
         cc = connectedComponentsComputer.connect(seg, background=set([1]))            
         newDone = numpy.where(cc>0, cc+int(prevMaxLabel), done)
-        doneOverlay[0,:,:,:,:] = newDone[:]        
-        dataImpex.DataImpex.exportOverlay(self.outputPath+'/'+'done', "h5", doneOverlay)
+        self.doneBinaryOverlay[0,:,:,:,:] = newDone[:]        
+        dataImpex.DataImpex.exportOverlay(self.outputPath+'/'+'done', "h5", self.doneBinaryOverlay)
     
         numCC = numpy.max(cc)
         print "    - there are %d segments to be saved as '%s'" % (numCC, key)
         print " - saving"
         for i in range(prevMaxLabel+1,prevMaxLabel+numCC+1):
             print "   - label %d now known as '%s'" % (i, key)
-            self.mapLabelsToKeys[i] = key
-            if key not in self.mapKeysToLabels.keys():
-                self.mapKeysToLabels[key] = set()
-            self.mapKeysToLabels[key].add(i)
+            self._mapLabelsToKeys[i] = key
+            if key not in self._mapKeysToLabels.keys():
+                self._mapKeysToLabels[key] = set()
+            self._mapKeysToLabels[key].add(i)
 
         self.__saveMapping()
 
@@ -207,12 +216,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
     def removeSegmentsByKey(self, key):
         print "removing segment '%s'" % (key)
-        labelsForKey = self.mapKeysToLabels[key]
-        print " - labels", [i for i in self.mapKeysToLabels[key]], "belong to '%s'" % (key)
+        labelsForKey = self._mapKeysToLabels[key]
+        print " - labels", [i for i in self._mapKeysToLabels[key]], "belong to '%s'" % (key)
         
-        del self.mapKeysToLabels[key]
+        del self._mapKeysToLabels[key]
         for l in labelsForKey:
-            del self.mapLabelsToKeys[l] 
+            del self._mapLabelsToKeys[l] 
         
         path = self.outputPath+'/'+str(key)
         print " - removing storage path '%s'" % (path)
@@ -222,17 +231,19 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         self.__saveMapping()
         
-        self.__rebuildDoneOverlay()
+        self.__rebuilddoneBinaryOverlay()
+        
+        self.emit('overlaysChanged()')
     
-    def __rebuildDoneOverlay(self):
+    def __rebuilddoneBinaryOverlay(self):
         print "rebuild 'done' overlay"
-        doneOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
-        doneOverlay[0,:,:,:,:] = 0 #clear 'done'
+        doneBinaryOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
+        doneBinaryOverlay[0,:,:,:,:] = 0 #clear 'done'
         maxLabel = 0
         
-        keys = copy.deepcopy(self.mapKeysToLabels.keys())
-        self.mapKeysToLabels = dict()
-        self.mapLabelsToKeys = dict()
+        keys = copy.deepcopy(self._mapKeysToLabels.keys())
+        self._mapKeysToLabels = dict()
+        self._mapLabelsToKeys = dict()
         
         for key in keys:
             print " - segments '%s'" % (key)
@@ -243,16 +254,16 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             #FIXME: indexing in first and last dimension
             cc = connectedComponentsComputer.connect(f['volume/data'][0,:,:,:,0], background=set([1]))
             numNewLabels = numpy.max(cc)         
-            doneOverlay[0,:,:,:,:] = numpy.where(cc>0, cc+int(maxLabel), doneOverlay[0,:,:,:,:])
+            doneBinaryOverlay[0,:,:,:,:] = numpy.where(cc>0, cc+int(maxLabel), doneBinaryOverlay[0,:,:,:,:])
             
             r = range(maxLabel+1, maxLabel+1+numNewLabels)
-            self.mapKeysToLabels[key] = set(r)
+            self._mapKeysToLabels[key] = set(r)
             for i in r:
                 print "   - label %d belongs to '%s'" % (i, key)
-                self.mapLabelsToKeys[i] = key
+                self._mapLabelsToKeys[i] = key
             
             maxLabel += numNewLabels
-        print " ==> there are now a total of %d segments stored as %d named groups" % (maxLabel, len(self.mapKeysToLabels.keys()))
+        print " ==> there are now a total of %d segments stored as %d named groups" % (maxLabel, len(self._mapKeysToLabels.keys()))
         
     def activeSegment(self):
         #get the label of the segment that we are currently 'carving'
@@ -260,15 +271,15 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def activateSegment(self, label):
         pass
     def hasSegmentKey(self, key):
-        return key in self.mapLabelsToKeys.values()
+        return key in self._mapLabelsToKeys.values()
     
     def setModuleMgr(self, interactiveSegmentationModuleMgr):
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         
-    def createSeedsData(self):
-        if self.seeds is None:
+    def __createSeedsData(self):
+        if self.seedLabelsVolume is None:
             l = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')
-            self.seeds = VolumeLabels(l)
+            self.seedLabelsVolume = VolumeLabels(l)
             
         if self.segmentation is None:
             self.segmentation = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')  
@@ -280,19 +291,22 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         if os.path.exists(doneFileName):
             dataImpex.DataImpex.importOverlay(self.dataItemImage, doneFileName, "")
+            self.doneBinaryOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
+            
         self.__loadMapping()
         
     def clearSeeds(self):
         self._seedLabelsList = None
         self._seedIndicesList = None
+        self.seedLabelsVolume._data[0,:,:,:,0] = 0
 
     def _buildSeedsWhenNotThere(self):
         if self._seedLabelsList is None:
             tempL = []
     
-            tempd =  self.seeds._data[:, :, :, :, 0].ravel()
+            tempd =  self.seedLabelsVolume._data[:, :, :, :, 0].ravel()
             indices = numpy.nonzero(tempd)[0]
-            tempL = self.seeds._data[:,:,:,:,0].ravel()[indices]
+            tempL = self.seedLabelsVolume._data[:,:,:,:,0].ravel()[indices]
             tempL.shape += (1,)
                                    
             self._seedIndicesList = indices
@@ -395,7 +409,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
 
     def segment(self):
         labels, indices = self.getSeeds()
-        self.globalMgr.segmentor.segment(self.seeds._data[0,:,:,:], labels, indices)
+        self.globalMgr.segmentor.segment(self.seedLabelsVolume._data[0,:,:,:], labels, indices)
         self.segmentation = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.segmentation])
         if(hasattr(self.globalMgr.segmentor, "potentials")):
             self.potentials = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.potentials])
@@ -408,15 +422,15 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         print "serializing interactive segmentation"
-        if self.seeds is not None:
+        if self.seedLabelsVolume is not None:
             print "seeds are not None!!!"
-            self.seeds.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )
+            self.seedLabelsVolume.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )
         else:
             print "seeds are None!!!"      
 
     def deserialize(self, h5G, offsets = (0,0,0), shape=(0,0,0)):
         if "seeds" in h5G.keys():
-            self.seeds = VolumeLabels.deserialize(h5G,  "seeds")
+            self.seedLabelsVolume = VolumeLabels.deserialize(h5G,  "seeds")
 
 #*******************************************************************************
 # I n t e r a c t i v e S e g m e n t a t i o n M o d u l e M g r              *
