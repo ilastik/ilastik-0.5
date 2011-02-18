@@ -47,7 +47,7 @@ class UnsupervisedSelectionDlg(QtGui.QDialog):
         (number, ok) = QInputDialog.getInt(None, str(self.currentUnsupervisedDecomposer.shortname + " parameters"), "Number of components", 3, 1, 10)
         if ok:
             self.currentUnsupervisedDecomposer.setNumberOfComponents(number)
-            print "setting number of components to", self.currentUnsupervisedDecomposer.numComponents        
+            #print "setting number of components to", self.currentUnsupervisedDecomposer.numComponents        
 
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
