@@ -248,7 +248,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             r = range(maxLabel+1, maxLabel+1+numNewLabels)
             self.mapKeysToLabels[key] = set(r)
             for i in r:
-                print "   - label %d belongs to '%s'" % (i, key))
+                print "   - label %d belongs to '%s'" % (i, key)
                 self.mapLabelsToKeys[i] = key
             
             maxLabel += numNewLabels
