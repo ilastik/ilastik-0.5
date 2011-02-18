@@ -108,7 +108,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     outputPath         = os.path.expanduser("~/test-segmentation")
     
     #Overlays for the current segmentation
-    seedOverlay         = None
     segmentationOverlay = None
     
     #Overlays for already 'done', previous segmentations
@@ -134,10 +133,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def init(self):
         """handles all the initialization that can be postponed until _activation_ of the module"""
         self.__createSeedsData()
-        
-        #create 'Seeds' overlay
-        self.seedOverlay = OverlayItem(self.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = self.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.dataItemImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
     
     def __reset(self):
         self.dataItemImage.Interactive_Segmentation.clearSeeds()
@@ -186,7 +181,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         print "   - segmentation"
         dataImpex.DataImpex.exportOverlay(path + "/segmentation", "h5", self.segmentationOverlay)
         print "   - seeds"
-        dataImpex.DataImpex.exportOverlay(path + "/seeds",        "h5", self.seedOverlay)
+        f = h5py.File(path + "/seeds.h5", 'w')
+        f.create_group('volume')
+        f.create_dataset('volume/data', data=self.seedLabelsVolume._data)
+        f.close()
 
         #compute connected components on current segmentation
         print " - computing connected components of segments to be saved"  

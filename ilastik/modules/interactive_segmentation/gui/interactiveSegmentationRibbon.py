@@ -75,6 +75,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.ilastik.labelWidget.repaint)
         s.init()
         
+        #create 'Seeds' overlay
+        self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        #self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
+        
         #initially add 'Raw Data' overlay
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         if "Raw Data" in self.ilastik._activeImage.overlayMgr.keys():
@@ -88,12 +92,13 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
     
         #add 'Seeds' overlay
-        overlayWidget.addOverlayRef(s.seedOverlay.getRef())
+        overlayWidget.addOverlayRef(self.seedOverlay.getRef())
+        
         #add 'Done' overlay if it exists
         if s.doneBinaryOverlay is not None:
             overlayWidget.addOverlayRef(s.doneBinaryOverlay.getRef())
         
-        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  s.seedOverlay))
+        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay))
         
         if self.parent.project.dataMgr.Interactive_Segmentation.segmentor is None:
             segmentors = self.parent.project.dataMgr.Interactive_Segmentation.segmentorClasses
