@@ -268,7 +268,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
         
     def changeLabel(self):
-        for i in range(3):
+        for i in range(0, len(self.volumeEditor.imageScenes)):
             self.volumeEditor.imageScenes[i].crossHairCursor.setColor(self.listWidget.currentItem().color)
             
     def ensureLabelOverlayVisible(self):
