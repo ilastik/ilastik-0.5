@@ -246,15 +246,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         tmp = self.segmentation[0,:,:,:,0]
         tmp.shape = (1,) + tmp.shape + (1,)
         f.create_dataset('volume/data', data=tmp)
-        f.close()
-        del f
+        f.close(); del f
         
         print "seeds"
         f = h5py.File(path + "/seeds.h5", 'w')
         f.create_group('volume')
         f.create_dataset('volume/data', data=self.seedLabelsVolume._data[:,:,:,:,:])
-        f.close()
-        del f
+        f.close(); del f
 
         #compute connected components on current segmentation
         print " - computing CC of current segments"  
@@ -262,14 +260,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         prevMaxLabel = numpy.max(self.done)
         print "   - previous number of labels was %d" % (prevMaxLabel)
         cc = connectedComponentsComputer.connect(self.segmentation[0,:,:,:,:], background=set([1]))            
-        newDone = numpy.where(cc>0, cc+int(prevMaxLabel), self.done)
-        self.done = newDone
+        self.done[:,:,:,:,:] = numpy.where(cc>0, cc+int(prevMaxLabel), self.done)
         
         f = h5py.File(self.outputPath + "/done.h5", 'w')
         f.create_group('volume')
         f.create_dataset('volume/data', data=self.done)
         f.close()
-        del f
     
         numCC = numpy.max(cc)
         print "   - there are %d segments to be saved as '%s'" % (numCC, key)
@@ -285,6 +281,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
 
         self.__reset()
         
+        #Clear the segmentation
+        #The association with the overlay will be broken,
+        #but this is not so bad because the overlay is 'fixed' via
+        #the overlaysChanged() notification. This is not nice, but works...
+        self.segmentation = None
+        
         self.emit(SIGNAL('saveAsPossible(bool)'), False)
         self.emit(SIGNAL('savePossible(bool)'),   False)
         
@@ -293,6 +295,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def discardCurrentSegmentation(self):
         self.segmentation = None
         self.__reset()
+        self.emit(SIGNAL('overlaysChanged()'))
         
     def removeSegmentsByKey(self, key):
         """Remove all segments belong to 'key'.
