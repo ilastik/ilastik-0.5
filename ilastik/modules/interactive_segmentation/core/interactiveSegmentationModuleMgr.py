@@ -222,7 +222,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         #make sure we have a 'done' overlay
         if self.done is None:
-            self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint8)
+            self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint32)
             self.emit(SIGNAL('doneOverlaysAvailable()'))
         
         if overwrite:
@@ -313,7 +313,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         print " - removing storage path '%s'" % (path)
         shutil.rmtree(path)
         
-        self.segmentation[0,:,:,:,:] = 0
+        #Clear the segmentation
+        #The association with the overlay will be broken,
+        #but this is not so bad because the overlay is 'fixed' via
+        #the overlaysChanged() notification. This is not nice, but works...
+        self.segmentation = None
         
         self.__reset()
         
@@ -584,7 +588,9 @@ if __name__ == '__main__':
         d = f['volume/data'].value.squeeze()
         a = a.squeeze()        
         assert a.shape == d.shape
-        assert a.dtype == d.dtype
+        if a.dtype != d.dtype:
+            print a.dtype, '!=', d.dtype
+            assert a.dtype == d.dtype
         assert numpy.array_equal(d, a)
         return True
         
