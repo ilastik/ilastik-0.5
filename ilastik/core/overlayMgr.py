@@ -44,6 +44,10 @@ still i decided to put them here in the core part!?!
 
 from ilastik.core.volume import DataAccessor
 
+#*******************************************************************************
+# O v e r l a y S l i c e                                                      *
+#*******************************************************************************
+
 class OverlaySlice():
     """
     Helper class to encapsulate the overlay slice and its drawing related settings
@@ -59,6 +63,10 @@ class OverlaySlice():
         self.min = min
         self.max = max
 
+
+#*******************************************************************************
+# O v e r l a y I t e m R e f e r e n c e                                      *
+#*******************************************************************************
 
 class OverlayItemReference(object):
     """
@@ -141,10 +149,18 @@ class OverlayItemReference(object):
         else:
             raise Exception
 
+#*******************************************************************************
+# O v e r l a y R e f e r e n c e M g r                                        *
+#*******************************************************************************
+
 class OverlayReferenceMgr(list):
     def __init__(self):
         list.__init__(self)
     
+
+#*******************************************************************************
+# O v e r l a y I t e m                                                        *
+#*******************************************************************************
 
 class OverlayItem(object):
     """
@@ -309,6 +325,10 @@ class OverlayItem(object):
             
         return colorlist    
 
+
+#*******************************************************************************
+# O v e r l a y M g r                                                          *
+#*******************************************************************************
 
 class OverlayMgr():
     """
