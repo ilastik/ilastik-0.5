@@ -32,6 +32,10 @@ from PyQt4 import QtCore, QtGui
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
 import numpy
         
+#*******************************************************************************
+# S e e d L i s t I t e m                                                      *
+#*******************************************************************************
+
 class SeedListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
         QtGui.QListWidgetItem.__init__(self, name)
@@ -40,8 +44,6 @@ class SeedListItem(QtGui.QListWidgetItem):
         self.setColor(color)
         #self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         #self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
-
-        
 
     def toggleVisible(self):
         self.visible = not(self.visible)
@@ -53,6 +55,9 @@ class SeedListItem(QtGui.QListWidgetItem):
         icon = QtGui.QIcon(pixmap)
         self.setIcon(icon)      
 
+#*******************************************************************************
+# S e e d L i s t W i d g e t                                                  *
+#*******************************************************************************
 
 class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
@@ -116,8 +121,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         imageScene.connect(removeAction, QtCore.SIGNAL("triggered()"), lambda key=key: s.removeSegmentsByKey(key))
         menu.exec_(QtGui.QCursor.pos())
         
-        
-
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):
@@ -153,8 +156,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         
         #select the last item in the last
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(self.listWidget.model().rowCount()-1,0), QtGui.QItemSelectionModel.ClearAndSelect)
-        
-        
+         
     def removeLabel(self, item,  index):
         self.labelMgr.removeLabel(item.number)
         
@@ -169,7 +171,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.volumeEditor.emit(QtCore.SIGNAL("seedRemoved(int)"), item.number)
         self.volumeEditor.repaint()
         
-
     def buildColorTab(self):
         origColorTable = self.volumeLabels.getColorTab()
         self.overlayItem.colorTable = self.colorTab = origColorTable
