@@ -170,6 +170,15 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             
         return weights
     
+    def setupWeights(self, weights = None):
+        if weights is None:
+            weights = self._segmentationWeights
+        else:
+            self._segmentationWeights = weights
+        if self.globalMgr.segmentor is not None:
+            self.globalMgr.segmentor.setupWeights(weights)
+        self.emit(SIGNAL('weightsSetup()'))
+    
     def segmentKeyForLabel(self, label):
         """given a label in the 'done' overlay, return the key of the group that
            this segment belongs to (key is a directory in self.outputPath"""

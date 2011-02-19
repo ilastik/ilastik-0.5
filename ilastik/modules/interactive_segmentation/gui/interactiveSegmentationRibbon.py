@@ -116,6 +116,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         s = self.ilastik._activeImage.Interactive_Segmentation
         self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.ilastik.labelWidget.repaint)
         self.connect(s, QtCore.SIGNAL('doneOverlaysAvailable()'), self.on_doneOverlaysAvailable)
+        self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
         s.init()
         
         #add 'Seeds' overlay
@@ -205,32 +206,22 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
             
             volume = overlay._data[0,:,:,:,0]
-            
-            #real_weights = numpy.zeros(volume.shape + (3,))        
-            
+                        
             borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness", "Gradient Magnitude"],  editable = False)
             if borderIndicator[1]:
                 borderIndicator = str(borderIndicator[0])
                 
                 weights = s.calculateWeights(volume, borderIndicator)
                 
-                self.setupWeights(weights)
+                s.setupWeights(weights)
                 self.btnSegmentorsOptions.setEnabled(True)
                 self.btnSegment.setEnabled(True)
                 self.btnFinishSegment.setEnabled(True)
             
 
-    def setupWeights(self, weights = None):
+    def on_setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []
-        if weights is None:
-            weights = self.localMgr._segmentationWeights
-        else:
-            self.localMgr._segmentationWeights = weights
-        if self.globalMgr.segmentor is not None:
-            self.globalMgr.segmentor.setupWeights(weights)
-
-
-
+        
     def clearSeeds(self):
         self._seedL = None
         self._seedIndices = None
