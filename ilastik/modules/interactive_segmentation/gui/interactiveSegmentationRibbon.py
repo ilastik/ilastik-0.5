@@ -195,32 +195,35 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     
     def on_btnChooseWeights_clicked(self):
+        #First question: Which overlay?
         dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
         answer = dlg.exec_()
+        if len(answer) == 0: return #dialog was dismissed
         
         s = self.ilastik._activeImage.Interactive_Segmentation
         
-        if len(answer) > 0:
-            
-            overlay = answer[0]
-            self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
-            
-            volume = overlay._data[0,:,:,:,0]
-                        
-            borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select Border Indicator",  "Indicator",  ["Brightness",  "Darkness", "Gradient Magnitude"],  editable = False)
-            if borderIndicator[1]:
-                borderIndicator = str(borderIndicator[0])
-                
-                weights = s.calculateWeights(volume, borderIndicator)
-                
-                s.setupWeights(weights)
-                self.btnSegmentorsOptions.setEnabled(True)
-                self.btnSegment.setEnabled(True)
-                self.btnFinishSegment.setEnabled(True)
-            
-
+        overlay = answer[0]
+        self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
+        volume = overlay._data[0,:,:,:,0]
+        
+        #Second question: Which border indicator?            
+        borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, \
+                          "Select Border Indicator",  "Indicator",  \
+                          ["Brightness",  "Darkness", "Gradient Magnitude"], \
+                          editable = False)
+        if not borderIndicator[1]: return #Dialog was dismissed
+        
+        borderIndicator = str(borderIndicator[0])
+        
+        #calculate the weights
+        #this will call on_setupWeights via a signal/slot connection
+        s.calculateWeights(volume, borderIndicator)
+        
     def on_setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []
+        self.btnSegmentorsOptions.setEnabled(True)
+        self.btnSegment.setEnabled(True)
+        self.btnFinishSegment.setEnabled(True)
         
     def clearSeeds(self):
         self._seedL = None

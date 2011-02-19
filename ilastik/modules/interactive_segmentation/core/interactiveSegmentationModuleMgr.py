@@ -168,7 +168,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             print "Weights min/max :", min, max
             weights = (weights - min)*(255.0 / (max - min))
             
-        return weights
+        self.setupWeights(weights)
     
     def setupWeights(self, weights = None):
         if weights is None:
