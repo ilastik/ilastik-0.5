@@ -260,6 +260,25 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         self.emit(SIGNAL('overlaysChanged()'))
     
+    def editSegmentsByKey(self, key):
+        print "you want to edit '%s'" % (key)
+        assert self.hasSegmentsKey(key)
+        
+        self.clearSeeds()
+        
+        #f = h5py.File(self.outputPath+'/'+key+'/segmentation.h5', 'r')
+        #self.segmentation[0,:,:,:,:] = f['volume/data'].value[0,:,:,:,:]
+        #f.close()
+        
+        f = h5py.File(self.outputPath+'/'+key+'/seeds.h5', 'r')
+        self.seedLabelsVolume._data[0,:,:,:,:] = f['volume/data'].value[0,:,:,:,:]
+        f.close()
+        
+        self._buildSeedsWhenNotThere()
+        self.emit(SIGNAL('overlaysChanged()'))
+        
+        #FIXME: make sure we have enough labels!!!!
+    
     def __rebuildDone(self):
         print "rebuild 'done' overlay"
         self.done[:] = 0 #clear 'done'

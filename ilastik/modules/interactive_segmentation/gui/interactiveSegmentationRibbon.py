@@ -286,8 +286,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         f.close()
 
         self.ilastik.labelWidget.repaint()
-
-        
+    
     def on_btnSegment_clicked(self):
         if hasattr(self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor, "bias"):
             bias = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias            

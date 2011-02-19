@@ -117,7 +117,10 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         display3dAction = menu.addAction("Display 3D")
         correctAction   = menu.addAction("Correct")
         removeAction    = menu.addAction("Remove")
-        imageScene.connect(removeAction, QtCore.SIGNAL("triggered()"), lambda key=key: s.removeSegmentsByKey(key))
+        
+        imageScene.connect(correctAction, QtCore.SIGNAL("triggered()"), lambda key=key: s.editSegmentsByKey(key)  )
+        imageScene.connect(removeAction,  QtCore.SIGNAL("triggered()"), lambda key=key: s.removeSegmentsByKey(key))
+        
         menu.exec_(QtGui.QCursor.pos())
         
     def initFromVolumeLabels(self, volumelabel):
