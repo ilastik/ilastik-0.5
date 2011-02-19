@@ -120,10 +120,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.segmentorInstance = None
         self.potentials = None
     
-    def init(self):
-        """handles all the initialization that can be postponed until _activation_ of the module"""
-        self.__createSeedsData()
-    
     def __reset(self):
         self.clearSeeds()
         self._buildSeedsWhenNotThere()
@@ -144,24 +140,44 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                 if key not in self._mapKeysToLabels.keys():
                     self._mapKeysToLabels[key] = set()
                 self._mapKeysToLabels[key].add(label)
+                
     def __saveMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
         r = csv.writer(open(mappingFileName, 'w'), delimiter='|')
         for i, key in self._mapLabelsToKeys.items():
             r.writerow([i,key])
     
-    def segmentName(self, label):
+    def init(self):
+        """Handles all the initialization that can be postponed until _activation_ of the module.
+           For example, big arrays are allocated only after the user has decided
+           to switch tothis particular tab."""
+        self.__createSeedsData()
+    
+    def segmentKeyForLabel(self, label):
+        """given a label in the 'done' overlay, return the key of the group that
+           this segment belongs to (key is a directory in self.outputPath"""
         return self._mapLabelsToKeys[label]
-    def saveCurrentSegmentsAs(self, key):        
+    
+    def segmentLabelsForKey(self, key):
+        """given a key (a directory name in self.outputPath), return all
+           label numbers in the 'done' overlay which refer to segments in the
+           key group"""
+        return self._mapKeysToLabels[key]
+    
+    def saveCurrentSegmentsAs(self, key):
+        """ Save the currently segmented segments as a group with the name 'key'.
+            A directory with the same name is created in self.outputPath holding
+            all information about seeds and segments."""
+                
         print "save current segments as '%s'" %  (key)
         self.__ensureOverlays()
         
         #create directory to store the segment in     
         path = self.outputPath+'/'+str(key)
-        print " - saving to '%s'" % (path)
+        print " - saving to '%s'" % (path),
         os.makedirs(path)
         
-        print "   - segmentation"
+        print "segmentation",
         f = h5py.File(path + "/segmentation.h5", 'w')
         f.create_group('volume')
         tmp = self.segmentation[0,:,:,:,0]
@@ -170,7 +186,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         f.close()
         del f
         
-        print "   - seeds"
+        print "seeds"
         f = h5py.File(path + "/seeds.h5", 'w')
         f.create_group('volume')
         f.create_dataset('volume/data', data=self.seedLabelsVolume._data[:,:,:,:,:])
@@ -178,7 +194,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         del f
 
         #compute connected components on current segmentation
-        print " - computing connected components of segments to be saved"  
+        print " - computing CC of current segments"  
         connectedComponentsComputer = ConnectedComponents()
         prevMaxLabel = numpy.max(self.done)
         print "   - previous number of labels was %d" % (prevMaxLabel)
@@ -193,7 +209,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         del f
     
         numCC = numpy.max(cc)
-        print "    - there are %d segments to be saved as '%s'" % (numCC, key)
+        print "   - there are %d segments to be saved as '%s'" % (numCC, key)
         print " - saving"
         for i in range(prevMaxLabel+1,prevMaxLabel+numCC+1):
             print "   - label %d now known as '%s'" % (i, key)
@@ -473,7 +489,6 @@ if __name__ == '__main__':
         return True
         
     def arrayEqual(a,b):
-        print a.shape,  b.shape, a.dtype, b.dtype
         assert a.shape == b.shape
         assert a.dtype == b.dtype
         if not numpy.array_equal(a,b):
@@ -530,9 +545,9 @@ if __name__ == '__main__':
     shape4D = (120,120,120,1)
     shape5D = (1,120,120,120,1)
 
-    ##*************************************************************************
-    ## segment for the first time (version 0)                                 *
-    ##*************************************************************************
+    print "*************************************************************************"
+    print "* segment for the first time (version 0)                                *"
+    print "*************************************************************************"
     
     #segment
     segmentor.setVersion(0)    
@@ -561,14 +576,16 @@ if __name__ == '__main__':
     
     assert s._mapKeysToLabels == {'one': set([1])}
     assert s._mapLabelsToKeys == {1: 'one'}
+    assert s.segmentKeyForLabel(1) == 'one'
+    assert s.segmentLabelsForKey('one') == set([1])
 
     s.discardCurrentSegmentation()
     assert s.segmentation == None
     assert numpy.where(s.seedLabelsVolume._data != 0) == ()
 
-    ##*************************************************************************
-    ## remove segment by key                                                  *
-    ##*************************************************************************
+    print "*************************************************************************"
+    print "* remove segment 'one'                                                  *"
+    print "*************************************************************************"
 
     #remove segment by key
     s.removeSegmentsByKey('one')
@@ -583,9 +600,9 @@ if __name__ == '__main__':
     assert f.readlines() == []
     f.close()
     
-    ##*************************************************************************
-    ## segment for the second time (version 1)                                *
-    ##*************************************************************************
+    print "*************************************************************************"
+    print "* segment for the second time (version 1)                               *"
+    print "*************************************************************************"
     
     segmentor.setVersion(1)
     s.segment()
@@ -605,10 +622,10 @@ if __name__ == '__main__':
     assert s._mapKeysToLabels == {'two': set([1, 2])}
     assert s._mapLabelsToKeys == {1: 'two', 2: 'two'}
     
-    ##*************************************************************************
-    ## segment again (version 2)                                              *
-    ##*************************************************************************
-    
+    print "*************************************************************************"
+    print "* segment again (version 2)                                             *"
+    print "*************************************************************************"
+ 
     segmentor.setVersion(2)
     s.segment()
     assert arrayEqual(s.segmentation[0,:,:,:,:], segmentor.segmentation)
@@ -640,9 +657,9 @@ if __name__ == '__main__':
     assert h5equal(s.outputPath+'/two/segmentation.h5', seg1)
     assert h5equal(s.outputPath+'/three/segmentation.h5', seg2)
     
-    ##*************************************************************************
-    ## remove segments 'three'                                                *
-    ##*************************************************************************
+    print "*************************************************************************"
+    print "* remove segments 'three'                                               *"
+    print "*************************************************************************"
     
     s.removeSegmentsByKey('three')
     assert s._mapKeysToLabels == {'two': set([1, 2])}
@@ -663,9 +680,10 @@ if __name__ == '__main__':
     assert arrayEqual(doneGT.squeeze(), s.done.squeeze())
     assert h5equal(s.outputPath+'/done.h5', doneGT)
     
-    ##*************************************************************************
-    ## remove segments 'two'                                                *
-    ##*************************************************************************
+    print "*************************************************************************"
+    print "* remove segments 'two'                                                 *"
+    print "*************************************************************************"
+    
     s.removeSegmentsByKey('two')
     assert s._mapKeysToLabels == {}
     assert s._mapLabelsToKeys == {}
