@@ -146,6 +146,17 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
            For example, big arrays are allocated only after the user has decided
            to switch to this particular tab."""
         self.__createSeedsData()
+        
+        if not os.path.exists(self.outputPath+'/'+'config.txt'): return
+        
+        f = open(self.outputPath+'/'+'config.txt')
+        lines = f.readlines()
+        d = dict()
+        for l in lines:
+            l = l.split('='); key = l[0].strip(); val = l[1].strip()
+            d[key] = val
+        
+        self.calculateWeights(self._dataItemImage.overlayMgr[d["overlay"]]._data[0,:,:,:,0], d["borderIndicator"])
     
     def calculateWeights(self, volume, borderIndicator, normalizePotential=True, sigma=1.0):
         """Calculate the weights indicating borderness from the raw data"""
