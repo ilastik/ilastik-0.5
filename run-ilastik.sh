@@ -4,4 +4,4 @@ SCRIPT=$(readlink -f $0)
 SCRIPTPATH=`dirname $SCRIPT`
 
 #PYTHONPATH=. gdb --args /usr/bin/python $SCRIPTPATH/ilastik/ilastikMain.py
-PYTHONPATH=. python $SCRIPTPATH/ilastik/ilastikMain.py
+PYTHONPATH=.:$PYTHONPATH python $SCRIPTPATH/ilastik/ilastikMain.py

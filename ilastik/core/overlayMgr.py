@@ -36,13 +36,17 @@ please also have a look at :
     gui/seedWidget.py
     gui/overlaySelectionDlg.py
 
-overlays seem to enjoy heavy usage in the gui part of the programm, 
+overlays seem to enjoy heavy usage in the gui part of the program, 
 still i decided to put them here in the core part!?!
 
 """
 
 
 from ilastik.core.volume import DataAccessor
+
+#*******************************************************************************
+# O v e r l a y S l i c e                                                      *
+#*******************************************************************************
 
 class OverlaySlice():
     """
@@ -59,6 +63,10 @@ class OverlaySlice():
         self.min = min
         self.max = max
 
+
+#*******************************************************************************
+# O v e r l a y I t e m R e f e r e n c e                                      *
+#*******************************************************************************
 
 class OverlayItemReference(object):
     """
@@ -141,10 +149,18 @@ class OverlayItemReference(object):
         else:
             raise Exception
 
+#*******************************************************************************
+# O v e r l a y R e f e r e n c e M g r                                        *
+#*******************************************************************************
+
 class OverlayReferenceMgr(list):
     def __init__(self):
         list.__init__(self)
     
+
+#*******************************************************************************
+# O v e r l a y I t e m                                                        *
+#*******************************************************************************
 
 class OverlayItem(object):
     """
@@ -241,7 +257,86 @@ class OverlayItem(object):
     def setData(self,  data):
         self.overlayItem._data = data
 
+    @classmethod
+    def normalizeForDisplay(cls, data):
+        import numpy
+        dmin = numpy.min(data)
+        data = data - dmin
+        dmax = numpy.max(data)
+        data = 255*data/dmax
+        data = data.astype(numpy.uint32) # transform to uint8
+        return data
 
+    @classmethod
+    def qrgb(cls, r, g, b):
+        return (0xff << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff)
+    
+    @classmethod
+    def qgray(cls, r, g, b):
+        return (r*11+g*16+b*5)/32
+    
+    @classmethod
+    def createDefaultColorTable(cls, type, levels = 256):
+        typeCap = type.capitalize()
+        colorTab = []
+        if(typeCap == "GRAY"):
+            for i in range(levels):
+                colorTab.append(OverlayItem.qgray(i, i, i)) # see qGray function in QtGui
+        else:
+            #RGB
+            import numpy
+            from ilastik.core.randomSeed import RandomSeed
+            seed = RandomSeed.getRandomSeed()
+            if seed is not None:
+                numpy.random.seed(seed)
+            for i in range(levels):
+                colorTab.append(OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))) # see gRGB function in QtGui
+        return colorTab        
+    
+    @classmethod
+    # IMPORTANT: BE AWARE THAT CHANGING THE COLOR TABLE MAY AFFECT TESTS THAT WORK WITH GROUND TRUTH 
+    # DATA FROM EXPORTED OVERLAYS. TYPICALLY, ONLY THE DATA AND NOT THE COLOR TABLE OF AN OVERLAY IS
+    # COMPARED BUT BETTER MAKE SURE THAT THIS IS INDEED THE CASE.
+    def createDefault16ColorColorTable(cls):
+        sublist = []
+        sublist.append(OverlayItem.qrgb(69, 69, 69)) # dark grey
+        sublist.append(OverlayItem.qrgb(255, 0, 0))
+        sublist.append(OverlayItem.qrgb(0, 255, 0))
+        sublist.append(OverlayItem.qrgb(0, 0, 255))
+        
+        sublist.append(OverlayItem.qrgb(255, 255, 0))
+        sublist.append(OverlayItem.qrgb(0, 255, 255))
+        sublist.append(OverlayItem.qrgb(255, 0, 255))
+        sublist.append(OverlayItem.qrgb(255, 105, 180)) #hot pink!
+        
+        sublist.append(OverlayItem.qrgb(102, 205, 170)) #dark aquamarine
+        sublist.append(OverlayItem.qrgb(165,  42,  42)) #brown        
+        sublist.append(OverlayItem.qrgb(0, 0, 128)) #navy
+        sublist.append(OverlayItem.qrgb(255, 165, 0)) #orange
+        
+        sublist.append(OverlayItem.qrgb(173, 255,  47)) #green-yellow
+        sublist.append(OverlayItem.qrgb(128,0, 128)) #purple
+        sublist.append(OverlayItem.qrgb(192, 192, 192)) #silver
+        sublist.append(OverlayItem.qrgb(240, 230, 140)) #khaki
+        colorlist = []
+        colorlist.append(long(0))
+        colorlist.extend(sublist)
+        
+        import numpy
+        from ilastik.core.randomSeed import RandomSeed
+        seed = RandomSeed.getRandomSeed()
+        if seed is not None:
+            numpy.random.seed(seed)        
+        for i in range(17, 256):
+            color = OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))
+            colorlist.append(color)
+            
+        return colorlist    
+
+
+#*******************************************************************************
+# O v e r l a y M g r                                                          *
+#*******************************************************************************
 
 class OverlayMgr():
     """

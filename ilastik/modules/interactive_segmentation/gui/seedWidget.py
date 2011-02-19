@@ -32,6 +32,10 @@ from PyQt4 import QtCore, QtGui
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
 import numpy
         
+#*******************************************************************************
+# S e e d L i s t I t e m                                                      *
+#*******************************************************************************
+
 class SeedListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
         QtGui.QListWidgetItem.__init__(self, name)
@@ -40,8 +44,6 @@ class SeedListItem(QtGui.QListWidgetItem):
         self.setColor(color)
         #self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         #self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
-
-        
 
     def toggleVisible(self):
         self.visible = not(self.visible)
@@ -53,6 +55,9 @@ class SeedListItem(QtGui.QListWidgetItem):
         icon = QtGui.QIcon(pixmap)
         self.setIcon(icon)      
 
+#*******************************************************************************
+# S e e d L i s t W i d g e t                                                  *
+#*******************************************************************************
 
 class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
@@ -69,6 +74,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.layout().addWidget(self.addLabelButton)
         self.layout().addWidget(self.listWidget)
         
+        self.ilastik = volumeEditor.ilastik
         self.volumeEditor = volumeEditor
         self.labelMgr = labelMgr
         self.listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -89,6 +95,34 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def currentItem(self):
         return self.listWidget.currentItem()
     
+    def onImageSceneContext(self, imageScene, pos):
+        overlayMgr = self.volumeEditor.ilastik._activeImage.overlayMgr
+        doneOverlay = overlayMgr["Segmentation/Done"]
+        if not doneOverlay: return
+        c = imageScene.coordinateUnderCursor()
+        print c
+        label = doneOverlay._data[0,c[0],c[1],c[2],0]
+        if label == 0: return
+        
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        
+        key = s.segmentKeyForLabel(label)
+        
+        menu = QtGui.QMenu(self)
+        act = menu.addAction("Object #%d [%s]" % (label, key))
+        act.setEnabled(False)
+        font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
+        act.setFont(font)
+        
+        display3dAction = menu.addAction("Display 3D")
+        correctAction   = menu.addAction("Correct")
+        removeAction    = menu.addAction("Remove")
+        
+        imageScene.connect(correctAction, QtCore.SIGNAL("triggered()"), lambda key=key: s.editSegmentsByKey(key)  )
+        imageScene.connect(removeAction,  QtCore.SIGNAL("triggered()"), lambda key=key: s.removeSegmentsByKey(key))
+        
+        menu.exec_(QtGui.QCursor.pos())
+        
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel
         for index, item in enumerate(volumelabel.descriptions):
@@ -124,8 +158,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         
         #select the last item in the last
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(self.listWidget.model().rowCount()-1,0), QtGui.QItemSelectionModel.ClearAndSelect)
-        
-        
+         
     def removeLabel(self, item,  index):
         self.labelMgr.removeLabel(item.number)
         
@@ -140,10 +173,12 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.volumeEditor.emit(QtCore.SIGNAL("seedRemoved(int)"), item.number)
         self.volumeEditor.repaint()
         
-
     def buildColorTab(self):
         origColorTable = self.volumeLabels.getColorTab()
         self.overlayItem.colorTable = self.colorTab = origColorTable
+
+    def count(self):
+        return self.listWidget.count()
 
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)

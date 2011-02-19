@@ -141,15 +141,9 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             return
 
         try:
-            h5file = h5py.File(str(fileName),'a')
-            if 'features' in h5file.keys():
-                del h5file['features']
-            h5featGrp = h5file.create_group('features')
-            self.ilastik.project.dataMgr.Classification.featureMgr.exportFeatureItems(h5featGrp)
-            h5file.close()
+            self.ilastik.project.dataMgr.Classification.featureMgr.exportFeatureItems(fileName)
         except RuntimeError as e:
             QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
-            h5file.close()
             return
         
         QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)

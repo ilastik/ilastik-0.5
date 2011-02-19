@@ -150,8 +150,6 @@ class Maya3DScene(HasTraits):
 #            
 #            print self.plot.module_manager.scalar_lut_manager.lut
             
-            #print "fucking shape ", lut.shape, lut.dtype
-
             
             #self.scene.mlab.pipeline.volume(self.scene.mlab.pipeline.scalar_field(self.item._data[0,:,:,:,0]), vmin=0.5, vmax=1.5)
             #self.scene.mlab.outline()

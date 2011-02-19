@@ -2,7 +2,6 @@ import os
 import sys
 import ilastik.modules
 ilastik.modules.loadModuleCores()
-from ilastik.core.volume import DataAccessor
 from ilastik.core import dataMgr
 
 from ilastik.modules.classification.core.classificationMgr import ClassificationModuleMgr
@@ -10,16 +9,14 @@ from ilastik.modules.classification.core.featureMgr import FeatureMgr
 
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import dataImpex
-from ilastik.core import jobMachine
 
 import traceback
 import getopt
 import h5py
-import fileinput
 import errno
 import gc
 import json
-from ilastik.gui import loadOptions
+from ilastik.core import loadOptionsMgr
 
 
 
@@ -31,7 +28,7 @@ class MainBatch():
         grp = None
         self.dataMgr = dataMgr.DataMgr(grp)
         self.project = project
-        self.options = loadOptions.loadOptions()
+        self.options = loadOptionsMgr.loadOptions()
         self.options.channels = []
         self.options.channels.append(0)
         self.json_input = json_input

@@ -55,7 +55,7 @@ class SegmentorBase(HasTraits):
             volume : 4D scalar containing 3D Data + Color information in the last dimension
             labels : 3D uint8 scalar containing the seeds
         return:
-            3D unit8 volume that contains label numbers
+            4D uint8 (3D + channels) volume that contains label numbers
         """
         print "labelVolume:  ", labelVolume.dtype, labelVolume.shape
         print "labelValues:  ", labelValues.dtype, labelValues.shape

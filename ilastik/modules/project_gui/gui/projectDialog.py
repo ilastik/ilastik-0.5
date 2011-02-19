@@ -1,5 +1,5 @@
 from PyQt4 import QtCore, QtGui, uic
-from ilastik.core import  dataMgr, projectMgr, dataImpex
+from ilastik.core import  dataMgr, dataImpex
 import ilastik.gui
 import fileloader
 import os, sys
@@ -7,6 +7,7 @@ import traceback
 import gc
 from ilastik.gui import stackloader
 from ilastik.gui.iconMgr import ilastikIcons
+from ilastik.core import projectClass
 
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None, newProject = True):
@@ -26,18 +27,19 @@ class ProjectDlg(QtGui.QDialog):
             self.columnPos[ str(self.tableWidget.horizontalHeaderItem(i).text()) ] = i
         self.defaultLabelColors = {}
 
+        self.oldFiles = 0
         projectName = self.projectName
         labeler = self.labeler
         description = self.description
 
         # New project or edited project? if edited, reuse parts of old dataMgr
         if hasattr(self.ilastik,'project') and (not self.newProject):
-            self.dataMgr = self.ilastik.project.dataMgr
+            #self.dataMgr = self.ilastik.project.dataMgr
             self.project = self.ilastik.project
         else:
             print "Create new project"
-            self.dataMgr = dataMgr.DataMgr()
-            self.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
+            #self.dataMgr = dataMgr.DataMgr()
+            self.project = projectClass.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , None)
                     
     def initDlg(self):
         #get the absolute path of the 'ilastik' module
@@ -57,8 +59,9 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def updateDlg(self, project):
+        print "in update Dialog"
         self.project = project
-        self.dataMgr = project.dataMgr        
+        #self.dataMgr = project.dataMgr        
         self.projectName.setText(project.name)
         self.labeler.setText(project.labeler)
         self.description.setText(project.description)
@@ -87,46 +90,29 @@ class ProjectDlg(QtGui.QDialog):
             #r.setFlags(r.flags() & flagOFF);
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
-               
+        self.oldFiles = rowCount+1
         self.exec_()
 
 
     @QtCore.pyqtSignature("")     
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader(self)
-        #imageData = sl.exec_()
         path, fileList, options = sl.exec_()
         if path is None:
             return
-        theDataItem = None
-        try:  
-            theDataItem = dataImpex.DataImpex.importDataItem(fileList, options)
-        except MemoryError:
+        loaded = False
+        try:
+            loaded = self.project.loadStack(path, fileList, options) 
+        except Exception, e:
+            print e
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller sub-volume. Much smaller, since you may also want to calculate some features...")
-        if theDataItem is not None:   
+        if loaded:   
             # file name
-            dirname = os.path.basename(os.path.dirname(path))
-            offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')'
-            theDataItem._name = dirname + ' ' + offsetstr
-            theDataItem.fileName = path   
+            offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')' 
             try:
-                self.dataMgr.append(theDataItem, True)
-                self.dataMgr._dataItemsLoaded[-1] = True
-
-                theDataItem._hasLabels = True
-                theDataItem._isTraining = True
-                theDataItem._isTesting = True
-
-                #self.ilastik.ribbon.getTab('Projects').btnEdit.setEnabled(True)
-                #self.ilastik.ribbon.getTab('Projects').btnOptions.setEnabled(True)
-                #self.ilastik.ribbon.getTab('Projects').btnSave.setEnabled(True)
-
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(rowCount)
-                theFlag = QtCore.Qt.ItemIsEnabled
-                flagON = ~theFlag | theFlag
-                flagOFF = ~theFlag
-               
+            
                 r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets: ' + offsetstr)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
 
@@ -149,37 +135,28 @@ class ProjectDlg(QtGui.QDialog):
         fl = fileloader.FileLoader(self)
         #imageData = sl.exec_()
         fl.exec_()
-        itemList = []
-        print fl.fileList
+
+        loaded = False
         try:
-            itemList = dataImpex.DataImpex.importDataItems(fl.fileList, fl.options)
+            self.project.loadFile(fl.fileList, fl.options)
         except Exception, e:
-            traceback.print_exc(file=sys.stdout)
-            print e
             QtGui.QErrorMessage.qtHandler().showMessage(str(e))
-        for index, item in enumerate(itemList):
-            self.dataMgr.append(item, True)
+        for filename in fl.fileList[fl.options.channels[0]]:
+            
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)
-
-            theFlag = QtCore.Qt.ItemIsEnabled
-            flagON = ~theFlag | theFlag
-            flagOFF = ~theFlag
             
-      
             # file name
-            r = QtGui.QTableWidgetItem(fl.fileList[fl.options.channels[0]][0]+"_series_"+str(index))
+            r = QtGui.QTableWidgetItem(filename)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             # labels
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
             r.setCheckState(QtCore.Qt.Checked)
-
-
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
-            #self.initThumbnail(fl.fileList[fl.options.channels[0]][index])
-            self.initThumbnail(fl.fileList[fl.options.channels[0]][0]+"_series_"+str(index))
+
+            self.initThumbnail(filename)
             self.tableWidget.setCurrentCell(0, 0)
 
     @QtCore.pyqtSignature("")     
@@ -187,56 +164,39 @@ class ProjectDlg(QtGui.QDialog):
         #global LAST_DIRECTORY
         fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ilastik.gui.LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.tiff *.gif *.h5)")
         fileNames.sort()
-        if fileNames:
+        loaded = False
+        try:
+            loaded = self.project.addFile(fileNames)
+        except Exception, e:
+            QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+        if loaded:
             for file_name in fileNames:
                 ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(file_name).path()
-                try:
-                    file_name = str(file_name)
+                rowCount = self.tableWidget.rowCount()
+                self.tableWidget.insertRow(rowCount)
 
-                    #theDataItem = dataMgr.DataItemImage(file_name)
-                    theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
-                    if theDataItem is None:
-                        print "No _data item loaded"
-                    self.dataMgr.append(theDataItem, True)
-                    #self.dataMgr._dataItemsLoaded[-1] = True
-
-                    rowCount = self.tableWidget.rowCount()
-                    self.tableWidget.insertRow(rowCount)
-
-                    theFlag = QtCore.Qt.ItemIsEnabled
-                    flagON = ~theFlag | theFlag
-                    flagOFF = ~theFlag
-
-                    # file name
-                    r = QtGui.QTableWidgetItem(file_name)
-                    self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-                    # labels
-                    r = QtGui.QTableWidgetItem()
-                    r.data(QtCore.Qt.CheckStateRole)
-                    r.setCheckState(QtCore.Qt.Checked)
+                # file name
+                r = QtGui.QTableWidgetItem(file_name)
+                self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
+                # labels
+                r = QtGui.QTableWidgetItem()
+                r.data(QtCore.Qt.CheckStateRole)
+                r.setCheckState(QtCore.Qt.Checked)
 
 
-                    self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
-                    self.initThumbnail(file_name)
-                    self.tableWidget.setCurrentCell(0, 0)
-                except Exception, e:
-                    traceback.print_exc(file=sys.stdout)
-                    print e
-                    QtGui.QErrorMessage.qtHandler().showMessage(str(e))
-
-                    
+                self.initThumbnail(file_name)
+                self.tableWidget.setCurrentCell(0, 0)
+                
     @QtCore.pyqtSignature("")   
     def on_removeFile_clicked(self):
         # Get row and fileName to remove
         row = self.tableWidget.currentRow()
         fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
         print "remove Filename in row: ", fileName, " -- ", row
-        self.dataMgr.remove(row)
-        print "Remove loaded File"
-
+        self.project.removeFile(row)
         # Remove Row from display Table
-        
         self.tableWidget.removeRow(row)
         try:
             del self.thumbList[row]
@@ -260,30 +220,9 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")     
     def on_confirmButtons_accepted(self):
-        projectName = self.projectName
-        labeler = self.labeler
-        description = self.description
-               
-        #self.parent.project = projectMgr.Project(str(projectName.text()), str(labeler.text()), str(description.toPlainText()) , self.dataMgr)
-
-            
-        # Go through the rows of the table and add files if needed
-        rowCount = self.tableWidget.rowCount()
-               
-        for k in range(0, rowCount):               
-            theDataItem = self.dataMgr[k]
-            
-            theDataItem._hasLabels = self.tableWidget.item(k, self.columnPos['Labels']).checkState() == QtCore.Qt.Checked
-            if theDataItem._hasLabels == False:
-                #TODO: remove labels from item
-                pass
-                
-            contained = False
-            for pr in theDataItem._projects:
-                if pr == self.parent.project:
-                    contained = True
-            if not contained:
-                theDataItem._projects.append(self.parent.project)
+        self.project.name = self.projectName.text()
+        self.project.labeler = self.labeler.text()
+        self.project.description = self.description.toPlainText()
         gc.collect()
         self.ilastik.project = self.project
         self.accept()
@@ -292,6 +231,9 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
+        for row in range(self.oldFiles, self.tableWidget.rowCount()):
+            fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
+            self.project.removeFile(row)
         self.reject() 
 
 

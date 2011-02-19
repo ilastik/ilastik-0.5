@@ -1,5 +1,3 @@
-import numpy
-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
@@ -8,11 +6,8 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
-#from ilastik.modules.unsupervised_decomposition.core.unsupervisedMgr import BackgroundOverlayItem
 from ilastik.core.volume import DataAccessor
-#import ilastik.gui.volumeeditor as ve
-from ilastik.core import overlayMgr
-from guiThread import UnsupervisedDecomposition
+from ilastik.modules.unsupervised_decomposition.gui.guiThread import UnsupervisedDecomposition
 from ilastik.modules.unsupervised_decomposition.gui.unsupervisedSelectionDlg import UnsupervisedSelectionDlg
 import ilastik.gui.volumeeditor as ve
 
@@ -49,12 +44,13 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         self.btnUnsupervisedOptions.setEnabled(True)     
                 
     def on_deActivation(self):
-        self.btnDecompose.setEnabled(False)
+        self.btnDecompose.setEnabled(False)  
             
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
         
         self.btnChooseOverlays = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
+        
         self.btnDecompose = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'decompose')
         self.btnUnsupervisedOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Unsupervised Decomposition Options')
 
@@ -90,22 +86,15 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
                 self.parent.labelWidget.overlayWidget.addOverlayRef(ref)
                 
             self.parent.labelWidget.repaint()
-            self.btnDecompose.setEnabled(True) 
+            self.btnDecompose.setEnabled(True)
         else:
-            self.btnDecompose.setEnabled(False)
-                           
+            self.btnDecompose.setEnabled(False)         
         
     def on_btnDecompose_clicked(self):
         self.unsDec = UnsupervisedDecomposition(self.ilastik)
         self.unsDec.start(self.overlays)
-        #self.unsDec.selection_key = self.project.dataMgr.connCompBackgroundKey
-        #self.connComp = UnsupervisedDecomposition(self.ilastik)
-        #
-        #self.connComp.start(None)
 
     def on_btnUnsupervisedOptions_clicked(self):
-        #dialog = UnsupervisedSelectionDlg(self.parent)
-        #self.parent.project.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod = dialog.exec_()
         dialog = UnsupervisedSelectionDlg(self.parent)
         answer = dialog.exec_()
         if answer != None:

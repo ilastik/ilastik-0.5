@@ -541,6 +541,12 @@ class VolumeEditor(QtGui.QWidget):
         self.shortcutToggleFullscreenZ = QtGui.QShortcut(QtGui.QKeySequence("z"), self, self.toggleFullscreenZ, self.toggleFullscreenZ )
         shortcutManager.register(self.shortcutToggleFullscreenZ, "Navigation", "Enlarge slice view z to full size")
 
+        self.shortcutNextChannel = QtGui.QShortcut(QtGui.QKeySequence("q"), self, self.nextChannel, self.nextChannel )
+        shortcutManager.register(self.shortcutNextChannel, "Navigation", "Switch to next channel")
+
+        self.shortcutPreviousChannel = QtGui.QShortcut(QtGui.QKeySequence("a"), self, self.previousChannel, self.previousChannel )
+        shortcutManager.register(self.shortcutPreviousChannel, "Navigation", "Switch to previous channel")
+
 
         for index, scene in enumerate(self.imageScenes):
             scene.shortcutZoomIn = QtGui.QShortcut(QtGui.QKeySequence("+"), scene, scene.zoomIn, scene.zoomIn )
@@ -627,6 +633,12 @@ class VolumeEditor(QtGui.QWidget):
         
     def toggleFullscreenZ(self):
         self.maximizeSliceView(2)
+        
+    def nextChannel(self):
+        self.channelSpin.setValue(self.selectedChannel + 1)
+
+    def previousChannel(self):
+        self.channelSpin.setValue(self.selectedChannel - 1)
 
     def toggleFullscreen3D(self):
         v = [self.imageScenes[i].isVisible() for i in range(3)]
@@ -746,7 +758,7 @@ class VolumeEditor(QtGui.QWidget):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, item.channel)) 
             if len(self.overlayWidget.overlays) > 0:
-                tempImage = self.overlayWidget.overlays[-1]._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.overlays[-1].channel)
+                tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.getOverlayRef("Raw Data").channel)
             else:
                 tempImage = None
 #            if self.labelWidget.volumeLabels is not None:
@@ -849,9 +861,9 @@ class VolumeEditor(QtGui.QWidget):
 
     def setChannel(self, channel):
         if len(self.overlayWidget.overlays) > 0:
-            ov = self.overlayWidget.overlays[-1]
+            ov = self.overlayWidget.getOverlayRef("Raw Data")
             if ov.shape[-1] == self.image.shape[-1]:
-                self.overlayWidget.overlays[-1].channel = channel
+                self.overlayWidget.getOverlayRef("Raw Data").channel = channel
             
         self.selectedChannel = channel
         for i in range(3):
@@ -890,7 +902,7 @@ class VolumeEditor(QtGui.QWidget):
                 tempoverlays.append(item.getOverlaySlice(num,axis, self.selectedTime, item.channel)) 
         
         if len(self.overlayWidget.overlays) > 0:
-            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
         #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
@@ -950,7 +962,7 @@ class VolumeEditor(QtGui.QWidget):
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
         if len(self.overlayWidget.overlays) > 0:
-            tempImage = self.overlayWidget.overlays[-1]._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+            tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
 
@@ -1574,6 +1586,9 @@ class ImageScene(QtGui.QGraphicsView):
         if self.axis is 2:
             self.setStyleSheet("QWidget:!focus { border: 2px solid blue; border-radius: 4px; } \
                                 QWidget:focus { border: 2px solid white; border-radius: 4px; }")
+        
+        #on right mouse press, the customContextMenuRequested() signal is
+        #_automatically_ emitted, no need to call onContext explicitly
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
 
@@ -1955,7 +1970,7 @@ class ImageScene(QtGui.QGraphicsView):
                 
         self.mouseMoveEvent(event)
 
-    #oli todo
+    #TODO oli
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
             self.lastPanPoint = event.pos()
@@ -1975,9 +1990,8 @@ class ImageScene(QtGui.QGraphicsView):
                 self.tempErase = True
             mousePos = self.mapToScene(event.pos())
             self.beginDraw(mousePos)
-        elif event.buttons() == QtCore.Qt.RightButton:
-            self.onContext(event.pos())
-    #oli todo
+            
+    #TODO oli
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
             releasePoint = event.pos()
@@ -1994,7 +2008,7 @@ class ImageScene(QtGui.QGraphicsView):
             self.drawManager.disableErasing()
             self.tempErase = False
 
-    #oli todo
+    #TODO oli
     def panning(self):
         hBar = self.horizontalScrollBar()
         vBar = self.verticalScrollBar()
@@ -2005,7 +2019,7 @@ class ImageScene(QtGui.QGraphicsView):
             hBar.setValue(hBar.value() - self.deltaPan.x())
         
         
-    #oli todo
+    #TODO oli
     def deaccelerate(self, speed, a=2, maxVal=64):
         x = self.qBound(-maxVal, speed.x(), maxVal)
         y = self.qBound(-maxVal, speed.y(), maxVal)
@@ -2019,11 +2033,11 @@ class ImageScene(QtGui.QGraphicsView):
             y = min(0.0, y + a*self.deltaPanRatioY)
         return QtCore.QPointF(x, y)
 
-    #oli todo
+    #TODO oli
     def qBound(self, minVal, current, maxVal):
         return max(min(current, maxVal), minVal)
 
-    #oli todo
+    #TODO oli
     def tickerEvent(self):
         if self.deltaPan.x() == 0.0 and self.deltaPan.y() == 0.0 or self.dragMode == True:
             self.ticker.stop()
@@ -2036,16 +2050,35 @@ class ImageScene(QtGui.QGraphicsView):
             self.deltaPan = self.deaccelerate(self.deltaPan)
             self.panning()
 
-    #oli todo
+    #TODO oli
     def updateInfoLabels(self, posX, posY, posZ, colorValues):
         self.volumeEditor.posLabel.setText("<b>x:</b> %03i  <b>y:</b> %03i  <b>z:</b> %03i" % (posX, posY, posZ))
         if isinstance(colorValues, numpy.ndarray):
             self.volumeEditor.pixelValuesLabel.setText("<b>R:</b> %03i  <b>G:</b> %03i  <b>B:</b> %03i" % (colorValues[0], colorValues[1], colorValues[2]))
         else:
             self.volumeEditor.pixelValuesLabel.setText("<b>Gray:</b> %03i" %int(colorValues))
+    
+    def coordinateUnderCursor(self):
+        """returns the coordinate that is defined by hovering with the mouse
+           over one of the slice views. It is _not_ the coordinate as defined
+           by the three slice views"""
         
-        
-    #oli todo
+        posX = posY = posZ = -1
+        if self.axis == 0:
+            posY = self.y
+            posZ = self.x
+            posX = self.volumeEditor.selSlices[0]
+        elif self.axis == 1:
+            posY = self.volumeEditor.selSlices[1]
+            posZ = self.y
+            posX = self.x
+        else:
+            posY = self.y
+            posZ = self.volumeEditor.selSlices[2]
+            posX = self.x
+        return (posX, posY, posZ)
+    
+    #TODO oli
     def mouseMoveEvent(self,event):
         if self.dragMode == True:
             self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
@@ -2069,24 +2102,18 @@ class ImageScene(QtGui.QGraphicsView):
             self.crossHairCursor.showXYPosition(x,y)
             #self.crossHairCursor.setPos(x,y)
             
+            (posX, posY, posZ) = self.coordinateUnderCursor()
+            
             if self.axis == 0:
-                posY = y
-                posZ = x
-                posX = self.volumeEditor.selSlices[0]
-                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
+                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 if len(self.volumeEditor.imageScenes) > 2:
                     yView = self.volumeEditor.imageScenes[1].crossHairCursor
                     zView = self.volumeEditor.imageScenes[2].crossHairCursor
                     yView.setVisible(False)
                     zView.showYPosition(x, y)
-                
-                
             elif self.axis == 1:
-                posY = self.volumeEditor.selSlices[1]
-                posZ = y
-                posX = x
-                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
+                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 zView = self.volumeEditor.imageScenes[2].crossHairCursor
@@ -2094,10 +2121,7 @@ class ImageScene(QtGui.QGraphicsView):
                 zView.showXPosition(x, y)
                 xView.setVisible(False)
             else:
-                posY = y
-                posZ = posX = self.volumeEditor.selSlices[2]
-                posX = x
-                colorValues = self.volumeEditor.overlayWidget.overlays[-1].getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
+                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
                 self.updateInfoLabels(posX, posY, posZ, colorValues)
                 xView = self.volumeEditor.imageScenes[0].crossHairCursor
                 yView = self.volumeEditor.imageScenes[1].crossHairCursor
@@ -2132,76 +2156,12 @@ class ImageScene(QtGui.QGraphicsView):
             self.volumeEditor.changeSlice(y, 1)
 
     def onContext(self, pos):
-        print self.volumeeditor.labelWidget        
-        
-        menu = QtGui.QMenu('Labeling menu', self)
-       
-        menu.addSeparator()
-        labelList = []
-        
-        if type(self.volumeEditor.labelWidget) != DummyLabelWidget:
-            volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
-    
-            act = menu.addAction("Labels")
-            act.setEnabled(False)
-            font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
-            act.setFont(font)
-            menu.addSeparator()
-            
-            for index, item in enumerate(volumeLabel):
-                labelColor = QtGui.QColor.fromRgb(long(item.color))
-                labelIndex = item.number
-                labelName = item.name
-                pixmap = QtGui.QPixmap(16, 16)
-                pixmap.fill(labelColor)
-                icon = QtGui.QIcon(pixmap)
-                
-                act = QtGui.QAction(icon, labelName, menu)
-                i = self.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
-                # print self.volumeEditor.labelView.selectionModel()
-                self.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: self.onContextSetLabel(i))
-                labelList.append(menu.addAction(act))
-                
-            if self.drawManager.erasing is False:
-                eraseAct = QtGui.QAction("Enable eraser", menu)
-                menu.addAction(eraseAct)
-                self.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: self.drawManager.toggleErase())
-            else:
-                eraseAct = QtGui.QAction("Disable eraser", menu)
-                menu.addAction(eraseAct)
-                self.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: self.drawManager.toggleErase())
-                
-            menu.addSeparator()
-            # brushM = labeling.addMenu("Brush size")
-            brushGroup = QtGui.QActionGroup(self)
-
-            act = menu.addAction("Brush Sizes")
-            act.setEnabled(False)
-            font = QtGui.QFont( "Helvetica", 10, QtGui.QFont.Bold, True)
-            act.setFont(font)
-            menu.addSeparator()
-            
-            defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
-            brush = []
-            for ind, bSizes in enumerate(defaultBrushSizes):
-                b = bSizes[0]
-                desc = bSizes[1]
-                act = QtGui.QAction("  " + str(b) + desc, brushGroup)
-                act.setCheckable(True)
-                self.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: self.drawManager.setBrushSize(b))
-                if b == self.drawManager.getBrushSize():
-                    act.setChecked(True)
-                brush.append(menu.addAction(act))
-            
-            menu.setTearOffEnabled(True)
-    
-            action = menu.exec_(QtGui.QCursor.pos())
+        if type(self.volumeEditor.labelWidget) == DummyLabelWidget: return
+        self.volumeEditor.labelWidget.onImageSceneContext(self, pos)
 
     def onContextSetLabel(self, i):
         self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
         self.drawManager.updateCrossHair()
-
-
 
 class OverviewSceneDummy(QtGui.QWidget):
     def __init__(self, parent, shape):

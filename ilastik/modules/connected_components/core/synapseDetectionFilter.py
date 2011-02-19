@@ -1,7 +1,5 @@
 import numpy
 from ilastik.core.overlays import thresholdOverlay
-from ilastik.modules.connected_components.core import connectedComponentsMgr
-from listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 import vigra
 
 class dummyOverlay:
