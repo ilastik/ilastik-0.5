@@ -197,6 +197,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
         answer = dlg.exec_()
         
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        
         if len(answer) > 0:
             
             overlay = answer[0]
@@ -210,26 +212,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             if borderIndicator[1]:
                 borderIndicator = str(borderIndicator[0])
                 
-                sigma = 1.0
-                normalizePotential = True
-                #TODO: this , until now, only supports gray scale and 2D!
-                if borderIndicator == "Brightness":
-                    weights = volume[:,:,:].view(vigra.ScalarVolume)
-                elif borderIndicator == "Darkness":
-                    weights = (255 - volume[:,:,:]).view(vigra.ScalarVolume)
-                elif borderIndicator == "Gradient Magnitude":
-                    weights = numpy.ndarray(volume.shape, numpy.float32)
-                    if weights.shape[0] == 1:
-                        weights[0,:,:] = vigra.filters.gaussianGradientMagnitude((volume[0,:,:]).astype(numpy.float32), 1.0 )
-                    else:
-                        weights = vigra.filters.gaussianGradientMagnitude((volume[:,:,:]).astype(numpy.float32), 1.0 )
-        
-                if normalizePotential == True:
-                    min = numpy.min(volume)
-                    max = numpy.max(volume)
-                    print "Weights min/max :", min, max
-                    weights = (weights - min)*(255.0 / (max - min))
-        
+                weights = s.calculateWeights(volume, borderIndicator)
+                
                 self.setupWeights(weights)
                 self.btnSegmentorsOptions.setEnabled(True)
                 self.btnSegment.setEnabled(True)

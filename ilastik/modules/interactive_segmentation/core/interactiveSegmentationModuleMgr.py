@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import numpy
+import numpy, vigra
 import sys, os, traceback, copy, csv, shutil, time, threading, warnings
 
 with warnings.catch_warnings():
@@ -144,8 +144,31 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def init(self):
         """Handles all the initialization that can be postponed until _activation_ of the module.
            For example, big arrays are allocated only after the user has decided
-           to switch tothis particular tab."""
+           to switch to this particular tab."""
         self.__createSeedsData()
+    
+    def calculateWeights(self, volume, borderIndicator, normalizePotential=True, sigma=1.0):
+        """Calculate the weights indicating borderness from the raw data"""
+        
+        #TODO: this , until now, only supports gray scale and 2D!
+        if borderIndicator == "Brightness":
+            weights = volume[:,:,:].view(vigra.ScalarVolume)
+        elif borderIndicator == "Darkness":
+            weights = (255 - volume[:,:,:]).view(vigra.ScalarVolume)
+        elif borderIndicator == "Gradient Magnitude":
+            weights = numpy.ndarray(volume.shape, numpy.float32)
+            if weights.shape[0] == 1:
+                weights[0,:,:] = vigra.filters.gaussianGradientMagnitude((volume[0,:,:]).astype(numpy.float32), sigma)
+            else:
+                weights = vigra.filters.gaussianGradientMagnitude((volume[:,:,:]).astype(numpy.float32), sigma)
+                
+        if normalizePotential == True:
+            min = numpy.min(volume)
+            max = numpy.max(volume)
+            print "Weights min/max :", min, max
+            weights = (weights - min)*(255.0 / (max - min))
+            
+        return weights
     
     def segmentKeyForLabel(self, label):
         """given a label in the 'done' overlay, return the key of the group that
