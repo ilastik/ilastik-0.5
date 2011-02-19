@@ -379,7 +379,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             #FIXME: indexing in first and last dimension
             cc = connectedComponentsComputer.connect(f['volume/data'][0,:,:,:,0], background=set([1]))
             numNewLabels = numpy.max(cc)         
-            self.done = numpy.where(cc>0, cc+int(maxLabel), self.done)
+            self.done[:] = numpy.where(cc>0, cc+int(maxLabel), self.done)
             
             r = range(maxLabel+1, maxLabel+1+numNewLabels)
             self._mapKeysToLabels[key] = set(r)
