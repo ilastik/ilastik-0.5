@@ -156,6 +156,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             l = l.split('='); key = l[0].strip(); val = l[1].strip()
             d[key] = val
         
+        #FIXME: make sure that we have the overlay loaded!!!
         self.calculateWeights(self._dataItemImage.overlayMgr[d["overlay"]]._data[0,:,:,:,0], d["borderIndicator"])
     
     def calculateWeights(self, volume, borderIndicator, normalizePotential=True, sigma=1.0):
