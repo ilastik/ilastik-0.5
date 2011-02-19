@@ -66,10 +66,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
-        self._initContent()
-        self._initConnects()
-        self.interactionLog = []
-        self.defaultSegmentor = False
     
     def on_doneOverlaysAvailable(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
@@ -89,6 +85,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         if self.ilastik.project is None: return
+    
+        self._initContent()
+        self._initConnects()
+        self.interactionLog = []
+        self.defaultSegmentor = False
         
         #initially add 'Raw Data' overlay
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
@@ -117,13 +118,27 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.ilastik.labelWidget.repaint)
         self.connect(s, QtCore.SIGNAL('doneOverlaysAvailable()'), self.on_doneOverlaysAvailable)
         self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
+        self.connect(s, QtCore.SIGNAL('newSegmentation()'), self.on_newSegmentation)
+        self.connect(s, QtCore.SIGNAL('numColorsNeeded(int)'), self.on_numColorsNeeded)
         s.init()
         
         #add 'Seeds' overlay
         self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
-        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay))            
+        self.seedWidget = SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay)
+        self.ilastik.labelWidget.setLabelWidget(self.seedWidget)            
 
+    def on_numColorsNeeded(self, numColors):
+        """make sure that there are enough label colors.
+           numColors refers to the _total_ number of colors,
+           including the background. Note that the background label color
+           is always present."""
+        
+        if self.seedWidget.count() >= numColors-1: return
+        
+        for i in range(numColors-self.seedWidget.count()-1):
+            self.seedWidget.createLabel()
+    
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
@@ -171,12 +186,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.setLayout(tl)
         
     def _initConnects(self):
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        
         self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
-        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
+        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), s.segment)
         self.connect(self.btnFinishSegment, QtCore.SIGNAL('clicked()'), self.on_btnFinishSegment_clicked)
         self.connect(self.btnChooseDimensions, QtCore.SIGNAL('clicked()'), self.on_btnDimensions)
         self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
-        self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, self.on_btnSegment_clicked, self.on_btnSegment_clicked)
+        self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
         #shortcutManager.register(self.shortcutNextLabel, "Labeling", "Go to next label (cyclic, forward)")
         
     
@@ -271,13 +288,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
 
         self.ilastik.labelWidget.repaint()
     
-    def on_btnSegment_clicked(self):
+    def on_newSegmentation(self):
         if hasattr(self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor, "bias"):
             bias = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentor.bias            
             s = "%f: segment(bias) %f" % (time.clock(),bias)
             self.ilastik.labelWidget.interactionLog.append(s)
-            
-        self.localMgr.segment()
 
         #ensure that we have a 'Segmentation' overlay which will display the result of the segmentation algorithm
         if self.activeImage.overlayMgr["Segmentation/Segmentation"] is None:

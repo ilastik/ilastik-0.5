@@ -177,6 +177,9 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         origColorTable = self.volumeLabels.getColorTab()
         self.overlayItem.colorTable = self.colorTab = origColorTable
 
+    def count(self):
+        return self.listWidget.count()
+
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)
 

@@ -315,13 +315,18 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         #f.close()
         
         f = h5py.File(self.outputPath+'/'+key+'/seeds.h5', 'r')
-        self.seedLabelsVolume._data[0,:,:,:,:] = f['volume/data'].value[0,:,:,:,:]
+        seeds = f['volume/data'].value[0,:,:,:,:]
+        self.seedLabelsVolume._data[0,:,:,:,:] = seeds
         f.close()
         
-        self._buildSeedsWhenNotThere()
-        self.emit(SIGNAL('overlaysChanged()'))
+        self.emit(SIGNAL('numColorsNeeded(int)'), numpy.max(seeds))
         
-        #FIXME: make sure we have enough labels!!!!
+        self._buildSeedsWhenNotThere()
+        
+        #Now that we have the correct seeds loaded, segment again!
+        self.segment()
+        
+        self.emit(SIGNAL('overlaysChanged()'))
     
     def __rebuildDone(self):
         print "rebuild 'done' overlay"
@@ -497,6 +502,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.borders = None
             
         self.savingNeeded = True
+        
+        self.emit(SIGNAL('newSegmentation()'))
                
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         print "serializing interactive segmentation"
