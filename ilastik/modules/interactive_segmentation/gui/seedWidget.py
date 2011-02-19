@@ -93,6 +93,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def onImageSceneContext(self, imageScene, pos):
         overlayMgr = self.volumeEditor.ilastik._activeImage.overlayMgr
         doneOverlay = overlayMgr["Segmentation/Done"]
+        print "YYYY", doneOverlay
         if not doneOverlay: return
         c = imageScene.coordinateUnderCursor()
         print c
@@ -101,7 +102,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         
         s = self.ilastik._activeImage.Interactive_Segmentation
         
-        key = s.segmentName(label)
+        key = s.segmentKeyForLabel(label)
         
         menu = QtGui.QMenu(self)
         act = menu.addAction("Object #%d [%s]" % (label, key))

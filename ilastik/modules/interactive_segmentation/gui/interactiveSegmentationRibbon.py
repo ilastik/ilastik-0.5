@@ -88,8 +88,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.overlayWidget.addOverlayRef(self.doneBinaryOverlay.getRef())
         
     def on_activation(self):
-        print "XXXXX on_actiavation XXXXXX" 
-        
         if self.ilastik.project is None: return
         
         #initially add 'Raw Data' overlay
@@ -123,7 +121,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         #add 'Seeds' overlay
         self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
-        self.overlayWidget.insertItem(0,OverlayListWidgetItem(self.seedOverlay.getRef()))
         self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay))            
 
     def on_deActivation(self):
