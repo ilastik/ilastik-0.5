@@ -104,7 +104,9 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     done = None
     segmentation = None
     
-    savingNeeded = False
+    #if we are editing a segment that already exists on disk as
+    #self.outputPath/key, this variable will hold 'key'
+    currentSegmentsKey = None
     
     _mapLabelsToKeys = dict()
     _mapKeysToLabels = dict()
@@ -122,6 +124,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def __reset(self):
         self.clearSeeds()
         self._buildSeedsWhenNotThere()
+        self.currentSegmentsKey = None
         
     def __loadMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
@@ -206,7 +209,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         """whether a group of segments is already stored under name 'key' on disk""" 
         return key in self._mapKeysToLabels.keys()
     
-    def saveCurrentSegmentsAs(self, key):
+    def saveCurrentSegment(self):
+        assert self.currentSegmentsKey
+        self.saveCurrentSegmentsAs(self.currentSegmentsKey, overwrite=True)
+    
+    def saveCurrentSegmentsAs(self, key, overwrite = False):
         """ Save the currently segmented segments as a group with the name 'key'.
             A directory with the same name is created in self.outputPath holding
             all information about seeds and segments."""
@@ -218,6 +225,16 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint8)
             self.emit(SIGNAL('doneOverlaysAvailable()'))
         
+        if overwrite:
+            shutil.rmtree(self.outputPath+'/'+str(key))
+            labelsToDelete = copy.deepcopy(self._mapKeysToLabels[key])
+            del self._mapKeysToLabels[key]
+            for l in labelsToDelete:
+                del self._mapLabelsToKeys[l]
+            self.__rebuildDone()
+            
+        elif os.path.exists(self.outputPath+'/'+str(key)):
+            raise RuntimeError("trying to overwrite '%s'", self.outputPath+'/'+str(key))
         #create directory to store the segment in     
         path = self.outputPath+'/'+str(key)
         print " - saving to '%s'" % (path),
@@ -267,6 +284,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.__saveMapping()
 
         self.__reset()
+        
+        self.emit(SIGNAL('saveAsPossible(bool)'), False)
+        self.emit(SIGNAL('savePossible(bool)'),   False)
+        
+        self.emit(SIGNAL('overlaysChanged()'))
     
     def discardCurrentSegmentation(self):
         self.segmentation = None
@@ -288,7 +310,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         print " - removing storage path '%s'" % (path)
         shutil.rmtree(path)
         
-        self.segmentation
+        self.segmentation[0,:,:,:,:] = 0
         
         self.__reset()
         
@@ -308,6 +330,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         print "you want to edit '%s'" % (key)
         assert self.hasSegmentsKey(key)
         
+        self.currentSegmentsKey = key
+        
         self.clearSeeds()
         
         #f = h5py.File(self.outputPath+'/'+key+'/segmentation.h5', 'r')
@@ -319,7 +343,9 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.seedLabelsVolume._data[0,:,:,:,:] = seeds
         f.close()
         
-        self.emit(SIGNAL('numColorsNeeded(int)'), numpy.max(seeds))
+        numColorsNeeded = numpy.max(seeds)
+        print "XXX I will need %d seed colors" % (numColorsNeeded)
+        self.emit(SIGNAL('numColorsNeeded(int)'), numColorsNeeded)
         
         self._buildSeedsWhenNotThere()
         
@@ -504,6 +530,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.savingNeeded = True
         
         self.emit(SIGNAL('newSegmentation()'))
+        if self.currentSegmentsKey == None:
+            self.emit(SIGNAL('saveAsPossible(bool)'), True)
+            self.emit(SIGNAL('savePossible(bool)'), False)
+        else:
+            self.emit(SIGNAL('saveAsPossible(bool)'), False)
+            self.emit(SIGNAL('savePossible(bool)'), True)
                
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         print "serializing interactive segmentation"

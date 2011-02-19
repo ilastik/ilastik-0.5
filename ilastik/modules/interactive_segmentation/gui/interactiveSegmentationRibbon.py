@@ -120,6 +120,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
         self.connect(s, QtCore.SIGNAL('newSegmentation()'), self.on_newSegmentation)
         self.connect(s, QtCore.SIGNAL('numColorsNeeded(int)'), self.on_numColorsNeeded)
+        self.connect(s, QtCore.SIGNAL('saveAsPossible(bool)'), lambda b: self.btnSaveAs.setEnabled(b))
+        self.connect(s, QtCore.SIGNAL('savePossible(bool)'), lambda b: self.btnSave.setEnabled(b))
         s.init()
         
         #add 'Seeds' overlay
@@ -134,9 +136,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
            including the background. Note that the background label color
            is always present."""
         
-        if self.seedWidget.count() >= numColors-1: return
+        if self.seedWidget.count() >= numColors: return
         
-        for i in range(numColors-self.seedWidget.count()-1):
+        for i in range(numColors-self.seedWidget.count()):
             self.seedWidget.createLabel()
     
     def on_deActivation(self):
@@ -156,7 +158,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Weights')
         self.btnChooseDimensions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Using 3D')
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
-        self.btnFinishSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Finish Object')
+        self.btnSaveAs = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Save),'Save As')
+        self.btnSave = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Save),'Save')
         self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Change Segmentor')
         
         self.inlineSettings = InlineSettingsWidget(self)
@@ -174,12 +177,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         #tl.addWidget(self.btnChooseDimensions)
         tl.addWidget(self.btnSegment)        
         tl.addWidget(self.inlineSettings)
-        tl.addWidget(self.btnFinishSegment)
+        tl.addWidget(self.btnSave)
+        tl.addWidget(self.btnSaveAs)
         tl.addStretch()
         tl.addWidget(self.btnSegmentorsOptions)
         
         self.btnSegment.setEnabled(False)
-        self.btnFinishSegment.setEnabled(False)
+        self.btnSaveAs.setEnabled(False)
+        self.btnSave.setEnabled(False)
         self.btnChooseDimensions.setEnabled(False)
         self.btnSegmentorsOptions.setEnabled(False)
         
@@ -190,7 +195,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
         self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), s.segment)
-        self.connect(self.btnFinishSegment, QtCore.SIGNAL('clicked()'), self.on_btnFinishSegment_clicked)
+        self.connect(self.btnSaveAs, QtCore.SIGNAL('clicked()'), self.on_btnSaveAs_clicked)
+        self.connect(self.btnSave, QtCore.SIGNAL('clicked()'), self.on_btnSave_clicked)
         self.connect(self.btnChooseDimensions, QtCore.SIGNAL('clicked()'), self.on_btnDimensions)
         self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
         self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
@@ -246,7 +252,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.interactionLog = []
         self.btnSegmentorsOptions.setEnabled(True)
         self.btnSegment.setEnabled(True)
-        self.btnFinishSegment.setEnabled(True)
         
     def clearSeeds(self):
         self._seedL = None
@@ -260,7 +265,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         button = event.button()
         # select an item on which we clicked
 
-    def on_btnFinishSegment_clicked(self):
+    def on_btnSave_clicked(self):
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        s.saveCurrentSegment()
+
+    def on_btnSaveAs_clicked(self):
         (segmentKey, accepted) = QtGui.QInputDialog.getText(self, "Finish object", "Enter object name:")
         segmentKey = str(segmentKey) #convert to native python string
         if not accepted: return #dialog was canceled
@@ -330,8 +339,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         else:
             self.activeImage.overlayMgr.remove("Segmentation/Supervoxels")
             
-        self.parent.labelWidget.repaint()
-            
+        self.parent.labelWidget.repaint()    
         
     def on_btnSegmentorsOptions_clicked(self):
         dialog = SegmentorSelectionDlg(self.parent)
@@ -340,7 +348,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             self.parent.project.dataMgr.Interactive_Segmentation.segmentor = answer
             self.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber].Interactive_Segmentation._segmentationWeights)
             self.btnSegment.setEnabled(True)
-            self.btnFinishSegment.setEnabled(True)
             
             ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget)
 
