@@ -533,8 +533,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.borders = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.borders])
         else:
             self.borders = None
-            
-        self.savingNeeded = True
         
         self.emit(SIGNAL('newSegmentation()'))
         if self.currentSegmentsKey == None:
