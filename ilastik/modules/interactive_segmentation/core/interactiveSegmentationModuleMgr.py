@@ -433,10 +433,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         return self._seedLabelsList,  self._seedIndicesList
     
     def updateSeeds(self, newLabels):
-        if len(newLabels) > 0 and not self._hasSeeds:
-            self._hasSeeds = True
-            self.emit(SIGNAL('seedsAvailable(bool)'), self._hasSeeds)
-        
         """
         This method updates the seedMatrix with new seeds.
         newlabels can contain completely new labels, changed labels and deleted labels
@@ -526,6 +522,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                 print indices.shape
                 print self._trainingF.shape
                 print nonzero
+        
+        print self._seedLabelsList.__class__ , self._seedLabelsList.shape      
+        hasSeeds = self._seedLabelsList.shape[0] > 0
+        if self._hasSeeds != hasSeeds:
+            self._hasSeeds = hasSeeds
+            self.emit(SIGNAL('seedsAvailable(bool)'), self._hasSeeds)
 
     def segment(self):
         labels, indices = self.getSeeds()
