@@ -98,7 +98,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def onImageSceneContext(self, imageScene, pos):
         overlayMgr = self.volumeEditor.ilastik._activeImage.overlayMgr
         doneOverlay = overlayMgr["Segmentation/Done"]
-        print "YYYY", doneOverlay
         if not doneOverlay: return
         c = imageScene.coordinateUnderCursor()
         print c
