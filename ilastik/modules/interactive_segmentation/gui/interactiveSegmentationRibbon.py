@@ -17,7 +17,7 @@ from ilastik.modules.connected_components.gui.guiThread import CC
 
 from seedWidget import SeedListWidget
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
-from ilastik.gui.overlayWidget import OverlayWidget
+from ilastik.gui.overlayWidget import OverlayWidget, OverlayListWidgetItem
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor
 
@@ -74,24 +74,23 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_doneOverlaysAvailable(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
         
-        bluetable = []
-        bluetable.append(long(0))
-        for i in range(1, 256):
-            bluetable.append(QtGui.qRgb(0, 0, 255))
-        self.doneBinaryOverlay = OverlayItem(s.done, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
-        self.doneObjectsOverlay = OverlayItem(s.done, color=0, alpha=0.7, autoAdd=False, autoVisible=False)
-                
+        bluetable    = [QtGui.qRgb(0, 0, 255) for i in range(256)]
+        bluetable[0] = long(0) #transparency
+        
+        randomColorTable    = [QtGui.qRgb(random.randint(0,255),random.randint(0,255),random.randint(0,255)) for i in range(256)] 
+        randomColorTable[0] = long(0) #transparency
+        
+        self.doneBinaryOverlay = OverlayItem(s.done, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 0, max = 255)
+        self.ilastik._activeImage.overlayMgr["Segmentation/Done"] = self.doneBinaryOverlay
+        self.doneObjectsOverlay = OverlayItem(s.done, color=0, colorTable=randomColorTable, alpha=0.7, autoAdd=False, autoVisible=False, min = 0, max = 255)
+        self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = self.doneObjectsOverlay
+        
+        self.overlayWidget.addOverlayRef(self.doneBinaryOverlay.getRef())
+        
     def on_activation(self):
+        print "XXXXX on_actiavation XXXXXX" 
+        
         if self.ilastik.project is None: return
-        
-        s = self.ilastik._activeImage.Interactive_Segmentation
-        self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.ilastik.labelWidget.repaint)
-        self.connect(s, QtCore.SIGNAL('doneOverlaysAvailable()'), self.on_doneOverlaysAvailable)
-        s.init()
-        
-        #create 'Seeds' overlay
-        self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
         
         #initially add 'Raw Data' overlay
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
@@ -102,13 +101,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.interactionLog = self.interactionLog        
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
-        overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
-        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
-    
-        #add 'Seeds' overlay
-        overlayWidget.addOverlayRef(self.seedOverlay.getRef())
-        
-        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay))
+        self.overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
+        self.ilastik.labelWidget.setOverlayWidget(self.overlayWidget)
         
         if self.parent.project.dataMgr.Interactive_Segmentation.segmentor is None:
             segmentors = self.parent.project.dataMgr.Interactive_Segmentation.segmentorClasses
@@ -118,18 +112,19 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
                     ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget, view='default')
                     self.inlineSettings.changeWidget(ui)
                     self.defaultSegmentor = True
-                    break            
-            
-        """
-        ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
-        ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
+                    break
         
-        if ov is not None and ov_cc is None:
-            colorTableCC = OverlayItem.createDefault16ColorColorTable()
-            ov_cc = OverlayItem(ov._data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
-            self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
-            #ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
-        """
+        #Finally, initialize the core module        
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.ilastik.labelWidget.repaint)
+        self.connect(s, QtCore.SIGNAL('doneOverlaysAvailable()'), self.on_doneOverlaysAvailable)
+        s.init()
+        
+        #add 'Seeds' overlay
+        self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
+        self.overlayWidget.insertItem(0,OverlayListWidgetItem(self.seedOverlay.getRef()))
+        self.ilastik.labelWidget.setLabelWidget(SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay))            
 
     def on_deActivation(self):
         if self.ilastik.project is None:
@@ -275,9 +270,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         s = self.ilastik._activeImage.Interactive_Segmentation
         
         #make sure the name is unique
-        if s.hasSegmentKey(segmentKey):
+        if s.hasSegmentsKey(segmentKey):
             msg = QtGui.QMessageBox.critical(self, "Finish object", \
-            "an object with name '%s' already exists.\\nPlease choose a different name" % (segmentKey))
+            "An object with name '%s' already exists. Please choose a different name" % (segmentKey))
             return
         
         s.saveCurrentSegmentsAs(segmentKey)

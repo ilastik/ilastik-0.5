@@ -158,6 +158,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
            key group"""
         return self._mapKeysToLabels[key]
     
+    def hasSegmentsKey(self, key):
+        """whether a group of segments is already stored under name 'key' on disk""" 
+        return key in self._mapKeysToLabels.keys()
+    
     def saveCurrentSegmentsAs(self, key):
         """ Save the currently segmented segments as a group with the name 'key'.
             A directory with the same name is created in self.outputPath holding
@@ -296,12 +300,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         if not os.path.exists(self.outputPath):
             os.makedirs(self.outputPath)
         
-        doneFileName         = self.outputPath + "/done.h5"
-        
-        #FIXME
-        if os.path.exists(doneFileName):
-            dataImpex.DataImpex.importOverlay(self._dataItemImage, doneFileName, "")
-            self.doneBinaryOverlay = self._dataItemImage.overlayMgr["Segmentation/Done"]
+        if os.path.exists(self.outputPath + "/done.h5"):
+            print "found existing done.h5 file. Loading..."
+            f = h5py.File(self.outputPath + "/done.h5", 'r')
+            self.done = f['volume/data'].value
+            self.emit(SIGNAL('doneOverlaysAvailable()'))
             
         self.__loadMapping()
         
