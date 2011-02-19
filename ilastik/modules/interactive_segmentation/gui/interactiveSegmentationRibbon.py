@@ -123,6 +123,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('numColorsNeeded(int)'), self.on_numColorsNeeded)
         self.connect(s, QtCore.SIGNAL('saveAsPossible(bool)'), lambda b: self.btnSaveAs.setEnabled(b))
         self.connect(s, QtCore.SIGNAL('savePossible(bool)'), lambda b: self.btnSave.setEnabled(b))
+        self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), lambda b: self.btnSegment.setEnabled(b))
         s.init()
         
         #add 'Seeds' overlay
@@ -252,7 +253,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []
         self.btnSegmentorsOptions.setEnabled(True)
-        self.btnSegment.setEnabled(True)
         
     def clearSeeds(self):
         self._seedL = None
@@ -359,7 +359,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         if answer != None:
             self.parent.project.dataMgr.Interactive_Segmentation.segmentor = answer
             self.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber].Interactive_Segmentation._segmentationWeights)
-            self.btnSegment.setEnabled(True)
             
             ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget)
 

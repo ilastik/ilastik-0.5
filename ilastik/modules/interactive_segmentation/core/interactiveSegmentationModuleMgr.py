@@ -106,10 +106,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     
     #if we are editing a segment that already exists on disk as
     #self.outputPath/key, this variable will hold 'key'
-    currentSegmentsKey = None
-    
+    _currentSegmentsKey = None
     _mapLabelsToKeys = dict()
     _mapKeysToLabels = dict()
+    _hasSeeds = False
     
     def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
@@ -124,7 +124,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def __reset(self):
         self.clearSeeds()
         self._buildSeedsWhenNotThere()
-        self.currentSegmentsKey = None
+        self._currentSegmentsKey = None
         
     def __loadMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
@@ -210,8 +210,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         return key in self._mapKeysToLabels.keys()
     
     def saveCurrentSegment(self):
-        assert self.currentSegmentsKey
-        self.saveCurrentSegmentsAs(self.currentSegmentsKey, overwrite=True)
+        assert self._currentSegmentsKey
+        self.saveCurrentSegmentsAs(self._currentSegmentsKey, overwrite=True)
     
     def saveCurrentSegmentsAs(self, key, overwrite = False):
         """ Save the currently segmented segments as a group with the name 'key'.
@@ -337,7 +337,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         print "you want to edit '%s'" % (key)
         assert self.hasSegmentsKey(key)
         
-        self.currentSegmentsKey = key
+        self._currentSegmentsKey = key
         
         self.clearSeeds()
         
@@ -410,6 +410,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.__loadMapping()
         
     def clearSeeds(self):
+        self._hasSeeds = False
+        self.emit(SIGNAL('seedsAvailable(bool)'), self._hasSeeds)
         self._seedLabelsList = None
         self._seedIndicesList = None
         self.seedLabelsVolume._data[0,:,:,:,0] = 0
@@ -431,6 +433,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         return self._seedLabelsList,  self._seedIndicesList
     
     def updateSeeds(self, newLabels):
+        if len(newLabels) > 0 and not self._hasSeeds:
+            self._hasSeeds = True
+            self.emit(SIGNAL('seedsAvailable(bool)'), self._hasSeeds)
+        
         """
         This method updates the seedMatrix with new seeds.
         newlabels can contain completely new labels, changed labels and deleted labels
@@ -535,7 +541,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.borders = None
         
         self.emit(SIGNAL('newSegmentation()'))
-        if self.currentSegmentsKey == None:
+        if self._currentSegmentsKey == None:
             self.emit(SIGNAL('saveAsPossible(bool)'), True)
             self.emit(SIGNAL('savePossible(bool)'), False)
         else:
