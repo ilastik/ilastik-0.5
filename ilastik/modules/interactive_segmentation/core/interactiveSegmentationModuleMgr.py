@@ -111,24 +111,18 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     
     def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
-        self.dataItemImage = dataItemImage
+        self._dataItemImage = dataItemImage
         self.interactiveSegmentationModuleMgr = None 
-        
-        self._segmentationWeights = None
-        self._seedLabelsList = None#numpy.zeros((0, 1), 'uint8')
-        self._seedIndicesList = None#numpy.zeros((0, 1), 'uint32')
-        self.segmentorInstance = None
-        self.potentials = None
+        self._segmentationWeights             = None
+        self._seedLabelsList                  = None
+        self._seedIndicesList                 = None
+        self.segmentorInstance                = None
+        self.potentials                       = None
     
     def __reset(self):
         self.clearSeeds()
         self._buildSeedsWhenNotThere()
-    
-    def __ensureOverlays(self):
-        if self.done is None:
-            self.done = numpy.zeros(self.dataItemImage.shape, numpy.uint8)
-            self.emit(SIGNAL('doneOverlaysAvailable()'))
-    
+        
     def __loadMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
         if os.path.exists(mappingFileName):
@@ -170,7 +164,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             all information about seeds and segments."""
                 
         print "save current segments as '%s'" %  (key)
-        self.__ensureOverlays()
+        
+        #make sure we have a 'done' overlay
+        if self.done is None:
+            self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint8)
+            self.emit(SIGNAL('doneOverlaysAvailable()'))
         
         #create directory to store the segment in     
         path = self.outputPath+'/'+str(key)
@@ -227,6 +225,9 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.__reset()
         
     def removeSegmentsByKey(self, key):
+        """Remove all segments belong to 'key'.
+           The segmentation on disk is removed as well."""
+        
         print "removing segment '%s'" % (key)
         labelsForKey = self._mapKeysToLabels[key]
         print " - labels", [i for i in self._mapKeysToLabels[key]], "belong to '%s'" % (key)
@@ -245,18 +246,17 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         self.__saveMapping()
         
-        self.__rebuilddoneBinaryOverlay()
+        self.__rebuildDone()
         
-        #write out done file again #FIXME
+        #write out done file again
         f = h5py.File(self.outputPath + "/done.h5", 'w')
         f.create_group('volume')
         f.create_dataset('volume/data', data=self.done)
         f.close()
-        del f
         
         self.emit(SIGNAL('overlaysChanged()'))
     
-    def __rebuilddoneBinaryOverlay(self):
+    def __rebuildDone(self):
         print "rebuild 'done' overlay"
         self.done[:] = 0 #clear 'done'
         maxLabel = 0
@@ -284,21 +284,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             
             maxLabel += numNewLabels
         print " ==> there are now a total of %d segments stored as %d named groups" % (maxLabel, len(self._mapKeysToLabels.keys()))
-        
-    def activeSegment(self):
-        #get the label of the segment that we are currently 'carving'
-        pass
-    def activateSegment(self, label):
-        pass
-    def hasSegmentKey(self, key):
-        return key in self._mapLabelsToKeys.values()
     
     def setModuleMgr(self, interactiveSegmentationModuleMgr):
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         
     def __createSeedsData(self):
         if self.seedLabelsVolume is None:
-            l = numpy.zeros(self.dataItemImage.shape[0:-1] + (1, ),  'uint8')
+            l = numpy.zeros(self._dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seedLabelsVolume = VolumeLabels(l)
         
         if not os.path.exists(self.outputPath):
@@ -308,8 +300,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         #FIXME
         if os.path.exists(doneFileName):
-            dataImpex.DataImpex.importOverlay(self.dataItemImage, doneFileName, "")
-            self.doneBinaryOverlay = self.dataItemImage.overlayMgr["Segmentation/Done"]
+            dataImpex.DataImpex.importOverlay(self._dataItemImage, doneFileName, "")
+            self.doneBinaryOverlay = self._dataItemImage.overlayMgr["Segmentation/Done"]
             
         self.__loadMapping()
         
@@ -354,7 +346,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                     loopc = 2
                     count = 1
                     indices = indic[-loopc]*count
-                    templ = list(self.dataItemImage.shape[1:-1])
+                    templ = list(self._dataItemImage.shape[1:-1])
                     templ.reverse()
                     for s in templ:
                         loopc += 1
@@ -401,7 +393,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                     loopc = 2
                     count = 1
                     indices = indic[-loopc]*count
-                    templ = list(self.dataItemImage.shape[1:-1])
+                    templ = list(self._dataItemImage.shape[1:-1])
                     templ.reverse()
                     for s in templ:
                         loopc += 1

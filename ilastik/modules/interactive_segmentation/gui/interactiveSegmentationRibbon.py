@@ -91,7 +91,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         #create 'Seeds' overlay
         self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        #self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
+        self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
         
         #initially add 'Raw Data' overlay
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
