@@ -6,6 +6,10 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
+#*******************************************************************************
+# A u t o m a t i c S e g m e n t a t i o n T e s t P r o j e c t              *
+#*******************************************************************************
+
 class AutomaticSegmentationTestProject(object):
     # this class is used to set up a default project which is then used for testing functionality, 
     # hopefully, this will reduced code redundancy
@@ -51,6 +55,10 @@ class AutomaticSegmentationTestProject(object):
         self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
         
 
+#*******************************************************************************
+# T e s t W h o l e M o d u l e                                                *
+#*******************************************************************************
+
 class TestWholeModule(unittest.TestCase):
      
     def setUp(self):
@@ -67,6 +75,10 @@ class TestWholeModule(unittest.TestCase):
         equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         self.assertEqual(equalOverlays, True)
         
+#*******************************************************************************
+# T e s t W h o l e M o d u l e W r o n g I m a g e                            *
+#*******************************************************************************
+
 class TestWholeModuleWrongImage(unittest.TestCase): # this test tests if wrong input data leads to wrong results
      
     def setUp(self):
@@ -83,6 +95,10 @@ class TestWholeModuleWrongImage(unittest.TestCase): # this test tests if wrong i
         equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         self.assertEqual(equalOverlays, False) # has to be different from ground truth result (wrong input data!)
         
+#*******************************************************************************
+# z z z T e s t D u m m y                                                      *
+#*******************************************************************************
+
 class zzzTestDummy(unittest.TestCase): 
      
     def test_dummy(self):
@@ -90,6 +106,10 @@ class zzzTestDummy(unittest.TestCase):
         
     def tearDown(self):
         jobMachine.GLOBAL_WM.stopWorkers()   
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     unittest.main()

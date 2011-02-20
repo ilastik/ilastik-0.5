@@ -97,6 +97,10 @@ from ilastik.gui.shortcutmanager import shortcutManager, shortcutManagerDlg, sho
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
+#*******************************************************************************
+# R e n d e r C h o i c e D i a l o g                                          *
+#*******************************************************************************
+
 class RenderChoiceDialog(QtGui.QDialog):
     def __init__(self):
         #Test for OpenGL Version
@@ -140,6 +144,10 @@ class RenderChoiceDialog(QtGui.QDialog):
             self.softwareChoice.setChecked(True)
 
         QtCore.QObject.connect(okButton, QtCore.SIGNAL("accepted()"), self, QtCore.SLOT("accept()"))
+
+#*******************************************************************************
+# M a i n W i n d o w                                                          *
+#*******************************************************************************
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -448,6 +456,10 @@ class MainWindow(QtGui.QMainWindow):
         else:
             event.ignore()
            
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")

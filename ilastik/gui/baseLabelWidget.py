@@ -29,6 +29,10 @@
 
 from PyQt4 import QtCore, QtGui
 
+#*******************************************************************************
+# B a s e L a b e l W i d g e t                                                *
+#*******************************************************************************
+
 class BaseLabelWidget(object):
     def __init__(self,  parent = None):
         self.colorTab = None

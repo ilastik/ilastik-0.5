@@ -26,6 +26,10 @@ from enthought.tvtk.api import tvtk
 
 ################################################################################
 # Some logic to pick on click but no move
+#*******************************************************************************
+# M v t P i c k e r                                                            *
+#*******************************************************************************
+
 class MvtPicker(object):
     mouse_mvt = False
 
@@ -61,6 +65,10 @@ class MvtPicker(object):
 
 ################################################################################
 #The actual visualization
+#*******************************************************************************
+# M a y a 3 D S c e n e                                                        *
+#*******************************************************************************
+
 class Maya3DScene(HasTraits):
 
     scene = Instance(MlabSceneModel, ())
@@ -194,6 +202,10 @@ class Maya3DScene(HasTraits):
 
 ################################################################################
 # The QWidget containing the visualization, this is pure PyQt4 code.
+#*******************************************************************************
+# M a y a v i Q W i d g e t                                                    *
+#*******************************************************************************
+
 class MayaviQWidget(QtGui.QWidget):
     def __init__(self, volumeEditor, overlayItemReference, raw):
         QtGui.QWidget.__init__(self)

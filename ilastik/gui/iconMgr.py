@@ -30,6 +30,10 @@
 import os
 import ilastik
 
+#*******************************************************************************
+# i l a s t i k I c o n s                                                      *
+#*******************************************************************************
+
 class ilastikIcons(object):
     #get the absolute path of the 'ilastik' module
     ilastikPath = os.path.dirname(ilastik.__file__)

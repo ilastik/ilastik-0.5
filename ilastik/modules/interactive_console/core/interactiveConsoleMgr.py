@@ -1,6 +1,10 @@
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
 
+#*******************************************************************************
+# I n t e r a c t i v e C o n s o l e I t e m M o d u l e M g r                *
+#*******************************************************************************
+
 class InteractiveConsoleItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Console"
     
@@ -14,6 +18,10 @@ class InteractiveConsoleItemModuleMgr(BaseModuleDataItemMgr):
     def deserialize(self, h5g, offsets, shape):
         pass
     
+
+#*******************************************************************************
+# I n t e r a c t i v e C o n s o l e M o d u l e M g r                        *
+#*******************************************************************************
 
 class InteractiveConsoleModuleMgr(BaseModuleMgr):
     name = "Interactive_Console"

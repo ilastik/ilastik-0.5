@@ -15,6 +15,10 @@ def createDataAccessor( data, channels = False,  autoRgb = True):
             return DataAccessor(data, channels, autoRgb)
 
 
+#*******************************************************************************
+# D a t a A c c e s s o r                                                      *
+#*******************************************************************************
+
 class DataAccessor():
     """
     This class gives consistent access to _data volumes, images channels etc.
@@ -202,6 +206,10 @@ class DataAccessor():
                 data = h5G[name].value[:,offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1], offsets[2]:offsets[2]+shape[2],:]
         return DataAccessor(data, channels = True)
         
+#*******************************************************************************
+# V o l u m e L a b e l D e s c r i p t i o n                                  *
+#*******************************************************************************
+
 class VolumeLabelDescription():
     def __init__(self, name,number, color,  prediction):
         self.number = number
@@ -229,6 +237,10 @@ class VolumeLabelDescription():
         t = VolumeLabelDescription( self.name, self.number, self.color,  self._prediction)
         return t
     
+#*******************************************************************************
+# V o l u m e L a b e l D e s c r i p t i o n M g r                            *
+#*******************************************************************************
+
 class VolumeLabelDescriptionMgr(list):
     def __init__(self):
         list.__init__(self)
@@ -251,6 +263,10 @@ class VolumeLabelDescriptionMgr(list):
     
     
     
+#*******************************************************************************
+# V o l u m e L a b e l s                                                      *
+#*******************************************************************************
+
 class VolumeLabels():
     def __init__(self, data = None):
         if issubclass(data.__class__, DataAccessor):

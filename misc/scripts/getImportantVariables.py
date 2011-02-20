@@ -85,6 +85,10 @@ def printUsage():
     print "nSel: Number of features to be selected"
     print "plotName: File name of output plot to be created"
 
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
 if __name__ == '__main__':
     if len(sys.argv) >=2 and sys.argv[1]=='--help':
         printUsage()

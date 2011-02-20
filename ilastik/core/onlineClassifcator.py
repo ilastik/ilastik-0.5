@@ -37,6 +37,10 @@ try:
 except ImportError:
     sys.exit("vigra module not found!")
 
+#*******************************************************************************
+# O n l i n e C l a s s i f i e r                                              *
+#*******************************************************************************
+
 class OnlineClassifier():
     def __init__(self):
         self.predSets={}
@@ -56,7 +60,15 @@ class OnlineClassifier():
     def predict(self,id):
         pass
 
+#*******************************************************************************
+# C u m u l a t i v e O n l i n e C l a s s i f i e r                          *
+#*******************************************************************************
+
 class CumulativeOnlineClassifier(OnlineClassifier):
+#*******************************************************************************
+# f o r                                                                        *
+#*******************************************************************************
+
     """Base class for all online classifiers, which can not unlearn and need to be shown the data from the last around every round"""
     def __init__(self):
         self.labels=None
@@ -86,6 +98,10 @@ class CumulativeOnlineClassifier(OnlineClassifier):
         self.ids=numpy.delete(self.ids,indexes)
         self.labels=numpy.delete(self.labels,indexes)
         self.features=numpy.delete(self.features,indexes,axis=0)
+
+#*******************************************************************************
+# O n l i n e R F                                                              *
+#*******************************************************************************
 
 class OnlineRF(CumulativeOnlineClassifier):
     def __init__(self,tree_count=100):
@@ -137,6 +153,10 @@ class OnlineRF(CumulativeOnlineClassifier):
         return self.rf.predictProbabilities(self.predOnlineSets[id])
 
 
+
+#*******************************************************************************
+# O n l i n e L a S v m                                                        *
+#*******************************************************************************
 
 class OnlineLaSvm(OnlineClassifier):
     def __init__(self,cacheSize=3000):

@@ -7,6 +7,10 @@ with warnings.catch_warnings():
 from ilastik.core import dataImpex
 from PyQt4 import QtCore, QtGui
 
+#*******************************************************************************
+# L o a d O p t i o n s W i d g e t                                            *
+#*******************************************************************************
+
 class LoadOptionsWidget(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
@@ -273,6 +277,10 @@ class LoadOptionsWidget(QtGui.QWidget):
             self.sizeZ.setValue(0)
             self.sizeX.setValue(0)
             self.sizeY.setValue(0)
+
+#*******************************************************************************
+# p r e v i e w T a b l e                                                      *
+#*******************************************************************************
 
 class previewTable(QtGui.QDialog):
     def __init__(self, fileList, parent=None, newProject = True):

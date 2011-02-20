@@ -9,6 +9,10 @@ from ilastik.gui import stackloader
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.core import projectClass
 
+#*******************************************************************************
+# P r o j e c t D l g                                                          *
+#*******************************************************************************
+
 class ProjectDlg(QtGui.QDialog):
     def __init__(self, parent=None, newProject = True):
         QtGui.QWidget.__init__(self, parent)
@@ -238,6 +242,10 @@ class ProjectDlg(QtGui.QDialog):
 
 
         
+#*******************************************************************************
+# P r o j e c t S e t t i n g s D l g                                          *
+#*******************************************************************************
+
 class ProjectSettingsDlg(QtGui.QDialog):
     def __init__(self, ilastik = None, project=None):
         QtGui.QWidget.__init__(self, ilastik)

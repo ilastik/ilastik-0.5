@@ -1,5 +1,9 @@
 from PyQt4 import QtGui
 
+#*******************************************************************************
+# s h o r t c u t M a n a g e r                                                *
+#*******************************************************************************
+
 class shortcutManager():
     def __init__(self):
         self.shortcuts = dict()
@@ -11,6 +15,10 @@ class shortcutManager():
         
     def showDialog(self, parent=None):
         dlg = shortcutManagerDlg(self, parent)
+
+#*******************************************************************************
+# s h o r t c u t M a n a g e r D l g                                          *
+#*******************************************************************************
 
 class shortcutManagerDlg(QtGui.QDialog):
     def __init__(self, s, parent=None):

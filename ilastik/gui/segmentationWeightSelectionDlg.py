@@ -32,6 +32,10 @@ from enthought.traits.api import *
 from enthought.traits.ui.api import *
 
 
+#*******************************************************************************
+# S e g m e n t a t i o n W e i g h t S e l e c t i o n D l g                  *
+#*******************************************************************************
+
 class SegmentationWeightSelectionDlg(HasTraits):
     borderIndicator = Enum("Brightness", "Darkness", "Gradient")
     sigma = CFloat(1.0)

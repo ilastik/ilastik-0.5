@@ -30,6 +30,10 @@
 from ilastik.modules.classification.core.features.featureBase import *
 import vigra
 
+#*******************************************************************************
+# H e s s i a n O f G a u s s i a n                                            *
+#*******************************************************************************
+
 class HessianOfGaussian(FeatureBase):
     name = "Hessian matrix of Gaussian"
     groups = ['Orientation']
@@ -50,6 +54,10 @@ class HessianOfGaussian(FeatureBase):
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
+
+#*******************************************************************************
+# H e s s i a n O f G a u s s i a n E i g e n v a l u e s                      *
+#*******************************************************************************
 
 class HessianOfGaussianEigenvalues(FeatureBase):
     name = "Eigenvalues of Hessian matrix of Gaussian"
@@ -78,6 +86,10 @@ class HessianOfGaussianEigenvalues(FeatureBase):
 
 
 
+#*******************************************************************************
+# S t r u c t u r e T e n s o r E i g e n v a l u e s                          *
+#*******************************************************************************
+
 class StructureTensorEigenvalues(FeatureBase):
     name = "Eigenvalues of structure tensor"
     groups = ['Texture']
@@ -100,6 +112,10 @@ class StructureTensorEigenvalues(FeatureBase):
 
 
 
+#*******************************************************************************
+# G a u s s i a n G r a d i e n t M a g n i t u d e                            *
+#*******************************************************************************
+
 class GaussianGradientMagnitude(FeatureBase):
     name = "Gradient Magnitude of Gaussian"
     groups = ['Edge']
@@ -121,6 +137,10 @@ class GaussianGradientMagnitude(FeatureBase):
         return result
 
 
+#*******************************************************************************
+# G a u s s i a n S m o o t h i n g                                            *
+#*******************************************************************************
+
 class GaussianSmoothing(FeatureBase):
     name = "Gaussian Smoothing"
     groups = ['Color']
@@ -140,6 +160,10 @@ class GaussianSmoothing(FeatureBase):
         func = vigra.filters.gaussianSmoothing
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
+
+#*******************************************************************************
+# S t r u c t u r e T e n s o r                                                *
+#*******************************************************************************
 
 class StructureTensor(FeatureBase):
     name = "Structure Tensor"
@@ -161,6 +185,10 @@ class StructureTensor(FeatureBase):
         result = self.applyToAllChannels(data, func, self.sigma, self.sigma / 2.0)
         return result
 
+#*******************************************************************************
+# L a p l a c i a n O f G a u s s i a n                                        *
+#*******************************************************************************
+
 class LaplacianOfGaussian(FeatureBase):
     name = "Laplacian of Gaussian"
     groups = ['Edge']
@@ -181,6 +209,10 @@ class LaplacianOfGaussian(FeatureBase):
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
+
+#*******************************************************************************
+# D i f f e r e n c e O f G a u s s i a n s                                    *
+#*******************************************************************************
 
 class DifferenceOfGaussians(FeatureBase):
     name = "Difference of Gaussians"

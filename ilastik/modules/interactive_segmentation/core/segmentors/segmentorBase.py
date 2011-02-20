@@ -31,6 +31,10 @@ from enthought.traits.api import *
 from enthought.traits.ui.api import *
 
 
+#*******************************************************************************
+# S e g m e n t o r B a s e                                                    *
+#*******************************************************************************
+
 class SegmentorBase(HasTraits):
     #human readable information
     name = "Base Segmentation Plugin"

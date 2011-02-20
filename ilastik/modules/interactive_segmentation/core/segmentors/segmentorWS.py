@@ -46,6 +46,10 @@ except Exception, e:
     pass
 
 if ok:
+#*******************************************************************************
+# S e g m e n t o r W S                                                        *
+#*******************************************************************************
+
     class SegmentorWS(SegmentorBase):
         name = "Biased Watershed Segmentation"
         description = "Segmentation plugin using seeded Region Growing Watershed algorithm"

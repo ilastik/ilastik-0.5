@@ -3,6 +3,10 @@ import overlayDialogBase
 import ilastik.gui.overlaySelectionDlg
 from ilastik.core.overlays.thresholdOverlay import ThresholdOverlay 
 
+#*******************************************************************************
+# S l i d e r R e c e i v e r                                                  *
+#*******************************************************************************
+
 class SliderReceiver(QtCore.QObject):
     def __init__(self, dialog, index, oldValue):
         QtCore.QObject.__init__(self)
@@ -13,6 +17,10 @@ class SliderReceiver(QtCore.QObject):
     def sliderMoved(self, value):
         self.dialog.sliderMoved(self.index, value, self.oldValue)
         self.oldValue = value
+
+#*******************************************************************************
+# M u l t i v a r i a t e T h r e s h o l d D i a l o g                        *
+#*******************************************************************************
 
 class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
     configuresClass = "ilastik.core.overlays.thresholdOverlay.ThresholdOverlay"
@@ -73,6 +81,10 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             self.sliderReceivers.append(SliderReceiver(self,index,self.overlayItem.thresholds[index] * 1000))
             
             w = QtGui.QSlider(QtCore.Qt.Vertical)
+#*******************************************************************************
+# p r o b a b i l i t y                                                        *
+#*******************************************************************************
+
             w.setToolTip("Change the threshold for " + str(t.name) + "\n a low threshold compared to the other thresholds means a high class probability")
             w.setRange(0,999)
             w.setSingleStep(1)

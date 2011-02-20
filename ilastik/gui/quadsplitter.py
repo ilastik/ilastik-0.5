@@ -5,6 +5,10 @@ import sys
 
 from ilastik.gui.iconMgr import ilastikIcons 
 
+#*******************************************************************************
+# D o c k a b l e C o n t a i n e r                                            *
+#*******************************************************************************
+
 class DockableContainer(QWidget):
     isDocked = True
     replaceWidget = None
@@ -84,6 +88,10 @@ class DockableContainer(QWidget):
         self.isDocked = not self.isDocked
         
         
+
+#*******************************************************************************
+# Q u a d V i e w                                                              *
+#*******************************************************************************
 
 class QuadView(QWidget):
     dockButton        = 4*[None]
@@ -271,6 +279,10 @@ class QuadView(QWidget):
         else:
             self.splitHorizontal2.insertWidget(index, w)
 
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
 if __name__ == "__main__":
     #make the program quit on Ctrl+C
     import signal
@@ -278,6 +290,10 @@ if __name__ == "__main__":
     
     app = QApplication(sys.argv)
     
+#*******************************************************************************
+# W i n d o w                                                                  *
+#*******************************************************************************
+
     class Window(QMainWindow):
         def __init__(self):
             QMainWindow.__init__(self)

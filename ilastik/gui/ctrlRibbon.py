@@ -28,6 +28,10 @@
 
 from PyQt4 import QtCore, QtGui
 
+#*******************************************************************************
+# I l a s t i k T a b W i d g e t                                              *
+#*******************************************************************************
+
 class IlastikTabWidget(QtGui.QTabWidget):
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self, parent)

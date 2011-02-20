@@ -31,6 +31,10 @@ from PyQt4 import QtCore, QtGui, uic
 import sys, os
 
 
+#*******************************************************************************
+# S e g m e n t o r S e l e c t i o n D l g                                    *
+#*******************************************************************************
+
 class SegmentorSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastik):
         QtGui.QWidget.__init__(self, ilastik)
@@ -94,6 +98,10 @@ def test():
     print dialog.show()
     app.exec_()
 
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     test()

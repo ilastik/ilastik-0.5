@@ -1,6 +1,10 @@
 import vigra, numpy
 import threading
 
+#*******************************************************************************
+# C l a s s i f i e r B a s e                                                  *
+#*******************************************************************************
+
 class ClassifierBase(object):
     #human readable information
     name = "Base classifier" 

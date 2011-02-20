@@ -11,10 +11,18 @@ import ilastik
 import numpy
 
 
+#*******************************************************************************
+# M y L i s t W i d g e t I t e m                                              *
+#*******************************************************************************
+
 class MyListWidgetItem(QtGui.QListWidgetItem):
     def __init__(self, item):
         QtGui.QListWidgetItem.__init__(self, item.name)
         self.origItem = item
+
+#*******************************************************************************
+# O v e r l a y C r e a t e S e l e c t i o n D l g                            *
+#*******************************************************************************
 
 class OverlayCreateSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastikMain):
@@ -60,6 +68,10 @@ class OverlayCreateSelectionDlg(QtGui.QDialog):
         else:
             return None
 
+#*******************************************************************************
+# M y Q L a b e l                                                              *
+#*******************************************************************************
+
 class MyQLabel(QtGui.QLabel):
     def __init(self, parent):
         QtGui.QLabel.__init__(self, parent)
@@ -67,6 +79,10 @@ class MyQLabel(QtGui.QLabel):
     def mouseReleaseEvent(self, ev):
         self.emit(QtCore.SIGNAL('clicked()'))
         
+#*******************************************************************************
+# M y T r e e W i d g e t                                                      *
+#*******************************************************************************
+
 class MyTreeWidget(QtGui.QTreeWidget):
     def __init__(self, *args):
         QtGui.QTreeWidget.__init__(self, *args)
@@ -76,6 +92,10 @@ class MyTreeWidget(QtGui.QTreeWidget):
             self.emit(QtCore.SIGNAL("spacePressed"))
             return True
         return QtGui.QTreeWidget.event(self, event)
+
+#*******************************************************************************
+# M y Q T r e e W i d g e t I t e r                                            *
+#*******************************************************************************
 
 class MyQTreeWidgetIter(QtGui.QTreeWidgetItemIterator):
     def __init__(self, *args):
@@ -88,10 +108,18 @@ class MyQTreeWidgetIter(QtGui.QTreeWidgetItemIterator):
         else:
             return False
 
+#*******************************************************************************
+# M y T r e e W i d g e t I t e m                                              *
+#*******************************************************************************
+
 class MyTreeWidgetItem(QtGui.QTreeWidgetItem):
     def __init__(self, item):
         QtGui.QTreeWidgetItem.__init__(self, [item.name])
         self.item = item
+
+#*******************************************************************************
+# O v e r l a y S e l e c t i o n D i a l o g                                  *
+#*******************************************************************************
 
 class OverlaySelectionDialog(QtGui.QDialog):
     def __init__(self, ilastik, forbiddenItems=[], singleSelection=True, selectedItems=[]):

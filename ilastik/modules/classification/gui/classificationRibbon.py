@@ -19,6 +19,10 @@ from ilastik.modules.classification.gui.featureDlg import FeatureDlg
 from ilastik.modules.classification.gui.classifierSelectionDialog import ClassifierSelectionDlg
 
 
+#*******************************************************************************
+# C l a s s i f i c a t i o n T a b                                            *
+#*******************************************************************************
+
 class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Classification'
     position = 1

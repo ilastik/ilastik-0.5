@@ -8,6 +8,10 @@ import ilastik.gui as gui
 import traceback
 from ilastik.gui import stackloader
 
+#*******************************************************************************
+# S t a c k O v e r l a y D i a l o g                                          *
+#*******************************************************************************
+
 class StackOverlayDialog(overlayDialogBase.OverlayDialogBase):
     configuresClass = "ilastik.core.overlays.stackOverlayDialog.StackOverlayDialog"
     name = "Add Stack Overlay"

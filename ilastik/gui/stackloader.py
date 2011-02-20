@@ -37,6 +37,10 @@ from ilastik.core import loadOptionsMgr
 
 from PyQt4 import QtCore, QtGui
 
+#*******************************************************************************
+# S t a c k L o a d e r                                                        *
+#*******************************************************************************
+
 class StackLoader(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -190,6 +194,10 @@ def test():
     print dialog.show()
     app.exec_()
 
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     test()

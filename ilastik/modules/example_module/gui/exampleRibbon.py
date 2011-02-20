@@ -7,6 +7,10 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 
+#*******************************************************************************
+# H e l p T a b                                                                *
+#*******************************************************************************
+
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Example'  #the name of your ribbon
     position = 101    #the position in the tabbar

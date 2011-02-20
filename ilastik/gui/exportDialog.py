@@ -30,6 +30,10 @@
 from PyQt4 import QtCore, QtGui
 import ilastik.gui
 
+#*******************************************************************************
+# E x p o r t D i a l o g                                                      *
+#*******************************************************************************
+
 class ExportDialog(QtGui.QDialog):
     def __init__(self, formatList, timeOffset, sliceOffset, channelOffset, parent=None):
         QtGui.QDialog.__init__(self, parent)

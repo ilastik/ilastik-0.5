@@ -1,5 +1,9 @@
 from PyQt4 import QtCore, QtGui
 
+#*******************************************************************************
+# E d i t C h a n n e l s D i a l o g                                          *
+#*******************************************************************************
+
 class EditChannelsDialog(QtGui.QDialog):
     def __init__(self, selectedChannels, numOfChannels, parent):
         QtGui.QWidget.__init__(self, parent=None)

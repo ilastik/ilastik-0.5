@@ -2,12 +2,20 @@ import numpy
 from ilastik.core.overlays import thresholdOverlay
 import vigra
 
+#*******************************************************************************
+# d u m m y O v e r l a y                                                      *
+#*******************************************************************************
+
 class dummyOverlay:
     def __init__(self, data, color):
         self._data = data
         self._data = self._data.reshape(self._data.shape+(1,))
         self.color = color
 
+
+#*******************************************************************************
+# S y n a p s e F i l t e r A n d S e g m e n t o r                            *
+#*******************************************************************************
 
 class SynapseFilterAndSegmentor(object):
     def __init__(self, parent = None, labelnum = None, cc_overlay = None, input_overlay = None):

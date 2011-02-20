@@ -8,6 +8,10 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
+#*******************************************************************************
+# C C T e s t P r o j e c t                                                    *
+#*******************************************************************************
+
 class CCTestProject(object):
     # this class is used to set up a default project which is then used for testing functionality, 
     # hopefully, this will reduced code redundancy
@@ -46,6 +50,10 @@ class CCTestProject(object):
         self.listOfResultOverlays.append("Connected Components/CC Results")
         self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
 
+#*******************************************************************************
+# T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d            *
+#*******************************************************************************
+
 class TestWholeModule_WithoutBackground(unittest.TestCase):
      
     def setUp(self):
@@ -71,6 +79,10 @@ class TestWholeModule_WithoutBackground(unittest.TestCase):
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
 
+
+#*******************************************************************************
+# T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d W r o n g I m a g e *
+#*******************************************************************************
 
 class TestWholeModule_WithoutBackgroundWrongImage(unittest.TestCase): # tests if wrong input leads to a test fail
      
@@ -104,6 +116,10 @@ class TestWholeModule_WithoutBackgroundWrongImage(unittest.TestCase): # tests if
         self.app.quit()
         
         
+#*******************************************************************************
+# T e s t W h o l e M o d u l e _ W i t h B a c k g r o u n d 1                *
+#*******************************************************************************
+
 class TestWholeModule_WithBackground1(unittest.TestCase):
      
     def setUp(self):
@@ -130,6 +146,10 @@ class TestWholeModule_WithBackground1(unittest.TestCase):
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
  
+#*******************************************************************************
+# T e s t W h o l e M o d u l e _ W i t h B a c k g r o u n d 2                *
+#*******************************************************************************
+
 class TestWholeModule_WithBackground2(unittest.TestCase):
      
     def setUp(self):
@@ -156,6 +176,10 @@ class TestWholeModule_WithBackground2(unittest.TestCase):
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
                 
+#*******************************************************************************
+# z z z T e s t D u m m y                                                      *
+#*******************************************************************************
+
 class zzzTestDummy(unittest.TestCase): 
      
     def test_dummy(self):
@@ -163,6 +187,10 @@ class zzzTestDummy(unittest.TestCase):
         
     def tearDown(self):
         jobMachine.GLOBAL_WM.stopWorkers()
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     unittest.main()

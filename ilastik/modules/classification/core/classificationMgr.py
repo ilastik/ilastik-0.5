@@ -108,6 +108,10 @@ def setintersectionmask(a,b):
     else:
         return numpy.intersect1d(a,b)
 
+#*******************************************************************************
+# C l a s s i f i c a t i o n I t e m M o d u l e M g r                        *
+#*******************************************************************************
+
 class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Classification"
     
@@ -142,6 +146,10 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
             self["prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
         
 
+
+#*******************************************************************************
+# C l a s s i f i c a t i o n M o d u l e M g r                                *
+#*******************************************************************************
 
 class ClassificationModuleMgr(BaseModuleMgr):
     name = "Classification"
@@ -285,6 +293,10 @@ class ClassificationModuleMgr(BaseModuleMgr):
         for cid in classifiers:
             self.classifier.deserialize(f[h5G.name +  '/classifiers/' + cid])
         
+#*******************************************************************************
+# C l a s s i f i c a t i o n M g r                                            *
+#*******************************************************************************
+
 class ClassificationMgr(object):
     def __init__(self, dataMgr):
         self.dataMgr = dataMgr         
@@ -541,6 +553,10 @@ class ClassificationMgr(object):
 
 
     
+#*******************************************************************************
+# C l a s s i f i e r T r a i n T h r e a d                                    *
+#*******************************************************************************
+
 class ClassifierTrainThread(ThreadBase):
     def __init__(self, queueSize, dataMgr,
                  classifier = classifiers.classifierRandomForest.ClassifierRandomForest,
@@ -589,6 +605,10 @@ class ClassifierTrainThread(ThreadBase):
 
 
                     
+#*******************************************************************************
+# C l a s s i f i e r P r e d i c t T h r e a d                                *
+#*******************************************************************************
+
 class ClassifierPredictThread(ThreadBase):
     def __init__(self, dataMgr):
         ThreadBase.__init__(self, None)
@@ -721,6 +741,10 @@ class ClassifierPredictThread(ThreadBase):
 
 
                 
+
+#*******************************************************************************
+# C l a s s i f i e r I n t e r a c t i v e T h r e a d                        *
+#*******************************************************************************
 
 class ClassifierInteractiveThread(ThreadBase):
     def __init__(self, parent, classificationMgr, classifier = classifiers.classifierRandomForest.ClassifierRandomForest, numClassifiers = 5, classifierOptions=(8,)):

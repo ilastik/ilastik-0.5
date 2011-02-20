@@ -36,6 +36,10 @@ import ilastik.gui.overlayDialogs as overlayDialogs
 import ilastik.gui.exportDialog as exportDialog
 from ilastik.core import dataImpex
 
+#*******************************************************************************
+# O v e r l a y L i s t W i d g e t I t e m                                    *
+#*******************************************************************************
+
 class OverlayListWidgetItem(QtGui.QListWidgetItem):
     def __init__(self, overlayItemReference):
         QtGui.QListWidgetItem.__init__(self,overlayItemReference.name)
@@ -54,7 +58,15 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
             return self.overlayItemReference.color
         raise AttributeError,  name
 
+#*******************************************************************************
+# O v e r l a y L i s t W i d g e t                                            *
+#*******************************************************************************
+
 class OverlayListWidget(QtGui.QListWidget):
+
+#*******************************************************************************
+# Q A l p h a S l i d e r D i a l o g                                          *
+#*******************************************************************************
 
     class QAlphaSliderDialog(QtGui.QDialog):
         def __init__(self, min, max, value):
@@ -288,6 +300,10 @@ class OverlayListWidget(QtGui.QListWidget):
             self.volumeEditor.repaint()
         
 
+
+#*******************************************************************************
+# O v e r l a y W i d g e t                                                    *
+#*******************************************************************************
 
 class OverlayWidget(QtGui.QGroupBox):
     def __init__(self,parent, dataMgr):

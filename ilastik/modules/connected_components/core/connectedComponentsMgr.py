@@ -48,6 +48,10 @@ except:
     ThreadBase = threading.Thread
     have_qt = False
 
+#*******************************************************************************
+# B a c k g r o u n d O v e r l a y I t e m                                    *
+#*******************************************************************************
+
 class BackgroundOverlayItem(OverlayItem):
     def __init__(self, backgroundListWidget, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
         self.backgroundListWidget = backgroundListWidget
@@ -56,6 +60,10 @@ class BackgroundOverlayItem(OverlayItem):
     def getColorTab(self):
         return self.backgroundListWidget.getColorTab()
 
+
+#*******************************************************************************
+# C o n n e c t e d C o m p o n e n t s I t e m M o d u l e M g r              *
+#*******************************************************************************
 
 class ConnectedComponentsItemModuleMgr(BaseModuleDataItemMgr):
     name = "Connected_Components"
@@ -115,6 +123,10 @@ class ConnectedComponentsItemModuleMgr(BaseModuleDataItemMgr):
     def setInputData(self, data):
         self.inputData = data
             
+#*******************************************************************************
+# C o n n e c t e d C o m p o n e n t s M o d u l e M g r                      *
+#*******************************************************************************
+
 class ConnectedComponentsModuleMgr(BaseModuleMgr):
     name = "Connected_Components"
     
@@ -195,6 +207,10 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"]._data = DataAccessor(result)        
 
     
+#*******************************************************************************
+# C o n n e c t e d C o m p o n e n t s                                        *
+#*******************************************************************************
+
 class ConnectedComponents():
     def __init__(self):
         self.inputdata = None
@@ -227,6 +243,10 @@ class ConnectedComponents():
                 vol_merged[ind]=back_value
             return vol_merged.swapaxes(0,2).view(), back_value
 
+
+#*******************************************************************************
+# C o n n e c t e d C o m p o n e n t s T h r e a d                            *
+#*******************************************************************************
 
 class ConnectedComponentsThread(QtCore.QThread):
     def __init__(self, dataMgr, image, background=set(), connector = ConnectedComponents(), connectorOptions = None):

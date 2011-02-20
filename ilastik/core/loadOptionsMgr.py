@@ -27,6 +27,10 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+#*******************************************************************************
+# l o a d O p t i o n s                                                        *
+#*******************************************************************************
+
 class loadOptions:
     def __init__(self):
         self.resolution = (1, 1, 1)

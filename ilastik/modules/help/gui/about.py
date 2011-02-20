@@ -5,6 +5,10 @@ import webbrowser
 from ilastik.core import readInBuildInfo
 
 
+#*******************************************************************************
+# L i c e n s e                                                                *
+#*******************************************************************************
+
 class License(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent)
@@ -48,11 +52,19 @@ class License(QtGui.QDialog):
             self.te.append(line)
         licenseFile.close()
 
+#*******************************************************************************
+# W r i t a b l e O b j e c t                                                  *
+#*******************************************************************************
+
 class WritableObject:
     def __init__(self):
         self.content = []
     def write(self, string):
         self.content.append(string)
+
+#*******************************************************************************
+# A b o u t                                                                    *
+#*******************************************************************************
 
 class About(QtGui.QDialog):
     def __init__(self, parent=None):
@@ -105,6 +117,10 @@ class About(QtGui.QDialog):
     def openWebSite(self):
         webbrowser.open('http://www.ilastik.org/')
         
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     about = About()
