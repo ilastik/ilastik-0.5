@@ -801,6 +801,15 @@ if __name__ == '__main__':
     assert h5equal(s.outputPath+'/done.h5', doneGT)
     
     print "*************************************************************************"
+    print "* edit segments 'two'                                                   *"
+    print "*************************************************************************"
+    
+    s.editSegmentsByKey('two')
+    #TODO: Implement fake segmentation based on seeds in the TestSegmentor
+    #assert h5equal(s.outputPath+'/two/segmentation.h5', s.segmentation[0,:,:,:,:])
+    s.saveCurrentSegment()
+    
+    print "*************************************************************************"
     print "* remove segments 'two'                                                 *"
     print "*************************************************************************"
     
