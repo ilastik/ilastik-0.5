@@ -675,6 +675,10 @@ if __name__ == '__main__':
     
     #save as 'one'
     s.saveCurrentSegmentsAs('one')
+    
+    #we now have a 'done' overlay
+    doneRef = s.done
+    
     assert os.path.exists(s.outputPath)
     assert os.path.exists(s.outputPath+'/done.h5')
     assert os.path.exists(s.outputPath+'/mapping.dat')
@@ -815,6 +819,11 @@ if __name__ == '__main__':
     doneGT = numpy.zeros(shape=seg1.shape, dtype=numpy.uint32)
     assert arrayEqual(doneGT.squeeze(), s.done.squeeze())
     assert h5equal(s.outputPath+'/done.h5', doneGT)
+    
+    #make sure that we have not overwritten the done overlay, which
+    #would cause the connection with the 'Segmentation/Done' overlay
+    #to break
+    assert doneRef is s.done
     
     jobMachine.GLOBAL_WM.stopWorkers()
     
