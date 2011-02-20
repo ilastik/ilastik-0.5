@@ -1,6 +1,10 @@
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
 
+#*******************************************************************************
+# H e l p I t e m M o d u l e M g r                                            *
+#*******************************************************************************
+
 class HelpItemModuleMgr(BaseModuleDataItemMgr):
     name = "Help"
     
@@ -14,6 +18,10 @@ class HelpItemModuleMgr(BaseModuleDataItemMgr):
     def deserialize(self, h5g, offsets, shape):
         pass
     
+
+#*******************************************************************************
+# H e l p M o d u l e M g r                                                    *
+#*******************************************************************************
 
 class HelpModuleMgr(BaseModuleMgr):
     name = "Help"

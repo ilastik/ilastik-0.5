@@ -33,6 +33,10 @@ def detectCPUs():
     return 1 # Default
 
 
+#*******************************************************************************
+# I l a s t i k J o b                                                          *
+#*******************************************************************************
+
 class IlastikJob(object):
     def __init__(self, target, args):
         self.target = target
@@ -42,6 +46,10 @@ class IlastikJob(object):
         worker = machine.workers.pop()
         worker.process(self, machine)
 
+
+#*******************************************************************************
+# J o b M a c h i n e W o r k e r                                              *
+#*******************************************************************************
 
 class JobMachineWorker(ThreadBase):
     def __init__(self):
@@ -81,6 +89,10 @@ class JobMachineWorker(ThreadBase):
         self.machine = machine
         self.event.set()
 
+#*******************************************************************************
+# J o b M a c h i n e W o r k e r U n t h r e a d e d                          *
+#*******************************************************************************
+
 class JobMachineWorkerUnthreaded(object):
     def __init__(self):
         pass
@@ -90,6 +102,10 @@ class JobMachineWorkerUnthreaded(object):
         machine.results.append(result)
         machine.workers.append(self)
         machine.sem.release()      
+
+#*******************************************************************************
+# J o b M a c h i n e                                                          *
+#*******************************************************************************
 
 class JobMachine(object):
     """
@@ -154,6 +170,10 @@ class JobMachine(object):
         return results
     
 
+
+#*******************************************************************************
+# W o r k e r M a n a g e r                                                    *
+#*******************************************************************************
 
 class WorkerManager(object):
     def __init__(self):
@@ -224,6 +244,10 @@ def test():
     
     for r in results:
         print r
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     test()

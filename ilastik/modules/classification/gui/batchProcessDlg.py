@@ -36,6 +36,10 @@ from ilastik.modules.classification.core import featureMgr
 from ilastik.modules.classification.core import classificationMgr
 
 
+#*******************************************************************************
+# B a t c h P r o c e s s                                                      *
+#*******************************************************************************
+
 class BatchProcess(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -162,6 +166,10 @@ def test():
     print dialog.show()
     app.exec_()
 
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     test()

@@ -1,6 +1,10 @@
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
 
+#*******************************************************************************
+# P r o j e c t I t e m M o d u l e M g r                                      *
+#*******************************************************************************
+
 class ProjectItemModuleMgr(BaseModuleDataItemMgr):
     name = "Project"
     
@@ -14,6 +18,10 @@ class ProjectItemModuleMgr(BaseModuleDataItemMgr):
     def deserialize(self, h5g, offsets, shape):
         pass
     
+
+#*******************************************************************************
+# P r o j e c t M o d u l e M g r                                              *
+#*******************************************************************************
 
 class ProjectModuleMgr(BaseModuleMgr):
     name = "Project"

@@ -48,6 +48,10 @@ except Exception, e:
     pass
 
 if 0:
+#*******************************************************************************
+# S e g m e n t o r S V 2                                                      *
+#*******************************************************************************
+
     class SegmentorSV2(SegmentorBase):
         name = "Supervoxel Segmentation 2"
         description = "Segmentation plugin using sparse Basin graph"
@@ -60,6 +64,10 @@ if 0:
         
         view = View( Item('bias'),  Item('maxHeight'), Item('biasedLabel'), buttons = ['OK', 'Cancel'],  )        
         
+#*******************************************************************************
+# I n d e x e d A c c e s s o r                                                *
+#*******************************************************************************
+
         class IndexedAccessor:
             """
             Helper class that behaves like an ndarray, but does a Lookuptable access

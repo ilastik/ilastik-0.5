@@ -11,6 +11,10 @@ from ilastik.modules.unsupervised_decomposition.gui.guiThread import Unsupervise
 from ilastik.modules.unsupervised_decomposition.gui.unsupervisedSelectionDlg import UnsupervisedSelectionDlg
 import ilastik.gui.volumeeditor as ve
 
+#*******************************************************************************
+# U n s u p e r v i s e d T a b                                                *
+#*******************************************************************************
+
 class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
     name = 'Unsupervised Decomposition'
     position = 2

@@ -29,6 +29,10 @@
 import numpy, h5py
 import ilastik.modules.classification.core.features
 
+#*******************************************************************************
+# F e a t u r e B a s e                                                        *
+#*******************************************************************************
+
 class FeatureBase(object):
     """
     A Base class for feature plugins, all subclasses of this class

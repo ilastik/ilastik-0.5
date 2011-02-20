@@ -23,6 +23,10 @@ from ilastik.core import loadOptionsMgr
 inputPath=""
 outputPath=""
 
+#*******************************************************************************
+# M a i n B a t c h                                                            *
+#*******************************************************************************
+
 class MainBatch():
     def __init__(self, project, json_input):
         grp = None
@@ -123,6 +127,10 @@ class MainBatch():
             
             
             
+#*******************************************************************************
+# B a t c h O p t i o n s                                                      *
+#*******************************************************************************
+
 class BatchOptions(object):
     def __init__(self, outputDir, classifierFile, fileList):
         self.outputDir = outputDir
@@ -185,6 +193,10 @@ class BatchOptions(object):
     
 
     
+#*******************************************************************************
+# B a t c h P r o c e s s C o r e                                              *
+#*******************************************************************************
+
 class BatchProcessCore(object):
     def __init__(self, batchOptions):
         self.batchOptions = batchOptions
@@ -283,6 +295,10 @@ class BatchProcessCore(object):
                 print e
 
             yield filename
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__": 
     if len(sys.argv) == 1:

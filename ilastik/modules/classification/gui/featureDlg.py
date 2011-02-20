@@ -40,6 +40,10 @@ import copy
 
 from ilastik.modules.classification.gui.guiThreads import FeatureComputation
 
+#*******************************************************************************
+# F e a t u r e D l g                                                          *
+#*******************************************************************************
+
 class FeatureDlg(QtGui.QDialog):
     def __init__(self, parent=None, previewImage=None):
         QtGui.QDialog.__init__(self, parent)

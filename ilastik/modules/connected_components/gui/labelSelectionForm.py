@@ -1,5 +1,9 @@
 from PyQt4 import QtCore, QtGui
 
+#*******************************************************************************
+# L a b e l S e l e c t i o n F o r m                                          *
+#*******************************************************************************
+
 class LabelSelectionForm(QtGui.QDialog):
     def __init__(self, parent = None, desc_names = None):
         QtGui.QWidget.__init__(self, parent)

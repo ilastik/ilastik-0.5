@@ -4,6 +4,10 @@ from PyQt4.QtGui import QInputDialog
 
 import numpy, h5py
 
+#*******************************************************************************
+# C l a s s i f i e r R a n d o m F o r e s t                                  *
+#*******************************************************************************
+
 class ClassifierRandomForest(ClassifierBase):
     #human readable information
     name = "Random forest classifier" 

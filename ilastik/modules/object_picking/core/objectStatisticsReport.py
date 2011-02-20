@@ -1,6 +1,10 @@
 import os.path
 import objectOperators
 
+#*******************************************************************************
+# O b j e c t S t a t i s t i c s R e p o r t                                  *
+#*******************************************************************************
+
 class ObjectStatisticsReport():
     def __init__(self, outputfile, objects, objectsOverlay, objectsInputOverlay, raw_data):
         self.outputfile = outputfile

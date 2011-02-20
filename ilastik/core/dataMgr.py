@@ -74,6 +74,10 @@ def unravelIndices(indices, shape):
     return ti    
 
 
+#*******************************************************************************
+# D a t a I t e m B a s e                                                      *
+#*******************************************************************************
+
 class DataItemBase():
     """
     Data Base class, serves as an interface for the specialized _data structures, e.g. images, multispectral, volume etc.  
@@ -89,6 +93,10 @@ class DataItemBase():
 
         self.thumbnail = None
 
+
+#*******************************************************************************
+# B l o c k A c c e s s o r                                                    *
+#*******************************************************************************
 
 class BlockAccessor():
     def __init__(self, data, blockSize = None):
@@ -172,6 +180,10 @@ class BlockAccessor():
         self._data[args] = data
         self._lock.release()
             
+#*******************************************************************************
+# B l o c k A c c e s s o r 2 D                                                *
+#*******************************************************************************
+
 class BlockAccessor2D():
     def __init__(self, data, blockSize = 128):
         self._data = data
@@ -240,6 +252,10 @@ class BlockAccessor2D():
         self._lock.release()
 
     
+#*******************************************************************************
+# D a t a I t e m I m a g e                                                    *
+#*******************************************************************************
+
 class DataItemImage(DataItemBase):
     def __init__(self, fileName):
         DataItemBase.__init__(self, fileName)
@@ -358,6 +374,10 @@ class DataItemImage(DataItemBase):
 
 
 
+#*******************************************************************************
+# M u l t i P a r t D a t a I t e m A c c e s s o r                            *
+#*******************************************************************************
+
 class MultiPartDataItemAccessor(object):
     def __init__(self, data, blocksize = 128, overlap = 10):
         self._data = data
@@ -381,6 +401,10 @@ class MultiPartDataItemAccessor(object):
 
         
             
+#*******************************************************************************
+# D a t a M g r                                                                *
+#*******************************************************************************
+
 class DataMgr():
     """
     Manages Project structure and associated files, e.g. images volumedata

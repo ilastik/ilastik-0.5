@@ -53,6 +53,10 @@ except Exception, e:
     print "####################################"
 
 if ok:
+#*******************************************************************************
+# S e g m e n t o r W S i t e r                                                *
+#*******************************************************************************
+
     class SegmentorWSiter(SegmentorBase):
         name = "Supervoxel Segmentation"
         description = "Segmentation plug-in using sparse basin graph"
@@ -80,6 +84,10 @@ if ok:
         lastBorderState = False        
         
                 
+#*******************************************************************************
+# I n d e x e d A c c e s s o r                                                *
+#*******************************************************************************
+
         class IndexedAccessor:
             """
             Helper class that behaves like an ndarray, but does a Lookuptable access
@@ -98,6 +106,10 @@ if ok:
             def __setitem__(self, key, data):
                 #self.data[tuple(key)] = data
                 print "##########ERROR ######### : IndexAccessor setitem should not be called"
+
+#*******************************************************************************
+# I n d e x e d A c c e s s o r W i t h C h a n n e l                          *
+#*******************************************************************************
 
         class IndexedAccessorWithChannel:
             """

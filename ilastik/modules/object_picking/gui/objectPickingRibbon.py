@@ -16,6 +16,10 @@ from ilastik.core.volume import DataAccessor
 import ilastik.gui.volumeeditor as ve
 from objectWidget import ObjectListWidget
 
+#*******************************************************************************
+# O b j e c t s T a b                                                          *
+#*******************************************************************************
+
 class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     name = 'Objects'
     moduleName = "Object_Picking"

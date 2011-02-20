@@ -4,6 +4,10 @@ import ilastik.core.overlayMgr as overlayMgr
 from ilastik.core.volume import DataAccessor
 import datetime
 
+#*******************************************************************************
+# M u l t i v a r i a t e T h r e s h o l d A c c e s s o r                    *
+#*******************************************************************************
+
 class MultivariateThresholdAccessor(object):
     def __init__(self, thresholdOverlay):
 
@@ -42,6 +46,10 @@ class MultivariateThresholdAccessor(object):
     def __setitem__(self, key, data):
         raise Exception('yeah sure', 'no setting of multivariathresholdaccessor _data')
         
+
+#*******************************************************************************
+# T h r e s h o l d O v e r l a y                                              *
+#*******************************************************************************
 
 class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
     def __init__(self, foregrounds, backgrounds, sigma = -1, autoAdd = True, autoVisible = True):

@@ -14,6 +14,10 @@ from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.LOCIwrapper import reader as LOCIreader
 
+#*******************************************************************************
+# D a t a I m p e x                                                            *
+#*******************************************************************************
+
 class DataImpex(object):
     """
     Data Import/Export class 

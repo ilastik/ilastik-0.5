@@ -1,5 +1,9 @@
 from PyQt4 import QtGui, QtCore
 
+#*******************************************************************************
+# U n s u p e r v i s e d D e c o m p o s i t i o n                            *
+#*******************************************************************************
+
 class UnsupervisedDecomposition(object):
     
     def __init__(self, parent):

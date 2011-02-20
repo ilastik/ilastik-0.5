@@ -46,6 +46,10 @@ except Exception, e:
     pass
 
 if ok:
+#*******************************************************************************
+# S e g m e n t o r R W                                                        *
+#*******************************************************************************
+
     class SegmentorRW(SegmentorBase):
         name = "Random Walk Segmentation"
         description = "Segmentation plugin using the Random Walk algorithm "

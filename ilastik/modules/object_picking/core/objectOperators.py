@@ -1,6 +1,10 @@
 import numpy, vigra
 import os.path
 
+#*******************************************************************************
+# s i z e _ i n _ p i x e l s                                                  *
+#*******************************************************************************
+
 class size_in_pixels():
     def __init__(self):
         pass
@@ -15,6 +19,10 @@ class size_in_pixels():
 
     def cleanUp(self):
         pass
+
+#*******************************************************************************
+# c o o r d s                                                                  *
+#*******************************************************************************
 
 class coords():
     def __init__(self):
@@ -32,6 +40,10 @@ class coords():
     def cleanUp(self):
         pass
         
+#*******************************************************************************
+# s l i c e _ v i e w                                                          *
+#*******************************************************************************
+
 class slice_view():
     def __init__(self, objects, raw_data, outputdir):
         self.objects = objects
@@ -94,6 +106,10 @@ class slice_view():
 
     def cleanUp(self):
         pass
+
+#*******************************************************************************
+# p c _ p r o j e c t i o n _ 3 d                                              *
+#*******************************************************************************
 
 class pc_projection_3d():
     def __init__(self, objects, objectsOverlay, objectInputOverlay, outputdir):

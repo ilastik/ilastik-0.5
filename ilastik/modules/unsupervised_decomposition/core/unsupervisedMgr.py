@@ -31,6 +31,10 @@ def interactiveMessagePrint(* args):
     #print "Thread: ", args[0]
 
 
+#*******************************************************************************
+# U n s u p e r v i s e d I t e m M o d u l e M g r                            *
+#*******************************************************************************
+
 class UnsupervisedItemModuleMgr(BaseModuleDataItemMgr):
     name = "Unsupervised_Decomposition"
     
@@ -43,6 +47,10 @@ class UnsupervisedItemModuleMgr(BaseModuleDataItemMgr):
     def setInputData(self, data):
         self.inputData = data
         
+#*******************************************************************************
+# U n s u p e r v i s e d D e c o m p o s i t i o n M o d u l e M g r          *
+#*******************************************************************************
+
 class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
     name = "Unsupervised_Decomposition"
          
@@ -87,6 +95,10 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname]._data = DataAccessor(self.decompThread.result)
             
+#*******************************************************************************
+# U n s u p e r v i s e d D e c o m p o s i t i o n T h r e a d                *
+#*******************************************************************************
+
 class UnsupervisedDecompositionThread(QtCore.QThread):
     def __init__(self, dataMgr, overlays, unsupervisedMethod = algorithms.unsupervisedDecompositionPCA.UnsupervisedDecompositionPCA, unsupervisedMethodOptions = None):
         QtCore.QThread.__init__(self, None)

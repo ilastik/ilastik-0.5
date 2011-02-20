@@ -72,6 +72,10 @@ except Exception, e:
 
 
 
+#*******************************************************************************
+# F e a t u r e M g r                                                          *
+#*******************************************************************************
+
 class FeatureMgr():
     """
     Manages selected features (merkmale) for classificator.
@@ -221,6 +225,10 @@ class FeatureMgr():
         # Delete This Instance for pickleling
         return {}     
                 
+#*******************************************************************************
+# F e a t u r e T h r e a d                                                    *
+#*******************************************************************************
+
 class FeatureThread(ThreadBase):
     def __init__(self, featureMgr, dataMgr, items):
         ThreadBase.__init__(self)
@@ -283,6 +291,10 @@ class FeatureThread(ThreadBase):
         self.jobMachine.process(jobs)
 
     
+
+#*******************************************************************************
+# F e a t u r e G r o u p s                                                    *
+#*******************************************************************************
 
 class FeatureGroups(object):
     """

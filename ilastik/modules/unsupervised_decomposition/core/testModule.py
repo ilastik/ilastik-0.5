@@ -9,6 +9,10 @@ import unittest
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
+#*******************************************************************************
+# U n s u p e r v i s e d D e c o m p o s i t i o n T e s t P r o j e c t      *
+#*******************************************************************************
+
 class UnsupervisedDecompositionTestProject(object):
     # this class is used to set up a default project which is then used for testing functionality, 
     # hopefully, this will reduced code redundancy
@@ -56,6 +60,10 @@ class UnsupervisedDecompositionTestProject(object):
             self.listOfFilenames.append(filename)        
 
 
+#*******************************************************************************
+# T e s t W h o l e M o d u l e D e f a u l t D e c o m p o s e r              *
+#*******************************************************************************
+
 class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decomposer
 
     def setUp(self):
@@ -85,6 +93,10 @@ class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decompo
         self.app.quit()
         
         
+#*******************************************************************************
+# T e s t W h o l e M o d u l e P C A D e c o m p o s e r                      *
+#*******************************************************************************
+
 class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with 3 components
      
     def setUp(self):
@@ -119,6 +131,10 @@ class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with
 
         self.app.quit()
         
+#*******************************************************************************
+# T e s t W h o l e M o d u l e P L S A D e c o m p o s e r                    *
+#*******************************************************************************
+
 class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
      
     def setUp(self):
@@ -160,6 +176,10 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
 # thread being started. To terminate it, we have to call the respective jobMachine function. But: this has 
 # to be done in a tearDown function and it must only been done once, i.e. by the last test. Tests are executed
 # in alphabetical order by unittest (default).   
+#*******************************************************************************
+# z z z T e s t D u m m y                                                      *
+#*******************************************************************************
+
 class zzzTestDummy(unittest.TestCase): 
      
     def test_dummy(self):
@@ -167,6 +187,10 @@ class zzzTestDummy(unittest.TestCase):
         
     def tearDown(self):
         jobMachine.GLOBAL_WM.stopWorkers()
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     unittest.main()

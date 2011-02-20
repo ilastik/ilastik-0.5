@@ -613,6 +613,10 @@ if __name__ == '__main__':
             return False
         return True
     
+#*******************************************************************************
+# T e s t S e g m e n t o r                                                    *
+#*******************************************************************************
+
     class TestSegmentor(SegmentorBase):
         segmentation = None
         ver = 0

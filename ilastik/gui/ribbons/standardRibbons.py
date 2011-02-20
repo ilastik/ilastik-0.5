@@ -19,6 +19,10 @@ from ilastik.gui.backgroundWidget import BackgroundWidget
 
     
 
+#*******************************************************************************
+# C o n n e c t e d C o m p o n e n t s T a b                                  *
+#*******************************************************************************
+
 class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     name = "Connected Components"
     def __init__(self, parent=None):

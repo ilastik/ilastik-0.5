@@ -2,6 +2,10 @@ from ilastik.core.overlayMgr import OverlayReferenceMgr
 
 from PyQt4.QtCore import QObject
 
+#*******************************************************************************
+# P r o p e r t y M g r                                                        *
+#*******************************************************************************
+
 class PropertyMgr(object):
     """
     Holds a bag of Properties that can be serialized and deserialized
@@ -36,6 +40,10 @@ class PropertyMgr(object):
         except:
             answer = None
         return answer
+
+#*******************************************************************************
+# B a s e M o d u l e D a t a I t e m M g r                                    *
+#*******************************************************************************
 
 class BaseModuleDataItemMgr(PropertyMgr, QObject):
     """
@@ -75,6 +83,10 @@ class BaseModuleDataItemMgr(PropertyMgr, QObject):
         pass
 
 
+
+#*******************************************************************************
+# B a s e M o d u l e M g r                                                    *
+#*******************************************************************************
 
 class BaseModuleMgr(PropertyMgr, QObject):
     """

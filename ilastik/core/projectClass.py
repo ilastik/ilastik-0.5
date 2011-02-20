@@ -38,6 +38,10 @@ with warnings.catch_warnings():
 from ilastik.core import dataImpex
 import os.path, sys
 
+#*******************************************************************************
+# P r o j e c t                                                                *
+#*******************************************************************************
+
 class Project(object):
     """
     Import/Export for the whole project, including any data, settings, labels etc.

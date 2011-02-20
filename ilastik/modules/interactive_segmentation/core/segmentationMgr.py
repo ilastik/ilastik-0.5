@@ -57,6 +57,10 @@ def LocallyDominantSegmentation2D(propmap, sigma = 2.0):
         
     return  numpy.argmax(propmap, axis=len(propmap.shape)-1) + 1
 
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
 if __name__ == "__main__":
     a = numpy.random.rand(256,256,4)
     s = LocallyDominantSegmentation()

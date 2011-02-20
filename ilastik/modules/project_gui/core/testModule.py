@@ -4,6 +4,10 @@ import glob
 from ilastik.core.testThread import TestHelperFunctions
 from ilastik import __path__ as ilastikpath
 
+#*******************************************************************************
+# T e s t s                                                                    *
+#*******************************************************************************
+
 class Tests(unittest.TestCase):
     
     def setUp(self):
@@ -31,6 +35,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(same, True)
         
         
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
 if __name__ == "__main__":
     unittest.main()
         

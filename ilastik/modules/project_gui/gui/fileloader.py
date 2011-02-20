@@ -17,6 +17,10 @@ from ilastik.core import loadOptionsMgr
 
 from PyQt4 import QtCore, QtGui
 
+#*******************************************************************************
+# F i l e L o a d e r                                                          *
+#*******************************************************************************
+
 class FileLoader(QtGui.QDialog):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)

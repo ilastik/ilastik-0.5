@@ -46,6 +46,10 @@ except Exception, e:
     pass
 
 if ok:
+#*******************************************************************************
+# S e g m e n t o r G C                                                        *
+#*******************************************************************************
+
     class SegmentorGC(SegmentorBase):
         name = "GraphCut Segmentation"
         description = "Segmentation plug-in using the Graph Cut algorithm"

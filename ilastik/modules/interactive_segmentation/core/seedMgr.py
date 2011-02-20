@@ -31,6 +31,10 @@ import vigra, numpy
 
 from ilastik.core.volume import DataAccessor, VolumeLabels, VolumeLabelDescription
 
+#*******************************************************************************
+# S e e d M g r                                                                *
+#*******************************************************************************
+
 class SeedMgr(object):
     """
     manages the seeds of all dataItems and stuff.

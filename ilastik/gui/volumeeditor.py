@@ -85,6 +85,10 @@ def rgb(r, g, b):
     return (QtGui.qRgb(r, g, b) & 0xffffff) - 0x1000000
         
 
+#*******************************************************************************
+# P a t c h A c c e s s o r                                                    *
+#*******************************************************************************
+
 class PatchAccessor():
     def __init__(self, size_x,size_y, blockSize = 128):
         self._blockSize = blockSize
@@ -155,6 +159,10 @@ class PatchAccessor():
     
 
 #abstract base class for undo redo stuff
+#*******************************************************************************
+# S t a t e                                                                    *
+#*******************************************************************************
+
 class State():
     def __init__(self):
         pass
@@ -162,6 +170,10 @@ class State():
     def restore(self):
         pass
 
+
+#*******************************************************************************
+# L a b e l S t a t e                                                          *
+#*******************************************************************************
 
 class LabelState(State):
     def __init__(self, title, axis, num, offsets, shape, timeAxis, volumeEditor, erasing, labels, labelNumber):
@@ -194,6 +206,10 @@ class LabelState(State):
         self.erasing = not(self.erasing)          
 
 
+
+#*******************************************************************************
+# H i s t o r y M a n a g e r                                                  *
+#*******************************************************************************
 
 class HistoryManager(QtCore.QObject):
     def __init__(self, parent, maxSize = 3000):
@@ -260,6 +276,10 @@ class HistoryManager(QtCore.QObject):
     def clear(self):
         self._history = []
 
+#*******************************************************************************
+# V o l u m e U p d a t e                                                      *
+#*******************************************************************************
+
 class VolumeUpdate():
     def __init__(self, data, offsets, sizes, erasing):
         self.offsets = offsets
@@ -283,6 +303,10 @@ class VolumeUpdate():
 
 
 
+#*******************************************************************************
+# D u m m y L a b e l W i d g e t                                              *
+#*******************************************************************************
+
 class DummyLabelWidget(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
@@ -291,12 +315,20 @@ class DummyLabelWidget(QtGui.QWidget):
     def currentItem(self):
         return None
 
+#*******************************************************************************
+# D u m m y O v e r l a y L i s t W i d g e t                                  *
+#*******************************************************************************
+
 class DummyOverlayListWidget(QtGui.QWidget):
     def __init__(self,  parent):
         QtGui.QWidget.__init__(self)
         self.volumeEditor = parent
         self.overlays = []
 
+
+#*******************************************************************************
+# V o l u m e E d i t o r                                                      *
+#*******************************************************************************
 
 class VolumeEditor(QtGui.QWidget):
     grid = None #in 3D mode hold the quad view widget, otherwise remains none
@@ -981,6 +1013,10 @@ class VolumeEditor(QtGui.QWidget):
 
 
 
+#*******************************************************************************
+# D r a w M a n a g e r                                                        *
+#*******************************************************************************
+
 class DrawManager(QtCore.QObject):
     def __init__(self, parent):
         QtCore.QObject.__init__(self)
@@ -1126,6 +1162,10 @@ class DrawManager(QtCore.QObject):
             self.topMost = y
         return lineVis
 
+#*******************************************************************************
+# I m a g e S a v e T h r e a d                                                *
+#*******************************************************************************
+
 class ImageSaveThread(QtCore.QThread):
     def __init__(self, parent):
         QtCore.QThread.__init__(self, None)
@@ -1183,6 +1223,10 @@ class ImageSaveThread(QtCore.QThread):
                 self.ve.sliceSelectors[axis].setValue(self.previousSlice)
                 self.previousSlice = None
             
+
+#*******************************************************************************
+# I m a g e S c e n e R e n d e r T h r e a d                                  *
+#*******************************************************************************
 
 class ImageSceneRenderThread(QtCore.QThread):
     def __init__(self, parent):
@@ -1325,6 +1369,10 @@ class ImageSceneRenderThread(QtCore.QThread):
             self.dataPending.clear()
 
 
+#*******************************************************************************
+# C r o s s H a i r C u r s o r                                                *
+#*******************************************************************************
+
 class CrossHairCursor(QtGui.QGraphicsItem) :
     modeYPosition  = 0
     modeXPosition  = 1
@@ -1402,6 +1450,10 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.brushSize = size
         self.update()
 
+#*******************************************************************************
+# I m a g e G r a p h i c s I t e m                                            *
+#*******************************************************************************
+
 class ImageGraphicsItem(QtGui.QGraphicsItem):
     def __init__(self, image):
         QtGui.QGraphicsItem.__init__(self)
@@ -1414,6 +1466,10 @@ class ImageGraphicsItem(QtGui.QGraphicsItem):
     def boundingRect(self):
         return QtCore.QRectF(self.image.rect())
 
+
+#*******************************************************************************
+# C u s t o m G r a p h i c s S c e n e                                        *
+#*******************************************************************************
 
 class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
     def __init__(self,parent,widget,image):
@@ -1462,6 +1518,10 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
         
 
 
+
+#*******************************************************************************
+# I m a g e S c e n e                                                          *
+#*******************************************************************************
 
 class ImageScene(QtGui.QGraphicsView):
     def __borderMarginIndicator__(self, margin):
@@ -2157,6 +2217,10 @@ class ImageScene(QtGui.QGraphicsView):
         self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
         self.drawManager.updateCrossHair()
 
+#*******************************************************************************
+# O v e r v i e w S c e n e D u m m y                                          *
+#*******************************************************************************
+
 class OverviewSceneDummy(QtGui.QWidget):
     def __init__(self, parent, shape):
         QtGui.QWidget.__init__(self)
@@ -2168,6 +2232,10 @@ class OverviewSceneDummy(QtGui.QWidget):
     def redisplay(self):
         pass
     
+#*******************************************************************************
+# O v e r v i e w S c e n e                                                    *
+#*******************************************************************************
+
 class OverviewScene(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
         QtOpenGL.QGLWidget.__init__(self, shareWidget = parent.sharedOpenGLWidget)
@@ -2460,6 +2528,10 @@ def test():
     dialog.show()
     app.exec_()
 
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     test()

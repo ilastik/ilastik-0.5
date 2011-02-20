@@ -1,5 +1,9 @@
 from classifierBase import *
 
+#*******************************************************************************
+# C l a s s i f i e r R a n d o m F o r e s t O l d                            *
+#*******************************************************************************
+
 class ClassifierRandomForestOld(ClassifierBase):
     #human readable information
     name = "Random forest classifier (stable)" 

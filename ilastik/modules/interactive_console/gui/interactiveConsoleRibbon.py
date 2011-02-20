@@ -14,6 +14,10 @@ from ilastik.gui.volumeeditor import DummyLabelWidget
 try:
     from shellWidget import SciShell
                 
+#*******************************************************************************
+# C o n s o l e T a b                                                          *
+#*******************************************************************************
+
     class ConsoleTab(IlastikTabBase, QtGui.QWidget):
         name = 'Interactive Console'
         position = 1

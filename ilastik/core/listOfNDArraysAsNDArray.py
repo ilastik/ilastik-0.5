@@ -28,6 +28,10 @@
 #    or implied, of their employers.
 
 # Helper class that behaves like an ndarray, but consists of an array of ndarrays
+#*******************************************************************************
+# L i s t O f N D A r r a y s A s N D A r r a y                                *
+#*******************************************************************************
+
 class ListOfNDArraysAsNDArray:
     """
     Helper class that behaves like an ndarray, but consists of an array of ndarrays

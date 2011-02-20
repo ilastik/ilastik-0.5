@@ -6,6 +6,10 @@ from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 from subprocess import Popen, PIPE
 
 # this is the core replacement of the guiThread used to test module functionality
+#*******************************************************************************
+# T e s t T h r e a d                                                          *
+#*******************************************************************************
+
 class TestThread(QtCore.QObject):#QtCore.QThread):
     
     def __init__(self, baseMgr, listOfResultOverlays, listOfFilenames):
@@ -46,6 +50,10 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
             obtained = self.baseMgr.dataMgr[self.baseMgr.dataMgr._activeImageNumber].overlayMgr["Unsupervised/pLSA component %d" % (i+1)]
             dataImpex.DataImpex.exportOverlay(self.listOfFilenames[i], "h5", obtained)
         '''
+
+#*******************************************************************************
+# T e s t H e l p e r F u n c t i o n s                                        *
+#*******************************************************************************
 
 class TestHelperFunctions():
     @staticmethod

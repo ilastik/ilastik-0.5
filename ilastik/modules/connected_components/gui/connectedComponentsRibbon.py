@@ -13,6 +13,10 @@ from guiThread import CC
 from labelSelectionForm import LabelSelectionForm
 
 
+#*******************************************************************************
+# C o n n e c t e d C o m p o n e n t s T a b                                  *
+#*******************************************************************************
+
 class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     name = 'Connected Components'
     position = 2
