@@ -184,7 +184,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         index = self.listWidget.indexAt(pos)
 
         if not index.isValid():
-           return
+            return
 
         item = self.listWidget.itemAt(pos)
         name = item.text()

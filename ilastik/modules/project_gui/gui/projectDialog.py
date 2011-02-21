@@ -1,5 +1,4 @@
 from PyQt4 import QtCore, QtGui, uic
-from ilastik.core import  dataMgr, dataImpex
 import ilastik.gui
 import fileloader
 import os, sys

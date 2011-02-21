@@ -1,20 +1,14 @@
-import numpy, vigra, h5py
-import random
-import code
 import gc
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
-from PyQt4 import QtGui, QtCore
 
 from ilastik.core.dataMgr import  PropertyMgr
-from ilastik.core.overlayMgr import OverlayItem
 
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.modules.classification.gui.guiThreads import *
 from ilastik.modules.classification.gui.labelWidget import LabelListWidget
-from ilastik.modules.classification.gui.batchProcessDlg import BatchProcess
 from ilastik.modules.classification.gui.featureDlg import FeatureDlg
 from ilastik.modules.classification.gui.classifierSelectionDialog import ClassifierSelectionDlg
 

@@ -66,10 +66,8 @@ ilastik.modules.loadModuleCores()
 #from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
 #import ilastik.gui
 #from ilastik.core import projectMgr, activeLearning
-from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
-from ilastik.core import projectClass
 from ilastik.core.randomSeed import RandomSeed 
 
 #from ilastik.core import connectedComponentsMgr
@@ -91,7 +89,7 @@ import getopt
 
 
 # Please no import *
-from ilastik.gui.shortcutmanager import shortcutManager, shortcutManagerDlg, shortcutManager
+from ilastik.gui.shortcutmanager import shortcutManager
 
 #make the program quit on Ctrl+C
 import signal

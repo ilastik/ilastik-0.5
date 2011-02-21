@@ -26,10 +26,8 @@
 #    The views and conclusions contained in the software and documentation are those of the
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
-import vigra, numpy
-from enthought.traits.api import *
-from enthought.traits.ui.api import *
-
+import numpy
+from enthought.traits.api import HasTraits
 
 #*******************************************************************************
 # S e g m e n t o r B a s e                                                    *

@@ -31,10 +31,7 @@
 Watershed iterative segmentation plugin
 """
 
-
-import vigra, numpy
 from segmentorBase import *
-import traceback
 from enthought.traits.api import *
 from enthought.traits.ui.api import *
 from segmentorWSit import SegmentorWSiter

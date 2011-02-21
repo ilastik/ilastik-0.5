@@ -26,19 +26,14 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 
 from PyQt4 import QtCore, QtGui, uic
-import sys
 import os
-import numpy
 import ilastik
-from ilastik.core.utilities import irange, debug
-from ilastik.core import version, dataMgr, activeLearning, onlineClassifcator
-from ilastik.modules.classification.core import featureMgr, classificationMgr
+from ilastik.core.utilities import irange
+from ilastik.modules.classification.core import featureMgr
 from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
 from ilastik.modules.classification.core.featureMgr import ilastikFeatureGroups
 import copy
-
-from ilastik.modules.classification.gui.guiThreads import FeatureComputation
 
 #*******************************************************************************
 # F e a t u r e D l g                                                          *

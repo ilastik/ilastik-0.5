@@ -28,7 +28,7 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui, uic
-import sys, os
+import os
 
 
 #*******************************************************************************
@@ -90,7 +90,6 @@ class SegmentorSelectionDlg(QtGui.QDialog):
 
 def test():
     """Text editor demo"""
-    import numpy
     #from spyderlib.utils.qthelpers import qapplication
     app = QtGui.QApplication([""])
 

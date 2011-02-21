@@ -28,8 +28,6 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui
-import vigra, numpy
-import sip
 import os
 from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
 import ilastik.gui.overlayDialogs as overlayDialogs

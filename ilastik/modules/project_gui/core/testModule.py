@@ -1,6 +1,5 @@
 from ilastik.core import projectClass
 import unittest
-import glob
 from ilastik.core.testThread import TestHelperFunctions
 from ilastik import __path__ as ilastikpath
 

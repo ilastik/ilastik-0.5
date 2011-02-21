@@ -28,24 +28,20 @@
 #    or implied, of their employers.
 
 import numpy, vigra
-import sys, os, traceback, copy, csv, shutil, time, threading, warnings
+import sys, os, traceback, copy, csv, shutil, warnings
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
-from ilastik.core import dataImpex
-from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
-from ilastik.core import overlayMgr
-from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, PropertyMgr
-from ilastik.modules.connected_components.gui.guiThread import CC
+from ilastik.core.volume import VolumeLabels
+from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
-
-from PyQt4.QtCore import SIGNAL
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
-
 import seedMgr
 from segmentors import segmentorBase
+
+from PyQt4.QtCore import SIGNAL
 
 #*******************************************************************************
 # L o a d i n g   o f   S e g m e n t o r s                                    *
@@ -675,6 +671,10 @@ if __name__ == '__main__':
     
     #save as 'one'
     s.saveCurrentSegmentsAs('one')
+    
+    #we now have a 'done' overlay
+    doneRef = s.done
+    
     assert os.path.exists(s.outputPath)
     assert os.path.exists(s.outputPath+'/done.h5')
     assert os.path.exists(s.outputPath+'/mapping.dat')
@@ -797,6 +797,15 @@ if __name__ == '__main__':
     assert h5equal(s.outputPath+'/done.h5', doneGT)
     
     print "*************************************************************************"
+    print "* edit segments 'two'                                                   *"
+    print "*************************************************************************"
+    
+    s.editSegmentsByKey('two')
+    #TODO: Implement fake segmentation based on seeds in the TestSegmentor
+    #assert h5equal(s.outputPath+'/two/segmentation.h5', s.segmentation[0,:,:,:,:])
+    s.saveCurrentSegment()
+    
+    print "*************************************************************************"
     print "* remove segments 'two'                                                 *"
     print "*************************************************************************"
     
@@ -815,6 +824,11 @@ if __name__ == '__main__':
     doneGT = numpy.zeros(shape=seg1.shape, dtype=numpy.uint32)
     assert arrayEqual(doneGT.squeeze(), s.done.squeeze())
     assert h5equal(s.outputPath+'/done.h5', doneGT)
+    
+    #make sure that we have not overwritten the done overlay, which
+    #would cause the connection with the 'Segmentation/Done' overlay
+    #to break
+    assert doneRef is s.done
     
     jobMachine.GLOBAL_WM.stopWorkers()
     

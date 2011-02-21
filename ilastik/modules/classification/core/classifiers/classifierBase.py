@@ -1,4 +1,3 @@
-import vigra, numpy
 import threading
 
 #*******************************************************************************
@@ -36,10 +35,10 @@ class ClassifierBase(object):
         pass
 
     def setWorker(self, workerNumber, numWorkers):
-      """ workerNumber in [0, numWorkers) gives the partition number of this
-          particular part."""
-      self.workerNumber = workerNumber
-      self.numWorkers = numWorkers
+        """ workerNumber in [0, numWorkers) gives the partition number of this
+            particular part."""
+        self.workerNumber = workerNumber
+        self.numWorkers = numWorkers
 
     def train(self, labels, features, isInteractive):
         """ train the classifier with column vector of numeric labels and

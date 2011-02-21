@@ -2,7 +2,6 @@ import numpy
 from PyQt4 import QtGui, QtCore
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import overlayMgr
-from ilastik.core import activeLearning
 import ilastik.core.overlays.thresholdOverlay as tho
 
 #*******************************************************************************

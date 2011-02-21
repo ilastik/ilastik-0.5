@@ -31,8 +31,8 @@ def reader(fileName=None):
 
 
     if fileName is None:
-	    print "No file name given"
-	    return
+        print "No file name given"
+        return
         
     r = jpype.JClass('loci.formats.ChannelFiller')()
     r = jpype.JClass('loci.formats.ChannelSeparator')(r)
@@ -54,8 +54,8 @@ def reader(fileName=None):
 
 
     if sgn:
-    	print "ERROR: cannont interpret signed data"
-    	return
+        print "ERROR: cannont interpret signed data"
+        return
     
 
     for s in range(numSeries):
@@ -67,19 +67,18 @@ def reader(fileName=None):
         d = r.getSizeZ();
         c = r.getSizeC();
         
-    	if bpp==1:
-    		res = numpy.zeros((t,h,w,d,c),numpy.uint8)
-    	elif bpp==2:
-        	res = numpy.zeros((t,h,w,d,c),numpy.uint16)
+        if bpp==1:
+            res = numpy.zeros((t,h,w,d,c),numpy.uint8)
+        elif bpp==2:
+            res = numpy.zeros((t,h,w,d,c),numpy.uint16)
         elif bpp ==4:
-        	res = numpy.zeros((t,h,w,d,c),numpy.uint32)
+            res = numpy.zeros((t,h,w,d,c),numpy.uint32)
         elif bpp == 8:
-        	res = numpy.zeros((t,h,w,d,c),numpy.uint64)
+            res = numpy.zeros((t,h,w,d,c),numpy.uint64)
         else:
-			print "ERROR: unrecognized bit format type"
-			return
-			
-			
+            print "ERROR: unrecognized bit format type"
+            return
+
         print "Time, Width, Height, Depth, Channels", t, w, h, d, c
 
         numImages = r.getImageCount()

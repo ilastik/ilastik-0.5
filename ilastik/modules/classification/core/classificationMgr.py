@@ -288,7 +288,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
         g = h5G.name + '/classifiers'
         print "  -> looking for classifiers in", g
         if g in f:
-          classifiers = f[g].keys()
+            classifiers = f[g].keys()
         
         for cid in classifiers:
             self.classifier.deserialize(f[h5G.name +  '/classifiers/' + cid])

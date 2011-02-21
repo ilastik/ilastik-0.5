@@ -27,14 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import numpy, vigra, os, sys
-import traceback
-
-import segmentors
-
-from PyQt4 import QtCore
-from ilastik.core import jobMachine
-
+import numpy, vigra
    
 def LocallyDominantSegmentation(propmap, sigma = 2.0):
     if not propmap.dtype == numpy.float32:

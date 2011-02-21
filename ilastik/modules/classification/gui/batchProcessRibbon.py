@@ -1,12 +1,5 @@
-import numpy, vigra, h5py
-import random
-import code
-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
-
-from ilastik.core.dataMgr import  PropertyMgr
-from ilastik.core.overlayMgr import OverlayItem, OverlayReferenceMgr
 
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.iconMgr import ilastikIcons

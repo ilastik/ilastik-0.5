@@ -30,9 +30,6 @@
 """
 Dataset Editor Dialog based on PyQt4
 """
-import qimage2ndarray.qimageview
-import math
-import ctypes 
 import time
 
 try:
@@ -42,17 +39,13 @@ except Exception, e:
     print e
     pass
 
-from PyQt4 import QtCore, QtGui, QtOpenGL
+from PyQt4 import QtCore, QtOpenGL
 import sip
-import vigra, numpy
-import qimage2ndarray
+import numpy, qimage2ndarray
 
-import copy
 import os.path
 from collections import deque
 import threading
-import traceback
-import os, sys
 
 from ilastik.core.volume import DataAccessor
 
@@ -60,7 +53,6 @@ from shortcutmanager import *
 
 from ilastik.gui.quadsplitter import QuadView
 
-from ilastik.gui.overlayWidget import OverlayListWidget
 import ilastik.gui.exportDialog as exportDialog
 
 from ilastik.gui.iconMgr import ilastikIcons
@@ -2514,7 +2506,6 @@ class OverviewSceneOld(QtOpenGL.QGLWidget):
 
 def test():
     """Text editor demo"""
-    import numpy
     app = QtGui.QApplication([""])
 
     im = (numpy.random.rand(1024,1024)*255).astype(numpy.uint8)
