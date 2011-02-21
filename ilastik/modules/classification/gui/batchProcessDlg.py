@@ -5,36 +5,15 @@ Created on Mon Mar 22 09:33:57 2010
 @author: - 
 """
 
-import os, glob
-import vigra
-import numpy
-
-import numpy
-import sys
-
-import vigra
-import getopt
+import os
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import h5py
-import glob
-import traceback
 
-from PyQt4 import QtCore, QtGui, uic
+from PyQt4 import QtCore, QtGui
 
-import sys, gc
-
-import ilastik.gui.volumeeditor as ve
 from ilastik.modules.classification.core.batchProcess import BatchOptions, BatchProcessCore
-
-from ilastik.core import dataMgr
 from ilastik.gui.iconMgr import ilastikIcons
-from ilastik.core.volume import DataAccessor
-from ilastik.core import  dataImpex
-from ilastik.modules.classification.core import featureMgr
-from ilastik.modules.classification.core import classificationMgr
-
 
 #*******************************************************************************
 # B a t c h P r o c e s s                                                      *
@@ -159,7 +138,6 @@ class BatchProcess(QtGui.QDialog):
        
 def test():
     """Text editor demo"""
-    import numpy
     app = QtGui.QApplication([""])
     
     dialog = BatchProcess(None)

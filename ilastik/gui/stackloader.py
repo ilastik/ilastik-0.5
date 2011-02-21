@@ -186,7 +186,6 @@ class StackLoader(QtGui.QDialog):
        
 def test():
     """Text editor demo"""
-    import numpy
     #from spyderlib.utils.qthelpers import qapplication
     app = QtGui.QApplication([""])
     

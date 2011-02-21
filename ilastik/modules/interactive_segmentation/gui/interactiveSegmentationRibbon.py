@@ -1,23 +1,18 @@
 # -*- coding: utf-8 -*-
-import numpy, vigra, os
-import traceback, h5py
+import numpy, os
+import h5py
 import time
 import copy
 import random
-
-from ilastik.core import dataImpex
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
 
 from ilastik.gui.iconMgr import ilastikIcons
-from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponentsModuleMgr, ConnectedComponents
-from ilastik.modules.connected_components.gui.guiThread import CC
-
 from seedWidget import SeedListWidget
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
-from ilastik.gui.overlayWidget import OverlayWidget, OverlayListWidgetItem
+from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.volumeeditor import DummyLabelWidget
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor
@@ -148,11 +143,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             return
         self.interactionLog = self.ilastik.labelWidget.interactionLog
         self.ilastik.labelWidget.interactionLog = None
-        if self.ilastik.labelWidget._history != self.ilastik._activeImage.Interactive_Segmentation.seeds._history:
-            self.ilastik._activeImage.Interactive_Segmentation.seeds._history = self.ilastik.labelWidget._history
+        if self.ilastik.labelWidget._history != self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history:
+            self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history = self.ilastik.labelWidget._history
         
-        if self.ilastik._activeImage.Interactive_Segmentation.seeds._history is not None:
-            self.ilastik.labelWidget._history = self.ilastik._activeImage.Interactive_Segmentation.seeds._history
+        if self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history is not None:
+            self.ilastik.labelWidget._history = self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()

@@ -30,8 +30,6 @@
 import numpy
 import sys
 import gc
-from Queue import Queue as queue
-from copy import copy
 import os
 import threading
 import warnings
@@ -46,12 +44,8 @@ except:
     have_qt = False
 
 from ilastik.core.volume import DataAccessor as DataAccessor
-from ilastik.core.volume import VolumeLabels, VolumeLabelDescriptionMgr
-
-from ilastik.core import activeLearning
 from ilastik.core import overlayMgr
 from ilastik.core.baseModuleMgr import PropertyMgr
-
 from ilastik.core.baseModuleMgr import BaseModuleMgr, BaseModuleDataItemMgr
 
 import traceback

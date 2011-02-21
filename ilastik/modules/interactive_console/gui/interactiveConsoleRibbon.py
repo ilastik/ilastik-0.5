@@ -1,15 +1,8 @@
-import numpy, vigra
-import random
 import code
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
-
-from ilastik.gui.iconMgr import ilastikIcons
-
-from ilastik.gui.overlayWidget import OverlayWidget
-from ilastik.gui.volumeeditor import DummyLabelWidget
 
 try:
     from shellWidget import SciShell

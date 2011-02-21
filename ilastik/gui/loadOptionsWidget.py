@@ -2,7 +2,6 @@ import os
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import h5py
 
 from ilastik.core import dataImpex
 from PyQt4 import QtCore, QtGui

@@ -28,24 +28,20 @@
 #    or implied, of their employers.
 
 import numpy, vigra
-import sys, os, traceback, copy, csv, shutil, time, threading, warnings
+import sys, os, traceback, copy, csv, shutil, warnings
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
-from ilastik.core import dataImpex
-from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
-from ilastik.core import overlayMgr
-from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr, PropertyMgr
-from ilastik.modules.connected_components.gui.guiThread import CC
+from ilastik.core.volume import VolumeLabels
+from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
-
-from PyQt4.QtCore import SIGNAL
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
-
 import seedMgr
 from segmentors import segmentorBase
+
+from PyQt4.QtCore import SIGNAL
 
 #*******************************************************************************
 # L o a d i n g   o f   S e g m e n t o r s                                    *

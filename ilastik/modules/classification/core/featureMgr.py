@@ -28,16 +28,13 @@
 #    or implied, of their employers.
 
 import numpy
-import time
 from ilastik.core import jobMachine
-from collections import deque
 from ilastik.core.utilities import irange
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
 import h5py
 
-import copy
 import traceback
 import threading
 
@@ -53,7 +50,6 @@ except:
 import vigra
 at = vigra.arraytypes
 
-import features
 from features.featureBase import FeatureBase
 
 import os, sys

@@ -1,7 +1,5 @@
 from PyQt4 import QtCore, QtGui
 import overlayDialogBase
-import ilastik.gui.overlaySelectionDlg
-import ilastik.core.overlayMgr as overlayMgr
 from ilastik.core import dataImpex
 import ilastik.gui as gui
 import traceback

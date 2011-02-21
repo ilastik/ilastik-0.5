@@ -2,11 +2,6 @@ from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
 
-from ilastik.gui.iconMgr import ilastikIcons
-
-from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
-from ilastik.gui.overlayWidget import OverlayWidget
-
 #*******************************************************************************
 # H e l p T a b                                                                *
 #*******************************************************************************

@@ -15,13 +15,11 @@
 __license__ = "CeCILL V2"
 
 
-import os, sys
+import sys
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 
-from PyQt4.Qsci import QsciScintilla, QsciLexerPython, QsciAPIs
-import sys
-from PyQt4 import QtCore, QtGui
+from PyQt4.Qsci import QsciScintilla, QsciLexerPython
 from PyQt4.QtGui import QApplication
 from PyQt4.QtCore import QThread, QEvent
 
@@ -791,7 +789,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
         @param txt the selected text (QString)
         """
 
-         # Remove already written characters
+        # Remove already written characters
         line, col = self.__getEndPos()
         self.setCursorPosition(line,col)
         buf = unicode(self.text(line))
@@ -800,7 +798,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
         if id == 1:
             txt = unicode(txt[ind:])
             #if self.completionText != "":
-             #   txt = txt.replace(self.completionText, "")
+            #   txt = txt.replace(self.completionText, "")
             self.__insertText(txt)
             #self.completionText = ""
 

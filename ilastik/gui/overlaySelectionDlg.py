@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtCore, QtGui
 from PyQt4 import uic
-import sys, os
-from ilastik.core.overlayMgr import OverlayItem
+import os
 import qimage2ndarray
-from PyQt4.QtOpenGL import QGLWidget
 from ilastik.gui.iconMgr import ilastikIcons
 import ilastik.gui.overlayDialogs as overlayDialogs
 import ilastik

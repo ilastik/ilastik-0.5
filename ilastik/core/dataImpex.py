@@ -370,8 +370,8 @@ class DataImpex(object):
         return formats
 
 #           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
-      #      if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):
-       #         QtGui.QErrorMessage.qtHandler().showMessage("Chosen channels don't have an equal number of files. Check with Preview files button")
-                #should it really reject?
-        #        self.reject()
-        #        return        
+#      if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):
+#         QtGui.QErrorMessage.qtHandler().showMessage("Chosen channels don't have an equal number of files. Check with Preview files button")
+#should it really reject?
+#        self.reject()
+#        return        

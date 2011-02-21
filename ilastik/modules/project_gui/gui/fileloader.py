@@ -9,7 +9,6 @@ import os, glob
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import h5py
 import ilastik.gui
 
 from ilastik.gui import loadOptionsWidget

@@ -60,4 +60,3 @@ class ListOfNDArraysAsNDArray:
             return self.ndarrays[0].flatten()
         else:
             print "##########ERROR ######### : ListOfNDArraysAsNDArray not implemented"       
-             

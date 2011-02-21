@@ -31,11 +31,9 @@
 Watershed iterative segmentation plugin
 """
 
+import numpy
 
-import vigra, numpy
-
-from segmentorBase import *
-import traceback
+from segmentorBase import SegmentorBase
 from enthought.traits.api import *
 from enthought.traits.ui.api import *
 
@@ -48,7 +46,7 @@ except Exception, e:
     print "####################################"
     print
     print "    please update to the latest"
-    print "    private viga repo !!!"
+    print "    private vigra repository !!!"
     print
     print "####################################"
 

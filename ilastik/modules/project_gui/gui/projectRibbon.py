@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import vigra
 import gc
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore

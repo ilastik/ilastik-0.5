@@ -61,7 +61,6 @@ class ClassifierSelectionDlg(QtGui.QDialog):
             return self.previousClassifier
 
 def test():
-    import numpy
     #from spyderlib.utils.qthelpers import qapplication
     app = QtGui.QApplication([""])
 
