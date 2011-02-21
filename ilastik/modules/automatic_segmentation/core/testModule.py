@@ -63,6 +63,9 @@ class TestWholeModule(unittest.TestCase):
         # ...add overlays
         self.testProject.automaticSegmentationMgr.finalizeResults()
         
+        #obtained = self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr[self.testProject.listOfResultOverlays[0]]
+        #dataImpex.DataImpex.exportOverlay("c:/new_segmentation_result", "h5", obtained)
+        
         # compare obtained result to ground truth result
         equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         self.assertEqual(equalOverlays, True)
