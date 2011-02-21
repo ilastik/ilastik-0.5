@@ -99,7 +99,7 @@ class TestHelperFunctions():
         print "files to compare: ", file1, file2
         #have to spawn a subprocess, because h5diff has no wrapper in python
         
-        cl = "h5diff -cv " + file1 + " " + file2
+        cl = "h5diff -cv '" + file1 + "' '" + file2 + "'"
         args = shlex.split(cl)
         '''
         cl_header1 = "h5dump --header " + file1
