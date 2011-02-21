@@ -10,6 +10,17 @@ from subprocess import Popen, PIPE
 # T e s t T h r e a d                                                          *
 #*******************************************************************************
 
+import ilastik.core.jobMachine
+
+def setup():
+    if not ilastik.core.jobMachine.GLOBAL_WM:
+        ilastik.core.jobMachine.GLOBAL_WM = ilastik.core.jobMachine.WorkerManager()
+    
+def teardown():
+    ilastik.core.jobMachine.GLOBAL_WM.stopWorkers()
+    del ilastik.core.jobMachine.GLOBAL_WM
+    ilastik.core.jobMachine.GLOBAL_WM = None
+
 class TestThread(QtCore.QObject):#QtCore.QThread):
     
     def __init__(self, baseMgr, listOfResultOverlays, listOfFilenames):

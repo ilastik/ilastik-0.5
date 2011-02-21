@@ -8,6 +8,8 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
+from ilastik.core.testThread import setup, teardown
+
 #*******************************************************************************
 # C C T e s t P r o j e c t                                                    *
 #*******************************************************************************
@@ -175,18 +177,6 @@ class TestWholeModule_WithBackground2(unittest.TestCase):
         # results comparison
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
-                
-#*******************************************************************************
-# z z z T e s t D u m m y                                                      *
-#*******************************************************************************
-
-class zzzTestDummy(unittest.TestCase): 
-     
-    def test_dummy(self):
-        pass
-        
-    def tearDown(self):
-        jobMachine.GLOBAL_WM.stopWorkers()
 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
@@ -194,6 +184,5 @@ class zzzTestDummy(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    jobMachine.GLOBAL_WM.stopWorkers()
 
 
