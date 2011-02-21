@@ -32,6 +32,10 @@ from PyQt4 import QtCore, QtGui
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
 from ilastik.core.overlayMgr import OverlayItem
 
+#*******************************************************************************
+# B a c k g r o u n d I t e m                                                  *
+#*******************************************************************************
+
 class BackgroundItem(QtGui.QListWidgetItem):
     def __init__(self, name, number, color):
         QtGui.QListWidgetItem.__init__(self, name)
@@ -53,6 +57,10 @@ class BackgroundItem(QtGui.QListWidgetItem):
         icon = QtGui.QIcon(pixmap)
         self.setIcon(icon)      
 
+
+#*******************************************************************************
+# B a c k g r o u n d W i d g e t                                              *
+#*******************************************************************************
 
 class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def __init__(self,  backgroundMgr,  volumeLabels,  volumeEditor):

@@ -9,13 +9,16 @@ import os, glob
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
-    import h5py
 import ilastik.gui
 
 from ilastik.gui import loadOptionsWidget
 from ilastik.core import loadOptionsMgr
 
 from PyQt4 import QtCore, QtGui
+
+#*******************************************************************************
+# F i l e L o a d e r                                                          *
+#*******************************************************************************
 
 class FileLoader(QtGui.QDialog):
     def __init__(self, parent=None):

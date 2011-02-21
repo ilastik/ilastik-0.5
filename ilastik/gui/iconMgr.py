@@ -30,6 +30,10 @@
 import os
 import ilastik
 
+#*******************************************************************************
+# i l a s t i k I c o n s                                                      *
+#*******************************************************************************
+
 class ilastikIcons(object):
     #get the absolute path of the 'ilastik' module
     ilastikPath = os.path.dirname(ilastik.__file__)
@@ -47,6 +51,7 @@ class ilastikIcons(object):
     New = iconPath + "actions/document-new.png" 
     Open = iconPath + "actions/document-open.png" 
     Save = iconPath + "actions/document-save.png" 
+    SaveAs = iconPath + "actions/document-save-as.png"
     Edit = iconPath + "actions/document-properties.png" 
     System = iconPath + "categories/applications-system.png"
     Dialog = iconPath + "status/dialog-information.png"

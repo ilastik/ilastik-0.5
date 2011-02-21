@@ -10,6 +10,10 @@ from ilastik.gui.overlayWidget import OverlayWidget
 import ilastik.gui.volumeeditor as ve
                     
                     
+#*******************************************************************************
+# A u t o S e g m e n t a t i o n T a b                                        *
+#*******************************************************************************
+
 class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Auto Segmentation'
     position = 2

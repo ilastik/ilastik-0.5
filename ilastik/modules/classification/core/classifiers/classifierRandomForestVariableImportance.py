@@ -6,6 +6,10 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
+#*******************************************************************************
+# C l a s s i f i e r R a n d o m F o r e s t V a r i a b l e I m p o r t a n c e *
+#*******************************************************************************
+
 class ClassifierRandomForestVariableImportance(ClassifierBase):
     #human readable information
     name = "Random forest classifier with variable importance" 

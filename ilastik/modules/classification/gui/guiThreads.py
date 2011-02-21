@@ -2,8 +2,11 @@ import numpy
 from PyQt4 import QtGui, QtCore
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import overlayMgr
-from ilastik.core import activeLearning
 import ilastik.core.overlays.thresholdOverlay as tho
+
+#*******************************************************************************
+# F e a t u r e C o m p u t a t i o n                                          *
+#*******************************************************************************
 
 class FeatureComputation(QtCore.QObject):
     def __init__(self, parent):
@@ -61,6 +64,10 @@ class FeatureComputation(QtCore.QObject):
                     
     def featureShow(self, item):
         pass
+
+#*******************************************************************************
+# C l a s s i f i c a t i o n T r a i n                                        *
+#*******************************************************************************
 
 class ClassificationTrain(QtCore.QObject):
     def __init__(self, parent):
@@ -122,6 +129,10 @@ class ClassificationTrain(QtCore.QObject):
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         
+
+#*******************************************************************************
+# C l a s s i f i c a t i o n I n t e r a c t i v e                            *
+#*******************************************************************************
 
 class ClassificationInteractive(object):
     def __init__(self, parent):
@@ -234,6 +245,10 @@ class ClassificationInteractive(object):
         self.parent.project.dataMgr.Classification.classificationMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
         
+
+#*******************************************************************************
+# C l a s s i f i c a t i o n P r e d i c t                                    *
+#*******************************************************************************
 
 class ClassificationPredict(QtCore.QObject):
     def __init__(self, parent):

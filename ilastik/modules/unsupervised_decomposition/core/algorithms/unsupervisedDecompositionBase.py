@@ -1,3 +1,7 @@
+#*******************************************************************************
+# U n s u p e r v i s e d D e c o m p o s i t i o n B a s e                    *
+#*******************************************************************************
+
 class UnsupervisedDecompositionBase(object):
     #human readable information
     name = "Base Unsupervised Decomposition"

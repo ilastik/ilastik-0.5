@@ -1,31 +1,21 @@
-from PyQt4 import QtCore, QtGui
-import vigra, numpy
-import sip
-import os
-from overlaySelectionDlg import OverlaySelectionDialog
+from PyQt4 import QtGui
 
+from enthought.traits.api import HasTraits, Instance, on_trait_change
+from enthought.traits.ui.api import View, Item
 
-from ilastik.core.volume import DataAccessor,  VolumeLabels, VolumeLabelDescription
-from ilastik.core.overlayMgr import OverlayMgr,  OverlayItem, OverlaySlice
-
-from enthought.traits.api import HasTraits, Range, Instance, on_trait_change
-from enthought.traits.ui.api import View, Item, Group
-
-from enthought.mayavi import mlab
 from enthought.mayavi.core.api import PipelineBase
 from enthought.mayavi.core.ui.api import MayaviScene, SceneEditor, MlabSceneModel
-
-
-
 
 ################################################################################
 # Some logic to select 'mesh' and the _data index when picking.
 from enthought.tvtk.api import tvtk
 
-
-
 ################################################################################
 # Some logic to pick on click but no move
+#*******************************************************************************
+# M v t P i c k e r                                                            *
+#*******************************************************************************
+
 class MvtPicker(object):
     mouse_mvt = False
 
@@ -61,6 +51,10 @@ class MvtPicker(object):
 
 ################################################################################
 #The actual visualization
+#*******************************************************************************
+# M a y a 3 D S c e n e                                                        *
+#*******************************************************************************
+
 class Maya3DScene(HasTraits):
 
     scene = Instance(MlabSceneModel, ())
@@ -194,6 +188,10 @@ class Maya3DScene(HasTraits):
 
 ################################################################################
 # The QWidget containing the visualization, this is pure PyQt4 code.
+#*******************************************************************************
+# M a y a v i Q W i d g e t                                                    *
+#*******************************************************************************
+
 class MayaviQWidget(QtGui.QWidget):
     def __init__(self, volumeEditor, overlayItemReference, raw):
         QtGui.QWidget.__init__(self)

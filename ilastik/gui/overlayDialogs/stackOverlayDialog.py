@@ -1,12 +1,13 @@
-from PyQt4 import QtCore, QtGui
-import sys, os
+from PyQt4 import QtGui
+import os
 import overlayDialogBase
-import ilastik.gui.overlaySelectionDlg
 import ilastik.core.overlayMgr as overlayMgr
 from ilastik.core import dataImpex
-import ilastik.gui as gui
-import traceback
 from ilastik.gui import stackloader
+
+#*******************************************************************************
+# S t a c k O v e r l a y D i a l o g                                          *
+#*******************************************************************************
 
 class StackOverlayDialog(overlayDialogBase.OverlayDialogBase):
     configuresClass = "ilastik.core.overlays.stackOverlayDialog.StackOverlayDialog"

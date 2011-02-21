@@ -2,7 +2,9 @@ from classifierBase import *
 
 from PyQt4.QtGui import QInputDialog
 
-import numpy, h5py
+#*******************************************************************************
+# C l a s s i f i e r R a n d o m F o r e s t                                  *
+#*******************************************************************************
 
 class ClassifierRandomForest(ClassifierBase):
     #human readable information
@@ -28,7 +30,7 @@ class ClassifierRandomForest(ClassifierBase):
     def settings(cls):
         (number, ok) = QInputDialog.getInt(None, "Random Forest parameters", "Number of trees", cls.treeCount, 20, 255)
         if ok:
-          cls.treeCount = number
+            cls.treeCount = number
         
         print "setting number of trees to", cls.treeCount
 

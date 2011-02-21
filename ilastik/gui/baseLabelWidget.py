@@ -27,7 +27,9 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4 import QtCore, QtGui
+#*******************************************************************************
+# B a s e L a b e l W i d g e t                                                *
+#*******************************************************************************
 
 class BaseLabelWidget(object):
     def __init__(self,  parent = None):

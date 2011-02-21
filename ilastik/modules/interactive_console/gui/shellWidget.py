@@ -15,13 +15,11 @@
 __license__ = "CeCILL V2"
 
 
-import os, sys
+import sys
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import Qt
 
-from PyQt4.Qsci import QsciScintilla, QsciLexerPython, QsciAPIs
-import sys
-from PyQt4 import QtCore, QtGui
+from PyQt4.Qsci import QsciScintilla, QsciLexerPython
 from PyQt4.QtGui import QApplication
 from PyQt4.QtCore import QThread, QEvent
 
@@ -36,6 +34,10 @@ try:
 except:
     py2exe_release = False
     
+#*******************************************************************************
+# M u l t i p l e R e d i r e c t i o n                                        *
+#*******************************************************************************
+
 class MultipleRedirection:
     """ Dummy file which redirects stream to multiple file """
 
@@ -50,6 +52,10 @@ class MultipleRedirection:
         for stream in self.streams:
             stream.write(str)
 
+
+#*******************************************************************************
+# T h r e a d e d R e d i r e c t i o n                                        *
+#*******************************************************************************
 
 class ThreadedRedirection:
     """ Dummy file which redirects stream to threaded gui output """
@@ -72,6 +78,10 @@ class ThreadedRedirection:
             self.guistream.write(str)
 
             
+#*******************************************************************************
+# G r a p h i c a l S t r e a m R e d i r e c t i o n                          *
+#*******************************************************************************
+
 class GraphicalStreamRedirection:
     """ Redirection of a stream as graphic output """
     
@@ -118,6 +128,10 @@ class GraphicalStreamRedirection:
         else:
             sys.stderr   = sys_stderr
             
+
+#*******************************************************************************
+# S c i S h e l l                                                              *
+#*******************************************************************************
 
 class SciShell(QsciScintilla,GraphicalStreamRedirection):
     """
@@ -775,7 +789,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
         @param txt the selected text (QString)
         """
 
-         # Remove already written characters
+        # Remove already written characters
         line, col = self.__getEndPos()
         self.setCursorPosition(line,col)
         buf = unicode(self.text(line))
@@ -784,7 +798,7 @@ class SciShell(QsciScintilla,GraphicalStreamRedirection):
         if id == 1:
             txt = unicode(txt[ind:])
             #if self.completionText != "":
-             #   txt = txt.replace(self.completionText, "")
+            #   txt = txt.replace(self.completionText, "")
             self.__insertText(txt)
             #self.completionText = ""
 
@@ -832,6 +846,10 @@ def main():
     aw.show()
     a.exec_()
 
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__=="__main__":
     main()

@@ -28,16 +28,13 @@
 #    or implied, of their employers.
 
 import numpy
-import time
 from ilastik.core import jobMachine
-from collections import deque
 from ilastik.core.utilities import irange
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
 import h5py
 
-import copy
 import traceback
 import threading
 
@@ -53,7 +50,6 @@ except:
 import vigra
 at = vigra.arraytypes
 
-import features
 from features.featureBase import FeatureBase
 
 import os, sys
@@ -71,6 +67,10 @@ except Exception, e:
     pass
 
 
+
+#*******************************************************************************
+# F e a t u r e M g r                                                          *
+#*******************************************************************************
 
 class FeatureMgr():
     """
@@ -221,6 +221,10 @@ class FeatureMgr():
         # Delete This Instance for pickleling
         return {}     
                 
+#*******************************************************************************
+# F e a t u r e T h r e a d                                                    *
+#*******************************************************************************
+
 class FeatureThread(ThreadBase):
     def __init__(self, featureMgr, dataMgr, items):
         ThreadBase.__init__(self)
@@ -283,6 +287,10 @@ class FeatureThread(ThreadBase):
         self.jobMachine.process(jobs)
 
     
+
+#*******************************************************************************
+# F e a t u r e G r o u p s                                                    *
+#*******************************************************************************
 
 class FeatureGroups(object):
     """

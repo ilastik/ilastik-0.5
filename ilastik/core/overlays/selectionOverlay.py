@@ -3,6 +3,10 @@ import overlayBase
 import ilastik.core.overlayMgr as overlayMgr
 
 
+#*******************************************************************************
+# S e l e c t i o n A c c e s s o r                                            *
+#*******************************************************************************
+
 class SelectionAccessor(object):
     def __init__(self, overlay):
 
@@ -32,6 +36,10 @@ class SelectionAccessor(object):
     def __setitem__(self, key, data):
         raise Exception('yeah sure', 'no setting of SelectionAccessor _data')
         
+
+#*******************************************************************************
+# S e l e c t i o n O v e r l a y                                              *
+#*******************************************************************************
 
 class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
     def __init__(self, dataItem, inputData, color):

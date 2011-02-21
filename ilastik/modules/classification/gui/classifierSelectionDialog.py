@@ -6,6 +6,10 @@ from ilastik.modules.classification.core.classifiers import classifierBase
 
 import os
 
+#*******************************************************************************
+# C l a s s i f i e r S e l e c t i o n D l g                                  *
+#*******************************************************************************
+
 class ClassifierSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastikMain):
         QtGui.QWidget.__init__(self, ilastikMain)
@@ -57,7 +61,6 @@ class ClassifierSelectionDlg(QtGui.QDialog):
             return self.previousClassifier
 
 def test():
-    import numpy
     #from spyderlib.utils.qthelpers import qapplication
     app = QtGui.QApplication([""])
 
@@ -65,6 +68,10 @@ def test():
     print dialog.show()
     app.exec_()
 
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     test()

@@ -10,6 +10,10 @@ from ilastik.gui.shortcutmanager import shortcutManager
 from ilastik.gui import volumeeditor as ve
 from ilastik.modules.help.gui.about import About
 
+#*******************************************************************************
+# H e l p T a b                                                                *
+#*******************************************************************************
+
 class HelpTab(IlastikTabBase, QtGui.QWidget):
     name = 'Help'
     position = 101

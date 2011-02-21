@@ -1,6 +1,10 @@
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
 
+#*******************************************************************************
+# E x a m p l e I t e m M o d u l e M g r                                      *
+#*******************************************************************************
+
 class ExampleItemModuleMgr(BaseModuleDataItemMgr):
     name = "Example"
     
@@ -51,6 +55,10 @@ class ExampleItemModuleMgr(BaseModuleDataItemMgr):
         """
         pass
     
+
+#*******************************************************************************
+# E x a m p l e M o d u l e M g r                                              *
+#*******************************************************************************
 
 class ExampleModuleMgr(BaseModuleMgr):
     name = "Example"

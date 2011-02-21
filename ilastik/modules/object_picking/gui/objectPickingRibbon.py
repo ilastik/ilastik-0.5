@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import numpy, vigra
-import random
-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 
 from PyQt4 import QtGui, QtCore
@@ -12,9 +9,11 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.modules.object_picking.core.objectModuleMgr import ObjectOverlayItem
-from ilastik.core.volume import DataAccessor
-import ilastik.gui.volumeeditor as ve
 from objectWidget import ObjectListWidget
+
+#*******************************************************************************
+# O b j e c t s T a b                                                          *
+#*******************************************************************************
 
 class ObjectsTab(IlastikTabBase, QtGui.QWidget):
     name = 'Objects'

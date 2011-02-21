@@ -1,10 +1,12 @@
 from PyQt4 import QtCore, QtGui
 import overlayDialogBase
-import ilastik.gui.overlaySelectionDlg
-import ilastik.core.overlayMgr as overlayMgr
 from ilastik.core import dataImpex
 import ilastik.gui as gui
 import traceback
+
+#*******************************************************************************
+# F i l e O v e r l a y D i a l o g                                            *
+#*******************************************************************************
 
 class FileOverlayDialog(overlayDialogBase.OverlayDialogBase):
     configuresClass = "ilastik.core.overlays.fileOverlayDialog.FileOverlayDialog"

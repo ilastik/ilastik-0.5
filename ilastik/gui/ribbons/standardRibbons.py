@@ -1,23 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
+
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from ilastik.gui.iconMgr import ilastikIcons
-
-import ilastik.gui
-from ilastik.core import projectMgr
-
-import ilastik.core.overlays
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.core.overlayMgr import OverlayItem
-from ilastik.gui import volumeeditor as ve
 
-
-from ilastik.gui.backgroundWidget import BackgroundWidget
-
-
-    
+#*******************************************************************************
+# C o n n e c t e d C o m p o n e n t s T a b                                  *
+#*******************************************************************************
 
 class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     name = "Connected Components"

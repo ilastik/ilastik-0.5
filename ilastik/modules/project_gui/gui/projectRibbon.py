@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import vigra
 import gc
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
@@ -10,6 +9,10 @@ from projectDialog import ProjectDlg, ProjectSettingsDlg
 from ilastik.core import projectClass
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui import volumeeditor as ve
+
+#*******************************************************************************
+# P r o j e c t T a b                                                          *
+#*******************************************************************************
 
 class ProjectTab(IlastikTabBase, QtGui.QWidget):
     name = 'Project'

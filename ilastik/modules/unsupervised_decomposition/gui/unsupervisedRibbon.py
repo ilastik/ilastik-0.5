@@ -6,10 +6,13 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
-from ilastik.core.volume import DataAccessor
 from ilastik.modules.unsupervised_decomposition.gui.guiThread import UnsupervisedDecomposition
 from ilastik.modules.unsupervised_decomposition.gui.unsupervisedSelectionDlg import UnsupervisedSelectionDlg
 import ilastik.gui.volumeeditor as ve
+
+#*******************************************************************************
+# U n s u p e r v i s e d T a b                                                *
+#*******************************************************************************
 
 class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
     name = 'Unsupervised Decomposition'

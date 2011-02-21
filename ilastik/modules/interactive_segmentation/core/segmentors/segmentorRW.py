@@ -31,9 +31,7 @@
 Watershed segmentation plugin
 """
 
-import vigra, numpy
 from segmentorBase import *
-import traceback
 from enthought.traits.api import *
 from enthought.traits.ui.api import *
 
@@ -46,6 +44,10 @@ except Exception, e:
     pass
 
 if ok:
+#*******************************************************************************
+# S e g m e n t o r R W                                                        *
+#*******************************************************************************
+
     class SegmentorRW(SegmentorBase):
         name = "Random Walk Segmentation"
         description = "Segmentation plugin using the Random Walk algorithm "

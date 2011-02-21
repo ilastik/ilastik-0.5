@@ -66,10 +66,8 @@ ilastik.modules.loadModuleCores()
 #from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
 #import ilastik.gui
 #from ilastik.core import projectMgr, activeLearning
-from ilastik.core.volume import DataAccessor
 
 from ilastik.modules.classification.core import featureMgr
-from ilastik.core import projectClass
 from ilastik.core.randomSeed import RandomSeed 
 
 #from ilastik.core import connectedComponentsMgr
@@ -91,11 +89,15 @@ import getopt
 
 
 # Please no import *
-from ilastik.gui.shortcutmanager import shortcutManager, shortcutManagerDlg, shortcutManager
+from ilastik.gui.shortcutmanager import shortcutManager
 
 #make the program quit on Ctrl+C
 import signal
 signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+#*******************************************************************************
+# R e n d e r C h o i c e D i a l o g                                          *
+#*******************************************************************************
 
 class RenderChoiceDialog(QtGui.QDialog):
     def __init__(self):
@@ -140,6 +142,10 @@ class RenderChoiceDialog(QtGui.QDialog):
             self.softwareChoice.setChecked(True)
 
         QtCore.QObject.connect(okButton, QtCore.SIGNAL("accepted()"), self, QtCore.SLOT("accept()"))
+
+#*******************************************************************************
+# M a i n W i n d o w                                                          *
+#*******************************************************************************
 
 class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -448,6 +454,10 @@ class MainWindow(QtGui.QMainWindow):
         else:
             event.ignore()
            
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == "__main__":
     splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")

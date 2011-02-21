@@ -30,9 +30,12 @@
 from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
-from ilastik.core.overlayMgr import OverlayItem
 import numpy
         
+#*******************************************************************************
+# L a b e l L i s t I t e m                                                    *
+#*******************************************************************************
+
 class LabelListItem(QtGui.QListWidgetItem):
     def __init__(self, name , number, color):
         QtGui.QListWidgetItem.__init__(self, name)
@@ -54,6 +57,10 @@ class LabelListItem(QtGui.QListWidgetItem):
         icon = QtGui.QIcon(pixmap)
         self.setIcon(icon)      
 
+
+#*******************************************************************************
+# L a b e l L i s t W i d g e t                                                *
+#*******************************************************************************
 
 class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def __init__(self,  labelMgr,  volumeLabelDescriptions, volumeEditor,  overlayItem):
@@ -211,7 +218,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         index = self.listWidget.indexAt(pos)
 
         if not index.isValid():
-           return
+            return
 
         item = self.listWidget.itemAt(pos)
         name = item.text()

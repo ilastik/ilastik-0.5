@@ -31,9 +31,9 @@
 Watershed segmentation plugin
 """
 
-import vigra, numpy
-from segmentorBase import *
-import traceback
+import numpy
+
+from segmentorBase import SegmentorBase
 from enthought.traits.api import *
 from enthought.traits.ui.api import *
 
@@ -46,6 +46,10 @@ except Exception, e:
     pass
 
 if ok:
+#*******************************************************************************
+# S e g m e n t o r G C                                                        *
+#*******************************************************************************
+
     class SegmentorGC(SegmentorBase):
         name = "GraphCut Segmentation"
         description = "Segmentation plug-in using the Graph Cut algorithm"

@@ -1,4 +1,8 @@
 
+#*******************************************************************************
+# I l a s t i k T a b B a s e                                                  *
+#*******************************************************************************
+
 class IlastikTabBase(object):
     name = "Ribbon Base Class for Tab Pages" 
     description = "Virtual base class" 

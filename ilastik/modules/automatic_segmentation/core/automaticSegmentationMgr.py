@@ -4,6 +4,10 @@ from ilastik.core.volume import DataAccessor
 import numpy
 import vigra
 
+#*******************************************************************************
+# A u t o m a t i c S e g m e n t a t i o n I t e m M o d u l e M g r          *
+#*******************************************************************************
+
 class AutomaticSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Automatic_Segmentation"
     
@@ -17,6 +21,10 @@ class AutomaticSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def deserialize(self, h5g, offsets, shape):
         pass
     
+
+#*******************************************************************************
+# A u t o m a t i c S e g m e n t a t i o n M o d u l e M g r                  *
+#*******************************************************************************
 
 class AutomaticSegmentationModuleMgr(BaseModuleMgr):
     name = "Automatic_Segmentation"

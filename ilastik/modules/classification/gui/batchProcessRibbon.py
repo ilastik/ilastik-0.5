@@ -1,12 +1,5 @@
-import numpy, vigra, h5py
-import random
-import code
-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
 from PyQt4 import QtGui, QtCore
-
-from ilastik.core.dataMgr import  PropertyMgr
-from ilastik.core.overlayMgr import OverlayItem, OverlayReferenceMgr
 
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.iconMgr import ilastikIcons
@@ -15,6 +8,10 @@ from ilastik.modules.classification.gui import *
 from ilastik.modules.classification.gui.batchProcessDlg import BatchProcess
 
 from ilastik.gui import volumeeditor as ve
+
+#*******************************************************************************
+# A u t o m a t e T a b                                                        *
+#*******************************************************************************
 
 class AutomateTab(IlastikTabBase, QtGui.QWidget):
     name = 'Automate'

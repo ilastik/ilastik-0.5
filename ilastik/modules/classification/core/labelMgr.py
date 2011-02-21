@@ -27,9 +27,13 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import vigra, numpy
+import numpy
 
-from ilastik.core.volume import DataAccessor, VolumeLabels, VolumeLabelDescription
+from ilastik.core.volume import VolumeLabelDescription
+
+#*******************************************************************************
+# L a b e l M g r                                                              *
+#*******************************************************************************
 
 class LabelMgr(object):
     def __init__(self,  dataMgr, classificationMgr):

@@ -35,6 +35,10 @@ from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.core.overlayMgr import OverlayItem
 from objectStatisticsReport import ObjectStatisticsReport
 
+#*******************************************************************************
+# O b j e c t O v e r l a y I t e m                                            *
+#*******************************************************************************
+
 class ObjectOverlayItem(OverlayItem):
     def __init__(self, objectListWidget, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
         self.objectListWidget = objectListWidget
@@ -43,6 +47,10 @@ class ObjectOverlayItem(OverlayItem):
     def getColorTab(self):
         return self.objectListWidget.getColorTab()
 
+
+#*******************************************************************************
+# O b j e c t P i c k i n g I t e m M o d u l e M g r                          *
+#*******************************************************************************
 
 class ObjectPickingItemModuleMgr(BaseModuleDataItemMgr):
     name = "Object_Picking"
@@ -174,6 +182,10 @@ class ObjectPickingItemModuleMgr(BaseModuleDataItemMgr):
         print "report saved in file", outputfile            
 
 
+
+#*******************************************************************************
+# O b j e c t P i c k i n g M o d u l e M g r                                  *
+#*******************************************************************************
 
 class ObjectPickingModuleMgr(BaseModuleMgr):
     name = "Object_Picking"

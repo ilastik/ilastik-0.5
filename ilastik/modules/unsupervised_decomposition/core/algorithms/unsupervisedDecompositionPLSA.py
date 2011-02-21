@@ -2,6 +2,10 @@ from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDeco
 from ilastik.core.testThread import TestHelperFunctions
 import numpy
         
+#*******************************************************************************
+# U n s u p e r v i s e d D e c o m p o s i t i o n P L S A                    *
+#*******************************************************************************
+
 class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     #human readable information
     name = "probabilistic Latent Semantic Analysis (pLSA)"
