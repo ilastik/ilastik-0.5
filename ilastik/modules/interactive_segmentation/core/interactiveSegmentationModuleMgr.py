@@ -650,13 +650,22 @@ if __name__ == '__main__':
             elif labelVolume[0,0,0,0] == 3:
                 self.segmentation = self.segmentationGT[2]  
     
-    # create project
-    project = Project.loadFromDisk('/home/thorben/cube100.ilp', None)
+    
+    # create project with some fake data
+    project = Project('Project Name', 'Labeler', 'Description')
+    filename = str(QDir.tempPath())+'/testdata.h5'
+    f = h5py.File(filename, 'w')
+    f.create_group('volume')
+    f.create_dataset('volume/data', data=numpy.zeros(shape=(1,120,120,120,1), dtype=numpy.uint8))
+    f.close; del f
+    project.addFile([filename])
+    os.remove(filename)
+    
     dataMgr = project.dataMgr
     segmentor = TestSegmentor()
     dataMgr.Interactive_Segmentation.segmentor = segmentor
     
-    #initialize the module to test
+    #initialize the module to testQDir.tempPath()+'/testdata.h5'
     s = dataMgr._activeImage.module["Interactive_Segmentation"] 
     #create outputPath, make sure it is empty
     s.outputPath = str(QDir.tempPath())+"/tmpseg"
