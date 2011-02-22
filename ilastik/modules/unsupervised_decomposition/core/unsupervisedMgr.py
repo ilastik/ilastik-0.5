@@ -26,11 +26,6 @@ for i, c in enumerate(algorithms.unsupervisedDecompositionBase.UnsupervisedDecom
     print "Loaded unsupervised decomposition algorithm:", c.name
 
 
-def interactiveMessagePrint(* args):
-    pass
-    #print "Thread: ", args[0]
-
-
 #*******************************************************************************
 # U n s u p e r v i s e d I t e m M o d u l e M g r                            *
 #*******************************************************************************

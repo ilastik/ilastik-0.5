@@ -82,7 +82,6 @@ class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decompo
         __test__ = False
 
     def setUp(self):
-        print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5")
     
@@ -201,6 +200,24 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
         self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, self.numComponents*2)
                 
         self.app.quit()
+        
+
+#*******************************************************************************
+# T e s t E t c                                                                *
+#*******************************************************************************
+
+class TestEtc(unittest.TestCase): # test additional functionality
+    
+    def test_Etc(self):
+        # check that wrong numbers of components are reset to a valid value in {1, ..., numComponents}
+        numChannels = 10
+        decomposer = UnsupervisedDecompositionPCA()
+        components = decomposer.checkNumComponents(numChannels, 100)
+        assert((components <= numChannels) & (components >= 1))
+        components = decomposer.checkNumComponents(numChannels, 0)
+        print components
+        assert((components <= numChannels) & (components >= 1))
+
 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
