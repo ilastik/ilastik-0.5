@@ -264,12 +264,12 @@ class OverlayItem(object):
         data = data - dmin
         dmax = numpy.max(data)
         data = 255*data/dmax
-        data = data.astype(numpy.uint32) # transform to uint8
+        data = data.astype(numpy.uint32) # transform to uint
         return data
 
     @classmethod
     def qrgb(cls, r, g, b):
-        return (0xff << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff)
+        return long(0xff << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff)
     
     @classmethod
     def qgray(cls, r, g, b):

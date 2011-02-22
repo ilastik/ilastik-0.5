@@ -1294,9 +1294,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                             
                             origitemColor = None
-                            if isinstance(origitem.color,  long):
-                                origitemColor = QtGui.QColor.fromRgba(origitem.color)
+                            if isinstance(origitem.color,  long) or isinstance(origitem.color,  int):
+                                origitemColor = QtGui.QColor.fromRgba(long(origitem.color))
                             else:
+                                print "origitem.color XXX ", origitem.color.__class__
                                 origitemColor = origitem.color
                                 
                             # if itemdata is uint16
