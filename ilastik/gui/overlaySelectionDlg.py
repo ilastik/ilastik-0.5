@@ -4,7 +4,7 @@ from PyQt4 import uic
 import os
 import qimage2ndarray
 from ilastik.gui.iconMgr import ilastikIcons
-import ilastik.gui.overlayDialogs as overlayDialogs
+import ilastik.gui.overlayDialogs
 import ilastik
 import numpy
 
