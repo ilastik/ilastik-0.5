@@ -4,6 +4,8 @@ from ilastik.modules.interactive_segmentation.core.segmentors.segmentorBase impo
 from PyQt4.QtCore import QDir
 import h5py, numpy, os, shutil
 
+from ilastik.core.testThread import setup, teardown
+
 def test_InteractiveSegmentationItemModuleMgr():
     def h5equal(filename, a):
         f = h5py.File(filename, 'r')
