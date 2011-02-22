@@ -69,7 +69,7 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
 
 class TestHelperFunctions():
     @staticmethod
-    def compareResultsWithFile(baseMgr, listOfResultOverlays, listOfFilenames, tolerance):
+    def compareResultsWithFile(baseMgr, listOfResultOverlays, listOfFilenames, tolerance = 0):
         equalOverlays = True
         for i in range(len(listOfResultOverlays)):
             obtained = baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber].overlayMgr[listOfResultOverlays[i]]
@@ -82,7 +82,7 @@ class TestHelperFunctions():
     
     @staticmethod
     # we only compare the data of the overlay, since we want to avoid dependence on color tables etc.
-    def compareOverlayData(overlay1, overlay2, tolerance):
+    def compareOverlayData(overlay1, overlay2, tolerance = 0):
         # overlay1._data._data can be a listOfNDArraysAsNDArray instance, overlay2._data._data is loaded from file, so it should be an NDArray
         if isinstance(overlay1._data._data, ListOfNDArraysAsNDArray):
             datatemp1 = overlay1._data._data.ndarrays
