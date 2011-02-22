@@ -1,3 +1,4 @@
+*,cover
 *.pyc
 *.swp
 .swp.*

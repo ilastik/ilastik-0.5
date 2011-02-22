@@ -35,4 +35,3 @@ class UnsupervisedDecompositionBase(object):
     @classmethod   
     def setNumberOfComponents(cls, numComponents):
         cls.numComponents = numComponents
-   

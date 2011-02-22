@@ -29,14 +29,14 @@
 
 import vigra
 vigraVersion = vigra.version.split('.')
-if vigraVersion[0] < 1 or vigraVersion[1] < 7 or vigraVersion[2] < 1:
-    raise RuntimeError("At least vigra version 1.7.1 is required")
+if int(vigraVersion[0]) < 1 or int(vigraVersion[1]) < 8 or int(vigraVersion[2]) < 0:
+    raise RuntimeError("At least vigra version 1.8.0 is required")
 print "Using vigra version %s ... ok" % (vigra.version)
 
 import numpy
 numpyVersion = numpy.__version__.split('.')
-if numpyVersion[0] < 1 or numpyVersion[1] < 5 or numpyVersion[2] < 1:
-    raise RuntimeError("At least numpy version 1.5.1 is required")
+if int(numpyVersion[0]) < 1 or int(numpyVersion[1]) < 3 or int(numpyVersion[2]) < 0:
+    raise RuntimeError("At least numpy version 1.3.0 is required")
 print "Using numpy version %s ... ok" % (numpy.__version__)
 
 from OpenGL.GL import *

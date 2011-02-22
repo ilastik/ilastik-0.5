@@ -956,6 +956,16 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[2].doScale(scaleFactor)
 
     def setLabels(self, offsets, axis, num, labels, erase):
+        """
+        offsets: labels is a 2D matrix in the image plane perpendicular to axis, which is offset from the origin
+                 of the slice by the 2D offsets verctor
+        axis:    the axis (x=0, y=1 or z=2 which is perpendicular to the image plane
+        num:     position of the image plane perpendicular to axis on which the 'labels' were drawn
+        labels   2D matrix of new labels
+        erase    boolean whether we are erasing or not. This changes how we interprete the update defined through
+                 'labels'
+        """
+        
         if axis == 0:
             offsets5 = (self.selectedTime,num,offsets[0],offsets[1],0)
             sizes5 = (1,1,labels.shape[0], labels.shape[1],1)
@@ -1278,11 +1288,11 @@ class ImageSceneRenderThread(QtCore.QThread):
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                             
                             origitemColor = None
-                            if isinstance(origitem.color,  long):
-                                origitemColor = QtGui.QColor.fromRgba(origitem.color)
+                            if isinstance(origitem.color,  long) or isinstance(origitem.color,  int):
+                                origitemColor = QtGui.QColor.fromRgba(long(origitem.color))
                             else:
                                 origitemColor = origitem.color
-                                
+                                 
                             # if itemdata is uint16
                             # convert it for displayporpuse
                             if itemdata.dtype == numpy.uint16:
@@ -2111,8 +2121,8 @@ class ImageScene(QtGui.QGraphicsView):
         
         posX = posY = posZ = -1
         if self.axis == 0:
-            posY = self.y
-            posZ = self.x
+            posY = self.x
+            posZ = self.y
             posX = self.volumeEditor.selSlices[0]
         elif self.axis == 1:
             posY = self.volumeEditor.selSlices[1]
