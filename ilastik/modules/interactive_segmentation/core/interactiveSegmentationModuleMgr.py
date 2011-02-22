@@ -609,33 +609,46 @@ if __name__ == '__main__':
             return False
         return True
     
-#*******************************************************************************
-# T e s t S e g m e n t o r                                                    *
-#*******************************************************************************
-
     class TestSegmentor(SegmentorBase):
         segmentation = None
-        ver = 0
+        seeds = None
         
-        def setVersion(self, ver=0):
-            self.ver = ver
+        segmentationGT = []
+        seedsGT = []
         
-        def produceSegmentationVersion(self, version):
-            #first fill with the background label '1' 
-            self.segmentation = numpy.ones((120,120,120,1), dtype=numpy.uint8)
-            if version == 0:
-                self.segmentation[5:10,5:10,5:10,0] = 2
-            elif version == 1:
-                self.segmentation[5:30,5:20,8:17,0]    = 3
-                self.segmentation[50:70,50:70,40:60,0] = 5
-            elif version == 2:
-                self.segmentation[8:12,10:30,30:40,0]  = 2
-                self.segmentation[20:30,10:30,30:40,0] = 4
-                self.segmentation[40:50,10:30,30:40,0] = 6
+        def __init__(self):
+            for ver in range(3):
+                seeds = numpy.zeros((120,120,120,1), dtype=numpy.uint8)
+                if  ver == 0:
+                    seeds[0,0,0,0] = 1
+                elif ver == 1:
+                    seeds[0,0,0,0] = 2
+                elif ver == 2:
+                    seeds[0,0,0,0] = 3
+                self.seedsGT.append(seeds)
+            
+            for i in range(3):
+                seg = numpy.ones((120,120,120,1), dtype=numpy.uint8)
+                if i == 0:
+                    seg[5:10,5:10,5:10,0]    = 2
+                elif i == 1:
+                    seg[5:30,5:20,8:17,0]    = 3
+                    seg[50:70,50:70,40:60,0] = 5
+                elif i == 2:
+                    seg[8:12,10:30,30:40,0]  = 2
+                    seg[20:30,10:30,30:40,0] = 4
+                    seg[40:50,10:30,30:40,0] = 6
+                self.segmentationGT.append(seg)
         
         def segment(self, labelVolume, labelValues, labelIndices):
+            print "fake segment"
             assert labelVolume.shape == (120,120,120,1)
-            self.produceSegmentationVersion(self.ver)
+            if labelVolume[0,0,0,0] == 1:
+                self.segmentation = self.segmentationGT[0]
+            elif labelVolume[0,0,0,0] == 2:
+                self.segmentation = self.segmentationGT[1]
+            elif labelVolume[0,0,0,0] == 3:
+                self.segmentation = self.segmentationGT[2]  
     
     # create project
     project = Project.loadFromDisk('/home/thorben/cube100.ilp', None)
@@ -657,13 +670,15 @@ if __name__ == '__main__':
     shape4D = (120,120,120,1)
     shape5D = (1,120,120,120,1)
 
+    version = 0
+
     print "*************************************************************************"
     print "* segment for the first time (version 0)                                *"
     print "*************************************************************************"
     
-    #segment
-    segmentor.setVersion(0)    
-    s.segment()
+    s.seedLabelsVolume._data[:] = segmentor.seedsGT[version][:] #fake drawing some seeds
+    s.segment() #segment
+    
     assert arrayEqual(s.segmentation[0,:,:,:,:], segmentor.segmentation)
     assert not os.path.exists(s.outputPath+'/one')
     assert s._mapKeysToLabels == {}
@@ -682,6 +697,9 @@ if __name__ == '__main__':
     assert os.path.exists(s.outputPath+'/one/seeds.h5')
     
     h5equal(s.outputPath+'/one/segmentation.h5', segmentor.segmentation)
+    h5equal(s.outputPath+'/one/seeds.h5', segmentor.seedsGT[version])
+    
+    assert numpy.where(s.seedLabelsVolume._data != 0) == () 
     
     doneGT = numpy.zeros(shape=shape4D, dtype=numpy.uint32)
     doneGT[numpy.where(segmentor.segmentation == 2)] = 1
@@ -720,7 +738,8 @@ if __name__ == '__main__':
     print "* segment for the second time (version 1)                               *"
     print "*************************************************************************"
     
-    segmentor.setVersion(1)
+    version = 1
+    s.seedLabelsVolume._data[:] = segmentor.seedsGT[version][:] #fake drawing some seeds
     s.segment()
     assert arrayEqual(s.segmentation[0,:,:,:,:], segmentor.segmentation)
     assert s._mapKeysToLabels == {}
@@ -742,9 +761,10 @@ if __name__ == '__main__':
     print "* segment again (version 2)                                             *"
     print "*************************************************************************"
  
-    segmentor.setVersion(2)
+    version = 2
+    s.seedLabelsVolume._data[:] = segmentor.seedsGT[version][:] #fake drawing some seeds
     s.segment()
-    assert arrayEqual(s.segmentation[0,:,:,:,:], segmentor.segmentation)
+    assert arrayEqual(s.segmentation[0,:,:,:,:], segmentor.segmentationGT[version])
     
     s.saveCurrentSegmentsAs('three')
     assert os.path.exists(s.outputPath)
@@ -758,20 +778,16 @@ if __name__ == '__main__':
     assert s._mapKeysToLabels == {'two': set([1, 2]), 'three': set([3, 4, 5])}
     assert s._mapLabelsToKeys == {1: 'two', 2: 'two', 3: 'three', 4: 'three', 5: 'three'}
     
-    segmentor.produceSegmentationVersion(1)
-    seg1 = segmentor.segmentation
-    segmentor.produceSegmentationVersion(2)
-    seg2 = segmentor.segmentation
-    doneGT = numpy.zeros(shape=seg1.shape, dtype=numpy.uint32)
-    doneGT[numpy.where(seg1 == 3)] = 1
-    doneGT[numpy.where(seg1 == 5)] = 2
-    doneGT[numpy.where(seg2 == 2)] = 3
-    doneGT[numpy.where(seg2 == 4)] = 4
-    doneGT[numpy.where(seg2 == 6)] = 5
+    doneGT = numpy.zeros(shape=shape4D, dtype=numpy.uint32)
+    doneGT[numpy.where(segmentor.segmentationGT[1] == 3)] = 1
+    doneGT[numpy.where(segmentor.segmentationGT[1] == 5)] = 2
+    doneGT[numpy.where(segmentor.segmentationGT[2] == 2)] = 3
+    doneGT[numpy.where(segmentor.segmentationGT[2] == 4)] = 4
+    doneGT[numpy.where(segmentor.segmentationGT[2] == 6)] = 5
     assert arrayEqual(doneGT.squeeze(), s.done.squeeze())
     
-    assert h5equal(s.outputPath+'/two/segmentation.h5', seg1)
-    assert h5equal(s.outputPath+'/three/segmentation.h5', seg2)
+    assert h5equal(s.outputPath+'/two/segmentation.h5', segmentor.segmentationGT[1])
+    assert h5equal(s.outputPath+'/three/segmentation.h5', segmentor.segmentationGT[2])
     
     print "*************************************************************************"
     print "* remove segments 'three'                                               *"
@@ -790,9 +806,9 @@ if __name__ == '__main__':
     assert f.readlines() == ['1|two\r\n', '2|two\r\n']
     f.close()
     
-    doneGT = numpy.zeros(shape=seg1.shape, dtype=numpy.uint32)
-    doneGT[numpy.where(seg1 == 3)] = 1
-    doneGT[numpy.where(seg1 == 5)] = 2
+    doneGT = numpy.zeros(shape=shape4D, dtype=numpy.uint32)
+    doneGT[numpy.where(segmentor.segmentationGT[1] == 3)] = 1
+    doneGT[numpy.where(segmentor.segmentationGT[1] == 5)] = 2
     assert arrayEqual(doneGT.squeeze(), s.done.squeeze())
     assert h5equal(s.outputPath+'/done.h5', doneGT)
     
@@ -801,8 +817,11 @@ if __name__ == '__main__':
     print "*************************************************************************"
     
     s.editSegmentsByKey('two')
-    #TODO: Implement fake segmentation based on seeds in the TestSegmentor
-    #assert h5equal(s.outputPath+'/two/segmentation.h5', s.segmentation[0,:,:,:,:])
+
+    print "check...."
+    assert arrayEqual(s.seedLabelsVolume._data[0,:,:,:,:], segmentor.seedsGT[1])
+    #assert arrayEqual(s.segmentation[0,:,:,:,:].squeeze(), segmentor.segmentation.squeeze())
+    
     s.saveCurrentSegment()
     
     print "*************************************************************************"
@@ -821,7 +840,7 @@ if __name__ == '__main__':
     assert f.readlines() == []
     f.close()
     
-    doneGT = numpy.zeros(shape=seg1.shape, dtype=numpy.uint32)
+    doneGT = numpy.zeros(shape=shape4D, dtype=numpy.uint32)
     assert arrayEqual(doneGT.squeeze(), s.done.squeeze())
     assert h5equal(s.outputPath+'/done.h5', doneGT)
     
