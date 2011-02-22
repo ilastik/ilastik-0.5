@@ -93,19 +93,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
             if raw is not None: ovs.append(raw.getRef())
         
-<<<<<<< HEAD
-        #create SeedsOverlay
-        ov = OverlayItem(self.ilastik._activeImage.Interactive_Segmentation.seeds._data, color = 0, alpha = 1.0, colorTable = self.ilastik._activeImage.Interactive_Segmentation.seeds.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        #be able to show the seeds in 3D
-        ov.displayable3D = True
-        ov.backgroundClasses = set([0])
-        ov.smooth3D = False
-        self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = ov
-        ov = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
-=======
         self.ilastik.labelWidget.interactionLog = self.interactionLog        
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
->>>>>>> master
 
         self.overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(self.overlayWidget)
@@ -132,49 +121,15 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), lambda b: self.btnSegment.setEnabled(b))
         s.init()
         
-<<<<<<< HEAD
-        ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
-        ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
-        
-        if ov is None:
-            path = self.outputPath
-            try:
-                os.makedirs(path)
-            except:
-                pass            
-            try:
-                activeItem = self.ilastik._activeImage
-                file_name = path + "done.h5"
-                dataImpex.DataImpex.importOverlay(activeItem, file_name, "")
-                
-                """
-                theDataItem = dataImpex.DataImpex.importDataItem(file_name, None)
-                if theDataItem is None:
-                    print "No _data item loaded"
-                else:
-                    if theDataItem.shape[0:-1] == activeItem.shape[0:-1]:
-                        data = theDataItem[:,:,:,:,:]
-                        ov = OverlayItem(data, color = QtGui.QColor(0,0,255), alpha = 0.5, colorTable = None, autoAdd = True, autoVisible = True, min = 1.0, max = 2.0)
-                        activeItem.overlayMgr["Segmentation/Done"] = ov
-                    else:
-                        print "Cannot add " + theDataItem.fileName + " due to dimensionality mismatch"
-                """
-            except:
-                traceback.print_exc()
-
-        ov = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
-        if ov is not None and ov_cc is None:
-            colorTableCC = CC.makeColorTab()
-            ov_cc = OverlayItem(ov._data, color=0, alpha=0.7, colorTable=colorTableCC, autoAdd=False, autoVisible=False)                    
-            self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = ov_cc
-            #ov_cc = self.ilastik._activeImage.overlayMgr["Segmentation/Objects"]
-=======
         #add 'Seeds' overlay
         self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
         self.seedWidget = SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay)
-        self.ilastik.labelWidget.setLabelWidget(self.seedWidget)            
->>>>>>> master
+        self.ilastik.labelWidget.setLabelWidget(self.seedWidget)
+        
+        self.seedOverlay.displayable3D = True
+        self.seedOverlay.backgroundClasses = set([0])
+        self.seedOverlay.smooth3D = False
 
     def on_numColorsNeeded(self, numColors):
         """make sure that there are enough label colors.
