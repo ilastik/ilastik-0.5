@@ -3,6 +3,8 @@ import unittest
 from ilastik.core.testThread import TestHelperFunctions
 from ilastik import __path__ as ilastikpath
 
+from ilastik.core.testThread import setup, teardown
+
 #*******************************************************************************
 # T e s t s                                                                    *
 #*******************************************************************************

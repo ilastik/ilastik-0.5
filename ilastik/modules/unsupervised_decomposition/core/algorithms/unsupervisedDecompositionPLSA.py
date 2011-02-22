@@ -1,5 +1,4 @@
 from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDecompositionBase import UnsupervisedDecompositionBase
-from ilastik.core.testThread import TestHelperFunctions
 import numpy
         
 #*******************************************************************************

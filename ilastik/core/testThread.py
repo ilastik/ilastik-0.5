@@ -10,6 +10,17 @@ from subprocess import Popen, PIPE
 # T e s t T h r e a d                                                          *
 #*******************************************************************************
 
+import ilastik.core.jobMachine
+
+def setup():
+    if not ilastik.core.jobMachine.GLOBAL_WM:
+        ilastik.core.jobMachine.GLOBAL_WM = ilastik.core.jobMachine.WorkerManager()
+    
+def teardown():
+    ilastik.core.jobMachine.GLOBAL_WM.stopWorkers()
+    del ilastik.core.jobMachine.GLOBAL_WM
+    ilastik.core.jobMachine.GLOBAL_WM = None
+
 class TestThread(QtCore.QObject):#QtCore.QThread):
     
     def __init__(self, baseMgr, listOfResultOverlays, listOfFilenames):
@@ -88,7 +99,7 @@ class TestHelperFunctions():
         print "files to compare: ", file1, file2
         #have to spawn a subprocess, because h5diff has no wrapper in python
         
-        cl = "h5diff -cv " + file1 + " " + file2
+        cl = "h5diff -cv '" + file1 + "' '" + file2 + "'"
         args = shlex.split(cl)
         '''
         cl_header1 = "h5dump --header " + file1

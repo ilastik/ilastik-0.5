@@ -962,6 +962,16 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[2].doScale(scaleFactor)
 
     def setLabels(self, offsets, axis, num, labels, erase):
+        """
+        offsets: labels is a 2D matrix in the image plane perpendicular to axis, which is offset from the origin
+                 of the slice by the 2D offsets verctor
+        axis:    the axis (x=0, y=1 or z=2 which is perpendicular to the image plane
+        num:     position of the image plane perpendicular to axis on which the 'labels' were drawn
+        labels   2D matrix of new labels
+        erase    boolean whether we are erasing or not. This changes how we interprete the update defined through
+                 'labels'
+        """
+        
         if axis == 0:
             offsets5 = (self.selectedTime,num,offsets[0],offsets[1],0)
             sizes5 = (1,1,labels.shape[0], labels.shape[1],1)
