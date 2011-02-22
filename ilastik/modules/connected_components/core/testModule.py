@@ -8,7 +8,7 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
-from ilastik.core.testThread import setup, teardown
+from ilastik.core.testThread import setUp, tearDown
 
 #*******************************************************************************
 # C C T e s t P r o j e c t                                                    *
@@ -51,6 +51,7 @@ class CCTestProject(object):
         self.listOfFilenames = []
         self.listOfResultOverlays.append("Connected Components/CC Results")
         self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
+        
 
 #*******************************************************************************
 # T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d            *
@@ -59,7 +60,7 @@ class CCTestProject(object):
 class TestWholeModule_WithoutBackground(unittest.TestCase):
      
     def setUp(self):
-        #print "setUp"
+        print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
     
@@ -78,9 +79,9 @@ class TestWholeModule_WithoutBackground(unittest.TestCase):
 
     def finalizeTest(self):
         # results comparison
+        print "finalize"
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
-
 
 #*******************************************************************************
 # T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d W r o n g I m a g e *

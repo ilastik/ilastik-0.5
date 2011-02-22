@@ -1,11 +1,13 @@
 from ilastik.modules.unsupervised_decomposition.core.algorithms.unsupervisedDecompositionBase import UnsupervisedDecompositionBase
 import numpy
 
+
 #*******************************************************************************
 # U n s u p e r v i s e d D e c o m p o s i t i o n P C A                      *
 #*******************************************************************************
 
 class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
+    
     #human readable information
     name = "Principal Component Analysis (PCA)" 
     shortname = "PCA"
