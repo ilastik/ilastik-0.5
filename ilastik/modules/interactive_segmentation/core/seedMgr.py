@@ -38,8 +38,9 @@ from ilastik.core.volume import VolumeLabelDescription
 class SeedMgr(object):
     """
     manages the seeds of all dataItems and stuff.
-    seeds (as labels) should be synchronized across all dataItems because it is a good idead.
+    seeds (as labels) should be synchronized across all dataItems because it is a good idea.
     """
+    
     def __init__(self,  dataMgr):
         self.dataMgr = dataMgr
         

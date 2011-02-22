@@ -27,10 +27,10 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import vigra, numpy
-import traceback, os, sys
+import numpy
+import traceback, sys
 
-from ilastik.core.volume import DataAccessor, VolumeLabels, VolumeLabelDescription
+from ilastik.core.volume import VolumeLabels, VolumeLabelDescription
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.core.overlayMgr import OverlayItem
 from objectStatisticsReport import ObjectStatisticsReport

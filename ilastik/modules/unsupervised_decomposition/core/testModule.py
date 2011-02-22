@@ -9,6 +9,8 @@ import unittest
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
+from ilastik.core.testThread import setup, teardown
+
 #*******************************************************************************
 # U n s u p e r v i s e d D e c o m p o s i t i o n T e s t P r o j e c t      *
 #*******************************************************************************
@@ -172,28 +174,11 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
                 
         self.app.quit()
 
-# very stupid indeed, but necessary: the inclusion of the jobMachine (potentially indirect) results in a global 
-# thread being started. To terminate it, we have to call the respective jobMachine function. But: this has 
-# to be done in a tearDown function and it must only been done once, i.e. by the last test. Tests are executed
-# in alphabetical order by unittest (default).   
-#*******************************************************************************
-# z z z T e s t D u m m y                                                      *
-#*******************************************************************************
-
-class zzzTestDummy(unittest.TestCase): 
-     
-    def test_dummy(self):
-        pass
-        
-    def tearDown(self):
-        jobMachine.GLOBAL_WM.stopWorkers()
-
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
 
 if __name__ == "__main__":
     unittest.main()
-    jobMachine.GLOBAL_WM.stopWorkers()
 
 
