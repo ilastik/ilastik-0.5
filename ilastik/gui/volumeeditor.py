@@ -1297,9 +1297,8 @@ class ImageSceneRenderThread(QtCore.QThread):
                             if isinstance(origitem.color,  long) or isinstance(origitem.color,  int):
                                 origitemColor = QtGui.QColor.fromRgba(long(origitem.color))
                             else:
-                                print "origitem.color XXX ", origitem.color.__class__
                                 origitemColor = origitem.color
-                                
+                                 
                             # if itemdata is uint16
                             # convert it for displayporpuse
                             if itemdata.dtype == numpy.uint16:
