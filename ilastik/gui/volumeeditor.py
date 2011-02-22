@@ -1292,7 +1292,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 origitemColor = QtGui.QColor.fromRgba(long(origitem.color))
                             else:
                                 origitemColor = origitem.color
-                                
+                                 
                             # if itemdata is uint16
                             # convert it for displayporpuse
                             if itemdata.dtype == numpy.uint16:
