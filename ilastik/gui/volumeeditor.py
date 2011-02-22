@@ -2127,8 +2127,8 @@ class ImageScene(QtGui.QGraphicsView):
         
         posX = posY = posZ = -1
         if self.axis == 0:
-            posY = self.y
-            posZ = self.x
+            posY = self.x
+            posZ = self.y
             posX = self.volumeEditor.selSlices[0]
         elif self.axis == 1:
             posY = self.volumeEditor.selSlices[1]
