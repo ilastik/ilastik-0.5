@@ -12,18 +12,18 @@ from subprocess import Popen, PIPE
 
 import ilastik.core.jobMachine
 
-def setup():
+def setUp():
     if not ilastik.core.jobMachine.GLOBAL_WM:
         ilastik.core.jobMachine.GLOBAL_WM = ilastik.core.jobMachine.WorkerManager()
     
-def teardown():
+def tearDown():
     ilastik.core.jobMachine.GLOBAL_WM.stopWorkers()
     del ilastik.core.jobMachine.GLOBAL_WM
     ilastik.core.jobMachine.GLOBAL_WM = None
 
 class TestThread(QtCore.QObject):#QtCore.QThread):
     
-    def __init__(self, baseMgr, listOfResultOverlays, listOfFilenames):
+    def __init__(self, baseMgr, listOfResultOverlays, listOfFilenames, tolerance = 0):
         __pyqtSignals__ = ( "done()")
 
         #QtCore.QThread.__init__(self, parent)
@@ -31,6 +31,7 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
         self.baseMgr = baseMgr
         self.listOfResultOverlays = listOfResultOverlays
         self.listOfFilenames = listOfFilenames
+        self.tolerance = tolerance
         self.passedTest = False
 
     def start(self, input):
@@ -51,7 +52,7 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
         # call core function
         self.baseMgr.finalizeResults()
         # compare obtained results with ground truth results
-        self.passedTest = TestHelperFunctions.compareResultsWithFile(self.baseMgr, self.listOfResultOverlays, self.listOfFilenames)
+        self.passedTest = TestHelperFunctions.compareResultsWithFile(self.baseMgr, self.listOfResultOverlays, self.listOfFilenames, self.tolerance)
         # announce that we are done
         self.emit(QtCore.SIGNAL("done()"))
         
@@ -68,20 +69,20 @@ class TestThread(QtCore.QObject):#QtCore.QThread):
 
 class TestHelperFunctions():
     @staticmethod
-    def compareResultsWithFile(baseMgr, listOfResultOverlays, listOfFilenames):
+    def compareResultsWithFile(baseMgr, listOfResultOverlays, listOfFilenames, tolerance = 0):
         equalOverlays = True
         for i in range(len(listOfResultOverlays)):
             obtained = baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber].overlayMgr[listOfResultOverlays[i]]
             prefix = "Ground_Truth/"
             dataImpex.DataImpex.importOverlay(baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber], listOfFilenames[i], prefix)
             groundTruth = baseMgr.dataMgr[baseMgr.dataMgr._activeImageNumber].overlayMgr[prefix + listOfResultOverlays[i]]
-            equalOverlays = equalOverlays & TestHelperFunctions.compareOverlayData(obtained, groundTruth)
+            equalOverlays = equalOverlays & TestHelperFunctions.compareOverlayData(obtained, groundTruth, tolerance)
         print "all ", str(len(listOfResultOverlays)), " compared overlays are equal: ", equalOverlays
         return equalOverlays        
     
     @staticmethod
     # we only compare the data of the overlay, since we want to avoid dependence on color tables etc.
-    def compareOverlayData(overlay1, overlay2):
+    def compareOverlayData(overlay1, overlay2, tolerance = 0):
         # overlay1._data._data can be a listOfNDArraysAsNDArray instance, overlay2._data._data is loaded from file, so it should be an NDArray
         if isinstance(overlay1._data._data, ListOfNDArraysAsNDArray):
             datatemp1 = overlay1._data._data.ndarrays
@@ -89,7 +90,7 @@ class TestHelperFunctions():
             datatemp1 = overlay1._data._data 
         datatemp2 = overlay2._data._data
         
-        if numpy.all(datatemp1 - datatemp2 == 0):
+        if numpy.all(numpy.abs(datatemp1 - datatemp2) <= tolerance):
             return True
         else: 
             return False

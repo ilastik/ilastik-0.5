@@ -6,7 +6,7 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
-from ilastik.core.testThread import setup, teardown
+from ilastik.core.testThread import setUp, tearDown
 
 #*******************************************************************************
 # A u t o m a t i c S e g m e n t a t i o n T e s t P r o j e c t              *
@@ -99,7 +99,7 @@ class TestWholeModuleWrongImage(unittest.TestCase): # this test tests if wrong i
         # compare obtained result to ground truth result
         equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         self.assertEqual(equalOverlays, False) # has to be different from ground truth result (wrong input data!)
- 
+
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
