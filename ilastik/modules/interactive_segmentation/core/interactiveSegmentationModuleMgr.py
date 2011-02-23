@@ -151,12 +151,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         from ilastik.modules.interactive_segmentation.core import startupOutputPath   
         self.outputPath = startupOutputPath
            
+        self.__createSeedsData()
+           
         if not self.outputPath:
             return
         else:
             print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
-           
-        self.__createSeedsData()
         
         if not os.path.exists(self.outputPath+'/'+'config.txt'): return
         
@@ -408,6 +408,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             l = numpy.zeros(self._dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seedLabelsVolume = VolumeLabels(l)
         
+        if not self.outputPath: return
+                
         if not os.path.exists(self.outputPath):
             os.makedirs(self.outputPath)
         
