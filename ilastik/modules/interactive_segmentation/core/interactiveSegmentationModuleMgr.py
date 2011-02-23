@@ -150,6 +150,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         from ilastik.modules.interactive_segmentation.core import startupOutputPath   
         self.outputPath = startupOutputPath
+        
+        self.__createSeedsData()
            
         self.__createSeedsData()
            
