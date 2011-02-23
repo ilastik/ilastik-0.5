@@ -144,7 +144,16 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         """Handles all the initialization that can be postponed until _activation_ of the module.
            For example, big arrays are allocated only after the user has decided
            to switch to this particular tab."""
+        
+        from ilastik.modules.interactive_segmentation.core import startupOutputPath   
+        self.outputPath = startupOutputPath
+           
         self.__createSeedsData()
+           
+        if not self.outputPath:
+            return
+        else:
+            print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
         
         if not os.path.exists(self.outputPath+'/'+'config.txt'): return
         
@@ -394,6 +403,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             l = numpy.zeros(self._dataItemImage.shape[0:-1] + (1, ),  'uint8')
             self.seedLabelsVolume = VolumeLabels(l)
         
+        if not self.outputPath: return
+                
         if not os.path.exists(self.outputPath):
             os.makedirs(self.outputPath)
         
