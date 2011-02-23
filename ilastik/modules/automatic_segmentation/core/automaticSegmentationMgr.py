@@ -51,14 +51,23 @@ class AutomaticSegmentationModuleMgr(BaseModuleMgr):
         if input.shape[0] > 1:
             borders = input.view(vigra.ScalarVolume)
             # this does NOT work if the border map is not smooth, e.g. vigra.filters.gaussianGradientMagnitude(border_image, 0.3) won't work ==> force smoothing!
+            #borders = vigra.filters.gaussianSmoothing(borders, 2)
             self.res[0,:,:,:,0] = vigra.analysis.watersheds(borders, neighborhood = 6)[0]
         else:
             borders = input[0,:,:].view(vigra.ScalarImage)
             # this does NOT work if the border map is not smooth, e.g. vigra.filters.gaussianGradientMagnitude(border_image, 0.3) won't work ==> force smoothing!
+            #borders = vigra.filters.gaussianSmoothing(borders, 2)
             self.res[0,0,:,:,0] = vigra.analysis.watersheds(borders, 4)[0]
             #self.res[0,0,:,:,0] = input[0,:,:].view(vigra.ScalarImage)
+        from ilastik.core import dataImpex
+        bov = OverlayItem(borders, color = 0, alpha = 1.0, colorTable = None)
+        dataImpex.DataImpex.exportOverlay("c:/border_overlay.h5", "h5", bov)
     
     def finalizeResults(self):
+        # fix random seed
+        from ilastik.core.randomSeed import RandomSeed
+        RandomSeed.setRandomSeed(42)
+        
         colortable = OverlayItem.createDefaultColorTable('RGB', 256)
 
         #create Overlay for segmentation:

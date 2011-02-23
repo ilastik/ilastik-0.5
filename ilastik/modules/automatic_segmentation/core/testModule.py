@@ -122,7 +122,27 @@ class TestWholeModuleNormal3D(unittest.TestCase):
         # compare obtained result to ground truth result
         equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
         self.assertEqual(equalOverlays, True)
+                
+#*******************************************************************************
+# T e s t W h o l e M o d u l e I n v e r t e d 3 D                            *
+#*******************************************************************************
+
+class TestWholeModuleInverted3D(unittest.TestCase):
+     
+    def setUp(self):
+        #print "setUp"
+        self.testProject = AutomaticSegmentationTestProject("neurocube.h5", "neurocube_border_overlay_laplacian_of_gaussians_1.h5", "neurocube_gt_automatic_segmentation_inverted.h5")
+    
+    def test_WholeModule(self):
+        # compute results
+        self.testProject.automaticSegmentationMgr.computeResults(self.testProject.input)
+        # ...add overlays
+        self.testProject.automaticSegmentationMgr.finalizeResults()
         
+        # compare obtained result to ground truth result
+        equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        self.assertEqual(equalOverlays, True)
+
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
