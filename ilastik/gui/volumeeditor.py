@@ -1299,7 +1299,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                             else:
                                 print "origitem.color XXX ", origitem.color.__class__
                                 origitemColor = origitem.color
-                                
+                                 
                             # if itemdata is uint16
                             # convert it for displayporpuse
                             if itemdata.dtype == numpy.uint16:
@@ -2128,8 +2128,8 @@ class ImageScene(QtGui.QGraphicsView):
         
         posX = posY = posZ = -1
         if self.axis == 0:
-            posY = self.y
-            posZ = self.x
+            posY = self.x
+            posZ = self.y
             posX = self.volumeEditor.selSlices[0]
         elif self.axis == 1:
             posY = self.volumeEditor.selSlices[1]

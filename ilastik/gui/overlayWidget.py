@@ -30,7 +30,7 @@
 from PyQt4 import QtCore, QtGui
 import os
 from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
-import ilastik.gui.overlayDialogs as overlayDialogs
+from ilastik.gui import overlayDialogs
 import ilastik.gui.exportDialog as exportDialog
 from ilastik.core import dataImpex
 

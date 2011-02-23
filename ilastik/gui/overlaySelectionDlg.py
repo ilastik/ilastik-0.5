@@ -4,7 +4,7 @@ from PyQt4 import uic
 import os
 import qimage2ndarray
 from ilastik.gui.iconMgr import ilastikIcons
-import ilastik.gui.overlayDialogs
+from ilastik.gui import overlayDialogs
 import ilastik
 import numpy
 
@@ -13,6 +13,7 @@ import numpy
 # M y L i s t W i d g e t I t e m                                              *
 #*******************************************************************************
 
+#FIXME name. This seems to refer to the list "Add File(s) Overlay", Thresholding Overlay", "Add Stack Overlay"
 class MyListWidgetItem(QtGui.QListWidgetItem):
     def __init__(self, item):
         QtGui.QListWidgetItem.__init__(self, item.name)
@@ -73,7 +74,7 @@ class OverlayCreateSelectionDlg(QtGui.QDialog):
 class MyQLabel(QtGui.QLabel):
     def __init(self, parent):
         QtGui.QLabel.__init__(self, parent)
-    #enabling clicked signal for QLable
+    #enabling clicked signal for QLabel
     def mouseReleaseEvent(self, ev):
         self.emit(QtCore.SIGNAL('clicked()'))
         
@@ -84,7 +85,7 @@ class MyQLabel(QtGui.QLabel):
 class MyTreeWidget(QtGui.QTreeWidget):
     def __init__(self, *args):
         QtGui.QTreeWidget.__init__(self, *args)
-    #enabling spacebar signal (for checking selected items)
+    #enabling space key signal (for checking selected items)
     def event(self, event):
         if (event.type()==QtCore.QEvent.KeyPress) and (event.key()==QtCore.Qt.Key_Space):
             self.emit(QtCore.SIGNAL("spacePressed"))
@@ -92,10 +93,10 @@ class MyTreeWidget(QtGui.QTreeWidget):
         return QtGui.QTreeWidget.event(self, event)
 
 #*******************************************************************************
-# M y Q T r e e W i d g e t I t e r                                            *
+# O v e r l a y T r e e W i d g e t I t e r                                    *
 #*******************************************************************************
 
-class MyQTreeWidgetIter(QtGui.QTreeWidgetItemIterator):
+class OverlayTreeWidgetIter(QtGui.QTreeWidgetItemIterator):
     def __init__(self, *args):
         QtGui.QTreeWidgetItemIterator.__init__(self, *args)
     def next(self):
@@ -107,11 +108,17 @@ class MyQTreeWidgetIter(QtGui.QTreeWidgetItemIterator):
             return False
 
 #*******************************************************************************
-# M y T r e e W i d g e t I t e m                                              *
+# O v e r l a y T r e e W i d g e t I t e m                                    *
 #*******************************************************************************
 
-class MyTreeWidgetItem(QtGui.QTreeWidgetItem):
-    def __init__(self, item):
+class OverlayTreeWidgetItem(QtGui.QTreeWidgetItem):
+    def __init__(self, item, overlayPathName):
+        """
+        item:            OverlayTreeWidgetItem
+        overlayPathName: string
+                         full name of the overlay, for example 'File Overlays/My Data'
+        """
+        self.overlayPathName = overlayPathName
         QtGui.QTreeWidgetItem.__init__(self, [item.name])
         self.item = item
 
@@ -132,6 +139,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.setLayout(self.layout)
         #self.layoutWidget = QtGui.QWidget(self)
         self.selectedOverlaysList = []
+        self.selectedOverlayPaths = []
         self.ilastik = ilastik
         self.christophsDict = ilastik.project.dataMgr[ilastik._activeImageNumber].overlayMgr
         self.forbiddenOverlays = forbiddenItems
@@ -209,7 +217,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.sliceSpinboxLabel = QtGui.QLabel("Slice")
         self.sliceSpinbox = QtGui.QSpinBox(self)
         self.sliceSpinbox.setEnabled(False)
-        sliceItem = MyTreeWidgetItem(self.christophsDict[self.christophsDict.keys()[0]])
+        sliceItem = OverlayTreeWidgetItem(self.christophsDict[self.christophsDict.keys()[0]], "")
         self.sliceValue = (sliceItem.item._data.shape[1]-1)/2
         self.sliceSpinbox.setMaximum(sliceItem.item._data.shape[1]-1)
         self.sliceSpinbox.setValue(self.sliceValue)
@@ -292,7 +300,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
                 split = keys.split("/")
             for i in range(len(split)):
                 if len(split) == 1:
-                    newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
+                    newItemsChild = OverlayTreeWidgetItem(self.christophsDict[keys], keys)
                     self.treeWidget.addTopLevelItem(newItemsChild)                   
                     boolStat = False
                     if self.christophsDict[keys] in self.preSelectedOverlays:
@@ -301,7 +309,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
                         newItemsChild.setCheckState(0, 0)
                     
                 elif i+1 == len(split) and len(split) > 1:
-                    newItemsChild = MyTreeWidgetItem(self.christophsDict[keys])
+                    newItemsChild = OverlayTreeWidgetItem(self.christophsDict[keys], keys)
                     testItem.addChild(newItemsChild)
                     if self.christophsDict[keys] in self.preSelectedOverlays:
                         newItemsChild.setCheckState(0, 2)
@@ -347,7 +355,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
 
     def treeItemChanged(self, item, column):
         currentItem = item
-        it = MyQTreeWidgetIter(self.treeWidget, QtGui.QTreeWidgetItemIterator.Checked)
+        it = OverlayTreeWidgetIter(self.treeWidget, QtGui.QTreeWidgetItemIterator.Checked)
         i = 0
         while (it.value()):
             if self.singleOverlaySelection == True and currentItem.checkState(column) == 2:
@@ -368,7 +376,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
             
         item = currentItem.item
         
-        if isinstance(currentItem, MyTreeWidgetItem):
+        if isinstance(currentItem, OverlayTreeWidgetItem):
             itemdata = imageArray = currentItem.item._data[0, self.sliceValue, :, :, currentItem.item.channel]
             if item.getColorTab() is not None:
                 if item.dtype != 'uint8':
@@ -408,7 +416,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
 
     def treeItemSelectionChanged(self):
         currentItem = self.treeWidget.currentItem()
-        if isinstance(currentItem, MyTreeWidgetItem):
+        if isinstance(currentItem, OverlayTreeWidgetItem):
             self.overlayItemLabel.setText(currentItem.item.key)
             self.channelSpinbox.setEnabled(True)
             self.sliceSpinbox.setEnabled(True)
@@ -513,9 +521,10 @@ class OverlaySelectionDialog(QtGui.QDialog):
 
 
     def addSelected(self):
-        it = MyQTreeWidgetIter(self.treeWidget, QtGui.QTreeWidgetItemIterator.Checked)
+        it = OverlayTreeWidgetIter(self.treeWidget, QtGui.QTreeWidgetItemIterator.Checked)
         while (it.value()):
             self.selectedOverlaysList.append(it.value().item)
+            self.selectedOverlayPaths.append(it.value().overlayPathName)
             it.next()
         self.accept()
 

@@ -15,9 +15,6 @@ class UnsupervisedDecompositionBase(object):
     def decompose(self, features):
         pass
     
-    def configure(self, options):
-        pass
-    
     def checkNumComponents(self, numChannels, numComponents):
         if(numChannels < numComponents):
             print "WARNING: The data set comprises", numChannels, "channels. Decomposition into more components (", numComponents, ") is not possible. Using", numChannels, "components instead."

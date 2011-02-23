@@ -264,7 +264,6 @@ class OverlayItem(object):
         data = data - dmin
         dmax = numpy.max(data)
         data = 255*data/dmax
-        data = data.astype(numpy.uint32) # transform to uint
         return data
 
     @classmethod

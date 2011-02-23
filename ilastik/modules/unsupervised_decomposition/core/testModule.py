@@ -9,7 +9,15 @@ import unittest
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
-from ilastik.core.testThread import setup, teardown
+from ilastik.core.testThread import setUp, tearDown
+
+# make sure that we have a recent numpy installation, the SVD used for PCA decomposition seems to have changed, resulting in a test failure!
+import numpy
+numpyversion = numpy.__version__.split('.')
+numpyTooOldMessage = str("Your current numpy version is too old. Is: " + numpy.__version__ + " Should Be: 1.4.0 or newer. Skipping some tests.")
+numpyRecentEnough = False
+if((int(numpyversion[0]) >= 1) & (int(numpyversion[1]) >= 4) & (int(numpyversion[2]) >= 0)):
+    numpyRecentEnough = True
 
 #*******************************************************************************
 # U n s u p e r v i s e d D e c o m p o s i t i o n T e s t P r o j e c t      *
@@ -21,6 +29,8 @@ class UnsupervisedDecompositionTestProject(object):
     def __init__(self, image_filename, unsupervisedMethod = None, numComponents = None):
         
         self.image_filename = image_filename
+        
+        self.tolerance = 0.01 # maximum derivation per pixel
         
         self.testdir = ilastikpath[0] + "/testdata/unsupervised_decomposition/"
         
@@ -57,7 +67,7 @@ class UnsupervisedDecompositionTestProject(object):
         self.listOfFilenames = []
         for i in range(self.numIterations):
             self.listOfResultOverlays.append(str("Unsupervised/" + self.unsupervisedMethod.shortname + " component %d" % (i+1)))
-            filename = str(self.testdir + "unsupervised_" + self.unsupervisedMethod.shortname + "_component_%d.h5" % (i+1))
+            filename = str(self.testdir + "gt_" + self.unsupervisedMethod.shortname + "_result_component_%d.h5" % (i+1))
             print filename
             self.listOfFilenames.append(filename)        
 
@@ -68,8 +78,10 @@ class UnsupervisedDecompositionTestProject(object):
 
 class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decomposer
 
+    if not numpyRecentEnough:
+        __test__ = False
+
     def setUp(self):
-        #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5")
     
@@ -82,7 +94,7 @@ class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decompo
         self.app.exec_()
         
     def mainFunction(self):
-        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, self.testProject.tolerance)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(self.testProject.inputOverlays)        
 
@@ -100,6 +112,9 @@ class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decompo
 #*******************************************************************************
 
 class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with 3 components
+
+    if not numpyRecentEnough:
+        __test__ = False
      
     def setUp(self):
         #print "setUp"
@@ -116,14 +131,21 @@ class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with
         self.app.exec_()
         
     def mainFunction(self):
-        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, self.testProject.tolerance)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(self.testProject.inputOverlays)        
 
         self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
 
     def finalizeTest(self):
-        # results comparison
+        '''for i in range(self.testProject.unsupervisedMethod.numComponents):
+            print "*************************************"
+            print self.testProject.listOfResultOverlays[i]
+            obtained = self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr[self.testProject.listOfResultOverlays[i]]
+            from ilastik.core import dataImpex
+            dataImpex.DataImpex.exportOverlay(str("c:/gt_PCA_result_component_%d" % (i+1)), "h5", obtained)'''
+        
+         # results comparison
         self.assertEqual(self.testThread.passedTest, True)
         
         # other conditions
@@ -138,7 +160,7 @@ class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with
 #*******************************************************************************
 
 class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
-     
+    
     def setUp(self):
         #print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) 
@@ -158,13 +180,18 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
         from ilastik.core.randomSeed import RandomSeed
         RandomSeed.setRandomSeed(42)
         
-        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, self.testProject.tolerance)
         QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(self.testProject.inputOverlays)        
 
         self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
 
     def finalizeTest(self):
+        '''for i in range(self.testProject.unsupervisedMethod.numComponents):
+            obtained = self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr[self.testProject.listOfResultOverlays[i]]
+            from ilastik.core import dataImpex
+            dataImpex.DataImpex.exportOverlay(str("c:/gt_pLSA_result_component_%d" % (i+1)), "h5", obtained)'''
+        
         # results comparison
         self.assertEqual(self.testThread.passedTest, True)
         
@@ -173,6 +200,24 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
         self.assertEqual(self.numOverlaysAfter - self.numOverlaysBefore, self.numComponents*2)
                 
         self.app.quit()
+        
+
+#*******************************************************************************
+# T e s t E t c                                                                *
+#*******************************************************************************
+
+class TestEtc(unittest.TestCase): # test additional functionality
+    
+    def test_Etc(self):
+        # check that wrong numbers of components are reset to a valid value in {1, ..., numComponents}
+        numChannels = 10
+        decomposer = UnsupervisedDecompositionPCA()
+        components = decomposer.checkNumComponents(numChannels, 100)
+        assert((components <= numChannels) & (components >= 1))
+        components = decomposer.checkNumComponents(numChannels, 0)
+        print components
+        assert((components <= numChannels) & (components >= 1))
+
 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *

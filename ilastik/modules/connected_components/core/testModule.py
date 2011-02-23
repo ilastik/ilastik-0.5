@@ -8,7 +8,7 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik import __path__ as ilastikpath
 
-from ilastik.core.testThread import setup, teardown
+from ilastik.core.testThread import setUp, tearDown
 
 #*******************************************************************************
 # C C T e s t P r o j e c t                                                    *
@@ -51,15 +51,16 @@ class CCTestProject(object):
         self.listOfFilenames = []
         self.listOfResultOverlays.append("Connected Components/CC Results")
         self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
+        
 
 #*******************************************************************************
-# T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d            *
+# T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d 2 D        *
 #*******************************************************************************
 
-class TestWholeModule_WithoutBackground(unittest.TestCase):
+class TestWholeModule_WithoutBackground2D(unittest.TestCase):
      
     def setUp(self):
-        #print "setUp"
+        print "setUp"
         self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
     
@@ -78,15 +79,15 @@ class TestWholeModule_WithoutBackground(unittest.TestCase):
 
     def finalizeTest(self):
         # results comparison
+        print "finalize"
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
 
-
 #*******************************************************************************
-# T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d W r o n g I m a g e *
+# T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d W r o n g I m a g e 2 D*
 #*******************************************************************************
 
-class TestWholeModule_WithoutBackgroundWrongImage(unittest.TestCase): # tests if wrong input leads to a test fail
+class TestWholeModule_WithoutBackgroundWrongImage2D(unittest.TestCase): # tests if wrong input leads to a test fail
      
     def setUp(self):
         #print "setUp"
@@ -119,10 +120,10 @@ class TestWholeModule_WithoutBackgroundWrongImage(unittest.TestCase): # tests if
         
         
 #*******************************************************************************
-# T e s t W h o l e M o d u l e _ W i t h B a c k g r o u n d 1                *
+# T e s t W h o l e M o d u l e _ W i t h B a c k g r o u n d 2 D 1            *
 #*******************************************************************************
 
-class TestWholeModule_WithBackground1(unittest.TestCase):
+class TestWholeModule_WithBackground2D1(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
@@ -149,10 +150,10 @@ class TestWholeModule_WithBackground1(unittest.TestCase):
         self.app.quit()
  
 #*******************************************************************************
-# T e s t W h o l e M o d u l e _ W i t h B a c k g r o u n d 2                *
+# T e s t W h o l e M o d u l e _ W i t h B a c k g r o u n d 2 D 2            *
 #*******************************************************************************
 
-class TestWholeModule_WithBackground2(unittest.TestCase):
+class TestWholeModule_WithBackground2D2(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
@@ -178,6 +179,67 @@ class TestWholeModule_WithBackground2(unittest.TestCase):
         self.assertEqual(self.testThread.passedTest, True)
         self.app.quit()
 
+#*******************************************************************************
+# T e s t W h o l e M o d u l e _ W i t h o u t B a c k g r o u n d 3 D        *
+#*******************************************************************************
+
+class TestWholeModule_WithoutBackground3D(unittest.TestCase):
+     
+    def setUp(self):
+        print "setUp"
+        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.testProject = CCTestProject("3dcube2.h5", "3dcube2_cc_threshold_overlay.h5", "3dcube2_ground_truth_cc_without_background.h5")
+    
+    def test_WholeModule(self):
+        t = QtCore.QTimer()
+        t.setSingleShot(True)
+        t.setInterval(0)
+        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        t.start()
+        self.app.exec_()
+        
+    def mainFunction(self):
+        self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        self.testThread.start(None) # ...compute connected components without background
+
+    def finalizeTest(self):
+        # results comparison
+        print "finalize"
+        self.assertEqual(self.testThread.passedTest, True)
+        self.app.quit()
+
+#*******************************************************************************
+# T e s t W h o l e M o d u l e _ W i t h B a c k g r o u n d 3 D              *
+#*******************************************************************************
+
+class TestWholeModule_WithBackground3D(unittest.TestCase):
+     
+    def setUp(self):
+        #print "setUp"
+        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.testProject = CCTestProject("3dcube2.h5", "3dcube2_cc_threshold_overlay.h5", "3dcube2_ground_truth_cc_with_background.h5")
+    
+    def test_WholeModule(self):
+        t = QtCore.QTimer()
+        t.setSingleShot(True)
+        t.setInterval(0)
+        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        t.start()
+        self.app.exec_()
+        
+    def mainFunction(self):
+        self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        backgroundClasses = set([1, 3]) # use a non-empty background set
+        self.testThread.start(backgroundClasses) # ...compute connected components with background
+
+    def finalizeTest(self):
+        # results comparison
+        self.assertEqual(self.testThread.passedTest, True)
+        self.app.quit()
+ 
+ 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************

@@ -1,6 +1,7 @@
 import code
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.overlayWidget import OverlayWidget
 
 from PyQt4 import QtGui, QtCore
 

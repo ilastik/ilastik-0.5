@@ -9,7 +9,7 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
     #human readable information
     name = "probabilistic Latent Semantic Analysis (pLSA)"
     shortname = "pLSA" 
-    description = "Standard pLSA method as proposed by Hofmann 99"
+    description = "Standard pLSA method as proposed by T. Hofmann (1999)"
     author = "M. Hanselmann, HCI - University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
     
@@ -60,11 +60,6 @@ class UnsupervisedDecompositionPLSA(UnsupervisedDecompositionBase):
             lastChange = numpy.abs((err - error_old)/(numpy.finfo(float).eps+err))
             iteration = iteration + 1;
         return FZ, ZV
-    
-    def configure(self, options):
-        self.numComponents = options[0]
-        self.minRelGain = options[1]
-        self.maxIterations = options[2]
     
     # Helper function
     def normalizeColumn(self, X):
