@@ -90,12 +90,13 @@ def test_InteractiveSegmentationItemModuleMgr():
     #initialize the module to testQDir.tempPath()+'/testdata.h5'
     s = dataMgr._activeImage.module["Interactive_Segmentation"] 
     #create outputPath, make sure it is empty
-    s.outputPath = str(QDir.tempPath())+"/tmpseg"
-    print s.outputPath
-    if os.path.exists(s.outputPath):
-        shutil.rmtree(s.outputPath)
-    os.makedirs(s.outputPath)
+    outputPath = str(QDir.tempPath())+"/tmpseg"
+    print outputPath
+    if os.path.exists(outputPath):
+        shutil.rmtree(outputPath)
+    os.makedirs(outputPath)
     s.init()
+    s.outputPath = outputPath
 
     shape3D = (120,120,120)
     shape4D = (120,120,120,1)
