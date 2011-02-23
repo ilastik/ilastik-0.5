@@ -236,10 +236,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         borderIndicator = str(borderIndicator[0])
         
         #Write the choice of weights to a file so that they can be reproduced
-        f = open(s.outputPath+'/'+'config.txt', 'w')
-        f.write("overlay=%s\n" % (overlay.name))
-        f.write("borderIndicator=%s" % (borderIndicator))
-        f.close()
+        if s.outputPath:
+            f = open(s.outputPath+'/'+'config.txt', 'w')
+            f.write("overlay=%s\n" % (dlg.selectedOverlayPaths[0]))
+            f.write("borderIndicator=%s" % (borderIndicator))
+            f.close()
         
         #calculate the weights
         #this will call on_setupWeights via a signal/slot connection

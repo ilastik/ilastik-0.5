@@ -74,6 +74,7 @@ from ilastik.core.randomSeed import RandomSeed
 #from ilastik.core import projectMgr
 
 from ilastik.gui import volumeeditor as ve
+from ilastik.core.dataImpex import DataImpex
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
@@ -176,8 +177,10 @@ class MainWindow(QtGui.QMainWindow):
         self.opengl = None
         project = None
 
+        overlaysToLoad = []
+
         try:
-            opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project=", "featureCache="])
+            opts, args = getopt.getopt(sys.argv[1:], "", ["help", "render=", "project=", "featureCache=", "load-overlays="])
             for o, a in opts:
                 if o == "-v":
                     verbose = True
@@ -189,6 +192,7 @@ class MainWindow(QtGui.QMainWindow):
                     print '%30s  %s' % ("gl_gl", "opengl with opengl 3d overview")
                     print '%30s  %s' % ("--project=[filename]", "open specified project file")
                     print '%30s  %s' % ("--featureCache=[filename]", "use specified file for caching of features")
+                    print '%30s  %s' % ("--load-overlays=[filename,filename...]", "load additional overlays from these files")
                 elif o in ("--render"):
                     if a == 's':
                         self.opengl = False
@@ -206,6 +210,8 @@ class MainWindow(QtGui.QMainWindow):
                     project = a
                 elif o in ("--featureCache"):
                     self.featureCache = h5py.File(a, 'w')
+                elif o in ("--load-overlays"):
+                     overlaysToLoad = a.split(',')
                 else:
                     assert False, "unhandled option"
 
@@ -241,6 +247,13 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
             self._activeImageNumber = 0
             self.projectModified()
+
+        #in case the user has specified some additional overlays to load from a file, do that
+        for overlayFilename in overlaysToLoad:
+            print "loading overlay '%s'" % (overlayFilename)
+            dataItem = self.labelWidget.ilastik.project.dataMgr[self.labelWidget.ilastik._activeImageNumber]
+            ov = DataImpex.importOverlay(dataItem, overlayFilename)
+            dataItem.overlayMgr[ov.key] = ov
 
         self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject)
         self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
