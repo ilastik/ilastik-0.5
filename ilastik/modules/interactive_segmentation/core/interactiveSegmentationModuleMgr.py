@@ -34,10 +34,12 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 
+import ilastik
 from ilastik.core.volume import VolumeLabels
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
+
 import seedMgr
 from segmentors import segmentorBase
 
@@ -94,7 +96,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
     
     #where to save segmentations to
-    outputPath         = os.path.expanduser("~/test-segmentation")
+    outputPath         = None
         
     seedLabelsVolume = None
     done = None
@@ -109,6 +111,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     
     def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
+        
         self._dataItemImage = dataItemImage
         self.interactiveSegmentationModuleMgr = None 
         self._segmentationWeights             = None
@@ -144,6 +147,15 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         """Handles all the initialization that can be postponed until _activation_ of the module.
            For example, big arrays are allocated only after the user has decided
            to switch to this particular tab."""
+        
+        from ilastik.modules.interactive_segmentation.core import startupOutputPath   
+        self.outputPath = startupOutputPath
+           
+        if not self.outputPath:
+            return
+        else:
+            print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
+           
         self.__createSeedsData()
         
         if not os.path.exists(self.outputPath+'/'+'config.txt'): return
@@ -215,6 +227,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             all information about seeds and segments."""
                 
         print "save current segments as '%s'" %  (key)
+
+        assert self.outputPath
         
         #make sure we have a 'done' overlay
         if self.done is None:
