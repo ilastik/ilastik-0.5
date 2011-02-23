@@ -37,9 +37,6 @@ class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
         FZ = FZ[:, range(0, self.numComponents)]
         return FZ, ZV
     
-    def configure(self, options):
-        self.numComponents = options[0]
-    
     # helper method
     def meanData(self, X):
         return numpy.ones((X.shape[0],1)) * numpy.mean(X, axis=0)

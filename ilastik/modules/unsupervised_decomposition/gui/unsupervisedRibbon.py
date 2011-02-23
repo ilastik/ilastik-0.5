@@ -52,7 +52,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
         
-        self.btnChooseOverlays = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
+        self.btnChooseOverlays = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Overlay')
         
         self.btnDecompose = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'decompose')
         self.btnUnsupervisedOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Unsupervised Decomposition Options')
