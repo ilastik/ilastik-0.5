@@ -22,7 +22,11 @@ class AutomaticSegmentationTestProject(object):
         self.groundtruth_filename = groundtruth_filename
         
         self.testdir = ilastikpath[0] + "/testdata/automatic_segmentation/"
-        
+
+        # fix random seed
+        from ilastik.core.randomSeed import RandomSeed
+        RandomSeed.setRandomSeed(42)
+                
         # create project
         self.project = Project('Project Name', 'Labeler', 'Description')
         self.dataMgr = self.project.dataMgr
@@ -58,14 +62,14 @@ class AutomaticSegmentationTestProject(object):
         
 
 #*******************************************************************************
-# T e s t W h o l e M o d u l e                                                *
+# T e s t W h o l e M o d u l e N o r m a l 2 D                                *
 #*******************************************************************************
 
-class TestWholeModule(unittest.TestCase):
+class TestWholeModuleNormal2D(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
-        self.testProject = AutomaticSegmentationTestProject("test_image.png", "borders_gaussianGradientMagnitude_sigma0.3_channel2.h5", "ground_truth_auto_segmentation.h5")
+        self.testProject = AutomaticSegmentationTestProject("test_image_gray.png", "border_overlay_gaussian_gradient_magnitude_3.5.h5", "gt_automatic_segmentation_normal.h5")
     
     def test_WholeModule(self):
         # compute results
@@ -81,14 +85,14 @@ class TestWholeModule(unittest.TestCase):
         self.assertEqual(equalOverlays, True)
         
 #*******************************************************************************
-# T e s t W h o l e M o d u l e W r o n g I m a g e                            *
+# T e s t W h o l e M o d u l e I n v e r t e d 2 D                            *
 #*******************************************************************************
 
-class TestWholeModuleWrongImage(unittest.TestCase): # this test tests if wrong input data leads to wrong results
+class TestWholeModuleInverted2D(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
-        self.testProject = AutomaticSegmentationTestProject("test_image_mirrored.png", "borders_gaussianGradientMagnitude_sigma0.3_channel2_mirrored.h5", "ground_truth_auto_segmentation.h5")
+        self.testProject = AutomaticSegmentationTestProject("test_image_gray.png", "border_overlay_laplacian_of_gaussians_3.5.h5", "gt_automatic_segmentation_inverted.h5")
     
     def test_WholeModule(self):
         # compute results
@@ -98,8 +102,27 @@ class TestWholeModuleWrongImage(unittest.TestCase): # this test tests if wrong i
         
         # compare obtained result to ground truth result
         equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
-        self.assertEqual(equalOverlays, False) # has to be different from ground truth result (wrong input data!)
+        self.assertEqual(equalOverlays, True)
 
+#*******************************************************************************
+# T e s t W h o l e M o d u l e N o r m a l 3 D                                *
+#*******************************************************************************
+
+class TestWholeModuleNormal3D(unittest.TestCase):
+     
+    def setUp(self):
+        self.testProject = AutomaticSegmentationTestProject("neurocube.h5", "neurocube_border_overlay_gaussian_gradient_magnitude_1.h5", "neurocube_gt_automatic_segmentation_normal.h5")
+    
+    def test_WholeModule(self):
+        # compute results
+        self.testProject.automaticSegmentationMgr.computeResults(self.testProject.input)
+        # ...add overlays
+        self.testProject.automaticSegmentationMgr.finalizeResults()
+        
+        # compare obtained result to ground truth result
+        equalOverlays = TestHelperFunctions.compareResultsWithFile(self.testProject.automaticSegmentationMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
+        self.assertEqual(equalOverlays, True)
+        
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
