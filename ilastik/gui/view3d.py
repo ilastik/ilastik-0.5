@@ -26,6 +26,8 @@ class QVTKOpenGLWidget(QVTKWidget2):
     
     def __init__(self, parent = None):
         QVTKWidget2.__init__(self, parent)
+        
+    def init(self):
 
         self.renderer = vtkRenderer()
         self.renderer.SetUseDepthPeeling(1); ####
@@ -318,7 +320,7 @@ class OverviewScene(QWidget):
         #self.qvtk = QVTKWidget()
         layout.addWidget(self.qvtk)
         self.setLayout(layout)
-        
+        self.qvtk.init()
         hbox = QHBoxLayout(None)
         b1 = QPushButton("X")
         b1.setCheckable(True); b1.setChecked(True)

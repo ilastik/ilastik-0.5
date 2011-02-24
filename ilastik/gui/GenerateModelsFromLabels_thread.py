@@ -17,7 +17,7 @@ class MeshExtractor(QObject):
     inputImage = None
     numpyVolume = None
     meshes = dict()
-    elapsed = QElapsedTimer()
+    #elapsed = QElapsedTimer()
     suppressLabels = list()
     smooth = True
     
@@ -31,9 +31,9 @@ class MeshExtractor(QObject):
         self.maybeEmitProgress(caller.GetProgress())
     
     def maybeEmitProgress(self, progress):
-        if self.elapsed.elapsed() > 100:
+        if True:
             self.emit(SIGNAL("currentStepProgressChanged"), progress)
-            self.elapsed.restart()
+            #self.elapsed.restart()
             self.emitted +=1
         else:
             self.skipped +=1
