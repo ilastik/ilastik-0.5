@@ -420,7 +420,7 @@ class OverviewScene(QWidget):
         for c in self.cutter:
             if c: self.qvtk.renderer.RemoveActor(c)
         for a in self.objects:
-           self.qvtk.renderer.RemoveActor(a) 
+            self.qvtk.renderer.RemoveActor(a) 
         
         self.polygonAppender = vtkAppendPolyData()
         for g in self.dlg.extractor.meshes.values():

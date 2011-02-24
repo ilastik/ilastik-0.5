@@ -26,6 +26,7 @@ class MeshExtractor(QObject):
     
     def __init__(self, parent=None):
         QObject.__init__(self, parent)
+        print "init MeshExtractor"
     
     def progressCallback(self, caller, eventId):
         self.maybeEmitProgress(caller.GetProgress())
@@ -48,9 +49,10 @@ class MeshExtractor(QObject):
     
     @pyqtSignature("run()")
     def run(self):
+        print "In run()"
         self.meshes = dict()
         
-        self.elapsed.restart()
+        #self.elapsed.restart()
         count = 0
         
         if self.numpyVolume is None:
@@ -172,6 +174,9 @@ class MeshExtractor(QObject):
             poly = vtkPolyData()
             poly.DeepCopy(f.GetOutput())
             
+            print "test"
+            #poly.PrintSelf()
+            
             print " - adding mesh for label %d" % (i)
             self.meshes[i] = poly
             
@@ -234,12 +239,14 @@ class MeshExtractorDialog(QDialog):
         self.connect(self.extractor, SIGNAL("currentStepProgressChanged"), self.onCurrentStepProgressChanged)#, Qt.BlockingQueuedConnection)
         print "running in thread"
 
-        self.extractor.moveToThread(self.thread)
-        self.connect(self.extractor, SIGNAL('done()'), self.thread.quit)
-        self.connect(self.thread, SIGNAL('finished()'), self.onMeshesExtracted)
+        #self.extractor.moveToThread(self.thread)
+        #self.connect(self.extractor, SIGNAL('done()'), self.thread.quit)
+        #self.connect(self.thread, SIGNAL('finished()'), self.onMeshesExtracted)
 
-        self.thread.start()
-        QMetaObject.invokeMethod(self.extractor, 'run')
+        #self.thread.start()
+        self.extractor.run()
+        self.onMeshesExtracted()
+        #QMetaObject.invokeMethod(self.extractor, 'run')
 
     def onMeshesExtracted(self):
         #print 'MeshExtractorDialog::onMeshesExtracted'
