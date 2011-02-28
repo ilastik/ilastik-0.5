@@ -691,7 +691,6 @@ class ClassifierPredictThread(ThreadBase):
 
             prediction = self._prediction
             descriptions =  self.dataMgr.module["Classification"]["labelDescriptions"]
-            print "descriptions", len(descriptions)
             classifiers = self.dataMgr.module["Classification"]["classificationMgr"].classifiers
             
             if prediction is not None and prediction[itemindex] is not None:
