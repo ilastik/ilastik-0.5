@@ -50,15 +50,10 @@ class AutomaticSegmentationModuleMgr(BaseModuleMgr):
         self.res = numpy.ndarray((1,) + input.shape + (1,), 'int32')
         if input.shape[0] > 1:
             borders = input.view(vigra.ScalarVolume)
-            # this does NOT work if the border map is not smooth, e.g. vigra.filters.gaussianGradientMagnitude(border_image, 0.3) won't work ==> force smoothing!
-            borders = vigra.filters.gaussianSmoothing(borders, 2)
             self.res[0,:,:,:,0] = vigra.analysis.watersheds(borders, neighborhood = 6)[0]
         else:
             borders = input[0,:,:].view(vigra.ScalarImage)
-            # this does NOT work if the border map is not smooth, e.g. vigra.filters.gaussianGradientMagnitude(border_image, 0.3) won't work ==> force smoothing!
-            borders = vigra.filters.gaussianSmoothing(borders, 2)
             self.res[0,0,:,:,0] = vigra.analysis.watersheds(borders, 4)[0]
-            #self.res[0,0,:,:,0] = input[0,:,:].view(vigra.ScalarImage)
     
     def finalizeResults(self):
         colortable = OverlayItem.createDefaultColorTable('RGB', 256)

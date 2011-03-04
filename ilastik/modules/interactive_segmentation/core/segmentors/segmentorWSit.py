@@ -34,8 +34,8 @@ Watershed iterative segmentation plugin
 import numpy
 
 from segmentorBase import SegmentorBase
-from enthought.traits.api import *
-from enthought.traits.ui.api import *
+from enthought.traits.api import Enum, Bool, Float, Int, String, on_trait_change
+from enthought.traits.ui.api import Item, View, Group
 
 ok = False
 

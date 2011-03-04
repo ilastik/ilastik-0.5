@@ -101,7 +101,9 @@ class BatchProcess(QtGui.QDialog):
 
     def slotProcess(self):
         outputDir = os.path.split(str(self.filenames[0]))[0]
-        bo = BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames)
+        descr = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
+
+        bo = BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames, descr)
         bo.writeFeatures = self.writeFeatures.isChecked()
         bo.writeSegmentation = self.writeSegmentation.isChecked()
         bo.serializeProcessing = self.serializeProcessing.isChecked()
