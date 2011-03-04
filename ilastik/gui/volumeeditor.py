@@ -2051,8 +2051,6 @@ class ImageScene(QtGui.QGraphicsView):
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
             releasePoint = event.pos()
-            self.deltaPanRatioX = float(releasePoint.x()) / (float(releasePoint.x()) + float(releasePoint.y()))
-            self.deltaPanRatioY = float(releasePoint.y()) / (float(releasePoint.x()) + float(releasePoint.y()))
             
             self.lastPanPoint = releasePoint
             self.dragMode = False
@@ -2076,22 +2074,42 @@ class ImageScene(QtGui.QGraphicsView):
         
         
     #TODO oli
-    def deaccelerate(self, speed, a=2, maxVal=64):
+    def deaccelerate(self, speed, a=1, maxVal=64):
         x = self.qBound(-maxVal, speed.x(), maxVal)
         y = self.qBound(-maxVal, speed.y(), maxVal)
+        ax ,ay = self.setdeaccelerateAxAy(speed.x(), speed.y(), a)
         if x > 0:
-            x = max(0.0, x - a*self.deltaPanRatioX)
+            x = max(0.0, x - a*ax)
         elif x < 0:
-            x = min(0.0, x + a*self.deltaPanRatioX)
+            x = min(0.0, x + a*ax)
         if y > 0:
-            y = max(0.0, y - a*self.deltaPanRatioY)
+            y = max(0.0, y - a*ay)
         elif y < 0:
-            y = min(0.0, y + a*self.deltaPanRatioY)
+            y = min(0.0, y + a*ay)
         return QtCore.QPointF(x, y)
 
     #TODO oli
     def qBound(self, minVal, current, maxVal):
         return max(min(current, maxVal), minVal)
+    
+    def setdeaccelerateAxAy(self, x, y, a):
+        x = abs(x)
+        y = abs(y)
+        if x > y:
+            if y > 0:
+                ax = int(x / y)
+                if ax != 0:
+                    return ax, 1
+            else:
+                return x/a, 1
+        if y > x:
+            if x > 0:
+                ay = int(y/x)
+                if ay != 0:
+                    return 1, ay
+            else:
+                return 1, y/a
+        return 1, 1
 
     #TODO oli
     def tickerEvent(self):
