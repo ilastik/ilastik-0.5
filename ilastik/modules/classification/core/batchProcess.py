@@ -237,7 +237,8 @@ class BatchProcessCore(object):
 
                     for blockNr in range(mpa.getBlockCount()):                       
 
-                        yield "Block " + str(blockNr +1 ) + "/" + str(mpa.getBlockCount())                        
+                        yield "Block " + str(blockNr +1 ) + "/" + str(mpa.getBlockCount())
+                        print "Block " + str(blockNr +1 ) + "/" + str(mpa.getBlockCount())             
                         dm = dataMgr.DataMgr()
                                         
                         di = mpa.getDataItem(blockNr)
