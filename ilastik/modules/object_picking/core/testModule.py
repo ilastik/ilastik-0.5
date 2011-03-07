@@ -7,11 +7,11 @@ from ilastik.core import dataImpex
 from ilastik.core import jobMachine
 from ilastik.core.overlays import selectionOverlay
 from ilastik import __path__ as ilastikpath
-import numpy
+import numpy, copy
 
 from ilastik.core.testThread import setUp, tearDown
 #*******************************************************************************
-# Object T e s t P r o j e c t                                                    *
+# fakeVolumeUpdate                                                             *
 #*******************************************************************************
 
 class fakeVolumeUpdate():
@@ -21,6 +21,9 @@ class fakeVolumeUpdate():
         self.sizes = data.shape
         self.erasing = erasing
 
+#*******************************************************************************
+# Object T e s t P r o j e c t                                                 *
+#*******************************************************************************
 class ObjectTestProject(object):
     # this class is used to set up a default project which is then used for testing functionality, 
     # hopefully, this will reduce code redundancy
@@ -65,19 +68,22 @@ class ObjectTestProject(object):
         self.listOfResultOverlays.append("Objects/Selection Result")
         self.listOfFilenames.append(self.testdir + self.groundtruth_filename)
         
+#*******************************************************************************
+# TestObjectLabels                                                             *
+#*******************************************************************************
 class TestObjectLabels(unittest.TestCase):
     def setUp(self):
         print "TestObjectLabels, setUp"
         self.testProject = ObjectTestProject("cc_ov.h5", "label_ov.h5", "selection_result.h5")
         
     def test(self):
+        #test the object selection results from labels from a file
         try:
             fakelabellist = []
             fakelabellist.append(self.testProject.fvu)
             self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.newLabels(fakelabellist)
             if self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr["Objects/Selection Result"] is None:                
                 self.finalize(False)
-                #print self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.selectedObjects.values()
             else:
                 rv = TestHelperFunctions.compareResultsWithFile(self.testProject, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, tolerance = 0)
                 self.finalize(rv)
@@ -88,8 +94,11 @@ class TestObjectLabels(unittest.TestCase):
     def finalize(self, returnValue):
         self.assertEqual(returnValue, True)        
         jobMachine.GLOBAL_WM.stopWorkers()
-        
-class TestObjectSelectAll(unittest.TestCase):
+
+#*******************************************************************************
+# TestObjectSelectAll_1                                                        *
+#*******************************************************************************        
+class TestObjectSelectAll_1(unittest.TestCase):
     def setUp(self):
         print "TestObjectSelectAll, setUp"
         self.testProject = ObjectTestProject("cc_ov.h5", "all_labels_ov.h5", "all_selection_result.h5")
@@ -114,7 +123,58 @@ class TestObjectSelectAll(unittest.TestCase):
     def finalize(self, returnValue):
         self.assertEqual(returnValue, True)        
         jobMachine.GLOBAL_WM.stopWorkers()
-     
+
+#*******************************************************************************
+# TestObjectSelectAll_2                                                        *
+#*******************************************************************************                
+class TestObjectSelectAll_2(unittest.TestCase):
+    def setUp(self):
+        print "TestObjectSelectAll2, setUp"
+        self.testProject = ObjectTestProject("cc_ov.h5", "all_labels_ov.h5", "all_selection_result.h5")
+        
+    def test(self):
+        #check, that the set of selected values is correct for setting labels and calling selectAll directly    
+        fakelabellist = []
+        fakelabellist.append(self.testProject.fvu)
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.newLabels(fakelabellist)
+        selection1 = copy.deepcopy(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.selectedObjects.values())
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.clearAll()
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.selectAll()
+        selection2 = self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.selectedObjects.values()
+        if selection1 != selection2:
+            self.finalize(False)
+        else:
+            self.finalize(True)
+            
+            
+    def finalize(self, returnValue):
+        self.assertEqual(returnValue, True)        
+        jobMachine.GLOBAL_WM.stopWorkers()
+        
+#*******************************************************************************
+# TestRemoveLabels                                                             *
+#*******************************************************************************                       
+class TestRemoveLabels(unittest.TestCase):
+    def setUp(self):
+        print "TestRemoveLabels setUp"
+        self.testProject = ObjectTestProject("cc_ov.h5", "label_ov.h5", "remove_selection_result.h5")
+        
+    def test(self):
+        remove_fvu = fakeVolumeUpdate(self.testProject.fvu._data, erasing=True)
+        fakelabellist = []
+        fakelabellist.append(remove_fvu)
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.selectAll()
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.newLabels(fakelabellist)
+        if self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr["Objects/Selection Result"] is None:                
+            self.finalize(False)
+        else:
+            rv = TestHelperFunctions.compareResultsWithFile(self.testProject, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, tolerance = 0)
+            self.finalize(rv)
+            
+    def finalize(self, returnValue):
+        self.assertEqual(returnValue, True)        
+        jobMachine.GLOBAL_WM.stopWorkers()
+                
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
