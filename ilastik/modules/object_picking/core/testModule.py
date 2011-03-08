@@ -175,6 +175,27 @@ class TestRemoveLabels(unittest.TestCase):
         self.assertEqual(returnValue, True)        
         jobMachine.GLOBAL_WM.stopWorkers()
                 
+class TestObjectExtraction(unittest.TestCase):
+    def setUp(self):
+        print "TestObjectExtraction setUp"
+        self.testProject = ObjectTestProject("cc_ov.h5", "label_ov.h5", "selection_result.h5")
+        
+    def test(self):
+        fakelabellist = []
+        fakelabellist.append(self.testProject.fvu)
+        self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.newLabels(fakelabellist)
+        objs = self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Object_Picking.objectsSlow3d(self.testProject.cc_ov)
+        for obj, coords in objs.items():
+            print "blablabla"
+            v = obj
+            for i in range(len(coords[0])):
+                if self.testProject.cc_ov[0, coords[0][i], coords[1][i], coords[2][i], 0]!=v:
+                    self.finalize(False)
+                
+    def finalize(self, returnValue):
+        self.assertEqual(returnValue, True)        
+        jobMachine.GLOBAL_WM.stopWorkers()        
+        
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
