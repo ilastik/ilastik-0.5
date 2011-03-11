@@ -869,15 +869,17 @@ class VolumeEditor(QtGui.QWidget):
             if self.borderMargin != margin:
                 print "new border margin:", margin
                 self.borderMargin = margin
-                self.imageScenes[0].__borderMarginIndicator__(margin)
-                self.imageScenes[1].__borderMarginIndicator__(margin)
-                self.imageScenes[2].__borderMarginIndicator__(margin)
+                for imgScene in self.imageScenes:
+                    imgScene.__borderMarginIndicator__(margin)
+                    imgScene.__borderMarginIndicator__(margin)
+                    imgScene.__borderMarginIndicator__(margin)
                 self.repaint()
         else:
-                self.imageScenes[0].__borderMarginIndicator__(0)
-                self.imageScenes[1].__borderMarginIndicator__(0)
-                self.imageScenes[2].__borderMarginIndicator__(0)
-                self.repaint()
+            for imgScene in self.imageScenes:
+                imgScene.__borderMarginIndicator__(margin)
+                imgScene.__borderMarginIndicator__(margin)
+                imgScene.__borderMarginIndicator__(margin)
+            self.repaint()
 
     def changeSliceX(self, num):
         self.changeSlice(num, 0)
