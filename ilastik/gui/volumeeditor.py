@@ -1091,12 +1091,12 @@ class DrawManager(QtCore.QObject):
         else:
             color = self.volumeEditor.labelWidget.currentItem().color
         
-        for i in range(3):
-            self.volumeEditor.imageScenes[i].crossHairCursor.setColor(color)
+        for i in self.volumeEditor.imageScenes:
+            i.crossHairCursor.setColor(color)
 
     def setBrushSize(self, size):
-        for i in range(3):
-            self.volumeEditor.imageScenes[i].crossHairCursor.setBrushSize(size)
+        for i in self.volumeEditor.imageScenes:
+            i.crossHairCursor.setBrushSize(size)
         
         self.brushSize = size
         self.penVis.setWidth(size)
