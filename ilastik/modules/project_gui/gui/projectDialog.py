@@ -211,7 +211,10 @@ class ProjectDlg(QtGui.QDialog):
     def initThumbnail(self, file_name):
         thumb = QtGui.QPixmap(str(file_name))
         if thumb.depth() != 0:
-            thumb = thumb.scaledToWidth(128)
+            if thumb.width() >= thumb.height():
+                thumb = thumb.scaledToWidth(128)
+            else:
+                thumb = thumb.scaledToHeight(128)
             self.thumbList.append(thumb)
             self.thumbnailImage.setPixmap(self.thumbList[0])
                     
