@@ -10,7 +10,7 @@ from vtk import vtkRenderer, vtkConeSource, vtkPolyDataMapper, vtkActor, \
                 vtkGenericOpenGLRenderWindow, QVTKWidget
 
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
-                        QSizePolicy, QSpacerItem
+                        QSizePolicy, QSpacerItem, QIcon, QFileDialog
 from PyQt4.QtCore import SIGNAL
 
 import qimage2ndarray
@@ -20,6 +20,8 @@ from numpy2vtk import toVtkImageData
 from GenerateModelsFromLabels_thread import *
 
 import platform #to check whether we are running on a Mac
+
+from ilastik.gui.iconMgr import ilastikIcons
 
 class QVTKOpenGLWidget(QVTKWidget2):
     wireframe = False
@@ -331,11 +333,14 @@ class OverviewScene(QWidget):
         bAnaglyph = QPushButton("A")
         bAnaglyph.setCheckable(True); bAnaglyph.setChecked(False)
         
+        bExportMesh = QPushButton(QIcon(ilastikIcons.SaveAs),'')
+        
         hbox.addWidget(b1)
         hbox.addWidget(b2)
         hbox.addWidget(b3)
-        hbox.addStretch()
         hbox.addWidget(bAnaglyph)
+        hbox.addStretch()
+        hbox.addWidget(bExportMesh)
         layout.addLayout(hbox)
         
         self.planes = SlicingPlanesWidget(shape)
@@ -361,12 +366,21 @@ class OverviewScene(QWidget):
         self.connect(b2, SIGNAL("clicked()"), self.TogglePlaneWidgetY)
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
         self.connect(bAnaglyph, SIGNAL("clicked()"), self.ToggleAnaglyph3D)
+        self.connect(bExportMesh, SIGNAL("clicked()"), self.exportMesh)
         
         self.connect(self.qvtk, SIGNAL("objectPicked"), self.__onObjectPicked)
         
         self.qvtk.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
         
         self.qvtk.setFocus()
+
+    def exportMesh(self):
+        #filename = QFileDialog.getSaveFileName(self,"Save Meshes As")
+        
+       self.qvtk.actors.InitTraversal();
+       for i in range(self.qvtk.actors.GetNumberOfItems()):
+            p = self.qvtk.actors.GetNextProp()
+            print p
 
     def __onObjectPicked(self, coor):
         self.ChangeSlice( coor[0], 0)
