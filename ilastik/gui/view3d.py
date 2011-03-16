@@ -7,7 +7,7 @@ from vtk import vtkRenderer, vtkConeSource, vtkPolyDataMapper, vtkActor, \
                 vtkDiscreteMarchingCubes, vtkWindowedSincPolyDataFilter, \
                 vtkMaskFields, vtkGeometryFilter, vtkThreshold, vtkDataObject, \
                 vtkDataSetAttributes, vtkCutter, vtkPlane, vtkPropAssembly, \
-                vtkGenericOpenGLRenderWindow, QVTKWidget
+                vtkGenericOpenGLRenderWindow, QVTKWidget, vtkOBJExporter
 
 from PyQt4.QtGui import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
                         QSizePolicy, QSpacerItem, QIcon, QFileDialog
@@ -381,6 +381,8 @@ class OverviewScene(QWidget):
        for i in range(self.qvtk.actors.GetNumberOfItems()):
             p = self.qvtk.actors.GetNextProp()
             print p
+            
+            #exporter = vtkObjExporter()
 
     def __onObjectPicked(self, coor):
         self.ChangeSlice( coor[0], 0)

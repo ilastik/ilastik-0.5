@@ -38,7 +38,6 @@ import ilastik
 from ilastik.core.volume import VolumeLabels
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
-from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 
 import seedMgr
 from segmentors import segmentorBase
@@ -91,6 +90,20 @@ def setintersectionmask(a,b):
 #*******************************************************************************
 # I n t e r a c t i v e S e g m e n t a t i o n I t e m M o d u l e M g r      *
 #*******************************************************************************
+
+class ArrayWrapper:
+    def __init__(self, array):
+        self.array = array
+        
+        self.dtype = array.dtype
+        self.shape = (1,) + array.shape
+    
+    #def reshape(self, newShape):
+    #    self.array.reshape(newShape)
+    #    self.shape = newShape
+        
+    def __getitem__(self, key):
+        return self.array[tuple(key[1:])]
 
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
@@ -546,13 +559,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def segment(self):
         labels, indices = self.getSeeds()
         self.globalMgr.segmentor.segment(self.seedLabelsVolume._data[0,:,:,:], labels, indices)
-        self.segmentation = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.segmentation])
+        self.segmentation = ArrayWrapper(self.globalMgr.segmentor.segmentation)
         if(hasattr(self.globalMgr.segmentor, "potentials")):
-            self.potentials = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.potentials])
+            self.potentials = ArrayWrapper(self.globalMgr.segmentor.potentials)
         else:
             self.potentials = None
         if(hasattr(self.globalMgr.segmentor, "borders")):
-            self.borders = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.borders])
+            self.borders = ArrayWrapper(self.globalMgr.segmentor.borders)
         else:
             self.borders = None
         
