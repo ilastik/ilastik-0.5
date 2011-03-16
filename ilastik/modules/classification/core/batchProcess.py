@@ -132,10 +132,11 @@ class MainBatch():
 #*******************************************************************************
 
 class BatchOptions(object):
-    def __init__(self, outputDir, classifierFile, fileList):
+    def __init__(self, outputDir, classifierFile, fileList, labelDescriptions=None):
         self.outputDir = outputDir
         self.classifierFile = classifierFile
         self.fileList = fileList
+        self.labelDescriptions = labelDescriptions
         
         self.writePrediction = True
         self.writeFeatures = False
@@ -236,7 +237,8 @@ class BatchProcessCore(object):
 
                     for blockNr in range(mpa.getBlockCount()):                       
 
-                        yield "Block " + str(blockNr +1 ) + "/" + str(mpa.getBlockCount())                        
+                        yield "Block " + str(blockNr +1 ) + "/" + str(mpa.getBlockCount())
+                        print "Block " + str(blockNr +1 ) + "/" + str(mpa.getBlockCount())             
                         dm = dataMgr.DataMgr()
                                         
                         di = mpa.getDataItem(blockNr)
@@ -251,10 +253,14 @@ class BatchProcessCore(object):
                         fm.joinCompute(dm)
         
                         dm.module["Classification"]["classificationMgr"].classifiers = self.batchOptions.classifiers
+                        if self.batchOptions.labelDescriptions is not None:
+                            dm.module["Classification"]["labelDescriptions"] = self.batchOptions.labelDescriptions
                         
                         classificationPredict = classificationMgr.ClassifierPredictThread(dm)
                         classificationPredict.start()
                         classificationPredict.wait()
+                        
+                        classificationPredict.generateOverlays()
 
                         dm[0].serialize(gw)
                         self.printStuff(" done\n")
@@ -279,6 +285,8 @@ class BatchProcessCore(object):
                     classificationPredict = classificationMgr.ClassifierPredictThread(dm)
                     classificationPredict.start()
                     classificationPredict.wait()
+                    
+                    classificationPredict.generateOverlays()
                     
                     dm[0].serialize(gw)
                     self.printStuff(" done\n")

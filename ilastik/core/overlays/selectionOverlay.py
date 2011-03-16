@@ -42,7 +42,7 @@ class SelectionAccessor(object):
 #*******************************************************************************
 
 class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
-    def __init__(self, dataItem, inputData, color):
+    def __init__(self, inputData, color):
         overlayBase.OverlayBase.__init__(self)
         
         self.color = color

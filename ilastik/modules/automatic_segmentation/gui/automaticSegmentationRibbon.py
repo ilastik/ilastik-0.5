@@ -60,22 +60,16 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.btnChooseWeights)
         tl.addWidget(self.btnSegment)
         tl.addStretch()
-        #tl.addWidget(self.btnSegmentorsOptions)
         
         self.setLayout(tl)
         
     def _initConnects(self):
         self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
         self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
-        #self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
-        
         
     def on_btnChooseWeights_clicked(self):
         dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
         answer = dlg.exec_()
-        
-        from ilastik.core.randomSeed import RandomSeed
-        RandomSeed.setRandomSeed(42)
         
         if len(answer) > 0:
             overlay = answer[0]
@@ -103,9 +97,4 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnSegmentorsOptions_clicked(self):
         pass
-        #dialog = AutoSegmentorSelectionDlg(self.parent)
-        #answer = dialog.exec_()
-        #if answer != None:
-        #    self.parent.project.autoSegmentor = answer
-        #    self.parent.project.autoSegmentor.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber].autoSegmentationWeights)
 

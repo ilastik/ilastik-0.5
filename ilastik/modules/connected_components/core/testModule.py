@@ -16,7 +16,7 @@ from ilastik.core.testThread import setUp, tearDown
 
 class CCTestProject(object):
     # this class is used to set up a default project which is then used for testing functionality, 
-    # hopefully, this will reduced code redundancy
+    # hopefully, this will reduce code redundancy
     def __init__(self, image_filename, thresholdoverlay_filename, groundtruth_filename):
         
         self.image_filename = image_filename
@@ -35,7 +35,7 @@ class CCTestProject(object):
         fileList.append(path)
         self.project.addFile(fileList)
         
-        # create automatic segmentation manager
+        # create connected components manager
         self.connectedComponentsMgr = ConnectedComponentsModuleMgr(self.dataMgr)
     
         # setup inputs

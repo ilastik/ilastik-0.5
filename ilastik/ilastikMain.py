@@ -486,7 +486,7 @@ if __name__ == "__main__":
     ilastik.modules.loadModuleGuis()
 
     mainwindow = MainWindow(sys.argv)
-    mainwindow.setStyleSheet("QSplitter::handle { background-color: #d6d6d6;}");
+    #mainwindow.setStyleSheet("QSplitter::handle { background-color: #d6d6d6;}");
 
     mainwindow.show()
     splashScreen.finish(mainwindow)

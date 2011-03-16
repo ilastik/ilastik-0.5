@@ -3,7 +3,9 @@ import numpy
 from ilastik.core import dataImpex
 import shlex
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
+from ilastik.core.overlays.selectionOverlay import SelectionAccessor
 from subprocess import Popen, PIPE
+import h5py
 
 # this is the core replacement of the guiThread used to test module functionality
 #*******************************************************************************
@@ -86,6 +88,8 @@ class TestHelperFunctions():
         # overlay1._data._data can be a listOfNDArraysAsNDArray instance, overlay2._data._data is loaded from file, so it should be an NDArray
         if isinstance(overlay1._data._data, ListOfNDArraysAsNDArray):
             datatemp1 = overlay1._data._data.ndarrays
+        elif isinstance(overlay1._data._data, SelectionAccessor):
+            datatemp1 = overlay1._data._data[:]
         else:
             datatemp1 = overlay1._data._data 
         datatemp2 = overlay2._data._data
@@ -94,6 +98,19 @@ class TestHelperFunctions():
             return True
         else: 
             return False
+    @staticmethod
+    def arrayEqual(a,b):
+        assert a.shape == b.shape
+        assert a.dtype == b.dtype
+        if not numpy.array_equal(a,b):
+            assert len(a.shape) == 3
+            for x in range(a.shape[0]):
+                for y in range(a.shape[1]):
+                    for z in range(a.shape[2]):
+                        if a[x,y,z] != b[x,y,z]:
+                            print x,y,z, "a=", a[x,y,z], "b=", b[x,y,z]
+            return False
+        return True
         
     @staticmethod
     def compareH5Files(file1, file2):
@@ -102,6 +119,7 @@ class TestHelperFunctions():
         
         cl = "h5diff -cv '" + file1 + "' '" + file2 + "'"
         args = shlex.split(cl)
+        print args
         '''
         cl_header1 = "h5dump --header " + file1
         args_header1 = shlex.split(cl_header1)
@@ -125,19 +143,14 @@ class TestHelperFunctions():
         try:
             p = Popen(args, stdout=PIPE, stderr=PIPE)
             stdout, stderr = p.communicate()
-            print "RETURN CODE: ", p.returncode
             if p.returncode >0:
                 print stdout
                 print stderr
-                print "sfsdfsfsfewrewrwre"
                 return False
             else :
-                print "asdfsadfsadfaaa"
                 return True
             
         except Exception, e:
             print e
-            print "kdjflsdjfsljfs"
             return False
-        print "fskdjflsjfls"
         return True

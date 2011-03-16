@@ -414,6 +414,9 @@ class VolumeEditor(QtGui.QWidget):
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
 
+        for scene in self.imageScenes:
+            QtCore.QObject.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), scene.updateSliceIntersection)
+            
         self.viewingLayout = QtGui.QVBoxLayout()
         
         labelLayout = QtGui.QHBoxLayout()
@@ -477,6 +480,14 @@ class VolumeEditor(QtGui.QWidget):
             self.toolBoxLayout.addLayout(tempLay)
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
+        
+        # Check box for slice intersection marks
+        sliceIntersectionBox = QtGui.QCheckBox("Slice Intersection")
+        sliceIntersectionBox.setEnabled(True)        
+        self.toolBoxLayout.addWidget(sliceIntersectionBox)
+        for scene in self.imageScenes:
+            self.connect(sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
+        sliceIntersectionBox.setCheckState(QtCore.Qt.Checked)
 
         self.toolBoxLayout.addStretch()
 
@@ -864,15 +875,17 @@ class VolumeEditor(QtGui.QWidget):
             if self.borderMargin != margin:
                 print "new border margin:", margin
                 self.borderMargin = margin
-                self.imageScenes[0].__borderMarginIndicator__(margin)
-                self.imageScenes[1].__borderMarginIndicator__(margin)
-                self.imageScenes[2].__borderMarginIndicator__(margin)
+                for imgScene in self.imageScenes:
+                    imgScene.__borderMarginIndicator__(margin)
+                    imgScene.__borderMarginIndicator__(margin)
+                    imgScene.__borderMarginIndicator__(margin)
                 self.repaint()
         else:
-                self.imageScenes[0].__borderMarginIndicator__(0)
-                self.imageScenes[1].__borderMarginIndicator__(0)
-                self.imageScenes[2].__borderMarginIndicator__(0)
-                self.repaint()
+            for imgScene in self.imageScenes:
+                imgScene.__borderMarginIndicator__(margin)
+                imgScene.__borderMarginIndicator__(margin)
+                imgScene.__borderMarginIndicator__(margin)
+            self.repaint()
 
     def changeSliceX(self, num):
         self.changeSlice(num, 0)
@@ -1086,12 +1099,12 @@ class DrawManager(QtCore.QObject):
         else:
             color = self.volumeEditor.labelWidget.currentItem().color
         
-        for i in range(3):
-            self.volumeEditor.imageScenes[i].crossHairCursor.setColor(color)
+        for i in self.volumeEditor.imageScenes:
+            i.crossHairCursor.setColor(color)
 
     def setBrushSize(self, size):
-        for i in range(3):
-            self.volumeEditor.imageScenes[i].crossHairCursor.setBrushSize(size)
+        for i in self.volumeEditor.imageScenes:
+            i.crossHairCursor.setBrushSize(size)
         
         self.brushSize = size
         self.penVis.setWidth(size)
@@ -1459,6 +1472,70 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.update()
 
 #*******************************************************************************
+# S l i c e I n t e r s e c t i o n M a r k e r                                *
+#*******************************************************************************
+
+class SliceIntersectionMarker(QtGui.QGraphicsItem) :
+    
+    def boundingRect(self):
+        return QtCore.QRectF(0,0, self.width, self.height)
+    
+    def __init__(self, width, height):
+        QtGui.QGraphicsItem.__init__(self)
+        
+        self.width = width
+        self.height = height
+              
+        self.penX = QtGui.QPen(QtCore.Qt.red, 2)
+        self.penX.setCosmetic(True)
+        
+        self.penY = QtGui.QPen(QtCore.Qt.green, 2)
+        self.penY.setCosmetic(True)
+        
+        self.x = 0
+        self.y = 0
+        
+        self.isVisible = False
+
+    def setPosition(self, x, y):
+        self.x = x
+        self.y = y
+        self.update()
+        
+    def setPositionX(self, x):
+        self.setPosition(x, self.y)
+        
+    def setPositionY(self, y):
+        self.setPosition(self.x, y)  
+   
+    def setColor(self, colorX, colorY):
+        self.penX = QtGui.QPen(colorX, 2)
+        self.penX.setCosmetic(True)
+        self.penY = QtGui.QPen(colorY, 2)
+        self.penY.setCosmetic(True)
+        self.update()
+        
+    def setVisibility(self, state):
+        if state == True:
+            self.isVisible = True
+        else:
+            self.isVisible = False
+        self.update()
+    
+    def paint(self, painter, option, widget=None):
+        if self.isVisible:
+            painter.setPen(self.penY)
+            painter.drawLine(QtCore.QPointF(0.0,self.y), QtCore.QPointF(self.width, self.y))
+            
+            painter.setPen(self.penX)
+            painter.drawLine(QtCore.QPointF(self.x, 0), QtCore.QPointF(self.x, self.height))
+        
+    def setPos(self, x, y):
+        self.x = x
+        self.y = y
+        self.update()
+        
+#*******************************************************************************
 # I m a g e G r a p h i c s I t e m                                            *
 #*******************************************************************************
 
@@ -1530,8 +1607,11 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
 #*******************************************************************************
 # I m a g e S c e n e                                                          *
 #*******************************************************************************
-
+#TODO: ImageScene should not care/know about what axis it is!
 class ImageScene(QtGui.QGraphicsView):
+    #axisColor = [QtGui.QColor("red"), QtGui.QColor("green"), QtGui.QColor("blue")]
+    axisColor = [QtGui.QColor(255,0,0,255), QtGui.QColor(0,255,0,255), QtGui.QColor(0,0,255,255)]
+    
     def __borderMarginIndicator__(self, margin):
         """
         update the border margin indicator (left, right, top, bottom)
@@ -1637,17 +1717,11 @@ class ImageScene(QtGui.QGraphicsView):
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
         
+        self.setStyleSheet("QWidget:!focus { border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px; }\
+                            QWidget:focus { border: 2px solid white; border-radius: 4px; }")
         if self.axis is 0:
-            self.setStyleSheet("QWidget:!focus { border: 2px solid red; border-radius: 4px; }\
-                                QWidget:focus { border: 2px solid white; border-radius: 4px; }")
             self.view.rotate(90.0)
             self.view.scale(1.0,-1.0)
-        if self.axis is 1:
-            self.setStyleSheet("QWidget:!focus { border: 2px solid green; border-radius: 4px; } \
-                                QWidget:focus { border: 2px solid white; border-radius: 4px; }")
-        if self.axis is 2:
-            self.setStyleSheet("QWidget:!focus { border: 2px solid blue; border-radius: 4px; } \
-                                QWidget:focus { border: 2px solid white; border-radius: 4px; }")
         
         #on right mouse press, the customContextMenuRequested() signal is
         #_automatically_ emitted, no need to call onContext explicitly
@@ -1698,6 +1772,17 @@ class ImageScene(QtGui.QGraphicsView):
         self.scene.addItem(self.crossHairCursor)
         self.crossHairCursor.setBrushSize(self.drawManager.brushSize)
 
+        self.sliceIntersectionMarker = SliceIntersectionMarker(self.image.width(), self.image.height())
+        self.sliceIntersectionMarker.setPos(23, 42);
+        if self.axis == 0:
+            self.sliceIntersectionMarker.setColor(self.axisColor[1], self.axisColor[2])
+        elif self.axis == 1:
+            self.sliceIntersectionMarker.setColor(self.axisColor[0], self.axisColor[2])
+        elif self.axis == 2:
+            self.sliceIntersectionMarker.setColor(self.axisColor[0], self.axisColor[1])
+                    
+        self.scene.addItem(self.sliceIntersectionMarker)
+
         self.tempErase = False
 
     def imageSceneFullScreen(self):
@@ -1720,6 +1805,34 @@ class ImageScene(QtGui.QGraphicsView):
         else:
             self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.RemSelx22)))
 
+    def setSliceIntersection(self, state):
+        if state == QtCore.Qt.Checked:
+            self.sliceIntersectionMarker.setVisibility(True)
+        else:
+            self.sliceIntersectionMarker.setVisibility(False)
+            
+    def updateSliceIntersection(self, num, axis):
+        if self.axis == 0:
+            if axis == 1:
+                self.sliceIntersectionMarker.setPositionX(num)
+            elif axis == 2:
+                self.sliceIntersectionMarker.setPositionY(num)
+            else:
+                return
+        elif self.axis == 1:
+            if axis == 0:
+                self.sliceIntersectionMarker.setPositionX(num)
+            elif axis == 2:
+                self.sliceIntersectionMarker.setPositionY(num)
+            else:
+                return
+        elif self.axis == 2:
+            if axis == 0:
+                self.sliceIntersectionMarker.setPositionX(num)
+            elif axis == 1:
+                self.sliceIntersectionMarker.setPositionY(num)
+            else:
+                return
         
     def changeSlice(self, delta):
         if self.drawing == True:
@@ -2057,8 +2170,6 @@ class ImageScene(QtGui.QGraphicsView):
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.MidButton:
             releasePoint = event.pos()
-            self.deltaPanRatioX = float(releasePoint.x()) / (float(releasePoint.x()) + float(releasePoint.y()))
-            self.deltaPanRatioY = float(releasePoint.y()) / (float(releasePoint.x()) + float(releasePoint.y()))
             
             self.lastPanPoint = releasePoint
             self.dragMode = False
@@ -2082,22 +2193,42 @@ class ImageScene(QtGui.QGraphicsView):
         
         
     #TODO oli
-    def deaccelerate(self, speed, a=2, maxVal=64):
+    def deaccelerate(self, speed, a=1, maxVal=64):
         x = self.qBound(-maxVal, speed.x(), maxVal)
         y = self.qBound(-maxVal, speed.y(), maxVal)
+        ax ,ay = self.setdeaccelerateAxAy(speed.x(), speed.y(), a)
         if x > 0:
-            x = max(0.0, x - a*self.deltaPanRatioX)
+            x = max(0.0, x - a*ax)
         elif x < 0:
-            x = min(0.0, x + a*self.deltaPanRatioX)
+            x = min(0.0, x + a*ax)
         if y > 0:
-            y = max(0.0, y - a*self.deltaPanRatioY)
+            y = max(0.0, y - a*ay)
         elif y < 0:
-            y = min(0.0, y + a*self.deltaPanRatioY)
+            y = min(0.0, y + a*ay)
         return QtCore.QPointF(x, y)
 
     #TODO oli
     def qBound(self, minVal, current, maxVal):
         return max(min(current, maxVal), minVal)
+    
+    def setdeaccelerateAxAy(self, x, y, a):
+        x = abs(x)
+        y = abs(y)
+        if x > y:
+            if y > 0:
+                ax = int(x / y)
+                if ax != 0:
+                    return ax, 1
+            else:
+                return x/a, 1
+        if y > x:
+            if x > 0:
+                ay = int(y/x)
+                if ay != 0:
+                    return 1, ay
+            else:
+                return 1, y/a
+        return 1, 1
 
     #TODO oli
     def tickerEvent(self):

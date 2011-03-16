@@ -32,8 +32,8 @@ Watershed iterative segmentation plugin
 """
 
 from segmentorBase import *
-from enthought.traits.api import *
-from enthought.traits.ui.api import *
+from enthought.traits.api import Float, Int
+from enthought.traits.ui.api import View, Item
 from segmentorWSit import SegmentorWSiter
 
 ok = False

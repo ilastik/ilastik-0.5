@@ -129,7 +129,7 @@ class ObjectPickingItemModuleMgr(BaseModuleDataItemMgr):
         self.inputData = data
 
     def selectAll(self):
-        #we define it on the item manager level, so it only selects for the curren item
+        #we define it on the item manager level, so it only selects for the current item
         #TODO: later on, an overall selection can also be implemented
         
         ov = self.dataItemImage.overlayMgr["Objects/Selection Result"]
@@ -151,19 +151,31 @@ class ObjectPickingItemModuleMgr(BaseModuleDataItemMgr):
     def objectsSlow3d(self, input_overlay):
         #returns a dictionary, where the key is the point "intensity" (i.e. connected component number)
         #and the value is a list of point coordinates [[x], [y], [z]]
-        #FIXME: no support for the 2D case yet
+        #FIXME: no support for the 2D case yet (there, but not tested)
         
         objs = {}
-
-        nzindex = numpy.nonzero(input_overlay[0, :, :, :, 0])
-        for i in range(len(nzindex[0])):
-            value = input_overlay[0, nzindex[0][i], nzindex[1][i], nzindex[2][i], 0]
-            if value > 0:
-                if value not in objs:
-                    objs[value] = [[], [], []]
-                objs[value][0].append(nzindex[0][i])
-                objs[value][1].append(nzindex[1][i])
-                objs[value][2].append(nzindex[2][i])
+        if input_overlay.shape[1]>1:
+            #3D
+            nzindex = numpy.nonzero(input_overlay[0, :, :, :, 0])
+            for i in range(len(nzindex[0])):
+                value = input_overlay[0, nzindex[0][i], nzindex[1][i], nzindex[2][i], 0]
+                if value > 0:
+                    if value not in objs:
+                        objs[value] = [[], [], []]
+                    objs[value][0].append(nzindex[0][i])
+                    objs[value][1].append(nzindex[1][i])
+                    objs[value][2].append(nzindex[2][i])
+        else:
+            #2D
+            nzindex = numpy.nonzero(input_overlay[0, 0, :, :, 0])
+            for i in range(len(nzindex[0])):
+                value = input_overlay[0, 0, nzindex[0][i], nzindex[1][i]]
+                if value > 0:
+                    if value not in objs:
+                        objs[value] = [[], [], []]
+                    objs[value][0].append(nzindex[0][i])
+                    objs[value][1].append(nzindex[1][i])
+                    
                 
         return objs
                 
