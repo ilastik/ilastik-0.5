@@ -35,6 +35,7 @@ import numpy
 
 from segmentorBase import SegmentorBase
 from enthought.traits.ui.api import View, Item
+from enthought.traits.api import Float, Bool
 
 ok = False
 
