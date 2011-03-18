@@ -39,6 +39,7 @@ from ilastik.core import jobMachine
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 from ilastik.core.volume import DataAccessor
 from ilastik.modules.connected_components.core.synapseDetectionFilter import SynapseFilterAndSegmentor 
+from ilastik.core.overlays.thresholdOverlay import MultivariateThresholdAccessor
 
 try:
     from PyQt4 import QtCore
@@ -178,17 +179,22 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         if thres is None:
             print "no threshold overlay"
             return
-        if cc is None:
-            print "No cc overlay"
-            return
-        sfad = SynapseFilterAndSegmentor(self.dataMgr, labelnum, cc, inputOverlay)
-        objs_user, goodsizes = sfad.computeSizes()
-        objs_ref = sfad.computeReferenceObjects()
-        goodsizes = [s for s in goodsizes if s>100]
         
-        mingoodsize = min(goodsizes)
-        maxgoodsize = max(goodsizes)
-        objs_final = sfad.filterObjects(objs_user, objs_ref, mingoodsize, maxgoodsize)
+        if not isinstance(thres._data, MultivariateThresholdAccessor):
+            print "no threshold overlay used for connected components"
+            return
+        if cc is None:
+            print "No connected components overlay"
+            return
+        
+        sfad = SynapseFilterAndSegmentor(self.dataMgr, labelnum, minsize, maxsize, cc, inputOverlay)
+        objs_user = sfad.computeUserThreshObjects()
+        objs_ref = sfad.computeReferenceObjects()
+        #goodsizes = [s for s in goodsizes if s>100]
+        
+        #mingoodsize = min(goodsizes)
+        #maxgoodsize = max(goodsizes)
+        objs_final = sfad.filterObjects(objs_user, objs_ref)
         #create a new, filtered overlay:
         result = numpy.zeros(cc.shape, dtype = 'int32')
         objcounter = 1
