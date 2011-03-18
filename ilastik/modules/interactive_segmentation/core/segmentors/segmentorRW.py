@@ -32,7 +32,7 @@ Watershed segmentation plugin
 """
 
 from segmentorBase import *
-from enthought.traits.api import String
+from enthought.traits.api import String, Float, Bool
 from enthought.traits.ui.api import View, Item
 
 ok = False

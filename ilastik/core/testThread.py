@@ -5,6 +5,7 @@ import shlex
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 from ilastik.core.overlays.selectionOverlay import SelectionAccessor
 from subprocess import Popen, PIPE
+import h5py
 
 # this is the core replacement of the guiThread used to test module functionality
 #*******************************************************************************
@@ -118,6 +119,7 @@ class TestHelperFunctions():
         
         cl = "h5diff -cv '" + file1 + "' '" + file2 + "'"
         args = shlex.split(cl)
+        print args
         '''
         cl_header1 = "h5dump --header " + file1
         args_header1 = shlex.split(cl_header1)
@@ -141,19 +143,14 @@ class TestHelperFunctions():
         try:
             p = Popen(args, stdout=PIPE, stderr=PIPE)
             stdout, stderr = p.communicate()
-            print "RETURN CODE: ", p.returncode
             if p.returncode >0:
                 print stdout
                 print stderr
-                print "sfsdfsfsfewrewrwre"
                 return False
             else :
-                print "asdfsadfsadfaaa"
                 return True
             
         except Exception, e:
             print e
-            print "kdjflsdjfsljfs"
             return False
-        print "fskdjflsjfls"
         return True
