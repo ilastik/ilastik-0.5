@@ -161,13 +161,12 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"]._data = DataAccessor(self.ccThread.result)
             
-    def filterSynapses(self, inputOverlay, label):
-        #This is a special function to filter synapses. First, it finds the sizes of labeled objects
-        #and throws away everything <0.1 of the smallest labeled object or >10 of the largest labeled
-        #object. Then, it assumes that the input overlay
+    def filterSynapses(self, inputOverlay, label, minsize, maxsize):
+        #This is a special function to filter synapses. It assumes that the input overlay
         #is a threhsold overlay and computes it for equal probabilities, and then dilates the
         #the current connected components to the size of their counterparts in the equal 
-        #probability connected components.
+        #probability connected components. The resulting objects are filtered to be between minsize 
+        #and maxsize pixels in volume.
         
         #FIXME: This function is very specific and is only put here until ilastik 0.6 allows 
         #to make it into a special workflow. Remove as soon as possible!
