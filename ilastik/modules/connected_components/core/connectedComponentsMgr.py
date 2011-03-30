@@ -39,6 +39,7 @@ from ilastik.core import jobMachine
 from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 from ilastik.core.volume import DataAccessor
 from ilastik.modules.connected_components.core.synapseDetectionFilter import SynapseFilterAndSegmentor 
+from ilastik.core.overlays.thresholdOverlay import MultivariateThresholdAccessor
 
 try:
     from PyQt4 import QtCore
@@ -161,13 +162,12 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"]._data = DataAccessor(self.ccThread.result)
             
-    def filterSynapses(self, inputOverlay, label):
-        #This is a special function to filter synapses. First, it finds the sizes of labeled objects
-        #and throws away everything <0.1 of the smallest labeled object or >10 of the largest labeled
-        #object. Then, it assumes that the input overlay
+    def filterSynapses(self, inputOverlay, label, minsize, maxsize):
+        #This is a special function to filter synapses. It assumes that the input overlay
         #is a threhsold overlay and computes it for equal probabilities, and then dilates the
         #the current connected components to the size of their counterparts in the equal 
-        #probability connected components.
+        #probability connected components. The resulting objects are filtered to be between minsize 
+        #and maxsize pixels in volume.
         
         #FIXME: This function is very specific and is only put here until ilastik 0.6 allows 
         #to make it into a special workflow. Remove as soon as possible!
@@ -179,17 +179,22 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         if thres is None:
             print "no threshold overlay"
             return
-        if cc is None:
-            print "No cc overlay"
-            return
-        sfad = SynapseFilterAndSegmentor(self.dataMgr, labelnum, cc, inputOverlay)
-        objs_user, goodsizes = sfad.computeSizes()
-        objs_ref = sfad.computeReferenceObjects()
-        goodsizes = [s for s in goodsizes if s>100]
         
-        mingoodsize = min(goodsizes)
-        maxgoodsize = max(goodsizes)
-        objs_final = sfad.filterObjects(objs_user, objs_ref, mingoodsize, maxgoodsize)
+        if not isinstance(thres._data, MultivariateThresholdAccessor):
+            print "no threshold overlay used for connected components"
+            return
+        if cc is None:
+            print "No connected components overlay"
+            return
+        
+        sfad = SynapseFilterAndSegmentor(self.dataMgr, labelnum, minsize, maxsize, cc, inputOverlay)
+        objs_user = sfad.computeUserThreshObjects()
+        objs_ref = sfad.computeReferenceObjects()
+        #goodsizes = [s for s in goodsizes if s>100]
+        
+        #mingoodsize = min(goodsizes)
+        #maxgoodsize = max(goodsizes)
+        objs_final = sfad.filterObjects(objs_user, objs_ref)
         #create a new, filtered overlay:
         result = numpy.zeros(cc.shape, dtype = 'int32')
         objcounter = 1

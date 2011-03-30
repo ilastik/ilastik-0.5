@@ -73,13 +73,13 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
         self.btnCC.setToolTip('Run connected components on the selected overlay')
         self.btnCCBack.setToolTip('Run connected components with background')
-        self.btnFilter.setToolTip('Perform magic synapse filtering and dilation')
+        self.btnFilter.setToolTip('Perform synapse filtering and dilation')
         #self.btnCCOptions.setToolTip('Set options')
         
         self.btnInputOverlay.setEnabled(True)
         self.btnCC.setEnabled(False)
         self.btnCCBack.setEnabled(False)
-        self.btnFilter.setEnabled(False)
+        self.btnFilter.setEnabled(True)
         #self.btnCCOptions.setEnabled(True)
         
         tl.addWidget(self.btnInputOverlay)
@@ -130,8 +130,8 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
             tempstr = str(i)+" "+d.name
             desc_names.append(tempstr)
         dlg = LabelSelectionForm(self.ilastik, desc_names)
-        label = dlg.exec_()
-        print label
+        label, minsize, maxsize = dlg.exec_()
+        print label, minsize, maxsize
         # call core function
-        self.parent.project.dataMgr.Connected_Components.filterSynapses(self.inputOverlay, label)
+        self.parent.project.dataMgr.Connected_Components.filterSynapses(self.inputOverlay, label, minsize, maxsize)
         self.ilastik.labelWidget.repaint()
