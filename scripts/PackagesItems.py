@@ -466,20 +466,6 @@ class LISPackage(Package):
         Package.configure(self)
         self.system('./configure --enable-omp --prefix=%s --enable-shared=yes' % (self.prefix))
         
-###############################################################################################################
-
-class CStraehlePackage(Package):
-    src_uri = 'git://129.206.128.184/cstraehl-vigranumpy.git'
-    workdir = 'cstraehl-vigranumpy'
-    
-    def unpack(self):
-        pass
-    def configure(self):
-        pass
-    def make(self):
-        pass
-    def makeInstall(self):
-        pass
         
 ###############################################################################################################
 
