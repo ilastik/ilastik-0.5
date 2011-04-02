@@ -318,13 +318,22 @@ class OverlayWidget(QtGui.QGroupBox):
         self.overlayListWidget = OverlayListWidget(parent, self)
        
         tl0 = QtGui.QHBoxLayout()
+        tl0.setSpacing(0)
+        tl0.setMargin(0)
         tl1 = QtGui.QVBoxLayout()
+        tl1.setSpacing(0)
+        tl1.setMargin(0)
         tl1.addWidget(self.overlayListWidget)
 
         pathext = os.path.dirname(__file__)
 
         tl4 = QtGui.QVBoxLayout()
+        tl4.setSpacing(0)
+        tl4.setMargin(0)
+        
         tl2 = QtGui.QHBoxLayout()
+        tl2.setSpacing(0)
+        tl2.setMargin(0)
         self.buttonAdd = QtGui.QPushButton()
         self.buttonAdd.setToolTip("Add an already existing overlay to this view")
         self.buttonAdd.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-add.png") )
@@ -347,6 +356,8 @@ class OverlayWidget(QtGui.QGroupBox):
         
 
         tl2 = QtGui.QHBoxLayout()
+        tl2.setSpacing(0)
+        tl2.setMargin(0)
         self.buttonCreate = QtGui.QPushButton()
         self.buttonCreate.setToolTip("Create a completely new overlay from data")
         self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
