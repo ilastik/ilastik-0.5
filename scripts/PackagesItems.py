@@ -249,7 +249,7 @@ class VigraPackage_old(Package):
         self.system("make install")
       
 ######################################################################################        
-class QtPackageSpecialFlags(Package):
+class QtPackage(Package):
     src_uri = 'http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.2.tar.gz'
     correctMD5sum = '66b992f5c21145df08c99d21847f4fdb'
     workdir = 'qt-everywhere-opensource-src-4.7.2'

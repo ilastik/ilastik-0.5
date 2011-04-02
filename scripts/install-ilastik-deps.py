@@ -150,7 +150,7 @@ if 'vigra' in c:
 # # # # # # # # # # # # #
 
 if 'qt' in c:
-	QtPackageSpecialFlags()
+	QtPackage()
 if 'pyqt' in c:
 	PyQtPackage()
 if 'qimage2ndarray' in c:
@@ -182,7 +182,7 @@ if 'vtk' in c:
 # # # # # # # # # # # # #
 
 if 'fixes' in c:
-    cmd = "cp -rv work/" + QtPackageSpecialFlags.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
+    cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
     print "Workaround #1: ", cmd
     os.system(cmd)
 
