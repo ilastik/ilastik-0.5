@@ -190,13 +190,8 @@ if 'fixes' in c:
     print "Workaround #2: ", cmd
     os.system(cmd)
     
-    f = installDir+"/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/TraitsBackendQt-3.6.0-py2.7.egg/enthought/pyface/ui/qt4/resource_manager.py"
-    cmd = "sed -i '.bkp' -e \"s|import QtCore, QtGui, QtSvg|import QtCore, QtGui|g\" "+f
-    print "Workaround #3: ", cmd
-    os.system(cmd)
-    
     cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
-    print "Workaround #4: ", cmd
+    print "Workaround #3: ", cmd
     os.system(cmd)
     
 #if 'fixes2' in c:

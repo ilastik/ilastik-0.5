@@ -535,6 +535,7 @@ class TraitsBackendQtPackage(Package):
     src_uri = "http://www.enthought.com/repo/ETS/TraitsBackendQt-3.6.0.tar.gz"
     workdir = "TraitsBackendQt-3.6.0"
     correctMD5sum = 'a655ae137af4d8590739618926e21893'
+    patches = ['enthought-no-webkit.patch', 'enthought-no-svg.patch']
     
     def configure(self):
         pass
