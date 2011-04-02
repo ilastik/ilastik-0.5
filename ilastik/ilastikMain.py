@@ -480,7 +480,7 @@ if __name__ == "__main__":
     painter.end()
 
     splashScreen = QtGui.QSplashScreen(splashImage)
-    splashScreen.show();
+    splashScreen.show()
 
     app.processEvents();
     ilastik.modules.loadModuleGuis()
@@ -489,6 +489,10 @@ if __name__ == "__main__":
     #mainwindow.setStyleSheet("QSplitter::handle { background-color: #d6d6d6;}");
 
     mainwindow.show()
+    #On OS X, the window has to be raised in order to be visible directly after starting
+    #the app
+    mainwindow.raise_()
+    
     splashScreen.finish(mainwindow)
     
     randomseed = RandomSeed()
