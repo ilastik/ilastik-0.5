@@ -67,6 +67,7 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
         QtGui.QGroupBox.__init__(self,  "Background")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
+        self.layout().setMargin(5)
         self.listWidget = QtGui.QListWidget(self)
         self.items = []
         
