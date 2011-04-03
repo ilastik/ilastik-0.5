@@ -42,11 +42,13 @@ class DockableContainer(QWidget):
         self.maximizeButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         
         h = QHBoxLayout(None)
+        h.setMargin(0); h.setSpacing(0)
         h.addStretch()
         h.addWidget(self.maximizeButton)
         h.addWidget(self.dockButton)
         
         self.mainLayout = QVBoxLayout(None)
+        self.mainLayout.setMargin(0); self.mainLayout.setSpacing(0)
         self.mainLayout.addItem(h)
         
         self.mainWidget = QTextEdit(None); self.mainWidget.setDocument(QTextDocument("MAIN widget %d" % (number)))
@@ -158,6 +160,7 @@ class QuadView(QWidget):
             self.connect(self.dockableContainer[i], SIGNAL('maximize(bool)'), self.maximizeContainer )
         
         self.layout = QVBoxLayout()
+        self.layout.setMargin(0); self.layout.setSpacing(0)
         self.layout.addWidget(self.splitVertical)
         self.setLayout(self.layout)
         
@@ -301,6 +304,7 @@ if __name__ == "__main__":
             
             widget= QWidget()
             mainLayout = QVBoxLayout()
+            mainLayout.setMargin(0); mainLayout.setSpacing(0)
             self.q = QuadView(self)
             
             for i in range(4):
