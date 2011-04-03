@@ -435,6 +435,7 @@ class VolumeEditor(QtGui.QWidget):
         #self.viewingLayout.addLayout(self.grid)
         if self.image.shape[1] != 1:
             self.viewingLayout.addWidget(self.grid)
+            self.grid.setContentsMargins(0,0,10,0)
         else:
             self.viewingLayout.addWidget(self.imageScenes[0])
         self.viewingLayout.addLayout(labelLayout)
@@ -442,6 +443,7 @@ class VolumeEditor(QtGui.QWidget):
         #right side toolbox
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
+        self.toolBoxLayout.setMargin(5)
         self.toolBox.setLayout(self.toolBoxLayout)
         #self.toolBox.setMaximumWidth(190)
         #self.toolBox.setMinimumWidth(190)
