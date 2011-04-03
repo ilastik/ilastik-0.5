@@ -48,6 +48,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
     
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
         self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Border Probability Overlay')
         self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')

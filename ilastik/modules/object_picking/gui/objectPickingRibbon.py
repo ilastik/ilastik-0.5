@@ -60,6 +60,7 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
         self.btnChooseOverlay = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
         self.btn3D = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'3D')

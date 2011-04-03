@@ -49,6 +49,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
         self.btnNew = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.New),'New')
         self.btnOpen = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Open),'Open')

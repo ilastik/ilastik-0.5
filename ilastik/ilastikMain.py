@@ -327,10 +327,13 @@ class MainWindow(QtGui.QMainWindow):
         self.fileSelectorList.setMaximumWidth(240)
         self.fileSelectorList.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         layout = QtGui.QVBoxLayout()
+        layout.setMargin(0)
+        layout.setSpacing(0)
         layout.addWidget(QtGui.QLabel("Select Image:"))
         layout.addWidget(self.fileSelectorList)
         widget.setLayout(layout)
         self.ribbonToolbar.addWidget(widget)
+        #self.ribbonToolbar.addWidget(self.fileSelectorList)
         self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
 
         self.ribbon.setCurrentIndex (0)

@@ -51,6 +51,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
         self.btnInputOverlay = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Overlay')
         self.btnCC = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'CC')

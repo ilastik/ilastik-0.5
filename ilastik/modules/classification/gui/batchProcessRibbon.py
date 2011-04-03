@@ -38,8 +38,9 @@ class AutomateTab(IlastikTabBase, QtGui.QWidget):
         pass
         
     def _initContent(self):
+        tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        tl = QtGui.QHBoxLayout()      
         self.btnBatchProcess = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Batch Process')
        
         self.btnBatchProcess.setToolTip('Select and batch predict files with the currently trained classifier')

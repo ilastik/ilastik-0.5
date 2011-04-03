@@ -35,6 +35,7 @@ from PyQt4 import QtCore, QtGui
 class IlastikTabWidget(QtGui.QTabWidget):
     def __init__(self, parent=None):
         QtGui.QTabWidget.__init__(self, parent)
+        self.setContentsMargins(0,0,0,0)
         self.tabDict = {}
         self.currentTabNumber = 0
         if parent:     

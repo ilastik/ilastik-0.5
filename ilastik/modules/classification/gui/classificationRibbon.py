@@ -62,6 +62,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
      
         self.btnSelectFeatures = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Features')
         self.btnStartLive = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Start Live Prediction')

@@ -42,8 +42,9 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         pass
         
     def _initContent(self):
-
-        tl = QtGui.QHBoxLayout()      
+        tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
+        
         self.btnShortcuts = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Help),'Shortcuts')
         self.btnAbout = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Ilastik),'About')
       
