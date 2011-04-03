@@ -400,14 +400,7 @@ class VolumeEditor(QtGui.QWidget):
         if self.image.shape[1] != 1:
             self.overview = OverviewScene(self, self.image.shape[1:4])
             
-            #this is need on OS X, otherwise the slice planes
-            #are not updated when scrolling through the slice views in the
-            #volume editor. strange...
-            self.overview.TogglePlaneWidgetX()
-            self.overview.update()
-            self.overview.TogglePlaneWidgetX()
-            
-            self.connect(self.overview, QtCore.SIGNAL("changedSlice(int,int)"), self.changeSlice)
+            self.overview.changedSlice.connect(self.changeSlice)
             self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
             
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
@@ -966,7 +959,7 @@ class VolumeEditor(QtGui.QWidget):
         if len(self.imageScenes) > axis:
             self.imageScenes[axis].sliceNumber = num
             self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
-        print "VolumeEditor.changedSlice(%s, %d)" % (num, axis)
+        #print "VolumeEditor.changedSlice(%s, %d)" % (num, axis)
         self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)

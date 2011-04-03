@@ -128,6 +128,8 @@ class Outliner(vtkPropAssembly):
 #*******************************************************************************
 
 class OverviewScene(QWidget):
+    changedSlice = pyqtSignal(int,int)
+
     def resizeEvent(self, event):
         QWidget.resizeEvent(self,event)
         self.qvtk.update() #needed on OS X
@@ -135,7 +137,7 @@ class OverviewScene(QWidget):
     def slicingCallback(self, obj, event):
         num = obj.coordinate[obj.lastChangedAxis]
         axis = obj.lastChangedAxis
-        self.emit(SIGNAL('changedSlice(int, int)'), num, axis)
+        self.changedSlice.emit(num, axis)
     
     def ShowPlaneWidget(self, axis, show):
         self.planes.ShowPlane(axis, show)
@@ -265,21 +267,19 @@ class OverviewScene(QWidget):
     
     def __updateCutter(self):
         if(self.useCutter):
-            print "Update cutter"
+            #print "Update cutter"
             for i in range(3):
                 if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
         else:
-            print "Do NOT update cutter"
+            pass
+            #print "Do NOT update cutter"
     
     def ChangeSlice(self, num, axis):
-        #print "<OverviewScene::ChangeSlice(%d, %d) >" % (num, axis)
         c = copy.copy(self.planes.coordinate)
         c[axis] = num
-        #print "  new coordinate =", c
         self.planes.SetCoordinate(c)
         self.__updateCutter()
         self.qvtk.update()
-        #print "</verviewScene::ChangeSlice() >"
     
     def display(self, axis):
         self.qvtk.update()

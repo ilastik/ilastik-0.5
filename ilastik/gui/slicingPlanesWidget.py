@@ -74,6 +74,9 @@ class SlicingPlanesWidget(vtkPropAssembly):
         crossActor.SetMapper(crossMapper)
         crossActor.GetProperty().SetColor(0,0,0)
         self.AddPart(crossActor)
+        
+        #initially invoke the event!
+        self.InvokeEvent("CoordinatesEvent")
     
     def Plane(self, axis):
         p = vtkPlane()
