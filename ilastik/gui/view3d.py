@@ -180,6 +180,9 @@ class OverviewScene(QWidget):
         b3.setCheckable(True); b3.setChecked(True)
         bAnaglyph = QToolButton(); bAnaglyph.setText('A')
         bAnaglyph.setCheckable(True); bAnaglyph.setChecked(False)
+        bCutter = QToolButton(); bCutter.setText('use cutter')
+        bCutter.setCheckable(True); bCutter.setChecked(False)
+        self.bCutter = bCutter
         
         bExportMesh = QToolButton()
         bExportMesh.setIcon(QIcon(ilastikIcons.SaveAs))
@@ -188,6 +191,7 @@ class OverviewScene(QWidget):
         hbox.addWidget(b2)
         hbox.addWidget(b3)
         hbox.addWidget(bAnaglyph)
+        hbox.addWidget(bCutter)
         hbox.addStretch()
         hbox.addWidget(bExportMesh)
         layout.addLayout(hbox)
@@ -213,11 +217,23 @@ class OverviewScene(QWidget):
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
         self.connect(bAnaglyph, SIGNAL("clicked()"), self.ToggleAnaglyph3D)
         self.connect(bExportMesh, SIGNAL("clicked()"), self.exportMesh)
-        
+        bCutter.toggled.connect(self.useCutterToggled)
         self.connect(self.qvtk, SIGNAL("objectPicked"), self.__onObjectPicked)
         
         self.qvtk.setFocus()
 
+    @property
+    def useCutter(self):
+        return self.bCutter.isChecked()
+
+    def useCutterToggled(self):
+        self.__updateCutter()
+        if self.useCutter:
+            for i in range(3): self.qvtk.renderer.AddActor(self.cutter[i])
+        else:
+            for i in range(3): self.qvtk.renderer.RemoveActor(self.cutter[i])
+        self.qvtk.update()
+    
     def exportMesh(self):
         #filename = QFileDialog.getSaveFileName(self,"Save Meshes As")
         
@@ -247,14 +263,21 @@ class OverviewScene(QWidget):
             self.qvtk.renderWindow.StereoRenderOff()
         self.qvtk.update()
     
+    def __updateCutter(self):
+        if(self.useCutter):
+            print "Update cutter"
+            for i in range(3):
+                if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
+        else:
+            print "Do NOT update cutter"
+    
     def ChangeSlice(self, num, axis):
         #print "<OverviewScene::ChangeSlice(%d, %d) >" % (num, axis)
         c = copy.copy(self.planes.coordinate)
         c[axis] = num
         #print "  new coordinate =", c
         self.planes.SetCoordinate(c)
-        for i in range(3):
-            if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
+        self.__updateCutter()
         self.qvtk.update()
         #print "</verviewScene::ChangeSlice() >"
     
@@ -296,10 +319,6 @@ class OverviewScene(QWidget):
         self.cutter[2].GetOutlineProperty().SetColor(0,0,1)
         for c in self.cutter:
             c.SetPickable(False)
-
-        self.qvtk.renderer.AddActor(self.cutter[0])
-        self.qvtk.renderer.AddActor(self.cutter[1])
-        self.qvtk.renderer.AddActor(self.cutter[2])
         
         ## 1. Use a render window with alpha bits (as initial value is 0 (false)):
         #self.renderWindow.SetAlphaBitPlanes(True);
@@ -355,7 +374,7 @@ if __name__ == '__main__':
     #seg=f['volume/data'][0,:,:,:,0]
     #f.close()
     
-    seg = numpy.ones((520,520,520), dtype=numpy.uint8)
+    seg = numpy.ones((120,120,120), dtype=numpy.uint8)
     seg[20:40,20:40,20:40] = 2
     seg[50:70,50:70,50:70] = 3
     seg[80:100,80:100,80:100] = 4

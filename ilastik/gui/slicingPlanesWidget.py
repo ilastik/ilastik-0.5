@@ -1,6 +1,6 @@
 from vtk import vtkPropAssembly, vtkImplicitPlaneRepresentation, vtkPolyData, vtkPoints, \
                 vtkCellArray, vtkImplicitPlaneWidget2, vtkTubeFilter, vtkPolyDataMapper, \
-                vtkActor
+                vtkActor, vtkPlane
 
 #*******************************************************************************
 # S l i c i n g P l a n e s W i d g e t                                        *
