@@ -10,45 +10,25 @@ from numpy2vtk import toVtkImageData
 import signal, numpy
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-#Read
-#http://www.vtk.org/pipermail/vtkusers/2010-July/110094.html
-#for information on why not to inherit from QThread
-
-class QThreader(QThread):
-    #see here
-    #http://wiki.maemo.org/PyQt_Tips_and_Tricks
-    #why this is needed
-    def run(self):
-        print "QThreader::run()"
-        #t = QTimer()
-        #t.setInterval(0)
-        #t.setSingleShot(True)
-        #self.connect(t, SIGNAL("timeout"), self.exec_)
-        #t.start()
-        self.exec_()
-    def exec_(self):
-        print "QThreader::exec_()"
-        QThread.exec_(self)
+#*******************************************************************************
+# M e s h E x t r a c t o r                                                    *
+#*******************************************************************************
 
 class MeshExtractor(QThread):
+
+    progress = pyqtSignal(float)
+    newStep  = pyqtSignal(QString)
+
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
-        
         self.inputImage = None
         self.numpyVolume = None
         self.meshes = dict()
         self.suppressLabels = list()
         self.smooth = True
-        
-        t = QTimer()
-        t.setInterval(0)
-        t.setSingleShot(True)
-        self.connect(t, SIGNAL("timeout()"), self.extract)
-        
-        print "init MeshExtractor"
     
     def progressCallback(self, caller, eventId):
-        self.emit(SIGNAL("currentStepProgressChanged(float)"), caller.GetProgress())
+        self.progress.emit(caller.GetProgress())
     
     def SetInput(self, numpyVolume):
         self.numpyVolume = numpyVolume.copy()
@@ -59,19 +39,9 @@ class MeshExtractor(QThread):
         self.smooth = smooth
     
     def run(self):
-        print "Extractor.run()"
-        #t = QTimer()
-        #t.setInterval(0)
-        #t.setSingleShot(True)
-        #self.connect(t, SIGNAL("timeout()"), self.extract)
-        #self.exec_()
-        self.extract()
-    
-    def extract(self):
-        print "MeshExtractor::extract()"
+        print "MeshExtractor::run()"
         self.meshes = dict()
         
-        #self.elapsed.restart()
         count = 0
         
         if self.numpyVolume is None:
@@ -103,7 +73,7 @@ class MeshExtractor(QThread):
         #4) Smooth the models
         #5) Output each model into a separate file
 
-        self.emit(SIGNAL("newStep(QString)"), QString("Histogram"))
+        self.newStep.emit(QString("Histogram"))
         qDebug("*** Histogram ***")
         histogram.SetInput(self.inputImage)
         histogram.AddObserver(vtkCommand.ProgressEvent, self.progressCallback)
@@ -112,14 +82,14 @@ class MeshExtractor(QThread):
         histogram.SetComponentSpacing(1, 1, 1)
         histogram.Update()
 
-        self.emit(SIGNAL("newStep(QString)"), QString("Marching Cubes"))
+        self.newStep.emit(QString("Marching Cubes"))
         qDebug("*** Marching Cubes ***")
         discreteCubes.SetInput(self.inputImage)
         discreteCubes.AddObserver(vtkCommand.ProgressEvent, self.progressCallback)
         discreteCubes.GenerateValues(endLabel - startLabel + 1, startLabel, endLabel)
 
         if self.smooth:
-            self.emit(SIGNAL("newStep(QString)"), QString("Smoothing"))
+            self.newStep.emit(QString("Smoothing"))
             qDebug("*** Smoothing ***")
             smoother.SetInput(discreteCubes.GetOutput())
             smoother.AddObserver(vtkCommand.ProgressEvent, self.progressCallback)
@@ -132,7 +102,7 @@ class MeshExtractor(QThread):
             smoother.NormalizeCoordinatesOn()
             smoother.Update()
 
-        self.emit(SIGNAL("newStep(QString)"), QString("Preparing meshes"))
+        self.newStep.emit(QString("Preparing meshes"))
         qDebug("*** Preparing meshes ***")
         if self.smooth:
             selector.SetInput(smoother.GetOutput())
@@ -150,15 +120,11 @@ class MeshExtractor(QThread):
                                     vtkDataSetAttributes.SCALARS)
 
         geometry.SetInput(scalarsOff.GetOutput())
-
-        #writer.SetInput(geometry.GetOutput())
         
-        selector.ThresholdBetween(2, 2)
-        
-        self.emit(SIGNAL("newStep(QString)"), QString("Writing meshes"))
+        self.newStep.emit(QString("Writing meshes"))
         qDebug("*** Writing meshes ***")
         for i in range(startLabel, endLabel+1):
-            self.emit(SIGNAL("currentStepProgressChanged(float)"), (i-startLabel+1)/float(endLabel-startLabel+1))
+            self.progress.emit((i-startLabel+1)/float(endLabel-startLabel+1))
             
             if i in self.suppressLabels:
                 print " - suppressed label:",i
@@ -193,9 +159,6 @@ class MeshExtractor(QThread):
             poly = vtkPolyData()
             poly.DeepCopy(f.GetOutput())
             
-            print "test"
-            #poly.PrintSelf()
-            
             print " - adding mesh for label %d" % (i)
             self.meshes[i] = poly
             
@@ -203,16 +166,19 @@ class MeshExtractor(QThread):
         #print "MeshExtractor::done"
         self.emit(SIGNAL('done()'))
 
+#*******************************************************************************
+# M e s h E x t r a c t o r D i a l o g                                        *
+#*******************************************************************************
+
 class MeshExtractorDialog(QDialog):
-    currentStep = 0
-    extractor   = None
+    done = pyqtSignal()
     
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
         
-        #w = QWidget()
-        #self.setCentralWidget(w)
-        
+        self.currentStep = 0
+        self.extractor   = None
+    
         l = QVBoxLayout()
         self.setLayout(l)
         
@@ -235,7 +201,6 @@ class MeshExtractorDialog(QDialog):
         self.update()
 
     def __onNewStep(self, description):
-        print "MeshExtractorDialog new step: %s" % (description)
         self.currentStep += 1
         self.currentStepProgress.setValue(0)
         self.overallProgress.setValue(self.currentStep)
@@ -243,7 +208,6 @@ class MeshExtractorDialog(QDialog):
         self.update()
 
     def __onCurrentStepProgressChanged(self, progress):
-        print "  - MeshExtractorDialog progress=", progress
         self.currentStepProgress.setValue( round(100.0*progress) )
         self.update()
 
@@ -252,21 +216,17 @@ class MeshExtractorDialog(QDialog):
         self.extractor.SetInput(segVolume)
         self.extractor.SuppressLabels(suppressLabels)
         self.extractor.Smooth(smooth)
-        
-        self.connect(self.extractor, SIGNAL("newStep(QString)"), self.__onNewStep, Qt.BlockingQueuedConnection)
-        self.connect(self.extractor, SIGNAL("currentStepProgressChanged(float)"), self.__onCurrentStepProgressChanged, Qt.BlockingQueuedConnection)
-
-        #please read:
-        #http://www.riverbankcomputing.com/pipermail/pyqt/2007-February/015512.html
-
-        #self.connect(thread, SIGNAL('started()'), extractor, SLOT("extract"))
-        #self.connect(thread, SIGNAL('started()'), extractor.testing)
-        self.extractor.connect(self.extractor, SIGNAL('finished()'), self.onMeshesExtracted)
-
+        self.extractor.progress.connect(self.__onCurrentStepProgressChanged, Qt.BlockingQueuedConnection)
+        self.extractor.newStep.connect(self.__onNewStep, Qt.BlockingQueuedConnection)
+        self.extractor.finished.connect(self.onMeshesExtracted)
         self.extractor.start()
     
     def onMeshesExtracted(self):
-        self.emit(SIGNAL('done()'))
+        self.done.emit()
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
@@ -277,6 +237,6 @@ if __name__ == '__main__':
 
     window = MeshExtractorDialog()
     window.show()
-    QTimer.singleShot(200, partial(window.run, seg));
+    QTimer.singleShot(0, partial(window.run, seg));
     app.exec_()
 
