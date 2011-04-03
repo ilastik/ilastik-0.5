@@ -40,6 +40,7 @@ except Exception, e:
     pass
 
 from PyQt4 import QtCore, QtOpenGL
+from PyQt4.QtCore import pyqtSignal
 import sip
 import numpy, qimage2ndarray
 
@@ -327,7 +328,7 @@ class DummyOverlayListWidget(QtGui.QWidget):
 #*******************************************************************************
 
 class VolumeEditor(QtGui.QWidget):
-    grid = None #in 3D mode hold the quad view widget, otherwise remains none
+    changedSlice = pyqtSignal(int,int)
     
     @property
     def useOpenGL(self):
@@ -339,6 +340,7 @@ class VolumeEditor(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.ilastik = parent
         self.name = name
+        self.grid = None #in 3D mode hold the quad view widget, otherwise remains none
         title = name
         
         #Controls the trade-off of speed and flickering when scrolling through this slice view
@@ -401,7 +403,7 @@ class VolumeEditor(QtGui.QWidget):
             self.overview = OverviewScene(self, self.image.shape[1:4])
             
             self.overview.changedSlice.connect(self.changeSlice)
-            self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
+            self.changedSlice.connect(self.overview.ChangeSlice)
             
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[2], self.image.shape[3]), 2 ,self.drawManager))
@@ -414,7 +416,7 @@ class VolumeEditor(QtGui.QWidget):
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
 
         for scene in self.imageScenes:
-            QtCore.QObject.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), scene.updateSliceIntersection)
+            self.changedSlice.connect(scene.updateSliceIntersection)
             
         self.viewingLayout = QtGui.QVBoxLayout()
         self.viewingLayout.setContentsMargins(10,2,0,2)
@@ -960,7 +962,7 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[axis].sliceNumber = num
             self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
         #print "VolumeEditor.changedSlice(%s, %d)" % (num, axis)
-        self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
+        self.changedSlice.emit(num, axis)
 #        for i in range(256):
 #            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
 #            image.setColor(i, col.rgba())
