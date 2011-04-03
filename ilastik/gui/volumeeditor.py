@@ -305,6 +305,7 @@ class VolumeUpdate():
 class DummyLabelWidget(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
+        self.setFixedSize(QtCore.QSize(0,0))
         self.volumeLabels = None
         
     def currentItem(self):
@@ -448,7 +449,7 @@ class VolumeEditor(QtGui.QWidget):
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
 
-        self.toolBoxLayout.addSpacing(30)
+        self.toolBoxLayout.addStretch()
 
         #Slice Selector Combo Box in right side toolbox
         self.sliceSelectors = []
@@ -493,9 +494,6 @@ class VolumeEditor(QtGui.QWidget):
         for scene in self.imageScenes:
             self.connect(sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
         sliceIntersectionBox.setCheckState(QtCore.Qt.Checked)
-
-        self.toolBoxLayout.addStretch()
-
 
         self.selSlices = []
         self.selSlices.append(0)
@@ -838,7 +836,11 @@ class VolumeEditor(QtGui.QWidget):
             del self.labelWidget
         self.labelWidget = widget
         self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 0, self.labelWidget)        
+        self.toolBoxLayout.insertWidget( 0, self.labelWidget)
+        if isinstance(widget, DummyLabelWidget):
+            oldMargins = list(self.toolBoxLayout.getContentsMargins())
+            oldMargins[1] = 0
+            self.toolBoxLayout.setContentsMargins(oldMargins[0],oldMargins[1],oldMargins[2],oldMargins[3])
     
     def setOverlayWidget(self,  widget):
         """
