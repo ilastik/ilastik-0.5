@@ -386,8 +386,6 @@ class VolumeEditor(QtGui.QWidget):
 
         self._history = HistoryManager(self)
 
-        self.layout_ = QtGui.QHBoxLayout()
-
         self.drawManager = DrawManager(self)
 
         self.imageScenes = []
@@ -529,8 +527,6 @@ class VolumeEditor(QtGui.QWidget):
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
 
-        #self.layout_.addWidget(self.toolBox)
-
         # Make the dialog act as a window and stay on top
         if self.embedded == False:
             pass
@@ -644,14 +640,16 @@ class VolumeEditor(QtGui.QWidget):
         self.connect(self, QtCore.SIGNAL("destroyed()"), self.widgetDestroyed)
         
         self.focusAxis =  0
-        
-        #self.setLayout(self.layout_)
+
         self.splitter = QtGui.QSplitter()
+        self.splitter.setContentsMargins(0,0,0,0)
         tempWidget = QtGui.QWidget()
         tempWidget.setLayout(self.viewingLayout)
         self.splitter.addWidget(tempWidget)
         self.splitter.addWidget(self.toolBox)
         splitterLayout = QtGui.QVBoxLayout()
+        splitterLayout.setMargin(0)
+        splitterLayout.setSpacing(0)
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
         

@@ -427,7 +427,8 @@ class MainWindow(QtGui.QMainWindow):
 
 
         dock = QtGui.QDockWidget(self)
-        #save space, but makes thi dock widget undockable
+        dock.setContentsMargins(0,0,0,0)
+        #save space, but makes this dock widget undockable
         #at the moment we do not support undocking anyway, so...
         dock.setTitleBarWidget(QtGui.QWidget())
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
@@ -489,7 +490,7 @@ if __name__ == "__main__":
     ilastik.modules.loadModuleGuis()
 
     mainwindow = MainWindow(sys.argv)
-    #mainwindow.setStyleSheet("QSplitter::handle { background-color: #d6d6d6;}");
+    mainwindow.setStyleSheet("QSplitter::handle { background-color: #999999;}")
 
     mainwindow.show()
     #On OS X, the window has to be raised in order to be visible directly after starting
