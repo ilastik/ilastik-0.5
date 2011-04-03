@@ -319,6 +319,7 @@ class OverviewScene(QWidget):
         
         layout = QVBoxLayout()
         layout.setMargin(0)
+        layout.setSpacing(0)
         self.qvtk = QVTKOpenGLWidget()
         #self.qvtk = QVTKWidget()
         layout.addWidget(self.qvtk)
@@ -326,7 +327,8 @@ class OverviewScene(QWidget):
         self.qvtk.init()
         hbox = QHBoxLayout(None)
         hbox.setMargin(0)
-        hbox.setContentsMargins(10,0,0,0)
+        hbox.setSpacing(5)
+        hbox.setContentsMargins(5,0,0,0)
         b1 = QToolButton(); b1.setText('X')
         b1.setCheckable(True); b1.setChecked(True)
         b2 = QToolButton(); b2.setText('Y')
