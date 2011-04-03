@@ -249,7 +249,8 @@ class VigraPackage_old(Package):
         self.system("make install")
       
 ######################################################################################        
-class QtPackageSpecialFlags(Package):
+
+class QtPackage(Package):
     src_uri = 'http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.2.tar.gz'
     correctMD5sum = '66b992f5c21145df08c99d21847f4fdb'
     workdir = 'qt-everywhere-opensource-src-4.7.2'
@@ -320,6 +321,7 @@ class SipPackage(Package):
         self.system(cmd)
     
 ############################################################################################################        
+
 class H5pyPackage(Package):
     src_uri = 'http://h5py.googlecode.com/files/h5py-1.3.1.tar.gz'
     
@@ -482,10 +484,13 @@ class SetuptoolsPackage(Package):
     def makeInstall(self):
         self.system(pythonExecutable+" setup.py install")
 
+###############################################################################################################
+
 class EnthoughtBasePackage(Package):
     src_uri = "http://enthought.com/repo/ets/EnthoughtBase-3.1.0.tar.gz"
     workdir = "EnthoughtBase-3.1.0"
     correctMD5sum = '1d8f6365d20dfd5c4232334e80b0cfdf'
+    patches = ['pyqt-correct-api-version.patch']
     
     def configure(self):
         pass
@@ -496,10 +501,7 @@ class EnthoughtBasePackage(Package):
     def makeInstall(self):
         self.system(pythonExecutable+" setup.py install")
 
-#and finally change line 22 in
-# vim /home/tkroeger/inst/lib/python2.6/site-packages/EnthoughtBase-3.1.0-py2.6.egg/enthought/qt/__init__.py
-# to read
-# sip.setapi('QString', 1)
+###############################################################################################################
 
 class TraitsPackage(Package):
     src_uri = "http://www.enthought.com/repo/ETS/Traits-3.6.0.tar.gz"
@@ -521,6 +523,7 @@ class TraitsBackendQtPackage(Package):
     src_uri = "http://www.enthought.com/repo/ETS/TraitsBackendQt-3.6.0.tar.gz"
     workdir = "TraitsBackendQt-3.6.0"
     correctMD5sum = 'a655ae137af4d8590739618926e21893'
+    patches = ['enthought-no-webkit.patch', 'enthought-no-svg.patch']
     
     def configure(self):
         pass

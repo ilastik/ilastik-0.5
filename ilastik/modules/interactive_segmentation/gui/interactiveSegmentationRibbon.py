@@ -5,7 +5,7 @@ import time
 import copy
 import random
 
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
 
@@ -155,13 +155,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Weights')
-        self.btnChooseDimensions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Using 3D')
-        self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
-        self.btnSaveAs = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.SaveAs),'Save As')
-        self.btnSave = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Save),'Save')
-        self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Change Segmentor')
+        self.btnChooseWeights     = TabButton('Choose Weights', ilastikIcons.Select)
+        self.btnChooseDimensions  = TabButton('Using 3D', ilastikIcons.Select)
+        self.btnSegment           = TabButton('Segment', ilastikIcons.Play)
+        self.btnSaveAs            = TabButton('Save As', ilastikIcons.SaveAs)
+        self.btnSave              = TabButton('Save', ilastikIcons.Save)
+        self.btnSegmentorsOptions = TabButton('Change Segmentor', ilastikIcons.System)
         
         self.inlineSettings = InlineSettingsWidget(self)
         

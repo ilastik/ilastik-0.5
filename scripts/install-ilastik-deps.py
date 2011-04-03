@@ -168,7 +168,7 @@ if 'vigra' in c:
 # # # # # # # # # # # # #
 
 if 'qt' in c:
-	QtPackageSpecialFlags()
+	QtPackage()
 if 'pyqt' in c:
 	PyQtPackage()
 if 'qimage2ndarray' in c:
@@ -200,27 +200,10 @@ if 'vtk' in c:
 # # # # # # # # # # # # #
 
 if 'fixes' in c:
-    cmd = "cp -rv work/" + QtPackageSpecialFlags.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
+    cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
     print "Workaround #1: ", cmd
-    os.system(cmd)
-
-    cmd = "sed -i '.bkp' -e \"s|sip.setapi('QString', 2)|sip.setapi('QString', 1)|g\" "+installDir+"/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/EnthoughtBase-3.1.0-py2.7.egg/enthought/qt/__init__.py"
-    print "Workaround #2: ", cmd
-    os.system(cmd)
-    
-    f = installDir+"/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/TraitsBackendQt-3.6.0-py2.7.egg/enthought/pyface/ui/qt4/resource_manager.py"
-    cmd = "sed -i '.bkp' -e \"s|import QtCore, QtGui, QtSvg|import QtCore, QtGui|g\" "+f
-    print "Workaround #3: ", cmd
     os.system(cmd)
     
     cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
-    print "Workaround #4: ", cmd
+    print "Workaround #2: ", cmd
     os.system(cmd)
-    
-#if 'fixes2' in c:
-#    cmd = "sed -i '.bkp' -e \"s|purelib = prefix+'/lib/python'+ver+'/site-packages'|purelib = %s|g\" work/VTK/Wrapping/Python/setup_install_paths.py" % pythonSitePackages
-#    print "Workaround #4: ", cmd
-#    os.system(cmd)
-#    cmd = "sed -i '.bkp' -e \"s|platlib = exec_prefix+'/lib/python'+ver+'/site-packages'|platlib = %s|g\" work/VTK/Wrapping/Python/setup_install_paths.py" % pythonSitePackages
-#    print "Workaround #5: ", cmd
-#    os.system(cmd)

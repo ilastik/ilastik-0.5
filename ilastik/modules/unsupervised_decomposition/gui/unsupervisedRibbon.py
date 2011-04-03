@@ -1,4 +1,4 @@
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
 
@@ -51,11 +51,11 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
             
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        self.btnChooseOverlays = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Overlay')
-        
-        self.btnDecompose = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'decompose')
-        self.btnUnsupervisedOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Unsupervised Decomposition Options')
+        self.btnChooseOverlays      = TabButton('Select Overlay', ilastikIcons.Select)
+        self.btnDecompose           = TabButton('decompose', ilastikIcons.Play)
+        self.btnUnsupervisedOptions = TabButton('Unsupervised Decomposition Options', ilastikIcons.System)
 
         self.btnDecompose.setEnabled(False)     
         self.btnUnsupervisedOptions.setEnabled(False)     

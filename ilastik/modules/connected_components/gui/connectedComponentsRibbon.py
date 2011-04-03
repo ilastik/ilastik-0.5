@@ -1,4 +1,4 @@
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
 
@@ -63,31 +63,28 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
             
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        self.btnInputOverlay = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Overlay')
-        self.btnCC = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'CC')
-        self.btnCCBack = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'CC with background')
-        self.btnFilter = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'Filter synapses')
-        #self.btnCCOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'Options')
+        self.btnInputOverlay = TabButton('Select Overlay', ilastikIcons.Select)
+        self.btnCC           = TabButton('CC', ilastikIcons.System)
+        self.btnCCBack       = TabButton('CC with background', ilastikIcons.System)
+        self.btnFilter       = TabButton('Filter synapses', ilastikIcons.System)
         
         self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
         self.btnCC.setToolTip('Run connected components on the selected overlay')
         self.btnCCBack.setToolTip('Run connected components with background')
         self.btnFilter.setToolTip('Perform magic synapse filtering and dilation')
-        #self.btnCCOptions.setToolTip('Set options')
         
         self.btnInputOverlay.setEnabled(True)
         self.btnCC.setEnabled(False)
         self.btnCCBack.setEnabled(False)
         self.btnFilter.setEnabled(False)
-        #self.btnCCOptions.setEnabled(True)
         
         tl.addWidget(self.btnInputOverlay)
         tl.addWidget(self.btnCC)
         tl.addWidget(self.btnCCBack)
         tl.addStretch()
         tl.addWidget(self.btnFilter)
-        #tl.addWidget(self.btnCCOptions)
         
         self.setLayout(tl)
         

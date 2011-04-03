@@ -33,7 +33,7 @@ __builtin__.pythonIncludePath  = pythonVersionPath + "/include/python" + pythonV
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-APP = ['/Users/tkroeger/Desktop/buildilastik/work/ilastik/ilastik/ilastikMain.py']
+APP = ['ilastik/ilastikMain.py']
 DATA_FILES = [  installDir+"/lib/qt_menu.nib",
                 installDir+"/lib/libvigraimpex.3.dylib",
                 installDir+"/library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages/vigra/vigranumpycore.so",
@@ -152,5 +152,5 @@ setup(
     data_files=DATA_FILES,
     options={'py2app': OPTIONS},
     setup_requires=['py2app'],
-    iconfile='/Users/tkroeger/Desktop/buildilastik/work/ilastik/appIcon.icns',
+    iconfile='appIcon.icns',
 )

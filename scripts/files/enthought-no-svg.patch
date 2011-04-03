@@ -1,0 +1,11 @@
+--- enthought/pyface/ui/qt4/resource_manager.py	2011-01-27 18:29:16.000000000 +0100
++++ enthought/pyface/ui/qt4/resource_manager.py	2011-04-02 16:08:44.000000000 +0200
+@@ -12,7 +12,7 @@
+ 
+ 
+ # Major package imports.
+-from enthought.qt import QtCore, QtGui, QtSvg
++from enthought.qt import QtCore, QtGui #, QtSvg
+ 
+ # Enthought library imports.
+ from enthought.resource.api import ResourceFactory

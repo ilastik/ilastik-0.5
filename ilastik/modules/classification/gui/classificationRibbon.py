@@ -1,6 +1,6 @@
 import gc
 
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from ilastik.core.dataMgr import  PropertyMgr
 
@@ -62,13 +62,14 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
      
-        self.btnSelectFeatures = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Features')
-        self.btnStartLive = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Start Live Prediction')
+        self.btnSelectFeatures    = TabButton('Select Features', ilastikIcons.Select)
+        self.btnStartLive         = TabButton('Start Live Prediction', ilastikIcons.Play)
         self.btnStartLive.setCheckable(True)
-        self.btnTrainPredict = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Train and Predict')
-        self.btnExportClassifier = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Export Classifier')
-        self.btnClassifierOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Classifier Options')
+        self.btnTrainPredict      = TabButton('Train and Predict', ilastikIcons.System)
+        self.btnExportClassifier  = TabButton('Export Classifier', ilastikIcons.Select)
+        self.btnClassifierOptions = TabButton('Classifier Options', ilastikIcons.Select)
         
         self.btnSelectFeatures.setToolTip('Select and compute features')
         self.btnStartLive.setToolTip('Toggle interactive prediction of the current image while labeling')

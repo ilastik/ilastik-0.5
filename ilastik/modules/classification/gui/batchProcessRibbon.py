@@ -1,4 +1,4 @@
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 from PyQt4 import QtGui, QtCore
 
 from ilastik.gui.overlayWidget import OverlayWidget
@@ -38,9 +38,10 @@ class AutomateTab(IlastikTabBase, QtGui.QWidget):
         pass
         
     def _initContent(self):
+        tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        tl = QtGui.QHBoxLayout()      
-        self.btnBatchProcess = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Batch Process')
+        self.btnBatchProcess = TabButton('Batch Process', ilastikIcons.Play)
        
         self.btnBatchProcess.setToolTip('Select and batch predict files with the currently trained classifier')
         tl.addWidget(self.btnBatchProcess)

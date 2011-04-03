@@ -49,6 +49,7 @@ except:
 import sys
 import os
 import gc
+import platform
 
 from PyQt4 import QtCore, QtOpenGL, QtGui
 
@@ -136,6 +137,9 @@ class RenderChoiceDialog(QtGui.QDialog):
         layout.addWidget(okButton)
         self.setLayout(layout)
 
+        if platform.system() == 'Darwin':
+            allowChoosingOpenGL = False
+
         if allowChoosingOpenGL:
             self.openglChoice.setChecked(True)
         else:
@@ -143,6 +147,12 @@ class RenderChoiceDialog(QtGui.QDialog):
             self.softwareChoice.setChecked(True)
 
         QtCore.QObject.connect(okButton, QtCore.SIGNAL("accepted()"), self, QtCore.SLOT("accept()"))
+        
+    def exec_(self):
+        if not (self.openglChoice.isEnabled() and self.softwareChoice.isEnabled()):
+            return
+        else:
+            QtGui.QDialog.exec_(self)
 
 #*******************************************************************************
 # M a i n W i n d o w                                                          *
@@ -219,7 +229,6 @@ class MainWindow(QtGui.QMainWindow):
             # print help information and exit:
             print str(err) # will print something like "option -a not recognized"
 
-
         if self.opengl == None:   #no command line option for opengl was given, ask user interactively
             dlg = RenderChoiceDialog()
             dlg.exec_()
@@ -231,13 +240,17 @@ class MainWindow(QtGui.QMainWindow):
                 self.openglOverview = True
             elif dlg.softwareChoice.isChecked():
                 self.opengl = False
-                self.openglOverview = False
+                self.openglOverview = True
             else:
                 raise RuntimeError("Unhandled choice in dialog")
 
+        print "* OpenGL:"
+        print "  - Using OpenGL for slice views:", self.opengl
+        print "  - Using OpenGL for 3D view:    ", self.openglOverview
+        
         #if we have OpenGL, a shared QGLWidget is set up,
         self.sharedOpenGLWidget = None
-        if self.openglOverview:
+        if self.opengl:
             self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
 
         self.project = None
@@ -309,6 +322,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createRibbons(self):
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
+        self.ribbonToolbar.setMovable(False)
 
         self.ribbon = ctrlRibbon.IlastikTabWidget(self.ribbonToolbar)
 
@@ -327,10 +341,13 @@ class MainWindow(QtGui.QMainWindow):
         self.fileSelectorList.setMaximumWidth(240)
         self.fileSelectorList.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         layout = QtGui.QVBoxLayout()
+        layout.setMargin(0)
+        layout.setSpacing(0)
         layout.addWidget(QtGui.QLabel("Select Image:"))
         layout.addWidget(self.fileSelectorList)
         widget.setLayout(layout)
         self.ribbonToolbar.addWidget(widget)
+        #self.ribbonToolbar.addWidget(self.fileSelectorList)
         self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
 
         self.ribbon.setCurrentIndex (0)
@@ -424,7 +441,8 @@ class MainWindow(QtGui.QMainWindow):
 
 
         dock = QtGui.QDockWidget(self)
-        #save space, but makes thi dock widget undockable
+        dock.setContentsMargins(0,0,0,0)
+        #save space, but makes this dock widget undockable
         #at the moment we do not support undocking anyway, so...
         dock.setTitleBarWidget(QtGui.QWidget())
         dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
@@ -480,15 +498,19 @@ if __name__ == "__main__":
     painter.end()
 
     splashScreen = QtGui.QSplashScreen(splashImage)
-    splashScreen.show();
+    splashScreen.show()
 
     app.processEvents();
     ilastik.modules.loadModuleGuis()
 
     mainwindow = MainWindow(sys.argv)
-    #mainwindow.setStyleSheet("QSplitter::handle { background-color: #d6d6d6;}");
+    mainwindow.setStyleSheet("QSplitter::handle { background-color: #999999;}")
 
     mainwindow.show()
+    #On OS X, the window has to be raised in order to be visible directly after starting
+    #the app
+    mainwindow.raise_()
+    
     splashScreen.finish(mainwindow)
     
     randomseed = RandomSeed()
