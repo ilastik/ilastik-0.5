@@ -366,7 +366,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     o = OverviewScene(None, [100,100,100])
-    o.connect(o, SIGNAL("changedSlice(int,int)"), updateSlice)
+    o.changedSlice.connect(updateSlice)
     o.show()
     o.resize(600,600)
     

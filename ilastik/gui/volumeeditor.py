@@ -951,22 +951,14 @@ class VolumeEditor(QtGui.QWidget):
             tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
-        #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
-
-#        if self.labelWidget.volumeLabels is not None:
-#            if self.labelWidget.volumeLabels.data is not None:
-#                tempLabels = self.labelWidget.volumeLabels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
         if len(self.imageScenes) > axis:
             self.imageScenes[axis].sliceNumber = num
             self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
+        
         #print "VolumeEditor.changedSlice(%s, %d)" % (num, axis)
         self.changedSlice.emit(num, axis)
-#        for i in range(256):
-#            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
-#            image.setColor(i, col.rgba())
-
 
     def closeEvent(self, event):
         event.accept()
