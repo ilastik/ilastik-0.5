@@ -147,6 +147,12 @@ class RenderChoiceDialog(QtGui.QDialog):
             self.softwareChoice.setChecked(True)
 
         QtCore.QObject.connect(okButton, QtCore.SIGNAL("accepted()"), self, QtCore.SLOT("accept()"))
+        
+    def exec_(self):
+        if not (self.openglChoice.isEnabled() and self.softwareChoice.isEnabled()):
+            return
+        else:
+            QtGui.QDialog.exec_(self)
 
 #*******************************************************************************
 # M a i n W i n d o w                                                          *
