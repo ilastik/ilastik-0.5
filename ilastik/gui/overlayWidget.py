@@ -307,6 +307,8 @@ class OverlayWidget(QtGui.QGroupBox):
     def __init__(self,parent, dataMgr):
         QtGui.QGroupBox.__init__(self,  "Overlays")
         self.setLayout(QtGui.QHBoxLayout())
+        self.layout().setMargin(5)
+        
         self.dataMgr = dataMgr
 
         self.volumeEditor = parent

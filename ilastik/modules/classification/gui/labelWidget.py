@@ -71,9 +71,11 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.overlayItem = overlayItem
         self.volumeLabelDescriptions = volumeLabelDescriptions
         #Label selector
-        self.addLabelButton = QtGui.QPushButton("Create Class")
+        self.addLabelButton = QtGui.QToolButton()
+        self.addLabelButton.setText("Create Class")
         self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
 
+        self.layout().setMargin(5)
         self.layout().addWidget(self.addLabelButton)
         self.layout().addWidget(self.listWidget)
         

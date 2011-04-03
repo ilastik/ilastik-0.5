@@ -322,6 +322,7 @@ class MainWindow(QtGui.QMainWindow):
 
     def createRibbons(self):
         self.ribbonToolbar = self.addToolBar("ToolBarForRibbons")
+        self.ribbonToolbar.setMovable(False)
 
         self.ribbon = ctrlRibbon.IlastikTabWidget(self.ribbonToolbar)
 

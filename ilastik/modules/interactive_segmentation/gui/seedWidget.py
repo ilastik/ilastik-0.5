@@ -64,11 +64,14 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         QtGui.QGroupBox.__init__(self,  "Seeds")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
+        self.layout().setMargin(5)
+        
         self.listWidget = QtGui.QListWidget(self)
         self.overlayItem = overlayItem
         
         #Label selector
-        self.addLabelButton = QtGui.QPushButton("Create Seed")
+        self.addLabelButton = QtGui.QToolButton()
+        self.addLabelButton.setText("Create Seed")
         self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
 
         self.layout().addWidget(self.addLabelButton)

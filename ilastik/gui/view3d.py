@@ -328,7 +328,7 @@ class OverviewScene(QWidget):
         hbox = QHBoxLayout(None)
         hbox.setMargin(0)
         hbox.setSpacing(5)
-        hbox.setContentsMargins(5,0,0,0)
+        hbox.setContentsMargins(5,0,5,0)
         b1 = QToolButton(); b1.setText('X')
         b1.setCheckable(True); b1.setChecked(True)
         b2 = QToolButton(); b2.setText('Y')
