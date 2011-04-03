@@ -355,7 +355,7 @@ if __name__ == '__main__':
     #seg=f['volume/data'][0,:,:,:,0]
     #f.close()
     
-    seg = numpy.ones((120,120,120), dtype=numpy.uint8)
+    seg = numpy.ones((520,520,520), dtype=numpy.uint8)
     seg[20:40,20:40,20:40] = 2
     seg[50:70,50:70,50:70] = 3
     seg[80:100,80:100,80:100] = 4
