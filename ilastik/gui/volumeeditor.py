@@ -418,8 +418,13 @@ class VolumeEditor(QtGui.QWidget):
             QtCore.QObject.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), scene.updateSliceIntersection)
             
         self.viewingLayout = QtGui.QVBoxLayout()
+        self.viewingLayout.setContentsMargins(10,2,0,2)
+        self.viewingLayout.setSpacing(0)
         
         labelLayout = QtGui.QHBoxLayout()
+        labelLayout.setMargin(0)
+        labelLayout.setSpacing(5)
+        labelLayout.setContentsMargins(0,0,0,0)
         
         self.posLabel = QtGui.QLabel()
         self.pixelValuesLabel = QtGui.QLabel()
@@ -1717,8 +1722,6 @@ class ImageScene(QtGui.QGraphicsView):
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
         
-        #Unfortunately, setting the style like this make the scroll bars look
-        #really crappy...
         #self.setStyleSheet("QWidget:!focus { border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px; }\
         #                    QWidget:focus { border: 2px solid white; border-radius: 4px; }")
         
