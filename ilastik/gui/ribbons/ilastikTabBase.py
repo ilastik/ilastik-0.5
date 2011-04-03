@@ -1,7 +1,17 @@
+from PyQt4.QtGui import QToolButton, QIcon
+from PyQt4.QtCore import Qt
 
 #*******************************************************************************
 # I l a s t i k T a b B a s e                                                  *
 #*******************************************************************************
+
+class TabButton(QToolButton):
+    def __init__(self, text, ilastikIcon, tooltip=""):
+        QToolButton.__init__(self)
+        self.setText(text)
+        self.setIcon(QIcon(ilastikIcon))
+        self.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        self.setToolTip(tooltip)
 
 class IlastikTabBase(object):
     name = "Ribbon Base Class for Tab Pages" 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
 
@@ -50,13 +50,10 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl = QtGui.QHBoxLayout()
         tl.setMargin(0)
         
-        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Border Probability Overlay')
-        self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
-        #self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Segmentors Options')
-        
+        self.btnChooseWeights = TabButton('Choose Border Probability Overlay', ilastikIcons.Select)
+        self.btnSegment       = TabButton('Segment', ilastikIcons.Play)
         self.btnChooseWeights.setToolTip('Choose the input overlay that contains border probabilities')
         self.btnSegment.setToolTip('Segment the image')
-        #self.btnSegmentorsOptions.setToolTip('Select a segmentation plugin and change settings')
         
         tl.addWidget(self.btnChooseWeights)
         tl.addWidget(self.btnSegment)
