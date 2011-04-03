@@ -49,6 +49,7 @@ except:
 import sys
 import os
 import gc
+import platform
 
 from PyQt4 import QtCore, QtOpenGL, QtGui
 
@@ -136,6 +137,9 @@ class RenderChoiceDialog(QtGui.QDialog):
         layout.addWidget(okButton)
         self.setLayout(layout)
 
+        if platform.system() == 'Darwin':
+            allowChoosingOpenGL = False
+
         if allowChoosingOpenGL:
             self.openglChoice.setChecked(True)
         else:
@@ -219,7 +223,6 @@ class MainWindow(QtGui.QMainWindow):
             # print help information and exit:
             print str(err) # will print something like "option -a not recognized"
 
-
         if self.opengl == None:   #no command line option for opengl was given, ask user interactively
             dlg = RenderChoiceDialog()
             dlg.exec_()
@@ -231,13 +234,17 @@ class MainWindow(QtGui.QMainWindow):
                 self.openglOverview = True
             elif dlg.softwareChoice.isChecked():
                 self.opengl = False
-                self.openglOverview = False
+                self.openglOverview = True
             else:
                 raise RuntimeError("Unhandled choice in dialog")
 
+        print "* OpenGL:"
+        print "  - Using OpenGL for slice views:", self.opengl
+        print "  - Using OpenGL for 3D view:    ", self.openglOverview
+        
         #if we have OpenGL, a shared QGLWidget is set up,
         self.sharedOpenGLWidget = None
-        if self.openglOverview:
+        if self.opengl:
             self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
 
         self.project = None

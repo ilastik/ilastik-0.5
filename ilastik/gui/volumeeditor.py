@@ -328,6 +328,10 @@ class DummyOverlayListWidget(QtGui.QWidget):
 class VolumeEditor(QtGui.QWidget):
     grid = None #in 3D mode hold the quad view widget, otherwise remains none
     
+    @property
+    def useOpenGL(self):
+        return self.sharedOpenglWidget is not None
+    
     """Array Editor Dialog"""
     def __init__(self, image, parent,  name="", font=None,
                  readonly=False, size=(400, 300), sharedOpenglWidget = None):
@@ -358,8 +362,9 @@ class VolumeEditor(QtGui.QWidget):
         self.sharedOpenGLWidget = sharedOpenglWidget
         
         if self.sharedOpenGLWidget is not None:
-            #print "Enabling OpenGL rendering"
-            pass
+            print "Enabling OpenGL rendering"
+        else:
+            print "Disabling OpenGL rendering"
         
         self.embedded = True
 
@@ -392,15 +397,12 @@ class VolumeEditor(QtGui.QWidget):
         self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
         
         if self.image.shape[1] != 1:
-            if self.sharedOpenGLWidget is not None:
-                self.overview = OverviewScene(self, self.image.shape[1:4])
-                self.connect(self.overview, QtCore.SIGNAL("changedSlice(int,int)"), self.changeSlice)
-                self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
-                #this call ensures that the object is properly initialized
-                #TODO get rid of this
-                self.overview.qvtk.update()
-            else:
-                self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
+            self.overview = OverviewScene(self, self.image.shape[1:4])
+            self.connect(self.overview, QtCore.SIGNAL("changedSlice(int,int)"), self.changeSlice)
+            self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
+            #this call ensures that the object is properly initialized
+            #TODO get rid of this
+            self.overview.qvtk.update()
             
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[2], self.image.shape[3]), 2 ,self.drawManager))
@@ -1971,6 +1973,7 @@ class ImageScene(QtGui.QGraphicsView):
                     glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imagePatches[patchNr].bits().__int__()))
             else:
                 # TODO: What is going on down here??
+                """
                 t = self.scene.tex
                 #self.scene.tex = -1
                 if t > -1:
@@ -1984,6 +1987,7 @@ class ImageScene(QtGui.QGraphicsView):
                     
                 #glBindTexture(GL_TEXTURE_2D,self.scene.tex)
                 #glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, self.scene.image.width(), self.scene.image.height(), GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                """
                     
             self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
