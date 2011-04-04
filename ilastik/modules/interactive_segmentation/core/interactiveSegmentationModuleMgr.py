@@ -108,22 +108,22 @@ class ArrayWrapper:
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
     
-    #where to save segmentations to
-    outputPath         = None
-        
-    seedLabelsVolume = None
-    done = None
-    segmentation = None
-    
-    #if we are editing a segment that already exists on disk as
-    #self.outputPath/key, this variable will hold 'key'
-    _currentSegmentsKey = None
-    _mapLabelsToKeys = dict()
-    _mapKeysToLabels = dict()
-    _hasSeeds = False
-    
     def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
+        
+        #where to save segmentations to
+        self.outputPath         = None
+        
+        self.seedLabelsVolume = None
+        self.done = None
+        self.segmentation = None
+    
+        #if we are editing a segment that already exists on disk as
+        #self.outputPath/key, this variable will hold 'key'
+        self._currentSegmentsKey = None
+        self._mapLabelsToKeys = dict()
+        self._mapKeysToLabels = dict()
+        self._hasSeeds = False
         
         self._dataItemImage = dataItemImage
         self.interactiveSegmentationModuleMgr = None 

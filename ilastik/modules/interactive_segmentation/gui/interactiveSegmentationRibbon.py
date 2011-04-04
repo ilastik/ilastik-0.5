@@ -8,6 +8,7 @@ import random
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtGui import QFileDialog
 
 from ilastik.gui.iconMgr import ilastikIcons
 from seedWidget import SeedListWidget
@@ -53,15 +54,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     position = 3
     moduleName = "Interactive_Segmentation"
     
-    outputPath = os.path.expanduser("~/test-segmentation/")
-    mapping = dict()
-    
-    doneBinaryOverlay  = None
-    doneObjectsOverlay = None
-    
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
+        
+        self.outputPath = os.path.expanduser("~/test-segmentation/")
+        self.mapping = dict()
+        self.doneBinaryOverlay  = None
+        self.doneObjectsOverlay = None
     
     def on_doneOverlaysAvailable(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
@@ -81,7 +81,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         if self.ilastik.project is None: return
-    
+
         self._initContent()
         self._initConnects()
         self.interactionLog = []
