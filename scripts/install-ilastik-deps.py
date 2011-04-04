@@ -1,27 +1,43 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import __builtin__
+import platform
 import urllib2, os, sys, tarfile, shutil
 from hashlib import md5
- 
+
 __builtin__.installDir="/ilastik"
 __builtin__.pythonVersion="2.7"
+
 __builtin__.gcc="/usr/bin/gcc"
 __builtin__.gpp="/usr/bin/g++"
 __builtin__.ls="/bin/ls"
 __builtin__.cd="cd"
 __builtin__.make="/usr/bin/make"
 __builtin__.pwd="/bin/pwd"
-__builtin__.cmake="/usr/local/bin/cmake"
-__builtin__.hg="/usr/local/bin/hg"
-__builtin__.git="/usr/local/git/bin/git"
+if platform.system() == "Darwin":
+  __builtin__.cmake="/usr/local/bin/cmake"
+  __builtin__.hg="/usr/local/bin/hg"
+  __builtin__.git="/usr/local/git/bin/git"
+else:
+  __builtin__.cmake="/usr/bin/cmake"
+  __builtin__.hg="/usr/bin/hg"
+  __builtin__.git="/usr/bin/git"
 
-__builtin__.pythonVersionPath  = installDir+"/Frameworks/Python.framework/Versions/"+pythonVersion
+if platform.system() == "Darwin":
+  __builtin__.pythonVersionPath  = installDir+"/Frameworks/Python.framework/Versions/"+pythonVersion
+else:
+  __builtin__.pythonVersionPath  = installDir 
 __builtin__.pythonBinaryPath   = pythonVersionPath+"/bin"
 __builtin__.pythonSharePath    = pythonVersionPath+"/share"
-__builtin__.pythonLibrary      = pythonVersionPath+"/lib/libpython"+pythonVersion+".dylib"
+if platform.system() == "Darwin":
+  __builtin__.pythonLibrary      = pythonVersionPath+"/lib/libpython"+pythonVersion+".dylib"
+else:
+  __builtin__.pythonLibrary      = pythonVersionPath+"/lib/libpython"+pythonVersion+".so"
 __builtin__.pythonExecutable   = pythonBinaryPath + "/python" + pythonVersion
 __builtin__.pythonSitePackages = pythonVersionPath + "/lib/python" + pythonVersion + "/site-packages"
 __builtin__.pythonIncludePath  = pythonVersionPath + "/include/python" + pythonVersion
+
+from PackagesItems import *
 
 # Create the initial structure of the project ######################################################
 
@@ -47,40 +63,26 @@ os.environ["CMAKE_PREFIX_PATH"]    = installDir
 os.environ["CMAKE_INSTALL_PREFIX"] = installDir
 os.environ["CMAKE_INCLUDE_PATH"]   = installDir+"/include"
 os.environ["CMAKE_LIBRARY_PATH"]   = installDir+"/lib"
-os.environ["CMAKE_FRAMEWORK_PATH"] = installDir+"/Frameworks"
-#Packages that use setuptools have to know where Python is installed
-#see: http://stackoverflow.com/questions/3390558/installing-setuptools-in-a-private-version-of-python
 os.environ["PATH"]                 = installDir+"bin:/usr/bin:/bin"
 os.environ["LIBRARY_PATH"]         = installDir+"/lib"
 os.environ["C_INCLUDE_PATH"]       = installDir+"/include"
 os.environ["CPLUS_INCLUDE_PATH"]   = installDir+"/include"
-os.environ["FRAMEWORK_PATH"]       = installDir+"/Frameworks"
-os.environ["CC"]                   = gcc+" -arch x86_64"
-os.environ["CXX"]                  = gpp+" -arch x86_64"
-os.environ["LDFLAGS"]              = "-arch x86_64"
-os.environ["BASEFLAGS"]            = "-arch x86_64"
-os.environ["LDFLAGS"]              = "-L"+installDir+"/lib" + " " + "-F"+installDir+"/Frameworks"
-os.environ["CPPFLAGS"]             = "-I"+installDir+"/include"
 os.environ["PREFIX"]               = installDir
-os.environ["MACOSX_DEPLOYMENT_TARGET"]="10.6"
 os.environ['QTDIR']                = installDir
 os.environ['PYTHONAPPSDIR']        = installDir + '/Applications/'
 
-#os.environ["BINDIR"]=IHOME+"/inst/bin"
-#os.environ["LIBDIR"]=IHOME+"/inst/lib"
-#os.environ["DOCDIR"]=IHOME+"/inst/doc"
-#os.environ["DATADIR"]=IHOME+"/inst"
-#os.environ["HEADERDIR"]=IHOME+"/inst/include"
-#os.environ["PLUGINDIR"]=IHOME+"/inst/plugins"
-#os.environ["TRANSLATIONDIR"]=IHOME+"/inst/translations"
-#os.environ["SYSCONFDIR"]=IHOME+"/inst/etc"
-#os.environ["EXAMPLESDIR"]=IHOME+"/inst/examples"
-#os.environ["DEMOSDIR"]=IHOME+"/inst/demos"
-#os.environ["PREFIX"]=IHOME+"/inst"
-#os.environ["UNUVERSALSDK"]="/Developer/SDKs/MacOSX10.4u.sdk"
-#os.system("env")
-
-from PackagesItems import *
+if platform.system() == "Darwin":
+  os.environ["CMAKE_FRAMEWORK_PATH"] = installDir+"/Frameworks"
+  #Packages that use setuptools have to know where Python is installed
+  #see: http://stackoverflow.com/questions/3390558/installing-setuptools-in-a-private-version-of-python
+  os.environ["FRAMEWORK_PATH"]       = installDir+"/Frameworks"
+  os.environ["CC"]                   = gcc+" -arch x86_64"
+  os.environ["CXX"]                  = gpp+" -arch x86_64"
+  os.environ["LDFLAGS"]              = "-arch x86_64"
+  os.environ["BASEFLAGS"]            = "-arch x86_64"
+  os.environ["LDFLAGS"]              = "-L"+installDir+"/lib" + " " + "-F"+installDir+"/Frameworks"
+  os.environ["CPPFLAGS"]             = "-I"+installDir+"/include"
+  os.environ["MACOSX_DEPLOYMENT_TARGET"]="10.6"
 
 ###################################################################################################
 
@@ -95,17 +97,12 @@ all = ['jpeg', 'tiff', 'png', 'slib', 'zlib',
     'vtk',
     'fixes']
 
-
-
-
 c = sys.argv[1:]
 
 if 'all' in c:
     c = all
 
-
 if 'from' in c:
-    
     startpackage=c[1]
     try:
         index=all.index(startpackage)
@@ -120,20 +117,19 @@ if 'jpeg' in c:
 	JpegPackage()
 if 'tiff' in c:
 	TiffPackage()
+if 'zlib' in c:
+    ZlibPackage()
 if 'png' in c:
 	PngPackage()
 if 'slib' in c:
 	SlibPackage()
-if 'zlib' in c:
-	ZlibPackage()
 	
 # # # # # # # # # # # # #
 os.environ["PYTHONPATH"] = pythonSitePackages #installDir+"/bin:" + pythonSitePackages
 os.environ["PATH"]       = os.environ["PATH"] + ':' + pythonBinaryPath
 
 if 'python' in c:
-	Python27FrameworkPackage()
-	#os.system("cp -v ./inst/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib ./inst/lib/libpython2.7.dylib")
+	PythonPackage()
 if 'nose' in c:
 	NosePackage()
 if 'setuptools' in c:

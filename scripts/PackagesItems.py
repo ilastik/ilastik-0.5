@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+import __builtin__
 from PackagesBase import Package
-import os
+import os, platform
 import urllib2, os, tarfile, shutil
         
 ###################################################################################################
@@ -8,10 +10,11 @@ class JpegPackage(Package):
     src_uri = 'http://www.ijg.org/files/jpegsrc.v8c.tar.gz'
     workdir = 'jpeg-8c'
     
-    def configure(self):
-        Package.configure(self)
-        cmd = "./configure --disable-dependency-tracking --enable-static=no --prefix=" + self.prefix
-        self.system(cmd)
+    def configure_darwin(self):
+        return "./configure --disable-dependency-tracking --enable-static=no --prefix=" + self.prefix
+
+    def configure_linux(self):
+        return "./configure  --prefix=" + self.prefix
 
 ###################################################################################################
 
@@ -19,40 +22,43 @@ class TiffPackage(Package):
     src_uri = 'http://download.osgeo.org/libtiff/tiff-3.9.4.tar.gz'
     workdir ='tiff-3.9.4'
     
-    def configure(self):
-        Package.configure(self)
-        cmd = """./configure --enable-static=no \\
+    def configure_darwin(self):
+        return """./configure --enable-static=no \\
                              --disable-dependency-tracking \\
                              --with-apple-opengl-framework \\
                              --prefix=%s""" % self.prefix
-        self.system(cmd)
-        
+
+    def configure_linux(self):
+        return """./configure --prefix=%s""" % self.prefix
+
 ###################################################################################
 
 class PngPackage(Package):
     src_uri = 'http://prdownloads.sourceforge.net/libpng/libpng-1.4.5.tar.gz'
     workdir = 'libpng-1.4.5'
     
-    def configure(self):
-        Package.configure(self)
-        cmd = """./configure --disable-dependency-tracking \\
+    def configure_darwin(self):
+        return """./configure --disable-dependency-tracking \\
                              --enable-static=no \\
                              --prefix=%s""" % self.prefix
-        self.system(cmd)
-        
+
+    def configure_linux(self):
+        return """./configure --enable-static=no \\
+                             --prefix=%s""" % self.prefix
 ###################################################################################################        
 
 class SlibPackage(Package):
     src_uri='http://www.hdfgroup.org/ftp/lib-external/szip/2.1/src/szip-2.1.tar.gz'
     workdir = 'szip-2.1'
     
-    def configure(self):
-        Package.configure(self)
-        cmd = """./configure --disable-dependency-tracking \\
+    def configure_darwin(self):
+        return """./configure --disable-dependency-tracking \\
                            --enable-static=no \\
                            --prefix=%s""" % self.prefix
-        self.system(cmd)
 
+    def configure_linux(self):
+        return """./configure --enable-static=no \\
+                           --prefix=%s""" % self.prefix
 ###################################################################################################
         
 class ZlibPackage(Package):
@@ -62,12 +68,13 @@ class ZlibPackage(Package):
     def unpack(self):
         Package.unpack(self)
     
-    def configure(self):
-        Package.configure(self)
-        cmd = """./configure --64 \\
+    def configure_darwin(self):
+        return """./configure --64 \\
                               --prefix='%s'"""  % self.prefix
-        self.system(cmd)
 
+    def configure_linux(self):
+        return """./configure --64 \\
+                              --prefix='%s'"""  % self.prefix
 ###################################################################################################
 
 class Hdf5Package(Package):
@@ -80,13 +87,15 @@ class Hdf5Package(Package):
         Package.unpack(self)
         
     
-    def configure(self):
-        Package.configure(self)
-        cmd = """./configure --disable-dependency-tracking \\
+    def configure_darwin(self):
+        return """./configure --disable-dependency-tracking \\
                              --enable-static=no \\
                              --prefix='%s'""" % self.prefix
-        self.system(cmd)
-        
+
+    def configure_linux(self):
+        return """./configure --enable-static=no \\
+                             --prefix='%s'""" % self.prefix
+
 ###################################################################################################
 
 class BoostPackage(Package):
@@ -114,54 +123,10 @@ class BoostPackage(Package):
     
     def makeInstall(self):
         self.system("./bjam install --prefix=%s" % self.prefix)
-        
-###################################################################################################
-
-class VigraPackageNoVigranumpy(Package):
-    src_uri = 'http://hci.iwr.uni-heidelberg.de/vigra/vigra-1.7.1-src.tar.gz'
-    workdir = 'vigra-1.7.1'
-    
-    def configure(self):
-        #if os.path.exists('work' + '/' + self.workdir):
-        #    shutil.rmtree('work' + '/' + self.workdir)
-        #os.makedirs('work'+'/'+self.workdir)
-        self.system("pwd")
-        cmd = """cmake .. \\
-        -DDEPENDENCY_SEARCH_PREFIX=%s \\
-        -DCMAKE_INSTALL_PREFIX=%s \\
-        -DBOOST_ROOT=%s \\
-        -DWITH_VIGRANUMPY=0 \\
-        ../../work/%s
-        """ % (self.prefix, self.prefix, self.prefix, self.workdir)
-        self.system(cmd)
-        
-        #self.system('mkdir -p ../../distfiles/vigra/vigranumpy/private')
-        #os.system('cd distfiles/vigra && patch --forward -p0 < ../../files/vigra_include_private.patch')
-        #self.system('cd ../../distfiles/vigra/vigranumpy/private && ln -sf ../../../cstraehl-vigranumpy cstraehl-vigranumpy')
-        #self.system('cp ../../files/vigra_private_cmakelists.txt ../../distfiles/vigra/vigranumpy/private/CMakeLists.txt')
-        
-        #reconfigure now that we have added the private dir!
-        #self.system(cmd)
-
-###############################################################################
-class Python27Package(Package):
-    src_uri = 'http://www.python.org/ftp/python/2.7.1/Python-2.7.1.tar.bz2'
-    workdir = 'Python-2.7.1'
-    patches =['woo.diff']
-    "This configuration gives problem with boost later on"
-    def unpack(self):
-        Package.unpack(self)
-    
-    def configure(self):
-        Package.configure(self)
-        cmd = """./configure --prefix=%s \\
-                                
-                 """ % (self.prefix)
-        self.system(cmd)
 
 ################################################################################
 
-class Python27FrameworkPackage(Package):
+class PythonPackage(Package):
     src_uri = 'http://www.python.org/ftp/python/2.7.1/Python-2.7.1.tar.bz2'
     workdir = 'Python-2.7.1'
     #patches=['patch-Mac-PythonLauncher-Makefile.in.diff']
@@ -169,22 +134,23 @@ class Python27FrameworkPackage(Package):
     def unpack(self):
         Package.unpack(self)
     
-    def configure(self):
-        Package.configure(self)
-        cmd = """DESTDIR=%s \\
+    def configure_darwin(self):
+        return """DESTDIR=%s \\
                  ./configure --prefix=%s \\
                              --enable-framework=%s/Frameworks \\
-              """ % (self.prefix,self.prefix,self.prefix)
-        self.system(cmd)
-        self.system("find . -name Makefile | xargs -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
+               """ % (self.prefix,self.prefix,self.prefix)
 
-        #self.system('patch --forward -p0 < ../../files/mac-makefile.patch')
+    def configure_linux(self):
+        return "DESTDIR=%s ./configure --prefix=%s" \
+                % (self.prefix,self.prefix)
+
     def make(self):
-        
+        if platform.system() == 'Darwin':
+            self.system("find . -name Makefile | xargs -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
      	self.system("make DESTDIR=%s" % self.prefix)
+     	
     def makeInstall(self):
         self.system("make install DESTDIR=''")
-        #"TODO to refine exporting the dylib into the right place"
     
 ##################################################################################
 
@@ -194,7 +160,6 @@ class NosePackage(Package):
     
     def unpack(self):
         Package.unpack(self)
-    
     def configure(self):
         pass
     def make(self):        
@@ -208,7 +173,7 @@ class NumpyPackage(Package):
     src_uri = 'http://sourceforge.net/projects/numpy/files/NumPy/1.5.1/numpy-1.5.1.tar.gz'
     workdir = 'numpy-1.5.1'
     
-    def configure(self):
+    def configure_darwin(self):
         pass
         #os.environ["CFLAGS"]="-arch x86_64"
         #os.environ["FFLAGS"]="-m64"
@@ -224,30 +189,7 @@ class NumpyPackage(Package):
         #os.environ["FFLAGS"]=""
         #os.environ["LDFLAGS"]=""
         
-########################################################################################## 
 
-class VigraPackage_old(Package):
-    src_uri = 'http://hci.iwr.uni-heidelberg.de/vigra/vigra-1.7.1-src.tar.gz'
-    workdir = 'vigra-1.7.1'
-    
-    def configure(self):
-        
-        self.system("pwd")
-        cmd = """cmake . \\
-        -DDEPENDENCY_SEARCH_PREFIX=%s \\
-        -DCMAKE_INSTALL_PREFIX=%s \\
-        -DBOOST_ROOT=%s \\
-        -DWITH_VIGRANUMPY=1 \\
-        -DPYTHON_INCLUDE_DIR:PATH=%s/Frameworks/Python.framework/Versions/2.7/include/python2.7\\
-        
-        """ % (self.prefix,self.prefix, self.prefix, self.prefix)
-        self.system(cmd)
-    def make(self):
-        self.system("make -j3")
-    
-    def makeInstall(self):
-        self.system("make install")
-      
 ######################################################################################        
 
 class QtPackage(Package):
@@ -259,9 +201,8 @@ class QtPackage(Package):
     def unpack(self):
         Package.unpack(self)
     
-    def configure(self):
-        Package.configure(self)
-        cmd = """echo 'yes' | ./configure \\
+    def configure_darwin(self):
+        return """echo 'yes' | ./configure \\
         -no-framework \\
         -opensource \\
         -no-sse3 -no-sse4.1 -no-sse4.2 -no-ssse3\\
@@ -285,7 +226,6 @@ class QtPackage(Package):
         -no-nis\\
         -fast -release -shared -no-accessibility\\
         --prefix=%s""" % self.prefix
-        self.system(cmd)
         
     def make(self):
         self.system(make+" -j4")
@@ -300,9 +240,9 @@ class PyQtPackage(Package):
     correctMD5sum = 'd54fd1c37a74864faf42709c8102f254'
     workdir = 'PyQt-x11-gpl-4.8.3'
 
-    def configure(self):
+    def configure_darwin(self):
         Package.configure(self)
-        cmd = """%s configure.py \\
+        return """%s configure.py \\
         --confirm-license \\
         --no-designer-plugin \\
         -q %s/bin/qmake \\
@@ -316,8 +256,8 @@ class SipPackage(Package):
     correctMD5sum = '0f8e8305b14c1812191de2e0ee22fea9'
     workdir = 'sip-4.12.1'
     
-    def configure(self):
-        cmd = pythonExecutable+" configure.py --arch=x86_64 -s MacOSX10.6.sdk" # +self.prefix + "/include/sip " 
+    def configure_darwin(self):
+        return pythonExecutable+" configure.py --arch=x86_64 -s MacOSX10.6.sdk" # +self.prefix + "/include/sip "
         self.system(cmd)
     
 ############################################################################################################        
@@ -327,8 +267,8 @@ class H5pyPackage(Package):
     
     workdir = 'h5py-1.3.1'
     
-    def configure(self):
-        cmd = pythonExecutable+" setup.py configure --hdf5=" + self.prefix
+    def configure_darwin(self):
+        return pythonExecutable+" setup.py configure --hdf5=" + self.prefix
         self.system(cmd)
     
     def make(self):
@@ -346,7 +286,7 @@ class PyOpenGLAccelleratePackage(Package):
     
     workdir = 'PyOpenGL-accelerate-3.0.1'
     
-    def configure(self):
+    def configure_darwin(self):
         pass
     
     def make(self):
@@ -362,7 +302,7 @@ class PyOpenGLPackage(Package):
     
     workdir = 'PyOpenGL-3.0.1'
     
-    def configure(self):
+    def configure_darwin(self):
         pass
     
     def make(self):
@@ -386,7 +326,7 @@ class Qimage2ndarrayPackage(Package):
         self.system("sed -i '.bkp' -e 's|config.qt_lib_dir|\"%s\"|g' setup.py" % \
                     (self.prefix+"/lib"))
 
-    def configure(self):
+    def configure_darwin(self):
     	pass
     
     def make(self):
@@ -404,8 +344,8 @@ class VTKGitPackage(Package):
     def unpack(self):
         Package.unpack(self, copyToWork=False)
     
-    def configure(self):
-        cmd = cmake + \
+    def configure_darwin(self):
+        return cmake + \
         """\\
         -DVTK_PYTHON_SETUP_ARGS=--prefix='%s'\\
         -DSIP_EXECUTABLE:FILEPATH=%s/sip\\
@@ -464,7 +404,7 @@ class LISPackage(Package):
     correctMD5sum = '275597239e7c47ab5aadeee7b7e2c6ce'
     workdir = 'lis-1.2.53'
     
-    def configure(self):
+    def configure_darwin(self):
         Package.configure(self)
         self.system('./configure --enable-omp --prefix=%s --enable-shared=yes' % (self.prefix))
         
@@ -475,7 +415,7 @@ class SetuptoolsPackage(Package):
     src_uri = "http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz"
     workdir = "setuptools-0.6c11"
     
-    def configure(self):
+    def configure_darwin(self):
         pass
     
     def make(self):
@@ -492,7 +432,7 @@ class EnthoughtBasePackage(Package):
     correctMD5sum = '1d8f6365d20dfd5c4232334e80b0cfdf'
     patches = ['pyqt-correct-api-version.patch']
     
-    def configure(self):
+    def configure_darwin(self):
         pass
     
     def make(self):
@@ -594,8 +534,8 @@ class VigraPackage(Package):
     src_uri = 'hg://http://www.informatik.uni-hamburg.de/~meine/hg/vigra'
     workdir = 'vigra'
     
-    def configure(self):
-        cmd = """%s . \\
+    def configure_darwin(self):
+        return """%s . \\
         -DDEPENDENCY_SEARCH_PREFIX=%s \\
         -DCMAKE_INSTALL_PREFIX=%s \\
         -DBOOST_ROOT=%s \\

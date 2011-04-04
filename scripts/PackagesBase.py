@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import __builtin__
 import urllib2, os, tarfile, shutil
 from hashlib import md5
- 
+import platform
+
 #using http://www.pytips.com/2010/5/29/a-quick-md5sum-equivalent-in-python
 #using http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
 def md5sum(filename, buf_size=8192):
@@ -128,6 +130,13 @@ class Package:
         
     def configure(self):
         print "* Configuring the Package"
+        if platform.system() == "Darwin":
+            cmd = self.configure_darwin()
+        else:
+            cmd = self.configure_linux()
+        self.system(cmd)
+
+
         
     def make(self):
         self.gmake()
