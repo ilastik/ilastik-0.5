@@ -72,18 +72,19 @@ os.environ['QTDIR']                = installDir
 os.environ['PYTHONAPPSDIR']        = installDir + '/Applications/'
 
 if platform.system() == "Darwin":
-  os.environ["CMAKE_FRAMEWORK_PATH"] = installDir+"/Frameworks"
-  #Packages that use setuptools have to know where Python is installed
-  #see: http://stackoverflow.com/questions/3390558/installing-setuptools-in-a-private-version-of-python
-  os.environ["FRAMEWORK_PATH"]       = installDir+"/Frameworks"
-  os.environ["CC"]                   = gcc+" -arch x86_64"
-  os.environ["CXX"]                  = gpp+" -arch x86_64"
-  os.environ["LDFLAGS"]              = "-arch x86_64"
-  os.environ["BASEFLAGS"]            = "-arch x86_64"
-  os.environ["LDFLAGS"]              = "-L"+installDir+"/lib" + " " + "-F"+installDir+"/Frameworks"
-  os.environ["CPPFLAGS"]             = "-I"+installDir+"/include"
-  os.environ["MACOSX_DEPLOYMENT_TARGET"]="10.6"
-
+    os.environ["CMAKE_FRAMEWORK_PATH"] = installDir+"/Frameworks"
+    #Packages that use setuptools have to know where Python is installed
+    #see: http://stackoverflow.com/questions/3390558/installing-setuptools-in-a-private-version-of-python
+    os.environ["FRAMEWORK_PATH"]       = installDir+"/Frameworks"
+    os.environ["CC"]                   = gcc+" -arch x86_64"
+    os.environ["CXX"]                  = gpp+" -arch x86_64"
+    os.environ["LDFLAGS"]              = "-arch x86_64"
+    os.environ["BASEFLAGS"]            = "-arch x86_64"
+    os.environ["LDFLAGS"]              = "-L"+installDir+"/lib" + " " + "-F"+installDir+"/Frameworks"
+    os.environ["CPPFLAGS"]             = "-I"+installDir+"/include"
+    os.environ["MACOSX_DEPLOYMENT_TARGET"]="10.6"
+else:
+    os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir,)
 ###################################################################################################
 
 all = ['jpeg', 'tiff', 'png', 'slib', 'zlib',
@@ -133,9 +134,10 @@ if 'python' in c:
 if 'nose' in c:
 	NosePackage()
 if 'setuptools' in c:
-    SetuptoolsPackage()	
-if 'py2app' in c:
-    Py2appPackage()
+    SetuptoolsPackage()
+if platform.system() == "Darwin":
+    if 'py2app' in c:
+        Py2appPackage()
 
 # # # # # # # # # # # # #
 	
