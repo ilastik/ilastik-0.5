@@ -84,20 +84,38 @@ from PackagesItems import *
 
 ###################################################################################################
 
+all = ['jpeg', 'tiff', 'png', 'slib', 'zlib',
+    'python', 'nose', 'setuptools', 'py2app',
+    'hdf5',
+    'numpy', 'h5py', 'boost', 'sip',
+    'lis', 'vigra', 
+    'qt', 'pyqt', 'qimage2ndarray',
+    'pyopenglaccellerate', 'pyopengl',
+    'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
+    'vtk',
+    'fixes']
+
+
+
+
 c = sys.argv[1:]
 
 if 'all' in c:
-    c = ['jpeg', 'tiff', 'png', 'slib', 'zlib',
-         'python', 'nose', 'setuptools', 'py2app',
-         'hdf5',
-         'numpy', 'h5py', 'boost', 'sip',
-         'lis', 'vigra', 
-         'qt', 'pyqt', 'qimage2ndarray',
-         'pyopenglaccellerate', 'pyopengl',
-         'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
-         'vtk',
-         'fixes']
+    c = all
 
+
+if 'from' in c:
+    
+    startpackage=c[1]
+    try:
+        index=all.index(startpackage)
+    except:
+        raise RuntimeError('package ' + startpackage + 'not known')
+        
+    for i in range(index,len(all)):
+        print all[i]
+        c.append(all[i])
+    
 if 'jpeg' in c:
 	JpegPackage()
 if 'tiff' in c:
@@ -189,3 +207,7 @@ if 'fixes' in c:
     cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
     print "Workaround #2: ", cmd
     os.system(cmd)
+    
+    cmd = "cp -rv work/vigra/vigranumpy/src/core/vigranumpycore.so "+installDir+"/lib"
+    print "Workaround #3: ", cmd
+    os.system(cmd)    

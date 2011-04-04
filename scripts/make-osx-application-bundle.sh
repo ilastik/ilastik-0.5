@@ -11,7 +11,7 @@ INSTALL_DIR="/ilastik"
 PYTHON_EXE="$INSTALL_DIR/Frameworks/Python.framework/Versions/2.7/bin/python2.7"
 PYTHON_SITE_PACKAGES="$INSTALL_DIR/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages"
 
-export DYLD_FALLBACK_LIBRARY_PATH="$INSTALL_DIR/lib:$PYTHON_SITE_PACKAGES/vigra"
+export DYLD_LIBRARY_PATH="$INSTALL_DIR/lib:$PYTHON_SITE_PACKAGES/vigra"
 
 $PYTHON_EXE setup_mac.py py2app --iconfile appIcon.icns
 
