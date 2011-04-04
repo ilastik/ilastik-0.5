@@ -183,7 +183,24 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             d[key] = val
         
         #FIXME: make sure that we have the overlay loaded!!!
-        self.calculateWeights(self._dataItemImage.overlayMgr[d["overlay"]]._data[0,:,:,:,0], d["borderIndicator"])
+        if self._dataItemImage.overlayMgr[d["overlay"]] is None \
+           and self._dataItemImage.overlayMgr["File Overlays/"+d["overlay"]] is None:
+            from PyQt4.QtGui import QMessageBox
+            
+            QMessageBox.critical(None, "Needed overlay not found",
+                                 """The overlay '%s' was not found.<br />
+                                    I cannot continue from here.<br />
+                                    Either use the "Classification tab" to re-calculate the
+                                    corresponding feature every time you open Ilastik, or use
+                                    the overlay saving and loading features to load the
+                                    overlay from a file.""" % d["overlay"])
+            raise RuntimeError("Overlay not available")
+        
+        overlayName = d["overlay"]
+        if self._dataItemImage.overlayMgr[d["overlay"]] is None:
+            overlayName = "File Overlays/"+d["overlay"]
+        
+        self.calculateWeights(self._dataItemImage.overlayMgr[overlayName]._data[0,:,:,:,0], d["borderIndicator"])
     
     def calculateWeights(self, volume, borderIndicator, normalizePotential=True, sigma=1.0):
         """Calculate the weights indicating borderness from the raw data"""
