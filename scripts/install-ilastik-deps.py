@@ -207,3 +207,7 @@ if 'fixes' in c:
     cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
     print "Workaround #2: ", cmd
     os.system(cmd)
+    
+    cmd = "cp -rv work/vigra/vigranumpy/src/core/vigranumpycore.so "+installDir+"/lib"
+    print "Workaround #3: ", cmd
+    os.system(cmd)    
