@@ -40,6 +40,7 @@ except Exception, e:
     pass
 
 from PyQt4 import QtCore, QtOpenGL
+from PyQt4.QtCore import pyqtSignal
 import sip
 import numpy, qimage2ndarray
 
@@ -327,7 +328,7 @@ class DummyOverlayListWidget(QtGui.QWidget):
 #*******************************************************************************
 
 class VolumeEditor(QtGui.QWidget):
-    grid = None #in 3D mode hold the quad view widget, otherwise remains none
+    changedSlice = pyqtSignal(int,int)
     
     @property
     def useOpenGL(self):
@@ -339,6 +340,7 @@ class VolumeEditor(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.ilastik = parent
         self.name = name
+        self.grid = None #in 3D mode hold the quad view widget, otherwise remains none
         title = name
         
         #Controls the trade-off of speed and flickering when scrolling through this slice view
@@ -399,11 +401,9 @@ class VolumeEditor(QtGui.QWidget):
         
         if self.image.shape[1] != 1:
             self.overview = OverviewScene(self, self.image.shape[1:4])
-            self.connect(self.overview, QtCore.SIGNAL("changedSlice(int,int)"), self.changeSlice)
-            self.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), self.overview.ChangeSlice)
-            #this call ensures that the object is properly initialized
-            #TODO get rid of this
-            self.overview.qvtk.update()
+            
+            self.overview.changedSlice.connect(self.changeSlice)
+            self.changedSlice.connect(self.overview.ChangeSlice)
             
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[2], self.image.shape[3]), 2 ,self.drawManager))
@@ -416,7 +416,7 @@ class VolumeEditor(QtGui.QWidget):
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
 
         for scene in self.imageScenes:
-            QtCore.QObject.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), scene.updateSliceIntersection)
+            self.changedSlice.connect(scene.updateSliceIntersection)
             
         self.viewingLayout = QtGui.QVBoxLayout()
         self.viewingLayout.setContentsMargins(10,2,0,2)
@@ -951,21 +951,14 @@ class VolumeEditor(QtGui.QWidget):
             tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
-        #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
-
-#        if self.labelWidget.volumeLabels is not None:
-#            if self.labelWidget.volumeLabels.data is not None:
-#                tempLabels = self.labelWidget.volumeLabels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
         if len(self.imageScenes) > axis:
             self.imageScenes[axis].sliceNumber = num
             self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
-        self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
-#        for i in range(256):
-#            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
-#            image.setColor(i, col.rgba())
-
+        
+        #print "VolumeEditor.changedSlice(%s, %d)" % (num, axis)
+        self.changedSlice.emit(num, axis)
 
     def closeEvent(self, event):
         event.accept()

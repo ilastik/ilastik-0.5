@@ -20,8 +20,15 @@ from numpy2vtk import toVtkImageData
 from GenerateModelsFromLabels_thread import *
 
 import platform #to check whether we are running on a Mac
+import copy
+
+from ilastik.gui.slicingPlanesWidget import SlicingPlanesWidget
 
 from ilastik.gui.iconMgr import ilastikIcons
+
+#*******************************************************************************
+# Q V T K O p e n G L W i d g e t                                              *
+#*******************************************************************************
 
 class QVTKOpenGLWidget(QVTKWidget2):
     wireframe = False
@@ -50,27 +57,8 @@ class QVTKOpenGLWidget(QVTKWidget2):
         #print "add item to prop collection"
         self.actors.AddItem(o)
         #self.picker.AddPickList(o)
-
-    def resizeEvent(self, event):
-        #ordering is important here
-        #1.) Let the QVTKWidget2 resize itself
-        QVTKWidget2.resizeEvent(self,event)
-        
-        #2.) Make sure the interactor is assigned a correct new size
-        #    This works around a bug in VTK.
-        w,h = self.width(), self.height()
-        self.w = w
-        self.h = h
-        self.renderWindow.GetInteractor().SetSize(w,h)
-        
-        #Work around a repaint bug on OS X
-        #This will trigger a paintGL call later which repaints the window correctly
-        self.update()
         
     def update(self):
-        #for some reason the size of the interactor is reset all the time
-        #fix this
-        self.renderWindow.GetInteractor().SetSize(self.width(), self.height())
         QVTKWidget2.update(self)
         
         #Refresh the content, works around a bug on OS X
@@ -102,6 +90,10 @@ class QVTKOpenGLWidget(QVTKWidget2):
         else:
             QVTKWidget2.mousePressEvent(self, e)
 
+#*******************************************************************************
+# O u t l i n e r                                                              *
+#*******************************************************************************
+
 class Outliner(vtkPropAssembly):
     def SetPickable(self, pickable):
         props = self.GetParts()
@@ -131,155 +123,21 @@ class Outliner(vtkPropAssembly):
         self.cutter.SetCutFunction(plane)
         self.cutter.Update()
 
-class SlicingPlanesWidget(vtkPropAssembly):
-    def SetPickable(self, pickable):
-        props = self.GetParts()
-        props.InitTraversal();
-        for i in range(props.GetNumberOfItems()):
-            props.GetNextProp().SetPickable(pickable)
-    
-    def __init__(self, dataShape):
-        self.dataShape = dataShape
-        self.planes = []
-        self.coordinate = [0,0,0]
-        self.lastChangedAxis = -1
-        for i in range(3):
-            p = vtkImplicitPlaneRepresentation()
-            p.SetPlaceFactor(1.0)
-            p.OutsideBoundsOn()
-            p.ScaleEnabledOff()
-            p.SetOrigin(0.25,0.25,0.25)
-            p.PlaceWidget([0.1,dataShape[0],0.1,dataShape[1],0.1,dataShape[2]])
-            if i==0:
-                p.SetNormal(1,0,0)
-                p.GetSelectedPlaneProperty().SetColor(1,0,0)
-                p.GetEdgesProperty().SetColor(1,0,0) #bug in VTK
-            elif i==1:
-                p.SetNormal(0,1,0)
-                p.GetSelectedPlaneProperty().SetColor(0,1,0)
-                p.GetEdgesProperty().SetColor(0,1,0) #bug in VTK
-            else: 
-                p.SetNormal(0,0,1)
-                p.GetSelectedPlaneProperty().SetColor(0,0,1)
-                p.GetEdgesProperty().SetColor(0,0,1) #bug in VTK
-            p.GetPlaneProperty().SetOpacity(0.001)
-            #do not draw outline
-            p.GetOutlineProperty().SetColor(0,0,0)
-            p.GetOutlineProperty().SetOpacity(0.0)
-            #do not draw normal
-            p.GetSelectedNormalProperty().SetOpacity(0.0)
-            p.GetNormalProperty().SetOpacity(0.0)
-            p.OutlineTranslationOff()
-            p.TubingOff()
-            
-            self.cross = vtkPolyData()
-            points = vtkPoints()
-            polys = vtkCellArray()
-            points.SetNumberOfPoints(6)
-            for i in range(3):
-                polys.InsertNextCell(2)
-                polys.InsertCellPoint(2*i); polys.InsertCellPoint(2*i+1)
-            self.cross.SetPoints(points)
-            self.cross.SetLines(polys)
-            
-            pw = vtkImplicitPlaneWidget2()
-            pw.SetRepresentation(p)
-            pw.AddObserver("InteractionEvent", self.__PlanePositionCallback)
-            
-            self.planes.append(pw)
-            
-        tubes = vtkTubeFilter()
-        tubes.SetNumberOfSides(16)
-        tubes.SetInput(self.cross)
-        tubes.SetRadius(1.0)
-        
-        crossMapper = vtkPolyDataMapper()
-        crossMapper.SetInput(self.cross)
-        crossActor = vtkActor()
-        crossActor.SetMapper(crossMapper)
-        crossActor.GetProperty().SetColor(0,0,0)
-        self.AddPart(crossActor)
-    
-    def Plane(self, axis):
-        p = vtkPlane()
-        self.planes[axis].GetRepresentation().GetPlane(p)
-        return p
-    def PlaneX(self):
-        return self.Plane(0)
-    def PlaneY(self):
-        return self.Plane(1)
-    def PlaneZ(self):
-        return self.Plane(2)
-        
-    def ShowPlaneWidget(self, axis, show):
-        self.planes[axis].SetEnabled(show)
-    
-    def TogglePlaneWidget(self, axis):
-        show = not self.planes[axis].GetEnabled()
-        self.planes[axis].SetEnabled(show)
-        
+#*******************************************************************************
+# O v e r v i e w S c e n e                                                    *
+#*******************************************************************************
 
-    
-    def SetInteractor(self, interactor):
-        for i in range(3):
-            self.planes[i].SetInteractor(interactor)
-            self.planes[i].On()
-    
-    def GetCoordinate(self):
-        return self.coordinate
-        
-    def SetCoordinate(self, coor):
-        self.coordinate = coor
-        for i in range(3):
-            self.planes[i].GetRepresentation().SetOrigin(coor[0], coor[1], coor[2])
-        self.__UpdateCross()
-    
-    def __UpdateCross(self):
-        p = self.cross.GetPoints()
-        x,y,z = self.coordinate[0], self.coordinate[1], self.coordinate[2]
-        X,Y,Z = self.dataShape[0], self.dataShape[1], self.dataShape[2] 
-        p.SetPoint(0,  0,y,z)
-        p.SetPoint(1,  X,y,z)
-        p.SetPoint(2,  x,0,z)
-        p.SetPoint(3,  x,Y,z)
-        p.SetPoint(4,  x,y,0)
-        p.SetPoint(5,  x,y,Z)
-        self.cross.Modified()
-    
-    def __PlanePositionCallback(self, obj, event):
-        newCoordinate = [int(self.planes[i].GetRepresentation().GetOrigin()[i]) \
-                         for i in range(3)]
-        axis = -1
-        for i in range(3):
-            if newCoordinate[i] != self.coordinate[i]: axis = i; break
-        if axis < 0: return
-                         
-        self.__UpdateCross()
-        self.lastChangedAxis = axis
-        self.coordinate = newCoordinate
-        #print "__PlanePositionCallback: setting coordinate to", self.coordinate
-        self.InvokeEvent("CoordinatesEvent")
-   
 class OverviewScene(QWidget):
-    colorTable = None
-    
+    changedSlice = pyqtSignal(int,int)
+
     def resizeEvent(self, event):
-        if platform.system() == 'Darwin':
-            QTimer.singleShot(0, self.__workaroundOSXRenderBug)
         QWidget.resizeEvent(self,event)
-    
-    def __workaroundOSXRenderBug(self):
-        self.TogglePlaneWidgetX()
-        self.qvtk.update()
-        self.TogglePlaneWidgetX()
-        self.qvtk.update()
+        self.qvtk.update() #needed on OS X
         
-    
     def slicingCallback(self, obj, event):
         num = obj.coordinate[obj.lastChangedAxis]
         axis = obj.lastChangedAxis
-        #print "OverviewScene emits 'changedSlice(%d,%d)'" % (num,axis)
-        self.emit(SIGNAL('changedSlice(int, int)'), num, axis)
+        self.changedSlice.emit(num, axis)
     
     def ShowPlaneWidget(self, axis, show):
         self.planes.ShowPlane(axis, show)
@@ -295,22 +153,10 @@ class OverviewScene(QWidget):
         self.planes.TogglePlaneWidget(2)
         self.qvtk.update()
     
-    
-    #vtkInteractorStyleTrackballCamera style
-    #style AddObserver LeftButtonReleaseEvent cbLBR
-    #style AddObserver LeftButtonReleaseEvent {style OnLeftButtonUp}
-
-    #proc cbLBR {} {
-
-    #if {[iren GetRepeatCount] == 1} {
-        #eval picker Pick [iren GetEventPosition] 0 ren1
-    #}
-
-    #}
-    
     def __init__(self, parent, shape):
         super(OverviewScene, self).__init__(parent)
         
+        self.colorTable = None
         self.anaglyph = False
         self.sceneShape = shape
         self.sceneItems = []
@@ -321,7 +167,6 @@ class OverviewScene(QWidget):
         layout.setMargin(0)
         layout.setSpacing(0)
         self.qvtk = QVTKOpenGLWidget()
-        #self.qvtk = QVTKWidget()
         layout.addWidget(self.qvtk)
         self.setLayout(layout)
         self.qvtk.init()
@@ -337,6 +182,9 @@ class OverviewScene(QWidget):
         b3.setCheckable(True); b3.setChecked(True)
         bAnaglyph = QToolButton(); bAnaglyph.setText('A')
         bAnaglyph.setCheckable(True); bAnaglyph.setChecked(False)
+        bCutter = QToolButton(); bCutter.setText('use cutter')
+        bCutter.setCheckable(True); bCutter.setChecked(False)
+        self.bCutter = bCutter
         
         bExportMesh = QToolButton()
         bExportMesh.setIcon(QIcon(ilastikIcons.SaveAs))
@@ -345,6 +193,7 @@ class OverviewScene(QWidget):
         hbox.addWidget(b2)
         hbox.addWidget(b3)
         hbox.addWidget(bAnaglyph)
+        hbox.addWidget(bCutter)
         hbox.addStretch()
         hbox.addWidget(bExportMesh)
         layout.addLayout(hbox)
@@ -360,9 +209,6 @@ class OverviewScene(QWidget):
         self.axes.AxisLabelsOff()
         self.axes.SetTotalLength(0.5*shape[0], 0.5*shape[1], 0.5*shape[2])
         self.axes.SetShaftTypeToCylinder()
-        #transform = vtkTransform()
-        #transform.Translate(-0.125*shape[0], -0.125*shape[1], -0.125*shape[2])
-        #self.axes.SetUserTransform(transform)
         self.qvtk.renderer.AddActor(self.axes)
         
         self.qvtk.renderer.AddActor(self.planes)
@@ -373,13 +219,23 @@ class OverviewScene(QWidget):
         self.connect(b3, SIGNAL("clicked()"), self.TogglePlaneWidgetZ)
         self.connect(bAnaglyph, SIGNAL("clicked()"), self.ToggleAnaglyph3D)
         self.connect(bExportMesh, SIGNAL("clicked()"), self.exportMesh)
-        
+        bCutter.toggled.connect(self.useCutterToggled)
         self.connect(self.qvtk, SIGNAL("objectPicked"), self.__onObjectPicked)
-        
-        self.qvtk.renderWindow.GetInteractor().SetSize(self.qvtk.width(), self.qvtk.height())
         
         self.qvtk.setFocus()
 
+    @property
+    def useCutter(self):
+        return self.bCutter.isChecked()
+
+    def useCutterToggled(self):
+        self.__updateCutter()
+        if self.useCutter:
+            for i in range(3): self.qvtk.renderer.AddActor(self.cutter[i])
+        else:
+            for i in range(3): self.qvtk.renderer.RemoveActor(self.cutter[i])
+        self.qvtk.update()
+    
     def exportMesh(self):
         #filename = QFileDialog.getSaveFileName(self,"Save Meshes As")
         
@@ -409,13 +265,20 @@ class OverviewScene(QWidget):
             self.qvtk.renderWindow.StereoRenderOff()
         self.qvtk.update()
     
+    def __updateCutter(self):
+        if(self.useCutter):
+            #print "Update cutter"
+            for i in range(3):
+                if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
+        else:
+            pass
+            #print "Do NOT update cutter"
+    
     def ChangeSlice(self, num, axis):
-        #print "OverviewScene::ChangeSlice"
-        c = self.planes.coordinate
+        c = copy.copy(self.planes.coordinate)
         c[axis] = num
         self.planes.SetCoordinate(c)
-        for i in range(3):
-            if self.cutter[i]: self.cutter[i].SetPlane(self.planes.Plane(i))
+        self.__updateCutter()
         self.qvtk.update()
     
     def display(self, axis):
@@ -456,10 +319,6 @@ class OverviewScene(QWidget):
         self.cutter[2].GetOutlineProperty().SetColor(0,0,1)
         for c in self.cutter:
             c.SetPickable(False)
-
-        self.qvtk.renderer.AddActor(self.cutter[0])
-        self.qvtk.renderer.AddActor(self.cutter[1])
-        self.qvtk.renderer.AddActor(self.cutter[2])
         
         ## 1. Use a render window with alpha bits (as initial value is 0 (false)):
         #self.renderWindow.SetAlphaBitPlanes(True);
@@ -491,6 +350,10 @@ class OverviewScene(QWidget):
         
         self.qvtk.update()
 
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
 if __name__ == '__main__':
     import numpy
     
@@ -503,7 +366,7 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     o = OverviewScene(None, [100,100,100])
-    o.connect(o, SIGNAL("changedSlice(int,int)"), updateSlice)
+    o.changedSlice.connect(updateSlice)
     o.show()
     o.resize(600,600)
     

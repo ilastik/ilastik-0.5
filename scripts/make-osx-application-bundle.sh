@@ -3,6 +3,7 @@ cd ..
 rm -rf dist
 rm -rf build
 rm -rf ilastik.app
+rm -rf scripts/ilastik.app
 
 find . -name \*.pyc | xargs rm
 
@@ -24,7 +25,7 @@ cp -v appIcon.icns dist/ilastik.app/Contents/Resources
 
 find dist/ilastik.app -name \*.h5 | xargs rm
 find dist/ilastik.app -name \*.ilp | xargs rm
-rm -f dist/ilastik.dmg
+rm -f scripts/ilastik.dmg
 
 mv dist/ilastik.app scripts/
 rm -rf dist
@@ -32,4 +33,4 @@ rm -rf build
 
 cd scripts
 
-#hdiutil create -imagekey zlib-level=9 -srcfolder ilastik.app ilastik.dmg
+hdiutil create -imagekey zlib-level=9 -srcfolder ilastik.app ilastik.dmg
