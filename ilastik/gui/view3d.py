@@ -237,14 +237,22 @@ class OverviewScene(QWidget):
         self.qvtk.update()
     
     def exportMesh(self):
-        #filename = QFileDialog.getSaveFileName(self,"Save Meshes As")
+        filename = QFileDialog.getSaveFileName(self,"Save Meshes As")
         
-       self.qvtk.actors.InitTraversal();
-       for i in range(self.qvtk.actors.GetNumberOfItems()):
+        self.qvtk.actors.InitTraversal();
+        for i in range(self.qvtk.actors.GetNumberOfItems()):
             p = self.qvtk.actors.GetNextProp()
-            print p
-            
-            #exporter = vtkObjExporter()
+            if p.GetPickable() and self.qvtk.actors.IsItemPresent(p):
+                print 'XXX'
+                renWin = vtkRenderWindow()
+                ren = vtkRenderer()
+                renWin.AddRenderer(ren)
+                ren.AddActor(p)
+                exporter = vtkOBJExporter()
+                exporter.SetInput(renWin)
+                exporter.SetFilePrefix("%s%02d" % (filename, i))
+                exporter.Update()
+                
 
     def __onObjectPicked(self, coor):
         self.ChangeSlice( coor[0], 0)
