@@ -223,6 +223,7 @@ class QtPackage(Package):
         -no-nis\\
         -fast -release -shared -no-accessibility\\
         --prefix=%s""" % (macosxspecial,self.prefix,)
+        self.system(cmd)
         
     def make(self):
         self.system(make+" -j4")
@@ -248,8 +249,7 @@ class PyQtPackage(Package):
         return """%s configure.py \\
         --confirm-license \\
         --no-designer-plugin \\
-        -q %s/bin/qmake \\
-        --use-arch=x86_64""" % (pythonExecutable, self.prefix)
+        -q %s/bin/qmake """ % (pythonExecutable, self.prefix)
 
 ##########################################################################################################
 
@@ -290,7 +290,7 @@ class PyOpenGLAccelleratePackage(Package):
     
     workdir = 'PyOpenGL-accelerate-3.0.1'
     
-    def configure_darwin(self):
+    def configure(self):
         pass
     
     def make(self):
@@ -306,7 +306,7 @@ class PyOpenGLPackage(Package):
     
     workdir = 'PyOpenGL-3.0.1'
     
-    def configure_darwin(self):
+    def configure(self):
         pass
     
     def make(self):
@@ -327,10 +327,11 @@ class Qimage2ndarrayPackage(Package):
 
     def unpack(self):
         Package.unpack(self)
-        self.system("sed -i '.bkp' -e 's|config.qt_inc_dir|\"%s\"|g' setup.py" % \
-                    (self.prefix+"/include/"))
-        self.system("sed -i '.bkp' -e 's|config.qt_lib_dir|\"%s\"|g' setup.py" % \
-                    (self.prefix+"/lib"))
+        if platform.system() == "Darwin":
+            self.system("sed -i '.bkp' -e 's|config.qt_inc_dir|\"%s\"|g' setup.py" % \
+                        (self.prefix+"/include/"))
+            self.system("sed -i '.bkp' -e 's|config.qt_lib_dir|\"%s\"|g' setup.py" % \
+                        (self.prefix+"/lib"))
 
     def configure(self):
     	pass
@@ -396,11 +397,22 @@ class VTKGitPackage(Package):
         -DVTK_USE_QTOPENGL=ON \\
         -DVTK_WRAP_CPP=ON \\
         -DVTK_WRAP_UI=ON \\
+        -DVTK_USE_TK:BOOL=OFF \\
         -DDESIRED_QT_VERSION=4 \\
         ../../distfiles/VTK""" % (pythonVersionPath, pythonBinaryPath, pythonIncludePath, pythonSharePath, \
         pythonExecutable, pythonIncludePath, pythonLibrary, \
         self.prefix)
         self.system(cmd)
+
+    def makeInstall(self):
+        cmd = "make install"
+        if platform.system() != "Darwin":
+            #FIXME: on 'make install', cmake complains about this missing file
+            #why?
+            self.system("touch Utilities/metaIOConfig.h")
+            cmd = "LD_LIBRARY_PATH=%s make install" % (self.prefix + "/lib",)
+        self.system(cmd)
+
 
 #####################################################################################################################################
 
@@ -439,7 +451,7 @@ class EnthoughtBasePackage(Package):
     correctMD5sum = '1d8f6365d20dfd5c4232334e80b0cfdf'
     patches = ['pyqt-correct-api-version.patch']
     
-    def configure_darwin(self):
+    def configure(self):
         pass
     
     def make(self):
@@ -518,7 +530,10 @@ class Py2appPackage(Package):
 class CStraehlePackage(Package):
     src_uri = ''
     workdir = 'cstraehl-vigranumpy'
-    patches = ['link-svs.patch']
+    if platform.system() == 'Darwin':
+        patches = ['link-svs-darwin.patch']
+    else:
+        patches = ['link-svs-linux.patch']
     
     def __init__(self):
         if not os.path.exists("cstraehle-git-url.txt"):

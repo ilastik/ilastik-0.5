@@ -88,7 +88,7 @@ else:
 ###################################################################################################
 
 all = ['jpeg', 'tiff', 'png', 'slib', 'zlib',
-    'python', 'nose', 'setuptools', 'py2app',
+    'python', 'nose', 'setuptools',
     'hdf5',
     'numpy', 'h5py', 'boost', 'sip',
     'lis', 'vigra', 
@@ -97,6 +97,8 @@ all = ['jpeg', 'tiff', 'png', 'slib', 'zlib',
     'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
     'vtk',
     'fixes']
+if platform.system() == "Darwin":
+    all.append('py2app')
 
 c = sys.argv[1:]
 
@@ -198,9 +200,10 @@ if 'vtk' in c:
 # # # # # # # # # # # # #
 
 if 'fixes' in c:
-    cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
-    print "Workaround #1: ", cmd
-    os.system(cmd)
+    if platform.system() == "Darwin":
+        cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
+        print "Workaround #1: ", cmd
+        os.system(cmd)
     
     cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
     print "Workaround #2: ", cmd

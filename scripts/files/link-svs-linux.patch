@@ -1,0 +1,13 @@
+diff --git graph/svs/CMakeLists.txt graph/svs/CMakeLists.txt
+index 8c0939f..5a4162b 100644
+--- graph/svs/CMakeLists.txt
++++ graph/svs/CMakeLists.txt
+@@ -8,7 +8,7 @@ VIGRA_ADD_NUMPY_MODULE(svs SHARED
+             kolmogorov/maxflow.cpp
+             
+   LIBRARIES
+-    ${VIGRANUMPY_LIBRARIES} vigranumpy_core stdc++ gomp ${LIS_LIBRARY} gfortran
++    ${LIS_LIBRARY} gomp
+   VIGRANUMPY)
+               
+       
