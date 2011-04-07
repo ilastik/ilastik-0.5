@@ -26,6 +26,59 @@ from ilastik.gui.slicingPlanesWidget import SlicingPlanesWidget
 
 from ilastik.gui.iconMgr import ilastikIcons
 
+def convertVTPtoOBJ(vtpFilename, objFilename):
+    f = open(vtpFilename, 'r')
+    lines = f.readlines()
+    inPoints = False
+    inPolygons = False
+
+    numPoints = -1
+    readPoints = 0
+
+    o = open(objFilename, 'w')
+
+    for l in lines:
+        l = l.strip()
+        if l == "":
+            continue
+        
+        if inPoints:
+            i=0
+            outLine = ""
+            for n in l.split(" "):
+                if i==0:
+                    outLine = "v"
+                
+                i+=1
+                
+                outLine += " "+n
+                readPoints += 1
+                
+                if i==3:
+                    o.write(outLine+"\n")
+                    i=0
+            
+            if readPoints == numPoints:
+                inPoints = False
+        
+        elif inPolygons:
+            indices = l[2:].split(" ")
+            o.write("f ")
+            o.write(str(int(indices[0])+1)+" ")
+            o.write(str(int(indices[1])+1)+" ")
+            o.write(str(int(indices[2])+1)+" ")
+            o.write("\n")
+        
+        else:
+            if l.startswith("POINTS"):
+                m = l.split(" ")
+                numPoints = 3*int(m[1])
+                inPoints = True
+                inPolygons = False
+            elif l.startswith("POLYGONS"):
+                inPoints = False
+                inPolygons = True
+
 #*******************************************************************************
 # Q V T K O p e n G L W i d g e t                                              *
 #*******************************************************************************
@@ -243,15 +296,28 @@ class OverviewScene(QWidget):
         for i in range(self.qvtk.actors.GetNumberOfItems()):
             p = self.qvtk.actors.GetNextProp()
             if p.GetPickable() and self.qvtk.actors.IsItemPresent(p):
-                print 'XXX'
-                renWin = vtkRenderWindow()
-                ren = vtkRenderer()
-                renWin.AddRenderer(ren)
-                ren.AddActor(p)
-                exporter = vtkOBJExporter()
-                exporter.SetInput(renWin)
-                exporter.SetFilePrefix("%s%02d" % (filename, i))
-                exporter.Update()
+                vtpFilename = "%s%02d.vtp" % (filename, i)
+                objFilename = "%s%02d.obj" % (filename, i)
+                
+                print "writing VTP file '%s'" % vtpFilename
+                d = p.GetMapper().GetInput()
+                w = vtkPolyDataWriter()
+                w.SetFileTypeToASCII()
+                w.SetInput(d)
+                w.SetFileName("%s%02d.vtp" % (filename, i))
+                w.Write()
+                
+                print "converting to OBJ file '%s'" % objFilename
+                convertVTPtoOBJ(vtpFilename, objFilename)
+                
+                #renWin = vtkRenderWindow()
+                #ren = vtkRenderer()
+                #renWin.AddRenderer(ren)
+                #ren.AddActor(p)
+                #exporter = vtkOBJExporter()
+                #exporter.SetInput(renWin)
+                #exporter.SetFilePrefix("%s%02d" % (filename, i))
+                #exporter.Update()
                 
 
     def __onObjectPicked(self, coor):
