@@ -1,0 +1,11 @@
+--- setup.py	2011-02-24 13:38:26.000000000 +0100
++++ setup.py	2011-02-24 13:50:58.000000000 +0100
+@@ -40,7 +40,7 @@
+ 									   os.path.join(qt_inc_dir, "QtCore"),
+ 									   os.path.join(qt_inc_dir, "QtGui")])
+ 
+-if sys.platform == 'darwin':
++if 0:
+ 	# Qt is distributed as 'framework' on OS X; obviously we need this
+ 	# special handling?!
+ 	for lib in qt_libraries:

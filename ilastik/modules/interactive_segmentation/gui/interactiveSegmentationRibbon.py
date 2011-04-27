@@ -5,9 +5,10 @@ import time
 import copy
 import random
 
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
+from PyQt4.QtGui import QFileDialog
 
 from ilastik.gui.iconMgr import ilastikIcons
 from seedWidget import SeedListWidget
@@ -53,15 +54,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     position = 3
     moduleName = "Interactive_Segmentation"
     
-    outputPath = os.path.expanduser("~/test-segmentation/")
-    mapping = dict()
-    
-    doneBinaryOverlay  = None
-    doneObjectsOverlay = None
-    
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
+        
+        self.outputPath = os.path.expanduser("~/test-segmentation/")
+        self.mapping = dict()
+        self.doneBinaryOverlay  = None
+        self.doneObjectsOverlay = None
     
     def on_doneOverlaysAvailable(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
@@ -81,7 +81,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         if self.ilastik.project is None: return
-    
+
         self._initContent()
         self._initConnects()
         self.interactionLog = []
@@ -125,7 +125,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
         self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
         self.seedWidget = SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay)
-        self.ilastik.labelWidget.setLabelWidget(self.seedWidget)            
+        self.ilastik.labelWidget.setLabelWidget(self.seedWidget)
+        
+        self.seedOverlay.displayable3D = True
+        self.seedOverlay.backgroundClasses = set([0])
+        self.seedOverlay.smooth3D = False
 
     def on_numColorsNeeded(self, numColors):
         """make sure that there are enough label colors.
@@ -151,13 +155,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        self.btnChooseWeights = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Choose Weights')
-        self.btnChooseDimensions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Using 3D')
-        self.btnSegment = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'Segment')
-        self.btnSaveAs = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.SaveAs),'Save As')
-        self.btnSave = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Save),'Save')
-        self.btnSegmentorsOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'Change Segmentor')
+        self.btnChooseWeights     = TabButton('Choose Weights', ilastikIcons.Select)
+        self.btnChooseDimensions  = TabButton('Using 3D', ilastikIcons.Select)
+        self.btnSegment           = TabButton('Segment', ilastikIcons.Play)
+        self.btnSaveAs            = TabButton('Save As', ilastikIcons.SaveAs)
+        self.btnSave              = TabButton('Save', ilastikIcons.Save)
+        self.btnSegmentorsOptions = TabButton('Change Segmentor', ilastikIcons.System)
         
         self.inlineSettings = InlineSettingsWidget(self)
         
@@ -308,9 +313,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
             origColorTable[1] = 255
             
-            print self.localMgr.segmentation.__class__, self.localMgr.segmentation.shape 
-            
             self.segmentationOverlay = OverlayItem(self.localMgr.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
+            #this overlay can be shown in 3D
+            #the label 0 never occurs, label 1 is assigned to the background  class
+            self.segmentationOverlay.displayable3D = True
+            self.segmentationOverlay.backgroundClasses = set([1])
             self.activeImage.overlayMgr["Segmentation/Segmentation"] = self.segmentationOverlay
 
         if s.segmentation is not None:

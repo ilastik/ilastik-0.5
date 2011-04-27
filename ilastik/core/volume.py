@@ -57,7 +57,7 @@ class DataAccessor():
 
             self._data = data
 
-            if issubclass(data.__class__, vigra.arraytypes._VigraArray):
+            if issubclass(data.__class__, vigra.arraytypes.VigraArray):
                 for i in range(len(data.shape)/2):
                     #self._data = self._data.swapaxes(i,len(_data.shape)-i)
                     pass

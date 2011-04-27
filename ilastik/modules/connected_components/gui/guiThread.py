@@ -6,8 +6,12 @@ from PyQt4 import QtGui, QtCore
 
 class CC(object):
     #Connected components
-    
+
     def __init__(self, parent):
+        #A list of labels which denote 'background'
+        #The corresponding connected components will not be displayed in 3D
+        self.backgroundClasses = set()
+        
         self.parent = parent
         self.ilastik = parent
         #self.start()
@@ -44,7 +48,14 @@ class CC(object):
             self.terminateProgressBar()
 
     def finalize(self):
-        self.parent.project.dataMgr.Connected_Components.finalizeResults()            
+        self.parent.project.dataMgr.Connected_Components.finalizeResults()
+        
+        #Update overlay with information on how to display it in 3D (if possible)
+        ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Connected Components/CC Results"]
+        if len(self.backgroundClasses) > 0:
+            ov.displayable3D = True
+            ov.backgroundClasses = set([0])
+        
         self.ilastik.labelWidget.repaint()
        
     def terminateProgressBar(self):

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
 
@@ -60,12 +60,13 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        self.btnChooseOverlay = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select overlay')
-        self.btn3D = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play),'3D')
-        self.btnReport = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Play), 'Generate report')
-        self.btnSelectAll = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select), 'Select all')
-        self.btnClearAll = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select), 'Clear all')
+        self.btnChooseOverlay = TabButton('Select overlay', ilastikIcons.Select)
+        self.btn3D            = TabButton('3D', ilastikIcons.Play)
+        self.btnReport        = TabButton('Generate report', ilastikIcons.Play)
+        self.btnSelectAll     = TabButton('Select all', ilastikIcons.Select)
+        self.btnClearAll      = TabButton('Clear all', ilastikIcons.Select)
         
         self.btnChooseOverlay.setToolTip('Choose the overlay with objects')
         self.btn3D.setToolTip('Display the currently selected objects in 3D')
@@ -98,6 +99,10 @@ class ObjectsTab(IlastikTabBase, QtGui.QWidget):
             import ilastik.core.overlays.selectionOverlay
             if self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Objects/Selection Result"] is None:
                 ov = ilastik.core.overlays.selectionOverlay.SelectionOverlay(answer[0]._data, color = long(QtGui.QColor(0,255,255).rgba()))
+                ov.displayable3D = True
+                ov.backgroundClasses = set([0])
+                ov.smooth3D = True
+                
                 self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Objects/Selection Result"] = ov
                 ov = self.parent.project.dataMgr[self.parent._activeImageNumber].overlayMgr["Objects/Selection Result"]
             

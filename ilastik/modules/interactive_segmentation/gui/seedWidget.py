@@ -30,7 +30,7 @@
 from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
-import numpy
+import numpy, h5py
         
 #*******************************************************************************
 # S e e d L i s t I t e m                                                      *
@@ -64,11 +64,14 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         QtGui.QGroupBox.__init__(self,  "Seeds")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
+        self.layout().setMargin(5)
+        
         self.listWidget = QtGui.QListWidget(self)
         self.overlayItem = overlayItem
         
         #Label selector
-        self.addLabelButton = QtGui.QPushButton("Create Seed")
+        self.addLabelButton = QtGui.QToolButton()
+        self.addLabelButton.setText("Create Seed")
         self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
 
         self.layout().addWidget(self.addLabelButton)
@@ -118,10 +121,24 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         correctAction   = menu.addAction("Correct")
         removeAction    = menu.addAction("Remove")
         
-        imageScene.connect(correctAction, QtCore.SIGNAL("triggered()"), lambda key=key: s.editSegmentsByKey(key)  )
-        imageScene.connect(removeAction,  QtCore.SIGNAL("triggered()"), lambda key=key: s.removeSegmentsByKey(key))
+        imageScene.connect(display3dAction, QtCore.SIGNAL("triggered()"), lambda label=label: self.displaySegmentation3D(label))
+        imageScene.connect(correctAction,   QtCore.SIGNAL("triggered()"), lambda key=key: s.editSegmentsByKey(key)  )
+        imageScene.connect(removeAction,    QtCore.SIGNAL("triggered()"), lambda key=key: s.removeSegmentsByKey(key))
         
         menu.exec_(QtGui.QCursor.pos())
+    
+    def displaySegmentation3D(self, label):
+        segmentationOverlay = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        
+        seg = s.segmentation
+        if s.segmentation is None:
+            f = h5py.File(s.outputPath+'/'+s.segmentKeyForLabel(label)+'/'+'segmentation.h5')
+            seg = f['volume/data'][0,:,:,:,0]
+            del f
+            
+        self.volumeEditor.overview.SetColorTable(segmentationOverlay.colorTable)
+        self.volumeEditor.overview.DisplayObjectMeshes(seg, set([1]), True)
         
     def initFromVolumeLabels(self, volumelabel):
         self.volumeLabel = volumelabel

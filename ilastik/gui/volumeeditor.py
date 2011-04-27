@@ -40,6 +40,7 @@ except Exception, e:
     pass
 
 from PyQt4 import QtCore, QtOpenGL
+from PyQt4.QtCore import pyqtSignal
 import sip
 import numpy, qimage2ndarray
 
@@ -55,7 +56,10 @@ from ilastik.gui.quadsplitter import QuadView
 
 import ilastik.gui.exportDialog as exportDialog
 
-from ilastik.gui.iconMgr import ilastikIcons 
+from ilastik.gui.iconMgr import ilastikIcons
+
+from ilastik.gui.view3d import OverviewScene
+
 # Local import
 #from spyderlib.config import get_icon, get_font
 
@@ -302,6 +306,7 @@ class VolumeUpdate():
 class DummyLabelWidget(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
+        self.setFixedSize(QtCore.QSize(0,0))
         self.volumeLabels = None
         
     def currentItem(self):
@@ -323,7 +328,11 @@ class DummyOverlayListWidget(QtGui.QWidget):
 #*******************************************************************************
 
 class VolumeEditor(QtGui.QWidget):
-    grid = None #in 3D mode hold the quad view widget, otherwise remains none
+    changedSlice = pyqtSignal(int,int)
+    
+    @property
+    def useOpenGL(self):
+        return self.sharedOpenglWidget is not None
     
     """Array Editor Dialog"""
     def __init__(self, image, parent,  name="", font=None,
@@ -331,6 +340,7 @@ class VolumeEditor(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         self.ilastik = parent
         self.name = name
+        self.grid = None #in 3D mode hold the quad view widget, otherwise remains none
         title = name
         
         #Controls the trade-off of speed and flickering when scrolling through this slice view
@@ -355,8 +365,9 @@ class VolumeEditor(QtGui.QWidget):
         self.sharedOpenGLWidget = sharedOpenglWidget
         
         if self.sharedOpenGLWidget is not None:
-            #print "Enabling OpenGL rendering"
-            pass
+            print "Enabling OpenGL rendering"
+        else:
+            print "Disabling OpenGL rendering"
         
         self.embedded = True
 
@@ -383,25 +394,16 @@ class VolumeEditor(QtGui.QWidget):
 
         self._history = HistoryManager(self)
 
-        self.layout_ = QtGui.QHBoxLayout()
-
         self.drawManager = DrawManager(self)
 
         self.imageScenes = []
-            
-        #self.grid.addWidget(self.overview, 1, 1)
-    
         self.imageScenes.append(ImageScene(self, (self.image.shape[2],  self.image.shape[3], self.image.shape[1]), 0 ,self.drawManager))
         
-        #self.grid.addWidget(self.imageScenes[2], 0, 0)
-        #self.grid.addWidget(self.imageScenes[0], 0, 1)
-        #self.grid.addWidget(self.imageScenes[1], 1, 0)
-        
         if self.image.shape[1] != 1:
-            if self.sharedOpenGLWidget is not None:
-                self.overview = OverviewScene(self, self.image.shape[1:4])
-            else:
-                self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
+            self.overview = OverviewScene(self, self.image.shape[1:4])
+            
+            self.overview.changedSlice.connect(self.changeSlice)
+            self.changedSlice.connect(self.overview.ChangeSlice)
             
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[3], self.image.shape[2]), 1 ,self.drawManager))
             self.imageScenes.append(ImageScene(self, (self.image.shape[1],  self.image.shape[2], self.image.shape[3]), 2 ,self.drawManager))
@@ -412,18 +414,18 @@ class VolumeEditor(QtGui.QWidget):
             self.grid.addWidget(3, self.overview)
         else:
             self.overview = OverviewSceneDummy(self, self.image.shape[1:4])
-            #self.grid.setVisible(False)
-            #self.imageScenes[1].setVisible(False)
-            #self.imageScenes[2].setVisible(False)
-            #self.overview.setVisible(False)
 
         for scene in self.imageScenes:
-            QtCore.QObject.connect(self, QtCore.SIGNAL('changedSlice(int, int)'), scene.updateSliceIntersection)
+            self.changedSlice.connect(scene.updateSliceIntersection)
             
         self.viewingLayout = QtGui.QVBoxLayout()
-        #tempLayout.addLayout(self.grid)
+        self.viewingLayout.setContentsMargins(10,2,0,2)
+        self.viewingLayout.setSpacing(0)
         
         labelLayout = QtGui.QHBoxLayout()
+        labelLayout.setMargin(0)
+        labelLayout.setSpacing(5)
+        labelLayout.setContentsMargins(0,0,0,0)
         
         self.posLabel = QtGui.QLabel()
         self.pixelValuesLabel = QtGui.QLabel()
@@ -433,6 +435,7 @@ class VolumeEditor(QtGui.QWidget):
         #self.viewingLayout.addLayout(self.grid)
         if self.image.shape[1] != 1:
             self.viewingLayout.addWidget(self.grid)
+            self.grid.setContentsMargins(0,0,10,0)
         else:
             self.viewingLayout.addWidget(self.imageScenes[0])
         self.viewingLayout.addLayout(labelLayout)
@@ -440,6 +443,7 @@ class VolumeEditor(QtGui.QWidget):
         #right side toolbox
         self.toolBox = QtGui.QWidget()
         self.toolBoxLayout = QtGui.QVBoxLayout()
+        self.toolBoxLayout.setMargin(5)
         self.toolBox.setLayout(self.toolBoxLayout)
         #self.toolBox.setMaximumWidth(190)
         #self.toolBox.setMinimumWidth(190)
@@ -447,7 +451,7 @@ class VolumeEditor(QtGui.QWidget):
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
 
-        self.toolBoxLayout.addSpacing(30)
+        self.toolBoxLayout.addStretch()
 
         #Slice Selector Combo Box in right side toolbox
         self.sliceSelectors = []
@@ -493,9 +497,6 @@ class VolumeEditor(QtGui.QWidget):
             self.connect(sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
         sliceIntersectionBox.setCheckState(QtCore.Qt.Checked)
 
-        self.toolBoxLayout.addStretch()
-
-
         self.selSlices = []
         self.selSlices.append(0)
         self.selSlices.append(0)
@@ -532,8 +533,6 @@ class VolumeEditor(QtGui.QWidget):
 
 
         self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
-
-        #self.layout_.addWidget(self.toolBox)
 
         # Make the dialog act as a window and stay on top
         if self.embedded == False:
@@ -648,14 +647,16 @@ class VolumeEditor(QtGui.QWidget):
         self.connect(self, QtCore.SIGNAL("destroyed()"), self.widgetDestroyed)
         
         self.focusAxis =  0
-        
-        #self.setLayout(self.layout_)
+
         self.splitter = QtGui.QSplitter()
+        self.splitter.setContentsMargins(0,0,0,0)
         tempWidget = QtGui.QWidget()
         tempWidget.setLayout(self.viewingLayout)
         self.splitter.addWidget(tempWidget)
         self.splitter.addWidget(self.toolBox)
         splitterLayout = QtGui.QVBoxLayout()
+        splitterLayout.setMargin(0)
+        splitterLayout.setSpacing(0)
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
         
@@ -678,6 +679,16 @@ class VolumeEditor(QtGui.QWidget):
 
     def previousChannel(self):
         self.channelSpin.setValue(self.selectedChannel - 1)
+
+    def toggleFullscreen3D(self):
+        v = [self.imageScenes[i].isVisible() for i in range(3)]
+        
+        if any(v):
+            for i in range(3):
+                self.imageScenes[i].setVisible(False)
+        else:
+            for i in range(3):
+                self.imageScenes[i].setVisible(True)
 
     def maximizeSliceView(self, axis):
         if axis == 2:
@@ -827,7 +838,11 @@ class VolumeEditor(QtGui.QWidget):
             del self.labelWidget
         self.labelWidget = widget
         self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 0, self.labelWidget)        
+        self.toolBoxLayout.insertWidget( 0, self.labelWidget)
+        if isinstance(widget, DummyLabelWidget):
+            oldMargins = list(self.toolBoxLayout.getContentsMargins())
+            oldMargins[1] = 0
+            self.toolBoxLayout.setContentsMargins(oldMargins[0],oldMargins[1],oldMargins[2],oldMargins[3])
     
     def setOverlayWidget(self,  widget):
         """
@@ -936,21 +951,14 @@ class VolumeEditor(QtGui.QWidget):
             tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
         else:
             tempImage = None            
-        #tempImage = self.image.getSlice(num, axis, self.selectedTime, self.selectedChannel)
-
-#        if self.labelWidget.volumeLabels is not None:
-#            if self.labelWidget.volumeLabels.data is not None:
-#                tempLabels = self.labelWidget.volumeLabels.data.getSlice(num,axis, self.selectedTime, 0)
 
         self.selSlices[axis] = num
         if len(self.imageScenes) > axis:
             self.imageScenes[axis].sliceNumber = num
             self.imageScenes[axis].displayNewSlice(tempImage, tempoverlays)
-        self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis)
-#        for i in range(256):
-#            col = QtGui.QColor(classColor.red(), classColor.green(), classColor.blue(), i * opasity)
-#            image.setColor(i, col.rgba())
-
+        
+        #print "VolumeEditor.changedSlice(%s, %d)" % (num, axis)
+        self.changedSlice.emit(num, axis)
 
     def closeEvent(self, event):
         event.accept()
@@ -1674,10 +1682,10 @@ class ImageScene(QtGui.QGraphicsView):
             tempLayout = QtGui.QHBoxLayout()
             self.fullScreenButton = QtGui.QPushButton()
             self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx22)))
-            self.fullScreenButton.setStyleSheet("background-color: white")
+            self.fullScreenButton.setStyleSheet("background-color: white; border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px;")
             self.connect(self.fullScreenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
-            tempLayout.addStretch()
             tempLayout.addWidget(self.fullScreenButton)
+            tempLayout.addStretch()
             grviewHudLayout.addLayout(tempLayout)
             grviewHudLayout.addStretch()
         
@@ -1711,8 +1719,9 @@ class ImageScene(QtGui.QGraphicsView):
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
         
-        self.setStyleSheet("QWidget:!focus { border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px; }\
-                            QWidget:focus { border: 2px solid white; border-radius: 4px; }")
+        #self.setStyleSheet("QWidget:!focus { border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px; }\
+        #                    QWidget:focus { border: 2px solid white; border-radius: 4px; }")
+        
         if self.axis is 0:
             self.view.rotate(90.0)
             self.view.scale(1.0,-1.0)
@@ -1967,6 +1976,7 @@ class ImageScene(QtGui.QGraphicsView):
                     glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imagePatches[patchNr].bits().__int__()))
             else:
                 # TODO: What is going on down here??
+                """
                 t = self.scene.tex
                 #self.scene.tex = -1
                 if t > -1:
@@ -1980,6 +1990,7 @@ class ImageScene(QtGui.QGraphicsView):
                     
                 #glBindTexture(GL_TEXTURE_2D,self.scene.tex)
                 #glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, self.scene.image.width(), self.scene.image.height(), GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
+                """
                     
             self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
@@ -2366,10 +2377,10 @@ class OverviewSceneDummy(QtGui.QWidget):
         pass
     
 #*******************************************************************************
-# O v e r v i e w S c e n e                                                    *
+# O v e r v i e w S c e n e O l d                                              *
 #*******************************************************************************
 
-class OverviewScene(QtOpenGL.QGLWidget):
+class OverviewSceneOld(QtOpenGL.QGLWidget):
     def __init__(self, parent, shape):
         QtOpenGL.QGLWidget.__init__(self, shareWidget = parent.sharedOpenGLWidget)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)

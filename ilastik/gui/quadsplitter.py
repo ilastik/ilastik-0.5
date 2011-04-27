@@ -42,11 +42,13 @@ class DockableContainer(QWidget):
         self.maximizeButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         
         h = QHBoxLayout(None)
+        h.setMargin(0); h.setSpacing(0)
         h.addStretch()
         h.addWidget(self.maximizeButton)
         h.addWidget(self.dockButton)
         
         self.mainLayout = QVBoxLayout(None)
+        self.mainLayout.setMargin(0); self.mainLayout.setSpacing(0)
         self.mainLayout.addItem(h)
         
         self.mainWidget = QTextEdit(None); self.mainWidget.setDocument(QTextDocument("MAIN widget %d" % (number)))
@@ -158,6 +160,7 @@ class QuadView(QWidget):
             self.connect(self.dockableContainer[i], SIGNAL('maximize(bool)'), self.maximizeContainer )
         
         self.layout = QVBoxLayout()
+        self.layout.setMargin(0); self.layout.setSpacing(0)
         self.layout.addWidget(self.splitVertical)
         self.setLayout(self.layout)
         
@@ -219,10 +222,10 @@ class QuadView(QWidget):
         
         w1  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [0,2] ]
         w2  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [1,3] ]
-        print w1, w2
+        #print w1, w2
         wLeft  = max(w1)
         wRight = max(w2)
-        print 'wLeft=',wLeft, 'wRight=',wRight
+        #print 'wLeft=',wLeft, 'wRight=',wRight
         if wLeft > wRight and wLeft > w/2:
             wRight = w - wLeft
         elif wRight >= wLeft and wRight > w/2:
@@ -230,12 +233,10 @@ class QuadView(QWidget):
         else:
             wLeft = w/2
             wRight = w/2
-        print 'wLeft=',wLeft, 'wRight=',wRight
+        #print 'wLeft=',wLeft, 'wRight=',wRight
         self.splitHorizontal1.setSizes([wLeft, wRight+10])
         self.splitHorizontal2.setSizes([wLeft, wRight+10])
-        print "width=",w
-        #self.splitHorizontal1.setSizes([500, w-500])
-        #self.splitHorizontal2.setSizes([500, w-500])
+        #print "width=",w
         self.splitVertical.setSizes([h/2, h/2])
     
     def undockContainer(self):
@@ -303,6 +304,7 @@ if __name__ == "__main__":
             
             widget= QWidget()
             mainLayout = QVBoxLayout()
+            mainLayout.setMargin(0); mainLayout.setSpacing(0)
             self.q = QuadView(self)
             
             for i in range(4):

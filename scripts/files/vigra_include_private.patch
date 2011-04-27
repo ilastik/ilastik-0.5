@@ -1,0 +1,12 @@
+--- vigranumpy/CMakeLists.txt	Wed Jan 19 19:40:26 2011 +0100
++++ vigranumpy/CMakeLists.txt	Thu Feb 17 11:35:30 2011 +0100
+@@ -27,7 +27,8 @@
+     ADD_SUBDIRECTORY(docsrc)
+ 
+     IF(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/private/CMakeLists.txt)
+-        ADD_SUBDIRECTORY(private EXCLUDE_FROM_ALL)
++        #ADD_SUBDIRECTORY(private EXCLUDE_FROM_ALL)
++	ADD_SUBDIRECTORY(private)
+     ENDIF()
+     
+     IF(PYTHON_PLATFORM MATCHES "^windows$")

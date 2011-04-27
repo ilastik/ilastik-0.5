@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
 
@@ -42,10 +42,11 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         pass
         
     def _initContent(self):
-
-        tl = QtGui.QHBoxLayout()      
-        self.btnShortcuts = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Help),'Shortcuts')
-        self.btnAbout = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Ilastik),'About')
+        tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
+        
+        self.btnShortcuts = TabButton('Shortcuts', ilastikIcons.Help)
+        self.btnAbout     = TabButton('About', ilastikIcons.Ilastik)
       
         self.btnShortcuts.setToolTip('Show a list of ilastik shortcuts')
         

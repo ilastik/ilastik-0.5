@@ -32,8 +32,9 @@ class HelpTab(IlastikTabBase, QtGui.QWidget):
         print 'Left Tab ', self.__class__.name
         
     def _initContent(self):
-
-        tl = QtGui.QHBoxLayout()      
+        tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
+        
         self.btnExample = QtGui.QPushButton('Example')
       
         self.btnExample.setToolTip('Example button')

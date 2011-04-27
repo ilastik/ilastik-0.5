@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import gc
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 from PyQt4 import QtGui, QtCore
 from ilastik.gui.iconMgr import ilastikIcons
 
@@ -49,18 +49,13 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        self.btnNew = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.New),'New')
-        self.btnOpen = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Open),'Open')
-        self.btnSave = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Save),'Save')
-        self.btnEdit = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Edit),'Edit')
-        self.btnOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Edit),'Options')
-        
-        self.btnNew.setToolTip('Create new project')
-        self.btnOpen.setToolTip('Open existing project')
-        self.btnSave.setToolTip('Save current project to file')
-        self.btnEdit.setToolTip('Edit current project')
-        self.btnOptions.setToolTip('Edit ilastik options')
+        self.btnNew     = TabButton('New', ilastikIcons.New, 'Create new project')
+        self.btnOpen    = TabButton('Open', ilastikIcons.Open, 'Open existing project')
+        self.btnSave    = TabButton('Save', ilastikIcons.Save, 'Save current project to file')
+        self.btnEdit    = TabButton('Edit', ilastikIcons.Edit, 'Edit current project')
+        self.btnOptions = TabButton('Options', ilastikIcons.Edit, 'Edit ilastik options')
         
         tl.addWidget(self.btnNew)
         tl.addWidget(self.btnOpen)

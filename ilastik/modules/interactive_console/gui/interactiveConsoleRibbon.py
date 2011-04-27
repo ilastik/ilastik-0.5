@@ -1,6 +1,6 @@
 import code
 
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 from ilastik.gui.overlayWidget import OverlayWidget
 
 from PyQt4 import QtGui, QtCore
@@ -75,7 +75,9 @@ try:
                 self.ilastik.volumeEditorDock.setVisible(self.volumeEditorVisible)
             
         def _initContent(self):
-            self.setLayout(QtGui.QHBoxLayout())
+            layout = QtGui.QHBoxLayout()
+            layout.setMargin(0)
+            self.setLayout(layout)
         
         def _initConnects(self):
             pass

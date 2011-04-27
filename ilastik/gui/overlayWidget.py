@@ -168,7 +168,12 @@ class OverlayListWidget(QtGui.QListWidget):
 
         menu = QtGui.QMenu(self)
 
-        show3dAction = menu.addAction("Display 3D")
+        #Only show the "Display 3D" entry when this overlay can be reasonably
+        #shown in 3D by extracting the meshes of the contained objects
+        show3dAction = QtGui.QAction(self)
+        if item.overlayItemReference.overlayItem.displayable3D:
+            show3dAction = menu.addAction("Display 3D")
+            
         if item.overlayItemReference.colorTable is None:
             colorAction = menu.addAction("Change Color")
             if item.overlayItemReference.linkColor is True:
@@ -202,13 +207,22 @@ class OverlayListWidget(QtGui.QListWidget):
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == show3dAction:
-            print "Loading vtk ..."
-            from mayaviWidget import MayaviQWidget
-            print "vtk running marching cubes..."
-#            mlab.contour3d(item._data[0,:,:,:,0], opacity=0.6)
-#            mlab.outline()
-            self.my_model = MayaviQWidget(self.volumeEditor, item.overlayItemReference, self.volumeEditor.image[0,:,:,:,0])
-            self.my_model.show()
+            print "3D view"
+            suppress   = item.overlayItemReference.overlayItem.backgroundClasses
+            smooth     = item.overlayItemReference.overlayItem.smooth3D
+            vol        = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
+            colorTable = item.overlayItemReference.colorTable
+            
+            print "  - will not extract the following labels:", suppress
+            print "  - volume to show has shape", vol.shape, "and dtype =", vol.dtype
+            #print "  - color table"
+            #for i, c in enumerate(colorTable):
+                #c = QtGui.QColor.fromRgba(c)
+                #print "    %03d.) (%03d, %03d, %03d)" % (i, c.red(), c.green(), c.blue())
+            
+            self.volumeEditor.overview.SetColorTable(colorTable)
+            self.volumeEditor.overview.DisplayObjectMeshes(vol, suppress, smooth)
+            
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.overlayItemReference.colorTable = None
@@ -293,6 +307,8 @@ class OverlayWidget(QtGui.QGroupBox):
     def __init__(self,parent, dataMgr):
         QtGui.QGroupBox.__init__(self,  "Overlays")
         self.setLayout(QtGui.QHBoxLayout())
+        self.layout().setMargin(5)
+        
         self.dataMgr = dataMgr
 
         self.volumeEditor = parent
@@ -301,66 +317,85 @@ class OverlayWidget(QtGui.QGroupBox):
         print "OverlayWidget, current Module Name", self.dataMgr._currentModuleName
         self.overlays = self.dataMgr._activeImage.module[self.dataMgr._currentModuleName].getOverlayRefs()
 
-        self.overlayListWidget = OverlayListWidget(parent, self)
-       
-        tl0 = QtGui.QHBoxLayout()
-        tl1 = QtGui.QVBoxLayout()
-        tl1.addWidget(self.overlayListWidget)
-
         pathext = os.path.dirname(__file__)
 
-        tl4 = QtGui.QVBoxLayout()
-        tl2 = QtGui.QHBoxLayout()
-        self.buttonAdd = QtGui.QPushButton()
+        self.overlayListWidget = OverlayListWidget(parent, self)
+        upDownLayout = QtGui.QVBoxLayout()
+        upDownLayout.setMargin(0)
+        upDownLayout.setSpacing(0)
+        
+        self.buttonUp = QtGui.QToolButton()
+        self.buttonUp.setToolTip("Move the selected overlay up in the view")
+        self.buttonUp.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonUp.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-up_thin.png") )
+        self.buttonUp.setEnabled(False)
+        self.connect(self.buttonUp,  QtCore.SIGNAL('clicked()'),  self.buttonUpClicked)
+        self.buttonDown = QtGui.QToolButton()
+        self.buttonDown.setToolTip("Move the selected overlay down in the view")
+        self.buttonDown.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
+        self.buttonDown.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-down_thin.png") )
+        self.buttonDown.setEnabled(False)
+        self.connect(self.buttonDown,  QtCore.SIGNAL('clicked()'),  self.buttonDownClicked)
+        
+        self.connect(self.overlayListWidget, QtCore.SIGNAL('currentRowChanged(int)'), self.onRowChanged)
+        self.connect(self.overlayListWidget, QtCore.SIGNAL('itemActivated()'), self.onItemActivated)
+        
+        upDownLayout.addWidget(self.buttonUp)
+        upDownLayout.addStretch()
+        upDownLayout.addWidget(self.buttonDown)
+        
+        overlayListLayout = QtGui.QHBoxLayout()
+        overlayListLayout.setMargin(0)
+        overlayListLayout.setSpacing(5)
+        
+        overlayListLayout.addWidget(self.overlayListWidget)
+        overlayListLayout.addLayout(upDownLayout)
+        
+        addRemoveCreateLayout = QtGui.QHBoxLayout()
+        addRemoveCreateLayout.setMargin(0)
+        addRemoveCreateLayout.setSpacing(5)
+       
+        self.buttonAdd = QtGui.QToolButton()
         self.buttonAdd.setToolTip("Add an already existing overlay to this view")
         self.buttonAdd.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-add.png") )
         self.connect(self.buttonAdd,  QtCore.SIGNAL('clicked()'),  self.buttonAddClicked)
-        self.buttonRemove = QtGui.QPushButton()
+        addRemoveCreateLayout.addWidget(self.buttonAdd)
+        
+        self.buttonRemove = QtGui.QToolButton()
         self.buttonRemove.setToolTip("Remove the selected overlay from this view")
         self.buttonRemove.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/list-remove.png"))
         self.connect(self.buttonRemove,  QtCore.SIGNAL('clicked()'),  self.buttonRemoveClicked)
+        addRemoveCreateLayout.addWidget(self.buttonRemove)
         
-        self.buttonUp = QtGui.QPushButton()
-        self.buttonUp.setToolTip("Move the selected overlay up in the view")
-        self.buttonUp.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
-        self.buttonUp.resize(11, 22)        
-        self.buttonUp.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-up_thin.png") )
-        self.connect(self.buttonUp,  QtCore.SIGNAL('clicked()'),  self.buttonUpClicked)
-        tl2.addWidget(self.buttonAdd)
-        tl2.addWidget(self.buttonRemove)
-        tl2.addWidget(self.buttonUp)
-        tl4.addLayout(tl2)
-        
-
-        tl2 = QtGui.QHBoxLayout()
-        self.buttonCreate = QtGui.QPushButton()
+        self.buttonCreate = QtGui.QToolButton()
         self.buttonCreate.setToolTip("Create a completely new overlay from data")
         self.buttonCreate.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/document-new.png") )
         self.connect(self.buttonCreate,  QtCore.SIGNAL('clicked()'),  self.buttonCreateClicked)
-        tl2.addWidget(self.buttonCreate)
-        #tl2.addStretch()
-        self.buttonDown = QtGui.QPushButton()
-        self.buttonDown.setToolTip("Move the selected overlay down in the view")
-        self.buttonDown.setSizePolicy(QtGui.QSizePolicy.Fixed,  QtGui.QSizePolicy.Fixed)
-        self.buttonDown.resize(11, 22)
-        self.buttonDown.setIcon(QtGui.QIcon(pathext + "/icons/22x22/actions/go-down_thin.png") )
-        self.connect(self.buttonDown,  QtCore.SIGNAL('clicked()'),  self.buttonDownClicked)
-        tl2.addWidget(self.buttonDown)
-        tl4.addLayout(tl2)
-        
-        tl0.addLayout(tl4)
-        #tl0.addLayout(tl3)
-        
-        tl1.addLayout(tl0)
+        addRemoveCreateLayout.addWidget(self.buttonCreate)
+        addRemoveCreateLayout.addStretch()
         
         #Save the current images button
-        self.saveAsImageBtn = QtGui.QPushButton('Export View')
+        self.saveAsImageBtn = QtGui.QToolButton()
+        self.saveAsImageBtn.setText('Export View')
         self.saveAsImageBtn.setToolTip("Export the currently rendered view as an image stack")
-        tl1.addWidget(self.saveAsImageBtn)
         self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.volumeEditor.on_saveAsImage)
         
-        self.layout().addLayout(tl1)
+        layout = QtGui.QVBoxLayout()
+        layout.setMargin(0)
+        layout.addLayout(overlayListLayout)
+        layout.addLayout(addRemoveCreateLayout)
+        layout.addWidget(self.saveAsImageBtn)
         
+        self.layout().addLayout(layout)
+    
+    def onItemActivated(self, item):
+        self.onRowChanged(self.overlayListWidget.row(item))
+
+    def onRowChanged(self, newRow):
+        self.buttonUp.setEnabled(newRow != 0)
+        self.buttonDown.setEnabled(newRow != self.overlayListWidget.count()-1)
+        
+    
     def buttonUpClicked(self):
         number = self.overlayListWidget.currentRow()
         if number > 0:

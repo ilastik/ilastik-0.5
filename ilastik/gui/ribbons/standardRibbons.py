@@ -2,7 +2,7 @@
 
 from PyQt4 import QtGui, QtCore
 
-from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
+from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
@@ -51,11 +51,12 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
+        tl.setMargin(0)
         
-        self.btnInputOverlay = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Select),'Select Overlay')
-        self.btnCC = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System),'CC')
-        self.btnCCBack = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'CC with background')
-        self.btnCCOptions = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.System), 'Options')
+        self.btnInputOverlay = TabButton('Select Overlay', ilastikIcons.Select)
+        self.btnCC           = TabButton('CC', ilastikIcons.System)
+        self.btnCCBack       = TabButton('CC with background', ilastikIcons.System)
+        self.btnCCOptions    = TabButton('Options', ilastikIcons.System)
         
         self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
         self.btnCC.setToolTip('Run connected componets on the selected overlay')

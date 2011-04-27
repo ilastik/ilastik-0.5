@@ -38,7 +38,6 @@ import ilastik
 from ilastik.core.volume import VolumeLabels
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
-from ilastik.core.listOfNDArraysAsNDArray import ListOfNDArraysAsNDArray
 
 import seedMgr
 from segmentors import segmentorBase
@@ -92,25 +91,39 @@ def setintersectionmask(a,b):
 # I n t e r a c t i v e S e g m e n t a t i o n I t e m M o d u l e M g r      *
 #*******************************************************************************
 
+class ArrayWrapper:
+    def __init__(self, array):
+        self.array = array
+        
+        self.dtype = array.dtype
+        self.shape = (1,) + array.shape
+    
+    #def reshape(self, newShape):
+    #    self.array.reshape(newShape)
+    #    self.shape = newShape
+        
+    def __getitem__(self, key):
+        return self.array[tuple(key[1:])]
+
 class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     name = "Interactive_Segmentation"
     
-    #where to save segmentations to
-    outputPath         = None
-        
-    seedLabelsVolume = None
-    done = None
-    segmentation = None
-    
-    #if we are editing a segment that already exists on disk as
-    #self.outputPath/key, this variable will hold 'key'
-    _currentSegmentsKey = None
-    _mapLabelsToKeys = dict()
-    _mapKeysToLabels = dict()
-    _hasSeeds = False
-    
     def __init__(self, dataItemImage):
         BaseModuleDataItemMgr.__init__(self, dataItemImage)
+        
+        #where to save segmentations to
+        self.outputPath         = None
+        
+        self.seedLabelsVolume = None
+        self.done = None
+        self.segmentation = None
+    
+        #if we are editing a segment that already exists on disk as
+        #self.outputPath/key, this variable will hold 'key'
+        self._currentSegmentsKey = None
+        self._mapLabelsToKeys = dict()
+        self._mapKeysToLabels = dict()
+        self._hasSeeds = False
         
         self._dataItemImage = dataItemImage
         self.interactiveSegmentationModuleMgr = None 
@@ -153,6 +166,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         self.__createSeedsData()
            
+        self.__createSeedsData()
+           
         if not self.outputPath:
             return
         else:
@@ -168,7 +183,24 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             d[key] = val
         
         #FIXME: make sure that we have the overlay loaded!!!
-        self.calculateWeights(self._dataItemImage.overlayMgr[d["overlay"]]._data[0,:,:,:,0], d["borderIndicator"])
+        if self._dataItemImage.overlayMgr[d["overlay"]] is None \
+           and self._dataItemImage.overlayMgr["File Overlays/"+d["overlay"]] is None:
+            from PyQt4.QtGui import QMessageBox
+            
+            QMessageBox.critical(None, "Needed overlay not found",
+                                 """The overlay '%s' was not found.<br />
+                                    I cannot continue from here.<br />
+                                    Either use the "Classification tab" to re-calculate the
+                                    corresponding feature every time you open Ilastik, or use
+                                    the overlay saving and loading features to load the
+                                    overlay from a file.""" % d["overlay"])
+            raise RuntimeError("Overlay not available")
+        
+        overlayName = d["overlay"]
+        if self._dataItemImage.overlayMgr[d["overlay"]] is None:
+            overlayName = "File Overlays/"+d["overlay"]
+        
+        self.calculateWeights(self._dataItemImage.overlayMgr[overlayName]._data[0,:,:,:,0], d["borderIndicator"])
     
     def calculateWeights(self, volume, borderIndicator, normalizePotential=True, sigma=1.0):
         """Calculate the weights indicating borderness from the raw data"""
@@ -544,13 +576,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def segment(self):
         labels, indices = self.getSeeds()
         self.globalMgr.segmentor.segment(self.seedLabelsVolume._data[0,:,:,:], labels, indices)
-        self.segmentation = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.segmentation])
+        self.segmentation = ArrayWrapper(self.globalMgr.segmentor.segmentation)
         if(hasattr(self.globalMgr.segmentor, "potentials")):
-            self.potentials = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.potentials])
+            self.potentials = ArrayWrapper(self.globalMgr.segmentor.potentials)
         else:
             self.potentials = None
         if(hasattr(self.globalMgr.segmentor, "borders")):
-            self.borders = ListOfNDArraysAsNDArray([self.globalMgr.segmentor.borders])
+            self.borders = ArrayWrapper(self.globalMgr.segmentor.borders)
         else:
             self.borders = None
         

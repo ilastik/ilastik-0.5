@@ -168,6 +168,14 @@ class OverlayItem(object):
     OverlayItems are held by the OverlayMgr
     """
     def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
+        #whether this overlay can be displayed in 3D using
+        #extraction of meshes
+        self.displayable3D = False
+        #if this overlay can be shown in 3D, the list of labels
+        #that should be suppressed (not shown)
+        self.backgroundClasses = set()
+        self.smooth3D = True
+        
         self._data = DataAccessor(data)
         self.linkColorTable = linkColorTable
         self.colorTable = colorTable
