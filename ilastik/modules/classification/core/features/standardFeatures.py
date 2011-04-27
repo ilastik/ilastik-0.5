@@ -45,12 +45,32 @@ class HessianOfGaussian(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        func = vigra.filters.hessianOfGaussian
+        if hasattr(vigra.filters, 'hessianOfGaussian2D'):
+            # Vigra with axistags
+            def hessianOfGaussianEigenvalues(data, sigma):
+                return vigra.filters.hessianOfGaussian2D(data, sigma)
+            func = hessianOfGaussianEigenvalues
+        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
+            # Vigra without axistags
+            func = vigra.filters.hessianOfGaussian
+        else:
+            raise RuntimeError('Vigra version does not have hessianOfGausian')
+        
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        func = vigra.filters.hessianOfGaussian
+        if hasattr(vigra.filters, 'hessianOfGaussian3D'):
+            # Vigra with axistags
+            def hessianOfGaussianEigenvalues(data, sigma):
+                return vigra.filters.hessianOfGaussian3D(data, sigma)
+            func = hessianOfGaussianEigenvalues
+        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
+            # Vigra without axistags
+            func = vigra.filters.hessianOfGaussian
+        else:
+            raise RuntimeError('Vigra version does not have hessianOfGausian')
+        
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
@@ -71,16 +91,33 @@ class HessianOfGaussianEigenvalues(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-#        def hessianOfGaussianEigenvalues(data, sigma):
-#            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, sigma))
-        func = vigra.filters.hessianOfGaussianEigenvalues
+        if hasattr(vigra.filters, 'hessianOfGaussian2D'):
+            # Vigra with axistags
+            def hessianOfGaussianEigenvalues(data, sigma):
+                return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, sigma))
+            func = hessianOfGaussianEigenvalues
+        
+        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
+            # Vigra without axistags
+            func = vigra.filters.hessianOfGaussianEigenvalues
+        else:
+            raise RuntimeError('Vigra version does not have hessianOfGausian')
+        
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-#        def hessianOfGaussianEigenvalues(data, sigma):
-#            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, sigma))
-        func = vigra.filters.hessianOfGaussianEigenvalues
+        if hasattr(vigra.filters, 'hessianOfGaussian3D'):
+            # Vigra with axistags
+            def hessianOfGaussianEigenvalues(data, sigma):
+                return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, sigma))
+            func = hessianOfGaussianEigenvalues
+        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
+            # Vigra without axistags
+            func = vigra.filters.hessianOfGaussianEigenvalues
+        else:
+            raise RuntimeError('Vigra version does not have hessianOfGausian')
+        
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 

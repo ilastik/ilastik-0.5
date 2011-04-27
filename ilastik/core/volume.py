@@ -56,8 +56,17 @@ class DataAccessor():
             tempShape = data.shape
 
             self._data = data
+            
+            if hasattr(vigra.arraytypes, 'VigraArray'):
+                # Vigra with axistags
+                vigraArrayClass = vigra.arraytypes.VigraArray
+            elif hasattr(vigra.arraytypes, '_VigraArray'):
+                # Vigra without axistags
+                vigraArrayClass = vigra.arraytypes._VigraArray
+            else:
+                raise RuntimeError('Vigra version does not have an VigraArray class.')
 
-            if issubclass(data.__class__, vigra.arraytypes.VigraArray):
+            if issubclass(data.__class__, vigraArrayClass):
                 for i in range(len(data.shape)/2):
                     #self._data = self._data.swapaxes(i,len(_data.shape)-i)
                     pass
