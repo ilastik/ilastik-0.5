@@ -2,7 +2,7 @@ import interactiveSegmentationModuleMgr
 
 import sys, getopt
 
-startupOutputPath = None
+startupOutputPath = "."
 
 toRemove = []
 for i, arg in enumerate(sys.argv[1:]):
