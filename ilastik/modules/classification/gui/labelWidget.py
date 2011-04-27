@@ -241,7 +241,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             if ok:
                 item.setText(newName)
                 result = self.labelMgr.changeLabelName(index.row(),str(newName))
-                print result
+                #print result
         elif action == clearAction:
             if QtGui.QMessageBox.question(self, "Clear label", "Really clear label" + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)  != QtGui.QMessageBox.Cancel:
                 number = self.volumeLabelDescriptions[index.row()].number
