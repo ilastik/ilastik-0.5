@@ -40,7 +40,7 @@ def getImportantVariables(classFile, nDims, nSel, plotName):
         for iFeat in range(nFeats):
             # there are different ways of defining the variable importance, but here we restrict
             # ourselves to the simplest measure, namely the Gini importance
-            subImp = varImpMatrix[featOffset:featOffset+nChannels[iFeat],3]
+            subImp = varImpMatrix[featOffset:featOffset+nChannels[iFeat],-1]
             # we are interested in the maximum variable importance over all sub-features
             maxChannel = amax(subImp,axis=0)
             varImp[rf, groupDict[groupNames[iFeat]], kernelDict[sigmas[iFeat]]] = max(maxChannel, \

@@ -12,6 +12,7 @@ with warnings.catch_warnings():
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
+from ilastik.core.overlayAttributes import OverlayAttributes
 from ilastik.core.LOCIwrapper import reader as LOCIreader
 
 #*******************************************************************************
@@ -252,60 +253,35 @@ class DataImpex(object):
                 return (tempimage.shape[0], tempimage.shape[1], 1, 1)
 
     @staticmethod                
-    def importOverlay(dataItem, filename, prefix="File Overlays/"):
+    def importOverlay(dataItem, filename, prefix="File Overlays/", attrs=None):
         theDataItem = DataImpex.importDataItem(filename, None)
         if theDataItem is None:
             print "could not load", filename
             return None
-        else:
-            data = theDataItem[:,:,:,:,:]
-            color = long(65535) << 16
-            alpha = 0.5
-            colorTable = None
-            autoAdd = True
-            autoVisible = True
-            omin = 1.0
-            omax = 2.0
-            key = "Unknown Key"
+
+        data = theDataItem[:,:,:,:,:]
+
+        if attrs == None:
+            attrs = OverlayAttributes(filename)
+        if attrs.min is None:
+            attrs.min = numpy.min(data)
+        if attrs.max is None:
+            attrs.max = numpy.max(data)
             
-            f = h5py.File(filename, 'r')
-            dataset = f["volume/data"]
-
-            if "overlayKey" in dataset.attrs.keys():
-                key = dataset.attrs["overlayKey"]
-                
-            if "overlayColor" in dataset.attrs.keys():
-                color = pickle.loads(dataset.attrs["overlayColor"])
-                
-            if "overlayColortable" in dataset.attrs.keys():
-                colorTable = pickle.loads(dataset.attrs["overlayColortable"])
-
-            if "overlayMin" in dataset.attrs.keys():
-                omin = pickle.loads(dataset.attrs["overlayMin"])
-                
-            if "overlayMax" in dataset.attrs.keys():
-                omax = pickle.loads(dataset.attrs["overlayMax"])
-
-            if "overlayAutovisible" in dataset.attrs.keys():
-                autoVisible = pickle.loads(dataset.attrs["overlayAutovisible"])
-
-            if "overlayAdd" in dataset.attrs.keys():
-                autoAdd = pickle.loads(dataset.attrs["overlayAdd"])
-                
-            if "overlayAlpha" in dataset.attrs.keys():
-                alpha = pickle.loads(dataset.attrs["overlayAlpha"])
-                
-            if data.shape[0:-1] == dataItem.shape[0:-1]:
-                ov = OverlayItem(data, color = color, alpha = alpha, colorTable = colorTable, autoAdd = autoAdd, autoVisible = autoVisible, min = omin, max = omax)
-                ov.key = key
-                if len(prefix) > 0:
-                    if prefix[-1] != "/":
-                        prefix = prefix + "/"
-                dataItem.overlayMgr[prefix + ov.key] = ov            
-                return ov
-            return None
-
-        
+        if data.shape[0:-1] == dataItem.shape[0:-1]:
+            ov = OverlayItem(data, color = attrs.color, 
+                             alpha = attrs.alpha, 
+                             colorTable = attrs.colorTable,
+                             autoAdd = attrs.autoAdd,
+                             autoVisible = attrs.autoVisible,
+                             min = attrs.min, max = attrs.max)
+            ov.key = attrs.key
+            if len(prefix) > 0:
+                if prefix[-1] != "/":
+                    prefix = prefix + "/"
+            dataItem.overlayMgr[prefix + ov.key] = ov            
+            return ov
+       
     @staticmethod
     def exportOverlay(filename, format, overlayItem, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
         if format == "h5":
