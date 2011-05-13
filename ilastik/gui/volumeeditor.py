@@ -1316,7 +1316,9 @@ class ImageSceneRenderThread(QtCore.QThread):
                                  
                             # if itemdata is uint16
                             # convert it for displayporpuse
-                            if itemdata.dtype == numpy.uint16:
+                            if itemcolorTable is None and itemdata.dtype == numpy.uint16:
+                                print '*** Normalizing your data for display purpose'
+                                print '*** I assume you have 12bit data'
                                 itemdata = (itemdata*255.0/4095.0).astype(numpy.uint8)
                             
                             if itemcolorTable != None:         

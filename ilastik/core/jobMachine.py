@@ -54,6 +54,7 @@ class IlastikJob(object):
 class JobMachineWorker(ThreadBase):
     def __init__(self):
         ThreadBase.__init__(self)
+
         self.setDaemon(True)
         self.event = threading.Event()
         self.event.clear()
