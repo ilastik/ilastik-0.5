@@ -54,6 +54,7 @@ class IlastikJob(object):
 class JobMachineWorker(ThreadBase):
     def __init__(self):
         ThreadBase.__init__(self)
+        self.setDaemon(True)
         self.event = threading.Event()
         self.event.clear()
         self.stopped = False
@@ -199,15 +200,18 @@ class WorkerManager(object):
         
     def stopWorkers(self):
         for i,w in enumerate(self.workerPool):
-            if not issubclass(w.__class__,JobMachineWorkerUnthreaded):
+            if not issubclass(w.__class__, JobMachineWorkerUnthreaded):
                 print "stopping worker thread ", str(i)
                 w.stopped = True
                 w.event.set()
                 w.wait()
         self.workerPool.clear()
         
+    # TODO: Do we still need this destructor when threads are daemonic?
     def __del__(self):
-        self.stopWorkers()
+        pass
+        #self.stopWorkers()
+        
 
 GLOBAL_WM = WorkerManager()
 
