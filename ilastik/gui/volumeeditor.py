@@ -934,6 +934,7 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[axis].thread.freeQueue.set()
 
     def changeSlice(self, num, axis):
+
         if self.interactionLog is not None:
             self.interactionLog.append("%f: changeSlice(axis,number) %d,%d" % (time.clock(),axis,num))
         self.selSlices[axis] = num
