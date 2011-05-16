@@ -880,21 +880,19 @@ class VolumeEditor(QtGui.QWidget):
         self.fastRepaint = fastRepaint
 
     def setBorderMargin(self, margin):
-        if self.useBorderMargin is True:
-            if self.borderMargin != margin:
-                print "new border margin:", margin
-                self.borderMargin = margin
-                for imgScene in self.imageScenes:
-                    imgScene.__borderMarginIndicator__(margin)
-                    imgScene.__borderMarginIndicator__(margin)
-                    imgScene.__borderMarginIndicator__(margin)
-                self.repaint()
-        else:
+        #print "******** setBorderMargin", margin
+        if margin != self.borderMargin:
             for imgScene in self.imageScenes:
                 imgScene.__borderMarginIndicator__(margin)
-                imgScene.__borderMarginIndicator__(margin)
-                imgScene.__borderMarginIndicator__(margin)
-            self.repaint()
+            
+        self.borderMargin = margin
+        
+        for imgScene in self.imageScenes:
+            if imgScene.border is not None:
+                imgScene.border.setVisible(self.useBorderMargin)
+            
+        self.repaint()
+
 
     def changeSliceX(self, num):
         self.changeSlice(num, 0)
@@ -1618,6 +1616,7 @@ class ImageScene(QtGui.QGraphicsView):
     axisColor = [QtGui.QColor(255,0,0,255), QtGui.QColor(0,255,0,255), QtGui.QColor(0,0,255,255)]
     
     def __borderMarginIndicator__(self, margin):
+        print "__borderMarginIndicator__()", margin
         """
         update the border margin indicator (left, right, top, bottom)
         to reflect the new given margin
@@ -1739,7 +1738,7 @@ class ImageScene(QtGui.QGraphicsView):
         #indicators for the biggest filter mask's size
         #marks the area where labels should not be placed
         # -> the margin top, left, right, bottom
-        self.__borderMarginIndicator__(0)
+        self.margin = 0
         # -> the complete 2D slice is marked
         brush = QtGui.QBrush(QtGui.QColor(0,0,255))
         brush.setStyle( QtCore.Qt.DiagCrossPattern )
@@ -1957,7 +1956,9 @@ class ImageScene(QtGui.QGraphicsView):
         if not self.thread.dataPending.isSet():
             #if, in slicing direction, we are within the margin of the image border
             #we set the border overlay indicator to visible
-            self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
+
+            self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1 and self.volumeEditor.useBorderMargin)
+            # print "renderingThreadFinished()", self.volumeEditor.useBorderMargin, self.volumeEditor.borderMargin    
 
             #if we are in opengl 2d render mode, update the texture
             if self.openglWidget is not None:

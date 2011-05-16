@@ -94,6 +94,7 @@ class FeatureMgr():
         if len(featureItems) > 0:
             numChannels = self.dataMgr[0]._dataVol._data.shape[-1]
             totalSize = 0
+            self.maxContext = 0
             for i, f in enumerate(featureItems):
                 oldSize = totalSize
                 totalSize += f.computeSizeForShape(self.dataMgr[0]._dataVol._data.shape, self.dataMgr.selectedChannels)
