@@ -221,7 +221,10 @@ class MainWindow(QtGui.QMainWindow):
                 elif o in ("--featureCache"):
                     self.featureCache = h5py.File(a, 'w')
                 elif o in ("--load-overlays"):
-                     overlaysToLoad = a.split(',')
+                    keys = [x[0] for x in opts]
+                    if not "--project" in keys:
+                        raise RuntimeError("--load-overlays options is only allowed if --project is passed, too")
+                    overlaysToLoad = a.split(',')
                 else:
                     assert False, "unhandled option"
 

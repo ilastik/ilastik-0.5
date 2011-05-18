@@ -1,4 +1,5 @@
 import h5py
+import pickle
 
 class OverlayAttributes(object):
     def __init__(self, overlayFile):
