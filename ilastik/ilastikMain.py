@@ -480,7 +480,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.labelWidget.grid.deleteUndocked()
         elif reply == QtGui.QMessageBox.No:
             event.accept()
-            if self.labelWidget.grid:
+            if hasattr(self.labelWidget,'grid') and self.labelWidget.grid:
                 self.labelWidget.grid.deleteUndocked()
         else:
             event.ignore()
