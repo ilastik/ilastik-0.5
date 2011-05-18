@@ -105,6 +105,7 @@ class SlicingPlanesWidget(vtkPropAssembly):
         return self.coordinate
         
     def SetCoordinate(self, coor):
+
         self.coordinate = coor
         for i in range(3):
             self.planes[i].GetRepresentation().SetOrigin(coor[0], coor[1], coor[2])
@@ -127,11 +128,14 @@ class SlicingPlanesWidget(vtkPropAssembly):
                          for i in range(3)]
         axis = -1
         for i in range(3):
+            
             if newCoordinate[i] != self.coordinate[i]: axis = i; break
         if axis < 0: return
+        if newCoordinate[axis] >= self.dataShape[axis]: newCoordinate[axis] = self.dataShape[axis]-1
                          
         self.__UpdateCross()
         self.lastChangedAxis = axis
+        
         self.coordinate = newCoordinate
         #print "__PlanePositionCallback: setting coordinate to", self.coordinate
         self.InvokeEvent("CoordinatesEvent")
