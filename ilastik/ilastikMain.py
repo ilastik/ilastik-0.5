@@ -92,6 +92,7 @@ import getopt
 
 # Please no import *
 from ilastik.gui.shortcutmanager import shortcutManager
+import ilastik
 
 #make the program quit on Ctrl+C
 import signal
@@ -398,7 +399,15 @@ class MainWindow(QtGui.QMainWindow):
             if self.project.filename is not None:
                 self.project.saveToDisk()
             else:
-                self.saveProjectDlg()
+                fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
+                fn = str(fileName)
+                if len(fn) > 4:
+                    if fn[-4:] != '.ilp':
+                        fn = fn + '.ilp'
+                    if self.project.saveToDisk(fn):
+                        QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+                        
+                ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
             print "saved Project to ", self.project.filename
 
     def projectModified(self):
