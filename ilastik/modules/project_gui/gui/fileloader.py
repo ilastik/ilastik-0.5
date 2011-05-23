@@ -115,12 +115,15 @@ class FileLoader(QtGui.QDialog):
             #check if the file is the correct type for options
             fBase, fExt = os.path.splitext(str(self.fileList[0]))
             fExt=fExt[:-2]
-            if fExt == ".tiff" or fExt == ".gif" or fExt == ".jpeg" or fExt == ".gif" or fExt == ".jpg" or fExt == ".tif"or fExt ==".h5":
+            if fExt in [".tiff", ".jpeg", ".gif", ".jpg", ".tif", ".png", ".h5"]:
                 self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
                 self.optionsFrame.setVisible(True)
             else:
-                print fExt == ".h5"
-                print "No advanced options available for the selected type " + fExt
+                m = QtGui.QMessageBox(self)
+                m.setText("No advanced options available for the selected type " + fExt)
+                m.exec_()
+                self.optionCheck.setCheckState(False)
+                
             
     def toggleMultiChannel(self, int):
         if self.multiChannel.checkState() == 0:

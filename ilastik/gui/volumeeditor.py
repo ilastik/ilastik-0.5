@@ -650,15 +650,34 @@ class VolumeEditor(QtGui.QWidget):
 
         self.splitter = QtGui.QSplitter()
         self.splitter.setContentsMargins(0,0,0,0)
+        
+        
         tempWidget = QtGui.QWidget()
         tempWidget.setLayout(self.viewingLayout)
         self.splitter.addWidget(tempWidget)
+        
         self.splitter.addWidget(self.toolBox)
         splitterLayout = QtGui.QVBoxLayout()
         splitterLayout.setMargin(0)
         splitterLayout.setSpacing(0)
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
+        
+#         Tried to resolve ugly splitter handle problem fro windows
+#         Still it does not look good
+#        http://stackoverflow.com/questions/2545577/qsplitter-becoming-undistinguishable-between-qwidget-and-qtabwidget
+#        sHandle = self.splitter.handle(1)
+#        v = QtGui.QVBoxLayout(sHandle)
+#        v.setSpacing(5)
+#        v.setMargin(5)
+#        
+#        l = QtGui.QFrame(sHandle)
+#        l.setFrameShape(QtGui.QFrame.VLine)
+#        l.setFrameShadow(QtGui.QFrame.Sunken)
+#        
+#        v.addWidget(l)
+#        
+#        sHandle.setLayout(v)
         
         self.updateGeometry()
         self.update()

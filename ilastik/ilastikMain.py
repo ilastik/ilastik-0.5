@@ -504,7 +504,7 @@ if __name__ == "__main__":
     ilastik.modules.loadModuleGuis()
 
     mainwindow = MainWindow(sys.argv)
-    mainwindow.setStyleSheet("QSplitter::handle { background-color: #999999;}")
+    mainwindow.setStyleSheet("QSplitter::handle { background-color: #CCCCCC;}")
 
     mainwindow.show()
     #On OS X, the window has to be raised in order to be visible directly after starting
