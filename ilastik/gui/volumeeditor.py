@@ -1749,8 +1749,8 @@ class ImageScene(QtGui.QGraphicsView):
         
         #on right mouse press, the customContextMenuRequested() signal is
         #_automatically_ emitted, no need to call onContext explicitly
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
+        #self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        #self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
 
         self.setMouseTracking(True)
 
@@ -2193,6 +2193,12 @@ class ImageScene(QtGui.QGraphicsView):
                 self.tempErase = True
             mousePos = self.mapToScene(event.pos())
             self.beginDraw(mousePos)
+            
+        if event.buttons() == QtCore.Qt.RightButton:
+            #make sure that we have the cursor at the correct position
+            #before we call the context menu
+            self.mouseMoveEvent(event)
+            self.onContext(event.pos())
             
     #TODO oli
     def mouseReleaseEvent(self, event):

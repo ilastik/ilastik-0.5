@@ -140,6 +140,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
     def __loadMapping(self):
         mappingFileName = self.outputPath + "/mapping.dat"
+        print "loading mapping.dat..."
         if os.path.exists(mappingFileName):
             r = csv.reader(open(mappingFileName, 'r'), delimiter='|')
             for entry in r:
@@ -164,8 +165,6 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         from ilastik.modules.interactive_segmentation.core import startupOutputPath   
         self.outputPath = startupOutputPath
         
-        self.__createSeedsData()
-           
         self.__createSeedsData()
            
         if not self.outputPath:
@@ -264,7 +263,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         #make sure we have a 'done' overlay
         if self.done is None:
-            self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint32)
+            self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint16)
             self.emit(SIGNAL('doneOverlaysAvailable()'))
         
         if overwrite:
@@ -287,13 +286,15 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         f.create_group('volume')
         tmp = self.segmentation[0,:,:,:,0]
         tmp.shape = (1,) + tmp.shape + (1,)
-        f.create_dataset('volume/data', data=tmp)
+        f.create_dataset('volume/data', data=tmp, dtype = tmp.dtype, chunks=True, compression='gzip')
         f.close(); del f
         
         print "seeds"
         f = h5py.File(path + "/seeds.h5", 'w')
         f.create_group('volume')
-        f.create_dataset('volume/data', data=self.seedLabelsVolume._data[:,:,:,:,:])
+        f.create_dataset('volume/data', data=self.seedLabelsVolume._data[:,:,:,:,:], 
+                         dtype = self.seedLabelsVolume._data.dtype,
+                         chunks=True, compression='gzip')
         f.close(); del f
 
         #compute connected components on current segmentation
@@ -306,7 +307,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         f = h5py.File(self.outputPath + "/done.h5", 'w')
         f.create_group('volume')
-        f.create_dataset('volume/data', data=self.done)
+        f.create_dataset('volume/data', data=self.done, dtype=numpy.uint16, chunks=True, compression='gzip')
         f.close()
     
         numCC = numpy.max(cc)
@@ -370,7 +371,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         #write out done file again
         f = h5py.File(self.outputPath + "/done.h5", 'w')
         f.create_group('volume')
-        f.create_dataset('volume/data', data=self.done)
+        f.create_dataset('volume/data', data=self.done, dtype=numpy.uint16, chunks=True, compression='gzip')
         f.close()
         
         self.emit(SIGNAL('overlaysChanged()'))
@@ -445,8 +446,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         if not os.path.exists(self.outputPath):
             os.makedirs(self.outputPath)
         
-        if os.path.exists(self.outputPath + "/done.h5"):
-            print "found existing done.h5 file. Loading..."
+        if self.done is None and os.path.exists(self.outputPath + "/done.h5"):
+            print "found existing '%s' file. Loading..." % (self.outputPath + "/done.h5")
             f = h5py.File(self.outputPath + "/done.h5", 'r')
             self.done = f['volume/data'].value
             self.emit(SIGNAL('doneOverlaysAvailable()'))
@@ -597,10 +598,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         print "serializing interactive segmentation"
         if self.seedLabelsVolume is not None:
-            print "seeds are not None!!!"
-            self.seedLabelsVolume.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )
-        else:
-            print "seeds are None!!!"      
+            self.seedLabelsVolume.serialize(h5G, "seeds", destbegin, destend, srcbegin, srcend, destshape )   
 
     def deserialize(self, h5G, offsets = (0,0,0), shape=(0,0,0)):
         if "seeds" in h5G.keys():

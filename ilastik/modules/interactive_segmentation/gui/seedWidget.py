@@ -103,7 +103,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         doneOverlay = overlayMgr["Segmentation/Done"]
         if not doneOverlay: return
         c = imageScene.coordinateUnderCursor()
-        print c
+        print "Right click on coordinate", c
         label = doneOverlay._data[0,c[0],c[1],c[2],0]
         if label == 0: return
         
