@@ -190,10 +190,7 @@ class DataImpex(object):
         else:
             options.destShape = options.shape
         
-        if options.normalize:
-            maximum = numpy.max(image)
-            minimum = numpy.min(image)
-            image = (image - minimum) * (255.0 / (maximum - minimum)) 
+        
 
         if options.grayscale:
             image = image.view(numpy.ndarray)
@@ -202,6 +199,12 @@ class DataImpex(object):
             image = result.astype(numpy.uint8)
             image.reshape(image.shape + (1,))
             nch = 1
+            
+        if options.normalize:
+            maximum = numpy.max(image)
+            minimum = numpy.min(image)
+            image = (image - minimum) * (255.0 / (maximum - minimum)) 
+            image = image.astype(numpy.uint8)
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
         print options.destfile
