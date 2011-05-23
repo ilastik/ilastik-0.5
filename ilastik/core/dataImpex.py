@@ -201,6 +201,7 @@ class DataImpex(object):
             options.rgb = 1
             image = result.astype(numpy.uint8)
             image.reshape(image.shape + (1,))
+            nch = 1
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
         print options.destfile
