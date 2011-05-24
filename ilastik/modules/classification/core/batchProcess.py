@@ -281,6 +281,8 @@ class BatchProcessCore(object):
                     fm.joinCompute(dm)
     
                     dm.module["Classification"]["classificationMgr"].classifiers = self.batchOptions.classifiers
+                    if self.batchOptions.labelDescriptions is not None:
+                        dm.module["Classification"]["labelDescriptions"] = self.batchOptions.labelDescriptions
     
                     classificationPredict = classificationMgr.ClassifierPredictThread(dm)
                     classificationPredict.start()
