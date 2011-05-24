@@ -334,7 +334,16 @@ class DataImpex(object):
                         if overlayItem._data.shape[-1]>1:
                             fn = fn + ("_channel%03i" %(c+channelOffset))
                         fn = fn + "." + format
-                        vigra.impex.writeImage(data, fn)
+                        if data.dtype == numpy.float32:
+                            mi = data.min()
+                            ma = data.max()
+                            if mi >= 0 and 1 < ma <= 255:
+                                data = data.astype(numpy.uint8)
+                                dtype_ = 'NATIVE'
+                            else:
+                                dtype_ = numpy.uint8
+                        
+                        vigra.impex.writeImage(data.swapaxes(1,0), fn, dtype=dtype_)
                         print "Exported file ", fn
         else:
             for t in range(overlayItem._data.shape[0]):
@@ -346,7 +355,20 @@ class DataImpex(object):
                     if overlayItem._data.shape[-1]>1:
                         fn = fn + ("_channel%03i" %(c+channelOffset))
                     fn = fn + "." + format
-                    vigra.impex.writeImage(data.swapaxes(0,1), fn)
+                    
+                    # dtype option for tif images when dtype is not uint8
+                    # specifing dtype in the write function leads to scaling!
+                    # be careful nbyte also scales, which is typically fine
+                    if data.dtype == numpy.float32:
+                        mi = data.min()
+                        ma = data.max()
+                        if mi >= 0 and 1 < ma <= 255:
+                            data = data.astype(numpy.uint8)
+                            dtype_ = 'NATIVE'
+                        else:
+                            dtype_ = numpy.uint8
+                    
+                    vigra.impex.writeImage(data, fn, dtype=dtype_)
                     print "Exported file ", fn
 
     @staticmethod
