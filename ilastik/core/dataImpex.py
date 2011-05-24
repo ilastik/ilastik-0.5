@@ -113,8 +113,14 @@ class DataImpex(object):
  
         #remove alpha channel
         if len(data.shape) == 3:
+            # prevent tranparent channel
             if data.shape[2] == 4:
                 data = data[:,:,0:-1]
+            # vigra axistag version now delivers always a '1'
+            # for the channel dimension, to support
+            # both vigra versions we delete the singleton
+            elif data.shape[2] == 1:
+                data = data[:,:,0]
         
         return data
         
