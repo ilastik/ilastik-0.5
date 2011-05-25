@@ -215,14 +215,14 @@ class DataImpex(object):
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
         print options.destfile
         try:
-            if options.destfile != None :
+            if options.destfile != None:
                 print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
                 g = f.create_group("volume")        
                 g.create_dataset("data",data = image)
                 f.close()
         except:
-            print "######ERROR saving File ", options.destfile
+            print "ERROR saving File ", options.destfile
             
         if allok:
             return image
