@@ -218,8 +218,10 @@ class DataImpex(object):
             if options.destfile != None:
                 print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
-                g = f.create_group("volume")        
-                g.create_dataset("data",data = image)
+                g = f.create_group("volume") 
+                temp_image = image.swapaxes(3,1) 
+                temp_image = temp_image.swapaxes(2,3)      
+                g.create_dataset("data",data=temp_image)
                 f.close()
         except:
             print "ERROR saving File ", options.destfile
