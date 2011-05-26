@@ -3,7 +3,41 @@ import __builtin__
 from PackagesBase import Package
 import os, platform
 import urllib2, os, tarfile, shutil
+import multiprocessing
         
+
+###################################################################################################
+
+class FFTW3(Package):
+    src_uri = 'http://fftw.org/fftw-3.2.2.tar.gz'
+    correctMD5sum = 'b616e5c91218cc778b5aa735fefb61ae'
+    workdir = 'fftw-3.2.2'
+    
+    def conf_all(self):
+        return " --enable-shared --enable-portable-binary --disable-fortran --prefix=" + self.prefix
+
+    def configure_darwin(self):
+        return "./configure --disable-dependency-tracking --enable-static=no " + self.conf_all()
+
+    def configure_linux(self):
+        return "./configure "  + self.conf_all()
+
+###################################################################################################
+
+class FFTW3F(Package):
+    src_uri = 'http://fftw.org/fftw-3.2.2.tar.gz'
+    correctMD5sum = 'b616e5c91218cc778b5aa735fefb61ae'
+    workdir = 'fftw-3.2.2'
+
+    def conf_all(self):
+        return " --enable-single --enable-shared --enable-portable-binary --disable-fortran --prefix=" + self.prefix
+
+    def configure_darwin(self):
+        return "./configure --disable-dependency-tracking --enable-static=no " + self.conf_all()
+
+    def configure_linux(self):
+        return "./configure "  + self.conf_all()
+
 ###################################################################################################
 
 class JpegPackage(Package):
@@ -78,9 +112,9 @@ class ZlibPackage(Package):
 ###################################################################################################
 
 class Hdf5Package(Package):
-    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.6.tar.gz'
+    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.7.tar.gz'
     #correctMD5sum = 'df131d156634608e4a7bf26baeafc940'
-    workdir ='hdf5-1.8.6'
+    workdir ='hdf5-1.8.7'
     
     def unpack(self):
         Package.unpack(self)
@@ -146,7 +180,7 @@ class PythonPackage(Package):
 
     def make(self):
         if platform.system() == 'Darwin':
-            self.system("find . -name Makefile | xargs -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
+            self.system("find . -name Makefile | xargsips -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
      	self.system("make DESTDIR=%s" % self.prefix)
      	
     def makeInstall(self):
@@ -221,22 +255,25 @@ class QtPackage(Package):
         -no-dbus\\
         -no-cups\\
         -no-nis\\
+        -qt-libpng\\
         -fast -release -shared -no-accessibility\\
         --prefix=%s""" % (macosxspecial,self.prefix,)
         self.system(cmd)
         
-    def make(self):
-        self.system(make+" -j4")
+    def make(self, parallel = multiprocessing.cpu_count()):
+        self.system(make + " -j" + str(parallel))
         
         #Also install Designer, which is needed by VTK
-        self.system("cd tools/designer && ../../bin/qmake && %s -j4 && %s install" % (make, make)) 
+        self.system(("cd tools/designer && ../../bin/qmake && %s -j"
+                     + str(parallel) + " && %s install")
+                    % (make, make))
         
 ###########################################################################################################
 
 class PyQtPackage(Package):
-    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-x11-gpl-4.8.3.tar.gz"
-    correctMD5sum = 'd54fd1c37a74864faf42709c8102f254'
-    workdir = 'PyQt-x11-gpl-4.8.3'
+    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-x11-gpl-4.8.4.tar.gz"
+    correctMD5sum = '97c5dc1042feb5b3fe20baabad055af1'
+    workdir = 'PyQt-x11-gpl-4.8.4'
 
     def configure_darwin(self):
         return """%s configure.py \\
@@ -254,9 +291,9 @@ class PyQtPackage(Package):
 ##########################################################################################################
 
 class SipPackage(Package):
-    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.12.1.tar.gz'
-    correctMD5sum = '0f8e8305b14c1812191de2e0ee22fea9'
-    workdir = 'sip-4.12.1'
+    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.12.3.tar.gz'
+    correctMD5sum = 'd0f1fa60494db04b4d115d4c2d92f79e'
+    workdir = 'sip-4.12.3'
     
     def configure_darwin(self):
         return pythonExecutable+" configure.py --arch=x86_64 -s MacOSX10.6.sdk" # +self.prefix + "/include/sip "
@@ -381,7 +418,7 @@ class VTKGitPackage(Package):
         -DVTK_USE_SYSTEM_EXPAT=ON \\
         -DVTK_USE_SYSTEM_FREETYPE=OFF \\
         -DVTK_USE_SYSTEM_JPEG=ON \\
-        -DVTK_USE_SYSTEM_LIBXML2=ON \\
+        -DVTK_USE_SYSTEM_LIBXML2=OFF \\
         -DVTK_USE_SYSTEM_PNG=ON \\
         -DVTK_USE_SYSTEM_TIFF=ON \\
         -DVTK_USE_SYSTEM_ZLIB=ON \\
@@ -580,10 +617,10 @@ class VigraPackage(Package):
         self.system(cmd)
         
         os.system('cd work/vigra && patch --forward -p0 < ../../files/vigra_include_private.patch')
-        self.system('cd vigranumpy && cp -r ../../cstraehl-vigranumpy private')
+        #############self.system('cd vigranumpy && cp -r ../../cstraehl-vigranumpy private')
         
         #reconfigure now that we have added the private dir!
         self.system(cmd)
         
-    def make(self):
-        self.system(make+" -j4")
+    def make(self, parallel = multiprocessing.cpu_count()):
+        self.system(make + " -j" + str(parallel))
