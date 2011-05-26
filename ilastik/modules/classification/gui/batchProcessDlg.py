@@ -39,6 +39,10 @@ class BatchProcess(QtGui.QDialog):
         self.writeSegmentation.setEnabled(False)
         self.writeFeatures.setEnabled(False)
         
+        # Oli TODO: implement these options 
+        self.writeSegmentation.setVisible(False)
+        self.writeFeatures.setVisible(False)
+        
         self.serializeProcessing = QtGui.QCheckBox("Blockwise processing (saves memory)")
         self.serializeProcessing.setCheckState(False)
         

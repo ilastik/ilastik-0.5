@@ -299,7 +299,7 @@ class ProjectSettingsDlg(QtGui.QDialog):
         self.fastRepaintCheckbox.setCheckState(self.project.fastRepaint * 2)
         self.layout.addWidget(self.fastRepaintCheckbox)
 
-        self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)
+#        self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)
         self.normalizeCheckbox.setCheckState(self.project.normalizeData*2)
 
         tempLayout = QtGui.QHBoxLayout()

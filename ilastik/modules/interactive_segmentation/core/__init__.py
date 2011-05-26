@@ -2,7 +2,7 @@ import interactiveSegmentationModuleMgr
 
 import sys, getopt
 
-startupOutputPath = "."
+startupOutputPath = None
 
 toRemove = []
 for i, arg in enumerate(sys.argv[1:]):
@@ -20,6 +20,8 @@ if not startupOutputPath:
     print "*"
 del toRemove
 
+'''
 if startupOutputPath is None:
     from PyQt4.QtGui import QFileDialog
     startupOutputPath = str(QFileDialog.getExistingDirectory(None, "Select empty directory to store segmentations in"))
+'''
