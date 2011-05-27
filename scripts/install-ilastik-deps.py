@@ -5,7 +5,9 @@ import platform
 import urllib2, os, sys, tarfile, shutil
 from hashlib import md5
 
-__builtin__.installDir="/ilastik"
+####__builtin__.installDir="/ilastik"
+__builtin__.installDir = os.environ["HOME"] + "/ilastik_deps_build"
+
 __builtin__.pythonVersion="2.7"
 
 __builtin__.gcc="/usr/bin/gcc"
@@ -87,7 +89,7 @@ else:
     os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir,)
 ###################################################################################################
 
-all = ['jpeg', 'tiff', 'png', 'slib', 'zlib',
+all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'png', 'slib', 'zlib',
     'python', 'nose', 'setuptools',
     'hdf5',
     'numpy', 'h5py', 'boost', 'sip',
@@ -104,6 +106,8 @@ c = sys.argv[1:]
 
 if 'all' in c:
     c = all
+    os.system("rm -rf " + installDir + "/*")
+
 
 if 'from' in c:
     startpackage=c[1]
@@ -115,7 +119,11 @@ if 'from' in c:
     for i in range(index,len(all)):
         print all[i]
         c.append(all[i])
-    
+ 
+if 'fftw3f' in c:
+	FFTW3F()
+if 'fftw3' in c:
+	FFTW3()
 if 'jpeg' in c:
 	JpegPackage()
 if 'tiff' in c:
@@ -162,7 +170,7 @@ if 'sip' in c:
 if 'lis' in c:
     LISPackage()
 if 'vigra' in c:
-    CStraehlePackage()
+    ##############################################CStraehlePackage()
     VigraPackage()
     
 # # # # # # # # # # # # #
@@ -199,7 +207,7 @@ if 'vtk' in c:
 
 # # # # # # # # # # # # #
 
-if 'fixes' in c:
+if ('fixes' in c) and ('download' not in sys.argv[0]):
     if platform.system() == "Darwin":
         cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
         print "Workaround #1: ", cmd
