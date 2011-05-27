@@ -67,7 +67,7 @@ class ObjectListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         QtGui.QGroupBox.__init__(self,  "Object Picker")
         BaseLabelWidget.__init__(self,None)
         self.setLayout(QtGui.QVBoxLayout())
-        self.layout.setMargin(5)
+        #self.layout.setMargin(5)
         self.listWidget = QtGui.QListWidget(self)
         self.layout().addWidget(self.listWidget)
 
