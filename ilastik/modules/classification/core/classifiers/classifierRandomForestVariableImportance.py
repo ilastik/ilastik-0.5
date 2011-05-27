@@ -56,7 +56,7 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
             self.oob, self.variableImportance = self.RF.learnRFWithFeatureSelection(features, labels)
             ClassifierBase.printLock.acquire()
             a = self.variableImportance
-            varStr = " ".join([str(i) + ": " + "%7.4f"%k for i,k in enumerate(a[:,3])])
+            varStr = " ".join([str(i) + ": " + "%7.4f"%k for i,k in enumerate(a[:,-1])])
             print "Gini Importance: " + varStr
             ClassifierBase.printLock.release()
         
