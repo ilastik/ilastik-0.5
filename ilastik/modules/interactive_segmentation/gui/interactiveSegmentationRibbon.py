@@ -119,7 +119,23 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('saveAsPossible(bool)'), lambda b: self.btnSaveAs.setEnabled(b))
         self.connect(s, QtCore.SIGNAL('savePossible(bool)'), lambda b: self.btnSave.setEnabled(b))
         self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), lambda b: self.btnSegment.setEnabled(b))
+        
+        
+        statusBar = self.parent.statusBar()
+        self.progressBar = QtGui.QProgressBar()
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(0)
+        self.progressBar.setValue(1)
+
+        self.progressBar.setFormat(' Initializing...')
+        statusBar.addWidget(self.progressBar)
+        statusBar.show()
+        QtGui.qApp.processEvents(QtCore.QEventLoop.WaitForMoreEvents)
+        
         s.init()
+        
+        self.parent.statusBar().removeWidget(self.progressBar)
+        self.parent.statusBar().hide()
         
         #add 'Seeds' overlay
         self.seedOverlay = OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
@@ -257,9 +273,23 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             f.write("borderIndicator=%s" % (borderIndicator))
             f.close()
         
+        statusBar = self.parent.statusBar()
+        self.progressBar = QtGui.QProgressBar()
+        self.progressBar.setMinimum(0)
+        self.progressBar.setMaximum(0)
+        self.progressBar.setValue(1)
+
+        self.progressBar.setFormat(' Calculating weight...')
+        statusBar.addWidget(self.progressBar)
+        statusBar.show()
+        QtGui.qApp.processEvents(QtCore.QEventLoop.WaitForMoreEvents)
+        
         #calculate the weights
         #this will call on_setupWeights via a signal/slot connection
         s.calculateWeights(volume, borderIndicator)
+        
+        self.parent.statusBar().removeWidget(self.progressBar)
+        self.parent.statusBar().hide()
         
     def on_setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []

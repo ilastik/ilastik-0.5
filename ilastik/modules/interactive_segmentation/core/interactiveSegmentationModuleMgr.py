@@ -264,9 +264,9 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
     
     def setRebuildDonePolicy(self, alwaysRebuild):
         if alwaysRebuild:
-            print "setting rebuild 'done' policiy to 'always rebuild'"
+            print "setting rebuild 'done' policy to 'always rebuild'"
         else:
-            print "setting rebuild 'done' policiy to 'sloppy'"
+            print "setting rebuild 'done' policy to 'sloppy'"
         self.rebuildDonePolicy = alwaysRebuild
     
     def saveCurrentSegmentsAs(self, key, overwrite = False):
