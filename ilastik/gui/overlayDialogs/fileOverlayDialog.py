@@ -87,7 +87,7 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
                     transparentValues.add(0)
                 self.attrs.colorTable = OverlayItem.createDefaultColorTable("RGB", transparentValues=transparentValues)
             elif self.ui.grayScaleButton.isChecked():
-                self.attrs.colorTable = OverlayItem.createDefaultColorTable("GRAY", transparentValues=transparentValues)
+                self.attrs.colorTable = OverlayItem.createDefaultColorTable("GRAY")
             self.attrs.key = str(self.ui.nameEdit.text())
             
             ov = dataImpex.DataImpex.importOverlay(activeItem, file_name, attrs=self.attrs)
