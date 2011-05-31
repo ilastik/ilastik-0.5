@@ -162,6 +162,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSegment           = TabButton('Segment', ilastikIcons.Play)
         self.btnSaveAs            = TabButton('Save As', ilastikIcons.SaveAs)
         self.btnSave              = TabButton('Save', ilastikIcons.Save)
+        self.btnRebuildDone       = TabButton('Rebuild Done', ilastikIcons.System)
+        self.btnRebuildDone.setCheckable(True)
+        self.btnRebuildDone.setChecked(False)
+        
         self.btnSegmentorsOptions = TabButton('Change Segmentor', ilastikIcons.System)
         
         self.inlineSettings = InlineSettingsWidget(self)
@@ -181,6 +185,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.inlineSettings)
         tl.addWidget(self.btnSave)
         tl.addWidget(self.btnSaveAs)
+        tl.addWidget(self.btnRebuildDone)
         tl.addStretch()
         tl.addWidget(self.btnSegmentorsOptions)
         
@@ -195,6 +200,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def _initConnects(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
         
+        self.btnRebuildDone.toggled.connect(self.on_btnRebuildDone_toggled)
         self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
         self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), s.segment)
         self.connect(self.btnSaveAs, QtCore.SIGNAL('clicked()'), self.on_btnSaveAs_clicked)
@@ -203,7 +209,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
         self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
         #shortcutManager.register(self.shortcutNextLabel, "Labeling", "Go to next label (cyclic, forward)")
-        
+     
+    def on_btnRebuildDone_toggled(self, toggled):
+        print "ghghgh"
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        s.setRebuildDonePolicy(toggled)
     
     def on_btnDimensions(self):
         self.only2D = not self.only2D
@@ -335,12 +345,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         else:
             self.activeImage.overlayMgr.remove("Segmentation/Potentials")
             
-        if self.localMgr.borders is not None:
+        if hasattr(self.localMgr, 'borders') and self.localMgr.borders is not None:
             #colorTab = []
             #for i in range(256):
             #    color = QtGui.QColor(random.randint(0,255),random.randint(0,255),random.randint(0,255)).rgba()
             #    colorTab.append(color)
-                
             ov = OverlayItem(self.localMgr.borders, color = QtGui.QColor(), alpha = 1.0, autoAdd = True, autoVisible = False, min = 0, max = 1.0)
             self.activeImage.overlayMgr["Segmentation/Supervoxels"] = ov
         else:

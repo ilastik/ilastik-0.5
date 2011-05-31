@@ -132,6 +132,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self._seedIndicesList                 = None
         self.segmentorInstance                = None
         self.potentials                       = None
+        
+        self.initialized = False
+        
+        self.rebuildDonePolicy = False
     
     def __reset(self):
         self.clearSeeds()
@@ -161,6 +165,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         """Handles all the initialization that can be postponed until _activation_ of the module.
            For example, big arrays are allocated only after the user has decided
            to switch to this particular tab."""
+        
+        if self.initialized:
+            print "interactive segmentation module is already initialized"
+            return
         
         from ilastik.modules.interactive_segmentation.core import startupOutputPath   
         self.outputPath = startupOutputPath
@@ -200,6 +208,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             overlayName = "File Overlays/"+d["overlay"]
         
         self.calculateWeights(self._dataItemImage.overlayMgr[overlayName]._data[0,:,:,:,0], d["borderIndicator"])
+    
+        self.initialized = True
     
     def calculateWeights(self, volume, borderIndicator, normalizePotential=True, sigma=1.0):
         """Calculate the weights indicating borderness from the raw data"""
@@ -252,6 +262,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         assert self._currentSegmentsKey
         self.saveCurrentSegmentsAs(self._currentSegmentsKey, overwrite=True)
     
+    def setRebuildDonePolicy(self, alwaysRebuild):
+        if alwaysRebuild:
+            print "setting rebuild 'done' policiy to 'always rebuild'"
+        else:
+            print "setting rebuild 'done' policiy to 'sloppy'"
+        self.rebuildDonePolicy = alwaysRebuild
+    
     def saveCurrentSegmentsAs(self, key, overwrite = False):
         """ Save the currently segmented segments as a group with the name 'key'.
             A directory with the same name is created in self.outputPath holding
@@ -269,10 +286,14 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         if overwrite:
             shutil.rmtree(self.outputPath+'/'+str(key))
             labelsToDelete = copy.deepcopy(self._mapKeysToLabels[key])
-            del self._mapKeysToLabels[key]
-            for l in labelsToDelete:
-                del self._mapLabelsToKeys[l]
-            self.__rebuildDone()
+            
+            if self.rebuildDonePolicy:       
+                del self._mapKeysToLabels[key]
+                for l in labelsToDelete:
+                    del self._mapLabelsToKeys[l]
+                self.__rebuildDone()
+            else:
+                print "** Be careful! I'm not updating the done overlay"
             
         elif os.path.exists(self.outputPath+'/'+str(key)):
             raise RuntimeError("trying to overwrite '%s'", self.outputPath+'/'+str(key))
@@ -352,6 +373,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         for l in labelsForKey:
             del self._mapLabelsToKeys[l] 
         
+        removedSegmentationFilename = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
+        F = h5py.File(removedSegmentationFilename, 'r')
+        removedSegmentation = F['volume/data'].value
+        F.close()
+        
         path = self.outputPath+'/'+str(key)
         print " - removing storage path '%s'" % (path)
         shutil.rmtree(path)
@@ -366,7 +392,11 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         
         self.__saveMapping()
         
-        self.__rebuildDone()
+        if self.rebuildDonePolicy:
+            self.__rebuildDone()
+        else:
+            print "* I removed the object from the done overlay without rebuilding"
+            self.done[numpy.where(removedSegmentation > 1)] = 0
         
         #write out done file again
         f = h5py.File(self.outputPath + "/done.h5", 'w')
