@@ -816,7 +816,7 @@ class VolumeEditor(QtGui.QWidget):
             for index, item in enumerate(reversed(self.overlayWidget.overlays)):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, item.channel)) 
-            if len(self.overlayWidget.overlays) > 0:
+            if len(self.overlayWidget.overlays) > 0 and self.overlayWidget.getOverlayRef("Raw Data") is not None:
                 tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.getOverlayRef("Raw Data").channel)
             else:
                 tempImage = None
