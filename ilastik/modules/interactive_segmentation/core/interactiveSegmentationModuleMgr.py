@@ -308,10 +308,11 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             shutil.rmtree(self.outputPath+'/'+str(key))
             labelsToDelete = copy.deepcopy(self._mapKeysToLabels[key])
             
+            del self._mapKeysToLabels[key]
+            for l in labelsToDelete:
+                del self._mapLabelsToKeys[l]
+                
             if self.rebuildDonePolicy:       
-                del self._mapKeysToLabels[key]
-                for l in labelsToDelete:
-                    del self._mapLabelsToKeys[l]
                 self.__rebuildDone()
             else:
                 print "    removing old segmentation"
@@ -396,7 +397,7 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             del self._mapLabelsToKeys[l] 
         
         removedSegmentation = None
-        if self.rebuildDonePolicy:
+        if not self.rebuildDonePolicy:
             print " - NOT updating the done overlay correctly"
             removedSegmentationFilename = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
             print "   loading old segmentation '%s'" % removedSegmentationFilename
