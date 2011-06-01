@@ -1656,11 +1656,6 @@ class ImageScene(QtGui.QGraphicsView):
         self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
         self.border.setZValue(200)
         self.scene.addItem(self.border)
-        self.lastPanPoint = QtCore.QPoint()
-        self.dragMode = False
-        self.deltaPan = QtCore.QPointF(0,0)
-        self.x = 0.0
-        self.y = 0.0
         
     def __init__(self, parent, imShape, axis, drawManager):
         """
@@ -1682,6 +1677,13 @@ class ImageScene(QtGui.QGraphicsView):
         self.border = None
         self.allBorder = None
         self.factor = 1.0
+        
+        #for panning
+        self.lastPanPoint = QtCore.QPoint()
+        self.dragMode = False
+        self.deltaPan = QtCore.QPointF(0,0)
+        self.x = 0.0
+        self.y = 0.0
         
         self.min = 0
         self.max = 255
