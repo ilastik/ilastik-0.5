@@ -269,6 +269,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             print "setting rebuild 'done' policy to 'sloppy'"
         self.rebuildDonePolicy = alwaysRebuild
     
+    def loadSegmentation(self, filename):
+        F = h5py.File(filename, 'r')
+        seg = F['volume/data'].value
+        F.close()
+        return seg
+    
     def saveCurrentSegmentsAs(self, key, overwrite = False):
         """ Save the currently segmented segments as a group with the name 'key'.
             A directory with the same name is created in self.outputPath holding
@@ -284,6 +290,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             self.emit(SIGNAL('doneOverlaysAvailable()'))
         
         if overwrite:
+            oldSeg = None
+            if not self.rebuildDonePolicy:
+                print "  NOT updating the done overlay correctly"
+                segFile = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
+                print "    loading old segmentation '%s'" % segFile
+                oldSeg = self.loadSegmentation(segFile)
+            
             shutil.rmtree(self.outputPath+'/'+str(key))
             labelsToDelete = copy.deepcopy(self._mapKeysToLabels[key])
             
@@ -293,7 +306,8 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
                     del self._mapLabelsToKeys[l]
                 self.__rebuildDone()
             else:
-                print "** Be careful! I'm not updating the done overlay"
+                print "    removing old segmentation"
+                self.done[numpy.where(oldSeg > 1)] = 0
             
         elif os.path.exists(self.outputPath+'/'+str(key)):
             raise RuntimeError("trying to overwrite '%s'", self.outputPath+'/'+str(key))
@@ -373,10 +387,12 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         for l in labelsForKey:
             del self._mapLabelsToKeys[l] 
         
-        removedSegmentationFilename = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
-        F = h5py.File(removedSegmentationFilename, 'r')
-        removedSegmentation = F['volume/data'].value
-        F.close()
+        removedSegmentation = None
+        if self.rebuildDonePolicy:
+            print " - NOT updating the done overlay correctly"
+            removedSegmentationFilename = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
+            print "   loading old segmentation '%s'" % removedSegmentationFilename
+            removedSegmentation = self.loadSegmentation(removedSegmentationFilename)
         
         path = self.outputPath+'/'+str(key)
         print " - removing storage path '%s'" % (path)
@@ -395,7 +411,7 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         if self.rebuildDonePolicy:
             self.__rebuildDone()
         else:
-            print "* I removed the object from the done overlay without rebuilding"
+            print " - removing the object from the done overlay (sloppy)"
             self.done[numpy.where(removedSegmentation > 1)] = 0
         
         #write out done file again
