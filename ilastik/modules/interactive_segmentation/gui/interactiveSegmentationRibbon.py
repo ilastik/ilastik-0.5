@@ -226,14 +226,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         s = self.ilastik._activeImage.Interactive_Segmentation
         
         self.btnRebuildDone.toggled.connect(self.on_btnRebuildDone_toggled)
-        self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
-        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), s.segment)
-        self.connect(self.btnSaveAs, QtCore.SIGNAL('clicked()'), self.on_btnSaveAs_clicked)
-        self.connect(self.btnSave, QtCore.SIGNAL('clicked()'), self.on_btnSave_clicked)
-        self.connect(self.btnChooseDimensions, QtCore.SIGNAL('clicked()'), self.on_btnDimensions)
-        self.connect(self.btnSegmentorsOptions, QtCore.SIGNAL('clicked()'), self.on_btnSegmentorsOptions_clicked)
+        self.btnChooseWeights.clicked.connect(self.on_btnChooseWeights_clicked)
+        self.btnSegment.clicked.connect(s.segment)
+        self.btnSaveAs.clicked.connect(self.on_btnSaveAs_clicked)
+        self.btnSave.clicked.connect(self.on_btnSave_clicked)
+        self.btnChooseDimensions.clicked.connect(self.on_btnDimensions)
+        self.btnSegmentorsOptions.clicked.connect(self.on_btnSegmentorsOptions_clicked)
+        
         self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
-        #shortcutManager.register(self.shortcutNextLabel, "Labeling", "Go to next label (cyclic, forward)")
      
     def on_btnRebuildDone_toggled(self, toggled):
         print "ghghgh"
