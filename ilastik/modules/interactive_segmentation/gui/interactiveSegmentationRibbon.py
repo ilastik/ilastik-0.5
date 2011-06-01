@@ -152,6 +152,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.seedWidget = SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  s.seedLabelsVolume,  self.ilastik.labelWidget,  self.seedOverlay)
         self.ilastik.labelWidget.setLabelWidget(self.seedWidget)
         
+        self.seedWidget.addLabel("Background", 1, QtGui.QColor(255,0,0))
+        self.seedWidget.createLabel() #make at least one object label so that we can start segmenting right away
+        
         self.seedOverlay.displayable3D = True
         self.seedOverlay.backgroundClasses = set([0])
         self.seedOverlay.smooth3D = False

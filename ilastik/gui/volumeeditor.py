@@ -1114,9 +1114,10 @@ class DrawManager(QtCore.QObject):
         self.updateCrossHair()
 
     def updateCrossHair(self):
+        color = QtGui.QColor("black")
         if self.erasing == True:
             color = QtGui.QColor("black") 
-        else:
+        elif self.volumeEditor.labelWidget.currentItem() is not None:
             color = self.volumeEditor.labelWidget.currentItem().color
         
         for i in self.volumeEditor.imageScenes:
