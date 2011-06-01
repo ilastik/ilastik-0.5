@@ -62,6 +62,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.mapping = dict()
         self.doneBinaryOverlay  = None
         self.doneObjectsOverlay = None
+        
+        self.weightsSetUp   = False
+        self.seedsAvailable = False
     
     def on_doneOverlaysAvailable(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
@@ -118,8 +121,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('numColorsNeeded(int)'), self.on_numColorsNeeded)
         self.connect(s, QtCore.SIGNAL('saveAsPossible(bool)'), lambda b: self.btnSaveAs.setEnabled(b))
         self.connect(s, QtCore.SIGNAL('savePossible(bool)'), lambda b: self.btnSave.setEnabled(b))
-        self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), lambda b: self.btnSegment.setEnabled(b))
-        
+        self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
         
         statusBar = self.parent.statusBar()
         self.progressBar = QtGui.QProgressBar()
@@ -146,6 +148,13 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.seedOverlay.displayable3D = True
         self.seedOverlay.backgroundClasses = set([0])
         self.seedOverlay.smooth3D = False
+
+    def on_seedsAvailable(self, b):
+        self.seedsAvailable = b
+        self.maybeEnableSegmentButton()
+        
+    def maybeEnableSegmentButton(self):
+        self.btnSegment.setEnabled(self.seedsAvailable and self.weightsSetUp)
 
     def on_numColorsNeeded(self, numColors):
         """make sure that there are enough label colors.
@@ -294,6 +303,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []
         self.btnSegmentorsOptions.setEnabled(True)
+        self.weightsSetUp = True
+        self.maybeEnableSegmentButton()
         
     def clearSeeds(self):
         self._seedL = None
