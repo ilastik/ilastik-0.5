@@ -28,7 +28,7 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui
-import os
+import os, traceback, sys
 from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
 from ilastik.gui import overlayDialogs
 import ilastik.gui.exportDialog as exportDialog
@@ -254,8 +254,9 @@ class OverlayListWidget(QtGui.QListWidget):
                 tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
                 filename = str(QtCore.QDir.convertSeparators(tempname))
                 dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference.overlayItem, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
-            except:
-                pass
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
         else:
             for index,  channelAct in enumerate(channelActions):
                 if action == channelAct:
