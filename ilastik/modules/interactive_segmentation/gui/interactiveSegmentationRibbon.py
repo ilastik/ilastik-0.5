@@ -20,6 +20,8 @@ from ilastik.core.volume import DataAccessor
 
 from segmentorSelectionDlg import SegmentorSelectionDlg
 
+from ilastik.modules.interactive_segmentation.core import startupOutputPath
+
 #*******************************************************************************
 # I n l i n e S e t t i n g s W i d g e t                                      *
 #*******************************************************************************
@@ -123,6 +125,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('savePossible(bool)'), lambda b: self.btnSave.setEnabled(b))
         self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
         
+        if startupOutputPath is not None:
+            self.segmentorInit()
+   
+    def segmentorInit(self):     
         statusBar = self.parent.statusBar()
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMinimum(0)
@@ -134,6 +140,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         statusBar.show()
         QtGui.qApp.processEvents(QtCore.QEventLoop.WaitForMoreEvents)
         
+        s = self.ilastik._activeImage.Interactive_Segmentation
         s.init()
         
         self.parent.statusBar().removeWidget(self.progressBar)
@@ -182,6 +189,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl = QtGui.QHBoxLayout()
         tl.setMargin(0)
         
+        self.btnChooseDir         = TabButton('Open', ilastikIcons.Open)
         self.btnChooseWeights     = TabButton('Choose Weights', ilastikIcons.Select)
         self.btnChooseDimensions  = TabButton('Using 3D', ilastikIcons.Select)
         self.btnSegment           = TabButton('Segment', ilastikIcons.Play)
@@ -197,15 +205,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.only2D = False
         
+        self.btnChooseDir.setToolTip('Choose the directory in which the segmentation will be stored')
         self.btnChooseWeights.setToolTip('Choose the edge weights for the segmentation task')
         self.btnSegment.setToolTip('Segment the image into foreground/background')
         self.btnChooseDimensions.setToolTip('Switch between slice based 2D segmentation and full 3D segmentation\n This is mainly useful for 3D Date with very weak border indicators, where seeds placed in one slice can bleed out badly to other regions')
         self.btnSegmentorsOptions.setToolTip('Select a segmentation plugin and change settings')
         
-        
+        tl.addWidget(self.btnChooseDir)
         tl.addWidget(self.btnChooseWeights)
-        
-        #tl.addWidget(self.btnChooseDimensions)
         tl.addWidget(self.btnSegment)        
         tl.addWidget(self.inlineSettings)
         tl.addWidget(self.btnSave)
@@ -214,6 +221,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl.addStretch()
         tl.addWidget(self.btnSegmentorsOptions)
         
+        self.btnChooseDir.setEnabled(True)
         self.btnSegment.setEnabled(False)
         self.btnSaveAs.setEnabled(False)
         self.btnSave.setEnabled(False)
@@ -225,6 +233,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def _initConnects(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
         
+        self.btnChooseDir.clicked.connect(self.on_btnChooseDir_clicked)
         self.btnRebuildDone.toggled.connect(self.on_btnRebuildDone_toggled)
         self.btnChooseWeights.clicked.connect(self.on_btnChooseWeights_clicked)
         self.btnSegment.clicked.connect(s.segment)
@@ -234,9 +243,16 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSegmentorsOptions.clicked.connect(self.on_btnSegmentorsOptions_clicked)
         
         self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
+    
+    def on_btnChooseDir_clicked(self):
+        startupOutputPath = str(QFileDialog.getExistingDirectory(None, "Select empty directory to store segmentations in"))
+        if startupOutputPath is not None:
+            s = self.ilastik._activeImage.Interactive_Segmentation
+            s.outputPath = startupOutputPath
+            self.segmentorInit()
+            self.btnChooseDir.setEnabled(False)
      
     def on_btnRebuildDone_toggled(self, toggled):
-        print "ghghgh"
         s = self.ilastik._activeImage.Interactive_Segmentation
         s.setRebuildDonePolicy(toggled)
     
@@ -304,6 +320,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.interactionLog = []
         self.btnSegmentorsOptions.setEnabled(True)
         self.weightsSetUp = True
+        self.btnChooseDir.setEnabled(False)
         self.maybeEnableSegmentButton()
         
     def clearSeeds(self):

@@ -178,12 +178,14 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             print "interactive segmentation module is already initialized"
             return
         
-        from ilastik.modules.interactive_segmentation.core import startupOutputPath   
-        self.outputPath = startupOutputPath
+        from ilastik.modules.interactive_segmentation.core import startupOutputPath 
+        if startupOutputPath is not None:  
+            self.outputPath = startupOutputPath
         
         self.__createSeedsData()
-           
-        if not self.outputPath:
+        
+        if self.outputPath is None:
+            print "  no output path set --> nothing to do"
             return
         else:
             print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
@@ -215,6 +217,7 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         if self._dataItemImage.overlayMgr[d["overlay"]] is None:
             overlayName = "File Overlays/"+d["overlay"]
         
+        print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
         self.calculateWeights(self._dataItemImage.overlayMgr[overlayName]._data[0,:,:,:,0], d["borderIndicator"])
     
         self.initialized = True
