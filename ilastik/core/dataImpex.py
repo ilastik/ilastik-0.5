@@ -336,6 +336,8 @@ class DataImpex(object):
                         if overlayItem._data.shape[-1]>1:
                             fn = fn + ("_channel%03i" %(c+channelOffset))
                         fn = fn + "." + format
+                        
+                        dtype_ = None
                         if data.dtype == numpy.float32:
                             mi = data.min()
                             ma = data.max()
