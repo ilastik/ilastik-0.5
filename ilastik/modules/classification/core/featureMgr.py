@@ -209,12 +209,8 @@ class FeatureMgr():
             numOfPixels = numpy.sum([ numpy.prod(dataItem._dataVol._data.shape[:-1]) for dataItem in dataMgr ])
 
             memoryReq = numOfPixels * (numOfEffectiveFeatures*4.0) /1024.0**2
-            if self.printComputeMemoryRequirement:
-                print "Feature memory demand: %8.2f MB. For feature vector of length %d" % (memoryReq, numOfEffectiveFeatures)
         else:
             memoryReq = 0.0
-            if self.printComputeMemoryRequirement:
-                print "No features selected"
         return memoryReq  
 
     def __getstate__(self): 
