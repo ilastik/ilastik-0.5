@@ -650,15 +650,34 @@ class VolumeEditor(QtGui.QWidget):
 
         self.splitter = QtGui.QSplitter()
         self.splitter.setContentsMargins(0,0,0,0)
+        
+        
         tempWidget = QtGui.QWidget()
         tempWidget.setLayout(self.viewingLayout)
         self.splitter.addWidget(tempWidget)
+        
         self.splitter.addWidget(self.toolBox)
         splitterLayout = QtGui.QVBoxLayout()
         splitterLayout.setMargin(0)
         splitterLayout.setSpacing(0)
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
+        
+#         Tried to resolve ugly splitter handle problem fro windows
+#         Still it does not look good
+#        http://stackoverflow.com/questions/2545577/qsplitter-becoming-undistinguishable-between-qwidget-and-qtabwidget
+#        sHandle = self.splitter.handle(1)
+#        v = QtGui.QVBoxLayout(sHandle)
+#        v.setSpacing(5)
+#        v.setMargin(5)
+#        
+#        l = QtGui.QFrame(sHandle)
+#        l.setFrameShape(QtGui.QFrame.VLine)
+#        l.setFrameShadow(QtGui.QFrame.Sunken)
+#        
+#        v.addWidget(l)
+#        
+#        sHandle.setLayout(v)
         
         self.updateGeometry()
         self.update()
@@ -880,21 +899,19 @@ class VolumeEditor(QtGui.QWidget):
         self.fastRepaint = fastRepaint
 
     def setBorderMargin(self, margin):
-        if self.useBorderMargin is True:
-            if self.borderMargin != margin:
-                print "new border margin:", margin
-                self.borderMargin = margin
-                for imgScene in self.imageScenes:
-                    imgScene.__borderMarginIndicator__(margin)
-                    imgScene.__borderMarginIndicator__(margin)
-                    imgScene.__borderMarginIndicator__(margin)
-                self.repaint()
-        else:
+        #print "******** setBorderMargin", margin
+        if margin != self.borderMargin:
             for imgScene in self.imageScenes:
                 imgScene.__borderMarginIndicator__(margin)
-                imgScene.__borderMarginIndicator__(margin)
-                imgScene.__borderMarginIndicator__(margin)
-            self.repaint()
+            
+        self.borderMargin = margin
+        
+        for imgScene in self.imageScenes:
+            if imgScene.border is not None:
+                imgScene.border.setVisible(self.useBorderMargin)
+            
+        self.repaint()
+
 
     def changeSliceX(self, num):
         self.changeSlice(num, 0)
@@ -934,6 +951,7 @@ class VolumeEditor(QtGui.QWidget):
             self.imageScenes[axis].thread.freeQueue.set()
 
     def changeSlice(self, num, axis):
+
         if self.interactionLog is not None:
             self.interactionLog.append("%f: changeSlice(axis,number) %d,%d" % (time.clock(),axis,num))
         self.selSlices[axis] = num
@@ -1316,7 +1334,9 @@ class ImageSceneRenderThread(QtCore.QThread):
                                  
                             # if itemdata is uint16
                             # convert it for displayporpuse
-                            if itemdata.dtype == numpy.uint16:
+                            if itemcolorTable is None and itemdata.dtype == numpy.uint16:
+                                print '*** Normalizing your data for display purpose'
+                                print '*** I assume you have 12bit data'
                                 itemdata = (itemdata*255.0/4095.0).astype(numpy.uint8)
                             
                             if itemcolorTable != None:         
@@ -1615,6 +1635,7 @@ class ImageScene(QtGui.QGraphicsView):
     axisColor = [QtGui.QColor(255,0,0,255), QtGui.QColor(0,255,0,255), QtGui.QColor(0,0,255,255)]
     
     def __borderMarginIndicator__(self, margin):
+        print "__borderMarginIndicator__()", margin
         """
         update the border margin indicator (left, right, top, bottom)
         to reflect the new given margin
@@ -1635,11 +1656,6 @@ class ImageScene(QtGui.QGraphicsView):
         self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
         self.border.setZValue(200)
         self.scene.addItem(self.border)
-        self.lastPanPoint = QtCore.QPoint()
-        self.dragMode = False
-        self.deltaPan = QtCore.QPointF(0,0)
-        self.x = 0.0
-        self.y = 0.0
         
     def __init__(self, parent, imShape, axis, drawManager):
         """
@@ -1661,6 +1677,13 @@ class ImageScene(QtGui.QGraphicsView):
         self.border = None
         self.allBorder = None
         self.factor = 1.0
+        
+        #for panning
+        self.lastPanPoint = QtCore.QPoint()
+        self.dragMode = False
+        self.deltaPan = QtCore.QPointF(0,0)
+        self.x = 0.0
+        self.y = 0.0
         
         self.min = 0
         self.max = 255
@@ -1728,15 +1751,15 @@ class ImageScene(QtGui.QGraphicsView):
         
         #on right mouse press, the customContextMenuRequested() signal is
         #_automatically_ emitted, no need to call onContext explicitly
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
+        #self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        #self.connect(self, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
 
         self.setMouseTracking(True)
 
         #indicators for the biggest filter mask's size
         #marks the area where labels should not be placed
         # -> the margin top, left, right, bottom
-        self.__borderMarginIndicator__(0)
+        self.margin = 0
         # -> the complete 2D slice is marked
         brush = QtGui.QBrush(QtGui.QColor(0,0,255))
         brush.setStyle( QtCore.Qt.DiagCrossPattern )
@@ -1954,7 +1977,9 @@ class ImageScene(QtGui.QGraphicsView):
         if not self.thread.dataPending.isSet():
             #if, in slicing direction, we are within the margin of the image border
             #we set the border overlay indicator to visible
-            self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1)
+
+            self.allBorder.setVisible((self.sliceNumber < self.margin or self.sliceExtent - self.sliceNumber < self.margin) and self.sliceExtent > 1 and self.volumeEditor.useBorderMargin)
+            # print "renderingThreadFinished()", self.volumeEditor.useBorderMargin, self.volumeEditor.borderMargin    
 
             #if we are in opengl 2d render mode, update the texture
             if self.openglWidget is not None:
@@ -2170,6 +2195,12 @@ class ImageScene(QtGui.QGraphicsView):
                 self.tempErase = True
             mousePos = self.mapToScene(event.pos())
             self.beginDraw(mousePos)
+            
+        if event.buttons() == QtCore.Qt.RightButton:
+            #make sure that we have the cursor at the correct position
+            #before we call the context menu
+            self.mouseMoveEvent(event)
+            self.onContext(event.pos())
             
     #TODO oli
     def mouseReleaseEvent(self, event):

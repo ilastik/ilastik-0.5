@@ -275,12 +275,15 @@ class OverlayItem(object):
         return (r*11+g*16+b*5)/32
     
     @classmethod
-    def createDefaultColorTable(cls, type, levels = 256):
+    def createDefaultColorTable(cls, type, levels = 256, transparentValues = set()):
         typeCap = type.capitalize()
         colorTab = []
         if(typeCap == "GRAY"):
             for i in range(levels):
-                colorTab.append(OverlayItem.qgray(i, i, i)) # see qGray function in QtGui
+                if i in transparentValues:
+                    colorTab.append(0L)
+                else:
+                    colorTab.append(OverlayItem.qgray(i, i, i)) # see qGray function in QtGui
         else:
             #RGB
             import numpy
@@ -289,7 +292,10 @@ class OverlayItem(object):
             if seed is not None:
                 numpy.random.seed(seed)
             for i in range(levels):
-                colorTab.append(OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))) # see gRGB function in QtGui
+                if i in transparentValues:
+                    colorTab.append(0L)
+                else:
+                    colorTab.append(OverlayItem.qrgb(numpy.random.randint(255),numpy.random.randint(255),numpy.random.randint(255))) # see gRGB function in QtGui
         return colorTab        
     
     @classmethod

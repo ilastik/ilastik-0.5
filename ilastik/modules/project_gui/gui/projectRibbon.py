@@ -89,15 +89,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.ilastik.setTabBusy(False)
             
     def on_btnSave_clicked(self):
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
-        fn = str(fileName)
-        if len(fn) > 4:
-            if fn[-4:] != '.ilp':
-                fn = fn + '.ilp'
-            if self.parent.project.saveToDisk(fn):
-                QtGui.QMessageBox.information(self.parent, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
-                
-            ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
+        self.parent.saveProject()
     
     def openProject(self, fileName):
         labelWidget = None

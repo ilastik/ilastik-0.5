@@ -319,8 +319,8 @@ class ClassificationMgr(object):
         if issubclass(prop["featureM"].__class__,numpy.ndarray): 
             trainingF = prop["featureM"][URI[:,0],URI[:,1],URI[:,2],URI[:,3],:]
         else:
-            print ind.shape
-            print prop["featureM"].shape
+            #print ind.shape
+            #print prop["featureM"].shape
             trainingF = numpy.zeros((ind.shape[0],) + (prop["featureM"].shape[4],), 'float32')
             for i in range(URI.shape[0]): 
                 trainingF[i,:,:] = prop["featureM"][URI[i,0],URI[i,1],URI[i,2],URI[i,3],:]
@@ -425,7 +425,7 @@ class ClassificationMgr(object):
                                 tempfm = self.getTrainingMforIndForImage(indices, dataItemImage)
                                 if len(prop["trainingF"].shape) == 1:
                                     prop["trainingF"].shape = (0,tempfm.shape[1])
-                                print tempfm.shape, prop["trainingF"].shape 
+                                #print tempfm.shape, prop["trainingF"].shape 
                                 prop["trainingF"] = numpy.vstack((prop["trainingF"],tempfm))
                             else:
                                 prop["trainingF"] = self.getTrainingMforIndForImage(indices, dataItemImage)

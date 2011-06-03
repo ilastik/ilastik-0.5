@@ -31,8 +31,7 @@ class ProjectModuleMgr(BaseModuleMgr):
         self.dataMgr = dataMgr
 
     def loadStack(self, fileList, options):
-        print len(fileList)
-        print len(fileList[0])
+        pass
         
 
     def onNewImage(self, dataItemImage):

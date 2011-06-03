@@ -92,6 +92,7 @@ import getopt
 
 # Please no import *
 from ilastik.gui.shortcutmanager import shortcutManager
+import ilastik
 
 #make the program quit on Ctrl+C
 import signal
@@ -221,7 +222,10 @@ class MainWindow(QtGui.QMainWindow):
                 elif o in ("--featureCache"):
                     self.featureCache = h5py.File(a, 'w')
                 elif o in ("--load-overlays"):
-                     overlaysToLoad = a.split(',')
+                    keys = [x[0] for x in opts]
+                    if not "--project" in keys:
+                        raise RuntimeError("--load-overlays options is only allowed if --project is passed, too")
+                    overlaysToLoad = a.split(',')
                 else:
                     assert False, "unhandled option"
 
@@ -395,7 +399,15 @@ class MainWindow(QtGui.QMainWindow):
             if self.project.filename is not None:
                 self.project.saveToDisk()
             else:
-                self.saveProjectDlg()
+                fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
+                fn = str(fileName)
+                if len(fn) > 4:
+                    if fn[-4:] != '.ilp':
+                        fn = fn + '.ilp'
+                    if self.project.saveToDisk(fn):
+                        QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+                        
+                ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
             print "saved Project to ", self.project.filename
 
     def projectModified(self):
@@ -480,7 +492,7 @@ class MainWindow(QtGui.QMainWindow):
                 self.labelWidget.grid.deleteUndocked()
         elif reply == QtGui.QMessageBox.No:
             event.accept()
-            if self.labelWidget.grid:
+            if hasattr(self.labelWidget,'grid') and self.labelWidget.grid:
                 self.labelWidget.grid.deleteUndocked()
         else:
             event.ignore()
@@ -504,7 +516,7 @@ if __name__ == "__main__":
     ilastik.modules.loadModuleGuis()
 
     mainwindow = MainWindow(sys.argv)
-    mainwindow.setStyleSheet("QSplitter::handle { background-color: #999999;}")
+    mainwindow.setStyleSheet("QSplitter::handle { background-color: #CCCCCC;}")
 
     mainwindow.show()
     #On OS X, the window has to be raised in order to be visible directly after starting

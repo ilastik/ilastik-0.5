@@ -12,6 +12,7 @@ with warnings.catch_warnings():
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
+from ilastik.core.overlayAttributes import OverlayAttributes
 from ilastik.core.LOCIwrapper import reader as LOCIreader
 
 #*******************************************************************************
@@ -112,8 +113,14 @@ class DataImpex(object):
  
         #remove alpha channel
         if len(data.shape) == 3:
+            # prevent tranparent channel
             if data.shape[2] == 4:
                 data = data[:,:,0:-1]
+            # vigra axistag version now delivers always a '1'
+            # for the channel dimension, to support
+            # both vigra versions we delete the singleton
+            elif data.shape[2] == 1:
+                data = data[:,:,0]
         
         return data
         
@@ -189,10 +196,7 @@ class DataImpex(object):
         else:
             options.destShape = options.shape
         
-        if options.normalize:
-            maximum = numpy.max(image)
-            minimum = numpy.min(image)
-            image = (image - minimum) * (255.0 / (maximum - minimum)) 
+        
 
         if options.grayscale:
             image = image.view(numpy.ndarray)
@@ -200,18 +204,27 @@ class DataImpex(object):
             options.rgb = 1
             image = result.astype(numpy.uint8)
             image.reshape(image.shape + (1,))
+            nch = 1
+            
+        if options.normalize:
+            maximum = numpy.max(image)
+            minimum = numpy.min(image)
+            image = (image - minimum) * (255.0 / (maximum - minimum)) 
+            image = image.astype(numpy.uint8)
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
         print options.destfile
         try:
-            if options.destfile != None :
+            if options.destfile != None:
                 print "Saving to file ", options.destfile
                 f = h5py.File(options.destfile, 'w')
-                g = f.create_group("volume")        
-                g.create_dataset("data",data = image)
+                g = f.create_group("volume") 
+                temp_image = image.swapaxes(3,1) 
+                temp_image = temp_image.swapaxes(2,3)      
+                g.create_dataset("data",data=temp_image)
                 f.close()
         except:
-            print "######ERROR saving File ", options.destfile
+            print "ERROR saving File ", options.destfile
             
         if allok:
             return image
@@ -252,60 +265,35 @@ class DataImpex(object):
                 return (tempimage.shape[0], tempimage.shape[1], 1, 1)
 
     @staticmethod                
-    def importOverlay(dataItem, filename, prefix="File Overlays/"):
+    def importOverlay(dataItem, filename, prefix="File Overlays/", attrs=None):
         theDataItem = DataImpex.importDataItem(filename, None)
         if theDataItem is None:
             print "could not load", filename
             return None
-        else:
-            data = theDataItem[:,:,:,:,:]
-            color = long(65535) << 16
-            alpha = 0.5
-            colorTable = None
-            autoAdd = True
-            autoVisible = True
-            omin = 1.0
-            omax = 2.0
-            key = "Unknown Key"
+
+        data = theDataItem[:,:,:,:,:]
+
+        if attrs == None:
+            attrs = OverlayAttributes(filename)
+        if attrs.min is None:
+            attrs.min = numpy.min(data)
+        if attrs.max is None:
+            attrs.max = numpy.max(data)
             
-            f = h5py.File(filename, 'r')
-            dataset = f["volume/data"]
-
-            if "overlayKey" in dataset.attrs.keys():
-                key = dataset.attrs["overlayKey"]
-                
-            if "overlayColor" in dataset.attrs.keys():
-                color = pickle.loads(dataset.attrs["overlayColor"])
-                
-            if "overlayColortable" in dataset.attrs.keys():
-                colorTable = pickle.loads(dataset.attrs["overlayColortable"])
-
-            if "overlayMin" in dataset.attrs.keys():
-                omin = pickle.loads(dataset.attrs["overlayMin"])
-                
-            if "overlayMax" in dataset.attrs.keys():
-                omax = pickle.loads(dataset.attrs["overlayMax"])
-
-            if "overlayAutovisible" in dataset.attrs.keys():
-                autoVisible = pickle.loads(dataset.attrs["overlayAutovisible"])
-
-            if "overlayAdd" in dataset.attrs.keys():
-                autoAdd = pickle.loads(dataset.attrs["overlayAdd"])
-                
-            if "overlayAlpha" in dataset.attrs.keys():
-                alpha = pickle.loads(dataset.attrs["overlayAlpha"])
-                
-            if data.shape[0:-1] == dataItem.shape[0:-1]:
-                ov = OverlayItem(data, color = color, alpha = alpha, colorTable = colorTable, autoAdd = autoAdd, autoVisible = autoVisible, min = omin, max = omax)
-                ov.key = key
-                if len(prefix) > 0:
-                    if prefix[-1] != "/":
-                        prefix = prefix + "/"
-                dataItem.overlayMgr[prefix + ov.key] = ov            
-                return ov
-            return None
-
-        
+        if data.shape[0:-1] == dataItem.shape[0:-1]:
+            ov = OverlayItem(data, color = attrs.color, 
+                             alpha = attrs.alpha, 
+                             colorTable = attrs.colorTable,
+                             autoAdd = attrs.autoAdd,
+                             autoVisible = attrs.autoVisible,
+                             min = attrs.min, max = attrs.max)
+            ov.key = attrs.key
+            if len(prefix) > 0:
+                if prefix[-1] != "/":
+                    prefix = prefix + "/"
+            dataItem.overlayMgr[prefix + ov.key] = ov            
+            return ov
+       
     @staticmethod
     def exportOverlay(filename, format, overlayItem, timeOffset = 0, sliceOffset = 0, channelOffset = 0):
         if format == "h5":
@@ -348,7 +336,18 @@ class DataImpex(object):
                         if overlayItem._data.shape[-1]>1:
                             fn = fn + ("_channel%03i" %(c+channelOffset))
                         fn = fn + "." + format
-                        vigra.impex.writeImage(data, fn)
+                        
+                        dtype_ = None
+                        if data.dtype == numpy.float32:
+                            mi = data.min()
+                            ma = data.max()
+                            if mi >= 0 and 1 < ma <= 255:
+                                data = data.astype(numpy.uint8)
+                                dtype_ = 'NATIVE'
+                            else:
+                                dtype_ = numpy.uint8
+                        
+                        vigra.impex.writeImage(data.swapaxes(1,0), fn, dtype=dtype_)
                         print "Exported file ", fn
         else:
             for t in range(overlayItem._data.shape[0]):
@@ -360,7 +359,20 @@ class DataImpex(object):
                     if overlayItem._data.shape[-1]>1:
                         fn = fn + ("_channel%03i" %(c+channelOffset))
                     fn = fn + "." + format
-                    vigra.impex.writeImage(data.swapaxes(0,1), fn)
+                    
+                    # dtype option for tif images when dtype is not uint8
+                    # specifing dtype in the write function leads to scaling!
+                    # be careful nbyte also scales, which is typically fine
+                    if data.dtype == numpy.float32:
+                        mi = data.min()
+                        ma = data.max()
+                        if mi >= 0 and 1 < ma <= 255:
+                            data = data.astype(numpy.uint8)
+                            dtype_ = 'NATIVE'
+                        else:
+                            dtype_ = numpy.uint8
+                    
+                    vigra.impex.writeImage(data, fn, dtype=dtype_)
                     print "Exported file ", fn
 
     @staticmethod

@@ -94,9 +94,9 @@ class ClassifierRandomForest(ClassifierBase):
           
             treeCount = 0
             for t in trees:
-                print "before"
-                print allForestsPath+"/"+t+"/_options/tree_count_"
-                print "after"
+                #print "before"
+                #print allForestsPath+"/"+t+"/_options/tree_count_"
+                #print "after"
                 treeCount += h5G.file[allForestsPath+"/"+t+"/_options/tree_count_"][0]
             print "total number of RandomForest trees = ", treeCount
             ClassifierRandomForest.treeCount = treeCount

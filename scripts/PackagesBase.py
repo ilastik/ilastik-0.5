@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import __builtin__
-import urllib2, os, tarfile, shutil
+import urllib2, os, sys, tarfile, shutil
 from hashlib import md5
 import platform
-
+import multiprocessing
+ 
 #using http://www.pytips.com/2010/5/29/a-quick-md5sum-equivalent-in-python
 #using http://stackoverflow.com/questions/22676/how-do-i-download-a-file-over-http-using-python
 def md5sum(filename, buf_size=8192):
@@ -56,19 +57,23 @@ class Package:
     correctMD5sum  = ''
     workdir = ''
     patches = []
+    patch_commands = []
     prefix = installDir
     
     def __init__(self):
         self.filename = self.src_uri.split('/')[-1]
         
         self.download()
+        if 'download' in sys.argv[0]:
+	    return
+
         self.unpack()
         self.configure()
         self.make()
         self.makeInstall()
         self.test()
     
-    def gmake(self, parallel=4):
+    def gmake(self, parallel = multiprocessing.cpu_count()):
         temp= 'make -j'+str(parallel)
         self.system(temp)
     
@@ -128,6 +133,10 @@ class Package:
             print "* applying patch", patch
             self.system('patch --forward -p0 < ../../files/' + patch)
         
+        for cmd in self.patch_commands:
+            print "* applying patch command", cmd
+            self.system(cmd)
+
     def configure(self):
         print "* Configuring the Package"
         if platform.system() == "Darwin":

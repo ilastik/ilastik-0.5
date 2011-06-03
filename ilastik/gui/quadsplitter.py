@@ -212,7 +212,7 @@ class QuadView(QWidget):
         for x in toDelete: x.deleteLater()
 
     def resizeEvent(self, event):
-        print "resizeEvent:",self.size()
+        #print "resizeEvent:",self.size()
         if self.firstTime:
             self.__resizeEqual()
             self.firstTime=False

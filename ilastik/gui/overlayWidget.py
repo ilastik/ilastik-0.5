@@ -28,10 +28,11 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui
-import os
+import os, traceback, sys
 from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
 from ilastik.gui import overlayDialogs
 import ilastik.gui.exportDialog as exportDialog
+from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.core import dataImpex
 
 #*******************************************************************************
@@ -253,8 +254,9 @@ class OverlayListWidget(QtGui.QListWidget):
                 tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
                 filename = str(QtCore.QDir.convertSeparators(tempname))
                 dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference.overlayItem, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
-            except:
-                pass
+            except Exception, e:
+                print e
+                traceback.print_exc(file=sys.stdout)
         else:
             for index,  channelAct in enumerate(channelActions):
                 if action == channelAct:
@@ -352,8 +354,8 @@ class OverlayWidget(QtGui.QGroupBox):
         overlayListLayout.addLayout(upDownLayout)
         
         addRemoveCreateLayout = QtGui.QHBoxLayout()
-        addRemoveCreateLayout.setMargin(0)
-        addRemoveCreateLayout.setSpacing(5)
+        #addRemoveCreateLayout.setMargin(0)
+        #addRemoveCreateLayout.setSpacing(5)
        
         self.buttonAdd = QtGui.QToolButton()
         self.buttonAdd.setToolTip("Add an already existing overlay to this view")
@@ -375,8 +377,7 @@ class OverlayWidget(QtGui.QGroupBox):
         addRemoveCreateLayout.addStretch()
         
         #Save the current images button
-        self.saveAsImageBtn = QtGui.QToolButton()
-        self.saveAsImageBtn.setText('Export View')
+        self.saveAsImageBtn = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.Save),'Export View')
         self.saveAsImageBtn.setToolTip("Export the currently rendered view as an image stack")
         self.connect(self.saveAsImageBtn, QtCore.SIGNAL("clicked()"), self.volumeEditor.on_saveAsImage)
         
