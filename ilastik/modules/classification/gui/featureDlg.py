@@ -26,7 +26,13 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 
 
-from PyQt4 import QtCore, QtGui
+from PyQt4.QtGui import QGraphicsView, QVBoxLayout, QLabel, QGraphicsScene, QPixmap, QPainter, \
+                        QTableWidgetItem, QItemDelegate, QStyle, QHBoxLayout, QIcon, QHeaderView, \
+                        QAbstractItemView, QDialog, QToolButton, QErrorMessage, QApplication, \
+                        QTableWidget, QGroupBox
+from PyQt4.QtCore import Qt, QRect, QSize, QEvent
+
+
 import sys
 from ilastik.modules.classification.core import featureMgr
 import qimage2ndarray
@@ -34,35 +40,35 @@ from ilastik.modules.classification.core.featureMgr import ilastikFeatureGroups
 from ilastik.gui.iconMgr import ilastikIcons
 
 
-class PreView(QtGui.QGraphicsView):
+class PreView(QGraphicsView):
     def __init__(self, previewImage=None):
-        QtGui.QGraphicsView.__init__(self)
+        QGraphicsView.__init__(self)
         
         self.setMinimumWidth(200)
         self.setMinimumHeight(200)
         self.setMaximumWidth(200)
         self.setMaximumHeight(200)        
         
-        self.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         
-        self.hudLayout = QtGui.QVBoxLayout(self)
+        self.hudLayout = QVBoxLayout(self)
         
-        self.sizeTextLabel = QtGui.QLabel(self)
+        self.sizeTextLabel = QLabel(self)
         self.sizeTextLabel.setStyleSheet("color: red; font-weight:bold;")
-        self.sizeTextLabel.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
+        self.sizeTextLabel.setAttribute(Qt.WA_TransparentForMouseEvents, True)
         self.sizeTextLabel.setText("Size:")
         
         self.hudLayout.addWidget(self.sizeTextLabel)
         
-        self.testLabel =  QtGui.QLabel()
+        self.testLabel =  QLabel()
         self.hudLayout.addWidget(self.testLabel)
-        self.testLabel.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)  
+        self.testLabel.setAttribute(Qt.WA_TransparentForMouseEvents, True)  
         self.hudLayout.addStretch()
         
-        self.grscene = QtGui.QGraphicsScene()
-        pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
+        self.grscene = QGraphicsScene()
+        pixmapImage = QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
         self.setScene(self.grscene)
             
@@ -71,23 +77,23 @@ class PreView(QtGui.QGraphicsView):
         self.updateCircle(size)
         
     def updateCircle(self, size):
-        pixmap = QtGui.QPixmap(self.width(), self.height())
-        pixmap.fill(QtCore.Qt.transparent)
-        painter = QtGui.QPainter()
+        pixmap = QPixmap(self.width(), self.height())
+        pixmap.fill(Qt.transparent)
+        painter = QPainter()
         painter.begin(pixmap)
-        painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.setPen(QtCore.Qt.red)
-        painter.drawEllipse(QtCore.QRect(70, 70, size, size))
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setPen(Qt.red)
+        painter.drawEllipse(QRect(70, 70, size, size))
         painter.end()
-        self.testLabel.setPixmap(QtGui.QPixmap(pixmap))
+        self.testLabel.setPixmap(QPixmap(pixmap))
 
 
-class FeatureTableWidgetVHeader(QtGui.QTableWidgetItem):
+class FeatureTableWidgetVHeader(QTableWidgetItem):
     def __init__(self, featureName, feature=None):
-        QtGui.QTableWidgetItem.__init__(self, "   " + featureName)
+        QTableWidgetItem.__init__(self, "   " + featureName)
         # init
         # ------------------------------------------------
-        self.setSizeHint(QtCore.QSize(260, 0))
+        self.setSizeHint(QSize(260, 0))
         self.expanded = True
         self.isParent = False
         self.feature = feature
@@ -95,18 +101,18 @@ class FeatureTableWidgetVHeader(QtGui.QTableWidgetItem):
         self.children = []
             
     def setExpanded(self):
-        QtGui.QTableWidgetItem.setText(self, "-  " + self.name)
+        QTableWidgetItem.setText(self, "-  " + self.name)
         
         self.expanded = True
         
     def setCollapsed(self):
-        QtGui.QTableWidgetItem.setText(self, "+  " + self.name)
+        QTableWidgetItem.setText(self, "+  " + self.name)
         self.expanded = False
         
         
-class FeatureTableWidgetHHeader(QtGui.QTableWidgetItem):
+class FeatureTableWidgetHHeader(QTableWidgetItem):
     def __init__(self, name):
-        QtGui.QTableWidgetItem.__init__(self, "   " + name)
+        QTableWidgetItem.__init__(self, "   " + name)
         # init
         # ------------------------------------------------
         self.expanded = True
@@ -115,40 +121,40 @@ class FeatureTableWidgetHHeader(QtGui.QTableWidgetItem):
         self.children = []
             
     def setExpanded(self):
-        QtGui.QTableWidgetItem.setText(self, "-  " + self.name)
+        QTableWidgetItem.setText(self, "-  " + self.name)
         
         self.expanded = True
         
     def setCollapsed(self):
-        QtGui.QTableWidgetItem.setText(self, "+  " + self.name)
+        QTableWidgetItem.setText(self, "+  " + self.name)
         self.expanded = False
         
 
-class ItemDelegate(QtGui.QItemDelegate):
+class ItemDelegate(QItemDelegate):
     """"
      TODO: DOKU
     """
     def __init__(self, parent=None):
-        QtGui.QItemDelegate.__init__(self, parent)
+        QItemDelegate.__init__(self, parent)
         self.parent = parent
     
     def paint(self, painter, option, index):
         item = self.parent.item(index.row(), index.column())
         
-        if item.featureState == 0:
-            option.state = QtGui.QStyle.State_Off
-        elif item.featureState == 1:
-            option.state = QtGui.QStyle.State_NoChange
+        if item.featureState == Qt.Unchecked:
+            option.state = QStyle.State_Off
+        elif item.featureState == Qt.PartiallyChecked:
+            option.state = QStyle.State_NoChange
         else:
-            option.state = QtGui.QStyle.State_On
+            option.state = QStyle.State_On
             
-        self.parent.style().drawPrimitive(QtGui.QStyle.PE_IndicatorCheckBox, option, painter)
+        self.parent.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, option, painter)
         self.parent.update()
 
 
-class FeatureTableWidgetItem(QtGui.QTableWidgetItem):
+class FeatureTableWidgetItem(QTableWidgetItem):
     def __init__(self, feature, parent=None, featureState=0):
-        QtGui.QTableWidgetItem.__init__(self)
+        QTableWidgetItem.__init__(self)
 
         self.isParent = False
         self.children = []
@@ -159,15 +165,15 @@ class FeatureTableWidgetItem(QtGui.QTableWidgetItem):
         self.featureState = state
         
     def changeState(self):
-        if self.featureState == 0:
-            self.featureState = 2
+        if self.featureState == Qt.Unchecked:
+            self.featureState = Qt.Checked
         else:
-            self.featureState = 0
+            self.featureState = Qt.Unchecked
 
 
-class FeatureTableWidget(QtGui.QTableWidget):
+class FeatureTableWidget(QTableWidget):
     def __init__(self, ilastik):
-        QtGui.QTableWidget.__init__(self)
+        QTableWidget.__init__(self)
         # init
         # ------------------------------------------------
         self.tmpSelectedItems = []
@@ -179,7 +185,7 @@ class FeatureTableWidget(QtGui.QTableWidget):
         self.setCornerButtonEnabled(False)
         self.setMinimumWidth(612)
         self.setMinimumHeight(100)
-        self.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
+        self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(0)
         self.setShowGrid(False)
         self.viewport().installEventFilter(self)
@@ -192,13 +198,13 @@ class FeatureTableWidget(QtGui.QTableWidget):
         self.setItemDelegate(self.itemDelegator)
         self.horizontalHeader().setMouseTracking(1)
         self.horizontalHeader().installEventFilter(self)
-        self.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
-        #self.verticalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        self.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+        #self.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
         
         self.itemSelectionChanged.connect(self.tableItemSelectionChanged)
-        self.connect(self, QtCore.SIGNAL('cellDoubleClicked (int, int)'), self.featureTableItemDoubleClicked)
-        self.connect(self.verticalHeader(), QtCore.SIGNAL('sectionClicked (int)'), self.expandOrCollapseVHeader)
-
+        self.cellDoubleClicked.connect(self.featureTableItemDoubleClicked)
+        self.verticalHeader().sectionClicked.connect(self.expandOrCollapseVHeader)
+        
         self.setHHeaderNames()
         self.setVHeaderNames()
         self.collapsAllRows()
@@ -317,24 +323,24 @@ class FeatureTableWidget(QtGui.QTableWidget):
 
     def eventFilter(self, obj, event):
 #        #??? hheader change size
-#        if not event.type() == QtCore.QEvent.Paint:
+#        if not event.type() == QEvent.Paint:
 #            print obj, event
-#        if event.type() == QtCore.QEvent.HoverMove:
+#        if event.type() == QEvent.HoverMove:
 #            print "hover"
-#        if type(obj) == QtGui.QHeaderView and self.underMouse():
+#        if type(obj) == QHeaderView and self.underMouse():
 #            print obj.pos()
-        if(event.type()==QtCore.QEvent.MouseButtonPress):
-            if event.button() == QtCore.Qt.LeftButton:
+        if(event.type()==QEvent.MouseButtonPress):
+            if event.button() == Qt.LeftButton:
                 if self.itemAt(event.pos()):
                     self.setSelectionMode(2)
                     #self.parent().parent().ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = True
-        if(event.type()==QtCore.QEvent.MouseButtonRelease):
+        if(event.type()==QEvent.MouseButtonRelease):
             #self.parent().parent().ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = False
-            if event.button() == QtCore.Qt.LeftButton:
+            if event.button() == Qt.LeftButton:
                 self.setSelectionMode(0)
                 self.tmpSelectedItems = []
                 self.deselectAllTableItems()
-        if event.type() == QtCore.QEvent.MouseMove:
+        if event.type() == QEvent.MouseMove:
             if self.itemAt(event.pos()) and self.underMouse():
                 item = self.itemAt(event.pos())
                 self.changeSizeCallback(ilastikFeatureGroups.groupMaskSizes[item.column()])
@@ -378,65 +384,65 @@ class FeatureTableWidget(QtGui.QTableWidget):
                 row += 1
                 
                 
-#class OkButton(QtGui.QToolButton):
+#class OkButton(QToolButton):
 #    def __init__(self, *args):
-#        QtGui.QToolButton.__init__(self,  *args)
+#        QToolButton.__init__(self,  *args)
 #        
-#        self.connect(self, QtCore.SIGNAL('clicked()'), self.clickOnButton)
+#        self.connect(self, SIGNAL('clicked()'), self.clickOnButton)
 #        
 #    def clickOnButton(self):
 #        print "ok"
 #        
 #
-#class CancelButton(QtGui.QToolButton):
+#class CancelButton(QToolButton):
 #    def __init__(self, *args):
-#        QtGui.QToolButton.__init__(self,  *args)
+#        QToolButton.__init__(self,  *args)
 #        
-#        self.connect(self, QtCore.SIGNAL('clicked()'), self.clickOnButton)
+#        self.connect(self, SIGNAL('clicked()'), self.clickOnButton)
 #        
 #    def clickOnButton(self):
 #        print "cancel"
 
 
-class FeatureDlg(QtGui.QDialog):
+class FeatureDlg(QDialog):
     def __init__(self, parent=None, previewImage=None):
-        QtGui.QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent)
         
         # init
         # ------------------------------------------------
         self.setWindowTitle("Spatial Features")
-        self.setWindowIcon(QtGui.QIcon(ilastikIcons.Select))
+        self.setWindowIcon(QIcon(ilastikIcons.Select))
         self.parent = parent
         self.ilastik = parent
         #self.ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = False
         # widgets and layouts
         # ------------------------------------------------
-        self.layout = QtGui.QHBoxLayout()
+        self.layout = QHBoxLayout()
         self.setLayout(self.layout)
         
-        tableAndViewGroupBox = QtGui.QGroupBox("Scales and Groups")
+        tableAndViewGroupBox = QGroupBox("Scales and Groups")
         tableAndViewGroupBox.setFlat(True)
         self.featureTableWidget = FeatureTableWidget(self.ilastik)
-        tableAndViewLayout = QtGui.QHBoxLayout()
+        tableAndViewLayout = QHBoxLayout()
         tableAndViewLayout.addWidget(self.featureTableWidget)
         
-        viewAndButtonLayout =  QtGui.QVBoxLayout()              
+        viewAndButtonLayout =  QVBoxLayout()              
         self.preView = PreView(previewImage)
         viewAndButtonLayout.addWidget(self.preView)
         
-        buttonsLayout = QtGui.QHBoxLayout()
-        self.memReqLabel = QtGui.QLabel()
+        buttonsLayout = QHBoxLayout()
+        self.memReqLabel = QLabel()
         buttonsLayout.addWidget(self.memReqLabel)
-        self.ok = QtGui.QToolButton()
+        self.ok = QToolButton()
         self.ok.setText("OK")
-        self.connect(self.ok, QtCore.SIGNAL("clicked()"), self.on_okClicked)
+        self.ok.clicked.connect(self.on_okClicked)
         
         buttonsLayout.addStretch()
         buttonsLayout.addWidget(self.ok)
         
-        self.cancel = QtGui.QToolButton()
+        self.cancel = QToolButton()
         self.cancel.setText("Cancel")
-        self.connect(self.cancel, QtCore.SIGNAL("clicked()"), self.on_cancelClicked)
+        self.cancel.clicked.connect(self.on_cancelClicked)
 
         buttonsLayout.addWidget(self.cancel)
         viewAndButtonLayout.addLayout(buttonsLayout)
@@ -449,7 +455,8 @@ class FeatureDlg(QtGui.QDialog):
         tableAndViewGroupBox.setContentsMargins(0,10,0,0)
         tableAndViewLayout.setContentsMargins(0,10,0,0)
         
-        self.featureTableWidget.setChangeSizeCallback(self.preView.setSizeToLabel)   
+        self.featureTableWidget.setChangeSizeCallback(self.preView.setSizeToLabel)  
+        print ilastikFeatureGroups.createList() 
                 
     # methods
     # ------------------------------------------------
@@ -468,7 +475,7 @@ class FeatureDlg(QtGui.QDialog):
             self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)           
             self.accept() 
         else:
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
+            QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
             self.on_cancelClicked()
             
     def on_cancelClicked(self):
@@ -476,7 +483,7 @@ class FeatureDlg(QtGui.QDialog):
         
         
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
     ex = FeatureDlg()
     ex.show()
     ex.raise_()
