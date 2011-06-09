@@ -296,12 +296,14 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
-        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
-        self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
+#        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
+#        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
+#        self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.groups = {}
         self.createGroups()
-        self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
+#        self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
+        self.selection = []
+        self.featureList = []
         
     def createGroups(self):
         for c in FeatureBase.__subclasses__():
@@ -312,27 +314,28 @@ class FeatureGroups(object):
                 else:
                     self.groups[g] = [c]
 
-    def createList(self):
-        resList = []
-        for groupIndex, scaleList in enumerate(self.selection):
-            for scaleIndex, selected in enumerate(scaleList):
-                for feature in self.groups[self.groups.keys()[groupIndex]]:
-                    if selected:
-                        scaleValue = self.groupScaleValues[scaleIndex]
-                        fc = feature(scaleValue)
-                        resList.append(fc)
-        return resList
+#    def createList(self):
+#        resList = []
+#        for groupIndex, scaleList in enumerate(self.selection):
+#            for scaleIndex, selected in enumerate(scaleList):
+#                for feature in self.groups[self.groups.keys()[groupIndex]]:
+#                    if selected:
+#                        scaleValue = self.groupScaleValues[scaleIndex]
+#                        fc = feature(scaleValue)
+#                        resList.append(fc)
+#        return resList
     
-    def createListRestr(self, groupNames, sigmaVals):
-        resList = []
-        for i, groupName in irange(groupNames):
-            for feature in self.groups[groupName]:
-                fc = feature(sigmaVals[i])
-                resList.append(fc)
-        return resList
+#    def createListRestr(self, groupNames, sigmaVals):
+#        resList = []
+#        for i, groupName in irange(groupNames):
+#            for feature in self.groups[groupName]:
+#                fc = feature(sigmaVals[i])
+#                resList.append(fc)
+#        return resList
 
     
 ilastikFeatureGroups = FeatureGroups()
-ilastikFeatures = ilastikFeatureGroups.createList()
+#ilastikFeatures = ilastikFeatureGroups.createList()
+ilastikFeatures = ilastikFeatureGroups.featureList
 
 
