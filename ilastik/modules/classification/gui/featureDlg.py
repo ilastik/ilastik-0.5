@@ -94,7 +94,7 @@ class FeatureTableWidgetVHeader(QTableWidgetItem):
         # init
         # ------------------------------------------------
         self.setSizeHint(QSize(260, 0))
-        self.expanded = True
+        self.isExpanded = True
         self.isParent = False
         self.feature = feature
         self.name = featureName
@@ -103,11 +103,11 @@ class FeatureTableWidgetVHeader(QTableWidgetItem):
     def setExpanded(self):
         QTableWidgetItem.setText(self, "-  " + self.name)
         
-        self.expanded = True
+        self.isExpanded = True
         
     def setCollapsed(self):
         QTableWidgetItem.setText(self, "+  " + self.name)
-        self.expanded = False
+        self.isExpanded = False
         
         
 class FeatureTableWidgetHHeader(QTableWidgetItem):
@@ -115,7 +115,7 @@ class FeatureTableWidgetHHeader(QTableWidgetItem):
         QTableWidgetItem.__init__(self, "   " + name)
         # init
         # ------------------------------------------------
-        self.expanded = True
+        self.isExpanded = True
         self.isParent = False
         self.name = name
         self.children = []
@@ -123,11 +123,11 @@ class FeatureTableWidgetHHeader(QTableWidgetItem):
     def setExpanded(self):
         QTableWidgetItem.setText(self, "-  " + self.name)
         
-        self.expanded = True
+        self.isExpanded = True
         
     def setCollapsed(self):
         QTableWidgetItem.setText(self, "+  " + self.name)
-        self.expanded = False
+        self.isExpanded = False
         
 
 class ItemDelegate(QItemDelegate):
@@ -149,7 +149,7 @@ class ItemDelegate(QItemDelegate):
         else:
             option.state = QStyle.State_On
         
-        if verticalHeader.isParent: 
+        if verticalHeader.isParent and verticalHeader.isExpanded: 
             painter.fillRect(option.rect, option.palette.alternateBase())
         self.parent.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, option, painter)
         self.parent.update()
@@ -217,7 +217,8 @@ class FeatureTableWidget(QTableWidget):
         self.fillTabelWithItems()  
         self.setOldSelectedFeatures() 
         self.updateParentCell()       
-                
+        
+                        
     # methods
     # ------------------------------------------------    
     def createSelectedFeatureList(self):
@@ -284,7 +285,7 @@ class FeatureTableWidget(QTableWidget):
     def expandOrCollapseVHeader(self, row):
         vHeader = self.verticalHeaderItem(row)
         if not vHeader.children == []:
-            if vHeader.expanded == False:
+            if vHeader.isExpanded == False:
                 vHeader.setExpanded()
                 for subRow in vHeader.children:
                     self.showRow(subRow)
@@ -306,7 +307,7 @@ class FeatureTableWidget(QTableWidget):
             if item in self.tmpSelectedItems:
                 self.tmpSelectedItems.remove(item)
             else:
-                if item.isParent and self.verticalHeaderItem(item.row()).expanded == False:
+                if item.isParent and self.verticalHeaderItem(item.row()).isExpanded == False:
                     if item.featureState == 0 or item.featureState == 1:
                         state = 2
                     else:
@@ -317,7 +318,7 @@ class FeatureTableWidget(QTableWidget):
                     item.changeState()
                 
         for item in self.tmpSelectedItems:
-            if item.isParent and self.verticalHeaderItem(item.row()).expanded == False:
+            if item.isParent and self.verticalHeaderItem(item.row()).isExpanded == False:
                 if item.featureState == 0 or item.featureState == 1:
                     state = 2
                 else:
@@ -350,13 +351,6 @@ class FeatureTableWidget(QTableWidget):
 
 
     def eventFilter(self, obj, event):
-#        #??? hheader change size
-#        if not event.type() == QEvent.Paint:
-#            print obj, event
-#        if event.type() == QEvent.HoverMove:
-#            print "hover"
-#        if type(obj) == QHeaderView and self.underMouse():
-#            print obj.pos()
         if(event.type()==QEvent.MouseButtonPress):
             if event.button() == Qt.LeftButton:
                 if self.itemAt(event.pos()):
@@ -377,7 +371,7 @@ class FeatureTableWidget(QTableWidget):
         
     def featureTableItemDoubleClicked(self, row, column):
         item = self.item(row, column)
-        if item.isParent and self.verticalHeaderItem(item.row()).expanded == True:
+        if item.isParent and self.verticalHeaderItem(item.row()).isExpanded == True:
             if item.featureState == 0 or item.featureState == 1:
                 state = 2
             else:
@@ -410,26 +404,6 @@ class FeatureTableWidget(QTableWidget):
                 self.verticalHeaderItem(row).setData(3, j.name)
                 parent.children.append(row)
                 row += 1
-                
-                
-#class OkButton(QToolButton):
-#    def __init__(self, *args):
-#        QToolButton.__init__(self,  *args)
-#        
-#        self.connect(self, SIGNAL('clicked()'), self.clickOnButton)
-#        
-#    def clickOnButton(self):
-#        print "ok"
-#        
-#
-#class CancelButton(QToolButton):
-#    def __init__(self, *args):
-#        QToolButton.__init__(self,  *args)
-#        
-#        self.connect(self, SIGNAL('clicked()'), self.clickOnButton)
-#        
-#    def clickOnButton(self):
-#        print "cancel"
 
 
 class FeatureDlg(QDialog):
@@ -522,7 +496,7 @@ if __name__ == "__main__":
     
     app = QApplication(sys.argv)
     ex = FeatureDlg()
-    ex.setGrouping(g)
+#    ex.setGrouping(g)
 #    numpy.random.randint
 #    ex.setRawData()
 #    ex.ok.clicked.connect(onAccepted)
