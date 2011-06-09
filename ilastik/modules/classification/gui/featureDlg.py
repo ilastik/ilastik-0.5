@@ -29,7 +29,7 @@
 from PyQt4.QtGui import QGraphicsView, QVBoxLayout, QLabel, QGraphicsScene, QPixmap, QPainter, \
                         QTableWidgetItem, QItemDelegate, QStyle, QHBoxLayout, QIcon, QHeaderView, \
                         QAbstractItemView, QDialog, QToolButton, QErrorMessage, QApplication, \
-                        QTableWidget, QGroupBox
+                        QTableWidget, QGroupBox, QBrush, QColor, QPalette, QStyleOptionViewItem
 from PyQt4.QtCore import Qt, QRect, QSize, QEvent
 
 
@@ -46,8 +46,8 @@ class PreView(QGraphicsView):
         
         self.setMinimumWidth(200)
         self.setMinimumHeight(200)
-        self.setMaximumWidth(200)
-        self.setMaximumHeight(200)        
+#        self.setMaximumWidth(200)
+#        self.setMaximumHeight(200)        
         
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -140,6 +140,7 @@ class ItemDelegate(QItemDelegate):
     
     def paint(self, painter, option, index):
         item = self.parent.item(index.row(), index.column())
+        verticalHeader = self.parent.verticalHeaderItem(index.row())
         
         if item.featureState == Qt.Unchecked:
             option.state = QStyle.State_Off
@@ -147,7 +148,9 @@ class ItemDelegate(QItemDelegate):
             option.state = QStyle.State_NoChange
         else:
             option.state = QStyle.State_On
-            
+        
+        if verticalHeader.isParent: 
+            painter.fillRect(option.rect, option.palette.alternateBase())
         self.parent.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, option, painter)
         self.parent.update()
 
@@ -176,6 +179,9 @@ class FeatureTableWidget(QTableWidget):
         QTableWidget.__init__(self)
         # init
         # ------------------------------------------------
+        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
+        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
+        self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.tmpSelectedItems = []
         self.ilastik = ilastik
         self.setStyleSheet("background-color:white;")
@@ -209,15 +215,37 @@ class FeatureTableWidget(QTableWidget):
         self.setVHeaderNames()
         self.collapsAllRows()
         self.fillTabelWithItems()  
-        self.setOldSelectedFeatures()           
+        self.setOldSelectedFeatures() 
+        self.updateParentCell()       
                 
     # methods
     # ------------------------------------------------    
+    def createSelectedFeatureList(self):
+        result = []
+        for c in range(self.columnCount()):
+            for r in range(self.rowCount()):
+                item = self.item(r,c)
+                if not item.isParent:
+                    if item.featureState == 2:
+                        result.append([self.verticalHeaderItem(r).name, str(self.horizontalHeaderItem(c).text())])
+        print result
+        return result
+        
+    
     def setOldSelectedFeatures(self):
-        if len(featureMgr.ilastikFeatureGroups.selection) == self.rowCount() and len(featureMgr.ilastikFeatureGroups.selection[0]) ==  self.columnCount():
-            for c in range(self.columnCount()):
-                for r in range(self.rowCount()):
-                    if featureMgr.ilastikFeatureGroups.selection[r][c]:
+        if len(featureMgr.ilastikFeatureGroups.selection[0]) == 2:
+            for feature in featureMgr.ilastikFeatureGroups.selection:
+                for c in range(self.columnCount()):
+                    for r in range(self.rowCount()):
+                        if feature[0] == self.verticalHeaderItem(r).name and feature[1] == str(self.horizontalHeaderItem(c).text()):
+                            self.item(r,c).setFeatureState(2)
+        else:
+            i = -1
+            for r in range(self.rowCount()):
+                if self.verticalHeaderItem(r).isParent:
+                    i+=1
+                for c in range(self.columnCount()):
+                    if featureMgr.ilastikFeatureGroups.selection[i][c]:
                         self.item(r,c).setFeatureState(2)
     
     
@@ -230,7 +258,7 @@ class FeatureTableWidget(QTableWidget):
                     if item.featureState == 2:
                         #print r,c,self.verticalHeaderItem(r).feature,'###'
                         feat = self.verticalHeaderItem(r).feature
-                        sigma = ilastikFeatureGroups.groupScaleValues[c]
+                        sigma = self.groupScaleValues[c]
                         result.append(feat(sigma))
         return result
     
@@ -343,7 +371,7 @@ class FeatureTableWidget(QTableWidget):
         if event.type() == QEvent.MouseMove:
             if self.itemAt(event.pos()) and self.underMouse():
                 item = self.itemAt(event.pos())
-                self.changeSizeCallback(ilastikFeatureGroups.groupMaskSizes[item.column()])
+                self.changeSizeCallback(self.groupMaskSizes[item.column()])
         return False
         
         
@@ -364,8 +392,8 @@ class FeatureTableWidget(QTableWidget):
 
     
     def setHHeaderNames(self):
-        self.setColumnCount(len(featureMgr.ilastikFeatureGroups.groupScaleNames))
-        self.setHorizontalHeaderLabels(featureMgr.ilastikFeatureGroups.groupScaleNames)
+        self.setColumnCount(len(self.groupScaleNames))
+        self.setHorizontalHeaderLabels(self.groupScaleNames)
 
     
     def setVHeaderNames(self):
@@ -455,8 +483,9 @@ class FeatureDlg(QDialog):
         tableAndViewGroupBox.setContentsMargins(0,10,0,0)
         tableAndViewLayout.setContentsMargins(0,10,0,0)
         
-        self.featureTableWidget.setChangeSizeCallback(self.preView.setSizeToLabel)  
-        print ilastikFeatureGroups.createList() 
+        self.featureTableWidget.setChangeSizeCallback(self.preView.setSizeToLabel)
+        self.setMemReq()  
+        
                 
     # methods
     # ------------------------------------------------
@@ -468,6 +497,8 @@ class FeatureDlg(QDialog):
     
     def on_okClicked(self):
         featureSelectionList = self.featureTableWidget.createFeatureList()
+        selectedFeatureList = self.featureTableWidget.createSelectedFeatureList()
+        featureMgr.ilastikFeatureGroups.selection = selectedFeatureList
         res = self.parent.project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
             #print "features have maximum needed margin of:", self.parent.project.dataMgr.Classification.featureMgr.maxSigma*3
@@ -483,8 +514,19 @@ class FeatureDlg(QDialog):
         
         
 if __name__ == "__main__":
+#    def onAccepted():
+#        global ex
+#        print ex.adfasdfdf
+#    
+#    g = GroupName("Banane", "Birne")
+    
     app = QApplication(sys.argv)
     ex = FeatureDlg()
+    ex.setGrouping(g)
+#    numpy.random.randint
+#    ex.setRawData()
+#    ex.ok.clicked.connect(onAccepted)
+    
     ex.show()
     ex.raise_()
     app.exec_()
