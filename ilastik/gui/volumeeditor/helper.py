@@ -83,6 +83,8 @@ class ViewManager(QtCore.QObject):
         self._time = time
         self._position = position
         self._channel = channel
+        self._beginStackIndex = 0
+        self._endStackIndex   = 1
         
     def setTime(self, time):
         if self._time != time:
@@ -94,9 +96,18 @@ class ViewManager(QtCore.QObject):
         return self._time
         
     def setSlice(self, num, axis):
+        if num < self._beginStackIndex or num >= self._endStackIndex:
+            return
+        
         if self._position[axis] != num:
             self._position[axis] = num
             self.sliceChanged.emit(num, axis)
+    
+    def setStackRange(self, begin, end):
+        """when scrolling through a stack of slices, the first slice
+           has index 'begin' and the last one has index 'end-1' """
+        self._beginStackIndex = begin
+        self._endStackIndex   = end
     
     def changeSliceDelta(self, axis, delta):
         self.setSlice(self.position[axis] + delta, axis)

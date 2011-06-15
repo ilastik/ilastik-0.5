@@ -60,6 +60,7 @@ class ImageScene(QtGui.QGraphicsView):
         
         self.drawManager = drawManager
         self.viewManager = viewManager
+        self.viewManager.setStackRange(0, imShape[axis])
         
         self.tempImageItems = []
         self.axis = axis
@@ -792,6 +793,10 @@ class ImageSceneTest(QtGui.QApplication):
         print "changeSlice"
     
 if __name__ == "__main__":
+    #make the program quit on Ctrl+C
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     app = ImageSceneTest([""])
     app.exec_()
 
