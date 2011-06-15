@@ -30,32 +30,39 @@
 """
 Dataset Editor Dialog based on PyQt4
 """
-from PyQt4 import QtCore, QtGui
+
+from PyQt4.QtCore import Qt, pyqtSignal
+from PyQt4.QtGui import QApplication, QWidget, QPixmapCache, QLabel, QSpinBox, \
+                        QCheckBox, QShortcut, QKeySequence, QSplitter, \
+                        QVBoxLayout, QHBoxLayout, QPushButton
 
 import time
 import numpy, qimage2ndarray
 
 from ilastik.core.volume import DataAccessor
-from ilastik.gui.shortcutmanager import *
+from ilastik.gui.shortcutmanager import shortcutManager
 from ilastik.gui.quadsplitter import QuadView
 import ilastik.gui.exportDialog as exportDialog
       
-      
-from ilastik.gui.volumeeditor.imagescene import *
-from ilastik.gui.volumeeditor.overview import *
-from ilastik.gui.volumeeditor.helper import *
+from ilastik.gui.volumeeditor.imagescene import ImageScene
+from ilastik.gui.volumeeditor.overview import OverviewSceneFactory
+from ilastik.gui.volumeeditor.helper import ImageWithProperties, \
+DummyLabelWidget, DummyOverlayListWidget, ImageSaveThread, HistoryManager, \
+DrawManager, ViewManager, InteractionLogger
 
 #*******************************************************************************
 # V o l u m e E d i t o r                                                      *
 #*******************************************************************************
 
-class VolumeEditor(QtGui.QWidget):
+class VolumeEditor(QWidget):
     grid = None #in 3D mode hold the quad view widget, otherwise remains none
+    
+    changedSlice = pyqtSignal(int,int)
     
     """Array Editor Dialog"""
     def __init__(self, image, parent,  name="", font=None,
                  readonly=False, size=(400, 300), sharedOpenglWidget = None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         
         if issubclass(image.__class__, ImageWithProperties):
             self.image = image
@@ -87,7 +94,7 @@ class VolumeEditor(QtGui.QWidget):
         self.sharedOpenGLWidget = sharedOpenglWidget
 
 
-        QtGui.QPixmapCache.setCacheLimit(100000)
+        QPixmapCache.setCacheLimit(100000)
 
         self.save_thread = ImageSaveThread(self)
         self._history = HistoryManager(self)
@@ -111,41 +118,40 @@ class VolumeEditor(QtGui.QWidget):
             self.grid.addWidget(2, self.imageScenes[1])
             self.grid.addWidget(3, self.overview)
             for i in xrange(3):
-                self.connect(self.imageScenes[i], QtCore.SIGNAL('toggleMaximized(QWidget)'), self.grid.toggleMaximized)
-                self.connect(self.imageScenes[i], QtCore.SIGNAL('drawing(int, QPointF)'), self.updateLabels)
-                self.connect(self.imageScenes[i], QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
+                self.imageScenes[i].toggleMaximized.connect(self.grid.toggleMaximized)
+                self.imageScenes[i].drawing.connect(self.updateLabels)
+                self.imageScenes[i].customContextMenuRequested.connect(self.onContext)
         
         for scene in self.imageScenes:
-            QtCore.QObject.connect(scene, QtCore.SIGNAL('mouseDoubleClicked(int, int, int)'), self.setPosition)
-            QtCore.QObject.connect(scene, QtCore.SIGNAL('mouseMoved(int, int, int, bool)'), self.updateInfoLabels)
-            QtCore.QObject.connect(scene, QtCore.SIGNAL('mouseMoved(int, int, int, bool)'), self.updateCrossHairCursor)
-            QtCore.QObject.connect(self.viewManager, QtCore.SIGNAL('sliceChanged(int, int)'), scene.updateSliceIntersection)
-            QtCore.QObject.connect(scene, QtCore.SIGNAL('updatedSlice(int)'), self.overview.display)
-            QtCore.QObject.connect(scene, QtCore.SIGNAL('beginDraw(int, QPointF)'), self.beginDraw)
-            QtCore.QObject.connect(scene, QtCore.SIGNAL('endDraw(int, QPointF)'), self.endDraw)
+            scene.mouseDoubleClicked.connect(self.setPosition)
+            scene.mouseMoved.connect(self.updateInfoLabels)
+            scene.mouseMoved.connect(self.updateCrossHairCursor)
+            self.changedSlice.connect(scene.updateSliceIntersection)
+            scene.beginDraw.connect(self.beginDraw)
+            scene.endDraw.connect(self.endDraw)
             
         #Controls the trade-off of speed and flickering when scrolling through this slice view
         self.setFastRepaint(True)   
 
         # 2D/3D Views
-        viewingLayout = QtGui.QVBoxLayout()
+        viewingLayout = QVBoxLayout()
         if self.image.is3D():
             viewingLayout.addWidget(self.grid)
         else:
             viewingLayout.addWidget(self.imageScenes[0])
         
         # Label below views
-        labelLayout = QtGui.QHBoxLayout()
-        self.posLabel = QtGui.QLabel()
-        self.pixelValuesLabel = QtGui.QLabel()
+        labelLayout = QHBoxLayout()
+        self.posLabel = QLabel()
+        self.pixelValuesLabel = QLabel()
         labelLayout.addWidget(self.posLabel)
         labelLayout.addWidget(self.pixelValuesLabel)
         labelLayout.addStretch()
         viewingLayout.addLayout(labelLayout)
 
         # Right side toolbox
-        self.toolBox = QtGui.QWidget()
-        self.toolBoxLayout = QtGui.QVBoxLayout()
+        self.toolBox = QWidget()
+        self.toolBoxLayout = QVBoxLayout()
         self.toolBox.setLayout(self.toolBoxLayout)
         #self.toolBox.setMaximumWidth(190)
         #self.toolBox.setMinimumWidth(190)
@@ -167,43 +173,43 @@ class VolumeEditor(QtGui.QWidget):
         
         for spinner in spinners:
             label, limitMax, signalConnect, isVisible = spinner
-            sliceSpin = QtGui.QSpinBox()
+            sliceSpin = QSpinBox()
             sliceSpin.setEnabled(True)
             sliceSpin.setRange(0, limitMax)
             if isVisible: #only show when needed
-                tempLay = QtGui.QHBoxLayout()
-                tempLay.addWidget(QtGui.QLabel("<pre>"+label+"</pre>"))
+                tempLay = QHBoxLayout()
+                tempLay.addWidget(QLabel("<pre>"+label+"</pre>"))
                 tempLay.addWidget(sliceSpin, 1)
-                self.toolBoxLayout.addLayout(tempLay)     
-            self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), signalConnect)
+                self.toolBoxLayout.addLayout(tempLay)
+            sliceSpin.valueChanged.connect(signalConnect)
             self.sliceSelectors.append(sliceSpin)
             
-        QtCore.QObject.connect(self.viewManager, QtCore.SIGNAL('sliceChanged(int, int)'), lambda num,axis: self.sliceSelectors[axis].setValue(num))
+        self.viewManager.sliceChanged.connect(lambda num,axis: self.sliceSelectors[axis].setValue(num))
 
         # Check box for slice intersection marks
-        sliceIntersectionBox = QtGui.QCheckBox("Slice Intersection")
+        sliceIntersectionBox = QCheckBox("Slice Intersection")
         sliceIntersectionBox.setEnabled(True)        
         self.toolBoxLayout.addWidget(sliceIntersectionBox)
         for scene in self.imageScenes:
-            self.connect(sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
-        sliceIntersectionBox.setCheckState(QtCore.Qt.Checked)
+            sliceIntersectionBox.stateChanged.connect(scene.setSliceIntersection)
+        sliceIntersectionBox.setCheckState(Qt.Checked)
 
         self.toolBoxLayout.addStretch()
 
 
         # Channel Selector Combo Box in right side toolbox
-        self.channelSpin = QtGui.QSpinBox()
+        self.channelSpin = QSpinBox()
         self.channelSpin.setEnabled(True)
-        self.connect(self.channelSpin, QtCore.SIGNAL("valueChanged(int)"), self.setChannel)
+        self.channelSpin.valueChanged.connect(self.setChannel)
         
-        self.channelEditBtn = QtGui.QPushButton('Edit channels')
-        self.connect(self.channelEditBtn, QtCore.SIGNAL("clicked()"), self.on_editChannels)
+        self.channelEditBtn = QPushButton('Edit channels')
+        self.channelEditBtn.clicked.connect(self.on_editChannels)
         
-        channelLayout = QtGui.QHBoxLayout()
+        channelLayout = QHBoxLayout()
         channelLayout.addWidget(self.channelSpin)
         channelLayout.addWidget(self.channelEditBtn)
         
-        self.channelSpinLabel = QtGui.QLabel("Channel:")
+        self.channelSpinLabel = QLabel("Channel:")
         self.toolBoxLayout.addWidget(self.channelSpinLabel)
         self.toolBoxLayout.addLayout(channelLayout)
         
@@ -219,8 +225,8 @@ class VolumeEditor(QtGui.QWidget):
         self.toolBoxLayout.addWidget(self.overlayWidget)
 
 
-        self.toolBoxLayout.setAlignment( QtCore.Qt.AlignTop )
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.toolBoxLayout.setAlignment( Qt.AlignTop )
+        self.setAttribute(Qt.WA_DeleteOnClose)
         self.setWindowTitle(self.tr("Volume") + \
                             "%s" % (" - "+str(self.name) if str(self.name) else ""))
 
@@ -234,12 +240,12 @@ class VolumeEditor(QtGui.QWidget):
         self.focusAxis =  0
         
         # setup the layout for display
-        self.splitter = QtGui.QSplitter()
-        tempWidget = QtGui.QWidget()
+        self.splitter = QSplitter()
+        tempWidget = QWidget()
         tempWidget.setLayout(viewingLayout)
         self.splitter.addWidget(tempWidget)
         self.splitter.addWidget(self.toolBox)
-        splitterLayout = QtGui.QVBoxLayout()
+        splitterLayout = QVBoxLayout()
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
         
@@ -256,7 +262,7 @@ class VolumeEditor(QtGui.QWidget):
         
             
     def __shortcutHelper(self, keySequence, group, description, parent, function, context = None, enabled = None):
-        shortcut = QtGui.QShortcut(QtGui.QKeySequence(keySequence), parent, function, function)
+        shortcut = QShortcut(QKeySequence(keySequence), parent, function, function)
         if context != None:
             shortcut.setContext(context)
         if enabled != None:
@@ -266,9 +272,9 @@ class VolumeEditor(QtGui.QWidget):
 
     def __initShortcuts(self):
         ##undo/redo and other shortcuts
-        self.__shortcutHelper("Ctrl+Z", "Labeling", "History undo", self, self.historyUndo, QtCore.Qt.ApplicationShortcut, True)
-        self.__shortcutHelper("Ctrl+Shift+Z", "Labeling", "History redo", self, self.historyRedo, QtCore.Qt.ApplicationShortcut, True)  
-        self.__shortcutHelper("Ctrl+Y", "Labeling", "History redo", self, self.historyRedo, QtCore.Qt.ApplicationShortcut, True)
+        self.__shortcutHelper("Ctrl+Z", "Labeling", "History undo", self, self.historyUndo, Qt.ApplicationShortcut, True)
+        self.__shortcutHelper("Ctrl+Shift+Z", "Labeling", "History redo", self, self.historyRedo, Qt.ApplicationShortcut, True)  
+        self.__shortcutHelper("Ctrl+Y", "Labeling", "History redo", self, self.historyRedo, Qt.ApplicationShortcut, True)
         self.__shortcutHelper("Space", "Overlays", "Invert overlay visibility", self, self.toggleOverlays, enabled = True)
         self.__shortcutHelper("l", "Labeling", "Go to next label (cyclic, forward)", self, self.nextLabel)
         self.__shortcutHelper("k", "Labeling", "Go to previous label (cyclic, backwards)", self, self.prevLabel)
@@ -277,18 +283,18 @@ class VolumeEditor(QtGui.QWidget):
         self.__shortcutHelper("z", "Navigation", "Enlarge slice view z to full size", self, self.toggleFullscreenZ)
         self.__shortcutHelper("q", "Navigation", "Switch to next channel", self, self.nextChannel)
         self.__shortcutHelper("a", "Navigation", "Switch to previous channel", self, self.previousChannel)
-#        self.__shortcutHelper("n", "Labeling", "Increase brush size", self.drawManager, self.drawManager.brushSmaller, QtCore.Qt.WidgetShortcut)
-#        self.__shortcutHelper("m", "Labeling", "Decrease brush size", self.drawManager, self.drawManager.brushBigger, QtCore.Qt.WidgetShortcut)
+#        self.__shortcutHelper("n", "Labeling", "Increase brush size", self.drawManager, self.drawManager.brushSmaller, Qt.WidgetShortcut)
+#        self.__shortcutHelper("m", "Labeling", "Decrease brush size", self.drawManager, self.drawManager.brushBigger, Qt.WidgetShortcut)
         
         for scene in self.imageScenes:
-            self.__shortcutHelper("+", "Navigation", "Zoom in", scene, scene.zoomIn, QtCore.Qt.WidgetShortcut)
-            self.__shortcutHelper("-", "Navigation", "Zoom out", scene, scene.zoomOut, QtCore.Qt.WidgetShortcut)
-            self.__shortcutHelper("p", "Navigation", "Slice up", scene, scene.sliceUp, QtCore.Qt.WidgetShortcut)           
-            self.__shortcutHelper("o", "Navigation", "Slice down", scene, scene.sliceDown, QtCore.Qt.WidgetShortcut)
-            self.__shortcutHelper("Ctrl+Up", "Navigation", "Slice up", scene, scene.sliceUp, QtCore.Qt.WidgetShortcut)
-            self.__shortcutHelper("Ctrl+Down", "Navigation", "Slice down", scene, scene.sliceDown, QtCore.Qt.WidgetShortcut)
-            self.__shortcutHelper("Ctrl+Shift+Up", "Navigation", "10 slices up", scene, scene.sliceUp10, QtCore.Qt.WidgetShortcut)
-            self.__shortcutHelper("Ctrl+Shift+Down", "Navigation", "10 slices down", scene, scene.sliceDown10, QtCore.Qt.WidgetShortcut)
+            self.__shortcutHelper("+", "Navigation", "Zoom in", scene, scene.zoomIn, Qt.WidgetShortcut)
+            self.__shortcutHelper("-", "Navigation", "Zoom out", scene, scene.zoomOut, Qt.WidgetShortcut)
+            self.__shortcutHelper("p", "Navigation", "Slice up", scene, scene.sliceUp, Qt.WidgetShortcut)           
+            self.__shortcutHelper("o", "Navigation", "Slice down", scene, scene.sliceDown, Qt.WidgetShortcut)
+            self.__shortcutHelper("Ctrl+Up", "Navigation", "Slice up", scene, scene.sliceUp, Qt.WidgetShortcut)
+            self.__shortcutHelper("Ctrl+Down", "Navigation", "Slice down", scene, scene.sliceDown, Qt.WidgetShortcut)
+            self.__shortcutHelper("Ctrl+Shift+Up", "Navigation", "10 slices up", scene, scene.sliceUp10, Qt.WidgetShortcut)
+            self.__shortcutHelper("Ctrl+Shift+Down", "Navigation", "10 slices down", scene, scene.sliceDown10, Qt.WidgetShortcut)
 
 
 
@@ -302,7 +308,7 @@ class VolumeEditor(QtGui.QWidget):
         else:
             for imageScene in self.imageScenes:
                 imageScene.drawingEnabled = False
-                imageScene.crossHairCursor.setColor(QtGui.QColor("black"))
+                imageScene.crossHairCursor.setColor(QColor("black"))
 
     def onOverlaySelected(self, index):
         print "onOverlaySelected"
@@ -324,13 +330,13 @@ class VolumeEditor(QtGui.QWidget):
             #stack z-view is stored in imageScenes[2], for no apparent reason
             sliceOffsetCheck = True
         timeOffsetCheck = self.image.shape[0]>1
-        formatList = QtGui.QImageWriter.supportedImageFormats()
+        formatList = QImageWriter.supportedImageFormats()
         formatList = [x for x in formatList if x in ['png', 'tif']]
         expdlg = exportDialog.ExportDialog(formatList, timeOffsetCheck, sliceOffsetCheck, None, parent=self.ilastik)
         expdlg.exec_()
         try:
             tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
-            filename = str(QtCore.QDir.convertSeparators(tempname))
+            filename = str(QDir.convertSeparators(tempname))
             self.save_thread.start()
             stuff = (filename, expdlg.timeOffset, expdlg.sliceOffset, expdlg.format)
             self.save_thread.queue.append(stuff)
@@ -356,7 +362,7 @@ class VolumeEditor(QtGui.QWidget):
         return True
     
     def cleanUp(self):
-        QtGui.QApplication.processEvents()
+        QApplication.processEvents()
         print "VolumeEditor: cleaning up "
         for scene in self.imageScenes:
             scene.cleanUp()
@@ -366,7 +372,7 @@ class VolumeEditor(QtGui.QWidget):
         self.save_thread.stopped = True
         self.save_thread.imagePending.set()
         self.save_thread.wait()
-        QtGui.QApplication.processEvents()
+        QApplication.processEvents()
         print "finished saving thread"
 
 
@@ -380,7 +386,7 @@ class VolumeEditor(QtGui.QWidget):
             self.labelWidget.close()
             del self.labelWidget
         self.labelWidget = widget
-        self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
+        self.labelWidget.itemSelectionChanged.connect(self.onLabelSelected)
         self.toolBoxLayout.insertWidget( 0, self.labelWidget)        
     
     def setOverlayWidget(self,  widget):
@@ -392,7 +398,7 @@ class VolumeEditor(QtGui.QWidget):
             self.overlayWidget.close()
             del self.overlayWidget
         self.overlayWidget = widget
-        self.connect(self.overlayWidget , QtCore.SIGNAL("selectedOverlay(int)"), self.onOverlaySelected)
+        self.overlayWidget.selectedOverlay.connect(self.onOverlaySelected)
         self.toolBoxLayout.insertWidget( 1, self.overlayWidget)        
         self.ilastik.project.dataMgr[self.ilastik._activeImageNumber].overlayMgr.ilastik = self.ilastik
 
@@ -445,8 +451,8 @@ class VolumeEditor(QtGui.QWidget):
         event.accept()
 
     def wheelEvent(self, event):
-        keys = QtGui.QApplication.keyboardModifiers()
-        k_ctrl = (keys == QtCore.Qt.ControlModifier)
+        keys = QApplication.keyboardModifiers()
+        k_ctrl = (keys == Qt.ControlModifier)
         
         if k_ctrl is True:        
             if event.delta() > 0:
@@ -468,9 +474,9 @@ class VolumeEditor(QtGui.QWidget):
             tempImage = None
             tempoverlays = []   
             for item in reversed(self.overlayWidget.overlays):
-                if item.visible:
-                    tempoverlays.append(item.getOverlaySlice(self.viewManager.slicePosition[i], i, self.viewManager.time, item.channel)) 
-            if len(self.overlayWidget.overlays) > 0:
+                if item.visible: #and hasattr(item, 'getOverlaySlice'):
+                    tempoverlays.append(item.getOverlaySlice(self.viewManager.slicePosition[i], i, self.viewManager.time, item.channel))
+            if len(self.overlayWidget.overlays) > 0: #and hasattr(self.overlayWidget, 'getOverlayRef'):
                 tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.viewManager.slicePosition[i], i, self.viewManager.time, self.overlayWidget.getOverlayRef("Raw Data").channel)
             else:
                 tempImage = None
@@ -481,7 +487,7 @@ class VolumeEditor(QtGui.QWidget):
                 self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False, normalizeData = self.normalizeData)
                         
     def show(self):
-        QtGui.QWidget.show(self)
+        QWidget.show(self)
 
 
 
@@ -529,8 +535,7 @@ class VolumeEditor(QtGui.QWidget):
 
         # FIXME there needs to be abstraction
         self.imageScenes[axis].imageSceneRenderer.updatePatches(patches, tempImage, tempoverlays)
-        self.emit(QtCore.SIGNAL('newLabelsPending()')) # e.g. retrain
-
+        self.newLabelsPending.emit() # e.g. retrain
 
     #===========================================================================
     # View & Tools Options
@@ -538,7 +543,7 @@ class VolumeEditor(QtGui.QWidget):
     def toggleOverlays(self):
         for index,  item in enumerate(self.overlayWidget.overlays):
             item.visible = not(item.visible)
-            checkState = QtCore.Qt.Checked if item.visible else QtCore.Qt.Unchecked
+            checkState = Qt.Checked if item.visible else Qt.Unchecked
             self.overlayWidget.overlayListWidget.item(index).setCheckState(checkState)
         self.repaint()
        
@@ -597,7 +602,8 @@ class VolumeEditor(QtGui.QWidget):
         for i in range(3):
             self.changeSlice(self.viewManager.slicePosition[i], i)
             
-    def setPosition(self, axis, x, y):        
+    def setPosition(self, axis, x, y):
+        print "setPosition(%d, %d, %d)" % (axis, x, y)
         if axis == 0:
             self.changeSlice(x, 1)
             self.changeSlice(y, 2)
@@ -622,8 +628,9 @@ class VolumeEditor(QtGui.QWidget):
         
         if len(self.imageScenes) > axis:
             self.imageScenes[axis].sliceNumber = num
-            
-        self.emit(QtCore.SIGNAL('changedSlice(int, int)'), num, axis) # FIXME this triggers the update for live prediction 
+        
+        #print "VolumeEditor.changeSlice: emitting 'changedSlice' signal num=%d, axis=%d" % (num,axis)
+        self.changedSlice.emit(num, axis) # FIXME this triggers the update for live prediction 
         
         self.repaint(axis)
         
@@ -705,6 +712,7 @@ class VolumeEditor(QtGui.QWidget):
         
         (posX, posY, posZ) = self.imageScenes[axis].coordinateUnderCursor()
 
+        #if hasattr(self.overlayWidget, 'getOverlayRef'):
         if axis == 0:
             colorValues = self.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
         elif axis == 1:
@@ -717,33 +725,34 @@ class VolumeEditor(QtGui.QWidget):
             self.pixelValuesLabel.setText("<b>R:</b> %03i  <b>G:</b> %03i  <b>B:</b> %03i" % (colorValues[0], colorValues[1], colorValues[2]))
         else:
             self.pixelValuesLabel.setText("<b>Gray:</b> %03i" %int(colorValues))
-    
-def test():
-    """Text editor demo"""
-#    app = QtGui.QApplication([""])
-#
-#    im = (numpy.random.rand(1024,1024)*255).astype(numpy.uint8)
-#    im[0:10,0:10] = 255
-#    
-#    dialog = VolumeEditor(im, None)
-#    dialog.show()
-#    app.exec_()
-#    del app
-
-    app = QtGui.QApplication([""])
-
-    im = (numpy.random.rand(128,128,128)*255).astype(numpy.uint8)
-    im[0:10,0:10,0:10] = 255
-
-    dialog = VolumeEditor(im, None)
-    dialog.show()
-    app.exec_()
-
 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
 
 if __name__ == "__main__":
-    test()
+    from PyQt4.QtCore import QObject
+    from PyQt4.QtGui import QApplication, QColor
+    #make the program quit on Ctrl+C
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    from ilastik.core.overlayMgr import OverlaySlice, OverlayItem
+    from ilastik.core.volume import DataAccessor
+    
+    class Test(QObject):
+        def __init__(self):
+            QObject.__init__(self)
+            
+            self.data = (numpy.random.rand(128,256,64)*255).astype(numpy.uint8)
+            self.data[0:10,0:10,0:10] = 255
+            self.data[20:40,30:70,:] = 128 
+            self.dialog = VolumeEditor(self.data, None)
+            self.dataOverlay = OverlayItem(DataAccessor(self.data), alpha=1.0, color=Qt.black, colorTable=OverlayItem.createDefaultColorTable('GRAY', 256), autoVisible=True, autoAlphaChannel=False)
+            self.dialog.overlayWidget.overlays = [self.dataOverlay.getRef()]
+            
+            self.dialog.show()
+
+    app = QApplication([""])
+    t = Test()
+    app.exec_()
 

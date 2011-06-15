@@ -1,5 +1,6 @@
+from PyQt4.QtCore import QObject, QThread, pyqtSignal
+from PyQt4.QtGui import QPainter, QColor, QImage
 
-from PyQt4 import QtCore, QtGui, QtOpenGL
 import numpy, qimage2ndarray
 import threading
 from collections import deque
@@ -10,9 +11,9 @@ except Exception, e:
     print e
     pass
 
-class ImageSceneRenderer(QtCore.QObject):
+class ImageSceneRenderer(QObject):
     def __init__(self, imageScene):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self.imageScene = imageScene # TODO: remove dependency
         self.patchAccessor = imageScene.patchAccessor
         
@@ -20,7 +21,7 @@ class ImageSceneRenderer(QtCore.QObject):
         self.max = 255
         
         self.thread = ImageSceneRenderThread(imageScene, imageScene.patchAccessor)
-        self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.renderingThreadFinished)
+        self.thread.finishedQueue.connect(self.renderingThreadFinished)
         self.thread.start()
 
     def renderImage(self, image, overlays = ()):
@@ -69,15 +70,17 @@ class ImageSceneRenderer(QtCore.QObject):
         self.thread.freeQueue.set()
         
         #FIXME this is a hack
-        self.imageScene.emit(QtCore.SIGNAL('updatedSlice(int)'), self.imageScene.axis)
+        #self.imageScene.updatedSlice.emit(self.imageScene.axis)
     
 
 #*******************************************************************************
 # I m a g e S c e n e R e n d e r T h r e a d                                  *
 #*******************************************************************************
-class ImageSceneRenderThread(QtCore.QThread):
+class ImageSceneRenderThread(QThread):
+    finishedQueue = pyqtSignal()
+    
     def __init__(self, imageScene, patchAccessor):
-        QtCore.QThread.__init__(self, None)
+        QThread.__init__(self, None)
         #self.paintDevice = paintDevice
         self.imageScene = imageScene #TODO make independent
         self.patchAccessor = patchAccessor
@@ -97,7 +100,7 @@ class ImageSceneRenderThread(QtCore.QThread):
     
     def run(self):
         while not self.stopped:
-            self.emit(QtCore.SIGNAL('finishedQueue()'))
+            self.finishedQueue.emit()
             self.dataPending.wait()
             self.newerDataPending.clear()
             self.freeQueue.clear()
@@ -112,10 +115,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                         bounds = self.patchAccessor.getPatchBounds(patchNr)
 
                         if self.imageScene.openglWidget is None:
-                            p = QtGui.QPainter(self.imageScene.scene.image)
+                            p = QPainter(self.imageScene.scene.image)
                             p.translate(bounds[0],bounds[2])
                         else:
-                            p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
+                            p = QPainter(self.imageScene.imagePatches[patchNr])
                         
                         p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
 
@@ -129,7 +132,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                             
                             origitemColor = None
                             if isinstance(origitem.color,  long) or isinstance(origitem.color,  int):
-                                origitemColor = QtGui.QColor.fromRgba(long(origitem.color))
+                                origitemColor = QColor.fromRgba(long(origitem.color))
                             else:
                                 origitemColor = origitem.color
                                  
@@ -191,7 +194,7 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         image0 = image1
                                 else:
                                     image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
-                                    image0 = QtGui.QImage(itemdata.shape[0],itemdata.shape[1],QtGui.QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                                    image0 = QImage(itemdata.shape[0],itemdata.shape[1],QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
                                     image0.fill(origitemColor.rgba())
                                     image0.setAlphaChannel(image1)
                             p.drawImage(0,0, image0)

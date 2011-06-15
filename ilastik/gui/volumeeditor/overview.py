@@ -27,7 +27,8 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4 import QtGui, QtOpenGL
+from PyQt4.QtGui import QWidget
+from PyQt4.QtOpenGL import QGLWidget
 
 try:
     from OpenGL.GL import *
@@ -35,8 +36,6 @@ try:
 except Exception, e:
     print e
     pass
-
-
 
 #*******************************************************************************
 # O v e r v i e w S c e n e F a c t o r y                                      *
@@ -53,9 +52,9 @@ class OverviewSceneFactory:
 # O v e r v i e w S c e n e D u m m y                                          *
 #*******************************************************************************
 
-class OverviewSceneDummy(QtGui.QWidget):
+class OverviewSceneDummy(QWidget):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
         pass
     
     def display(self, axis):
@@ -68,10 +67,10 @@ class OverviewSceneDummy(QtGui.QWidget):
 # O v e r v i e w S c e n e G L                                                *
 #*******************************************************************************
 
-class OverviewSceneGL(QtOpenGL.QGLWidget):
+class OverviewSceneGL(QGLWidget):
     def __init__(self, images, viewManager, shape, sharedOpenGLWidget):
-        QtOpenGL.QGLWidget.__init__(self, shareWidget = sharedOpenGLWidget)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        QGLWidget.__init__(self, shareWidget = sharedOpenGLWidget)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         self.viewManger = viewManager
         self.images = images

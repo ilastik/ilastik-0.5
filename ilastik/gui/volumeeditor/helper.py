@@ -27,8 +27,8 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtCore import pyqtSignal, QObject, QThread, Qt
+from PyQt4.QtGui  import QWidget, QPen, QGraphicsScene
 
 from ilastik.core.volume import DataAccessor
 
@@ -74,11 +74,11 @@ class InteractionLogger():
 
     
 
-class ViewManager(QtCore.QObject):
+class ViewManager(QObject):
     sliceChanged = pyqtSignal(int,int)
     
     def __init__(self, image, time = 0, position = [0, 0, 0], channel = 0):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self._image = image
         self._time = time
         self._position = position
@@ -96,18 +96,12 @@ class ViewManager(QtCore.QObject):
         return self._time
         
     def setSlice(self, num, axis):
-        if num < self._beginStackIndex or num >= self._endStackIndex:
+        if num < self._image.shape[axis] or num >= self._image.shape[axis]:
             return
         
         if self._position[axis] != num:
             self._position[axis] = num
             self.sliceChanged.emit(num, axis)
-    
-    def setStackRange(self, begin, end):
-        """when scrolling through a stack of slices, the first slice
-           has index 'begin' and the last one has index 'end-1' """
-        self._beginStackIndex = begin
-        self._endStackIndex   = end
     
     def changeSliceDelta(self, axis, delta):
         self.setSlice(self.position[axis] + delta, axis)
@@ -131,7 +125,7 @@ class ViewManager(QtCore.QObject):
         return [self._time, self._position[0], self._position[1], self._position[2], self._channel]
     
     def __updated(self):
-        #self.emit(QtCore.SIGNAL('viewChanged(ViewManager)'), self) #FIXME
+        #self.emit(SIGNAL('viewChanged(ViewManager)'), self) #FIXME
         pass
 
 
@@ -261,9 +255,9 @@ class LabelState(State):
 # H i s t o r y M a n a g e r                                                  *
 #*******************************************************************************
 
-class HistoryManager(QtCore.QObject):
+class HistoryManager(QObject):
     def __init__(self, parent, maxSize = 3000):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self.volumeEditor = parent
         self.maxSize = maxSize
         self._history = []
@@ -365,9 +359,11 @@ class VolumeUpdate():
 # D u m m y L a b e l W i d g e t                                              *
 #*******************************************************************************
 
-class DummyLabelWidget(QtGui.QWidget):
+class DummyLabelWidget(QWidget):
+    itemSelectionChanged = pyqtSignal()
+    
     def __init__(self):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
         self.volumeLabels = None
         
     def currentItem(self):
@@ -377,31 +373,36 @@ class DummyLabelWidget(QtGui.QWidget):
 # D u m m y O v e r l a y L i s t W i d g e t                                  *
 #*******************************************************************************
 
-class DummyOverlayListWidget(QtGui.QWidget):
+class DummyOverlayListWidget(QWidget):
     def __init__(self,  parent):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
         self.volumeEditor = parent
         self.overlays = []
+    def getOverlayRef(self, name):
+        #FIXME
+        return self.overlays[0]
 
 #*******************************************************************************
 # D r a w M a n a g e r                                                        *
 #*******************************************************************************
 
-class DrawManager(QtCore.QObject):
+class DrawManager(QObject):
+    brushSizeChanged = pyqtSignal(int)
+    
     def __init__(self):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self.shape = None
         self.brushSize = 3
         #self.initBoundingBox()
-        self.penVis = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
-        self.penDraw = QtGui.QPen(QtCore.Qt.white, 3, QtCore.Qt.SolidLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
-        self.penDraw.setColor(QtCore.Qt.white)
+        self.penVis = QPen(Qt.white, 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        self.penDraw = QPen(Qt.white, 3, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin)
+        self.penDraw.setColor(Qt.white)
         self.pos = None
         self.erasing = False
         self.lines = []
-        self.scene = QtGui.QGraphicsScene()
+        self.scene = QGraphicsScene()
         
-        self.color = QtCore.Qt.white
+        self.color = Qt.white
 
     def copy(self):
         """
@@ -437,17 +438,17 @@ class DrawManager(QtCore.QObject):
 
     def setErasing(self):
         self.erasing = True
-        self.emit(QtCore.SIGNAL('brushColorChanged(int)'), QtGui.QColor("black") )
+        self.emit(SIGNAL('brushColorChanged(int)'), QColor("black") )
     
     def disableErasing(self):
         self.erasing = False
-        self.emit(QtCore.SIGNAL('brushColorChanged(int)'), self.color())
+        self.emit(SIGNAL('brushColorChanged(int)'), self.color())
 
     def setBrushSize(self, size):      
         self.brushSize = size
         self.penVis.setWidth(size)
         self.penDraw.setWidth(size)
-        self.emit(QtCore.SIGNAL('brushSizeChanged(int)'), self.brushSize)
+        self.emit(SIGNAL('brushSizeChanged(int)'), self.brushSize)
         
     def getBrushSize(self):
         return self.brushSize
@@ -465,17 +466,17 @@ class DrawManager(QtCore.QObject):
     def setBrushColor(self, color):
         self.color = color
         self.penVis.setColor(color)
-        self.emit(QtCore.SIGNAL('brushColorChanged(int)'), self.color)
+        self.emit(SIGNAL('brushColorChanged(int)'), self.color)
         
     def beginDraw(self, pos, shape):
         self.shape = shape
         self.initBoundingBox()
         self.scene.clear()
         if self.erasing == True:
-            self.penVis.setColor(QtCore.Qt.black)
+            self.penVis.setColor(Qt.black)
         else:
             self.penVis.setColor(self.color)
-        self.pos = QtCore.QPointF(pos.x()+0.0001, pos.y()+0.0001)
+        self.pos = QPointF(pos.x()+0.0001, pos.y()+0.0001)
         
         line = self.moveTo(pos)
         return line
@@ -484,12 +485,12 @@ class DrawManager(QtCore.QObject):
         self.moveTo(pos)
         self.growBoundingBox()
 
-        tempi = QtGui.QImage(self.rightMost - self.leftMost, self.bottomMost - self.topMost, QtGui.QImage.Format_ARGB32_Premultiplied) #TODO: format
+        tempi = QImage(self.rightMost - self.leftMost, self.bottomMost - self.topMost, QImage.Format_ARGB32_Premultiplied) #TODO: format
         tempi.fill(0)
-        painter = QtGui.QPainter(tempi)
+        painter = QPainter(tempi)
         
-        self.scene.render(painter, QtCore.QRectF(0,0, self.rightMost - self.leftMost, self.bottomMost - self.topMost),
-            QtCore.QRectF(self.leftMost, self.topMost, self.rightMost - self.leftMost, self.bottomMost - self.topMost))
+        self.scene.render(painter, QRectF(0,0, self.rightMost - self.leftMost, self.bottomMost - self.topMost),
+            QRectF(self.leftMost, self.topMost, self.rightMost - self.leftMost, self.bottomMost - self.topMost))
         
         oldLeft = self.leftMost
         oldTop = self.topMost
@@ -502,10 +503,10 @@ class DrawManager(QtCore.QObject):
 
 
     def moveTo(self, pos):    
-        lineVis = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
+        lineVis = QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         lineVis.setPen(self.penVis)
         
-        line = QtGui.QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
+        line = QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         line.setPen(self.penDraw)
         self.scene.addItem(line)
 
@@ -527,9 +528,9 @@ class DrawManager(QtCore.QObject):
 # I m a g e S a v e T h r e a d                                                *
 #*******************************************************************************
 
-class ImageSaveThread(QtCore.QThread):
+class ImageSaveThread(QThread):
     def __init__(self, parent):
-        QtCore.QThread.__init__(self, None)
+        QThread.__init__(self, None)
         self.ve = parent
         self.queue = deque()
         self.imageSaved = threading.Event()

@@ -27,27 +27,40 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4 import QtCore, QtGui, QtOpenGL
-
+from PyQt4.QtCore import QPoint, QPointF,QRectF, QTimer, pyqtSignal, Qt
+from PyQt4.QtGui import QColor, QGraphicsView, QGraphicsItem, QPixmap, QImage, \
+                        QVBoxLayout, QHBoxLayout, QPushButton, QIcon, QBrush, \
+                        QPainter, QGraphicsPixmapItem, QPainterPath, \
+                        QGraphicsPathItem, QCursor, QApplication, \
+                        QGraphicsScene, QPen
+from PyQt4.QtOpenGL import QGLWidget
 
 
 import numpy, qimage2ndarray
-import os.path
+import os.path, time
 import sip
 
 
 from ilastik.gui.iconMgr import ilastikIcons
-from ilastik.gui.volumeeditor.helper import *
+from ilastik.gui.volumeeditor.helper import PatchAccessor
 
-from ilastik.gui.volumeeditor.imagescenerenderer import *
+from ilastik.gui.volumeeditor.imagescenerenderer import ImageSceneRenderer
+from ilastik.gui.volumeeditor.helper import InteractionLogger
 
 #*******************************************************************************
 # I m a g e S c e n e                                                          *
 #*******************************************************************************
 #TODO: ImageScene should not care/know about what axis it is!
-class ImageScene(QtGui.QGraphicsView):
-    #axisColor = [QtGui.QColor("red"), QtGui.QColor("green"), QtGui.QColor("blue")]
-    axisColor = [QtGui.QColor(255,0,0,255), QtGui.QColor(0,255,0,255), QtGui.QColor(0,0,255,255)]
+class ImageScene(QGraphicsView):
+    sliceChanged       = pyqtSignal(int,int)
+    drawing            = pyqtSignal(int, QPointF)
+    beginDraw          = pyqtSignal(int, QPointF)
+    endDraw            = pyqtSignal(int, QPointF)
+    mouseMoved         = pyqtSignal(int, int, int, bool)
+    mouseDoubleClicked = pyqtSignal(int, int, int)
+    toggleMaximized    = pyqtSignal(bool)
+    
+    axisColor = [QColor(255,0,0,255), QColor(0,255,0,255), QColor(0,0,255,255)]
         
     def __init__(self, imShape, axis, viewManager, drawManager, sharedOpenGLWidget = None):
         """
@@ -55,20 +68,21 @@ class ImageScene(QtGui.QGraphicsView):
                  first two entries denote the x,y extent of one slice,
                  the last entry is the extent in slice direction
         """
-        QtGui.QGraphicsView.__init__(self)
-        self.imShape = imShape[0:2]
+        QGraphicsView.__init__(self)
+        
+        assert len(imShape) == 3
+        self.imShape = imShape
         
         self.drawManager = drawManager
         self.viewManager = viewManager
-        self.viewManager.setStackRange(0, imShape[axis])
         
         self.tempImageItems = []
         self.axis = axis
         self.sliceNumber = 0
         self.sliceExtent = imShape[2]
-        self.drawing = False
+        self.isDrawing = False
         self.view = self
-        self.image = QtGui.QImage(imShape[0], imShape[1], QtGui.QImage.Format_RGB888) #Format_ARGB32
+        self.image = QImage(imShape[0], imShape[1], QImage.Format_RGB888) #Format_ARGB32
         self.border = None
         self.allBorder = None
         self.factor = 1.0
@@ -84,7 +98,7 @@ class ImageScene(QtGui.QGraphicsView):
         if sharedOpenGLWidget is not None:
             self.openglWidget = QtOpenGL.QGLWidget(shareWidget = sharedOpenGLWidget)
             self.setViewport(self.openglWidget)
-            self.setViewportUpdateMode(QtGui.QGraphicsView.FullViewportUpdate)
+            self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
             
         self.scene = CustomGraphicsScene(self.openglWidget, self.image)
         
@@ -93,12 +107,12 @@ class ImageScene(QtGui.QGraphicsView):
 
         # oli todo
         if self.sliceExtent > 1:
-            grviewHudLayout = QtGui.QVBoxLayout(self)
-            tempLayout = QtGui.QHBoxLayout()
-            self.fullScreenButton = QtGui.QPushButton()
-            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx22)))
+            grviewHudLayout = QVBoxLayout(self)
+            tempLayout = QHBoxLayout()
+            self.fullScreenButton = QPushButton()
+            self.fullScreenButton.setIcon(QIcon(QPixmap(ilastikIcons.AddSelx22)))
             self.fullScreenButton.setStyleSheet("background-color: white")
-            self.connect(self.fullScreenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
+            self.fullScreenButton.clicked.connect(self.imageSceneFullScreen)
             tempLayout.addStretch()
             tempLayout.addWidget(self.fullScreenButton)
             grviewHudLayout.addLayout(tempLayout)
@@ -114,14 +128,14 @@ class ImageScene(QtGui.QGraphicsView):
         self.view.setScene(self.scene)
         self.scene.setSceneRect(0,0, imShape[0],imShape[1])
         self.view.setSceneRect(0,0, imShape[0],imShape[1])
-        self.scene.bgColor = QtGui.QColor(QtCore.Qt.white)
+        self.scene.bgColor = QColor(Qt.white)
         if os.path.isfile('gui/backGroundBrush.png'):
-            self.scene.bgBrush = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
+            self.scene.bgBrush = QBrush(QImage('gui/backGroundBrush.png'))
         else:
-            self.scene.bgBrush = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
+            self.scene.bgBrush = QBrush(QColor(Qt.black))
 
-        self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
-        #self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
+        self.view.setRenderHint(QPainter.Antialiasing, False)
+        #self.view.setRenderHint(QPainter.SmoothPixmapTransform, False)
 
         self.patchAccessor = PatchAccessor(imShape[0],imShape[1],64)
         print "PatchCount :", self.patchAccessor.patchCount
@@ -129,10 +143,10 @@ class ImageScene(QtGui.QGraphicsView):
         self.imagePatches = range(self.patchAccessor.patchCount)
         for i, p in enumerate(self.imagePatches):
             b = self.patchAccessor.getPatchBounds(i, 0)
-            self.imagePatches[i] = QtGui.QImage(b[1]-b[0], b[3] -b[2], QtGui.QImage.Format_RGB888)
+            self.imagePatches[i] = QImage(b[1]-b[0], b[3] -b[2], QImage.Format_RGB888)
 
-        self.pixmap = QtGui.QPixmap.fromImage(self.image)
-        self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
+        self.pixmap = QPixmap.fromImage(self.image)
+        self.imageItem = QGraphicsPixmapItem(self.pixmap)
         
         self.setStyleSheet("QWidget:!focus { border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px; }\
                             QWidget:focus { border: 2px solid white; border-radius: 4px; }")
@@ -140,7 +154,7 @@ class ImageScene(QtGui.QGraphicsView):
             self.view.rotate(90.0)
             self.view.scale(1.0,-1.0)
         
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self.setMouseTracking(True)
 
@@ -149,37 +163,37 @@ class ImageScene(QtGui.QGraphicsView):
         # -> the margin top, left, right, bottom
         self.setBorderMarginIndicator(0)
         # -> the complete 2D slice is marked
-        brush = QtGui.QBrush(QtGui.QColor(0,0,255))
-        brush.setStyle( QtCore.Qt.DiagCrossPattern )
-        allBorderPath = QtGui.QPainterPath()
-        allBorderPath.setFillRule(QtCore.Qt.WindingFill)
+        brush = QBrush(QColor(0,0,255))
+        brush.setStyle( Qt.DiagCrossPattern )
+        allBorderPath = QPainterPath()
+        allBorderPath.setFillRule(Qt.WindingFill)
         allBorderPath.addRect(0, 0, imShape[0], imShape[1])
-        self.allBorder = QtGui.QGraphicsPathItem(allBorderPath)
+        self.allBorder = QGraphicsPathItem(allBorderPath)
         self.allBorder.setBrush(brush)
-        self.allBorder.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+        self.allBorder.setPen(QPen(Qt.NoPen))
         self.scene.addItem(self.allBorder)
         self.allBorder.setVisible(False)
         self.allBorder.setZValue(99)
 
-        self.ticker = QtCore.QTimer(self)
-        self.connect(self.ticker, QtCore.SIGNAL("timeout()"), self.tickerEvent)
+        self.ticker = QTimer(self)
+        self.ticker.timeout.connect(self.tickerEvent)
         #label updates while drawing, needed for interactive segmentation
-        self.drawTimer = QtCore.QTimer(self)
-        self.connect(self.drawTimer, QtCore.SIGNAL("timeout()"), self.notifyDrawing)
+        self.drawTimer = QTimer(self)
+        self.drawTimer.timeout.connect(self.notifyDrawing)
         
         # invisible cursor to enable custom cursor
-        self.hiddenCursor = QtGui.QCursor(QtCore.Qt.BlankCursor)
+        self.hiddenCursor = QCursor(Qt.BlankCursor)
         
         # For screen recording BlankCursor dont work
-        #self.hiddenCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
+        #self.hiddenCursor = QCursor(Qt.ArrowCursor)
         
-        #self.connect(self, QtCore.SIGNAL("destroyed()"), self.cleanUp)
+        #self.connect(self, SIGNAL("destroyed()"), self.cleanUp)
 
         self.crossHairCursor = CrossHairCursor(self.image.width(), self.image.height())
         self.crossHairCursor.setZValue(100)
         self.scene.addItem(self.crossHairCursor)
         
-        self.connect(self.drawManager, QtCore.SIGNAL('brushSizeChanged(int)'), self.crossHairCursor.setBrushSize)
+        self.drawManager.brushSizeChanged.connect(self.crossHairCursor.setBrushSize)
         self.crossHairCursor.setBrushSize(self.drawManager.brushSize)
 
         self.sliceIntersectionMarker = SliceIntersectionMarker(self.image.width(), self.image.height())
@@ -206,35 +220,36 @@ class ImageScene(QtGui.QGraphicsView):
         self.margin = margin
         if self.border:
             self.scene.removeItem(self.border)
-        borderPath = QtGui.QPainterPath()
-        borderPath.setFillRule(QtCore.Qt.WindingFill)
+        borderPath = QPainterPath()
+        borderPath.setFillRule(Qt.WindingFill)
         borderPath.addRect(0,0, margin, self.imShape[1])
         borderPath.addRect(0,0, self.imShape[0], margin)
         borderPath.addRect(self.imShape[0]-margin,0, margin, self.imShape[1])
         borderPath.addRect(0,self.imShape[1]-margin, self.imShape[0], margin)
-        self.border = QtGui.QGraphicsPathItem(borderPath)
-        brush = QtGui.QBrush(QtGui.QColor(0,0,255))
-        brush.setStyle( QtCore.Qt.Dense7Pattern )
+        self.border = QGraphicsPathItem(borderPath)
+        brush = QBrush(QColor(0,0,255))
+        brush.setStyle( Qt.Dense7Pattern )
         self.border.setBrush(brush)
-        self.border.setPen(QtGui.QPen(QtCore.Qt.NoPen))
+        self.border.setPen(QPen(Qt.NoPen))
         self.border.setZValue(200)
         self.scene.addItem(self.border)
-        self.lastPanPoint = QtCore.QPoint()
+        self.lastPanPoint = QPoint()
         self.dragMode = False
-        self.deltaPan = QtCore.QPointF(0,0)
+        self.deltaPan = QPointF(0,0)
         self.x = 0.0
         self.y = 0.0
 
     def imageSceneFullScreen(self):
-        self.emit(QtCore.SIGNAL('toggleMaximized(QWidget)'), self)
+        self.toggleMaximized.emit(self)
 
     def setSliceIntersection(self, state):
-        if state == QtCore.Qt.Checked:
+        if state == Qt.Checked:
             self.sliceIntersectionMarker.setVisibility(True)
         else:
             self.sliceIntersectionMarker.setVisibility(False)
             
     def updateSliceIntersection(self, num, axis):
+        #print "updateSliceIntersection(%d, %d)" % (num, axis)
         if self.axis == 0:
             if axis == 1:
                 self.sliceIntersectionMarker.setPositionX(num)
@@ -279,8 +294,8 @@ class ImageScene(QtGui.QGraphicsView):
         
     def saveSlice(self, filename):
         print "Saving in ", filename, "slice #", self.sliceNumber, "axis", self.axis
-        result_image = QtGui.QImage(self.scene.image.size(), self.scene.image.format())
-        p = QtGui.QPainter(result_image)
+        result_image = QImage(self.scene.image.size(), self.scene.image.format())
+        p = QPainter(result_image)
         for patchNr in range(self.patchAccessor.patchCount):
             bounds = self.patchAccessor.getPatchBounds(patchNr)
             if self.openglWidget is None:
@@ -289,43 +304,43 @@ class ImageScene(QtGui.QGraphicsView):
                 p.drawImage(bounds[0], bounds[2], self.imagePatches[patchNr])
         p.end()
         #horrible way to transpose an image. but it works.
-        transform = QtGui.QTransform()
+        transform = QTransform()
         transform.rotate(90)
         result_image = result_image.mirrored()
         result_image = result_image.transformed(transform)
-        result_image.save(QtCore.QString(filename))
+        result_image.save(QString(filename))
 
     def display(self, image, overlays = ()):
         self.thread.queue.clear()
         self.updatePatches(range(self.patchAccessor.patchCount),image, overlays)
     
     def notifyDrawing(self):
-        self.emit(QtCore.SIGNAL('drawing(int, QPointF)'), self.axis, self.mousePos)
+        self.drawing.emit(self.axis, self.mousePos)
     
-    def beginDraw(self, pos):
-        InteractionLogger.log("%f: beginDraw`()" % (time.clock()))   
+    def beginDrawing(self, pos):
+        InteractionLogger.log("%f: beginDrawing`()" % (time.clock()))   
         self.mousePos = pos
-        self.drawing  = True
-        line = self.drawManager.beginDraw(pos, self.imShape)
+        self.isDrawing  = True
+        line = self.drawManager.beginDrawing(pos, self.imShape)
         line.setZValue(99)
         self.tempImageItems.append(line)
         self.scene.addItem(line)
         if self.drawUpdateInterval > 0:
             self.drawTimer.start(self.drawUpdateInterval) #update labels every some ms
             
-        self.emit(QtCore.SIGNAL('beginDraw(int, QPointF)'), self.axis, pos)
+        self.beginDraw.emit(self.axis, pos)
         
-    def endDraw(self, pos):
-        InteractionLogger.log("%f: endDraw()" % (time.clock()))     
+    def endDrawing(self, pos):
+        InteractionLogger.log("%f: endDrawing()" % (time.clock()))     
         self.drawTimer.stop()
-        self.drawing = False
+        self.isDrawing = False
         
-        self.emit(QtCore.SIGNAL('endDraw(int, QPointF)'), self.axis, pos)
+        self.endDraw.emit(self.axis, pos)
 
     def wheelEvent(self, event):
-        keys = QtGui.QApplication.keyboardModifiers()
-        k_alt = (keys == QtCore.Qt.AltModifier)
-        k_ctrl = (keys == QtCore.Qt.ControlModifier)
+        keys = QApplication.keyboardModifiers()
+        k_alt = (keys == Qt.AltModifier)
+        k_ctrl = (keys == Qt.ControlModifier)
 
         self.mousePos = self.mapToScene(event.pos())
         grviewCenter  = self.mapToScene(self.viewport().rect().center())
@@ -364,13 +379,13 @@ class ImageScene(QtGui.QGraphicsView):
 #        
 #        self.mousePos = mousePos = self.mapToScene(event.pos())
 #        
-#        if event.pointerType() == QtGui.QTabletEvent.Eraser or QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
+#        if event.pointerType() == QTabletEvent.Eraser or QApplication.keyboardModifiers() == Qt.ShiftModifier:
 #            self.drawManager.setErasing()
-#        elif event.pointerType() == QtGui.QTabletEvent.Pen and QtGui.QApplication.keyboardModifiers() != QtCore.Qt.ShiftModifier:
+#        elif event.pointerType() == QTabletEvent.Pen and QApplication.keyboardModifiers() != Qt.ShiftModifier:
 #            self.drawManager.disableErasing()
-#        if self.drawing == True:
+#        if self.isDrawing == True:
 #            if event.pressure() == 0:
-#                self.endDraw(mousePos)
+#                self.endDrawing(mousePos)
 #                self.volumeEditor.changeSlice(self.volumeEditor.viewManager.slicePosition[self.axis], self.axis)
 #            else:
 #                if self.drawManager.erasing:
@@ -378,45 +393,45 @@ class ImageScene(QtGui.QGraphicsView):
 #                    self.drawManager.setBrushSize(int(event.pressure()*10))
 #                else:
 #                    self.drawManager.setBrushSize(int(event.pressure()*7))
-#        if self.drawing == False:
+#        if self.isDrawing == False:
 #            if event.pressure() > 0:
-#                self.beginDraw(mousePos)
+#                self.beginDrawing(mousePos)
 #                
 #        self.mouseMoveEvent(event)
 
     #TODO oli
     def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.MidButton:
+        if event.button() == Qt.MidButton:
             self.lastPanPoint = event.pos()
             self.crossHairCursor.setVisible(False)
             self.dragMode = True
             if self.ticker.isActive():
-                self.deltaPan = QtCore.QPointF(0, 0)
+                self.deltaPan = QPointF(0, 0)
 
         if not self.drawingEnabled:
             return
         
-        if event.buttons() == QtCore.Qt.LeftButton:
+        if event.buttons() == Qt.LeftButton:
             #don't draw if flicker the view
             if self.ticker.isActive():
                 return
-            if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
+            if QApplication.keyboardModifiers() == Qt.ShiftModifier:
                 self.drawManager.setErasing()
                 self.tempErase = True
             mousePos = self.mapToScene(event.pos())
-            self.beginDraw(mousePos)
+            self.beginDrawing(mousePos)
             
     #TODO oli
     def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.MidButton:
+        if event.button() == Qt.MidButton:
             releasePoint = event.pos()
             
             self.lastPanPoint = releasePoint
             self.dragMode = False
             self.ticker.start(20)
-        if self.drawing == True:
+        if self.isDrawing == True:
             mousePos = self.mapToScene(event.pos())
-            self.endDraw(mousePos)
+            self.endDrawing(mousePos)
         if self.tempErase == True:
             self.drawManager.disableErasing()
             self.tempErase = False
@@ -445,7 +460,7 @@ class ImageScene(QtGui.QGraphicsView):
             y = max(0.0, y - a*ay)
         elif y < 0:
             y = min(0.0, y + a*ay)
-        return QtCore.QPointF(x, y)
+        return QPointF(x, y)
 
     #TODO oli
     def qBound(self, minVal, current, maxVal):
@@ -474,7 +489,7 @@ class ImageScene(QtGui.QGraphicsView):
     def tickerEvent(self):
         if self.deltaPan.x() == 0.0 and self.deltaPan.y() == 0.0 or self.dragMode == True:
             self.ticker.stop()
-            cursor = QtGui.QCursor()
+            cursor = QCursor()
             mousePos = self.mapToScene(self.mapFromGlobal(cursor.pos()))
             x = mousePos.x()
             y = mousePos.y()
@@ -509,7 +524,7 @@ class ImageScene(QtGui.QGraphicsView):
     #TODO oli
     def mouseMoveEvent(self,event):
         if self.dragMode == True:
-            self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
+            self.deltaPan = QPointF(event.pos() - self.lastPanPoint)
             self.panning()
             self.lastPanPoint = event.pos()
             return
@@ -521,9 +536,9 @@ class ImageScene(QtGui.QGraphicsView):
         y = self.y = mousePos.y()
 
         valid = x > 0 and x < self.image.width() and y > 0 and y < self.image.height()# and len(self.volumeEditor.overlayWidget.overlays) > 0:                
-        self.emit(QtCore.SIGNAL('mouseMoved(int, int, int, bool)'), self.axis, x, y, valid)
+        self.mouseMoved.emit(self.axis, x, y, valid)
                 
-        if self.drawing == True:
+        if self.isDrawing == True:
             line = self.drawManager.moveTo(mousePos)
             line.setZValue(99)
             self.tempImageItems.append(line)
@@ -531,7 +546,7 @@ class ImageScene(QtGui.QGraphicsView):
 
     def mouseDoubleClickEvent(self, event):
         mousePos = self.mapToScene(event.pos())
-        self.emit(QtCore.SIGNAL('mouseDoubleClicked(int, int, int)'), self.axis, mousePos.x(), mousePos.y())
+        self.mouseDoubleClicked.emit(self.axis, mousePos.x(), mousePos.y())
 
     #===========================================================================
     # Navigate in Volume
@@ -550,10 +565,10 @@ class ImageScene(QtGui.QGraphicsView):
         self.changeSlice(-10)
 
     def changeSlice(self, delta):
-        if self.drawing == True:
-            self.endDraw(self.mousePos)
-            self.drawing = True
-            self.drawManager.beginDraw(self.mousePos, self.imShape)
+        if self.isDrawing == True:
+            self.endDrawing(self.mousePos)
+            self.isDrawing = True
+            self.drawManager.beginDrawing(self.mousePos, self.imShape)
 
         self.viewManager.changeSliceDelta(self.axis, delta)
         InteractionLogger.log("%f: changeSliceDelta(axis, num) %d, %d" % (time.clock(), self.axis, delta))
@@ -573,13 +588,13 @@ class ImageScene(QtGui.QGraphicsView):
 # C u s t o m G r a p h i c s S c e n e                                        *
 #*******************************************************************************
 
-class CustomGraphicsScene(QtGui.QGraphicsScene):
+class CustomGraphicsScene(QGraphicsScene):
     def __init__(self, glWidget, image):
-        QtGui.QGraphicsScene.__init__(self)
+        QGraphicsScene.__init__(self)
         self.glWidget = glWidget
         self.image = image
         self.images = []
-        self.bgColor = QtGui.QColor(QtCore.Qt.green)
+        self.bgColor = QColor(Qt.green)
         self.tex = -1
 
             
@@ -593,11 +608,11 @@ class CustomGraphicsScene(QtGui.QGraphicsScene):
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             if self.tex > -1:
-                #self.glWidget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
+                #self.glWidget.drawTexture(QRectF(self.image.rect()),self.tex)
                 d = painter.device()
                 dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
 
-                rect = QtCore.QRectF(self.image.rect())
+                rect = QRectF(self.image.rect())
                 tl = rect.topLeft()
                 br = rect.bottomRight()
                 
@@ -623,23 +638,23 @@ class CustomGraphicsScene(QtGui.QGraphicsScene):
 # C r o s s H a i r C u r s o r                                                *
 #*******************************************************************************
 
-class CrossHairCursor(QtGui.QGraphicsItem) :
+class CrossHairCursor(QGraphicsItem) :
     modeYPosition  = 0
     modeXPosition  = 1
     modeXYPosition = 2
     
     def boundingRect(self):
-        return QtCore.QRectF(0,0, self.width, self.height)
+        return QRectF(0,0, self.width, self.height)
     def __init__(self, width, height):
-        QtGui.QGraphicsItem.__init__(self)
+        QGraphicsItem.__init__(self)
         
         self.width = width
         self.height = height
         
-        self.penDotted = QtGui.QPen(QtCore.Qt.red, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.penDotted = QPen(Qt.red, 2, Qt.DotLine, Qt.RoundCap, Qt.RoundJoin)
         self.penDotted.setCosmetic(True)
         
-        self.penSolid = QtGui.QPen(QtCore.Qt.red, 2)
+        self.penSolid = QPen(Qt.red, 2)
         self.penSolid.setCosmetic(True)
         
         self.x = 0
@@ -649,9 +664,9 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.mode = self.modeXYPosition
     
     def setColor(self, color):
-        self.penDotted = QtGui.QPen(color, 2, QtCore.Qt.DotLine, QtCore.Qt.RoundCap, QtCore.Qt.RoundJoin)
+        self.penDotted = QPen(color, 2, Qt.DotLine, Qt.RoundCap, Qt.RoundJoin)
         self.penDotted.setCosmetic(True)
-        self.penSolid  = QtGui.QPen(color, 2)
+        self.penSolid  = QPen(color, 2)
         self.penSolid.setCosmetic(True)
         self.update()
     
@@ -678,18 +693,18 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         painter.setPen(self.penDotted)
         
         if self.mode == self.modeXPosition:
-            painter.drawLine(QtCore.QPointF(self.x+0.5, 0), QtCore.QPointF(self.x+0.5, self.height))
+            painter.drawLine(QPointF(self.x+0.5, 0), QPointF(self.x+0.5, self.height))
         elif self.mode == self.modeYPosition:
-            painter.drawLine(QtCore.QPointF(0, self.y), QtCore.QPointF(self.width, self.y))
+            painter.drawLine(QPointF(0, self.y), QPointF(self.width, self.y))
         else:            
-            painter.drawLine(QtCore.QPointF(0.0,self.y), QtCore.QPointF(self.x -0.5*self.brushSize, self.y))
-            painter.drawLine(QtCore.QPointF(self.x+0.5*self.brushSize, self.y), QtCore.QPointF(self.width, self.y))
+            painter.drawLine(QPointF(0.0,self.y), QPointF(self.x -0.5*self.brushSize, self.y))
+            painter.drawLine(QPointF(self.x+0.5*self.brushSize, self.y), QPointF(self.width, self.y))
 
-            painter.drawLine(QtCore.QPointF(self.x, 0), QtCore.QPointF(self.x, self.y-0.5*self.brushSize))
-            painter.drawLine(QtCore.QPointF(self.x, self.y+0.5*self.brushSize), QtCore.QPointF(self.x, self.height))
+            painter.drawLine(QPointF(self.x, 0), QPointF(self.x, self.y-0.5*self.brushSize))
+            painter.drawLine(QPointF(self.x, self.y+0.5*self.brushSize), QPointF(self.x, self.height))
 
             painter.setPen(self.penSolid)
-            painter.drawEllipse(QtCore.QPointF(self.x, self.y), 0.5*self.brushSize, 0.5*self.brushSize)
+            painter.drawEllipse(QPointF(self.x, self.y), 0.5*self.brushSize, 0.5*self.brushSize)
         
     def setPos(self, x, y):
         self.x = x
@@ -704,21 +719,21 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
 # S l i c e I n t e r s e c t i o n M a r k e r                                *
 #*******************************************************************************
 
-class SliceIntersectionMarker(QtGui.QGraphicsItem) :
+class SliceIntersectionMarker(QGraphicsItem) :
     
     def boundingRect(self):
-        return QtCore.QRectF(0,0, self.width, self.height)
+        return QRectF(0,0, self.width, self.height)
     
     def __init__(self, width, height):
-        QtGui.QGraphicsItem.__init__(self)
+        QGraphicsItem.__init__(self)
         
         self.width = width
         self.height = height
               
-        self.penX = QtGui.QPen(QtCore.Qt.red, 2)
+        self.penX = QPen(Qt.red, 2)
         self.penX.setCosmetic(True)
         
-        self.penY = QtGui.QPen(QtCore.Qt.green, 2)
+        self.penY = QPen(Qt.green, 2)
         self.penY.setCosmetic(True)
         
         self.x = 0
@@ -738,9 +753,9 @@ class SliceIntersectionMarker(QtGui.QGraphicsItem) :
         self.setPosition(self.x, y)  
    
     def setColor(self, colorX, colorY):
-        self.penX = QtGui.QPen(colorX, 2)
+        self.penX = QPen(colorX, 2)
         self.penX.setCosmetic(True)
-        self.penY = QtGui.QPen(colorY, 2)
+        self.penY = QPen(colorY, 2)
         self.penY.setCosmetic(True)
         self.update()
         
@@ -754,48 +769,49 @@ class SliceIntersectionMarker(QtGui.QGraphicsItem) :
     def paint(self, painter, option, widget=None):
         if self.isVisible:
             painter.setPen(self.penY)
-            painter.drawLine(QtCore.QPointF(0.0,self.y), QtCore.QPointF(self.width, self.y))
+            painter.drawLine(QPointF(0.0,self.y), QPointF(self.width, self.y))
             
             painter.setPen(self.penX)
-            painter.drawLine(QtCore.QPointF(self.x, 0), QtCore.QPointF(self.x, self.height))
+            painter.drawLine(QPointF(self.x, 0), QPointF(self.x, self.height))
 
 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
 
-from ilastik.core.overlayMgr import OverlaySlice 
-class ImageSceneTest(QtGui.QApplication):    
-    def __init__(self, args):
-        app = QtGui.QApplication.__init__(self, args)
-
-        self.data = (numpy.random.rand(128,256,512)*255).astype(numpy.uint8)
-        axis = 0
-        
-        viewManager = ViewManager(None)
-        drawManager = DrawManager()
-        
-        self.imageScene = ImageScene(self.data.shape, axis, viewManager, drawManager)
-        
-        self.testChangeSlice(64,axis)
-    
-        self.imageScene.connect(viewManager, QtCore.SIGNAL('sliceChanged(int, int)'), self.testChangeSlice)
-        
-        self.imageScene.show()
-        
-
-    def testChangeSlice(self, num, axis):
-        self.image = OverlaySlice(self.data[:,:,num], color = QtGui.QColor("black"), alpha = 1, colorTable = None, min = None, max = None, autoAlphaChannel = True)
-        self.overlays = [self.image]
-        
-        
-        self.imageScene.displayNewSlice(self.image, self.overlays, fastPreview = True, normalizeData = False)
-        print "changeSlice"
-    
-if __name__ == "__main__":
+if __name__ == '__main__':
+    from PyQt4.QtGui import QApplication
+    from ilastik.core.overlayMgr import OverlaySlice 
     #make the program quit on Ctrl+C
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
+        
+    class ImageSceneTest(QApplication):    
+        def __init__(self, args):
+            app = QApplication.__init__(self, args)
+
+            self.data = (numpy.random.rand(128,256,512)*255).astype(numpy.uint8)
+            axis = 0
+            
+            viewManager = ViewManager(self.data)
+            drawManager = DrawManager()
+            
+            self.imageScene = ImageScene(self.data.shape, axis, viewManager, drawManager)
+            
+            self.testChangeSlice(64,axis)
+        
+            self.imageScene.sliceChanged.connect(self.testChangeSlice)
+            
+            self.imageScene.show()
+            
+
+        def testChangeSlice(self, num, axis):
+            self.image = OverlaySlice(self.data[:,:,num], color = QColor("black"), alpha = 1, colorTable = None, min = None, max = None, autoAlphaChannel = True)
+            self.overlays = [self.image]
+            
+            
+            self.imageScene.displayNewSlice(self.image, self.overlays, fastPreview = True, normalizeData = False)
+            print "changeSlice num=%d, axis=%d" % (num, axis)
 
     app = ImageSceneTest([""])
     app.exec_()

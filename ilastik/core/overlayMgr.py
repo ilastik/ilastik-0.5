@@ -211,7 +211,7 @@ class OverlayItem(object):
         elif name == "dataItemImage":
             return self.overlayMgr.dataItem
         else:
-            raise AttributeError, name
+            raise AttributeError("no such attribute: '%s'" % (name))
 
     def getColorTab(self):
         return self.colorTable
@@ -275,15 +275,15 @@ class OverlayItem(object):
         return (r*11+g*16+b*5)/32
     
     @classmethod
-    def createDefaultColorTable(cls, type, levels = 256, transparentValues = set()):
-        typeCap = type.capitalize()
+    def createDefaultColorTable(cls, typeString, levels = 256, transparentValues = set()):
+        typeCap = str(typeString).capitalize()
         colorTab = []
-        if(typeCap == "GRAY"):
+        if typeCap == "Gray":
             for i in range(levels):
                 if i in transparentValues:
                     colorTab.append(0L)
                 else:
-                    colorTab.append(OverlayItem.qgray(i, i, i)) # see qGray function in QtGui
+                    colorTab.append(OverlayItem.qrgb(i, i, i)) # see qGray function in QtGui
         else:
             #RGB
             import numpy
