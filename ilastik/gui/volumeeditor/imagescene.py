@@ -111,10 +111,10 @@ class ImageScene(QGraphicsView):
             tempLayout = QHBoxLayout()
             self.fullScreenButton = QPushButton()
             self.fullScreenButton.setIcon(QIcon(QPixmap(ilastikIcons.AddSelx22)))
-            self.fullScreenButton.setStyleSheet("background-color: white")
+            self.fullScreenButton.setStyleSheet("background-color: white; border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px;")
             self.fullScreenButton.clicked.connect(self.imageSceneFullScreen)
-            tempLayout.addStretch()
             tempLayout.addWidget(self.fullScreenButton)
+            tempLayout.addStretch()
             grviewHudLayout.addLayout(tempLayout)
             grviewHudLayout.addStretch()
         
@@ -148,8 +148,11 @@ class ImageScene(QGraphicsView):
         self.pixmap = QPixmap.fromImage(self.image)
         self.imageItem = QGraphicsPixmapItem(self.pixmap)
         
-        self.setStyleSheet("QWidget:!focus { border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px; }\
-                            QWidget:focus { border: 2px solid white; border-radius: 4px; }")
+        #Unfortunately, setting the style like this make the scroll bars look
+        #really crappy...
+        #self.setStyleSheet("QWidget:!focus { border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px; }\
+        #                    QWidget:focus { border: 2px solid white; border-radius: 4px; }")
+
         if self.axis is 0:
             self.view.rotate(90.0)
             self.view.scale(1.0,-1.0)
