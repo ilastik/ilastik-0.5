@@ -29,7 +29,8 @@
 from PyQt4.QtGui import QGraphicsView, QVBoxLayout, QLabel, QGraphicsScene, QPixmap, QPainter, \
                         QTableWidgetItem, QItemDelegate, QStyle, QHBoxLayout, QIcon, QHeaderView, \
                         QAbstractItemView, QDialog, QToolButton, QErrorMessage, QApplication, \
-                        QTableWidget, QGroupBox, QBrush, QColor, QPalette, QStyleOptionViewItem
+                        QTableWidget, QGroupBox, QBrush, QColor, QPalette, QStyleOptionViewItem, \
+                        QFont
 from PyQt4.QtCore import Qt, QRect, QSize, QEvent
 
 
@@ -189,7 +190,7 @@ class FeatureTableWidget(QTableWidget):
         #layout
         # ------------------------------------------------
         self.setCornerButtonEnabled(False)
-        self.setMinimumWidth(612)
+        self.setMinimumWidth(650)
         self.setMinimumHeight(100)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(0)
@@ -216,8 +217,7 @@ class FeatureTableWidget(QTableWidget):
         self.collapsAllRows()
         self.fillTabelWithItems()  
         self.setOldSelectedFeatures() 
-        self.updateParentCell()       
-        
+        self.updateParentCell()    
                         
     # methods
     # ------------------------------------------------    
@@ -234,6 +234,8 @@ class FeatureTableWidget(QTableWidget):
         
     
     def setOldSelectedFeatures(self):
+        if len(featureMgr.ilastikFeatureGroups.selection) == 0:
+            return
         if len(featureMgr.ilastikFeatureGroups.selection[0]) == 2:
             for feature in featureMgr.ilastikFeatureGroups.selection:
                 for c in range(self.columnCount()):
@@ -366,6 +368,18 @@ class FeatureTableWidget(QTableWidget):
             if self.itemAt(event.pos()) and self.underMouse():
                 item = self.itemAt(event.pos())
                 self.changeSizeCallback(self.groupMaskSizes[item.column()])
+                
+#                bold = QFont()
+#                bold.setBold(False)
+#                for r in range(self.rowCount()):
+#                    self.verticalHeaderItem(r).setFont(bold)
+#                for c in range(self.columnCount()):
+#                    self.horizontalHeaderItem(c).setFont(bold)
+#                bold.setBold(True)
+#                if self.underMouse():
+#                    self.verticalHeaderItem(item.row()).setFont(bold)
+#                    self.horizontalHeaderItem(item.column()).setFont(bold)
+#                
         return False
         
         
