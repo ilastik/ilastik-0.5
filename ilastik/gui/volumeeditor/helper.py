@@ -28,6 +28,7 @@
 #    or implied, of their employers.
 
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import pyqtSignal
 
 from ilastik.core.volume import DataAccessor
 
@@ -74,6 +75,8 @@ class InteractionLogger():
     
 
 class ViewManager(QtCore.QObject):
+    sliceChanged = pyqtSignal(int,int)
+    
     def __init__(self, image, time = 0, position = [0, 0, 0], channel = 0):
         QtCore.QObject.__init__(self)
         self._image = image
@@ -93,7 +96,7 @@ class ViewManager(QtCore.QObject):
     def setSlice(self, num, axis):
         if self._position[axis] != num:
             self._position[axis] = num
-            self.emit(QtCore.SIGNAL('sliceChanged(int, int)'), num, axis)
+            self.sliceChanged.emit(num, axis)
     
     def changeSliceDelta(self, axis, delta):
         self.setSlice(self.position[axis] + delta, axis)
