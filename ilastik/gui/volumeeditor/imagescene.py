@@ -48,8 +48,6 @@ from ilastik.gui.volumeeditor.imagescenerenderer import *
 class ImageScene(QtGui.QGraphicsView):
     #axisColor = [QtGui.QColor("red"), QtGui.QColor("green"), QtGui.QColor("blue")]
     axisColor = [QtGui.QColor(255,0,0,255), QtGui.QColor(0,255,0,255), QtGui.QColor(0,0,255,255)]
-    
-
         
     def __init__(self, imShape, axis, viewManager, drawManager, sharedOpenGLWidget = None):
         """
@@ -770,14 +768,13 @@ class ImageSceneTest(QtGui.QApplication):
     def __init__(self, args):
         app = QtGui.QApplication.__init__(self, args)
 
-        self.data = (numpy.random.rand(128,128,128)*255).astype(numpy.uint8)
-        imShape = [128,128,128]
+        self.data = (numpy.random.rand(128,256,512)*255).astype(numpy.uint8)
         axis = 0
         
         viewManager = ViewManager(None)
         drawManager = DrawManager()
         
-        self.imageScene = ImageScene(imShape, axis, viewManager, drawManager)
+        self.imageScene = ImageScene(self.data.shape, axis, viewManager, drawManager)
         
         self.testChangeSlice(64,axis)
     
