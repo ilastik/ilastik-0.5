@@ -96,7 +96,8 @@ class ViewManager(QObject):
         return self._time
         
     def setSlice(self, num, axis):
-        if num < self._image.shape[axis] or num >= self._image.shape[axis]:
+        if num < 0 or num >= self._image.shape[axis]:
+            #print "could not setSlice: shape=%r, but axis=%d and num=%d" % (self._image.shape, axis, num)
             return
         
         if self._position[axis] != num:

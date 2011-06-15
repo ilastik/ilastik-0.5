@@ -731,7 +731,7 @@ class VolumeEditor(QWidget):
 #*******************************************************************************
 
 if __name__ == "__main__":
-    from PyQt4.QtCore import QObject
+    from PyQt4.QtCore import QObject, QTimer
     from PyQt4.QtGui import QApplication, QColor
     #make the program quit on Ctrl+C
     import signal
@@ -739,18 +739,66 @@ if __name__ == "__main__":
     from ilastik.core.overlayMgr import OverlaySlice, OverlayItem
     from ilastik.core.volume import DataAccessor
     
+    def img(N):
+        def meshgrid2(*arrs):
+            arrs = tuple(reversed(arrs))  #edit
+            lens = map(len, arrs)
+            dim = len(arrs)
+
+            sz = 1
+            for s in lens:
+                sz*=s
+
+            ans = []    
+            for i, arr in enumerate(arrs):
+                slc = [1]*dim
+                slc[i] = lens[i]
+                arr2 = numpy.asarray(arr).reshape(slc)
+                for j, sz in enumerate(lens):
+                    if j!=i:
+                        arr2 = arr2.repeat(sz, axis=j) 
+                ans.append(arr2)
+
+            return tuple(ans)
+
+        N2 = N/2
+
+        X,Y,Z = meshgrid2(numpy.arange(N),numpy.arange(N),numpy.arange(N))
+
+        s = numpy.zeros((N,N,N))
+        s[:] = 255
+
+        center = numpy.asarray((N2,N2,N2))
+        s[(X-10)**2+(Y-10)**2+(Z-15)**2 < (N2-2)**2] = 0
+
+        s[(X-30)**2+(Y-30)**2+(Z-30)**2 < (10)**2] = 128
+
+        s[0:10,0:10,0:10] = 200
+        
+        return s
+    
     class Test(QObject):
         def __init__(self):
             QObject.__init__(self)
             
-            self.data = (numpy.random.rand(128,256,64)*255).astype(numpy.uint8)
-            self.data[0:10,0:10,0:10] = 255
-            self.data[20:40,30:70,:] = 128 
+            #self.data = (numpy.random.rand(128,256,64)*255).astype(numpy.uint8)
+            #self.data[0:10,0:10,0:10] = 255
+            #self.data[20:40,30:70,:] = 128
+            
+            N = 100
+            self.data = (numpy.random.rand(N,2*N, 3*N)*255).astype(numpy.uint8)
+            image = img(N).astype(numpy.uint8)
+            print image.shape
+            self.data[0:N,0:N,0:N] = img(N)
+            
             self.dialog = VolumeEditor(self.data, None)
             self.dataOverlay = OverlayItem(DataAccessor(self.data), alpha=1.0, color=Qt.black, colorTable=OverlayItem.createDefaultColorTable('GRAY', 256), autoVisible=True, autoAlphaChannel=False)
             self.dialog.overlayWidget.overlays = [self.dataOverlay.getRef()]
             
             self.dialog.show()
+            self.dialog.setPosition(0,0,0)
+            self.dialog.setPosition(1,0,0)
+            self.dialog.setPosition(2,0,0)
 
     app = QApplication([""])
     t = Test()
