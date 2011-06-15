@@ -33,8 +33,10 @@ from PyQt4.QtGui import QColor, QGraphicsView, QGraphicsItem, QPixmap, QImage, \
                         QPainter, QGraphicsPixmapItem, QPainterPath, \
                         QGraphicsPathItem, QCursor, QApplication, \
                         QGraphicsScene, QPen
-from PyQt4.QtOpenGL import QGLWidget
+from PyQt4.QtOpenGL import QGLWidget, QGLFramebufferObject
 
+from OpenGL.GL import *
+from OpenGL.GLU import *
 
 import numpy, qimage2ndarray
 import os.path, time
@@ -96,7 +98,7 @@ class ImageScene(QGraphicsView):
         self.sharedOpenGLWidget = sharedOpenGLWidget
         # enable OpenGL acceleratino
         if sharedOpenGLWidget is not None:
-            self.openglWidget = QtOpenGL.QGLWidget(shareWidget = sharedOpenGLWidget)
+            self.openglWidget = QGLWidget(shareWidget = sharedOpenGLWidget)
             self.setViewport(self.openglWidget)
             self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
             
@@ -613,7 +615,7 @@ class CustomGraphicsScene(QGraphicsScene):
             if self.tex > -1:
                 #self.glWidget.drawTexture(QRectF(self.image.rect()),self.tex)
                 d = painter.device()
-                dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
+                dc = sip.cast(d,QGLFramebufferObject)
 
                 rect = QRectF(self.image.rect())
                 tl = rect.topLeft()

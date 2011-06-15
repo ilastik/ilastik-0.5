@@ -27,8 +27,8 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4.QtGui import QWidget
-from PyQt4.QtOpenGL import QGLWidget
+from PyQt4.QtGui import QWidget, QSizePolicy
+from PyQt4.QtOpenGL import QGLWidget, QGLFramebufferObject
 
 try:
     from OpenGL.GL import *

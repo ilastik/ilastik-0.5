@@ -732,7 +732,8 @@ class VolumeEditor(QWidget):
 
 if __name__ == "__main__":
     from PyQt4.QtCore import QObject, QTimer
-    from PyQt4.QtGui import QApplication, QColor
+    from PyQt4.QtGui import QApplication, QColor, QSplitter
+    from PyQt4.QtOpenGL import QGLWidget
     #make the program quit on Ctrl+C
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -778,7 +779,7 @@ if __name__ == "__main__":
         return s
     
     class Test(QObject):
-        def __init__(self):
+        def __init__(self, useGL):
             QObject.__init__(self)
             
             N = 100
@@ -787,7 +788,11 @@ if __name__ == "__main__":
             print image.shape
             self.data[0:N,0:N,0:N] = img(N)
             
-            self.dialog = VolumeEditor(self.data, None)
+            sharedOpenglWidget = None
+            if useGL:
+                sharedOpenglWidget=QGLWidget()
+            
+            self.dialog = VolumeEditor(self.data, None, sharedOpenglWidget=sharedOpenglWidget)
             self.dataOverlay = OverlayItem(DataAccessor(self.data), alpha=1.0, color=Qt.black, colorTable=OverlayItem.createDefaultColorTable('GRAY', 256), autoVisible=True, autoAlphaChannel=False)
             self.dialog.overlayWidget.overlays = [self.dataOverlay.getRef()]
             
@@ -797,6 +802,14 @@ if __name__ == "__main__":
             self.dialog.setPosition(2,0,0)
 
     app = QApplication([""])
-    t = Test()
+    
+    s = QSplitter()
+    t1 = Test(True)
+    t2 = Test(False)
+    s.addWidget(t1.dialog)
+    s.addWidget(t2.dialog)
+    
+    s.show()
+    
     app.exec_()
 
