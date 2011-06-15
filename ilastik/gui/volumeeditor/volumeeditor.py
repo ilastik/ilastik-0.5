@@ -781,10 +781,6 @@ if __name__ == "__main__":
         def __init__(self):
             QObject.__init__(self)
             
-            #self.data = (numpy.random.rand(128,256,64)*255).astype(numpy.uint8)
-            #self.data[0:10,0:10,0:10] = 255
-            #self.data[20:40,30:70,:] = 128
-            
             N = 100
             self.data = (numpy.random.rand(N,2*N, 3*N)*255).astype(numpy.uint8)
             image = img(N).astype(numpy.uint8)
