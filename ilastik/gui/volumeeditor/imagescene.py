@@ -59,7 +59,7 @@ class ImageScene(QGraphicsView):
     endDraw            = pyqtSignal(int, QPointF)
     mouseMoved         = pyqtSignal(int, int, int, bool)
     mouseDoubleClicked = pyqtSignal(int, int, int)
-    toggleMaximized    = pyqtSignal(object)
+    toggleMaximized    = pyqtSignal(int)
     
     axisColor = [QColor(255,0,0,255), QColor(0,255,0,255), QColor(0,0,255,255)]
         
@@ -244,7 +244,7 @@ class ImageScene(QGraphicsView):
         self.scene.addItem(self.border)
 
     def imageSceneFullScreen(self):
-        self.toggleMaximized.emit(self)
+        self.toggleMaximized.emit(self.axis)
 
     def setSliceIntersection(self, state):
         self.sliceIntersectionMarker.setVisibility(state == Qt.Checked)
