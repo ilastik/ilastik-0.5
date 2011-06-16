@@ -241,11 +241,14 @@ class VolumeEditor(QWidget):
         
         # setup the layout for display
         self.splitter = QSplitter()
+        self.splitter.setContentsMargins(0,0,0,0)
         tempWidget = QWidget()
         tempWidget.setLayout(viewingLayout)
         self.splitter.addWidget(tempWidget)
         self.splitter.addWidget(self.toolBox)
         splitterLayout = QVBoxLayout()
+        splitterLayout.setMargin(0)
+        splitterLayout.setSpacing(0)
         splitterLayout.addWidget(self.splitter)
         self.setLayout(splitterLayout)
         
