@@ -28,7 +28,7 @@
 #    or implied, of their employers.
 
 from PyQt4.QtCore import pyqtSignal, QObject, QThread, Qt, QSize
-from PyQt4.QtGui  import QWidget, QPen, QGraphicsScene
+from PyQt4.QtGui  import QWidget, QPen, QGraphicsScene, QColor
 
 from ilastik.core.volume import DataAccessor
 
@@ -390,6 +390,7 @@ class DummyOverlayListWidget(QWidget):
 
 class DrawManager(QObject):
     brushSizeChanged = pyqtSignal(int)
+    brushColorChanged = pyqtSignal(QColor)
     
     def __init__(self):
         QObject.__init__(self)
@@ -440,17 +441,17 @@ class DrawManager(QObject):
 
     def setErasing(self):
         self.erasing = True
-        self.emit(SIGNAL('brushColorChanged(int)'), QColor("black") )
+        self.brushColorChanged.emit(Qt.black)
     
     def disableErasing(self):
         self.erasing = False
-        self.emit(SIGNAL('brushColorChanged(int)'), self.color())
+        self.brushColorChanged.emit(self.color())
 
     def setBrushSize(self, size):      
         self.brushSize = size
         self.penVis.setWidth(size)
         self.penDraw.setWidth(size)
-        self.emit(SIGNAL('brushSizeChanged(int)'), self.brushSize)
+        self.brushSizeChanged.emit(self.brushSize)
         
     def getBrushSize(self):
         return self.brushSize
@@ -468,7 +469,7 @@ class DrawManager(QObject):
     def setBrushColor(self, color):
         self.color = color
         self.penVis.setColor(color)
-        self.emit(SIGNAL('brushColorChanged(int)'), self.color)
+        self.emit.brushColorChanged(self.color)
         
     def beginDraw(self, pos, shape):
         self.shape = shape
