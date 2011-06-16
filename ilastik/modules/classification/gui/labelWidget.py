@@ -71,8 +71,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.volumeLabelDescriptions = volumeLabelDescriptions
         #Label selector
         self.addLabelButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel),"Create Class")
-        #self.addLabelButton.setText("Create Class")
-        self.addLabelButton.connect(self.addLabelButton, QtCore.SIGNAL("pressed()"), self.createLabel)
+        self.addLabelButton.pressed.connect(self.createLabel)
 
         self.layout().setMargin(5)
         self.layout().addWidget(self.addLabelButton)
@@ -81,13 +80,13 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.volumeEditor = volumeEditor
         self.labelMgr = labelMgr
         self.listWidget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.listWidget.connect(self.listWidget, QtCore.SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
+        self.listWidget.customContextMenuRequested.connect(self.onContext)
         self.colorTab = []
         self.items = []
         self.labelColorTable = [QtGui.QColor(QtCore.Qt.red), QtGui.QColor(QtCore.Qt.green), QtGui.QColor(QtCore.Qt.yellow), QtGui.QColor(QtCore.Qt.blue), QtGui.QColor(QtCore.Qt.magenta) , QtGui.QColor(QtCore.Qt.darkYellow), QtGui.QColor(QtCore.Qt.lightGray)]
         #self.connect(self, QtCore.SIGNAL("currentTextChanged(QString)"), self.changeText)
         
-        self.connect(self.listWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.changeLabel)
+        self.listWidget.itemSelectionChanged.connect(self.changeLabel)
         self.labelPropertiesChanged_callback = None
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.initFromVolumeLabelDescriptions(volumeLabelDescriptions)
@@ -115,17 +114,17 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             act = QtGui.QAction(icon, labelName, menu)
             i = imageScene.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
             # print self.volumeEditor.labelView.selectionModel()
-            imageScene.connect(act, QtCore.SIGNAL("triggered()"), lambda i=i: imageScene.onContextSetLabel(i))
+            act.triggered.connect(lambda i=i: imageScene.onContextSetLabel(i))
             labelList.append(menu.addAction(act))
             
         if imageScene.drawManager.erasing is False:
             eraseAct = QtGui.QAction("Enable eraser", menu)
             menu.addAction(eraseAct)
-            imageScene.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: imageScene.drawManager.toggleErase())
+            eraseAct.triggered.connect(lambda: imageScene.drawManager.toggleErase())
         else:
             eraseAct = QtGui.QAction("Disable eraser", menu)
             menu.addAction(eraseAct)
-            imageScene.connect(eraseAct, QtCore.SIGNAL("triggered()"), lambda: imageScene.drawManager.toggleErase())
+            eraseAct.triggered.connect(lambda: imageScene.drawManager.toggleErase())
             
         menu.addSeparator()
         # brushM = labeling.addMenu("Brush size")
@@ -144,7 +143,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             desc = bSizes[1]
             act = QtGui.QAction("  " + str(b) + desc, brushGroup)
             act.setCheckable(True)
-            imageScene.connect(act, QtCore.SIGNAL("triggered()"), lambda b=b: imageScene.drawManager.setBrushSize(b))
+            act.triggered.connect(lambda b=b: imageScene.drawManager.setBrushSize(b))
             if b == imageScene.drawManager.getBrushSize():
                 act.setChecked(True)
             brush.append(menu.addAction(act))
@@ -164,7 +163,6 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         
         #just select the first item in the list so we have some selection
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(0,0), QtGui.QItemSelectionModel.ClearAndSelect)
-
 
     def changeLabelName(self, index, name):
         self.labelMgr.changeLabelName(index, name)
@@ -194,7 +192,6 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         #select the last item in the last
         self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(self.listWidget.model().rowCount()-1,0), QtGui.QItemSelectionModel.ClearAndSelect)
         
-        
     def removeLabel(self, item,  index):
         self.labelMgr.removeLabel(item.number)
         
@@ -209,11 +206,9 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.buildColorTab()
         self.volumeEditor.emit(QtCore.SIGNAL("labelRemoved(int)"), item.number)
         self.volumeEditor.repaint()
-        
 
     def buildColorTab(self):
         self.overlayItem.colorTable = self.colorTab = self.volumeLabelDescriptions.getColorTab()
-
 
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)
@@ -245,15 +240,12 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             if QtGui.QMessageBox.question(self, "Clear label", "Really clear label" + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)  != QtGui.QMessageBox.Cancel:
                 number = self.volumeLabelDescriptions[index.row()].number
                 self.labelMgr.clearLabel(number)                
-
-            
             
         elif action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
             self.volumeLabelDescriptions[index.row()].color = color.rgba()
             
-#            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
             if self.labelPropertiesChanged_callback is not None:
                 self.labelPropertiesChanged_callback()
             self.buildColorTab()
@@ -283,6 +275,10 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         if self.volumeEditor.overlayWidget.getOverlayRef(self.overlayItem.key) == None:
             self.volumeEditor.overlayWidget.addOverlayRef(self.overlayItem.getRef())
         self.volumeEditor.overlayWidget.setVisibility(self.overlayItem.key, True)
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
 
 if __name__ == '__main__':
     #make the program quit on Ctrl+C
