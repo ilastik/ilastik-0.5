@@ -55,8 +55,6 @@ DrawManager, ViewManager, InteractionLogger
 #*******************************************************************************
 
 class VolumeEditor(QWidget):
-    grid = None #in 3D mode hold the quad view widget, otherwise remains none
-    
     changedSlice = pyqtSignal(int,int)
     
     @property
@@ -76,8 +74,7 @@ class VolumeEditor(QWidget):
             
         self.ilastik = parent   # FIXME: dependency cycle
         self.name = name
-        
-        
+        self.grid = None #in 3D mode hold the quad view widget, otherwise remains none
         
         # enable interaction logger
         #InteractionLogger()   
