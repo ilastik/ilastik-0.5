@@ -59,7 +59,7 @@ class ImageScene(QGraphicsView):
     endDraw            = pyqtSignal(int, QPointF)
     mouseMoved         = pyqtSignal(int, int, int, bool)
     mouseDoubleClicked = pyqtSignal(int, int, int)
-    toggleMaximized    = pyqtSignal(bool)
+    toggleMaximized    = pyqtSignal(object)
     
     axisColor = [QColor(255,0,0,255), QColor(0,255,0,255), QColor(0,0,255,255)]
         
