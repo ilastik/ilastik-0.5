@@ -403,6 +403,7 @@ class ImageScene(QGraphicsView):
     #TODO oli
     def mousePressEvent(self, event):
         if event.button() == Qt.MidButton:
+            self.setCursor(QCursor(Qt.SizeAllCursor))
             self.lastPanPoint = event.pos()
             self.crossHairCursor.setVisible(False)
             self.dragMode = True
@@ -425,6 +426,7 @@ class ImageScene(QGraphicsView):
     #TODO oli
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MidButton:
+            self.setCursor(QCursor())
             releasePoint = event.pos()
             
             self.lastPanPoint = releasePoint
