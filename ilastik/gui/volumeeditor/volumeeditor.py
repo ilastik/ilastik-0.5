@@ -144,8 +144,8 @@ class VolumeEditor(QWidget):
 
         # 2D/3D Views
         viewingLayout = QVBoxLayout()
-        self.viewingLayout.setContentsMargins(10,2,0,2)
-        self.viewingLayout.setSpacing(0)
+        viewingLayout.setContentsMargins(10,2,0,2)
+        viewingLayout.setSpacing(0)
         if self.image.is3D():
             viewingLayout.addWidget(self.grid)
         else:
@@ -174,7 +174,7 @@ class VolumeEditor(QWidget):
         self.labelWidget = None
         self.setLabelWidget(DummyLabelWidget())
 
-        self.toolBoxLayout.addSpacing(30)
+        self.toolBoxLayout.addStretch()
 
         # Slice Selector Combo Box in right side toolbox
         self.sliceSelectors = []
@@ -207,9 +207,6 @@ class VolumeEditor(QWidget):
         for scene in self.imageScenes:
             sliceIntersectionBox.stateChanged.connect(scene.setSliceIntersection)
         sliceIntersectionBox.setCheckState(Qt.Checked)
-
-        self.toolBoxLayout.addStretch()
-
 
         # Channel Selector Combo Box in right side toolbox
         self.channelSpin = QSpinBox()
@@ -404,7 +401,11 @@ class VolumeEditor(QWidget):
             del self.labelWidget
         self.labelWidget = widget
         self.labelWidget.itemSelectionChanged.connect(self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 0, self.labelWidget)        
+        self.toolBoxLayout.insertWidget( 0, self.labelWidget)
+        if isinstance(widget, DummyLabelWidget):
+            oldMargins = list(self.toolBoxLayout.getContentsMargins())
+            oldMargins[1] = 0
+            self.toolBoxLayout.setContentsMargins(oldMargins[0],oldMargins[1],oldMargins[2],oldMargins[3])
     
     def setOverlayWidget(self,  widget):
         """

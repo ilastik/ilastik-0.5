@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4.QtCore import pyqtSignal, QObject, QThread, Qt
+from PyQt4.QtCore import pyqtSignal, QObject, QThread, Qt, QSize
 from PyQt4.QtGui  import QWidget, QPen, QGraphicsScene
 
 from ilastik.core.volume import DataAccessor
@@ -365,6 +365,7 @@ class DummyLabelWidget(QWidget):
     
     def __init__(self):
         QWidget.__init__(self)
+        self.setFixedSize(QSize(0,0))
         self.volumeLabels = None
         
     def currentItem(self):
