@@ -135,10 +135,9 @@ class ImageSceneRenderThread(QThread):
 
     def callMyFunction(self, itemdata, origitem, origitemColor, itemcolorTable):
         uint8image = self.convertImageUInt8(itemdata)
-        image0 = None
+
         if itemcolorTable != None and self.isRGB(uint8image):
-            image0 = qimage2ndarray.array2qimage(uint8image.swapaxes(0,1), normalize=False)
-            return image0
+            return qimage2ndarray.array2qimage(uint8image.swapaxes(0,1), normalize=False)
         if itemcolorTable != None:
             image0 = qimage2ndarray.gray2qimage(uint8image.swapaxes(0,1), normalize=False)
             image0.setColorTable(itemcolorTable[:])
