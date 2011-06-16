@@ -112,13 +112,6 @@ class VolumeEditor(QWidget):
         
         self.overview = OverviewScene(self, self.image.shape[1:4])
         
-        #this is needed on OS X, otherwise the slice planes
-        #are not updated when scrolling through the slice views in the
-        #volume editor. strange...
-        self.overview.TogglePlaneWidgetX()
-        self.overview.update()
-        self.overview.TogglePlaneWidgetX()
-        
         self.overview.changedSlice.connect(self.changeSlice)
         self.changedSlice.connect(self.overview.ChangeSlice)
 
