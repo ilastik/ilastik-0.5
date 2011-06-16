@@ -136,37 +136,34 @@ class ImageSceneRenderThread(QThread):
     def callMyFunction(self, itemdata, origitem, origitemColor, itemcolorTable):
         uint8image = self.convertImageUInt8(itemdata)
         image0 = None
-        if itemcolorTable != None:         
-            if self.isRGB(uint8image):
-                image0 = qimage2ndarray.array2qimage(uint8image.swapaxes(0,1), normalize=False)
-            else:
-                image0 = qimage2ndarray.gray2qimage(uint8image.swapaxes(0,1), normalize=False)
-                image0.setColorTable(itemcolorTable[:])
+        if itemcolorTable != None and self.isRGB(uint8image):
+            image0 = qimage2ndarray.array2qimage(uint8image.swapaxes(0,1), normalize=False)
+            return image0
+        if itemcolorTable != None:
+            image0 = qimage2ndarray.gray2qimage(uint8image.swapaxes(0,1), normalize=False)
+            image0.setColorTable(itemcolorTable[:])
+            return image0
             
+        if origitem.min is not None and origitem.max is not None:
+            normalize = (origitem.min, origitem.max)
         else:
-            if origitem.min is not None and origitem.max is not None:
-                normalize = (origitem.min, origitem.max)
-            else:
-                normalize = False
-                                            
-            if origitem.autoAlphaChannel is False:
-                if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
-                    image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
-                    image0 = image1
-                else:
-                    tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'float32')
-                    tempdat[:,:,0] = origitemColor.redF()*itemdata[:]
-                    tempdat[:,:,1] = origitemColor.greenF()*itemdata[:]
-                    tempdat[:,:,2] = origitemColor.blueF()*itemdata[:]
-                    image1 = qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
-                    image0 = image1
-            else:
-                image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
-                image0 = QImage(itemdata.shape[0],itemdata.shape[1],QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                image0.fill(origitemColor.rgba())
-                image0.setAlphaChannel(image1)
-        return image0
-    
+            normalize = False
+                                        
+        if origitem.autoAlphaChannel is False and self.isRGB(itemdata):
+            return qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+        if origitem.autoAlphaChannel is False:
+            tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'float32')
+            tempdat[:,:,0] = origitemColor.redF()*itemdata[:]
+            tempdat[:,:,1] = origitemColor.greenF()*itemdata[:]
+            tempdat[:,:,2] = origitemColor.blueF()*itemdata[:]
+            return qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
+        else: #autoAlphaChannel == True
+            image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+            image0 = QImage(itemdata.shape[0],itemdata.shape[1],QImage.Format_ARGB32)
+            image0.fill(origitemColor.rgba())
+            image0.setAlphaChannel(image1)
+            return image0
+
     def takeJob(self):
         workPackage = self.queue.pop()
         if workPackage is None:
