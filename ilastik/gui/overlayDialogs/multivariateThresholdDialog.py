@@ -1,4 +1,36 @@
-from PyQt4 import QtCore, QtGui
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import QObject, Qt, SIGNAL
+from PyQt4.QtGui import QCheckBox, QDialog, QHBoxLayout, QLabel, QLineEdit,\
+                        QMessageBox, QPushButton, QSlider, QVBoxLayout, QWidget
+
 import overlayDialogBase
 import ilastik.gui.overlaySelectionDlg
 from ilastik.core.overlays.thresholdOverlay import ThresholdOverlay 
@@ -7,9 +39,9 @@ from ilastik.core.overlays.thresholdOverlay import ThresholdOverlay
 # S l i d e r R e c e i v e r                                                  *
 #*******************************************************************************
 
-class SliderReceiver(QtCore.QObject):
+class SliderReceiver(QObject):
     def __init__(self, dialog, index, oldValue):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self.dialog = dialog
         self.index = index
         self.oldValue = oldValue
@@ -22,7 +54,7 @@ class SliderReceiver(QtCore.QObject):
 # M u l t i v a r i a t e T h r e s h o l d D i a l o g                        *
 #*******************************************************************************
 
-class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
+class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QDialog):
     configuresClass = "ilastik.core.overlays.thresholdOverlay.ThresholdOverlay"
     name = "Thresholding Overlay"
     author = "C. N. S."
@@ -32,7 +64,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             
     
     def __init__(self, ilastik, instance = None):
-        QtGui.QDialog.__init__(self, ilastik)
+        QDialog.__init__(self, ilastik)
         self.setWindowTitle("Multi-variate Thresholding")
         
         self.ilastik = ilastik
@@ -46,16 +78,16 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
 
         self.volumeEditor = ilastik.labelWidget
         self.project = ilastik.project
-        self.mainlayout = QtGui.QVBoxLayout()
+        self.mainlayout = QVBoxLayout()
         self.setLayout(self.mainlayout)
-        self.mainwidget = QtGui.QWidget()
+        self.mainwidget = QWidget()
         self.mainlayout.addWidget(self.mainwidget)
         self.hbox = None
         
         self.buildDialog()
         
-        self.acceptButton = QtGui.QPushButton("Ok")
-        self.connect(self.acceptButton, QtCore.SIGNAL('clicked()'), self.okClicked)
+        self.acceptButton = QPushButton("Ok")
+        self.connect(self.acceptButton, SIGNAL('clicked()'), self.okClicked)
         self.mainlayout.addWidget(self.acceptButton)
         
     def buildDialog(self):
@@ -63,9 +95,9 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         self.mainlayout.removeWidget(self.mainwidget)
         self.mainwidget.close()
         del self.mainwidget
-        self.mainwidget = QtGui.QWidget()
+        self.mainwidget = QWidget()
         self.mainlayout.insertWidget(0, self.mainwidget)      
-        self.hbox = QtGui.QHBoxLayout()
+        self.hbox = QHBoxLayout()
         self.mainwidget.setLayout(self.hbox)
         
         self.sliders = []
@@ -74,13 +106,13 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         self.totalValue = 0
         
         for index, t in enumerate(self.overlayItem.foregrounds):
-            l = QtGui.QVBoxLayout()
+            l = QVBoxLayout()
             #print t.name
             #print len(self.overlayItem.thresholds)
             #print index
             self.sliderReceivers.append(SliderReceiver(self,index,self.overlayItem.thresholds[index] * 1000))
             
-            w = QtGui.QSlider(QtCore.Qt.Vertical)
+            w = QSlider(Qt.Vertical)
 #*******************************************************************************
 # p r o b a b i l i t y                                                        *
 #*******************************************************************************
@@ -90,44 +122,44 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
             w.setSingleStep(1)
             w.setValue(self.overlayItem.thresholds[index] * 1000)
             l.addWidget(w)
-            label = QtGui.QLabel(t.name)
+            label = QLabel(t.name)
             l.addWidget(label)
-            self.sliderReceivers[-1].connect(w, QtCore.SIGNAL('sliderMoved(int)'), self.sliderReceivers[-1].sliderMoved)
+            self.sliderReceivers[-1].connect(w, SIGNAL('sliderMoved(int)'), self.sliderReceivers[-1].sliderMoved)
             self.sliders.append(w)
             
             self.hbox.addLayout(l)
             
         if len(self.overlayItem.backgrounds) > 0:
-            l = QtGui.QVBoxLayout()
+            l = QVBoxLayout()
             self.sliderReceivers.append(SliderReceiver(self,len(self.sliders),self.overlayItem.thresholds[-1] * 1000))
             
-            w = QtGui.QSlider(QtCore.Qt.Vertical)
+            w = QSlider(Qt.Vertical)
             w.setRange(0,1000)
             w.setSingleStep(1)
             w.setValue(self.overlayItem.thresholds[-1] * 1000)
             l.addWidget(w)
-            label = QtGui.QLabel('Background')
+            label = QLabel('Background')
             l.addWidget(label)
-            self.sliderReceivers[-1].connect(w, QtCore.SIGNAL('sliderMoved(int)'), self.sliderReceivers[-1].sliderMoved)
+            self.sliderReceivers[-1].connect(w, SIGNAL('sliderMoved(int)'), self.sliderReceivers[-1].sliderMoved)
             self.sliders.append(w)
             
             self.hbox.addLayout(l)
 
         
-        l = QtGui.QVBoxLayout()
-        w = QtGui.QPushButton("Select Foreground")
-        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectForegrounds)
+        l = QVBoxLayout()
+        w = QPushButton("Select Foreground")
+        self.connect(w, SIGNAL("clicked()"), self.selectForegrounds)
         l.addWidget(w)
-        w = QtGui.QPushButton("Select Background")
-        self.connect(w, QtCore.SIGNAL("clicked()"), self.selectBackgrounds)
+        w = QPushButton("Select Background")
+        self.connect(w, SIGNAL("clicked()"), self.selectBackgrounds)
         l.addWidget(w)
         
-        l2 = QtGui.QHBoxLayout()
-        self.smoothing = QtGui.QCheckBox("Smooth")
+        l2 = QHBoxLayout()
+        self.smoothing = QCheckBox("Smooth")
         self.smoothing.setToolTip("Smooth the input overlays with the specified pixel sigma using a gaussian\n Smoothing may take a while depending on the size of the data...")
         self.smoothing.setCheckState(self.overlayItem.smoothing * 2)
-        self.connect(self.smoothing, QtCore.SIGNAL("stateChanged(int)"), self.smoothingChanged)
-        self.sigma = QtGui.QLineEdit(str(self.overlayItem.sigma))
+        self.connect(self.smoothing, SIGNAL("stateChanged(int)"), self.smoothingChanged)
+        self.sigma = QLineEdit(str(self.overlayItem.sigma))
         self.sigma.setToolTip("sigma in pixels")
         l2.addWidget(self.smoothing)
         l2.addWidget(self.sigma)
@@ -143,7 +175,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         except:
             pass
         self.overlayItem.sigma = sigma
-        if state == QtCore.Qt.Checked:
+        if state == Qt.Checked:
             self.overlayItem.smoothing = True
         else:
             self.overlayItem.smoothing = False
@@ -193,10 +225,10 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         if len(self.overlayItem.dsets) >= 2:
             self.accept()
         else:
-            QtGui.QMessageBox.warning(self, "Error", "Please select more than one Overlay for thresholding - either more than one foreground overlays, or one foreground and one background overlay !")
+            QMessageBox.warning(self, "Error", "Please select more than one Overlay for thresholding - either more than one foreground overlays, or one foreground and one background overlay !")
         
     def exec_(self):
-        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+        if QDialog.exec_(self) == QDialog.Accepted:
             return self.overlayItem
         else:
             return None        

@@ -1,4 +1,39 @@
-from PyQt4 import QtCore, QtGui, uic
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import QFileInfo, Qt, SIGNAL, pyqtSignature
+from PyQt4.QtGui import QCheckBox, QColor, QDialog, QErrorMessage, QFileDialog,\
+                        QFrame, QHBoxLayout, QHeaderView, QIcon, QLabel, QPixmap,\
+                        QPushButton, QSpinBox, QTableWidgetItem, QVBoxLayout,\
+                        QWidget
+from PyQt4.uic import loadUi
+
 import ilastik.gui
 import fileloader
 import os, sys
@@ -12,16 +47,16 @@ from ilastik.core import projectClass
 # P r o j e c t D l g                                                          *
 #*******************************************************************************
 
-class ProjectDlg(QtGui.QDialog):
+class ProjectDlg(QDialog):
     def __init__(self, parent=None, newProject = True):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         
         self.ilastik = parent
         self.newProject = newProject
 
         self.labelCounter = 2
         self.columnPos = {}
-        self.labelColor = { 1:QtGui.QColor(QtCore.Qt.red), 2:QtGui.QColor(QtCore.Qt.green), 3:QtGui.QColor(QtCore.Qt.yellow), 4:QtGui.QColor(QtCore.Qt.blue), 5:QtGui.QColor(QtCore.Qt.magenta) , 6:QtGui.QColor(QtCore.Qt.darkYellow), 7:QtGui.QColor(QtCore.Qt.lightGray) }
+        self.labelColor = { 1:QColor(Qt.red), 2:QColor(Qt.green), 3:QColor(Qt.yellow), 4:QColor(Qt.blue), 5:QColor(Qt.magenta) , 6:QColor(Qt.darkYellow), 7:QColor(Qt.lightGray) }
         self.parent = parent
         self.fileList = []
         self.thumbList = []        
@@ -47,20 +82,20 @@ class ProjectDlg(QtGui.QDialog):
     def initDlg(self):
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(__file__)
-        uic.loadUi(os.path.join(ilastikPath,"dlgProject.ui"), self) 
+        loadUi(os.path.join(ilastikPath,"dlgProject.ui"), self) 
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setAlternatingRowColors(True)
         self.tableWidget.setShowGrid(False)
-        self.tableWidget.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+        self.tableWidget.horizontalHeader().setResizeMode(0, QHeaderView.Stretch)
         self.tableWidget.verticalHeader().hide()
-        self.connect(self.tableWidget, QtCore.SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
-        self.addFile.setIcon(QtGui.QIcon(ilastikIcons.DoubleArrow))
-        self.removeFile.setIcon(QtGui.QIcon(ilastikIcons.DoubleArrowBack))
+        self.connect(self.tableWidget, SIGNAL("cellPressed(int, int)"), self.updateThumbnail)
+        self.addFile.setIcon(QIcon(ilastikIcons.DoubleArrow))
+        self.removeFile.setIcon(QIcon(ilastikIcons.DoubleArrowBack))
 
 
 
-    @QtCore.pyqtSignature("")
+    @pyqtSignature("")
     def updateDlg(self, project):
         print "in update Dialog"
         self.project = project
@@ -69,7 +104,7 @@ class ProjectDlg(QtGui.QDialog):
         self.labeler.setText(project.labeler)
         self.description.setText(project.description)
         
-        theFlag = QtCore.Qt.ItemIsEnabled
+        theFlag = Qt.ItemIsEnabled
         flagON = ~theFlag | theFlag 
         flagOFF = ~theFlag
             
@@ -78,15 +113,15 @@ class ProjectDlg(QtGui.QDialog):
             self.tableWidget.insertRow(rowCount)
             
             # File _name
-            r = QtGui.QTableWidgetItem(d.fileName)
+            r = QTableWidgetItem(d.fileName)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                        
             # Here comes the cool python "checker" use it for if_than_else in lambdas
-            checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
+            checker = lambda x: x and Qt.Checked or Qt.Unchecked
             
             # labels
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
+            r = QTableWidgetItem()
+            r.data(Qt.CheckStateRole)
             #TODO: check for label availability
             #r.setCheckState(checker(d._dataVol.labels._data != None))
             
@@ -97,7 +132,7 @@ class ProjectDlg(QtGui.QDialog):
         self.exec_()
 
 
-    @QtCore.pyqtSignature("")     
+    @pyqtSignature("")     
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader(self)
         path, fileList, options = sl.exec_()
@@ -108,7 +143,7 @@ class ProjectDlg(QtGui.QDialog):
             loaded = self.project.loadStack(path, fileList, options) 
         except Exception, e:
             print e
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller sub-volume. Much smaller, since you may also want to calculate some features...")
+            QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller sub-volume. Much smaller, since you may also want to calculate some features...")
         if loaded:   
             # file name
             offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')' 
@@ -116,23 +151,23 @@ class ProjectDlg(QtGui.QDialog):
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(rowCount)
             
-                r = QtGui.QTableWidgetItem('Stack at ' + path + ', offsets: ' + offsetstr)
+                r = QTableWidgetItem('Stack at ' + path + ', offsets: ' + offsetstr)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
 
                 # labels
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Unchecked)
+                r = QTableWidgetItem()
+                r.data(Qt.CheckStateRole)
+                r.setCheckState(Qt.Unchecked)
 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
                 
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 print e
-                QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+                QErrorMessage.qtHandler().showMessage(str(e))
             
     
-    @QtCore.pyqtSignature("")
+    @pyqtSignature("")
     def on_loadFileButton_clicked(self):
 
         fl = fileloader.FileLoader(self)
@@ -143,48 +178,48 @@ class ProjectDlg(QtGui.QDialog):
         try:
             self.project.loadFile(fl.fileList, fl.options)
         except Exception, e:
-            QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+            QErrorMessage.qtHandler().showMessage(str(e))
         for filename in fl.fileList[fl.options.channels[0]]:
             
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)
             
             # file name
-            r = QtGui.QTableWidgetItem(filename)
+            r = QTableWidgetItem(filename)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             # labels
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Checked)
+            r = QTableWidgetItem()
+            r.data(Qt.CheckStateRole)
+            r.setCheckState(Qt.Checked)
             self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
 
             self.initThumbnail(filename)
             self.tableWidget.setCurrentCell(0, 0)
 
-    @QtCore.pyqtSignature("")     
+    @pyqtSignature("")     
     def on_addFile_clicked(self):
         #global LAST_DIRECTORY
-        fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ilastik.gui.LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.tiff *.gif *.h5)")
+        fileNames = QFileDialog.getOpenFileNames(self, "Open Image", ilastik.gui.LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.tiff *.gif *.h5)")
         fileNames.sort()
         loaded = False
         try:
             loaded = self.project.addFile(fileNames)
         except Exception, e:
-            QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+            QErrorMessage.qtHandler().showMessage(str(e))
         if loaded:
             for file_name in fileNames:
-                ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(file_name).path()
+                ilastik.gui.LAST_DIRECTORY = QFileInfo(file_name).path()
                 rowCount = self.tableWidget.rowCount()
                 self.tableWidget.insertRow(rowCount)
 
                 # file name
-                r = QtGui.QTableWidgetItem(file_name)
+                r = QTableWidgetItem(file_name)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                 # labels
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
+                r = QTableWidgetItem()
+                r.data(Qt.CheckStateRole)
+                r.setCheckState(Qt.Checked)
 
 
                 self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
@@ -192,7 +227,7 @@ class ProjectDlg(QtGui.QDialog):
                 self.initThumbnail(file_name)
                 self.tableWidget.setCurrentCell(0, 0)
                 
-    @QtCore.pyqtSignature("")   
+    @pyqtSignature("")   
     def on_removeFile_clicked(self):
         # Get row and fileName to remove
         row = self.tableWidget.currentRow()
@@ -209,7 +244,7 @@ class ProjectDlg(QtGui.QDialog):
         
         
     def initThumbnail(self, file_name):
-        thumb = QtGui.QPixmap(str(file_name))
+        thumb = QPixmap(str(file_name))
         if thumb.depth() != 0:
             if thumb.width() >= thumb.height():
                 thumb = thumb.scaledToWidth(128)
@@ -224,7 +259,7 @@ class ProjectDlg(QtGui.QDialog):
         except IndexError:
             pass
     
-    @QtCore.pyqtSignature("")     
+    @pyqtSignature("")     
     def on_confirmButtons_accepted(self):
         self.project.name = self.projectName.text()
         self.project.labeler = self.labeler.text()
@@ -235,7 +270,7 @@ class ProjectDlg(QtGui.QDialog):
 
         
     
-    @QtCore.pyqtSignature("")    
+    @pyqtSignature("")    
     def on_confirmButtons_rejected(self):
         for row in range(self.oldFiles, self.tableWidget.rowCount()):
             fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
@@ -248,9 +283,9 @@ class ProjectDlg(QtGui.QDialog):
 # P r o j e c t S e t t i n g s D l g                                          *
 #*******************************************************************************
 
-class ProjectSettingsDlg(QtGui.QDialog):
+class ProjectSettingsDlg(QDialog):
     def __init__(self, ilastik = None, project=None):
-        QtGui.QWidget.__init__(self, ilastik)
+        QWidget.__init__(self, ilastik)
         
         self.setWindowTitle("Project Options")
 
@@ -260,21 +295,21 @@ class ProjectSettingsDlg(QtGui.QDialog):
         
 
 
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
-        self.drawUpdateIntervalCheckbox = QtGui.QCheckBox("Train and predict during brush strokes in Interactive Mode")
+        self.drawUpdateIntervalCheckbox = QCheckBox("Train and predict during brush strokes in Interactive Mode")
         self.drawUpdateIntervalCheckbox.setCheckState((self.project.drawUpdateInterval > 0)  * 2)
-        self.connect(self.drawUpdateIntervalCheckbox, QtCore.SIGNAL("stateChanged(int)"), self.toggleUpdateInterval)
+        self.connect(self.drawUpdateIntervalCheckbox, SIGNAL("stateChanged(int)"), self.toggleUpdateInterval)
         self.layout.addWidget(self.drawUpdateIntervalCheckbox)
 
-        self.drawUpdateIntervalFrame = QtGui.QFrame()
-        tempLayout = QtGui.QHBoxLayout()
-        self.drawUpdateIntervalSpin = QtGui.QSpinBox()
+        self.drawUpdateIntervalFrame = QFrame()
+        tempLayout = QHBoxLayout()
+        self.drawUpdateIntervalSpin = QSpinBox()
         self.drawUpdateIntervalSpin.setRange(0,1000)
         self.drawUpdateIntervalSpin.setSuffix("ms")
         self.drawUpdateIntervalSpin.setValue(self.project.drawUpdateInterval)
-        tempLayout.addWidget(QtGui.QLabel(" "))
+        tempLayout.addWidget(QLabel(" "))
         tempLayout.addWidget(self.drawUpdateIntervalSpin)
         tempLayout.addStretch()
         self.drawUpdateIntervalFrame.setLayout(tempLayout)
@@ -283,30 +318,30 @@ class ProjectSettingsDlg(QtGui.QDialog):
             self.drawUpdateIntervalFrame.setVisible(False)
             self.drawUpdateIntervalSpin.setValue(300)
         
-        self.normalizeCheckbox = QtGui.QCheckBox("Normalize data for display in each slice view separately")
+        self.normalizeCheckbox = QCheckBox("Normalize data for display in each slice view separately")
         self.normalizeCheckbox.setCheckState(self.project.normalizeData * 2)
         self.layout.addWidget(self.normalizeCheckbox)
 
-        self.rgbDataCheckbox = QtGui.QCheckBox("Interpret 3-Channel files as RGB images")
+        self.rgbDataCheckbox = QCheckBox("Interpret 3-Channel files as RGB images")
         self.rgbDataCheckbox.setCheckState(self.project.rgbData * 2)
         self.layout.addWidget(self.rgbDataCheckbox)
 
-        self.borderMarginCheckbox = QtGui.QCheckBox("Show border margin indicator")
+        self.borderMarginCheckbox = QCheckBox("Show border margin indicator")
         self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin * 2)
         self.layout.addWidget(self.borderMarginCheckbox)
 
-        self.fastRepaintCheckbox = QtGui.QCheckBox("Speed up painting of slice views by tolerating flickering")
+        self.fastRepaintCheckbox = QCheckBox("Speed up painting of slice views by tolerating flickering")
         self.fastRepaintCheckbox.setCheckState(self.project.fastRepaint * 2)
         self.layout.addWidget(self.fastRepaintCheckbox)
 
 #        self.borderMarginCheckbox.setCheckState(self.project.useBorderMargin*2)
         self.normalizeCheckbox.setCheckState(self.project.normalizeData*2)
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.cancelButton = QtGui.QPushButton("Cancel")
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.cancel)
-        self.okButton = QtGui.QPushButton("Ok")
-        self.connect(self.okButton, QtCore.SIGNAL('clicked()'), self.ok)
+        tempLayout = QHBoxLayout()
+        self.cancelButton = QPushButton("Cancel")
+        self.connect(self.cancelButton, SIGNAL('clicked()'), self.cancel)
+        self.okButton = QPushButton("Ok")
+        self.connect(self.okButton, SIGNAL('clicked()'), self.ok)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
         tempLayout.addWidget(self.okButton)
@@ -329,13 +364,13 @@ class ProjectSettingsDlg(QtGui.QDialog):
         self.project.useBorderMargin = False
         self.project.normalizeData = False
         self.project.rgbData = False
-        if self.fastRepaintCheckbox.checkState() == QtCore.Qt.Checked:
+        if self.fastRepaintCheckbox.checkState() == Qt.Checked:
             self.project.fastRepaint = True
-        if self.normalizeCheckbox.checkState() == QtCore.Qt.Checked:
+        if self.normalizeCheckbox.checkState() == Qt.Checked:
             self.project.normalizeData = True
-        if self.borderMarginCheckbox.checkState() == QtCore.Qt.Checked:
+        if self.borderMarginCheckbox.checkState() == Qt.Checked:
             self.project.useBorderMargin = True
-        if self.rgbDataCheckbox.checkState() == QtCore.Qt.Checked:
+        if self.rgbDataCheckbox.checkState() == Qt.Checked:
             self.project.rgbData = True
         if self.ilastik.labelWidget is not None:
             self.ilastik.labelWidget.drawUpdateInterval = self.project.drawUpdateInterval

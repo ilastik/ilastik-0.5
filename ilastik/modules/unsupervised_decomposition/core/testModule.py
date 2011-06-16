@@ -1,4 +1,34 @@
-from PyQt4 import QtCore
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import QCoreApplication, QObject, QTimer, SIGNAL
+
 import sys
 from ilastik.core.projectClass import Project
 from ilastik.core.testThread import TestThread
@@ -82,20 +112,20 @@ class TestWholeModuleDefaultDecomposer(unittest.TestCase): # use default decompo
         __test__ = False
 
     def setUp(self):
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5")
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
     def mainFunction(self):
         self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, self.testProject.tolerance)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(self.testProject.inputOverlays)        
 
         self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
@@ -118,21 +148,21 @@ class TestWholeModulePCADecomposer(unittest.TestCase): # use PCA decomposer with
      
     def setUp(self):
         #print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.numComponents = 3
         self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5", UnsupervisedDecompositionPCA, self.numComponents)
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
     def mainFunction(self):
         self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, self.testProject.tolerance)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(self.testProject.inputOverlays)        
 
         self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())
@@ -163,15 +193,15 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
     
     def setUp(self):
         #print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) 
+        self.app = QCoreApplication(sys.argv) 
         self.numComponents = 5
         self.testProject = UnsupervisedDecompositionTestProject("sims_aligned_s7_32.h5", UnsupervisedDecompositionPLSA, self.numComponents)
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
@@ -181,7 +211,7 @@ class TestWholeModulePLSADecomposer(unittest.TestCase): # pLSA with 5 components
         RandomSeed.setRandomSeed(42)
         
         self.testThread = TestThread(self.testProject.unsupervisedMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames, self.testProject.tolerance)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(self.testProject.inputOverlays)        
 
         self.numOverlaysBefore = len(self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].overlayMgr.keys())

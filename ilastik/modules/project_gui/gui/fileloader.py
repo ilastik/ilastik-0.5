@@ -1,9 +1,36 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 23 10:38:02 2010
 
-@author: Anna
-"""
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import QDir, QFileInfo, QString, SIGNAL
+from PyQt4.QtGui import QCheckBox, QDialog, QFileDialog, QFormLayout, QFrame,\
+                        QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton,\
+                        QVBoxLayout, QWidget
 
 import os, glob
 import warnings
@@ -14,93 +41,91 @@ import ilastik.gui
 from ilastik.gui import loadOptionsWidget
 from ilastik.core import loadOptionsMgr
 
-from PyQt4 import QtCore, QtGui
-
 #*******************************************************************************
 # F i l e L o a d e r                                                          *
 #*******************************************************************************
 
-class FileLoader(QtGui.QDialog):
+class FileLoader(QDialog):
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         self.setWindowTitle("File Loading")
         self.setMinimumWidth(400)
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         
         self.fileList = []
         self.options = loadOptionsMgr.loadOptions()
         
-        tempLayout = QtGui.QHBoxLayout()
-        self.path = QtGui.QLineEdit("")
-        self.connect(self.path, QtCore.SIGNAL("textEdited(QString)"), self.pathChanged)
-        self.pathButton = QtGui.QPushButton("Select")
-        self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
+        tempLayout = QHBoxLayout()
+        self.path = QLineEdit("")
+        self.connect(self.path, SIGNAL("textEdited(QString)"), self.pathChanged)
+        self.pathButton = QPushButton("Select")
+        self.connect(self.pathButton, SIGNAL('clicked()'), self.slotDir)
         tempLayout.addWidget(self.path)
         tempLayout.addWidget(self.pathButton)
-        self.layout.addWidget(QtGui.QLabel("Path to the file:"))
+        self.layout.addWidget(QLabel("Path to the file:"))
         self.layout.addLayout(tempLayout)
         
-        tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("Load Multichannel data as one image:")
-        self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
+        tempLayout = QHBoxLayout()
+        self.multiChannel = QCheckBox("Load Multichannel data as one image:")
+        self.connect(self.multiChannel, SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout)
        
-        self.multiChannelFrame = QtGui.QFrame()
-        tempLayout = QtGui.QFormLayout()
-        tempLayout1 = QtGui.QHBoxLayout()
-        self.redPath = QtGui.QLineEdit("")
-        self.connect(self.redPath, QtCore.SIGNAL("textChanged(QString)"), self.redPathChanged)
-        self.redButton = QtGui.QPushButton("Select")
-        self.connect(self.redButton, QtCore.SIGNAL('clicked()'), self.slotRedPath)
+        self.multiChannelFrame = QFrame()
+        tempLayout = QFormLayout()
+        tempLayout1 = QHBoxLayout()
+        self.redPath = QLineEdit("")
+        self.connect(self.redPath, SIGNAL("textChanged(QString)"), self.redPathChanged)
+        self.redButton = QPushButton("Select")
+        self.connect(self.redButton, SIGNAL('clicked()'), self.slotRedPath)
         tempLayout1.addWidget(self.redPath)
         tempLayout1.addWidget(self.redButton)
-        tempLayout.addRow(QtGui.QLabel("red:"), tempLayout1)
+        tempLayout.addRow(QLabel("red:"), tempLayout1)
         
-        tempLayout1 = QtGui.QHBoxLayout()
-        self.greenPath = QtGui.QLineEdit("")
-        self.connect(self.greenPath, QtCore.SIGNAL("textChanged(QString)"), self.greenPathChanged)
-        self.greenButton = QtGui.QPushButton("Select")
-        self.connect(self.greenButton, QtCore.SIGNAL('clicked()'), self.slotGreenPath)
+        tempLayout1 = QHBoxLayout()
+        self.greenPath = QLineEdit("")
+        self.connect(self.greenPath, SIGNAL("textChanged(QString)"), self.greenPathChanged)
+        self.greenButton = QPushButton("Select")
+        self.connect(self.greenButton, SIGNAL('clicked()'), self.slotGreenPath)
         tempLayout1.addWidget(self.greenPath)
         tempLayout1.addWidget(self.greenButton)
-        tempLayout.addRow(QtGui.QLabel("green:"), tempLayout1)
+        tempLayout.addRow(QLabel("green:"), tempLayout1)
         
-        tempLayout1 = QtGui.QHBoxLayout()
-        self.bluePath = QtGui.QLineEdit("")
-        self.connect(self.bluePath, QtCore.SIGNAL("textChanged(QString)"), self.bluePathChanged)
-        self.blueButton = QtGui.QPushButton("Select")
-        self.connect(self.blueButton, QtCore.SIGNAL('clicked()'), self.slotBluePath)
+        tempLayout1 = QHBoxLayout()
+        self.bluePath = QLineEdit("")
+        self.connect(self.bluePath, SIGNAL("textChanged(QString)"), self.bluePathChanged)
+        self.blueButton = QPushButton("Select")
+        self.connect(self.blueButton, SIGNAL('clicked()'), self.slotBluePath)
         tempLayout1.addWidget(self.bluePath)
         tempLayout1.addWidget(self.blueButton)
-        tempLayout.addRow(QtGui.QLabel("blue:"), tempLayout1)
+        tempLayout.addRow(QLabel("blue:"), tempLayout1)
         
         self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.optionCheck = QtGui.QCheckBox("Additional options")
-        self.connect(self.optionCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleOptions)
+        tempLayout = QHBoxLayout()
+        self.optionCheck = QCheckBox("Additional options")
+        self.connect(self.optionCheck, SIGNAL("stateChanged(int)"), self.toggleOptions)
         tempLayout.addWidget(self.optionCheck)
         self.layout.addLayout(tempLayout)
         
-        self.optionsFrame = QtGui.QFrame()
-        tempLayout = QtGui.QHBoxLayout()
+        self.optionsFrame = QFrame()
+        tempLayout = QHBoxLayout()
         self.optionsWidget = loadOptionsWidget.LoadOptionsWidget()
         tempLayout.addWidget(self.optionsWidget)
         self.optionsFrame.setLayout(tempLayout)
         self.optionsFrame.setVisible(False)
         self.layout.addWidget(self.optionsFrame)
         
-        tempLayout = QtGui.QHBoxLayout()
-        self.loadButton = QtGui.QPushButton("Load")
-        self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
-        self.cancelButton = QtGui.QPushButton("Cancel")
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
-        self.previewFilesButton = QtGui.QPushButton("Preview files")
-        self.connect(self.previewFilesButton, QtCore.SIGNAL('clicked()'), self.slotPreviewFiles)
+        tempLayout = QHBoxLayout()
+        self.loadButton = QPushButton("Load")
+        self.connect(self.loadButton, SIGNAL('clicked()'), self.slotLoad)
+        self.cancelButton = QPushButton("Cancel")
+        self.connect(self.cancelButton, SIGNAL('clicked()'), self.reject)
+        self.previewFilesButton = QPushButton("Preview files")
+        self.connect(self.previewFilesButton, SIGNAL('clicked()'), self.slotPreviewFiles)
         tempLayout.addWidget(self.previewFilesButton)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
@@ -119,7 +144,7 @@ class FileLoader(QtGui.QDialog):
                 self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
                 self.optionsFrame.setVisible(True)
             else:
-                m = QtGui.QMessageBox(self)
+                m = QMessageBox(self)
                 m.setText("No advanced options available for the selected type " + fExt)
                 m.exec_()
                 self.optionCheck.setCheckState(False)
@@ -201,35 +226,35 @@ class FileLoader(QtGui.QDialog):
                 
     def slotDir(self):
         path = self.path.text()
-        templist1 = QtGui.QFileDialog.getOpenFileNames(self, "", path)
+        templist1 = QFileDialog.getOpenFileNames(self, "", path)
         templist = []
         for item in templist1:
-            templist.append(str(QtCore.QDir.convertSeparators(item)))
+            templist.append(str(QDir.convertSeparators(item)))
         self.updateFileList(templist)
         if (len(templist)>0):
             path_to_display = templist[0]
             if (len(templist)>1):
                 path_to_display = path_to_display + " ..."
-            self.path.setText(QtCore.QString(path_to_display))
+            self.path.setText(QString(path_to_display))
         
     def slotRedPath(self):
         path = ilastik.gui.LAST_DIRECTORY
-        filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
-        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
+        filename = QFileDialog.getOpenFileName(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QFileInfo(filename).path()
         self.redPath.setText(filename)
         #self.redPathChanged(filename)
         
     def slotGreenPath(self):
         path = ilastik.gui.LAST_DIRECTORY
-        filename = QtGui.QFileDialog.getOpenFileName(self, "", path)
-        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
+        filename = QFileDialog.getOpenFileName(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QFileInfo(filename).path()
         self.greenPath.setText(filename)
         #self.greenPathChanged(filename)
     
     def slotBluePath(self):
         path = ilastik.gui.LAST_DIRECTORY
-        filename = QtGui.QFileDialog.getOpenFileName(self, "",path)
-        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
+        filename = QFileDialog.getOpenFileName(self, "",path)
+        ilastik.gui.LAST_DIRECTORY = QFileInfo(filename).path()
         self.bluePath.setText(filename)
         #self.bluePathChanged(filename)
     
@@ -241,15 +266,15 @@ class FileLoader(QtGui.QDialog):
                 self.options.channels.append(0)
             else:
                 self.fileList.append([templist[0]])
-                self.redPath.setText(QtCore.QString(self.fileList[0][0]))
+                self.redPath.setText(QString(self.fileList[0][0]))
                 self.options.channels.append(0)
                 if len(templist) > 1:
                     self.fileList.append([templist[1]])
-                    self.greenPath.setText(QtCore.QString(self.fileList[1][0]))
+                    self.greenPath.setText(QString(self.fileList[1][0]))
                     self.options.channels.append(1)
                 if len(templist) > 2:
                     self.fileList.append([templist[2]])
-                    self.bluePath.setText(QtCore.QString(self.fileList[2][0]))
+                    self.bluePath.setText(QString(self.fileList[2][0]))
                     self.options.channels.append(2)
             #this call fills the shape
             if (self.optionCheck.checkState()==1):

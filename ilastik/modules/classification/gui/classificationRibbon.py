@@ -1,3 +1,6 @@
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QDialog, QFileDialog, QHBoxLayout, QMessageBox, QWidget
+
 import gc
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
@@ -12,19 +15,18 @@ from ilastik.modules.classification.gui.labelWidget import LabelListWidget
 from ilastik.modules.classification.gui.featureDlg import FeatureDlg
 from ilastik.modules.classification.gui.classifierSelectionDialog import ClassifierSelectionDlg
 
-
 #*******************************************************************************
 # C l a s s i f i c a t i o n T a b                                            *
 #*******************************************************************************
 
-class ClassificationTab(IlastikTabBase, QtGui.QWidget):
+class ClassificationTab(IlastikTabBase, QWidget):
     name = 'Classification'
     position = 1
     moduleName = "Classification"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
@@ -61,7 +63,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             self.ilastik._activeImage.module["Classification"]["labelHistory"] = self.ilastik.labelWidget._history
         
     def _initContent(self):
-        tl = QtGui.QHBoxLayout()
+        tl = QHBoxLayout()
         tl.setMargin(0)
      
         self.btnSelectFeatures    = TabButton('Select Features', ilastikIcons.Select)
@@ -90,11 +92,11 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         
     def _initConnects(self):
-        self.connect(self.btnSelectFeatures, QtCore.SIGNAL('clicked()'), self.on_btnSelectFeatures_clicked)
-        self.connect(self.btnStartLive, QtCore.SIGNAL('toggled(bool)'), self.on_btnStartLive_clicked)
-        self.connect(self.btnTrainPredict, QtCore.SIGNAL('clicked()'), self.on_btnTrainPredict_clicked)
-        self.connect(self.btnExportClassifier, QtCore.SIGNAL('clicked()'), self.on_btnExportClassifier_clicked)
-        self.connect(self.btnClassifierOptions, QtCore.SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
+        self.connect(self.btnSelectFeatures, SIGNAL('clicked()'), self.on_btnSelectFeatures_clicked)
+        self.connect(self.btnStartLive, SIGNAL('toggled(bool)'), self.on_btnStartLive_clicked)
+        self.connect(self.btnTrainPredict, SIGNAL('clicked()'), self.on_btnTrainPredict_clicked)
+        self.connect(self.btnExportClassifier, SIGNAL('clicked()'), self.on_btnExportClassifier_clicked)
+        self.connect(self.btnClassifierOptions, SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
         
     def on_otherProject(self):
         self.btnSelectFeatures.setEnabled(True)
@@ -107,7 +109,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
         newFeatureDlg = FeatureDlg(self.ilastik, preview)
         answer = newFeatureDlg.exec_()
-        if answer == QtGui.QDialog.Accepted:
+        if answer == QDialog.Accepted:
             self.featureComputation = FeatureComputation(self.ilastik)
         newFeatureDlg.close()
         newFeatureDlg.deleteLater()
@@ -124,28 +126,28 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnTrainPredict_clicked(self):
         self.classificationTrain = ClassificationTrain(self.ilastik)
-        self.connect(self.classificationTrain, QtCore.SIGNAL("trainingFinished()"), self.on_trainingFinished)
+        self.connect(self.classificationTrain, SIGNAL("trainingFinished()"), self.on_trainingFinished)
         
     def on_trainingFinished(self):
         print "Training finished"
         self.classificationPredict = ClassificationPredict(self.ilastik)
         
     def on_btnExportClassifier_clicked(self):
-        fileName = QtGui.QFileDialog.getSaveFileName(self, "Export Classifier", filter =  "HDF5 Files (*.h5)")
+        fileName = QFileDialog.getSaveFileName(self, "Export Classifier", filter =  "HDF5 Files (*.h5)")
         
         try:
             self.ilastik.project.dataMgr.Classification.exportClassifiers(fileName)
         except (RuntimeError, AttributeError, IOError) as e:
-            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            QMessageBox.warning(self, 'Error', str(e), QMessageBox.Ok)
             return
 
         try:
             self.ilastik.project.dataMgr.Classification.featureMgr.exportFeatureItems(fileName)
         except RuntimeError as e:
-            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            QMessageBox.warning(self, 'Error', str(e), QMessageBox.Ok)
             return
         
-        QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+        QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QMessageBox.Ok)
         
         
     def on_btnClassifierOptions_clicked(self):

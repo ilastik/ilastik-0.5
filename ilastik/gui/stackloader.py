@@ -27,6 +27,11 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+from PyQt4.QtCore import QDir, QFileInfo, SIGNAL
+from PyQt4.QtGui import QApplication, QCheckBox, QDialog, QFileDialog, QFrame,\
+                        QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit,\
+                        QPushButton, QVBoxLayout, QWidget
+
 import glob
 import os
 import ilastik.gui
@@ -34,19 +39,16 @@ import ilastik.gui
 from ilastik.gui import loadOptionsWidget
 from ilastik.core import loadOptionsMgr
 
-
-from PyQt4 import QtCore, QtGui
-
 #*******************************************************************************
 # S t a c k L o a d e r                                                        *
 #*******************************************************************************
 
-class StackLoader(QtGui.QDialog):
+class StackLoader(QDialog):
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         self.setWindowTitle("Load File Stack")
         self.setMinimumWidth(400)
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
         #a list of filenames
@@ -55,57 +57,57 @@ class StackLoader(QtGui.QDialog):
         self.fileList = []
         self.options = loadOptionsMgr.loadOptions()
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.path = QtGui.QLineEdit("")
-        self.connect(self.path, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.pathButton = QtGui.QPushButton("Select")
-        self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
+        tempLayout = QHBoxLayout()
+        self.path = QLineEdit("")
+        self.connect(self.path, SIGNAL("textChanged(QString)"), self.pathChanged)
+        self.pathButton = QPushButton("Select")
+        self.connect(self.pathButton, SIGNAL('clicked()'), self.slotDir)
         tempLayout.addWidget(self.path)
         tempLayout.addWidget(self.pathButton)
-        self.layout.addWidget(QtGui.QLabel("Path to Image Stack:"))
+        self.layout.addWidget(QLabel("Path to Image Stack:"))
         self.layout.addLayout(tempLayout)
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("Load MultiChannel data as one image:")
-        self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
+        tempLayout = QHBoxLayout()
+        self.multiChannel = QCheckBox("Load MultiChannel data as one image:")
+        self.connect(self.multiChannel, SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout) 
         
-        self.multiChannelFrame = QtGui.QFrame()
-        tempLayout = QtGui.QVBoxLayout()
-        tempLayout1 = QtGui.QHBoxLayout()
-        tempLayout1.addWidget(QtGui.QLabel("Enter channel identifiers, e.g. GFP"))
+        self.multiChannelFrame = QFrame()
+        tempLayout = QVBoxLayout()
+        tempLayout1 = QHBoxLayout()
+        tempLayout1.addWidget(QLabel("Enter channel identifiers, e.g. GFP"))
         tempLayout.addLayout(tempLayout1)
-        tempLayout2 = QtGui.QHBoxLayout()
-        self.redChannelId = QtGui.QLineEdit("")
-        self.connect(self.redChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.blueChannelId = QtGui.QLineEdit("")
-        self.connect(self.blueChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.greenChannelId = QtGui.QLineEdit("")
-        self.connect(self.greenChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        tempLayout2.addWidget(QtGui.QLabel("Red:"))
+        tempLayout2 = QHBoxLayout()
+        self.redChannelId = QLineEdit("")
+        self.connect(self.redChannelId, SIGNAL("textChanged(QString)"), self.pathChanged)
+        self.blueChannelId = QLineEdit("")
+        self.connect(self.blueChannelId, SIGNAL("textChanged(QString)"), self.pathChanged)
+        self.greenChannelId = QLineEdit("")
+        self.connect(self.greenChannelId, SIGNAL("textChanged(QString)"), self.pathChanged)
+        tempLayout2.addWidget(QLabel("Red:"))
         tempLayout2.addWidget(self.redChannelId)
-        tempLayout2.addWidget(QtGui.QLabel("Green:"))
+        tempLayout2.addWidget(QLabel("Green:"))
         tempLayout2.addWidget(self.greenChannelId)
-        tempLayout2.addWidget(QtGui.QLabel("Blue:"))
+        tempLayout2.addWidget(QLabel("Blue:"))
         tempLayout2.addWidget(self.blueChannelId)
         tempLayout.addLayout(tempLayout2)
         self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
 
-        tempLayout = QtGui.QHBoxLayout()
+        tempLayout = QHBoxLayout()
         self.optionsWidget = loadOptionsWidget.LoadOptionsWidget()
         tempLayout.addWidget(self.optionsWidget)
         self.layout.addLayout(tempLayout)
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.loadButton = QtGui.QPushButton("Load")
-        self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
-        self.cancelButton = QtGui.QPushButton("Cancel")
-        self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
-        self.previewFilesButton = QtGui.QPushButton("Preview files")
-        self.connect(self.previewFilesButton, QtCore.SIGNAL('clicked()'), self.slotPreviewFiles)
+        tempLayout = QHBoxLayout()
+        self.loadButton = QPushButton("Load")
+        self.connect(self.loadButton, SIGNAL('clicked()'), self.slotLoad)
+        self.cancelButton = QPushButton("Cancel")
+        self.connect(self.cancelButton, SIGNAL('clicked()'), self.reject)
+        self.previewFilesButton = QPushButton("Preview files")
+        self.connect(self.previewFilesButton, SIGNAL('clicked()'), self.slotPreviewFiles)
         tempLayout.addWidget(self.previewFilesButton)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
@@ -113,7 +115,7 @@ class StackLoader(QtGui.QDialog):
         self.layout.addStretch()
         self.layout.addLayout(tempLayout)
                 
-        self.logger = QtGui.QPlainTextEdit()
+        self.logger = QPlainTextEdit()
         self.logger.setVisible(False)
         self.layout.addWidget(self.logger)        
         self.image = None
@@ -161,12 +163,12 @@ class StackLoader(QtGui.QDialog):
 
     def slotDir(self):
         path = ilastik.gui.LAST_DIRECTORY
-        filename = QtGui.QFileDialog.getExistingDirectory(self, "Image Stack Directory", path)
-        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
+        filename = QFileDialog.getExistingDirectory(self, "Image Stack Directory", path)
+        ilastik.gui.LAST_DIRECTORY = QFileInfo(filename).path()
         tempname = filename + "/*"
         #This is needed, because internally Qt always uses "/" separators,
         #which is a problem on Windows, as we don't use QDir to open dirs
-        self.path.setText(str(QtCore.QDir.convertSeparators(tempname)))
+        self.path.setText(str(QDir.convertSeparators(tempname)))
         
 
     def slotPreviewFiles(self):
@@ -179,7 +181,7 @@ class StackLoader(QtGui.QDialog):
 
             
     def exec_(self):
-        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+        if QDialog.exec_(self) == QDialog.Accepted:
             return  str(self.path.text()), self.fileList, self.options
         else:
             return None, None, None
@@ -187,7 +189,7 @@ class StackLoader(QtGui.QDialog):
 def test():
     """Text editor demo"""
     #from spyderlib.utils.qthelpers import qapplication
-    app = QtGui.QApplication([""])
+    app = QApplication([""])
     
     dialog = StackLoader()
     print dialog.show()

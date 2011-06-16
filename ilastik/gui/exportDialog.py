@@ -27,66 +27,69 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import QFileInfo, QString, SIGNAL
+from PyQt4.QtGui import QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel,\
+                        QLineEdit, QPushButton, QSpinBox, QVBoxLayout
+
 import ilastik.gui
 
 #*******************************************************************************
 # E x p o r t D i a l o g                                                      *
 #*******************************************************************************
 
-class ExportDialog(QtGui.QDialog):
+class ExportDialog(QDialog):
     def __init__(self, formatList, timeOffset, sliceOffset, channelOffset, parent=None):
-        QtGui.QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent)
         self.setWindowTitle("Export Images")
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
             
-        l = QtGui.QHBoxLayout()
-        l.addWidget(QtGui.QLabel("Path"))
-        self.path = QtGui.QLineEdit("")
+        l = QHBoxLayout()
+        l.addWidget(QLabel("Path"))
+        self.path = QLineEdit("")
         l.addWidget(self.path)
-        self.pathButton = QtGui.QPushButton("Select")
+        self.pathButton = QPushButton("Select")
         l.addWidget(self.pathButton)
-        self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
+        self.connect(self.pathButton, SIGNAL('clicked()'), self.slotDir)
         layout.addLayout(l)
         
-        l = QtGui.QHBoxLayout()
-        l.addWidget(QtGui.QLabel("File name/prefix"))
-        self.prefix = QtGui.QLineEdit("")
+        l = QHBoxLayout()
+        l.addWidget(QLabel("File name/prefix"))
+        self.prefix = QLineEdit("")
         l.addWidget(self.prefix)
         self.formatList = formatList
-        self.formatBox = QtGui.QComboBox()
+        self.formatBox = QComboBox()
         for item in self.formatList:
-            self.formatBox.addItem(QtCore.QString(item))
+            self.formatBox.addItem(QString(item))
 
         l.addWidget(self.formatBox)        
         layout.addLayout(l)
         
-        l = QtGui.QHBoxLayout()
+        l = QHBoxLayout()
         self.timeOffsetBox = None
         self.sliceOffsetBox = None
         self.channelOffsetBox = None
         if timeOffset == True:
-            self.timeOffsetBox = QtGui.QSpinBox()
-            l.addWidget(QtGui.QLabel("Time Offset"))
+            self.timeOffsetBox = QSpinBox()
+            l.addWidget(QLabel("Time Offset"))
             l.addWidget(self.timeOffsetBox)
         if sliceOffset == True:
-            self.sliceOffsetBox = QtGui.QSpinBox()
-            l.addWidget(QtGui.QLabel("Slice Offset"))
+            self.sliceOffsetBox = QSpinBox()
+            l.addWidget(QLabel("Slice Offset"))
             l.addWidget(self.sliceOffsetBox)
         if channelOffset == True:
-            self.channelOffsetBox = QtGui.QSpinBox()
-            l.addWidget(QtGui.QLabel("Channel Offset"))
+            self.channelOffsetBox = QSpinBox()
+            l.addWidget(QLabel("Channel Offset"))
             l.addWidget(self.channelOffsetBox)
         if self.timeOffsetBox is not None or self.sliceOffsetBox is not None or self.channelOffsetBox is not None:
             layout.addLayout(l)
             
-        l = QtGui.QHBoxLayout()
+        l = QHBoxLayout()
         l.addStretch()
-        b = QtGui.QPushButton("Ok")
-        self.connect(b, QtCore.SIGNAL("clicked()"), self.export)
+        b = QPushButton("Ok")
+        self.connect(b, SIGNAL("clicked()"), self.export)
         l.addWidget(b)
-        b = QtGui.QPushButton("Cancel")
-        self.connect(b, QtCore.SIGNAL("clicked()"), self.reject)
+        b = QPushButton("Cancel")
+        self.connect(b, SIGNAL("clicked()"), self.reject)
         l.addWidget(b)
         layout.addLayout(l)
         self.setLayout(layout)
@@ -94,8 +97,8 @@ class ExportDialog(QtGui.QDialog):
 
     def slotDir(self):
         path = ilastik.gui.LAST_DIRECTORY
-        dir = QtGui.QFileDialog.getExistingDirectory(self, "", path)
-        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(dir).path()
+        dir = QFileDialog.getExistingDirectory(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QFileInfo(dir).path()
         self.path.setText(dir)
             
     def export(self):
@@ -106,7 +109,7 @@ class ExportDialog(QtGui.QDialog):
         self.accept()
 
     def exec_(self):
-        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+        if QDialog.exec_(self) == QDialog.Accepted:
             return None
         else:
             return None

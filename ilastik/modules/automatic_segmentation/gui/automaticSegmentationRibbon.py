@@ -1,3 +1,5 @@
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QHBoxLayout, QInputDialog, QWidget
 # -*- coding: utf-8 -*-
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
@@ -14,14 +16,14 @@ import ilastik.gui.volumeeditor as ve
 # A u t o S e g m e n t a t i o n T a b                                        *
 #*******************************************************************************
 
-class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
+class AutoSegmentationTab(IlastikTabBase, QWidget):
     name = 'Auto Segmentation'
     position = 2
     moduleName = "Automatic_Segmentation"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
@@ -47,7 +49,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         pass
     
     def _initContent(self):
-        tl = QtGui.QHBoxLayout()
+        tl = QHBoxLayout()
         tl.setMargin(0)
         
         self.btnChooseWeights = TabButton('Choose Border Probability Overlay', ilastikIcons.Select)
@@ -62,8 +64,8 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.setLayout(tl)
         
     def _initConnects(self):
-        self.connect(self.btnChooseWeights, QtCore.SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
-        self.connect(self.btnSegment, QtCore.SIGNAL('clicked()'), self.on_btnSegment_clicked)
+        self.connect(self.btnChooseWeights, SIGNAL('clicked()'), self.on_btnChooseWeights_clicked)
+        self.connect(self.btnSegment, SIGNAL('clicked()'), self.on_btnSegment_clicked)
         
     def on_btnChooseWeights_clicked(self):
         dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
@@ -75,7 +77,7 @@ class AutoSegmentationTab(IlastikTabBase, QtGui.QWidget):
             
             volume = overlay._data[0,:,:,:,0]
             
-            borderIndicator = QtGui.QInputDialog.getItem(self.ilastik, "Select border indicator type", "Select the border probability type : \n (Normal: bright pixels mean high border probability, Inverted: dark pixels mean high border probability) ",  ["Normal",  "Inverted"],  editable = False)
+            borderIndicator = QInputDialog.getItem(self.ilastik, "Select border indicator type", "Select the border probability type : \n (Normal: bright pixels mean high border probability, Inverted: dark pixels mean high border probability) ",  ["Normal",  "Inverted"],  editable = False)
             borderIndicator = str(borderIndicator[0])
             if borderIndicator == "Normal":
                 weights = volume[:,:,:]

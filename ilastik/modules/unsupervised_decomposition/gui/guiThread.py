@@ -1,3 +1,5 @@
+from PyQt4.QtCore import QTimer, SIGNAL
+from PyQt4.QtGui import QProgressBar
 from PyQt4 import QtGui, QtCore
 
 #*******************************************************************************
@@ -13,8 +15,8 @@ class UnsupervisedDecomposition(object):
     def start(self, overlays):
         self.parent.ribbon.getTab('Unsupervised Decomposition').btnDecompose.setEnabled(False)
         
-        self.timer = QtCore.QTimer()
-        self.parent.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateProgressBar)
+        self.timer = QTimer()
+        self.parent.connect(self.timer, SIGNAL("timeout()"), self.updateProgressBar)
 
         # call core function
         self.ud = self.parent.project.dataMgr.Unsupervised_Decomposition.computeResults(overlays)
@@ -26,7 +28,7 @@ class UnsupervisedDecomposition(object):
         
     def initProgressBar(self):#, numberOfJobs):    # USE (.., numberOfJobs) IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
         statusBar = self.parent.statusBar()
-        self.progressBar = QtGui.QProgressBar()
+        self.progressBar = QProgressBar()
         self.progressBar.setMinimum(0)
         self.progressBar.setMaximum(0)             # USE (numberOfJobs) IF YOU WANT TO UPDATE THE PROGRESS BAR WITH A PERCENTAGE
         self.progressBar.setValue(0)

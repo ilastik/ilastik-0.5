@@ -27,6 +27,15 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+from PyQt4.QtCore import QCoreApplication, QFileInfo, QObject, QPointF, Qt,\
+                         SIGNAL, SLOT
+from PyQt4.QtGui import QApplication, QButtonGroup, QComboBox, QDialog,\
+                        QDialogButtonBox, QDockWidget, QFileDialog, QIcon,\
+                        QKeySequence, QLabel, QMainWindow, QMessageBox, QPainter,\
+                        QPixmap, QRadioButton, QShortcut, QSplashScreen,\
+                        QVBoxLayout, QWidget
+from PyQt4.QtOpenGL import QGLWidget
+
 import vigra
 vigraVersion = vigra.version.split('.')
 if int(vigraVersion[0]) < 1 or int(vigraVersion[1]) < 8 or int(vigraVersion[2]) < 0:
@@ -53,7 +62,7 @@ import platform
 
 from PyQt4 import QtCore, QtOpenGL, QtGui
 
-app = QtGui.QApplication(sys.argv) #(sys.argv
+app = QApplication(sys.argv) #(sys.argv
 
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
@@ -102,11 +111,11 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 # R e n d e r C h o i c e D i a l o g                                          *
 #*******************************************************************************
 
-class RenderChoiceDialog(QtGui.QDialog):
+class RenderChoiceDialog(QDialog):
     def __init__(self):
         #Test for OpenGL Version
         gl2 = False
-        w = QtOpenGL.QGLWidget()
+        w = QGLWidget()
         w.setVisible(False)
         w.makeCurrent()
         gl_version =  glGetString(GL_VERSION)
@@ -122,12 +131,12 @@ class RenderChoiceDialog(QtGui.QDialog):
             raise RuntimeError("Absolutely no OpenGL available")
 
         super(RenderChoiceDialog, self).__init__()
-        layout = QtGui.QVBoxLayout(self)
-        choicesGroup = QtGui.QButtonGroup(self)
-        self.openglChoice   = QtGui.QRadioButton("Open GL")
-        self.softwareChoice = QtGui.QRadioButton("Software + OpenGL")
-        okButton = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok, QtCore.Qt.Vertical)
-        label = QtGui.QLabel("""<b>OpenGL + OpenGL Overview</b> allows
+        layout = QVBoxLayout(self)
+        choicesGroup = QButtonGroup(self)
+        self.openglChoice   = QRadioButton("Open GL")
+        self.softwareChoice = QRadioButton("Software + OpenGL")
+        okButton = QDialogButtonBox(QDialogButtonBox.Ok, Qt.Vertical)
+        label = QLabel("""<b>OpenGL + OpenGL Overview</b> allows
                     for fastest rendering if OpenGL is correctly installed.
                     <br> If visualization is slow or incomplete,
                     try the <b>Software + OpenGL</b> mode.""")
@@ -147,26 +156,26 @@ class RenderChoiceDialog(QtGui.QDialog):
             self.openglChoice.setEnabled(False)
             self.softwareChoice.setChecked(True)
 
-        QtCore.QObject.connect(okButton, QtCore.SIGNAL("accepted()"), self, QtCore.SLOT("accept()"))
+        QObject.connect(okButton, SIGNAL("accepted()"), self, SLOT("accept()"))
         
     def exec_(self):
         if not (self.openglChoice.isEnabled() and self.softwareChoice.isEnabled()):
             return
         else:
-            QtGui.QDialog.exec_(self)
+            QDialog.exec_(self)
 
 #*******************************************************************************
 # M a i n W i n d o w                                                          *
 #*******************************************************************************
 
-class MainWindow(QtGui.QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, parent=None):
 
-        QtGui.QMainWindow.__init__(self)
+        QMainWindow.__init__(self)
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
         self.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
-        self.setWindowIcon(QtGui.QIcon(ilastikIcons.Ilastik))
+        self.setWindowIcon(QIcon(ilastikIcons.Ilastik))
 
         self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
 
@@ -255,7 +264,7 @@ class MainWindow(QtGui.QMainWindow):
         #if we have OpenGL, a shared QGLWidget is set up,
         self.sharedOpenGLWidget = None
         if self.opengl:
-            self.sharedOpenGLWidget = QtOpenGL.QGLWidget()
+            self.sharedOpenGLWidget = QGLWidget()
 
         self.project = None
         if project != None:
@@ -272,8 +281,8 @@ class MainWindow(QtGui.QMainWindow):
             ov = DataImpex.importOverlay(dataItem, overlayFilename)
             dataItem.overlayMgr[ov.key] = ov
 
-        self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject)
-        self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
+        self.shortcutSave = QShortcut(QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject)
+        self.shortcutFullscreen = QShortcut(QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
         self.tabChanged(0)
 
     def showFullscreen(self):
@@ -294,7 +303,7 @@ class MainWindow(QtGui.QMainWindow):
         self.fileSelectorList.setEnabled(False)
 
         self.activeImageLock.acquire()
-        QtCore.QCoreApplication.processEvents()
+        QCoreApplication.processEvents()
         if self.labelWidget is not None:
             self.labelWidget._history.volumeEditor = None
 
@@ -339,23 +348,23 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.addTab(tab(self), tab.name)
 
 
-        self.fileSelectorList = QtGui.QComboBox()
-        widget = QtGui.QWidget()
+        self.fileSelectorList = QComboBox()
+        widget = QWidget()
         self.fileSelectorList.setMinimumWidth(140)
         self.fileSelectorList.setMaximumWidth(240)
-        self.fileSelectorList.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
-        layout = QtGui.QVBoxLayout()
+        self.fileSelectorList.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        layout = QVBoxLayout()
         layout.setMargin(0)
         layout.setSpacing(0)
-        layout.addWidget(QtGui.QLabel("Select Image:"))
+        layout.addWidget(QLabel("Select Image:"))
         layout.addWidget(self.fileSelectorList)
         widget.setLayout(layout)
         self.ribbonToolbar.addWidget(widget)
         #self.ribbonToolbar.addWidget(self.fileSelectorList)
-        self.fileSelectorList.connect(self.fileSelectorList, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeImage)
+        self.fileSelectorList.connect(self.fileSelectorList, SIGNAL("currentIndexChanged(int)"), self.changeImage)
 
         self.ribbon.setCurrentIndex (0)
-        self.connect(self.ribbon,QtCore.SIGNAL("currentChanged(int)"),self.tabChanged)
+        self.connect(self.ribbon,SIGNAL("currentChanged(int)"),self.tabChanged)
 
     def setTabBusy(self, state):
         self.fileSelectorList.setEnabled(not state)
@@ -399,15 +408,15 @@ class MainWindow(QtGui.QMainWindow):
             if self.project.filename is not None:
                 self.project.saveToDisk()
             else:
-                fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
+                fileName = QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
                 fn = str(fileName)
                 if len(fn) > 4:
                     if fn[-4:] != '.ilp':
                         fn = fn + '.ilp'
                     if self.project.saveToDisk(fn):
-                        QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
+                        QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QMessageBox.Ok)
                         
-                ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
+                ilastik.gui.LAST_DIRECTORY = QFileInfo(fn).path()
             print "saved Project to ", self.project.filename
 
     def projectModified(self):
@@ -424,7 +433,7 @@ class MainWindow(QtGui.QMainWindow):
     def destroyImageWindows(self):
 
         if self.labelWidget is not None:
-            self.labelWidget.setAttribute(QtCore.Qt.WA_DeleteOnClose, True)
+            self.labelWidget.setAttribute(Qt.WA_DeleteOnClose, True)
             self.labelWidget.cleanUp()
             self.labelWidget.close()
             self.labelWidget.deleteLater()
@@ -452,19 +461,19 @@ class MainWindow(QtGui.QMainWindow):
         self.labelWidget.setRgbMode(self.project.rgbData)
 
 
-        dock = QtGui.QDockWidget(self)
+        dock = QDockWidget(self)
         dock.setContentsMargins(0,0,0,0)
         #save space, but makes this dock widget undockable
         #at the moment we do not support undocking anyway, so...
-        dock.setTitleBarWidget(QtGui.QWidget())
-        dock.setAllowedAreas(QtCore.Qt.BottomDockWidgetArea | QtCore.Qt.RightDockWidgetArea | QtCore.Qt.TopDockWidgetArea | QtCore.Qt.LeftDockWidgetArea)
+        dock.setTitleBarWidget(QWidget())
+        dock.setAllowedAreas(Qt.BottomDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea | Qt.LeftDockWidgetArea)
         dock.setWidget(self.labelWidget)
-        dock.setFeatures(dock.features() & (not QtGui.QDockWidget.DockWidgetClosable))
+        dock.setFeatures(dock.features() & (not QDockWidget.DockWidgetClosable))
         self.volumeEditorDock = dock
 
-        self.connect(self.labelWidget, QtCore.SIGNAL("labelRemoved(int)"),self.labelRemoved)
+        self.connect(self.labelWidget, SIGNAL("labelRemoved(int)"),self.labelRemoved)
 
-        area = QtCore.Qt.BottomDockWidgetArea
+        area = Qt.BottomDockWidgetArea
         self.addDockWidget(area, dock)
         self.labelDocks.append(dock)
 
@@ -484,13 +493,13 @@ class MainWindow(QtGui.QMainWindow):
         shortcutManager.showDialog()
 
     def closeEvent(self, event):
-        reply = QtGui.QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No, QtGui.QMessageBox.Cancel)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QMessageBox.question(self, 'Save before Exit?', "Save the Project before quitting the Application", QMessageBox.Yes, QMessageBox.No, QMessageBox.Cancel)
+        if reply == QMessageBox.Yes:
             self.saveProject()
             event.accept()
             if self.labelWidget.grid:
                 self.labelWidget.grid.deleteUndocked()
-        elif reply == QtGui.QMessageBox.No:
+        elif reply == QMessageBox.No:
             event.accept()
             if hasattr(self.labelWidget,'grid') and self.labelWidget.grid:
                 self.labelWidget.grid.deleteUndocked()
@@ -503,13 +512,13 @@ class MainWindow(QtGui.QMainWindow):
 #*******************************************************************************
 
 if __name__ == "__main__":
-    splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")
-    painter = QtGui.QPainter()
+    splashImage = QPixmap("ilastik/gui/logos/ilastik-splash.png")
+    painter = QPainter()
     painter.begin(splashImage)
-    painter.drawText(QtCore.QPointF(270,110), ilastik.core.readInBuildInfo())
+    painter.drawText(QPointF(270,110), ilastik.core.readInBuildInfo())
     painter.end()
 
-    splashScreen = QtGui.QSplashScreen(splashImage)
+    splashScreen = QSplashScreen(splashImage)
     splashScreen.show()
 
     app.processEvents();

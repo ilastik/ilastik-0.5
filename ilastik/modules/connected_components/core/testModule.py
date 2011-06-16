@@ -1,4 +1,34 @@
-from PyQt4 import QtCore
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import QCoreApplication, QObject, QTimer, SIGNAL
+
 import sys
 from ilastik.core.projectClass import Project
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponentsModuleMgr
@@ -61,20 +91,20 @@ class TestWholeModule_WithoutBackground2D(unittest.TestCase):
      
     def setUp(self):
         print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
     def mainFunction(self):
         self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(None) # ...compute connected components without background
 
     def finalizeTest(self):
@@ -91,14 +121,14 @@ class TestWholeModule_WithoutBackgroundWrongImage2D(unittest.TestCase): # tests 
      
     def setUp(self):
         #print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("test_image_mirrored.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
@@ -110,7 +140,7 @@ class TestWholeModule_WithoutBackgroundWrongImage2D(unittest.TestCase): # tests 
         self.testProject.dataMgr[self.testProject.dataMgr._activeImageNumber].Connected_Components.setInputData(self.testProject.threshold_ov._data)
         
         self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(None) # ...compute connected components without background
 
     def finalizeTest(self):
@@ -127,20 +157,20 @@ class TestWholeModule_WithBackground2D1(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_with_background.h5")
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
     def mainFunction(self):
         self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         backgroundClasses = set([5, 6]) # use a non-empty background set
         self.testThread.start(backgroundClasses) # ...compute connected components with background
 
@@ -157,20 +187,20 @@ class TestWholeModule_WithBackground2D2(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("test_image.png", "cc_threshold_overlay.h5", "ground_truth_cc_without_background.h5")
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
     def mainFunction(self):
         self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         backgroundClasses = set([]) # use an empty background set - should then equal result without background
         self.testThread.start(backgroundClasses) # ...compute connected components with background
 
@@ -187,20 +217,20 @@ class TestWholeModule_WithoutBackground3D(unittest.TestCase):
      
     def setUp(self):
         print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("3dcube2.h5", "3dcube2_cc_threshold_overlay.h5", "3dcube2_ground_truth_cc_without_background.h5")
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
     def mainFunction(self):
         self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         self.testThread.start(None) # ...compute connected components without background
 
     def finalizeTest(self):
@@ -217,20 +247,20 @@ class TestWholeModule_WithBackground3D(unittest.TestCase):
      
     def setUp(self):
         #print "setUp"
-        self.app = QtCore.QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
+        self.app = QCoreApplication(sys.argv) # we need a QCoreApplication to run, otherwise the thread just gets killed
         self.testProject = CCTestProject("3dcube2.h5", "3dcube2_cc_threshold_overlay.h5", "3dcube2_ground_truth_cc_with_background.h5")
     
     def test_WholeModule(self):
-        t = QtCore.QTimer()
+        t = QTimer()
         t.setSingleShot(True)
         t.setInterval(0)
-        self.app.connect(t, QtCore.SIGNAL('timeout()'), self.mainFunction)        
+        self.app.connect(t, SIGNAL('timeout()'), self.mainFunction)        
         t.start()
         self.app.exec_()
         
     def mainFunction(self):
         self.testThread = TestThread(self.testProject.connectedComponentsMgr, self.testProject.listOfResultOverlays, self.testProject.listOfFilenames)
-        QtCore.QObject.connect(self.testThread, QtCore.SIGNAL('done()'), self.finalizeTest)
+        QObject.connect(self.testThread, SIGNAL('done()'), self.finalizeTest)
         backgroundClasses = set([1, 3]) # use a non-empty background set
         self.testThread.start(backgroundClasses) # ...compute connected components with background
 

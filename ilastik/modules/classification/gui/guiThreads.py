@@ -1,5 +1,36 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import QObject, QTimer, SIGNAL
+from PyQt4.QtGui import QColor, QErrorMessage, QProgressBar
+
 import numpy
-from PyQt4 import QtGui, QtCore
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import overlayMgr
 import ilastik.core.overlays.thresholdOverlay as tho
@@ -8,9 +39,9 @@ import ilastik.core.overlays.thresholdOverlay as tho
 # F e a t u r e C o m p u t a t i o n                                          *
 #*******************************************************************************
 
-class FeatureComputation(QtCore.QObject):
+class FeatureComputation(QObject):
     def __init__(self, parent):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self.ilastik = self.parent = parent
         self.featureCompute() 
     
@@ -19,8 +50,8 @@ class FeatureComputation(QtCore.QObject):
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)        
         self.parent.project.dataMgr.featureLock.acquire()
-        self.myTimer = QtCore.QTimer(self)
-        self.parent.connect(self.myTimer, QtCore.SIGNAL("timeout()"), self.updateFeatureProgress)
+        self.myTimer = QTimer(self)
+        self.parent.connect(self.myTimer, SIGNAL("timeout()"), self.updateFeatureProgress)
         self.parent.project.dataMgr.module["Classification"]["classificationMgr"].clearFeaturesAndTraining()
         numberOfJobs = self.ilastik.project.dataMgr.Classification.featureMgr.prepareCompute(self.parent.project.dataMgr)   
         self.initFeatureProgress(numberOfJobs)
@@ -29,7 +60,7 @@ class FeatureComputation(QtCore.QObject):
         
     def initFeatureProgress(self, numberOfJobs):
         statusBar = self.parent.statusBar()
-        self.myFeatureProgressBar = QtGui.QProgressBar()
+        self.myFeatureProgressBar = QProgressBar()
         self.myFeatureProgressBar.setMinimum(0)
         self.myFeatureProgressBar.setMaximum(numberOfJobs)
         self.myFeatureProgressBar.setFormat(' Features... %p%')
@@ -69,9 +100,9 @@ class FeatureComputation(QtCore.QObject):
 # C l a s s i f i c a t i o n T r a i n                                        *
 #*******************************************************************************
 
-class ClassificationTrain(QtCore.QObject):
+class ClassificationTrain(QObject):
     def __init__(self, parent):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self.parent = parent
         self.ilastik = parent
         self.start()
@@ -88,8 +119,8 @@ class ClassificationTrain(QtCore.QObject):
         if len(newLabels) > 0:
             self.parent.project.dataMgr.Classification.classificationMgr.updateTrainingMatrix(newLabels)
         
-        self.classificationTimer = QtCore.QTimer(self)
-        self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
+        self.classificationTimer = QTimer(self)
+        self.parent.connect(self.classificationTimer, SIGNAL("timeout()"), self.updateClassificationProgress)      
         numberOfJobs = 10                 
         self.initClassificationProgress(numberOfJobs)
         
@@ -99,7 +130,7 @@ class ClassificationTrain(QtCore.QObject):
 
     def initClassificationProgress(self, numberOfJobs):
         statusBar = self.parent.statusBar()
-        self.myClassificationProgressBar = QtGui.QProgressBar()
+        self.myClassificationProgressBar = QProgressBar()
         self.myClassificationProgressBar.setMinimum(0)
         self.myClassificationProgressBar.setMaximum(numberOfJobs)
         self.myClassificationProgressBar.setFormat(' Training... %p%')
@@ -118,7 +149,7 @@ class ClassificationTrain(QtCore.QObject):
         self.classificationProcess.wait()
         self.terminateClassificationProgressBar()
         self.parent.setTabBusy(False)
-        self.emit(QtCore.SIGNAL("trainingFinished()"))
+        self.emit(SIGNAL("trainingFinished()"))
                       
     def terminateClassificationProgressBar(self):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
@@ -146,9 +177,9 @@ class ClassificationInteractive(object):
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
                 
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('newLabelsPending()'), self.updateThreadQueues)
+        self.parent.labelWidget.connect(self.parent.labelWidget, SIGNAL('newLabelsPending()'), self.updateThreadQueues)
 
-        self.parent.labelWidget.connect(self.parent.labelWidget, QtCore.SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
+        self.parent.labelWidget.connect(self.parent.labelWidget, SIGNAL('changedSlice(int, int)'), self.updateThreadQueues)
 
         self.temp_cnt = 0
         
@@ -162,7 +193,7 @@ class ClassificationInteractive(object):
             #create Overlay for _prediction if not there:
             if activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] is None:
                 data = numpy.zeros(activeImage.shape[0:-1] + (1,), 'float32')
-                ov = overlayMgr.OverlayItem(data,  color = QtGui.QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
+                ov = overlayMgr.OverlayItem(data,  color = QColor.fromRgba(long(descriptions[p_num-1].color)), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                 activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
             ov = activeImage.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
@@ -172,7 +203,7 @@ class ClassificationInteractive(object):
         #create Overlay for uncertainty:
         if activeImage.overlayMgr["Classification/Uncertainty"] is None:
             data = numpy.zeros(activeImage.shape[0:-1] + (1,), 'float32')
-            ov = overlayMgr.OverlayItem(data, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
+            ov = overlayMgr.OverlayItem(data, color = QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
             activeImage.overlayMgr["Classification/Uncertainty"] = ov
 
         if len(foregrounds) > 1:
@@ -201,7 +232,7 @@ class ClassificationInteractive(object):
 
     def initInteractiveProgressBar(self):
         statusBar = self.parent.statusBar()
-        self.myInteractionProgressBar = QtGui.QProgressBar()
+        self.myInteractionProgressBar = QProgressBar()
         self.myInteractionProgressBar.setVisible(False)
         self.myInteractionProgressBar.setMinimum(0)
         self.myInteractionProgressBar.setMaximum(0)
@@ -217,7 +248,7 @@ class ClassificationInteractive(object):
         self.initInteractiveProgressBar()
         self.classificationInteractive = classificationMgr.ClassifierInteractiveThread(self.parent, self.parent.project.dataMgr.module["Classification"]["classificationMgr"],classifier = self.parent.project.dataMgr.module["Classification"].classifier)
 
-        self.parent.connect(self.classificationInteractive, QtCore.SIGNAL("resultsPending()"), self.updateLabelWidget)      
+        self.parent.connect(self.classificationInteractive, SIGNAL("resultsPending()"), self.updateLabelWidget)      
     
                
         self.classificationInteractive.start()
@@ -250,9 +281,9 @@ class ClassificationInteractive(object):
 # C l a s s i f i c a t i o n P r e d i c t                                    *
 #*******************************************************************************
 
-class ClassificationPredict(QtCore.QObject):
+class ClassificationPredict(QObject):
     def __init__(self, parent):
-        QtCore.QObject.__init__(self)
+        QObject.__init__(self)
         self.parent = parent
         self.start()
     
@@ -264,8 +295,8 @@ class ClassificationPredict(QtCore.QObject):
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
         
         
-        self.classificationTimer = QtCore.QTimer(self)
-        self.parent.connect(self.classificationTimer, QtCore.SIGNAL("timeout()"), self.updateClassificationProgress)      
+        self.classificationTimer = QTimer(self)
+        self.parent.connect(self.classificationTimer, SIGNAL("timeout()"), self.updateClassificationProgress)      
                     
         self.classificationPredict = classificationMgr.ClassifierPredictThread(self.parent.project.dataMgr)
         numberOfJobs = self.classificationPredict.numberOfJobs
@@ -275,7 +306,7 @@ class ClassificationPredict(QtCore.QObject):
 
     def initClassificationProgress(self, numberOfJobs):
         statusBar = self.parent.statusBar()
-        self.myClassificationProgressBar = QtGui.QProgressBar()
+        self.myClassificationProgressBar = QProgressBar()
         self.myClassificationProgressBar.setMinimum(0)
         self.myClassificationProgressBar.setMaximum(numberOfJobs)
         self.myClassificationProgressBar.setFormat(' Prediction... %p%')
@@ -300,7 +331,7 @@ class ClassificationPredict(QtCore.QObject):
             self.parent.labelWidget.repaint()
         except MemoryError,e:
             print "Out of memory:", e
-            QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory to create all classification results")
+            QErrorMessage.qtHandler().showMessage("Not enough memory to create all classification results")
         self.parent.setTabBusy(False)
         
     def terminateClassificationProgressBar(self):

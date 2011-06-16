@@ -26,25 +26,26 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import Qt, SIGNAL
+from PyQt4.QtGui import QTabWidget
 
 #*******************************************************************************
 # I l a s t i k T a b W i d g e t                                              *
 #*******************************************************************************
 
-class IlastikTabWidget(QtGui.QTabWidget):
+class IlastikTabWidget(QTabWidget):
     def __init__(self, parent=None):
-        QtGui.QTabWidget.__init__(self, parent)
+        QTabWidget.__init__(self, parent)
         self.setContentsMargins(0,0,0,0)
         self.tabDict = {}
         self.currentTabNumber = 0
         if parent:     
-            self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
+            self.connect(parent,SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
 
     def orientationEvent(self, orientation):
-        if orientation == QtCore.Qt.Horizontal: 
+        if orientation == Qt.Horizontal: 
             self.setTabPosition(self.North)            
-        if orientation == QtCore.Qt.Vertical: 
+        if orientation == Qt.Vertical: 
             self.setTabPosition(self.West)
         for tab in self.tabDict.values():
             lo = tab.layout()
@@ -53,11 +54,11 @@ class IlastikTabWidget(QtGui.QTabWidget):
             lo.setDirection(lo.Direction(orientation))
           
     def moveEvent(self, event):
-        QtGui.QTabWidget.moveEvent(self, event)
+        QTabWidget.moveEvent(self, event)
     
     def addTab(self, page, tabName):
         self.tabDict[tabName] = page
-        QtGui.QTabWidget.addTab(self, page, tabName)  
+        QTabWidget.addTab(self, page, tabName)  
  
     def getTab(self, tabName):
         return self.tabDict[tabName] 

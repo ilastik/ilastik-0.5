@@ -42,8 +42,9 @@ from ilastik.modules.connected_components.core.synapseDetectionFilter import Syn
 from ilastik.core.overlays.thresholdOverlay import MultivariateThresholdAccessor
 
 try:
-    from PyQt4 import QtCore
-    ThreadBase = QtCore.QThread
+    from PyQt4.QtCore import QThread
+    from PyQt4.QtGui import QColor, qRgb
+    ThreadBase = QThread
     have_qt = True
 except:
     ThreadBase = threading.Thread
@@ -204,9 +205,9 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
             objcounter = objcounter +1
         
         if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] is None:
-            #colortab = [QtGui.qRgb(i, i, i) for i in range(256)]
+            #colortab = [qRgb(i, i, i) for i in range(256)]
             colortab = OverlayItem.createDefault16ColorColorTable()
-            myColor = OverlayItem.qrgb(255, 0, 0) #QtGui.QColor(255, 0, 0)
+            myColor = OverlayItem.qrgb(255, 0, 0) #QColor(255, 0, 0)
             ov = OverlayItem(result, color = myColor, alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Filtered"] = ov
         else:
@@ -254,9 +255,9 @@ class ConnectedComponents():
 # C o n n e c t e d C o m p o n e n t s T h r e a d                            *
 #*******************************************************************************
 
-class ConnectedComponentsThread(QtCore.QThread):
+class ConnectedComponentsThread(QThread):
     def __init__(self, dataMgr, image, background=set(), connector = ConnectedComponents(), connectorOptions = None):
-        QtCore.QThread.__init__(self, None)
+        QThread.__init__(self, None)
         self._data = image
         self.backgroundSet = copy.deepcopy(background) #make copy, because we alter the set later
         self.dataMgr = dataMgr

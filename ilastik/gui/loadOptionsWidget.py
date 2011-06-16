@@ -1,160 +1,193 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import QString, Qt, SIGNAL
+from PyQt4.QtGui import QCheckBox, QDialog, QFileDialog, QFormLayout, QFrame,\
+                        QGridLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton,\
+                        QSpinBox, QTableWidget, QTableWidgetItem, QVBoxLayout,\
+                        QWidget
 import os
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
 from ilastik.core import dataImpex
-from PyQt4 import QtCore, QtGui
 
 #*******************************************************************************
 # L o a d O p t i o n s W i d g e t                                            *
 #*******************************************************************************
 
-class LoadOptionsWidget(QtGui.QWidget):
+class LoadOptionsWidget(QWidget):
     def __init__(self):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
         #self.setMinimumWidth(400)
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.rgb = 1
         
     
-        self.layout.addWidget(QtGui.QLabel("Select a subvolume:"))
-        #tempGrid = QtGui.QGridLayout()
-        #tempForm = QtGui.QFormLayout()
-        tempLayoutRight = QtGui.QVBoxLayout()        
-        tempLayout = QtGui.QHBoxLayout()        
-        self.offsetX = QtGui.QSpinBox()
+        self.layout.addWidget(QLabel("Select a subvolume:"))
+        #tempGrid = QGridLayout()
+        #tempForm = QFormLayout()
+        tempLayoutRight = QVBoxLayout()        
+        tempLayout = QHBoxLayout()        
+        self.offsetX = QSpinBox()
         self.offsetX.setRange(0,10000)
-        self.connect(self.offsetX, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
-        self.offsetY = QtGui.QSpinBox()
+        self.connect(self.offsetX, SIGNAL("textChanged(QString)"), self.off1Changed)
+        self.offsetY = QSpinBox()
         self.offsetY.setRange(0,10000)
-        self.connect(self.offsetY, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
-        self.offsetZ = QtGui.QSpinBox()
+        self.connect(self.offsetY, SIGNAL("textChanged(QString)"), self.off1Changed)
+        self.offsetZ = QSpinBox()
         self.offsetZ.setRange(0,10000)
-        self.connect(self.offsetZ, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
-        tempLayout.addWidget(QtGui.QLabel("X"))
+        self.connect(self.offsetZ, SIGNAL("textChanged(QString)"), self.off1Changed)
+        tempLayout.addWidget(QLabel("X"))
         tempLayout.addWidget( self.offsetX)
-        tempLayout.addWidget(QtGui.QLabel("Y"))
+        tempLayout.addWidget(QLabel("Y"))
         tempLayout.addWidget( self.offsetY)
-        tempLayout.addWidget(QtGui.QLabel("Z"))
+        tempLayout.addWidget(QLabel("Z"))
         tempLayout.addWidget( self.offsetZ)
         tempLayoutRight.addLayout(tempLayout)
         #self.layout.addLayout(tempLayout)
-        #tempForm.addRow(QtGui.QLabel("From:"), tempLayout)
-#        tempGrid.addWidget(QtGui.QLabel("From:"), 0, 0)
-#        tempGrid.addWidget(QtGui.QLabel("X"), 0, 1)
+        #tempForm.addRow(QLabel("From:"), tempLayout)
+#        tempGrid.addWidget(QLabel("From:"), 0, 0)
+#        tempGrid.addWidget(QLabel("X"), 0, 1)
 #        tempGrid.addWidget(self.offsetX, 0, 2)
-#        tempGrid.addWidget(QtGui.QLabel("Y"), 0, 3)
+#        tempGrid.addWidget(QLabel("Y"), 0, 3)
 #        tempGrid.addWidget(self.offsetY, 0, 4)
-#        tempGrid.addWidget(QtGui.QLabel("Z"), 0, 5)
+#        tempGrid.addWidget(QLabel("Z"), 0, 5)
 #        tempGrid.addWidget(self.offsetZ, 0, 6)
         
-        tempLayout = QtGui.QHBoxLayout()
-        self.sizeX = QtGui.QSpinBox()
+        tempLayout = QHBoxLayout()
+        self.sizeX = QSpinBox()
         self.sizeX.setRange(0,10000)
-        self.connect(self.sizeX, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
-        self.sizeY = QtGui.QSpinBox()
+        self.connect(self.sizeX, SIGNAL("textChanged(QString)"), self.off2Changed)
+        self.sizeY = QSpinBox()
         self.sizeY.setRange(0,10000)
-        self.connect(self.sizeY, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
-        self.sizeZ = QtGui.QSpinBox()
+        self.connect(self.sizeY, SIGNAL("textChanged(QString)"), self.off2Changed)
+        self.sizeZ = QSpinBox()
         self.sizeZ.setRange(0,10000)
-        self.connect(self.sizeZ, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
-        tempLayout.addWidget(QtGui.QLabel("X"))
+        self.connect(self.sizeZ, SIGNAL("textChanged(QString)"), self.off2Changed)
+        tempLayout.addWidget(QLabel("X"))
         tempLayout.addWidget( self.sizeX)
-        tempLayout.addWidget(QtGui.QLabel("Y"))
+        tempLayout.addWidget(QLabel("Y"))
         tempLayout.addWidget( self.sizeY)
-        tempLayout.addWidget(QtGui.QLabel("Z"))
+        tempLayout.addWidget(QLabel("Z"))
         tempLayout.addWidget( self.sizeZ)
         tempLayoutRight.addLayout(tempLayout)
-        #self.layout.addWidget(QtGui.QLabel("Subvolume End Offsets:"))
+        #self.layout.addWidget(QLabel("Subvolume End Offsets:"))
         
-        tempLayoutLeft = QtGui.QVBoxLayout()
-        tempLayoutLeft.addWidget(QtGui.QLabel("From:"))
-        tempLayoutLeft.addWidget(QtGui.QLabel("To:"))
-        tempLayout = QtGui.QHBoxLayout()
+        tempLayoutLeft = QVBoxLayout()
+        tempLayoutLeft.addWidget(QLabel("From:"))
+        tempLayoutLeft.addWidget(QLabel("To:"))
+        tempLayout = QHBoxLayout()
         
         tempLayout.addLayout(tempLayoutLeft)
         tempLayout.addLayout(tempLayoutRight)
         tempLayout.addStretch()
         self.layout.addLayout(tempLayout)
-#        tempForm.addRow(QtGui.QLabel("To:"), tempLayout)
+#        tempForm.addRow(QLabel("To:"), tempLayout)
 #        self.layout.addLayout(tempForm)
-#        tempGrid.addWidget(QtGui.QLabel("To:"), 1, 0)
-#        x = QtGui.QLabel("X")
-#        x.setAlignment(QtCore.Qt.AlignCenter)
+#        tempGrid.addWidget(QLabel("To:"), 1, 0)
+#        x = QLabel("X")
+#        x.setAlignment(Qt.AlignCenter)
 #        tempGrid.addWidget(x, 1, 1)
 #        tempGrid.addWidget(self.sizeX, 1, 2)
-#        tempGrid.addWidget(QtGui.QLabel("Y"), 1, 3)
+#        tempGrid.addWidget(QLabel("Y"), 1, 3)
 #        tempGrid.addWidget(self.sizeY, 1, 4)
-#        tempGrid.addWidget(QtGui.QLabel("Z"), 1, 5)
+#        tempGrid.addWidget(QLabel("Z"), 1, 5)
 #        tempGrid.addWidget(self.sizeZ, 1, 6)
 #        self.layout.addLayout(tempGrid)
         
         
-        tempLayout = QtGui.QHBoxLayout()
-        self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
+        tempLayout = QHBoxLayout()
+        self.resCheck = QCheckBox("Data with varying resolution:")
         
         # TODO: renable this as soon its impemented
         self.resCheck.setVisible(False)
         
-        self.connect(self.resCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleResolution)
+        self.connect(self.resCheck, SIGNAL("stateChanged(int)"), self.toggleResolution)
         tempLayout.addWidget(self.resCheck)
         self.layout.addLayout(tempLayout) 
         
-        self.resolutionFrame = QtGui.QFrame()
-        tempLayout = QtGui.QVBoxLayout()
-        tempLayout1 = QtGui.QHBoxLayout()
-        tempLayout1.addWidget(QtGui.QLabel("Enter relative resolution along x, y and z"))
+        self.resolutionFrame = QFrame()
+        tempLayout = QVBoxLayout()
+        tempLayout1 = QHBoxLayout()
+        tempLayout1.addWidget(QLabel("Enter relative resolution along x, y and z"))
         tempLayout.addLayout(tempLayout1)
-        tempLayout2 = QtGui.QHBoxLayout()
-        self.resX = QtGui.QLineEdit("1")
-        self.connect(self.resX, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
-        self.resY = QtGui.QLineEdit("1")
-        self.connect(self.resY, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
-        self.resZ = QtGui.QLineEdit("1")
-        self.connect(self.resZ, QtCore.SIGNAL("textChanged(QString)"), self.resChanged)
-        tempLayout2.addWidget(QtGui.QLabel("X:"))
+        tempLayout2 = QHBoxLayout()
+        self.resX = QLineEdit("1")
+        self.connect(self.resX, SIGNAL("textChanged(QString)"), self.resChanged)
+        self.resY = QLineEdit("1")
+        self.connect(self.resY, SIGNAL("textChanged(QString)"), self.resChanged)
+        self.resZ = QLineEdit("1")
+        self.connect(self.resZ, SIGNAL("textChanged(QString)"), self.resChanged)
+        tempLayout2.addWidget(QLabel("X:"))
         tempLayout2.addWidget(self.resX)
-        tempLayout2.addWidget(QtGui.QLabel("Y:"))
+        tempLayout2.addWidget(QLabel("Y:"))
         tempLayout2.addWidget(self.resY)
-        tempLayout2.addWidget(QtGui.QLabel("Z:"))
+        tempLayout2.addWidget(QLabel("Z:"))
         tempLayout2.addWidget(self.resZ)
         tempLayout.addLayout(tempLayout2)
         self.resolutionFrame.setLayout(tempLayout)
         self.resolutionFrame.setVisible(False)
         self.layout.addWidget(self.resolutionFrame)    
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.invert = QtGui.QCheckBox("Invert Colors?")
+        tempLayout = QHBoxLayout()
+        self.invert = QCheckBox("Invert Colors?")
         tempLayout.addWidget(self.invert)
         self.layout.addLayout(tempLayout) 
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.grayscale = QtGui.QCheckBox("Convert to Grayscale ?")
+        tempLayout = QHBoxLayout()
+        self.grayscale = QCheckBox("Convert to Grayscale ?")
         tempLayout.addWidget(self.grayscale)
         self.layout.addLayout(tempLayout) 
 
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.normalize = QtGui.QCheckBox("Normalize Data?")
+        tempLayout = QHBoxLayout()
+        self.normalize = QCheckBox("Normalize Data?")
         tempLayout.addWidget(self.normalize)
         self.layout.addLayout(tempLayout) 
 
 
-        tempLayout = QtGui.QHBoxLayout()
-        self.downsample = QtGui.QCheckBox("Downsample Subvolume to Size:")
-        self.connect(self.downsample, QtCore.SIGNAL("stateChanged(int)"), self.toggleDownsample)      
+        tempLayout = QHBoxLayout()
+        self.downsample = QCheckBox("Downsample Subvolume to Size:")
+        self.connect(self.downsample, SIGNAL("stateChanged(int)"), self.toggleDownsample)      
         tempLayout.addWidget(self.downsample)
         self.layout.addLayout(tempLayout)
 
-        self.downsampleFrame = QtGui.QFrame()
-        tempLayout = QtGui.QHBoxLayout()
-        self.downX = QtGui.QSpinBox()
+        self.downsampleFrame = QFrame()
+        tempLayout = QHBoxLayout()
+        self.downX = QSpinBox()
         self.downX.setRange(0,10000)
-        self.downY = QtGui.QSpinBox()
+        self.downY = QSpinBox()
         self.downY.setRange(0,10000)
-        self.downZ = QtGui.QSpinBox()
+        self.downZ = QSpinBox()
         self.downZ.setRange(0,10000)
         tempLayout.addWidget( self.downX)
         tempLayout.addWidget( self.downY)
@@ -164,17 +197,17 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.layout.addWidget(self.downsampleFrame)
     
         
-        tempLayout = QtGui.QHBoxLayout()
-        self.alsoSave = QtGui.QCheckBox("also save to Destination File:")
-        self.connect(self.alsoSave, QtCore.SIGNAL("stateChanged(int)"), self.toggleAlsoSave)
+        tempLayout = QHBoxLayout()
+        self.alsoSave = QCheckBox("also save to Destination File:")
+        self.connect(self.alsoSave, SIGNAL("stateChanged(int)"), self.toggleAlsoSave)
         tempLayout.addWidget(self.alsoSave)
         self.layout.addLayout(tempLayout) 
 
-        self.alsoSaveFrame = QtGui.QFrame()
-        tempLayout = QtGui.QHBoxLayout()
-        self.fileButton = QtGui.QPushButton("Select")
-        self.connect(self.fileButton, QtCore.SIGNAL('clicked()'), self.slotFile)
-        self.file = QtGui.QLineEdit("")
+        self.alsoSaveFrame = QFrame()
+        tempLayout = QHBoxLayout()
+        self.fileButton = QPushButton("Select")
+        self.connect(self.fileButton, SIGNAL('clicked()'), self.slotFile)
+        self.file = QLineEdit("")
         tempLayout.addWidget(self.file)
         tempLayout.addWidget(self.fileButton)
         self.alsoSaveFrame.setLayout(tempLayout)
@@ -235,7 +268,7 @@ class LoadOptionsWidget(QtGui.QWidget):
 
 
     def slotFile(self):
-        filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
+        filename= QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
         self.file.setText(filename)
 
     def fillOptions(self, options):
@@ -281,14 +314,14 @@ class LoadOptionsWidget(QtGui.QWidget):
 # p r e v i e w T a b l e                                                      *
 #*******************************************************************************
 
-class previewTable(QtGui.QDialog):
+class previewTable(QDialog):
     def __init__(self, fileList, parent=None, newProject = True):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         self.setWindowTitle("Preview")
-        self.layout = QtGui.QVBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
         self.fileList = fileList
-        self.fileListTable = QtGui.QTableWidget()
+        self.fileListTable = QTableWidget()
         self.fillFileTable()        
         self.fileListTable.setHorizontalHeaderLabels(["channel 1", "channel 2", "channel 3"])
         self.fileListTable.resizeRowsToContents()
@@ -299,9 +332,9 @@ class previewTable(QtGui.QDialog):
         if (len(self.fileList)==0):
             self.fileListTable.setRowCount(1)
             self.fileListTable.setColumnCount(3)
-            self.fileListTable.setItem(0, 0, QtGui.QTableWidgetItem(QtCore.QString("file1")))
-            self.fileListTable.setItem(0, 1, QtGui.QTableWidgetItem(QtCore.QString("file2")))
-            self.fileListTable.setItem(0, 2, QtGui.QTableWidgetItem(QtCore.QString("file3")))
+            self.fileListTable.setItem(0, 0, QTableWidgetItem(QString("file1")))
+            self.fileListTable.setItem(0, 1, QTableWidgetItem(QString("file2")))
+            self.fileListTable.setItem(0, 2, QTableWidgetItem(QString("file3")))
             return
         nfiles = len(self.fileList[0])
         self.fileListTable.setRowCount(nfiles)
@@ -313,7 +346,7 @@ class previewTable(QtGui.QDialog):
             self.fileListTable.setColumnCount(1)       
             for i in range(0, len(self.fileList[0])):
                 filename = os.path.basename(self.fileList[0][i])
-                self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+                self.fileListTable.setItem(i, 0, QTableWidgetItem(QString(filename)))
         if (len(self.fileList)==3):
             #multichannel data
             nfiles = max([len(self.fileList[0]), len(self.fileList[1]), len(self.fileList[2])])
@@ -321,10 +354,10 @@ class previewTable(QtGui.QDialog):
             self.fileListTable.setColumnCount(3)
             for i in range(0, len(self.fileList[0])):
                 filename = os.path.basename(self.fileList[0][i])
-                self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+                self.fileListTable.setItem(i, 0, QTableWidgetItem(QString(filename)))
             for i in range(0, len(self.fileList[1])):
                 filename = os.path.basename(self.fileList[1][i])
-                self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+                self.fileListTable.setItem(i, 1, QTableWidgetItem(QString(filename)))
             for i in range(0, len(self.fileList[2])):
                 filename = os.path.basename(self.fileList[2][i])
-                self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+                self.fileListTable.setItem(i, 2, QTableWidgetItem(QString(filename)))

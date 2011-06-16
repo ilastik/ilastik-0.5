@@ -3,14 +3,8 @@ import threading
 import thread
 import traceback
 
-#try:
-    #from PyQt4 import QtCore
-    #ThreadBase = QtCore.QThread
-    #have_qt = True
-#except:
 ThreadBase = threading.Thread
 have_qt = False
-
 
 from collections import deque
 

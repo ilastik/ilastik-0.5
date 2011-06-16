@@ -27,17 +27,19 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4 import QtCore, QtGui, uic
-import os
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QApplication, QDialog, QWidget
+from PyQt4.uic import loadUi
 
+import os
 
 #*******************************************************************************
 # S e g m e n t o r S e l e c t i o n D l g                                    *
 #*******************************************************************************
 
-class SegmentorSelectionDlg(QtGui.QDialog):
+class SegmentorSelectionDlg(QDialog):
     def __init__(self, ilastik):
-        QtGui.QWidget.__init__(self, ilastik)
+        QWidget.__init__(self, ilastik)
         self.setWindowTitle("Select Segmentation Algorithm")
         self.ilastik = ilastik
         
@@ -45,11 +47,11 @@ class SegmentorSelectionDlg(QtGui.QDialog):
         
         #get the absolute path of the 'ilastik' module
         path = os.path.dirname(__file__)
-        uic.loadUi(path + '/segmentorSelectionDlg.ui', self)
+        loadUi(path + '/segmentorSelectionDlg.ui', self)
 
-        self.connect(self.buttonBox, QtCore.SIGNAL('accepted()'), self.accept)
-        self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)
-        self.connect(self.settingsButton, QtCore.SIGNAL('pressed()'), self.segmentorSettings)
+        self.connect(self.buttonBox, SIGNAL('accepted()'), self.accept)
+        self.connect(self.buttonBox, SIGNAL('rejected()'), self.reject)
+        self.connect(self.settingsButton, SIGNAL('pressed()'), self.segmentorSettings)
 
         self.segmentors = self.ilastik.project.dataMgr.Interactive_Segmentation.segmentorClasses
         
@@ -60,7 +62,7 @@ class SegmentorSelectionDlg(QtGui.QDialog):
             if c == self.currentSegmentor.__class__:
                 j = i
 
-        self.connect(self.listWidget, QtCore.SIGNAL('currentRowChanged(int)'), self.currentRowChanged)
+        self.connect(self.listWidget, SIGNAL('currentRowChanged(int)'), self.currentRowChanged)
         self.listWidget.setCurrentRow(j)
 
     def currentRowChanged(self, current):
@@ -80,7 +82,7 @@ class SegmentorSelectionDlg(QtGui.QDialog):
 
 
     def exec_(self):
-        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+        if QDialog.exec_(self) == QDialog.Accepted:
             if self.currentSegmentor != self.previousSegmentor:
                 return  self.currentSegmentor
             else:
@@ -91,7 +93,7 @@ class SegmentorSelectionDlg(QtGui.QDialog):
 def test():
     """Text editor demo"""
     #from spyderlib.utils.qthelpers import qapplication
-    app = QtGui.QApplication([""])
+    app = QApplication([""])
 
     dialog = SegmentorSelectionDlg()
     print dialog.show()

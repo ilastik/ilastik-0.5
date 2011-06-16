@@ -38,8 +38,9 @@ with warnings.catch_warnings():
 from collections import deque
 
 try:
-    from PyQt4 import QtCore
-    ThreadBase = QtCore.QThread
+    from PyQt4.QtCore import QThread, SIGNAL
+    from PyQt4.QtGui import QColor
+    ThreadBase = QThread
     have_qt = True
 except:
     ThreadBase = threading.Thread
@@ -224,7 +225,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
 
 #        if self._dataVol.uncertainty is not None:
 #            #create Overlay for uncertainty:
-#            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QtGui.QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
+#            ov = overlayMgr.OverlayItem(self._dataVol.uncertainty, color = QColor(255, 0, 0), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False)
 #            self.overlayMgr["Classification/Uncertainty"] = ov        
         
         
@@ -932,7 +933,7 @@ class ClassifierInteractiveThread(ThreadBase):
                     else:
                         print "##################### No Classifiers ############################"
                     if have_qt:
-                        self.emit(QtCore.SIGNAL("resultsPending()"))
+                        self.emit(SIGNAL("resultsPending()"))
                     else:
                         raise "Need to add code to signal results pending without Qt"
                     self.ilastik.project.dataMgr.featureLock.release()
@@ -948,9 +949,9 @@ class ClassifierInteractiveThread(ThreadBase):
 
 
 
-#class ClassifierOnlineThread(QtCore.QThread):
+#class ClassifierOnlineThread(QThread):
 #    def __init__(self, name, features, labels, ids, predictionList, predictionUpdated):
-#        QtCore.QThread.__init__(self, None)
+#        QThread.__init__(self, None)
 #
 #        self.commandQueue = queue()
 #        self.stopped = False

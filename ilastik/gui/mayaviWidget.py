@@ -1,4 +1,34 @@
-from PyQt4 import QtGui
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+from PyQt4.QtCore import pyqtRemoveInputHook, pyqtRestoreInputHook
+from PyQt4.QtGui import QColor, QVBoxLayout, QWidget
 
 from enthought.traits.api import HasTraits, Instance, on_trait_change
 from enthought.traits.ui.api import View, Item
@@ -124,7 +154,7 @@ class Maya3DScene(HasTraits):
 #            
 #            for index in range(0,255):
 #                c = self.overlayItemReference.colorTable[index]
-#                c = QtGui.QColor.fromRgba(c)
+#                c = QColor.fromRgba(c)
 #                print index, " ", c.red(), " ", c.green()
 #                cm[index,0] = c.red()
 #                cm[index,1] = c.green()
@@ -192,21 +222,21 @@ class Maya3DScene(HasTraits):
 # M a y a v i Q W i d g e t                                                    *
 #*******************************************************************************
 
-class MayaviQWidget(QtGui.QWidget):
+class MayaviQWidget(QWidget):
     def __init__(self, volumeEditor, overlayItemReference, raw):
-        QtGui.QWidget.__init__(self)
+        QWidget.__init__(self)
         self.volumeEditor = volumeEditor
         self.overlayItemReference = overlayItemReference
-        layout = QtGui.QVBoxLayout(self)
+        layout = QVBoxLayout(self)
         layout.setMargin(0)
         layout.setSpacing(0)
         self.visualization = Maya3DScene(self.volumeEditor, self.overlayItemReference, raw)
 
         # If you want to debug, beware that you need to remove the Qt
         # input hook.
-        #QtCore.pyqtRemoveInputHook()
+        #pyqtRemoveInputHook()
         #import pdb ; pdb.set_trace()
-        #QtCore.pyqtRestoreInputHook()
+        #pyqtRestoreInputHook()
 
         # The edit_traits call will generate the widget to embed.
         self.ui = self.visualization.edit_traits(parent=self,
