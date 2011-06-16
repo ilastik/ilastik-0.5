@@ -33,6 +33,7 @@ from ilastik.gui.baseLabelWidget import BaseLabelWidget
 import numpy
         
 from ilastik.gui.iconMgr import ilastikIcons
+
 #*******************************************************************************
 # L a b e l L i s t I t e m                                                    *
 #*******************************************************************************
@@ -46,8 +47,6 @@ class LabelListItem(QtGui.QListWidgetItem):
         #self.setFlags(self.flags() | QtCore.Qt.ItemIsUserCheckable)
         #self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
 
-        
-
     def toggleVisible(self):
         self.visible = not(self.visible)
 
@@ -57,7 +56,6 @@ class LabelListItem(QtGui.QListWidgetItem):
         pixmap.fill(color)
         icon = QtGui.QIcon(pixmap)
         self.setIcon(icon)      
-
 
 #*******************************************************************************
 # L a b e l L i s t W i d g e t                                                *
@@ -159,7 +157,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def initFromVolumeLabelDescriptions(self, volumeLabelDescriptions):
         self.volumeLabelDescriptions = volumeLabelDescriptions
         for index, item in enumerate(volumeLabelDescriptions):
-            li = LabelListItem(item.name,item.number, QtGui.QColor.fromRgba(long(item.color)))
+            li = LabelListItem(item.name, item.number, QtGui.QColor.fromRgba(long(item.color)))
             self.listWidget.addItem(li)
             self.items.append(li)
         self.buildColorTab()
@@ -286,3 +284,31 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             self.volumeEditor.overlayWidget.addOverlayRef(self.overlayItem.getRef())
         self.volumeEditor.overlayWidget.setVisibility(self.overlayItem.key, True)
 
+if __name__ == '__main__':
+    #make the program quit on Ctrl+C
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    import sys
+    from PyQt4.QtCore import Qt
+    from PyQt4.QtGui import QApplication, QColor
+    from ilastik.modules.classification.core.labelMgr import LabelMgr
+    from ilastik.core.dataMgr import DataMgr
+    from ilastik.core.overlayMgr import OverlaySlice, OverlayItem
+    from ilastik.core.volume import VolumeLabelDescriptionMgr, VolumeLabelDescription, DataAccessor
+    
+    dataMgr = DataMgr()
+    labelMgr = LabelMgr(dataMgr, None)
+    data = numpy.zeros((10,10,10))
+    overlay = OverlayItem(DataAccessor(data), alpha=1.0, color=Qt.black, colorTable=OverlayItem.createDefaultColorTable('GRAY', 256), autoVisible=True, autoAlphaChannel=False)
+    
+    app = QApplication(sys.argv)
+    
+    volumeLabelMgr = VolumeLabelDescriptionMgr()
+    volumeLabelMgr.append(VolumeLabelDescription("1", 0, QColor(255,0,0).rgba(), None))
+    volumeLabelMgr.append(VolumeLabelDescription("2", 1, QColor(0,255,0).rgba(), None))
+    volumeLabelMgr.append(VolumeLabelDescription("3", 2, QColor(0,0,255).rgba(), None))
+    
+    l = LabelListWidget(labelMgr, volumeLabelMgr, None, overlay)
+    l.show()
+    app.exec_()
+    

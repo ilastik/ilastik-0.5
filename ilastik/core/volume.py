@@ -220,7 +220,7 @@ class DataAccessor():
 #*******************************************************************************
 
 class VolumeLabelDescription():
-    def __init__(self, name,number, color,  prediction):
+    def __init__(self, name, number, color, prediction):
         self.number = number
         self.name = name
         self.color = color
@@ -243,7 +243,7 @@ class VolumeLabelDescription():
         return not(self.__eq__(other))
 
     def clone(self):
-        t = VolumeLabelDescription( self.name, self.number, self.color,  self._prediction)
+        t = VolumeLabelDescription(self.name, self.number, self.color, self._prediction)
         return t
     
 #*******************************************************************************
@@ -260,17 +260,14 @@ class VolumeLabelDescriptionMgr(list):
             labelNames.append(it.name)
         return labelNames    
         
-        
     def getColorTab(self):
         colorTab = []
         for i in range(256):
-            colorTab.append(long(0)) #QtGui.QColor(0,0,0,0).rgba()
+            colorTab.append(long(0))
 
         for index,item in enumerate(self):
             colorTab[item.number] = long(item.color)
         return colorTab
-    
-    
     
 #*******************************************************************************
 # V o l u m e L a b e l s                                                      *

@@ -328,11 +328,6 @@ class VolumeEditor(QWidget):
                 imageScene.drawingEnabled = False
                 imageScene.crossHairCursor.setColor(QColor("black"))
 
-    def onOverlaySelected(self, index):
-        print "onOverlaySelected"
-        if self.labelWidget.currentItem() is not None:
-            pass
-
     def on_editChannels(self):
         from ilastik.gui.channelEditDialog import EditChannelsDialog 
         
@@ -502,9 +497,7 @@ class VolumeEditor(QWidget):
                 tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.viewManager.slicePosition[i], i, self.viewManager.time, self.overlayWidget.getOverlayRef("Raw Data").channel)
             else:
                 tempImage = None
-    #            if self.labelWidget.volumeLabels is not None:
-    #                if self.labelWidget.volumeLabels.data is not None:
-    #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.viewManager.slicePosition[i],i, self.viewManager.time, 0)
+
             if len(self.imageScenes) > i:
                 self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False, normalizeData = self.normalizeData)
                         

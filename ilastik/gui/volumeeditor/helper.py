@@ -500,7 +500,6 @@ class DrawManager(QObject):
         self.beginDraw(pos, self.shape)
         return res
 
-
     def moveTo(self, pos):    
         lineVis = QGraphicsLineItem(self.pos.x(), self.pos.y(),pos.x(), pos.y())
         lineVis.setPen(self.penVis)
