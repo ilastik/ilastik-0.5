@@ -46,7 +46,8 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.volumeeditor.helper import PatchAccessor
 
 from ilastik.gui.volumeeditor.imagescenerenderer import ImageSceneRenderer
-from ilastik.gui.volumeeditor.helper import InteractionLogger
+from ilastik.gui.volumeeditor.helper import InteractionLogger, ViewManager, \
+                                            DrawManager
 
 #*******************************************************************************
 # I m a g e S c e n e                                                          *
