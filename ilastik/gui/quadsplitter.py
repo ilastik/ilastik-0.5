@@ -10,16 +10,14 @@ from ilastik.gui.iconMgr import ilastikIcons
 #*******************************************************************************
 
 class DockableContainer(QWidget):
-    isDocked = True
-    replaceWidget = None
-    mainLayout = None
-    maximized = False
-    
     def __init__(self, number, parent=None):
         QWidget.__init__(self, parent)
         
-        #self.replaceWidget = QTextEdit(None)
-        #self.replaceWidget.setDocument(QTextDocument("replace widget %d" % (number)))
+        self.isDocked = True
+        self.replaceWidget = None
+        self.mainLayout = None
+        self.maximized = False
+        
         self.replaceWidget = QWidget(None)
         self.replaceWidget.setObjectName("replaceWidget_%d" % (number))
         
@@ -87,8 +85,6 @@ class DockableContainer(QWidget):
             self.emit(SIGNAL('dock()'))
             
         self.isDocked = not self.isDocked
-        
-        
 
 #*******************************************************************************
 # Q u a d V i e w                                                              *
@@ -242,8 +238,6 @@ class QuadView(QWidget):
         else:
             self.splitHorizontal1.setSizes( self.splitHorizontal2.sizes() )
             
-        
-        
     def dockContainer(self):
         i = int(self.sender().objectName())
         w = self.dockableContainer[i]
@@ -272,10 +266,6 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     
     app = QApplication(sys.argv)
-    
-#*******************************************************************************
-# W i n d o w                                                                  *
-#*******************************************************************************
 
     class Window(QMainWindow):
         def __init__(self):
