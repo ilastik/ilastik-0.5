@@ -88,6 +88,13 @@ class ImageScene(QGraphicsView):
         self.allBorder = None
         self.factor = 1.0
         
+        #for panning
+        self.lastPanPoint = QPoint()
+        self.dragMode = False
+        self.deltaPan = QPointF(0,0)
+        self.x = 0.0
+        self.y = 0.0
+        
         self.min = 0
         self.max = 255
         
@@ -235,11 +242,6 @@ class ImageScene(QGraphicsView):
         self.border.setPen(QPen(Qt.NoPen))
         self.border.setZValue(200)
         self.scene.addItem(self.border)
-        self.lastPanPoint = QPoint()
-        self.dragMode = False
-        self.deltaPan = QPointF(0,0)
-        self.x = 0.0
-        self.y = 0.0
 
     def imageSceneFullScreen(self):
         self.toggleMaximized.emit(self)
