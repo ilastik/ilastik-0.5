@@ -27,6 +27,10 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+import sys
+print "the old volumeeditor.py is deprecated"
+sys.exit(1)
+
 """
 Dataset Editor Dialog based on PyQt4
 """
@@ -329,6 +333,7 @@ class DummyOverlayListWidget(QtGui.QWidget):
 
 class VolumeEditor(QtGui.QWidget):
     changedSlice = pyqtSignal(int,int)
+    onOverlaySelected = pyqtSignal(int)
     
     @property
     def useOpenGL(self):

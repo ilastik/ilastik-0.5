@@ -27,6 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+from PyQt4.QtCore import pyqtSignal
 from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
@@ -63,6 +64,8 @@ class BackgroundItem(QtGui.QListWidgetItem):
 #*******************************************************************************
 
 class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
+    itemSelectionChanged = pyqtSignal(int)
+    
     def __init__(self,  backgroundMgr,  volumeLabels,  volumeEditor):
         QtGui.QGroupBox.__init__(self,  "Background")
         BaseLabelWidget.__init__(self,None)

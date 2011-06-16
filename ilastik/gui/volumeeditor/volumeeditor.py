@@ -63,6 +63,7 @@ DrawManager, ViewManager, InteractionLogger
 
 class VolumeEditor(QWidget):
     changedSlice = pyqtSignal(int,int)
+    onOverlaySelected = pyqtSignal(int)
     
     @property
     def useOpenGL(self):

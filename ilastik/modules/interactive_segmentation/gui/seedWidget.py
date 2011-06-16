@@ -27,6 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+from PyQt4.QtCore import pyqtSignal
 from PyQt4 import QtCore, QtGui
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
@@ -60,6 +61,8 @@ class SeedListItem(QtGui.QListWidgetItem):
 #*******************************************************************************
 
 class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
+    itemSelectionChangaed = pyqtSignal(int)
+    
     def __init__(self,  labelMgr,  volumeLabels,  volumeEditor,  overlayItem):
         QtGui.QGroupBox.__init__(self,  "Seeds")
         BaseLabelWidget.__init__(self,None)

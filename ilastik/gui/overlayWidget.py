@@ -27,6 +27,8 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+from PyQt4.QtCore import pyqtSignal
+
 from PyQt4 import QtCore, QtGui
 import os, traceback, sys
 from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
@@ -58,24 +60,23 @@ class OverlayListWidgetItem(QtGui.QListWidgetItem):
         raise AttributeError,  name
 
 #*******************************************************************************
+# Q A l p h a S l i d e r D i a l o g                                          *
+#*******************************************************************************
+
+class QAlphaSliderDialog(QtGui.QDialog):
+    def __init__(self, min, max, value):
+        QtGui.QDialog.__init__(self)
+        self.setWindowTitle('Change Opacity')
+        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
+        self.slider.setGeometry(20, 30, 140, 20)
+        self.slider.setRange(min,max)
+        self.slider.setValue(value)
+
+#*******************************************************************************
 # O v e r l a y L i s t W i d g e t                                            *
 #*******************************************************************************
 
 class OverlayListWidget(QtGui.QListWidget):
-
-#*******************************************************************************
-# Q A l p h a S l i d e r D i a l o g                                          *
-#*******************************************************************************
-
-    class QAlphaSliderDialog(QtGui.QDialog):
-        def __init__(self, min, max, value):
-            QtGui.QDialog.__init__(self)
-            self.setWindowTitle('Change Opacity')
-            self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
-            self.slider.setGeometry(20, 30, 140, 20)
-            self.slider.setRange(min,max)
-            self.slider.setValue(value)
-
     def __init__(self,volumeEditor,  overlayWidget):
         QtGui.QListWidget.__init__(self)
         self.volumeEditor = volumeEditor
@@ -306,6 +307,8 @@ class OverlayListWidget(QtGui.QListWidget):
 #*******************************************************************************
 
 class OverlayWidget(QtGui.QGroupBox):
+    selectedOverlay = pyqtSignal(int)
+    
     def __init__(self,parent, dataMgr):
         QtGui.QGroupBox.__init__(self,  "Overlays")
         self.setLayout(QtGui.QHBoxLayout())
@@ -316,7 +319,6 @@ class OverlayWidget(QtGui.QGroupBox):
         self.volumeEditor = parent
         self.overlayMgr = self.dataMgr._activeImage.overlayMgr
         
-        print "OverlayWidget, current Module Name", self.dataMgr._currentModuleName
         self.overlays = self.dataMgr._activeImage.module[self.dataMgr._currentModuleName].getOverlayRefs()
 
         pathext = os.path.dirname(__file__)
