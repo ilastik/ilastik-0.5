@@ -593,47 +593,49 @@ class CustomGraphicsScene(QGraphicsScene):
     def __init__(self, glWidget, image):
         QGraphicsScene.__init__(self)
         self.glWidget = glWidget
+        self.useGL = (glWidget != None)
         self.image = image
         self.images = []
         self.bgColor = QColor(Qt.green)
         self.tex = -1
 
+    def drawBackgroundSoftware(self, painter, rect):
+        painter.setClipRect(rect)
+        painter.drawImage(0,0,self.image)
+
+    def drawBackgroundGL(self, painter, rect):
+        self.glWidget.context().makeCurrent()
             
+        #glClearColor(self.bgColor.redF(),self.bgColor.greenF(),self.bgColor.blueF(),1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+        if self.tex <= -1:
+            return
+
+        #self.glWidget.drawTexture(QRectF(self.image.rect()),self.tex)
+        d = painter.device()
+        dc = sip.cast(d,QGLFramebufferObject)
+
+        rect = QRectF(self.image.rect())
+        tl = rect.topLeft()
+        br = rect.bottomRight()
+        
+        #flip coordinates since the texture is flipped
+        #this is due to qimage having another representation thatn OpenGL
+        rect.setCoords(tl.x(),br.y(),br.x(),tl.y())
+        
+        #switch corrdinates if qt version is small
+        painter.beginNativePainting()
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        dc.drawTexture(rect,self.tex)
+        painter.endNativePainting()
+
     def drawBackground(self, painter, rect):
-        #painter.fillRect(rect, self.bgBrush)
-        if self.glWidget != None:
-
-            self.glWidget.context().makeCurrent()
-            
-            glClearColor(self.bgColor.redF(),self.bgColor.greenF(),self.bgColor.blueF(),1.0)
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-            if self.tex > -1:
-                #self.glWidget.drawTexture(QRectF(self.image.rect()),self.tex)
-                d = painter.device()
-                dc = sip.cast(d,QGLFramebufferObject)
-
-                rect = QRectF(self.image.rect())
-                tl = rect.topLeft()
-                br = rect.bottomRight()
-                
-                #flip coordinates since the texture is flipped
-                #this is due to qimage having another representation thatn OpenGL
-                rect.setCoords(tl.x(),br.y(),br.x(),tl.y())
-                
-                #switch corrdinates if qt version is small
-                painter.beginNativePainting()
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-                dc.drawTexture(rect,self.tex)
-                painter.endNativePainting()
-
+        if self.useGL:
+            self.drawBackgroundGL(painter, rect)
         else:
-            painter.setClipRect(rect)
-            painter.drawImage(0,0,self.image)
-
-
-
+            self.drawBackgroundSoftware(painter, rect)
 
 #*******************************************************************************
 # C r o s s H a i r C u r s o r                                                *
