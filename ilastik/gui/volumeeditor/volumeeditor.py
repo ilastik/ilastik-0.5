@@ -36,6 +36,7 @@ Dataset Editor Dialog based on PyQt4
 # TODO
 # port the following revisions:
 #    1f810747c21380eda916c2c5b7b5d1893f92663e
+#    e65f5bad2cd9fdaefbe7ceaafa0cce0e071b56e4
 
 from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtGui import QApplication, QWidget, QPixmapCache, QLabel, QSpinBox, \
