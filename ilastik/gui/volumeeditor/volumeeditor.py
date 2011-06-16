@@ -45,7 +45,7 @@ from ilastik.gui.quadsplitter import QuadView
 import ilastik.gui.exportDialog as exportDialog
       
 from ilastik.gui.volumeeditor.imagescene import ImageScene
-from ilastik.gui.volumeeditor.overview import OverviewSceneFactory
+from ilastik.gui.view3d import OverviewScene
 from ilastik.gui.volumeeditor.helper import ImageWithProperties, \
 DummyLabelWidget, DummyOverlayListWidget, ImageSaveThread, HistoryManager, \
 DrawManager, ViewManager, InteractionLogger
@@ -59,7 +59,10 @@ class VolumeEditor(QWidget):
     
     changedSlice = pyqtSignal(int,int)
     
-    """Array Editor Dialog"""
+    @property
+    def useOpenGL(self):
+        return self.sharedOpenglWidget is not None
+    
     def __init__(self, image, parent,  name="", font=None,
                  readonly=False, size=(400, 300), sharedOpenglWidget = None):
         QWidget.__init__(self, parent)
@@ -106,7 +109,13 @@ class VolumeEditor(QWidget):
 
         self.imageScenes = []
         self.imageScenes.append(ImageScene((self.image.shape[2], self.image.shape[3], self.image.shape[1]), 0, self.viewManager, self.drawManager, self.sharedOpenGLWidget))
-        self.overview = OverviewSceneFactory.getOverviewScene(self.imageScenes, self.viewManager, self.image.shape[1:4], self.sharedOpenGLWidget)
+        
+        self.overview = OverviewScene(self, self.image.shape[1:4])
+        self.overview.changedSlice.connect(self.changeSlice)
+        self.changedSlice.connect(self.overview.ChangeSlice)
+        #this call ensures that the object is properly initialized
+        #TODO get rid of this
+        self.overview.qvtk.update()
 
         if self.image.is3D():
             # 3D image          
