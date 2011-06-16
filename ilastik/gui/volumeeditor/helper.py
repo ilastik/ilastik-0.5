@@ -38,8 +38,10 @@ import time
 
 from collections import deque
 
+#*******************************************************************************
+# I m a g e W i t h P r o p e r t i e s                                        *
+#*******************************************************************************
 
-########################################################################
 class ImageWithProperties(DataAccessor):
     """adds some nice properties to the image"""
     
@@ -52,6 +54,9 @@ class ImageWithProperties(DataAccessor):
     def is3D(self):
         return self.shape[1] > 1
 
+#*******************************************************************************
+# I n t e r a c t i o n L o g g e r                                            *
+#*******************************************************************************
 
 class InteractionLogger():
     #singleton pattern
@@ -70,9 +75,10 @@ class InteractionLogger():
     def log(logEntry):
         if InteractionLogger._interactionLog != None:
             InteractionLogger._interactionLog.append(logEntry)
-        
 
-    
+#*******************************************************************************
+# V i e w M a n a g e r                                                        *
+#*******************************************************************************
 
 class ViewManager(QObject):
     sliceChanged = pyqtSignal(int,int)
@@ -129,7 +135,6 @@ class ViewManager(QObject):
         #self.emit(SIGNAL('viewChanged(ViewManager)'), self) #FIXME
         pass
 
-
 #*******************************************************************************
 # P a t c h A c c e s s o r                                                    *
 #*******************************************************************************
@@ -160,7 +165,6 @@ class PatchAccessor():
 
 
         self.patchCount = self._cX * self._cY
-
 
     def getPatchBounds(self, blockNum, overlap = 0):
         #z = int(numpy.floor(blockNum / (self._cX*self._cY)))
@@ -200,15 +204,12 @@ class PatchAccessor():
         
         return nums
 
-        
-    
-
-#abstract base class for undo redo stuff
 #*******************************************************************************
 # S t a t e                                                                    *
 #*******************************************************************************
 
 class State():
+    """abstract base class for undo redo stuff"""
     def __init__(self):
         pass
 
@@ -249,8 +250,6 @@ class LabelState(State):
             #repainting is already done automatically by the setLabels function
             pass
         self.erasing = not(self.erasing)          
-
-
 
 #*******************************************************************************
 # H i s t o r y M a n a g e r                                                  *
@@ -352,9 +351,6 @@ class VolumeUpdate():
                 offsets[2]:offsets[2]+sizes[2],\
                 offsets[3]:offsets[3]+sizes[3],\
                 offsets[4]:offsets[4]+sizes[4]] = tempData  
-
-
-
 
 #*******************************************************************************
 # D u m m y L a b e l W i d g e t                                              *
@@ -587,5 +583,3 @@ class ImageSaveThread(QThread):
             if self.previousSlice is not None:
                 self.ve.sliceSelectors[axis].setValue(self.previousSlice)
                 self.previousSlice = None
-
-
