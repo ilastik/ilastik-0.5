@@ -148,7 +148,6 @@ class ImageSceneRenderThread(QThread):
                 normalize = (origitem.min, origitem.max)
             else:
                 normalize = False
-            
                                             
             if origitem.autoAlphaChannel is False:
                 if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
@@ -184,14 +183,14 @@ class ImageSceneRenderThread(QThread):
                 p.translate(bounds[0],bounds[2])
             else:
                 p = QPainter(self.imageScene.imagePatches[patchNr])
-            
-            p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
 
             #add overlays
             for index, origitem in enumerate(overlays):
+                if index == 0 and origitem.alpha < 1.0:
+                    p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
+                
                 p.setOpacity(origitem.alpha)
                 itemcolorTable = origitem.colorTable
-                
                 
                 imagedata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                 image0 = self.callMyFunction(imagedata, origitem, self.asQColor(origitem.color), itemcolorTable)
