@@ -497,7 +497,7 @@ class VolumeEditor(QWidget):
             for item in reversed(self.overlayWidget.overlays):
                 if item.visible: #and hasattr(item, 'getOverlaySlice'):
                     tempoverlays.append(item.getOverlaySlice(self.viewManager.slicePosition[i], i, self.viewManager.time, item.channel))
-            if len(self.overlayWidget.overlays) > 0: #and hasattr(self.overlayWidget, 'getOverlayRef'):
+            if len(self.overlayWidget.overlays) > 0 and self.overlayWidget.getOverlayRef("Raw Data") is not None:
                 tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.viewManager.slicePosition[i], i, self.viewManager.time, self.overlayWidget.getOverlayRef("Raw Data").channel)
             else:
                 tempImage = None
