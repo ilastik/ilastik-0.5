@@ -45,6 +45,8 @@ import sip
 
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.volumeeditor.helper import PatchAccessor
+from ilastik.gui.volumeeditor.helper import ViewManager
+from ilastik.gui.volumeeditor.helper import DrawManager
 
 from ilastik.gui.volumeeditor.imagescenerenderer import ImageSceneRenderer
 from ilastik.gui.volumeeditor.helper import InteractionLogger
