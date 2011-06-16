@@ -731,6 +731,7 @@ class VolumeEditor(QWidget):
 #*******************************************************************************
 
 if __name__ == "__main__":
+    import sys
     from PyQt4.QtCore import QObject, QTimer
     from PyQt4.QtGui import QApplication, QColor, QSplitter
     from PyQt4.QtOpenGL import QGLWidget
@@ -779,14 +780,20 @@ if __name__ == "__main__":
         return s
     
     class Test(QObject):
-        def __init__(self, useGL):
+        def __init__(self, useGL, testmode):
             QObject.__init__(self)
             
-            N = 100
-            self.data = (numpy.random.rand(N,2*N, 3*N)*255).astype(numpy.uint8)
-            image = img(N).astype(numpy.uint8)
-            print image.shape
-            self.data[0:N,0:N,0:N] = img(N)
+            if testmode == "hugeslab":
+                N = 2000
+                self.data = (numpy.random.rand(N,2*N, 10)*255).astype(numpy.uint8)
+            elif testmode == "cuboid":
+                N = 100
+                self.data = (numpy.random.rand(N,2*N, 3*N)*255).astype(numpy.uint8)
+                image = img(N).astype(numpy.uint8)
+                print image.shape
+                self.data[0:N,0:N,0:N] = img(N)
+            else:
+                raise RuntimeError("Invalid testing mode")
             
             sharedOpenglWidget = None
             if useGL:
@@ -801,11 +808,15 @@ if __name__ == "__main__":
             self.dialog.setPosition(1,0,0)
             self.dialog.setPosition(2,0,0)
 
-    app = QApplication([""])
+    app = QApplication(sys.argv)
+    
+    if len(sys.argv) < 2:
+        raise RuntimeError("Usage: python volumeeditor.py <testmode>")
+    testmode = sys.argv[1]
     
     s = QSplitter()
-    t1 = Test(True)
-    t2 = Test(False)
+    t1 = Test(True, testmode)
+    t2 = Test(False, testmode)
     s.addWidget(t1.dialog)
     s.addWidget(t2.dialog)
     
