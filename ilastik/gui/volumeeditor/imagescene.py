@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-from PyQt4.QtCore import QPoint, QPointF,QRectF, QTimer, pyqtSignal, Qt
+from PyQt4.QtCore import QPoint, QPointF, QRectF, QTimer, pyqtSignal, Qt
 from PyQt4.QtGui import QColor, QGraphicsView, QGraphicsItem, QPixmap, QImage, \
                         QVBoxLayout, QHBoxLayout, QPushButton, QIcon, QBrush, \
                         QPainter, QGraphicsPixmapItem, QPainterPath, \
@@ -38,10 +38,9 @@ from PyQt4.QtOpenGL import QGLWidget, QGLFramebufferObject
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-import numpy, qimage2ndarray
+import numpy
 import os.path, time
 import sip
-
 
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.volumeeditor.helper import PatchAccessor
@@ -248,10 +247,7 @@ class ImageScene(QGraphicsView):
         self.toggleMaximized.emit(self)
 
     def setSliceIntersection(self, state):
-        if state == Qt.Checked:
-            self.sliceIntersectionMarker.setVisibility(True)
-        else:
-            self.sliceIntersectionMarker.setVisibility(False)
+        self.sliceIntersectionMarker.setVisibility(state == Qt.Checked)
             
     def updateSliceIntersection(self, num, axis):
         #print "updateSliceIntersection(%d, %d)" % (num, axis)
