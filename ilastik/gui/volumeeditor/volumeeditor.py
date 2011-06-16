@@ -144,6 +144,8 @@ class VolumeEditor(QWidget):
 
         # 2D/3D Views
         viewingLayout = QVBoxLayout()
+        self.viewingLayout.setContentsMargins(10,2,0,2)
+        self.viewingLayout.setSpacing(0)
         if self.image.is3D():
             viewingLayout.addWidget(self.grid)
         else:
@@ -151,6 +153,9 @@ class VolumeEditor(QWidget):
         
         # Label below views
         labelLayout = QHBoxLayout()
+        labelLayout.setMargin(0)
+        labelLayout.setSpacing(5)
+        labelLayout.setContentsMargins(0,0,0,0)
         self.posLabel = QLabel()
         self.pixelValuesLabel = QLabel()
         labelLayout.addWidget(self.posLabel)
