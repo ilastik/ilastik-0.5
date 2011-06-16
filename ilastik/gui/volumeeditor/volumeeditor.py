@@ -148,6 +148,7 @@ class VolumeEditor(QWidget):
         viewingLayout.setSpacing(0)
         if self.image.is3D():
             viewingLayout.addWidget(self.grid)
+            self.grid.setContentsMargins(0,0,10,0)
         else:
             viewingLayout.addWidget(self.imageScenes[0])
         
@@ -166,6 +167,7 @@ class VolumeEditor(QWidget):
         # Right side toolbox
         self.toolBox = QWidget()
         self.toolBoxLayout = QVBoxLayout()
+        self.toolBoxLayout.setMargin(5)
         self.toolBox.setLayout(self.toolBoxLayout)
         #self.toolBox.setMaximumWidth(190)
         #self.toolBox.setMinimumWidth(190)
