@@ -111,11 +111,16 @@ class VolumeEditor(QWidget):
         self.imageScenes.append(ImageScene((self.image.shape[2], self.image.shape[3], self.image.shape[1]), 0, self.viewManager, self.drawManager, self.sharedOpenGLWidget))
         
         self.overview = OverviewScene(self, self.image.shape[1:4])
+        
+        #this is needed on OS X, otherwise the slice planes
+        #are not updated when scrolling through the slice views in the
+        #volume editor. strange...
+        self.overview.TogglePlaneWidgetX()
+        self.overview.update()
+        self.overview.TogglePlaneWidgetX()
+        
         self.overview.changedSlice.connect(self.changeSlice)
         self.changedSlice.connect(self.overview.ChangeSlice)
-        #this call ensures that the object is properly initialized
-        #TODO get rid of this
-        self.overview.qvtk.update()
 
         if self.image.is3D():
             # 3D image          
