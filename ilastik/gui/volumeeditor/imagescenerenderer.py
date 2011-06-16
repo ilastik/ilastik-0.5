@@ -45,22 +45,14 @@ class ImageSceneRenderer(QObject):
             if self.imageScene.openglWidget is not None:
                 self.imageScene.sharedOpenGLWidget.context().makeCurrent()
                 for patchNr in self.thread.outQueue:
-                    t = self.imageScene.scene.tex
-                    if t > -1:
-                        pass
-                    else:
-                        self.imageScene.scene.tex = glGenTextures(1)
-                        glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
-                        glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.imageScene.scene.image.width(), self.imageScene.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
-                        
-                    glBindTexture(GL_TEXTURE_2D,self.imageScene.scene.tex)
-                    b = self.imageScene.patchAccessor.getPatchBounds(patchNr,0)
+                    glBindTexture(GL_TEXTURE_2D, self.imageScene.scene.tex)
+                    b = self.imageScene.patchAccessor.getPatchBounds(patchNr, 0)
                     glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imageScene.imagePatches[patchNr].bits().__int__()))
                     
             self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
             if self.thread.queue.__len__() == 0:
-                for index, item in enumerate(self.imageScene.tempImageItems):
+                for item in self.imageScene.tempImageItems:
                     self.imageScene.scene.removeItem(item)
                 self.imageScene.tempImageItems = []
  

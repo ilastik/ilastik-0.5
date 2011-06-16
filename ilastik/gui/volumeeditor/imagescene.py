@@ -119,11 +119,11 @@ class ImageScene(QGraphicsView):
             grviewHudLayout.addLayout(tempLayout)
             grviewHudLayout.addStretch()
         
-        
         if self.openglWidget is not None:
             self.openglWidget.context().makeCurrent()
             self.scene.tex = glGenTextures(1)
             glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+            print "generating OpenGL texture of size %d x %d" % (self.scene.image.width(), self.scene.image.height())
             glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
             
         self.view.setScene(self.scene)
