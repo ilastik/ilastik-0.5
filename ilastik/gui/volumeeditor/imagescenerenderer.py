@@ -11,6 +11,10 @@ except Exception, e:
     print e
     pass
 
+#*******************************************************************************
+# I m a g e S c e n e R e n d e r e r                                          *
+#*******************************************************************************
+
 class ImageSceneRenderer(QObject):
     def __init__(self, imageScene):
         QObject.__init__(self)
@@ -30,13 +34,18 @@ class ImageSceneRenderer(QObject):
 
         self.updatePatches(range(self.patchAccessor.patchCount), image, overlays)
         
-    def updatePatches(self, patchNumbers ,image, overlays = ()):
+    def updatePatches(self, patchNumbers, image, overlays = ()):
         if patchNumbers is None:
             return
-        stuff = [patchNumbers,image, overlays, self.min, self.max]
-        self.thread.queue.append(stuff)
+        workPackage = [patchNumbers, image, overlays, self.min, self.max]
+        self.thread.queue.append(workPackage)
         self.thread.dataPending.set()
 
+    def updateTexture(self, patch, b):
+        glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], \
+                        GL_RGB, GL_UNSIGNED_BYTE, \
+                        ctypes.c_void_p(patch.bits().__int__()))
+    
     def renderingThreadFinished(self):
         #only proceed if there is no new _data already in the rendering thread queue
         if not self.thread.dataPending.isSet():
@@ -44,10 +53,10 @@ class ImageSceneRenderer(QObject):
             #if we are in opengl 2d render mode, update the texture
             if self.imageScene.openglWidget is not None:
                 self.imageScene.sharedOpenGLWidget.context().makeCurrent()
+                glBindTexture(GL_TEXTURE_2D, self.imageScene.scene.tex)
                 for patchNr in self.thread.outQueue:
-                    glBindTexture(GL_TEXTURE_2D, self.imageScene.scene.tex)
                     b = self.imageScene.patchAccessor.getPatchBounds(patchNr, 0)
-                    glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imageScene.imagePatches[patchNr].bits().__int__()))
+                    self.updateTexture(self.imageScene.imagePatches[patchNr], b)
                     
             self.thread.outQueue.clear()
             #if all updates have been rendered remove tempitems
@@ -60,14 +69,11 @@ class ImageSceneRenderer(QObject):
         print "updating slice view ", self.imageScene.axis
         self.imageScene.viewport().repaint()
         self.thread.freeQueue.set()
-        
-        #FIXME this is a hack
-        #self.imageScene.updatedSlice.emit(self.imageScene.axis)
-    
 
 #*******************************************************************************
 # I m a g e S c e n e R e n d e r T h r e a d                                  *
 #*******************************************************************************
+
 class ImageSceneRenderThread(QThread):
     finishedQueue = pyqtSignal()
     
