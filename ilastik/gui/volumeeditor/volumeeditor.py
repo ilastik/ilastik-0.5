@@ -31,6 +31,12 @@
 Dataset Editor Dialog based on PyQt4
 """
 
+# TODO
+# TODO
+# TODO
+# port the following revisions:
+#    1f810747c21380eda916c2c5b7b5d1893f92663e
+
 from PyQt4.QtCore import Qt, pyqtSignal
 from PyQt4.QtGui import QApplication, QWidget, QPixmapCache, QLabel, QSpinBox, \
                         QCheckBox, QShortcut, QKeySequence, QSplitter, \
@@ -493,6 +499,11 @@ class VolumeEditor(QWidget):
                     tempoverlays.append(item.getOverlaySlice(self.viewManager.slicePosition[i], i, self.viewManager.time, item.channel))
             if len(self.overlayWidget.overlays) > 0: #and hasattr(self.overlayWidget, 'getOverlayRef'):
                 tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.viewManager.slicePosition[i], i, self.viewManager.time, self.overlayWidget.getOverlayRef("Raw Data").channel)
+            else:
+                tempImage = None
+    #            if self.labelWidget.volumeLabels is not None:
+    #                if self.labelWidget.volumeLabels.data is not None:
+    #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.viewManager.slicePosition[i],i, self.viewManager.time, 0)
             if len(self.imageScenes) > i:
                 self.imageScenes[i].displayNewSlice(tempImage, tempoverlays, fastPreview = False, normalizeData = self.normalizeData)
                         
