@@ -157,8 +157,6 @@ class ImageScene(QGraphicsView):
         if self.axis is 0:
             self.view.rotate(90.0)
             self.view.scale(1.0,-1.0)
-        
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
 
         self.setMouseTracking(True)
 
@@ -422,6 +420,12 @@ class ImageScene(QGraphicsView):
                 self.tempErase = True
             mousePos = self.mapToScene(event.pos())
             self.beginDrawing(mousePos)
+            
+        if event.buttons() == QtCore.Qt.RightButton:
+            #make sure that we have the cursor at the correct position
+            #before we call the context menu
+            self.mouseMoveEvent(event)
+            self.onContext(event.pos())
             
     #TODO oli
     def mouseReleaseEvent(self, event):
