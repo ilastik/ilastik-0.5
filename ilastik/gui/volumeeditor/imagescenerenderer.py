@@ -99,8 +99,9 @@ class ImageSceneRenderThread(QThread):
     def convertImageUInt8(self, itemdata):
         if itemdata.dtype == numpy.uint8 or itemcolorTable == None:
             return itemdata
-        if itemdata.dtype == numpy.uint16:
-            #FIXME
+        if itemcolorTable is None and itemdata.dtype == numpy.uint16:
+            print '*** Normalizing your data for display purpose'
+            print '*** I assume you have 12bit data'
             return (itemdata*255.0/4095.0).astype(numpy.uint8)
     
         #if the item is larger we take the values module 256
