@@ -31,11 +31,11 @@ class ImageSceneRenderer(QObject):
         self.updatePatches(range(self.patchAccessor.patchCount), image, overlays)
         
     def updatePatches(self, patchNumbers ,image, overlays = ()):
+        if patchNumbers is None:
+            return
         stuff = [patchNumbers,image, overlays, self.min, self.max]
-        #print patchNumbers
-        if patchNumbers is not None:
-            self.thread.queue.append(stuff)
-            self.thread.dataPending.set()
+        self.thread.queue.append(stuff)
+        self.thread.dataPending.set()
 
     def renderingThreadFinished(self):
         #only proceed if there is no new _data already in the rendering thread queue
@@ -98,108 +98,117 @@ class ImageSceneRenderThread(QThread):
         
         print "initialized ImageSceneRenderThread"
     
+    def convertImageUInt8(self, itemdata):
+        if itemdata.dtype == numpy.uint8 or itemcolorTable == None:
+            return itemdata
+        if itemdata.dtype == numpy.uint16:
+            #FIXME
+            return (itemdata*255.0/4095.0).astype(numpy.uint8)
+    
+        #if the item is larger we take the values module 256
+        #since QImage supports only 8Bit Indexed images
+        olditemdata = itemdata              
+        itemdata = numpy.ndarray(olditemdata.shape, 'float32')
+        if olditemdata.dtype == numpy.uint32:
+            return numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+        elif olditemdata.dtype == numpy.uint64:
+            return numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+        elif olditemdata.dtype == numpy.int32:
+            return numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
+        elif olditemdata.dtype == numpy.int64:
+            return numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
+        elif olditemdata.dtype == numpy.uint16:
+            return numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
+        #raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
+        # TODO: Workaround: tried to fix the problem
+        # with the segmentation display, somehow it arrieves
+        # here in float32
+        print TypeError(str(olditemdata.dtype) + ': unsupported dtype of overlay in ImageSceneRenderThread.run()')
+
+    def isRGB(self, image):
+        return len(image.shape) > 2 and image.shape[2] > 1
+
+    def asQColor(self, color):
+        if isinstance(color,  long) or isinstance(color,  int):
+            return QColor.fromRgba(long(color))
+        return color
+
+    def callMyFunction(self, itemdata, origitem, origitemColor, itemcolorTable):
+        uint8image = self.convertImageUInt8(itemdata)
+        image0 = None
+        if itemcolorTable != None:         
+            if self.isRGB(uint8image):
+                image0 = qimage2ndarray.array2qimage(uint8image.swapaxes(0,1), normalize=False)
+            else:
+                image0 = qimage2ndarray.gray2qimage(uint8image.swapaxes(0,1), normalize=False)
+                image0.setColorTable(itemcolorTable[:])
+            
+        else:
+            if origitem.min is not None and origitem.max is not None:
+                normalize = (origitem.min, origitem.max)
+            else:
+                normalize = False
+            
+                                            
+            if origitem.autoAlphaChannel is False:
+                if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
+                    image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+                    image0 = image1
+                else:
+                    tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'float32')
+                    tempdat[:,:,0] = origitemColor.redF()*itemdata[:]
+                    tempdat[:,:,1] = origitemColor.greenF()*itemdata[:]
+                    tempdat[:,:,2] = origitemColor.blueF()*itemdata[:]
+                    image1 = qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
+                    image0 = image1
+            else:
+                image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+                image0 = QImage(itemdata.shape[0],itemdata.shape[1],QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
+                image0.fill(origitemColor.rgba())
+                image0.setAlphaChannel(image1)
+        return image0
+    
+    def takeJob(self):
+        workPackage = self.queue.pop()
+        if workPackage is None:
+            return
+        patchNumbers, origimage, overlays , min, max = workPackage
+        for patchNr in patchNumbers:
+            if self.newerDataPending.isSet():
+                self.newerDataPending.clear()
+                break
+            bounds = self.patchAccessor.getPatchBounds(patchNr)
+
+            if self.imageScene.openglWidget is None:
+                p = QPainter(self.imageScene.scene.image)
+                p.translate(bounds[0],bounds[2])
+            else:
+                p = QPainter(self.imageScene.imagePatches[patchNr])
+            
+            p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
+
+            #add overlays
+            for index, origitem in enumerate(overlays):
+                p.setOpacity(origitem.alpha)
+                itemcolorTable = origitem.colorTable
+                
+                
+                imagedata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
+                image0 = self.callMyFunction(imagedata, origitem, self.asQColor(origitem.color), itemcolorTable)
+                p.drawImage(0,0, image0)
+
+            p.end()
+            self.outQueue.append(patchNr)
+
+    def runImpl(self):
+        self.finishedQueue.emit()
+        self.dataPending.wait()
+        self.newerDataPending.clear()
+        self.freeQueue.clear()
+        while len(self.queue) > 0:
+            self.takeJob()
+        self.dataPending.clear()
+    
     def run(self):
         while not self.stopped:
-            self.finishedQueue.emit()
-            self.dataPending.wait()
-            self.newerDataPending.clear()
-            self.freeQueue.clear()
-            while len(self.queue) > 0:
-                stuff = self.queue.pop()
-                if stuff is not None:
-                    nums, origimage, overlays , min, max  = stuff
-                    for patchNr in nums:
-                        if self.newerDataPending.isSet():
-                            self.newerDataPending.clear()
-                            break
-                        bounds = self.patchAccessor.getPatchBounds(patchNr)
-
-                        if self.imageScene.openglWidget is None:
-                            p = QPainter(self.imageScene.scene.image)
-                            p.translate(bounds[0],bounds[2])
-                        else:
-                            p = QPainter(self.imageScene.imagePatches[patchNr])
-                        
-                        p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
-
-                        #add overlays
-                        for index, origitem in enumerate(overlays):
-                            p.setOpacity(origitem.alpha)
-                            itemcolorTable = origitem.colorTable
-                            
-                            
-                            itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
-                            
-                            origitemColor = None
-                            if isinstance(origitem.color,  long) or isinstance(origitem.color,  int):
-                                origitemColor = QColor.fromRgba(long(origitem.color))
-                            else:
-                                origitemColor = origitem.color
-                                 
-                            # if itemdata is uint16
-                            # convert it for displayporpuse
-                            if itemdata.dtype == numpy.uint16:
-                                itemdata = (itemdata*255.0/4095.0).astype(numpy.uint8)
-                            
-                            if itemcolorTable != None:         
-                                if itemdata.dtype != 'uint8':
-                                    """
-                                    if the item is larger we take the values module 256
-                                    since QImage supports only 8Bit Indexed images
-                                    """
-                                    olditemdata = itemdata              
-                                    itemdata = numpy.ndarray(olditemdata.shape, 'float32')
-                                    #print "moduo", olditemdata.shape, olditemdata.dtype
-                                    if olditemdata.dtype == 'uint32':
-                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
-                                    elif olditemdata.dtype == 'uint64':
-                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
-                                    elif olditemdata.dtype == 'int32':
-                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,24),24)[:]
-                                    elif olditemdata.dtype == 'int64':
-                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,56),56)[:]
-                                    elif olditemdata.dtype == 'uint16':
-                                        itemdata[:] = numpy.right_shift(numpy.left_shift(olditemdata,8),8)[:]
-                                    else:
-                                        #raise TypeError(str(olditemdata.dtype) + ' <- unsupported image _data type (in the rendering thread, you know) ')
-                                        # TODO: Workaround: tried to fix the problem
-                                        # with the segmentation display, somehow it arrieves
-                                        # here in float32
-                                        print TypeError(str(olditemdata.dtype) + ': unsupported dtype of overlay in ImageSceneRenderThread.run()')
-                                        continue
-                                   
-                                if len(itemdata.shape) > 2 and itemdata.shape[2] > 1:
-                                    image0 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                else:
-                                    image0 = qimage2ndarray.gray2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                    image0.setColorTable(itemcolorTable[:])
-                                
-                            else:
-                                if origitem.min is not None and origitem.max is not None:
-                                    normalize = (origitem.min, origitem.max)
-                                else:
-                                    normalize = False
-                                
-                                                                
-                                if origitem.autoAlphaChannel is False:
-                                    if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
-                                        image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
-                                        image0 = image1
-                                    else:
-                                        tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'float32')
-                                        tempdat[:,:,0] = origitemColor.redF()*itemdata[:]
-                                        tempdat[:,:,1] = origitemColor.greenF()*itemdata[:]
-                                        tempdat[:,:,2] = origitemColor.blueF()*itemdata[:]
-                                        image1 = qimage2ndarray.array2qimage(tempdat.swapaxes(0,1), normalize)
-                                        image0 = image1
-                                else:
-                                    image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
-                                    image0 = QImage(itemdata.shape[0],itemdata.shape[1],QImage.Format_ARGB32)#qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
-                                    image0.fill(origitemColor.rgba())
-                                    image0.setAlphaChannel(image1)
-                            p.drawImage(0,0, image0)
-
-                        p.end()
-                        self.outQueue.append(patchNr)
-
-            self.dataPending.clear()
+            self.runImpl()
