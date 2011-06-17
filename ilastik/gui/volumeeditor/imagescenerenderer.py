@@ -15,6 +15,15 @@ except Exception, e:
 # I m a g e S c e n e R e n d e r e r                                          *
 #*******************************************************************************
 
+# check minimal version of the opengl python wrapper
+#
+# to avoid copies, we want to call glTexImage2D(..., pixels)
+# with 'pixels' of type ctypes.c_void_p. This is not supported
+# in older versions of the wrapper code
+from distutils.version import LooseVersion 
+if LooseVersion(OpenGL.__version__) < LooseVersion('3.0.1'):
+    raise Exception('PyOpenGL version is less than 3.0.1')
+
 class ImageSceneRenderer(QObject):
     def __init__(self, imageScene):
         QObject.__init__(self)
