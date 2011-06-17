@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    Copyright 2010, 2011 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
 #    
 #    Redistribution and use in source and binary forms, with or without modification, are
 #    permitted provided that the following conditions are met:
@@ -27,6 +27,9 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QHBoxLayout, QWidget
+
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from ilastik.gui.iconMgr import ilastikIcons
@@ -41,14 +44,14 @@ import ilastik.gui.volumeeditor as ve
 # U n s u p e r v i s e d T a b                                                *
 #*******************************************************************************
 
-class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
+class UnsupervisedTab(IlastikTabBase, QWidget):
     name = 'Unsupervised Decomposition'
     position = 2
     moduleName = "Unsupervised_Decomposition"
     
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         
         self._initContent()
         self._initConnects()
@@ -77,7 +80,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         self.btnDecompose.setEnabled(False)  
             
     def _initContent(self):
-        tl = QtGui.QHBoxLayout()
+        tl = QHBoxLayout()
         tl.setMargin(0)
         
         self.btnChooseOverlays      = TabButton('Select Overlay', ilastikIcons.Select)
@@ -99,9 +102,9 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         self.setLayout(tl)
         
     def _initConnects(self):
-        self.connect(self.btnChooseOverlays, QtCore.SIGNAL('clicked()'), self.on_btnChooseOverlays_clicked)
-        self.connect(self.btnDecompose, QtCore.SIGNAL('clicked()'), self.on_btnDecompose_clicked)
-        self.connect(self.btnUnsupervisedOptions, QtCore.SIGNAL('clicked()'), self.on_btnUnsupervisedOptions_clicked)
+        self.connect(self.btnChooseOverlays, SIGNAL('clicked()'), self.on_btnChooseOverlays_clicked)
+        self.connect(self.btnDecompose, SIGNAL('clicked()'), self.on_btnDecompose_clicked)
+        self.connect(self.btnUnsupervisedOptions, SIGNAL('clicked()'), self.on_btnUnsupervisedOptions_clicked)
         
     def on_btnChooseOverlays_clicked(self):
         dlg = OverlaySelectionDialog(self.parent,  singleSelection = False)
