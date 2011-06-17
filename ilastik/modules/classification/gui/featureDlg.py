@@ -30,8 +30,8 @@ from PyQt4.QtGui import QGraphicsView, QVBoxLayout, QLabel, QGraphicsScene, QPix
                         QTableWidgetItem, QItemDelegate, QStyle, QHBoxLayout, QIcon, QHeaderView, \
                         QAbstractItemView, QDialog, QToolButton, QErrorMessage, QApplication, \
                         QTableWidget, QGroupBox, QBrush, QColor, QPalette, QStyleOptionViewItem, \
-                        QFont
-from PyQt4.QtCore import Qt, QRect, QSize, QEvent
+                        QFont, QPen
+from PyQt4.QtCore import Qt, QRect, QSize, QEvent, QPointF
 
 
 import sys
@@ -47,26 +47,32 @@ class PreView(QGraphicsView):
         
         self.setMinimumWidth(200)
         self.setMinimumHeight(200)
-#        self.setMaximumWidth(200)
-#        self.setMaximumHeight(200)        
+        self.setMaximumWidth(200)
+        self.setMaximumHeight(200)       
+        
+        self.zoom = 2
+        self.scale(self.zoom, self.zoom) 
         
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         
         self.hudLayout = QVBoxLayout(self)
+        self.hudLayout.setContentsMargins(0,0,0,0)
         
-        self.sizeTextLabel = QLabel(self)
-        self.sizeTextLabel.setStyleSheet("color: red; font-weight:bold;")
-        self.sizeTextLabel.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self.sizeTextLabel.setText("Size:")
+#        self.sizeTextLabel = QLabel(self)
+#        self.sizeTextLabel.setStyleSheet("color: red; font-weight:bold;")
+#        self.sizeTextLabel.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+#        self.sizeTextLabel.setText("Size:")
         
-        self.hudLayout.addWidget(self.sizeTextLabel)
+#        self.hudLayout.addWidget(self.sizeTextLabel)
         
-        self.testLabel =  QLabel()
-        self.hudLayout.addWidget(self.testLabel)
-        self.testLabel.setAttribute(Qt.WA_TransparentForMouseEvents, True)  
-        self.hudLayout.addStretch()
+        self.ellipseLabel =  QLabel()
+        self.ellipseLabel.setMinimumWidth(self.width())
+        self.ellipseLabel.setMinimumHeight(self.height())
+        self.hudLayout.addWidget(self.ellipseLabel)
+        self.ellipseLabel.setAttribute(Qt.WA_TransparentForMouseEvents, True)  
+        #self.hudLayout.addStretch()
         
         self.grscene = QGraphicsScene()
         pixmapImage = QPixmap(qimage2ndarray.array2qimage(previewImage))
@@ -74,19 +80,42 @@ class PreView(QGraphicsView):
         self.setScene(self.grscene)
             
     def setSizeToLabel(self, size):
-        self.sizeTextLabel.setText("Size: " + str(size))
+#        self.sizeTextLabel.setText("Size: " + str(size))
         self.updateCircle(size)
         
-    def updateCircle(self, size):
+    def updateCircle(self, s):
+        size = s * self.zoom
         pixmap = QPixmap(self.width(), self.height())
         pixmap.fill(Qt.transparent)
+        #painter size text
         painter = QPainter()
         painter.begin(pixmap)
         painter.setRenderHint(QPainter.Antialiasing)
         painter.setPen(Qt.red)
-        painter.drawEllipse(QRect(70, 70, size, size))
+        painter.setFont(QFont("Arial", 20))
+        painter.drawText(10, 20, "Size: " + str(s))
         painter.end()
-        self.testLabel.setPixmap(QPixmap(pixmap))
+        #painter ellipse 1
+        painter = QPainter()
+        painter.begin(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing)
+        pen = QPen(Qt.red)
+        pen.setWidth(3)
+        painter.setPen(pen)
+        painter.drawEllipse(QRect(self.width()/2 - size/2, self.height()/2 - size/2, size, size))
+        painter.end()
+        #painter ellipse 2
+        painter2 = QPainter()
+        painter2.begin(pixmap)
+        painter2.setRenderHint(QPainter.Antialiasing)
+        pen2 = QPen(Qt.green)
+        pen2.setStyle(Qt.DotLine)
+        pen2.setWidth(3)
+        painter2.setPen(pen2)
+        painter2.drawEllipse(QRect(self.width()/2 - size/2, self.height()/2 - size/2, size, size))
+        painter2.end()
+        
+        self.ellipseLabel.setPixmap(QPixmap(pixmap))
 
 
 class FeatureTableWidgetVHeader(QTableWidgetItem):
@@ -112,24 +141,16 @@ class FeatureTableWidgetVHeader(QTableWidgetItem):
         
         
 class FeatureTableWidgetHHeader(QTableWidgetItem):
-    def __init__(self, name):
-        QTableWidgetItem.__init__(self, "   " + name)
+    def __init__(self, size):
+        QTableWidgetItem.__init__(self, " ")
         # init
         # ------------------------------------------------
-        self.isExpanded = True
-        self.isParent = False
-        self.name = name
-        self.children = []
-            
-    def setExpanded(self):
-        QTableWidgetItem.setText(self, "-  " + self.name)
-        
-        self.isExpanded = True
-        
-    def setCollapsed(self):
-        QTableWidgetItem.setText(self, "+  " + self.name)
-        self.isExpanded = False
-        
+        self.size = size
+        self.setText(str(size))
+        font = QFont() 
+        font.setPointSize(10)
+        font.setBold(True)
+        self.setFont(font)
 
 class ItemDelegate(QItemDelegate):
     """"
@@ -149,9 +170,13 @@ class ItemDelegate(QItemDelegate):
             option.state = QStyle.State_NoChange
         else:
             option.state = QStyle.State_On
-        
-        if verticalHeader.isParent and verticalHeader.isExpanded: 
-            painter.fillRect(option.rect, option.palette.alternateBase())
+        if item.isSelected() == True:
+            painter.fillRect(option.rect, option.palette.highlight ())
+        else:
+            if verticalHeader.isParent: 
+                painter.fillRect(option.rect, option.palette.alternateBase())
+            else:
+                painter.fillRect(option.rect, option.palette.light())
         self.parent.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, option, painter)
         self.parent.update()
 
@@ -185,13 +210,14 @@ class FeatureTableWidget(QTableWidget):
         self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.tmpSelectedItems = []
         self.ilastik = ilastik
-        self.setStyleSheet("background-color:white;")
+        self.setStyleSheet("background-color:transparent;")
+        self.setIconSize(QSize(30, 30))
         #self.setAlternatingRowColors(True)        
         #layout
         # ------------------------------------------------
         self.setCornerButtonEnabled(False)
-        self.setMinimumWidth(650)
-        self.setMinimumHeight(100)
+        self.setMinimumWidth(560)
+        #self.setMinimumHeight(100)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(0)
         self.setShowGrid(False)
@@ -205,8 +231,9 @@ class FeatureTableWidget(QTableWidget):
         self.setItemDelegate(self.itemDelegator)
         self.horizontalHeader().setMouseTracking(1)
         self.horizontalHeader().installEventFilter(self)
+#        self.horizontalHeader().setStretchLastSection(True)
         self.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-        #self.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+#        self.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
         
         self.itemSelectionChanged.connect(self.tableItemSelectionChanged)
         self.cellDoubleClicked.connect(self.featureTableItemDoubleClicked)
@@ -217,10 +244,12 @@ class FeatureTableWidget(QTableWidget):
         self.collapsAllRows()
         self.fillTabelWithItems()  
         self.setOldSelectedFeatures() 
-        self.updateParentCell()    
+        self.updateParentCell() 
                         
     # methods
-    # ------------------------------------------------    
+    # ------------------------------------------------  
+    
+      
     def createSelectedFeatureList(self):
         result = []
         for c in range(self.columnCount()):
@@ -228,8 +257,7 @@ class FeatureTableWidget(QTableWidget):
                 item = self.item(r,c)
                 if not item.isParent:
                     if item.featureState == 2:
-                        result.append([self.verticalHeaderItem(r).name, str(self.horizontalHeaderItem(c).text())])
-        print result
+                        result.append([self.verticalHeaderItem(r).name, str(self.horizontalHeaderItem(c).size)])
         return result
         
     
@@ -240,7 +268,7 @@ class FeatureTableWidget(QTableWidget):
             for feature in featureMgr.ilastikFeatureGroups.selection:
                 for c in range(self.columnCount()):
                     for r in range(self.rowCount()):
-                        if feature[0] == self.verticalHeaderItem(r).name and feature[1] == str(self.horizontalHeaderItem(c).text()):
+                        if feature[0] == self.verticalHeaderItem(r).name and feature[1] == str(self.horizontalHeaderItem(c).size):
                             self.item(r,c).setFeatureState(2)
         else:
             i = -1
@@ -367,20 +395,41 @@ class FeatureTableWidget(QTableWidget):
         if event.type() == QEvent.MouseMove:
             if self.itemAt(event.pos()) and self.underMouse():
                 item = self.itemAt(event.pos())
-                self.changeSizeCallback(self.groupMaskSizes[item.column()])
-                
-#                bold = QFont()
-#                bold.setBold(False)
-#                for r in range(self.rowCount()):
-#                    self.verticalHeaderItem(r).setFont(bold)
-#                for c in range(self.columnCount()):
-#                    self.horizontalHeaderItem(c).setFont(bold)
-#                bold.setBold(True)
-#                if self.underMouse():
-#                    self.verticalHeaderItem(item.row()).setFont(bold)
-#                    self.horizontalHeaderItem(item.column()).setFont(bold)
-#                
+                self.changeSizeCallback(self.groupMaskSizes[item.column()])               
+                self.setHAndVHeaderForegroundColor(item.column(), item.row())
         return False
+        
+        
+    def setHAndVHeaderForegroundColor(self, c, r):       
+        
+        for i in range(self.columnCount()):
+            pixmap = QPixmap(self.groupMaskSizes[-1], self.groupMaskSizes[-1])
+            pixmap.fill(Qt.transparent)
+            painter = QPainter()
+            painter.begin(pixmap)
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            col = self.horizontalHeaderItem(i)
+            size = self.groupMaskSizes[i]
+            if i == c:
+                col.setForeground(QBrush(Qt.lightGray))
+                painter.setPen(Qt.lightGray)
+                brush = QBrush(Qt.lightGray)
+            else:
+                col.setForeground(QBrush(Qt.black))
+                painter.setPen(Qt.black)
+                brush = QBrush(Qt.black)
+                
+            painter.setBrush(brush)
+            painter.drawEllipse(QRect(self.groupMaskSizes[-1]/2 - size/2, self.groupMaskSizes[-1]/2 - size/2, size, size))
+            painter.end()        
+            col.setIcon(QIcon(pixmap))
+            
+        for j in range(self.rowCount()):
+            row = self.verticalHeaderItem(j)
+            if j == r:
+                row.setForeground(QBrush(Qt.lightGray))
+            else:
+                row.setForeground(QBrush(Qt.black))
         
         
     def featureTableItemDoubleClicked(self, row, column):
@@ -400,8 +449,28 @@ class FeatureTableWidget(QTableWidget):
 
     
     def setHHeaderNames(self):
-        self.setColumnCount(len(self.groupScaleNames))
-        self.setHorizontalHeaderLabels(self.groupScaleNames)
+        self.setColumnCount(len(self.groupScaleValues))
+#        self.setHorizontalHeaderLabels(self.groupScaleNames)
+
+        for c in range(len(self.groupMaskSizes)):
+            
+            size = self.groupMaskSizes[c]
+                
+            pixmap = QPixmap(self.groupMaskSizes[-1], self.groupMaskSizes[-1])
+            pixmap.fill(Qt.transparent)
+            painter = QPainter()
+            painter.begin(pixmap)
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            painter.setPen(Qt.black)
+            brush = QBrush(Qt.black)
+            painter.setBrush(brush)
+            painter.drawEllipse(QRect(self.groupMaskSizes[-1]/2 - size/2, self.groupMaskSizes[-1]/2 - size/2, size, size))
+            painter.end()
+            hHeader = FeatureTableWidgetHHeader(size)
+            hHeader.setIcon(QIcon(pixmap))
+            hHeader.setTextAlignment(Qt.AlignVCenter)
+            self.setHorizontalHeaderItem(c, hHeader)
+            #self.horizontalHeader().resizeSection(c, 40)
 
     
     def setVHeaderNames(self):
@@ -415,7 +484,8 @@ class FeatureTableWidget(QTableWidget):
             for j in featureMgr.ilastikFeatureGroups.groups[i]:
                 self.insertRow(row)
                 self.setVerticalHeaderItem(row, FeatureTableWidgetVHeader(j.name, feature=j))
-                self.verticalHeaderItem(row).setData(3, j.name)
+                #Tooltip
+                #self.verticalHeaderItem(row).setData(3, j.name)
                 parent.children.append(row)
                 row += 1
 
@@ -442,7 +512,7 @@ class FeatureDlg(QDialog):
         tableAndViewLayout = QHBoxLayout()
         tableAndViewLayout.addWidget(self.featureTableWidget)
         
-        viewAndButtonLayout =  QVBoxLayout()              
+        viewAndButtonLayout =  QVBoxLayout() 
         self.preView = PreView(previewImage)
         viewAndButtonLayout.addWidget(self.preView)
         
@@ -463,8 +533,9 @@ class FeatureDlg(QDialog):
         buttonsLayout.addWidget(self.cancel)
         viewAndButtonLayout.addLayout(buttonsLayout)
         tableAndViewLayout.addLayout(viewAndButtonLayout)
+        tableAndViewLayout.addStretch()
         tableAndViewGroupBox.setLayout(tableAndViewLayout)
-        tableAndViewGroupBox.updateGeometry()
+        #tableAndViewGroupBox.updateGeometry()
         self.layout.addWidget(tableAndViewGroupBox)
         
         self.layout.setContentsMargins(0,0,10,10)
@@ -472,8 +543,7 @@ class FeatureDlg(QDialog):
         tableAndViewLayout.setContentsMargins(0,10,0,0)
         
         self.featureTableWidget.setChangeSizeCallback(self.preView.setSizeToLabel)
-        self.setMemReq()  
-        
+        self.setMemReq()        
                 
     # methods
     # ------------------------------------------------
