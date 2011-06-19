@@ -30,8 +30,8 @@ from PyQt4.QtGui import QGraphicsView, QVBoxLayout, QLabel, QGraphicsScene, QPix
                         QTableWidgetItem, QItemDelegate, QStyle, QHBoxLayout, QIcon, QHeaderView, \
                         QAbstractItemView, QDialog, QToolButton, QErrorMessage, QApplication, \
                         QTableWidget, QGroupBox, QBrush, QColor, QPalette, QStyleOptionViewItem, \
-                        QFont, QPen
-from PyQt4.QtCore import Qt, QRect, QSize, QEvent, QPointF
+                        QFont, QPen, QPolygon, QSlider
+from PyQt4.QtCore import Qt, QRect, QSize, QEvent, QPointF, QPoint
 
 
 import sys
@@ -88,13 +88,13 @@ class PreView(QGraphicsView):
         pixmap = QPixmap(self.width(), self.height())
         pixmap.fill(Qt.transparent)
         #painter size text
-        painter = QPainter()
-        painter.begin(pixmap)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setPen(Qt.red)
-        painter.setFont(QFont("Arial", 20))
-        painter.drawText(10, 20, "Size: " + str(s))
-        painter.end()
+#        painter = QPainter()
+#        painter.begin(pixmap)
+#        painter.setRenderHint(QPainter.Antialiasing)
+#        painter.setPen(Qt.red)
+#        painter.setFont(QFont("Arial", 20))
+#        painter.drawText(10, 20, "Size: " + str(s))
+#        painter.end()
         #painter ellipse 1
         painter = QPainter()
         painter.begin(pixmap)
@@ -120,37 +120,92 @@ class PreView(QGraphicsView):
 
 class FeatureTableWidgetVHeader(QTableWidgetItem):
     def __init__(self, featureName, feature=None):
-        QTableWidgetItem.__init__(self, "   " + featureName)
+        QTableWidgetItem.__init__(self, featureName)
         # init
         # ------------------------------------------------
-        self.setSizeHint(QSize(260, 0))
         self.isExpanded = True
         self.isParent = False
         self.feature = feature
         self.name = featureName
         self.children = []
+        pixmap = QPixmap(20, 20)
+        pixmap.fill(Qt.transparent)
+        self.setIcon(QIcon(pixmap))
             
     def setExpanded(self):
-        QTableWidgetItem.setText(self, "-  " + self.name)
-        
         self.isExpanded = True
+        self.drawIcon()
         
     def setCollapsed(self):
-        QTableWidgetItem.setText(self, "+  " + self.name)
         self.isExpanded = False
+        self.drawIcon()
+
+    def drawIcon(self, color=Qt.black):
+        self.setForeground(QBrush(color))
+        
+        if self.isParent:
+            pixmap = QPixmap(20, 20)
+            pixmap.fill(Qt.transparent)
+            painter = QPainter()
+            painter.begin(pixmap)
+    #        painter.setRenderHint(QPainter.Antialiasing)
+            pen = QPen(color)
+            pen.setWidth(1)
+            painter.setPen(pen)
+            painter.setBrush(color)
+            painter.setRenderHint(QPainter.Antialiasing)
+            if not self.isExpanded:
+                points = [QPoint(6,6), QPoint(6,14), QPoint(14, 10)]
+                painter.drawPolygon(QPolygon(points))
+            else:
+                points = [QPoint(6,6), QPoint(15,6), QPoint(10, 14)]
+                painter.drawPolygon(QPolygon(points))
+            painter.end()
+            self.setIcon(QIcon(pixmap))
+        
+    def setIconAndTextColor(self, color):
+        self.drawIcon(color)
         
         
 class FeatureTableWidgetHHeader(QTableWidgetItem):
-    def __init__(self, size):
-        QTableWidgetItem.__init__(self, " ")
+    def __init__(self, sigma):
+        QTableWidgetItem.__init__(self)
         # init
         # ------------------------------------------------
-        self.size = size
-        self.setText(str(size))
+        self.sigma = sigma
+        self.brushSize = int(3.0*self.sigma + 0.5)*2 + 1
+        self.headerSize = QSize(40,30)
+        self.pixmapSize = QSize(61, 61)
+        
+        self.setNameAndBrush(self.sigma)
+        
+    def setNameAndBrush(self, sigma, color=Qt.black):
+        self.sigma = sigma
+        self.brushSize = int(3.0*self.sigma + 0.5)*2 + 1
+        self.setText(str(self.brushSize))
         font = QFont() 
         font.setPointSize(10)
         font.setBold(True)
         self.setFont(font)
+        self.setForeground(color)
+                        
+        pixmap = QPixmap(self.pixmapSize)
+        pixmap.fill(Qt.transparent)
+        painter = QPainter()
+        painter.begin(pixmap)
+        painter.setRenderHint(QPainter.Antialiasing, True)
+        painter.setPen(color)
+        brush = QBrush(color)
+        painter.setBrush(brush)
+        painter.drawEllipse(QRect(self.pixmapSize.width()/2 - self.brushSize/2, self.pixmapSize.height()/2 - self.brushSize/2, self.brushSize, self.brushSize))
+        painter.end()
+        self.setIcon(QIcon(pixmap))
+        self.setTextAlignment(Qt.AlignVCenter)
+        self.setSizeHint(self.headerSize)
+        
+    def setIconAndTextColor(self, color):
+        self.setNameAndBrush(self.sigma, color)
+        
 
 class ItemDelegate(QItemDelegate):
     """"
@@ -205,14 +260,13 @@ class FeatureTableWidget(QTableWidget):
         QTableWidget.__init__(self)
         # init
         # ------------------------------------------------
-        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
         self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
-        self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.tmpSelectedItems = []
         self.ilastik = ilastik
         self.setStyleSheet("background-color:transparent;")
         self.setIconSize(QSize(30, 30))
-        #self.setAlternatingRowColors(True)        
+        #self.setAlternatingRowColors(True)    
+        self.isSliderOpen = False    
         #layout
         # ------------------------------------------------
         self.setCornerButtonEnabled(False)
@@ -233,11 +287,12 @@ class FeatureTableWidget(QTableWidget):
         self.horizontalHeader().installEventFilter(self)
 #        self.horizontalHeader().setStretchLastSection(True)
         self.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-#        self.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+        self.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
         
         self.itemSelectionChanged.connect(self.tableItemSelectionChanged)
         self.cellDoubleClicked.connect(self.featureTableItemDoubleClicked)
         self.verticalHeader().sectionClicked.connect(self.expandOrCollapseVHeader)
+        self.horizontalHeader().sectionDoubleClicked.connect(self.hHeaderDoubleclicked)
         
         self.setHHeaderNames()
         self.setVHeaderNames()
@@ -249,6 +304,15 @@ class FeatureTableWidget(QTableWidget):
     # methods
     # ------------------------------------------------  
     
+    
+    def hHeaderDoubleclicked(self, col):
+        self.isSliderOpen = True
+        sliderdlg = SliderDlg(self, self.horizontalHeaderItem(col).sigma)
+        self.setHAndVHeaderForegroundColor(col, -1)
+#        sliderdlg.show()
+#        sliderdlg.raise_()
+        self.horizontalHeaderItem(col).setNameAndBrush(sliderdlg.exec_())
+        self.isSliderOpen = False
       
     def createSelectedFeatureList(self):
         result = []
@@ -257,7 +321,7 @@ class FeatureTableWidget(QTableWidget):
                 item = self.item(r,c)
                 if not item.isParent:
                     if item.featureState == 2:
-                        result.append([self.verticalHeaderItem(r).name, str(self.horizontalHeaderItem(c).size)])
+                        result.append([self.verticalHeaderItem(r).name, str(self.horizontalHeaderItem(c).sigma)])
         return result
         
     
@@ -268,7 +332,7 @@ class FeatureTableWidget(QTableWidget):
             for feature in featureMgr.ilastikFeatureGroups.selection:
                 for c in range(self.columnCount()):
                     for r in range(self.rowCount()):
-                        if feature[0] == self.verticalHeaderItem(r).name and feature[1] == str(self.horizontalHeaderItem(c).size):
+                        if feature[0] == self.verticalHeaderItem(r).name and feature[1] == str(self.horizontalHeaderItem(c).sigma):
                             self.item(r,c).setFeatureState(2)
         else:
             i = -1
@@ -289,7 +353,7 @@ class FeatureTableWidget(QTableWidget):
                     if item.featureState == 2:
                         #print r,c,self.verticalHeaderItem(r).feature,'###'
                         feat = self.verticalHeaderItem(r).feature
-                        sigma = self.groupScaleValues[c]
+                        sigma = self.horizontalHeaderItem(c).sigma
                         result.append(feat(sigma))
         return result
     
@@ -395,7 +459,8 @@ class FeatureTableWidget(QTableWidget):
         if event.type() == QEvent.MouseMove:
             if self.itemAt(event.pos()) and self.underMouse():
                 item = self.itemAt(event.pos())
-                self.changeSizeCallback(self.groupMaskSizes[item.column()])               
+                hHeader = self.horizontalHeaderItem(item.column())
+                self.changeSizeCallback(hHeader.brushSize)               
                 self.setHAndVHeaderForegroundColor(item.column(), item.row())
         return False
         
@@ -403,33 +468,18 @@ class FeatureTableWidget(QTableWidget):
     def setHAndVHeaderForegroundColor(self, c, r):       
         
         for i in range(self.columnCount()):
-            pixmap = QPixmap(self.groupMaskSizes[-1], self.groupMaskSizes[-1])
-            pixmap.fill(Qt.transparent)
-            painter = QPainter()
-            painter.begin(pixmap)
-            painter.setRenderHint(QPainter.Antialiasing, True)
             col = self.horizontalHeaderItem(i)
-            size = self.groupMaskSizes[i]
             if i == c:
-                col.setForeground(QBrush(Qt.lightGray))
-                painter.setPen(Qt.lightGray)
-                brush = QBrush(Qt.lightGray)
+                col.setIconAndTextColor(Qt.lightGray)
             else:
-                col.setForeground(QBrush(Qt.black))
-                painter.setPen(Qt.black)
-                brush = QBrush(Qt.black)
-                
-            painter.setBrush(brush)
-            painter.drawEllipse(QRect(self.groupMaskSizes[-1]/2 - size/2, self.groupMaskSizes[-1]/2 - size/2, size, size))
-            painter.end()        
-            col.setIcon(QIcon(pixmap))
+                col.setIconAndTextColor(Qt.black)
             
         for j in range(self.rowCount()):
             row = self.verticalHeaderItem(j)
             if j == r:
-                row.setForeground(QBrush(Qt.lightGray))
+                row.setIconAndTextColor(Qt.lightGray)
             else:
-                row.setForeground(QBrush(Qt.black))
+                row.setIconAndTextColor(Qt.black)
         
         
     def featureTableItemDoubleClicked(self, row, column):
@@ -450,34 +500,18 @@ class FeatureTableWidget(QTableWidget):
     
     def setHHeaderNames(self):
         self.setColumnCount(len(self.groupScaleValues))
-#        self.setHorizontalHeaderLabels(self.groupScaleNames)
-
-        for c in range(len(self.groupMaskSizes)):
-            
-            size = self.groupMaskSizes[c]
-                
-            pixmap = QPixmap(self.groupMaskSizes[-1], self.groupMaskSizes[-1])
-            pixmap.fill(Qt.transparent)
-            painter = QPainter()
-            painter.begin(pixmap)
-            painter.setRenderHint(QPainter.Antialiasing, True)
-            painter.setPen(Qt.black)
-            brush = QBrush(Qt.black)
-            painter.setBrush(brush)
-            painter.drawEllipse(QRect(self.groupMaskSizes[-1]/2 - size/2, self.groupMaskSizes[-1]/2 - size/2, size, size))
-            painter.end()
-            hHeader = FeatureTableWidgetHHeader(size)
-            hHeader.setIcon(QIcon(pixmap))
-            hHeader.setTextAlignment(Qt.AlignVCenter)
+        for c in range(len(self.groupScaleValues)):
+            hHeader = FeatureTableWidgetHHeader(self.groupScaleValues[c])
             self.setHorizontalHeaderItem(c, hHeader)
-            #self.horizontalHeader().resizeSection(c, 40)
 
     
     def setVHeaderNames(self):
         row = 0
         for i in featureMgr.ilastikFeatureGroups.groups.keys():
             self.insertRow(row)
-            self.setVerticalHeaderItem(row, FeatureTableWidgetVHeader(i, feature=None))
+            vHeader = FeatureTableWidgetVHeader(i, feature=None)
+            vHeader.setSizeHint(QSize(260,30))
+            self.setVerticalHeaderItem(row, vHeader)
             parent = self.verticalHeaderItem(row)
             parent.isParent = True
             row += 1
@@ -488,6 +522,89 @@ class FeatureTableWidget(QTableWidget):
                 #self.verticalHeaderItem(row).setData(3, j.name)
                 parent.children.append(row)
                 row += 1
+                
+                
+                
+class SliderDlg(QDialog):
+    def __init__(self, parent, sigma):
+        QDialog.__init__(self, parent, Qt.FramelessWindowHint)
+        
+        # init
+        # ------------------------------------------------
+        self.oldSigma = sigma
+        self.sigma = sigma
+        self.brushSize = 0
+        self.setStyleSheet("background-color:window;")
+        # widgets and layouts
+        # ------------------------------------------------
+        
+        self.layout = QVBoxLayout()
+        self.setLayout(self.layout)
+        
+        labelsLayout =  QHBoxLayout()
+        self.labelSigma = QLabel("Sigma: xx")
+        self.labelBrushSize = QLabel("BrushSize: xx")
+        labelsLayout.addWidget(self.labelSigma)
+        labelsLayout.addWidget(self.labelBrushSize)
+        self.layout.addLayout(labelsLayout)
+        
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.setMinimum(1)
+        self.slider.setMaximum(100)
+        self.slider.sliderMoved.connect(self.on_sliderMoved)
+        self.layout.addWidget(self.slider)
+        
+        buttonsLayout = QHBoxLayout()
+        self.cancel = QToolButton()
+        self.cancel.setText("cancel")
+        self.cancel.clicked.connect(self.on_cancelClicked)
+        buttonsLayout.addWidget(self.cancel)
+        
+        
+        self.ok = QToolButton()
+        self.ok.setText("OK")
+        self.ok.clicked.connect(self.on_okClicked)
+        buttonsLayout.addWidget(self.ok)
+
+        self.layout.addLayout(buttonsLayout)
+        self.layout.addStretch()
+        
+        self.layout.setContentsMargins(10, 0, 10, 0)
+        labelsLayout.setContentsMargins(0, 0, 0, 0)
+        buttonsLayout.setContentsMargins(0, 0, 0, 0)
+        
+        self.setlabelSigma()
+        self.setLabelBrushSize()
+        self.setSliderPosition()
+        
+    def setlabelSigma(self):
+        self.labelSigma.setText("Sigma: " + str(self.sigma))
+        
+    def setLabelBrushSize(self):
+        self.brushSize = int(3.0*self.sigma + 0.5)*2 + 1
+        self.labelBrushSize.setText("BrushSize: " + str(self.brushSize))
+        
+    def setSliderPosition(self):
+        self.slider.setSliderPosition(self.sigma*10)
+    
+    def on_sliderMoved(self, i):
+        self.sigma = float(i)/10
+        self.setlabelSigma()
+        self.setLabelBrushSize()
+        self.parent().parent().parent().preView.setSizeToLabel(self.brushSize)
+    
+    def on_cancelClicked(self):
+        self.reject()
+        
+    def on_okClicked(self):
+        self.accept()
+        
+    def exec_(self):
+        if QDialog.exec_(self) == QDialog.Accepted:
+            return  self.sigma
+        else:
+            return self.oldSigma
+        
 
 
 class FeatureDlg(QDialog):
