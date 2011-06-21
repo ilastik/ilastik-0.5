@@ -2,6 +2,7 @@ import code
 
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 from ilastik.gui.overlayWidget import OverlayWidget
+from ilastik.gui.volumeeditor import DummyLabelWidget
 
 from PyQt4 import QtGui, QtCore
 

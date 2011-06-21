@@ -43,6 +43,7 @@ import seedMgr
 from segmentors import segmentorBase
 
 from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QMessageBox
 
 #*******************************************************************************
 # L o a d i n g   o f   S e g m e n t o r s                                    *
@@ -145,6 +146,13 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
             r = csv.reader(open(mappingFileName, 'r'), delimiter='|')
             for entry in r:
                 key   = entry[1].strip()
+                folderPath = self.outputPath+'/'+key
+                if not os.path.exists(folderPath):
+                    QMessageBox.critical(None, "Invalid mapping file",
+                                         """Invalid file '%s'.
+It references directory '%s' which does not exist.
+I'll have to abort now.""" % (mappingFileName, folderPath))
+                    sys.exit(1)
                 label = int(entry[0])
                 self._mapLabelsToKeys[label] = key
                 if key not in self._mapKeysToLabels.keys():

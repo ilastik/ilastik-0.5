@@ -60,7 +60,6 @@ class DockableContainer(QWidget):
         self.connect(self.maximizeButton, SIGNAL('clicked()'), self.__onMaximizeButtonClicked )
     
     def __del__(self):
-        print "destruct dockabled widget"
         if not self.isDocked:
             del self
     
@@ -109,7 +108,6 @@ class QuadView(QWidget):
         wLeft  = max(w1)
         wRight = max(w2)
         
-        #print "moved"
         if self.sender().objectName() == "splitter1":
             s = self.splitHorizontal1.sizes()
             if s[0] < wLeft or s[1] < wRight:
@@ -127,8 +125,6 @@ class QuadView(QWidget):
     def addWidget(self, i, widget):
         assert 0 <= i < 4, "range of i"
         
-        #widget.setMinimumSize(QSize(0,0))
-
         w = self.dockableContainer[i]
         oldMainWidget = w.mainWidget
         w.mainWidget = widget
@@ -168,13 +164,9 @@ class QuadView(QWidget):
         self.connect( self.splitHorizontal2, SIGNAL( 'splitterMoved( int, int )'), self.horizontalSplitterMoved)
 
     def __del__(self):
-        print "destruct QuadView"
         for i in range(4):
             if not self.dockableContainer[i]:
-                print "deleting undocked widget", i
                 del self.dockableContainer[i]
-            else:
-                print "widget %d is docked" % (i)
 
     def setMaximized(self, maximized, i):
         if maximized:
@@ -196,23 +188,17 @@ class QuadView(QWidget):
         self.setMaximized(not self.maximized, i)
     
     def maximizeContainer(self, maximized):
-        print "maximized =", maximized
         i = int(self.sender().objectName())
         self.setMaximized(maximized, i)
     
     def deleteUndocked(self):
-        print "delete undocked"
         toDelete = []
         for i in range(4):
             if not self.dockableContainer[i].isDocked:
-                print "deleting undocked widget", i
                 toDelete.append( self.dockableContainer[i] )
-            else:
-                print "widget %d is docked" % (i)
         for x in toDelete: x.deleteLater()
 
     def resizeEvent(self, event):
-        #print "resizeEvent:",self.size()
         if self.firstTime:
             self.__resizeEqual()
             self.firstTime=False
@@ -222,10 +208,8 @@ class QuadView(QWidget):
         
         w1  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [0,2] ]
         w2  = [self.dockableContainer[i].mainLayout.minimumSize().width() for i in [1,3] ]
-        #print w1, w2
         wLeft  = max(w1)
         wRight = max(w2)
-        #print 'wLeft=',wLeft, 'wRight=',wRight
         if wLeft > wRight and wLeft > w/2:
             wRight = w - wLeft
         elif wRight >= wLeft and wRight > w/2:
@@ -233,16 +217,13 @@ class QuadView(QWidget):
         else:
             wLeft = w/2
             wRight = w/2
-        #print 'wLeft=',wLeft, 'wRight=',wRight
         self.splitHorizontal1.setSizes([wLeft, wRight+10])
         self.splitHorizontal2.setSizes([wLeft, wRight+10])
-        #print "width=",w
         self.splitVertical.setSizes([h/2, h/2])
     
     def undockContainer(self):
         i = int(self.sender().objectName())
         w = self.dockableContainer[i]
-        print "undock", i
         
         index = i
         splitter = self.splitHorizontal1
@@ -267,7 +248,6 @@ class QuadView(QWidget):
         i = int(self.sender().objectName())
         w = self.dockableContainer[i]
         assert not w.isDocked
-        print "dock", i
 
         index = i
         splitter = self.splitHorizontal1
@@ -311,7 +291,6 @@ if __name__ == "__main__":
                 edit = QTextEdit()
                 edit.setDocument(QTextDocument("view %d" % (i)))
                 edit.setMinimumSize(200+100*i,200+100*i)
-                print "setting minimum size to", 200+100*i, 200+100*i
                 self.q.addWidget(i, edit)
             
             mainLayout.addWidget(self.q)
@@ -319,7 +298,6 @@ if __name__ == "__main__":
             widget.setLayout(mainLayout)
         
         def closeEvent(self, event):
-            print "close event"
             self.q.deleteUndocked()
             self.deleteLater()
 

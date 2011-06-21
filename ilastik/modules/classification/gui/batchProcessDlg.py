@@ -47,15 +47,18 @@ class BatchProcess(QtGui.QDialog):
         self.serializeProcessing.setCheckState(False)
         
         self.pathButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel), "Add to selection")
-        self.clearSelectionBtn = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.RemSel), "Clear all")
+        self.removeButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.RemSel), "Remove from selection")
+        self.clearSelectionBtn = QtGui.QPushButton("Clear all")
         
         
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
+        self.connect(self.removeButton, QtCore.SIGNAL('clicked()'), self.removeSelectedEntry)
         self.connect(self.clearSelectionBtn, QtCore.SIGNAL('clicked()'), self.clearSelection)
         
         tempLayout = QtGui.QHBoxLayout()
         
         tempLayout.addWidget(self.pathButton)
+        tempLayout.addWidget(self.removeButton)
         tempLayout.addWidget(self.clearSelectionBtn)
         tempLayout.addStretch()
         
@@ -88,7 +91,16 @@ class BatchProcess(QtGui.QDialog):
         self.image = None
 
         
-
+    def removeSelectedEntry(self):
+        itemIndex = self.filesView.currentRow()
+        if itemIndex >= 0:
+            dummy = self.filesView.takeItem(itemIndex)
+            del dummy
+            del self.filenames[itemIndex]
+        for a in self.filenames:
+            print a
+        
+        
 
     def slotDir(self):
         selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "HDF5 (*.h5);; Images (*.jpg *.tiff *.tif *.png *.jpeg)")

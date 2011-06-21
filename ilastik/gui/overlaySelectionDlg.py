@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtCore, QtGui
+from PyQt4.QtGui import QSplitter, QWidget
+from PyQt4.Qt import QSizePolicy
 from PyQt4 import uic
 import os
 import qimage2ndarray
@@ -137,7 +139,6 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.setMinimumWidth(600)
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
-        #self.layoutWidget = QtGui.QWidget(self)
         self.selectedOverlaysList = []
         self.selectedOverlayPaths = []
         self.ilastik = ilastik
@@ -152,12 +153,16 @@ class OverlaySelectionDialog(QtGui.QDialog):
         
         # widgets and layouts
         # ------------------------------------------------
-        GroupsLayout = QtGui.QHBoxLayout()
+        
+        # splits the layout into the left part
+        # (select overlay from tree over available overlays)
+        # and the right part
+        # (previews the currently selected overlay)
+        splitter = QSplitter()
+        
         treeGroupBoxLayout = QtGui.QGroupBox("Overlays")
         treeAndButtonsLayout = QtGui.QVBoxLayout()
         self.treeWidget = MyTreeWidget()
-        self.treeWidget.setMinimumWidth(350)
-        self.treeWidget.setMinimumHeight(500)
         self.connect(self.treeWidget, QtCore.SIGNAL('spacePressed'), self.spacePressedTreewidget)
         self.treeWidget.header().close()
         self.treeWidget.setSortingEnabled(True)
@@ -180,14 +185,11 @@ class OverlaySelectionDialog(QtGui.QDialog):
         previewGroupBox = QtGui.QGroupBox("Preview")
         previewLayout = QtGui.QVBoxLayout()
         self.grview = QtGui.QGraphicsView()
-        self.grview.setMinimumWidth(350)
-        self.grview.setMinimumHeight(300)
-        self.grview.setMaximumWidth(350)
-        self.grview.setMaximumHeight(300)
         self.grview.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         self.grview.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.grview.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.grscene = QtGui.QGraphicsScene()
+        self.grview.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         grviewHudLayout = QtGui.QVBoxLayout(self.grview)
         grviewHudLayout.addStretch()
@@ -237,22 +239,18 @@ class OverlaySelectionDialog(QtGui.QDialog):
         self.overlayItemLabel = QtGui.QLabel()
         self.overlayItemLabel.setWordWrap(True)
         self.overlayItemLabel.setAlignment(QtCore.Qt.AlignTop)
-        self.overlayItemLabel.setMinimumWidth(350)
         self.overlayItemSizeLabel = QtGui.QLabel("Size: 123 bytes")
         self.overlayItemPageOutLabel = QtGui.QLabel("Memory/Hard drive")
-        infoScrollArea = QtGui.QScrollArea()
-        #self.overlayItemDependencyLabel = QtGui.QLabel("Dependency: a, b, c, d,...")
         infoLayout.addWidget(self.overlayItemLabel)
         infoLayout.addWidget(self.overlayItemPageOutLabel)
-        #infoScrollArea.setWidget(self.overlayItemDependencyLabel)
-        infoLayout.addWidget(infoScrollArea)
         infoGroupBox.setLayout(infoLayout)
 
         rightLayout.addWidget(previewGroupBox)
         rightLayout.addWidget(infoGroupBox)
-        rightLayout.addStretch()
-        GroupsLayout.addWidget(treeGroupBoxLayout)
-        GroupsLayout.addLayout(rightLayout)
+        splitter.addWidget(treeGroupBoxLayout)
+        w = QWidget()
+        w.setLayout(rightLayout)
+        splitter.addWidget(w)
         
         tempLayout = QtGui.QHBoxLayout()
         self.cancelButton = QtGui.QPushButton("&Cancel")
@@ -273,7 +271,7 @@ class OverlaySelectionDialog(QtGui.QDialog):
             self.overlayItemLabel.setText("Multi Selection Mode")
             self.treeWidget.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         
-        self.layout.addLayout(GroupsLayout)
+        self.layout.addWidget(splitter)
         self.layout.addLayout(tempLayout)
         
         self.addOverlaysToTreeWidget()
