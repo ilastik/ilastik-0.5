@@ -1490,7 +1490,11 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.update()
         
     def setBrushSize(self, size):
-        self.brushSize = size
+        if size < 30:
+            self.size=size
+        else:
+            self.size = 30
+        self.brushSize = self.size
         self.update()
 
 #*******************************************************************************
