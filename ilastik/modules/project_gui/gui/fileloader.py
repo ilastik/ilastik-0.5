@@ -44,14 +44,23 @@ class FileLoader(QtGui.QDialog):
         self.layout.addWidget(QtGui.QLabel("Path to the file:"))
         self.layout.addLayout(tempLayout)
         
+        '''
         tempLayout = QtGui.QHBoxLayout()
         self.multiChannel = QtGui.QCheckBox("Load Multichannel data from multiple images:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout)
-       
+        '''
         self.multiChannelFrame = QtGui.QFrame()
+        
+        
         tempLayout = QtGui.QFormLayout()
+        self.addChannelButton = QtGui.QPushButton("Add channel")
+        self.connect(self.addChannelButton, QtCore.SIGNAL('clicked()'), self.slotAddChannel)
+        tempLayout.addWidget(self.addChannelButton)
+        
+        self.multiChannelFrame.setLayout(tempLayout)
+        '''
         tempLayout1 = QtGui.QHBoxLayout()
         self.redPath = QtGui.QLineEdit("")
         self.connect(self.redPath, QtCore.SIGNAL("textChanged(QString)"), self.redPathChanged)
@@ -78,12 +87,9 @@ class FileLoader(QtGui.QDialog):
         tempLayout1.addWidget(self.bluePath)
         tempLayout1.addWidget(self.blueButton)
         tempLayout.addRow(QtGui.QLabel("blue:"), tempLayout1)
-        self.addChannelButton = QtGui.QPushButton("Add channel")
-        self.connect(self.addChannelButton, QtCore.SIGNAL('clicked()'), self.slotAddChannel)
-        tempLayout.addWidget(self.addChannelButton)
         
-        self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
+        '''
         self.layout.addWidget(self.multiChannelFrame)        
 
         tempLayout = QtGui.QHBoxLayout()
