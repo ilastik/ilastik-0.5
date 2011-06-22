@@ -296,13 +296,14 @@ class FeatureGroups(object):
     calculation parameters (for example sigma)
     """
     def __init__(self):
-#        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
+        self.groupScaleNames = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Megahuge', 'Gigahuge']
 #        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
 #        self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.groups = {}
         self.createGroups()
-#        self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
-        self.selection = []
+        self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
+        self.newGroupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
+        self.newSelection = []
         self.featureList = []
         
     def createGroups(self):
