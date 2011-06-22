@@ -206,6 +206,7 @@ class FeatureTableWidgetHHeader(QTableWidgetItem):
     def setIconAndTextColor(self, color):
         self.setNameAndBrush(self.sigma, color)
         
+        
 
 class ItemDelegate(QItemDelegate):
     """"
@@ -260,13 +261,15 @@ class FeatureTableWidget(QTableWidget):
         QTableWidget.__init__(self)
         # init
         # ------------------------------------------------
-        self.groupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
+        self.defaultGroupScaleValues = [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0]
+        self.groupScaleValues = []
         self.tmpSelectedItems = []
         self.ilastik = ilastik
         self.setStyleSheet("background-color:transparent;")
         self.setIconSize(QSize(30, 30))
         #self.setAlternatingRowColors(True)    
         self.isSliderOpen = False    
+        self.selection = []
         #layout
         # ------------------------------------------------
         self.setCornerButtonEnabled(False)
@@ -294,6 +297,7 @@ class FeatureTableWidget(QTableWidget):
         self.verticalHeader().sectionClicked.connect(self.expandOrCollapseVHeader)
         self.horizontalHeader().sectionDoubleClicked.connect(self.hHeaderDoubleclicked)
         
+        self.loadSelection()
         self.setHHeaderNames()
         self.setVHeaderNames()
         self.collapsAllRows()
@@ -302,8 +306,23 @@ class FeatureTableWidget(QTableWidget):
         self.updateParentCell() 
                         
     # methods
-    # ------------------------------------------------  
+    # ------------------------------------------------
     
+    def loadSelection(self):
+        if not len(featureMgr.ilastikFeatureGroups.newSelection) == 0:
+            self.selection = featureMgr.ilastikFeatureGroups.newSelection
+            self.groupScaleValues = featureMgr.ilastikFeatureGroups.newGroupScaleValues
+        else:
+            self.selection = featureMgr.ilastikFeatureGroups.selection
+            self.groupScaleValues = self.defaultGroupScaleValues
+    
+    #TODO .99999999999 
+    def createSigmaList(self):
+        result = []
+        for c in range(self.columnCount()):
+            result.append(self.horizontalHeaderItem(c).sigma)
+        return result
+            
     
     def hHeaderDoubleclicked(self, col):
         self.isSliderOpen = True
@@ -326,10 +345,10 @@ class FeatureTableWidget(QTableWidget):
         
     
     def setOldSelectedFeatures(self):
-        if len(featureMgr.ilastikFeatureGroups.selection) == 0:
+        if len(self.selection) == 0:
             return
-        if len(featureMgr.ilastikFeatureGroups.selection[0]) == 2:
-            for feature in featureMgr.ilastikFeatureGroups.selection:
+        if len(self.selection[0]) == 2:
+            for feature in self.selection:
                 for c in range(self.columnCount()):
                     for r in range(self.rowCount()):
                         if feature[0] == self.verticalHeaderItem(r).name and feature[1] == str(self.horizontalHeaderItem(c).sigma):
@@ -340,7 +359,7 @@ class FeatureTableWidget(QTableWidget):
                 if self.verticalHeaderItem(r).isParent:
                     i+=1
                 for c in range(self.columnCount()):
-                    if featureMgr.ilastikFeatureGroups.selection[i][c]:
+                    if self.selection[i][c]:
                         self.item(r,c).setFeatureState(2)
     
     
@@ -351,7 +370,6 @@ class FeatureTableWidget(QTableWidget):
                 item = self.item(r,c)
                 if not item.isParent:
                     if item.featureState == 2:
-                        #print r,c,self.verticalHeaderItem(r).feature,'###'
                         feat = self.verticalHeaderItem(r).feature
                         sigma = self.horizontalHeaderItem(c).sigma
                         result.append(feat(sigma))
@@ -449,9 +467,7 @@ class FeatureTableWidget(QTableWidget):
             if event.button() == Qt.LeftButton:
                 if self.itemAt(event.pos()):
                     self.setSelectionMode(2)
-                    #self.parent().parent().ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = True
         if(event.type()==QEvent.MouseButtonRelease):
-            #self.parent().parent().ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = False
             if event.button() == Qt.LeftButton:
                 self.setSelectionMode(0)
                 self.tmpSelectedItems = []
@@ -617,7 +633,6 @@ class FeatureDlg(QDialog):
         self.setWindowIcon(QIcon(ilastikIcons.Select))
         self.parent = parent
         self.ilastik = parent
-        #self.ilastik.project.dataMgr.Classification.featureMgr.printComputeMemoryRequirement = False
         # widgets and layouts
         # ------------------------------------------------
         self.layout = QHBoxLayout()
@@ -673,10 +688,11 @@ class FeatureDlg(QDialog):
     def on_okClicked(self):
         featureSelectionList = self.featureTableWidget.createFeatureList()
         selectedFeatureList = self.featureTableWidget.createSelectedFeatureList()
-        featureMgr.ilastikFeatureGroups.selection = selectedFeatureList
+        sigmaList = self.featureTableWidget.createSigmaList()
+        featureMgr.ilastikFeatureGroups.newGroupScaleValues = sigmaList
+        featureMgr.ilastikFeatureGroups.newSelection = selectedFeatureList
         res = self.parent.project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
-            #print "features have maximum needed margin of:", self.parent.project.dataMgr.Classification.featureMgr.maxSigma*3
             self.parent.labelWidget.setBorderMargin(int(self.parent.project.dataMgr.Classification.featureMgr.maxContext))
             self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)           
             self.accept() 
