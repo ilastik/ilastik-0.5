@@ -31,6 +31,9 @@ class FileLoader(QtGui.QDialog):
         self.fileList = []
         self.options = loadOptionsMgr.loadOptions()
         
+        self.channelPathWidgets = []
+        self.channelButtons = []
+        
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
         self.connect(self.path, QtCore.SIGNAL("textEdited(QString)"), self.pathChanged)
@@ -42,7 +45,7 @@ class FileLoader(QtGui.QDialog):
         self.layout.addLayout(tempLayout)
         
         tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("Load Multichannel data as one image:")
+        self.multiChannel = QtGui.QCheckBox("Load Multichannel data from multiple images:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout)
@@ -75,6 +78,9 @@ class FileLoader(QtGui.QDialog):
         tempLayout1.addWidget(self.bluePath)
         tempLayout1.addWidget(self.blueButton)
         tempLayout.addRow(QtGui.QLabel("blue:"), tempLayout1)
+        self.addChannelButton = QtGui.QPushButton("Add channel")
+        self.connect(self.addChannelButton, QtCore.SIGNAL('clicked()'), self.slotAddChannel)
+        tempLayout.addWidget(self.addChannelButton)
         
         self.multiChannelFrame.setLayout(tempLayout)
         self.multiChannelFrame.setVisible(False)
@@ -232,6 +238,36 @@ class FileLoader(QtGui.QDialog):
         ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filename).path()
         self.bluePath.setText(filename)
         #self.bluePathChanged(filename)
+        
+    def slotAddChannel(self):
+        
+        #tempLayout1 = QtGui.QHBoxLayout()
+        newPath = QtGui.QLineEdit("")
+        self.channelPathWidgets.append(newPath)
+        newButton = QtGui.QPushButton("Select")
+        self.channelButtons.append(newButton)
+        nch = len(self.channelPathWidgets)
+        label = "channel %d" % nch
+        
+        
+        #FEEL THE POWER OF PYTHON
+        receiver = lambda callingPath=nch-1: self.channelPathChanged(callingPath)
+        self.connect(self.channelPathWidgets[nch-1], QtCore.SIGNAL('editingFinished()'), receiver)
+        
+        tempLayout = QtGui.QHBoxLayout()
+        tempLayout.addWidget(newPath)
+        tempLayout.addWidget(newButton)
+        self.multiChannelFrame.layout().addRow(QtGui.QLabel(label), tempLayout)
+        #self.multiChannelFrame.layout().addWidget(newPath)
+        #self.multiChannelFrame.layout().addWidget(self.channelButtons[nch-1])
+        #self.channelButtons[nch-1].show()
+    
+
+    
+    def channelPathChanged(self, calling):
+        print "bla", calling
+        print "current text", self.channelPathWidgets[calling].text()
+        #print "channel path changed: ", self.channelButtons[ch_ind].text()
     
     def updateFileList(self, templist):
         self.fileList = []    
