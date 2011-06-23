@@ -198,8 +198,9 @@ class OverlayListWidget(QtGui.QListWidget):
         #Only show the "Display 3D" entry when this overlay can be reasonably
         #shown in 3D by extracting the meshes of the contained objects
         show3dAction = QtGui.QAction(self)
-        if item.overlayItemReference.overlayItem.displayable3D:
-            show3dAction = menu.addAction("Display 3D")
+        if item.overlayItemReference.shape[1]!=1:
+            if item.overlayItemReference.overlayItem.displayable3D:
+                show3dAction = menu.addAction("Display 3D")
             
         if item.overlayItemReference.colorTable is None:
             colorAction = menu.addAction("Change Color")

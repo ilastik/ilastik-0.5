@@ -339,6 +339,7 @@ class MainWindow(QtGui.QMainWindow):
         widget = QtGui.QWidget()
         self.fileSelectorList.setMinimumWidth(140)
         self.fileSelectorList.setMaximumWidth(240)
+        self.fileSelectorList.setMinimumHeight(37)
         self.fileSelectorList.setSizeAdjustPolicy(QtGui.QComboBox.AdjustToContents)
         layout = QtGui.QVBoxLayout()
         layout.setMargin(0)

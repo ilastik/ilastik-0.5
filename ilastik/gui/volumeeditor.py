@@ -1490,7 +1490,11 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         self.update()
         
     def setBrushSize(self, size):
-        self.brushSize = size
+        if size < 30:
+            self.size=size
+        else:
+            self.size = 30
+        self.brushSize = self.size
         self.update()
 
 #*******************************************************************************
@@ -1702,14 +1706,26 @@ class ImageScene(QtGui.QGraphicsView):
         # oli todo
         if self.volumeEditor.image.shape[1] > 1:
             grviewHudLayout = QtGui.QVBoxLayout(self)
-            tempLayout = QtGui.QHBoxLayout()
+            self.tempLayout = QtGui.QHBoxLayout()
+            
             self.fullScreenButton = QtGui.QPushButton()
-            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx22)))
-            self.fullScreenButton.setStyleSheet("background-color: white; border: 2px solid " + self.axisColor[self.axis].name() +"; border-radius: 4px;")
+            self.fullScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.AddSelx16)))
+            self.fullScreenButton.setStyleSheet("background-color: white; border: 1px solid " + self.axisColor[self.axis].name() +"; border-radius: 8px;")
             self.connect(self.fullScreenButton, QtCore.SIGNAL('clicked()'), self.imageSceneFullScreen)
-            tempLayout.addWidget(self.fullScreenButton)
-            tempLayout.addStretch()
-            grviewHudLayout.addLayout(tempLayout)
+            
+            self.normalScreenButton = QtGui.QPushButton()
+            self.normalScreenButton.setIcon(QtGui.QIcon(QtGui.QPixmap(ilastikIcons.RemSelx16)))
+            self.normalScreenButton.setStyleSheet("background-color: white; border: 1px solid " + self.axisColor[self.axis].name() +"; border-radius: 8px;")
+            self.connect(self.normalScreenButton, QtCore.SIGNAL('clicked()'), self.imageSceneNormalScreen)
+            
+            self.tempLayout.addWidget(self.fullScreenButton)
+            self.tempLayout.addWidget(self.normalScreenButton)
+            
+            self.normalScreenButton.setVisible(False)
+            self.fullScreenButton.setVisible(True)
+            
+            self.tempLayout.addStretch()
+            grviewHudLayout.addLayout(self.tempLayout)
             grviewHudLayout.addStretch()
         
         
@@ -1812,13 +1828,38 @@ class ImageScene(QtGui.QGraphicsView):
         self.tempErase = False
 
     def imageSceneFullScreen(self):
+        
         if self.volumeEditor.imageScenes[0] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenX()
+            self.fullScreenButton.setVisible(False)
+            self.normalScreenButton.setVisible(True)
+            
         if self.volumeEditor.imageScenes[1] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenY()
+            self.fullScreenButton.setVisible(False)
+            self.normalScreenButton.setVisible(True)
         if self.volumeEditor.imageScenes[2] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenZ()
-
+            self.fullScreenButton.setVisible(False)
+            self.normalScreenButton.setVisible(True)
+            
+    def imageSceneNormalScreen(self):
+        
+        if self.volumeEditor.imageScenes[0] == self.normalScreenButton.parent():
+            self.volumeEditor.toggleFullscreenX()
+            self.fullScreenButton.setVisible(True)
+            self.normalScreenButton.setVisible(False)
+            
+        if self.volumeEditor.imageScenes[1] == self.normalScreenButton.parent():
+            self.volumeEditor.toggleFullscreenY()
+            self.fullScreenButton.setVisible(True)
+            self.normalScreenButton.setVisible(False)
+            
+        if self.volumeEditor.imageScenes[2] == self.normalScreenButton.parent():
+            self.volumeEditor.toggleFullscreenZ()
+            self.fullScreenButton.setVisible(True)
+            self.normalScreenButton.setVisible(False)
+            
     def setImageSceneFullScreenLabel(self):
         self.allVisible = True
         a = range(3)
