@@ -15,6 +15,8 @@ from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.overlayAttributes import OverlayAttributes
 from ilastik.core.LOCIwrapper import reader as LOCIreader
 
+import traceback
+
 #*******************************************************************************
 # D a t a I m p e x                                                            *
 #*******************************************************************************
@@ -150,7 +152,7 @@ class DataImpex(object):
         for index, filename in enumerate(firstlist):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                 try:
-                    img_data = DataImpex.vigraReadImageWrapper(filename)
+                    img_data = DataImpex.vigraReadImageWrapper(filename).swapaxes(1,0)
                     if options.rgb > 1:
                         image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
                     else:
@@ -174,8 +176,10 @@ class DataImpex(object):
                         logger.insertPlainText(".")
                 except Exception, e:
                     allok = False
-                    print e 
                     s = "Error loading file " + filename + "as Slice " + str(z-options.offsets[2])
+                    print s, 'with error', e
+                    #print traceback.print_exc()
+                    
                     if logger is not None:
                         logger.appendPlainText(s)
                         logger.appendPlainText("")
@@ -260,9 +264,9 @@ class DataImpex(object):
                 print e
                 raise
             if (len(tempimage.shape)==3):
-                return (tempimage.shape[0], tempimage.shape[1], 1, tempimage.shape[2])
+                return (tempimage.shape[1], tempimage.shape[0], 1, tempimage.shape[2])
             else:
-                return (tempimage.shape[0], tempimage.shape[1], 1, 1)
+                return (tempimage.shape[1], tempimage.shape[0], 1, 1)
 
     @staticmethod                
     def importOverlay(dataItem, filename, prefix="File Overlays/", attrs=None):

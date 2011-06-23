@@ -68,14 +68,40 @@ class OverlayListWidget(QtGui.QListWidget):
 #*******************************************************************************
 
     class QAlphaSliderDialog(QtGui.QDialog):
-        def __init__(self, min, max, value):
-            QtGui.QDialog.__init__(self)
+        def __init__(self, min, max, value, parent=None):
+            QtGui.QDialog.__init__(self,parent=parent)
             self.setWindowTitle('Change Opacity')
+            
+            self.dlgLayout = QtGui.QVBoxLayout()
+            
+            self.confBtnLayout = QtGui.QHBoxLayout()
+            
             self.slider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
             self.slider.setGeometry(20, 30, 140, 20)
             self.slider.setRange(min,max)
             self.slider.setValue(value)
+            
+            self.okButton = QtGui.QPushButton('Ok')
+            self.cancelButton = QtGui.QPushButton('Cancel')
+            
+            self.dlgLayout.addWidget(self.slider)
+            
+            self.confBtnLayout.addStretch()
+            self.confBtnLayout.addWidget(self.cancelButton)
+            self.confBtnLayout.addWidget(self.okButton)
+            
+            
+            tmpWidget = QtGui.QWidget()
+            tmpWidget.setLayout(self.confBtnLayout)
+            
+            self.dlgLayout.addWidget(tmpWidget)
+            
+            self.setLayout(self.dlgLayout)
+            
+            self.connect(self.okButton, QtCore.SIGNAL("clicked()"), self.accept)
+            self.connect(self.cancelButton, QtCore.SIGNAL("clicked()"), self.accept)
 
+            self.cancelButton.setVisible(False)
     def __init__(self,volumeEditor,  overlayWidget):
         QtGui.QListWidget.__init__(self)
         self.volumeEditor = volumeEditor
@@ -108,7 +134,7 @@ class OverlayListWidget(QtGui.QListWidget):
     def onItemDoubleClick(self, itemIndex):
         self.currentItem = item = self.itemFromIndex(itemIndex)
         if item.checkState() == 2:
-            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
+            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20), parent=self)
             dialog.slider.connect(dialog.slider, QtCore.SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
             dialog.exec_()
         else:
