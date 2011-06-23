@@ -45,6 +45,8 @@ from segmentors import segmentorBase
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QMessageBox
 
+import copy
+
 #*******************************************************************************
 # L o a d i n g   o f   S e g m e n t o r s                                    *
 #*******************************************************************************
@@ -494,7 +496,7 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         for nl in newLabels:
             try:
                 if nl.erasing == False:
-                    indic =  list(numpy.nonzero(nl._data))
+                    indic =  copy.deepcopy(list(numpy.nonzero(nl._data)))
                     indic[0] = indic[0] + nl.offsets[0]
                     indic[1] += nl.offsets[1]
                     indic[2] += nl.offsets[2]
@@ -542,7 +544,7 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
                         self._seedLabelsList = numpy.vstack((temp2,tempL))
 
                 else: #erasing == True
-                    indic =  list(numpy.nonzero(nl._data))
+                    indic =  copy.deepcopy(list(numpy.nonzero(nl._data)))
                     indic[0] = indic[0] + nl.offsets[0]
                     indic[1] += nl.offsets[1]
                     indic[2] += nl.offsets[2]

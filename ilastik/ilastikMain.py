@@ -39,12 +39,8 @@ if int(numpyVersion[0]) < 1 or int(numpyVersion[1]) < 3 or int(numpyVersion[2]) 
     raise RuntimeError("At least numpy version 1.3.0 is required")
 print "Using numpy version %s ... ok" % (numpy.__version__)
 
-from OpenGL.GL import *
-try:
-    from OpenGL.GLX import *
-#    XInitThreads()
-except:
-    pass
+from OpenGL.GL import glGetString, GL_VERSION
+
 
 import sys
 import os
@@ -92,7 +88,8 @@ import getopt
 
 # Please no import *
 from ilastik.gui.shortcutmanager import shortcutManager
-import ilastik
+import ilastik.core
+import ilastik.gui
 
 #make the program quit on Ctrl+C
 import signal
@@ -105,7 +102,6 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 class RenderChoiceDialog(QtGui.QDialog):
     def __init__(self):
         #Test for OpenGL Version
-        gl2 = False
         w = QtOpenGL.QGLWidget()
         w.setVisible(False)
         w.makeCurrent()
@@ -123,7 +119,7 @@ class RenderChoiceDialog(QtGui.QDialog):
 
         super(RenderChoiceDialog, self).__init__()
         layout = QtGui.QVBoxLayout(self)
-        choicesGroup = QtGui.QButtonGroup(self)
+        #choicesGroup = QtGui.QButtonGroup(self)
         self.openglChoice   = QtGui.QRadioButton("Open GL")
         self.softwareChoice = QtGui.QRadioButton("Software + OpenGL")
         okButton = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok, QtCore.Qt.Vertical)

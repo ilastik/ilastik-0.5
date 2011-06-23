@@ -547,18 +547,7 @@ class DataMgr():
                             
             dataMgr.append(activeItem,alreadyLoaded=True)
         
-        return dataMgr
-    
-    
-        
-        
-        
-        
-        
-
-                    
-                    
-                    
+        return dataMgr 
                 
         
         

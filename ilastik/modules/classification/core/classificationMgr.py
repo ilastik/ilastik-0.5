@@ -61,6 +61,8 @@ import featureMgr
 import labelMgr
 
 import classifiers
+import copy
+
 
 """ Import all classification plugins"""
 pathext = os.path.dirname(__file__)
@@ -94,11 +96,16 @@ def unravelIndices(indices, shape):
     if len(indices.shape) == 1:
         indices.shape = indices.shape + (1,)
     try:
-        ti =  numpy.apply_along_axis(numpy.unravel_index, 1, indices , shape)
+        # FIXME/TODO: numpy bug / version conflict: 
+        # see bugreport: http://projects.scipy.org/numpy/ticket/1870
+        # Hopefully fixed in numpy 1.6.1
+        if numpy.version.version != "1.6.0":
+            ti =  numpy.apply_along_axis(numpy.unravel_index, 1, indices , shape)
+        else:
+            ti =  numpy.asarray(numpy.unravel_index(indices , shape)).reshape(-1, indices.shape[0]).T
     except Exception, e:
-        print e
-        print indices
-        print shape
+        print e, 'indices.shape', indices.shape, 'shape', shape
+        raise e
     return ti    
 
 
@@ -363,7 +370,9 @@ class ClassificationMgr(object):
         for nl in newLabels:
             try:
                 if nl.erasing == False:
-                    indic =  list(numpy.nonzero(nl._data))
+                    # FIXME: copy is nessecary for numpy 1.6.0 to work
+                    # otherwise throws an error
+                    indic =  copy.deepcopy(list(numpy.nonzero(nl._data)))
                     indic[0] = indic[0] + nl.offsets[0]
                     indic[1] += nl.offsets[1]
                     indic[2] += nl.offsets[2]
@@ -459,7 +468,7 @@ class ClassificationMgr(object):
                     else: #no intersectoin, in erase mode just pass
                         pass
             except Exception, e:
-                self.matrixLock.release()
+                #self.matrixLock.release()
                 print e
                 traceback.print_exc(file=sys.stdout)
         self.matrixLock.release()
