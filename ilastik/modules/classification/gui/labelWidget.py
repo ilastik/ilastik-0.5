@@ -279,7 +279,8 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         
     def changeLabel(self):
         for i in range(0, len(self.volumeEditor.imageScenes)):
-            self.volumeEditor.imageScenes[i].crossHairCursor.setColor(self.listWidget.currentItem().color)
+            if self.listWidget.currentItem() is not None:
+                self.volumeEditor.imageScenes[i].crossHairCursor.setColor(self.listWidget.currentItem().color)
             
     def ensureLabelOverlayVisible(self):
         if self.volumeEditor.overlayWidget.getOverlayRef(self.overlayItem.key) == None:

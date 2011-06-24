@@ -440,7 +440,7 @@ class ClassificationMgr(object):
                                 prop["trainingF"] = self.getTrainingMforIndForImage(indices, dataItemImage)
 
                 else: #erasing == True
-                    indic =  list(numpy.nonzero(nl._data))
+                    indic =  copy.deepcopy(list(numpy.nonzero(nl._data)))
                     indic[0] = indic[0] + nl.offsets[0]
                     indic[1] += nl.offsets[1]
                     indic[2] += nl.offsets[2]

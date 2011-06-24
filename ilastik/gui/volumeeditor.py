@@ -820,6 +820,7 @@ class VolumeEditor(QtGui.QWidget):
                 tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.getOverlayRef("Raw Data").channel)
             else:
                 tempImage = None
+            tempImage = None
 #            if self.labelWidget.volumeLabels is not None:
 #                if self.labelWidget.volumeLabels.data is not None:
 #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
@@ -1114,13 +1115,15 @@ class DrawManager(QtCore.QObject):
         self.updateCrossHair()
 
     def updateCrossHair(self):
+        color = None
         if self.erasing == True:
             color = QtGui.QColor("black") 
-        else:
+        elif hasattr(self.volumeEditor.labelWidget.currentItem(),'color'):
             color = self.volumeEditor.labelWidget.currentItem().color
         
-        for i in self.volumeEditor.imageScenes:
-            i.crossHairCursor.setColor(color)
+        if color is not None:
+            for i in self.volumeEditor.imageScenes:
+                i.crossHairCursor.setColor(color)
 
     def setBrushSize(self, size):
         for i in self.volumeEditor.imageScenes:
@@ -1303,7 +1306,7 @@ class ImageSceneRenderThread(QtCore.QThread):
             while len(self.queue) > 0:
                 stuff = self.queue.pop()
                 if stuff is not None:
-                    nums, origimage, overlays , min, max  = stuff
+                    nums, origimage, overlays, min, max  = stuff
                     for patchNr in nums:
                         if self.newerDataPending.isSet():
                             self.newerDataPending.clear()
@@ -1313,8 +1316,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                         if self.imageScene.openglWidget is None:
                             p = QtGui.QPainter(self.imageScene.scene.image)
                             p.translate(bounds[0],bounds[2])
+#                            print 'uses scene.image'
                         else:
                             p = QtGui.QPainter(self.imageScene.imagePatches[patchNr])
+#                            print 'uses scene.imagePatches'
                         
                         p.eraseRect(0,0,bounds[1]-bounds[0],bounds[3]-bounds[2])
 
@@ -1595,9 +1600,17 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
 
             
     def drawBackground(self, painter, rect):
+        """
+        This function is responsible for actually drawing all the overlays!!
+        It gets the texture from the glTexureId self.tex. This texureId and
+        the real image to show is generated in the RenderingThread and assembled
+        to a texture in renderingThreadFinished
+        
+        if _widget is not present the standard painter is used to draw the
+        non patched image.
+        """
         #painter.fillRect(rect,self.bgBrush)
         if self._widget != None:
-
             self._widget.context().makeCurrent()
             
             glClearColor(self.bgColor.redF(),self.bgColor.greenF(),self.bgColor.blueF(),1.0)
@@ -1606,7 +1619,7 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
             if self.tex > -1:
                 #self._widget.drawTexture(QtCore.QRectF(self.image.rect()),self.tex)
                 d = painter.device()
-                dc = sip.cast(d,QtOpenGL.QGLFramebufferObject)
+                dc = sip.cast(d, QtOpenGL.QGLFramebufferObject)
 
                 rect = QtCore.QRectF(self.image.rect())
                 tl = rect.topLeft()
@@ -1620,7 +1633,7 @@ class CustomGraphicsScene( QtGui.QGraphicsScene):#, QtOpenGL.QGLWidget):
                 painter.beginNativePainting()
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-                dc.drawTexture(rect,self.tex)
+                dc.drawTexture(rect, self.tex)
                 painter.endNativePainting()
 
         else:
@@ -1743,7 +1756,7 @@ class ImageScene(QtGui.QGraphicsView):
             self.scene.bgBrush = QtGui.QBrush(QtGui.QImage('gui/backGroundBrush.png'))
         else:
             self.scene.bgBrush = QtGui.QBrush(QtGui.QColor(QtCore.Qt.black))
-        #self.setBackgroundBrush(brushImage)
+        #self.setBackgroundBrush(self.scene.bgBrush)
         self.view.setRenderHint(QtGui.QPainter.Antialiasing, False)
         #self.view.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, False)
 
@@ -1751,9 +1764,10 @@ class ImageScene(QtGui.QGraphicsView):
         #print "PatchCount :", self.patchAccessor.patchCount
 
         self.imagePatches = range(self.patchAccessor.patchCount)
+
         for i,p in enumerate(self.imagePatches):
             b = self.patchAccessor.getPatchBounds(i, 0)
-            self.imagePatches[i] = QtGui.QImage(b[1]-b[0], b[3] -b[2], QtGui.QImage.Format_RGB888)
+            self.imagePatches[i] = QtGui.QImage(b[1]-b[0], b[3]-b[2], QtGui.QImage.Format_RGB888)
 
         self.pixmap = QtGui.QPixmap.fromImage(self.image)
         self.imageItem = QtGui.QGraphicsPixmapItem(self.pixmap)
@@ -1802,7 +1816,7 @@ class ImageScene(QtGui.QGraphicsView):
         #self.hiddenCursor = QtGui.QCursor(QtCore.Qt.ArrowCursor)
         
         self.thread = ImageSceneRenderThread(self)
-        self.connect(self.thread, QtCore.SIGNAL('finishedPatch(int)'),self.redrawPatch)
+        self.connect(self.thread, QtCore.SIGNAL('finishedPatch(int)'), self.redrawPatch)
         self.connect(self.thread, QtCore.SIGNAL('finishedQueue()'), self.renderingThreadFinished)
         self.thread.start()
         
@@ -1950,7 +1964,7 @@ class ImageScene(QtGui.QGraphicsView):
         print "finished thread"
 
     def updatePatches(self, patchNumbers ,image, overlays = ()):
-        stuff = [patchNumbers,image, overlays, self.min, self.max]
+        stuff = [patchNumbers, image, overlays, self.min, self.max]
         #print patchNumbers
         if patchNumbers is not None:
             self.thread.queue.append(stuff)
@@ -1966,20 +1980,20 @@ class ImageScene(QtGui.QGraphicsView):
         #to get a fast update on slice change
         if image is not None:
             #TODO: This doing something twice (see below)
-            if fastPreview is True and self.volumeEditor.sharedOpenGLWidget is not None and len(image.shape) == 2:
-                self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
-                t = self.scene.tex
-                ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
-    
-                if not t > -1:
-                    self.scene.tex = glGenTextures(1)
-                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
-                    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
-                else:
-                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
-                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
-                
-                self.viewport().repaint()
+#            if fastPreview is True and self.volumeEditor.sharedOpenGLWidget is not None and len(image.shape) == 2:
+#                self.volumeEditor.sharedOpenGLWidget.context().makeCurrent()
+#                t = self.scene.tex
+#                ti = qimage2ndarray.gray2qimage(image.swapaxes(0,1), normalize = self.volumeEditor.normalizeData)
+#    
+#                if not t > -1:
+#                    self.scene.tex = glGenTextures(1)
+#                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+#                    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, ti.width(), ti.height(), 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+#                else:
+#                    glBindTexture(GL_TEXTURE_2D,self.scene.tex)
+#                    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, ti.width(), ti.height(), GL_LUMINANCE, GL_UNSIGNED_BYTE, ctypes.c_void_p(ti.bits().__int__()))
+#                
+#                self.viewport().repaint()
     
             if self.volumeEditor.normalizeData:
                 self.min = numpy.min(image)
@@ -2036,7 +2050,7 @@ class ImageScene(QtGui.QGraphicsView):
                         self.scene.tex = glGenTextures(1)
                         glBindTexture(GL_TEXTURE_2D,self.scene.tex)
                         glTexImage2D(GL_TEXTURE_2D, 0,GL_RGB, self.scene.image.width(), self.scene.image.height(), 0, GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.scene.image.bits().__int__()))
-                        
+                       
                     glBindTexture(GL_TEXTURE_2D,self.scene.tex)
                     b = self.patchAccessor.getPatchBounds(patchNr,0)
                     glTexSubImage2D(GL_TEXTURE_2D, 0, b[0], b[2], b[1]-b[0], b[3]-b[2], GL_RGB, GL_UNSIGNED_BYTE, ctypes.c_void_p(self.imagePatches[patchNr].bits().__int__()))
