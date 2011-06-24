@@ -249,7 +249,6 @@ class FileLoader(QtGui.QDialog):
         
     def slotAddChannel(self):
         
-        #tempLayout1 = QtGui.QHBoxLayout()
         newPath = QtGui.QLineEdit("")
         self.channelPathWidgets.append(newPath)
         newButton = QtGui.QPushButton("Select")

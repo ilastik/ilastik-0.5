@@ -53,6 +53,7 @@ class StackLoader(QtGui.QDialog):
         #internally, it's a list of lists of filenames
         #for each channel
         self.fileList = []
+        self.channelIDs = []
         self.options = loadOptionsMgr.loadOptions()
 
         tempLayout = QtGui.QHBoxLayout()
@@ -66,12 +67,20 @@ class StackLoader(QtGui.QDialog):
         self.layout.addLayout(tempLayout)
 
         tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("Load MultiChannel data as one image:")
+        self.multiChannel = QtGui.QCheckBox("Load MultiChannel data from separate channel images:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout) 
         
         self.multiChannelFrame = QtGui.QFrame()
+        tempLayout = QtGui.QFormLayout()
+        self.addChannelButton = QtGui.QPushButton("  Add channel identifier")
+        self.connect(self.addChannelButton, QtCore.SIGNAL('clicked()'), self.slotAddChannel)
+        tempLayout.addRow(QtGui.QLabel(" "), self.addChannelButton)
+        
+        self.multiChannelFrame.setLayout(tempLayout)
+        
+        '''
         tempLayout = QtGui.QVBoxLayout()
         tempLayout1 = QtGui.QHBoxLayout()
         tempLayout1.addWidget(QtGui.QLabel("Enter channel identifiers, e.g. GFP"))
@@ -91,6 +100,7 @@ class StackLoader(QtGui.QDialog):
         tempLayout2.addWidget(self.blueChannelId)
         tempLayout.addLayout(tempLayout2)
         self.multiChannelFrame.setLayout(tempLayout)
+        '''
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
 
@@ -123,10 +133,37 @@ class StackLoader(QtGui.QDialog):
             self.multiChannelFrame.setVisible(False)
         else:
             self.multiChannelFrame.setVisible(True)
+            if len(self.channelIDs)==0:
+                self.slotAddChannel()
+    
+    def slotAddChannel(self):
+        newID = QtGui.QLineEdit()
+        newID.setToolTip("Enter identifier for this channel's files, e.g. GFP or ch01")
+        self.channelIDs.append(newID)
+        nch = len(self.channelIDs)
+        label = "Channel %d identifier" % nch
+        receiver = lambda callingChannel=nch-1: self.channelIDChanged(callingChannel)
+        self.connect(self.channelIDs[nch-1], QtCore.SIGNAL('editingFinished()'), receiver)
+        
+        self.multiChannelFrame.layout().addRow(QtGui.QLabel(label), newID)
+        if len(self.channelIDs)>1:
+            self.fileList.append([])
 
-
+    def channelIDChanged(self, channel):
+        #if one identifier changes, we only have to change that filelist
+        print "changing an id for channel", channel
+        if len(self.fileList)<channel+1:
+            print "!!! something went wrong with allocating enough lists for channels !!!"
+            return
+        temp = os.path.splitext(str(self.path.text()))[0]
+        chfiles = temp + "*" + str(self.channelIDs[channel].text()) + "*"
+        print "chfiles:", chfiles        
+        self.fileList[channel] = sorted(glob.glob(chfiles), key=str.lower)
+        print self.fileList[channel]
+        self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def pathChanged(self, text):
+        #if path changes, we have to redo all lookups for all channels
         self.fileList = []
         self.options.channels = []
         if self.multiChannel.checkState() == 0:
@@ -135,6 +172,14 @@ class StackLoader(QtGui.QDialog):
             #self.fileList.append(glob.glob(str(self.path.text())))
             self.options.channels.append(0)
         else:
+            nch = len(self.channelIDs)
+            temp = os.path.splitext(str(self.path.text()))[0]
+            for ich in range(nch):
+                chfiles = temp + "*" + str(self.channelIDs[ich].text()) + "*"
+                self.fileList[ich] = sorted(glob.glob(chfiles), key=str.lower)
+                self.options.channels.append(ich)                
+            
+            '''
             #not all channels have to be filled
             if (len(str(self.redChannelId.text()))>0):
                 temp = os.path.splitext(str(self.path.text()))[0]
@@ -157,6 +202,7 @@ class StackLoader(QtGui.QDialog):
                 self.options.channels.append(2)
             else:
                 self.fileList.append([])
+            '''
         self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotDir(self):
@@ -174,6 +220,10 @@ class StackLoader(QtGui.QDialog):
         self.fileTableWidget.exec_()
 
     def slotLoad(self):
+        #remove unused channels, we don't support loading only green or blue anymore
+        
+        
+        
         self.optionsWidget.fillOptions(self.options)
         self.accept()
 
