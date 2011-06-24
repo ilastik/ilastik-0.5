@@ -113,7 +113,7 @@ class DataImpex(object):
  
         #remove alpha channel
         if len(data.shape) == 3:
-            # prevent tranparent channel
+            # prevent transparent channel
             if data.shape[2] == 4:
                 data = data[:,:,0:-1]
             # vigra axistag version now delivers always a '1'
@@ -131,8 +131,8 @@ class DataImpex(object):
         #This method also exports the stack as .h5 file, if options.destfile is not None
         if (len(fileList) == 0):
             return None
-        if len(options.channels)>1:
-            nch = 3
+        if len(fileList)>1:
+            nch = len(fileList)
         else:
             nch = options.rgb
         try: 
@@ -146,6 +146,30 @@ class DataImpex(object):
         #loop over provided images
         z = 0
         allok = True
+        for ich in range(nch):
+            z = 0
+            for index, filename in enumerate(fileList[ich]):
+                if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
+                    try:
+                        img_data = DataImpex.vigraReadImageWrapper(filename)
+                        #Why did we need this options.rbg thing? Why not always load all channels?
+                        if options.rgb>1:
+                            image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
+                        else:
+                            image[:, :, z-options.offsets[2], ich] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
+                        if logger is not None:                           
+                            logger.insertPlainText(".")
+                    except Exception, e:
+                        allok = False
+                        print e 
+                        s = "Error loading file " + filename + "as Slice " + str(z-options.offsets[2])
+                        if logger is not None:
+                            logger.appendPlainText(s)
+                            logger.appendPlainText("")
+                    if logger is not None:        
+                        logger.repaint()
+                z = z + 1
+        '''            
         firstlist = fileList[options.channels[0]]
         for index, filename in enumerate(firstlist):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
@@ -182,7 +206,7 @@ class DataImpex(object):
                 if logger is not None:        
                     logger.repaint()
             z = z + 1
-
+        '''
         if options.invert:
             image = 255 - image             
                  
