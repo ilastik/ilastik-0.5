@@ -151,15 +151,12 @@ class StackLoader(QtGui.QDialog):
 
     def channelIDChanged(self, channel):
         #if one identifier changes, we only have to change that filelist
-        print "changing an id for channel", channel
         if len(self.fileList)<channel+1:
             print "!!! something went wrong with allocating enough lists for channels !!!"
             return
         temp = os.path.splitext(str(self.path.text()))[0]
         chfiles = temp + "*" + str(self.channelIDs[channel].text()) + "*"
-        print "chfiles:", chfiles        
         self.fileList[channel] = sorted(glob.glob(chfiles), key=str.lower)
-        print self.fileList[channel]
         self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def pathChanged(self, text):
