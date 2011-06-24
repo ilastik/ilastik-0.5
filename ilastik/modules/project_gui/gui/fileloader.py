@@ -243,6 +243,11 @@ class FileLoader(QtGui.QDialog):
             self.optionsWidget.fillOptions(self.options)
         
         self.accept()
-    
+
+    def exec_(self):
+        if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
+            return  self.fileList, self.options
+        else:
+            return None, None    
     
     

@@ -171,7 +171,6 @@ class StackLoader(QtGui.QDialog):
         self.fileTableWidget.exec_()
 
     def slotLoad(self):    
-        
         self.optionsWidget.fillOptions(self.options)
         self.accept()
 
