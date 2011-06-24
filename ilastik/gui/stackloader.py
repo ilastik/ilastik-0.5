@@ -80,27 +80,6 @@ class StackLoader(QtGui.QDialog):
         
         self.multiChannelFrame.setLayout(tempLayout)
         
-        '''
-        tempLayout = QtGui.QVBoxLayout()
-        tempLayout1 = QtGui.QHBoxLayout()
-        tempLayout1.addWidget(QtGui.QLabel("Enter channel identifiers, e.g. GFP"))
-        tempLayout.addLayout(tempLayout1)
-        tempLayout2 = QtGui.QHBoxLayout()
-        self.redChannelId = QtGui.QLineEdit("")
-        self.connect(self.redChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.blueChannelId = QtGui.QLineEdit("")
-        self.connect(self.blueChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.greenChannelId = QtGui.QLineEdit("")
-        self.connect(self.greenChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        tempLayout2.addWidget(QtGui.QLabel("Red:"))
-        tempLayout2.addWidget(self.redChannelId)
-        tempLayout2.addWidget(QtGui.QLabel("Green:"))
-        tempLayout2.addWidget(self.greenChannelId)
-        tempLayout2.addWidget(QtGui.QLabel("Blue:"))
-        tempLayout2.addWidget(self.blueChannelId)
-        tempLayout.addLayout(tempLayout2)
-        self.multiChannelFrame.setLayout(tempLayout)
-        '''
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
 
@@ -175,31 +154,6 @@ class StackLoader(QtGui.QDialog):
                 chfiles = temp + "*" + str(self.channelIDs[ich].text()) + "*"
                 self.fileList[ich] = sorted(glob.glob(chfiles), key=str.lower)
                 self.options.channels.append(ich)                
-            
-            '''
-            #not all channels have to be filled
-            if (len(str(self.redChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathred = temp+"*"+str(self.redChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathred), key=str.lower))
-                self.options.channels.append(0)
-            else:
-                self.fileList.append([])    
-            if (len(str(self.greenChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathgreen = temp+"*"+str(self.greenChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathgreen), key=str.lower))
-                self.options.channels.append(1)
-            else:
-                self.fileList.append([])
-            if (len(str(self.blueChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathblue = temp+"*"+str(self.blueChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathblue), key=str.lower))
-                self.options.channels.append(2)
-            else:
-                self.fileList.append([])
-            '''
         self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotDir(self):
@@ -216,10 +170,7 @@ class StackLoader(QtGui.QDialog):
         self.fileTableWidget = loadOptionsWidget.previewTable(self.fileList)
         self.fileTableWidget.exec_()
 
-    def slotLoad(self):
-        #remove unused channels, we don't support loading only green or blue anymore
-        
-        
+    def slotLoad(self):    
         
         self.optionsWidget.fillOptions(self.options)
         self.accept()
