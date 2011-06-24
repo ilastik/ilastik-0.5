@@ -121,12 +121,12 @@ class RenderChoiceDialog(QtGui.QDialog):
         layout = QtGui.QVBoxLayout(self)
         #choicesGroup = QtGui.QButtonGroup(self)
         self.openglChoice   = QtGui.QRadioButton("Open GL")
-        self.softwareChoice = QtGui.QRadioButton("Software + OpenGL")
+        self.softwareChoice = QtGui.QRadioButton("Software")
         okButton = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok, QtCore.Qt.Vertical)
-        label = QtGui.QLabel("""<b>OpenGL + OpenGL Overview</b> allows
+        label = QtGui.QLabel("""<b>OpenGL </b> allows
                     for fastest rendering if OpenGL is correctly installed.
                     <br> If visualization is slow or incomplete,
-                    try the <b>Software + OpenGL</b> mode.""")
+                    try the <b>Software mode.""")
 
         layout.addWidget(label)
         layout.addWidget(self.openglChoice)
