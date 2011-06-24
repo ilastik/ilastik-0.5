@@ -1379,11 +1379,14 @@ class ImageSceneRenderThread(QtCore.QThread):
                                 
                             else:
                                 if origitem.min is not None and origitem.max is not None:
-                                    normalize = (origitem.min, origitem.max)
+                                    if origitem.min == 'normalizeSlice' or origitem.max == 'normalizeSlice':
+                                        normalize = (min, max)
+                                    else:
+                                        normalize = (origitem.min, origitem.max)
                                 else:
                                     normalize = False
-                                
-                                                                
+                                    
+                                               
                                 if origitem.autoAlphaChannel is False:
                                     if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
                                         image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)

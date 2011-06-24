@@ -327,12 +327,19 @@ class ProjectSettingsDlg(QtGui.QDialog):
     def ok(self):
         self.project.fastRepaint = False
         self.project.useBorderMargin = False
-        self.project.normalizeData = False
+        
         self.project.rgbData = False
         if self.fastRepaintCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.fastRepaint = True
         if self.normalizeCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.normalizeData = True
+            self.ilastik._activeImage.overlayMgr["Raw Data"].min = 'normalizeSlice'
+            self.ilastik._activeImage.overlayMgr["Raw Data"].max = 'normalizeSlice'
+        else:
+            self.project.normalizeData = False
+            self.ilastik._activeImage.overlayMgr["Raw Data"].min = 0
+            self.ilastik._activeImage.overlayMgr["Raw Data"].max = 255
+            
         if self.borderMarginCheckbox.checkState() == QtCore.Qt.Checked:
             self.project.useBorderMargin = True
         if self.rgbDataCheckbox.checkState() == QtCore.Qt.Checked:
