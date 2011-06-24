@@ -55,9 +55,9 @@ class FileLoader(QtGui.QDialog):
         
         
         tempLayout = QtGui.QFormLayout()
-        self.addChannelButton = QtGui.QPushButton("Add channel")
+        self.addChannelButton = QtGui.QPushButton("  Append more spectral channels")
         self.connect(self.addChannelButton, QtCore.SIGNAL('clicked()'), self.slotAddChannel)
-        tempLayout.addWidget(self.addChannelButton)
+        tempLayout.addRow(QtGui.QLabel(" "), self.addChannelButton)
         
         self.multiChannelFrame.setLayout(tempLayout)
         '''
@@ -154,7 +154,7 @@ class FileLoader(QtGui.QDialog):
     def pathChanged(self, text):
         path = str(self.path.text())
         templist = sorted(glob.glob(path), key=str.lower)
-        self.updateFileList(templist)
+        self.updateFileListNew(0, templist)
         
     def redPathChanged(self, text):
         path = str(self.redPath.text())
@@ -212,12 +212,14 @@ class FileLoader(QtGui.QDialog):
                 self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
                 
     def slotDir(self):
-        path = self.path.text()
-        templist1 = QtGui.QFileDialog.getOpenFileNames(self, "", path)
+        path = ilastik.gui.LAST_DIRECTORY
+        filenames = QtGui.QFileDialog.getOpenFileNames(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filenames[0]).path()
+        
         templist = []
-        for item in templist1:
+        for item in filenames:
             templist.append(str(QtCore.QDir.convertSeparators(item)))
-        self.updateFileList(templist)
+        self.updateFileListNew(0, templist)
         if (len(templist)>0):
             path_to_display = templist[0]
             if (len(templist)>1):
@@ -253,27 +255,72 @@ class FileLoader(QtGui.QDialog):
         newButton = QtGui.QPushButton("Select")
         self.channelButtons.append(newButton)
         nch = len(self.channelPathWidgets)
-        label = "channel %d" % nch
+        label = "%d" % nch
         
         
         #FEEL THE POWER OF PYTHON
-        receiver = lambda callingPath=nch-1: self.channelPathChanged(callingPath)
-        self.connect(self.channelPathWidgets[nch-1], QtCore.SIGNAL('editingFinished()'), receiver)
+        receiverPath = lambda callingPath=nch-1: self.channelPathChanged(callingPath)
+        self.connect(self.channelPathWidgets[nch-1], QtCore.SIGNAL('editingFinished()'), receiverPath)
+        
+        receiverButton = lambda callingButton=nch-1: self.channelButtonClicked(callingButton)
+        self.connect(self.channelButtons[nch-1], QtCore.SIGNAL('clicked()'), receiverButton)
         
         tempLayout = QtGui.QHBoxLayout()
         tempLayout.addWidget(newPath)
         tempLayout.addWidget(newButton)
         self.multiChannelFrame.layout().addRow(QtGui.QLabel(label), tempLayout)
-        #self.multiChannelFrame.layout().addWidget(newPath)
-        #self.multiChannelFrame.layout().addWidget(self.channelButtons[nch-1])
-        #self.channelButtons[nch-1].show()
+        
+        
+        if len(self.channelPathWidgets)==1 and len(self.path.text())>0:
+            #this is the first time the button is pressed and there is already something in the path
+            #replicate the first channel from the path and add space for the second one
+            self.channelPathWidgets[nch-1].setText(self.path.text())
+            #the file list has been updated when the path was changed, no need to do it here
+            self.slotAddChannel()
+        else:
+            self.fileList.append([])
     
 
+    def channelButtonClicked(self, calling):
+        path = ilastik.gui.LAST_DIRECTORY
+        filenames = QtGui.QFileDialog.getOpenFileNames(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(filenames[0]).path()
+
+        templist = []
+        for f in filenames:
+            templist.append(str(QtCore.QDir.convertSeparators(f)))
+        self.updateFileListNew(calling, templist)
+        newText = filenames[0]
+        if len(filenames)>1:
+            newText = filenames[0]+"..."
+        self.channelPathWidgets[calling].setText(newText)
+        
     
     def channelPathChanged(self, calling):
-        print "bla", calling
-        print "current text", self.channelPathWidgets[calling].text()
+        #is there more than 1 file? Not very probable, but let's check anyway
+        text = self.channelPathWidgets[calling].text()
+        filenames = []
+        if ',' in text:
+            templist = text.split(',')
+            for f in templist:
+                tempname = str(QtCore.QDir.convertSeparators(f))
+                if os.path.isfile(tempname):
+                    filenames.append(tempname)
+        else:
+            tempname = str(QtCore.QDir.convertSeparators(text))
+            if os.path.isfile(tempname):
+                filenames.append(tempname)
+        self.updateFileListNew(calling, filenames)
+        
         #print "channel path changed: ", self.channelButtons[ch_ind].text()
+
+    def updateFileListNew(self, col, filenames):
+        if len(self.fileList)==0:
+            self.fileList.append([])
+        if len(self.fileList)<col+1:
+            print "!!! something went wrong with allocating enough file lists !!!"
+            return
+        self.fileList[col]=filenames
     
     def updateFileList(self, templist):
         self.fileList = []    
@@ -302,6 +349,18 @@ class FileLoader(QtGui.QDialog):
         self.fileTableWidget.exec_()
                 
     def slotLoad(self):
+        #remove unused channels, we don't support loading only green or blue anymore
+        newlist = []
+        for f in self.fileList:
+            if len(f)>0:
+                newlist.append(f)
+        self.fileList = newlist
+        for i in range(len(self.fileList)):
+            self.options.channels.append(i)
+            
+            
+                
+        
         if self.optionCheck.checkState() == 0:
          
             self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
