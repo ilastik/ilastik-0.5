@@ -1483,11 +1483,11 @@ class CrossHairCursor(QtGui.QGraphicsItem) :
         elif self.mode == self.modeYPosition:
             painter.drawLine(QtCore.QPointF(0, self.y), QtCore.QPointF(self.width, self.y))
         else:            
-            painter.drawLine(QtCore.QPointF(0.0,self.y), QtCore.QPointF(self.x -0.5*self.brushSize, self.y))
-            painter.drawLine(QtCore.QPointF(self.x+0.5*self.brushSize, self.y), QtCore.QPointF(self.width, self.y))
+            painter.drawLine(QtCore.QPointF(self.x -0.5*self.brushSize -3 ,self.y), QtCore.QPointF(self.x -0.5*self.brushSize, self.y))
+            painter.drawLine(QtCore.QPointF(self.x+0.5*self.brushSize, self.y), QtCore.QPointF(self.x+0.5*self.brushSize +3, self.y))
 
-            painter.drawLine(QtCore.QPointF(self.x, 0), QtCore.QPointF(self.x, self.y-0.5*self.brushSize))
-            painter.drawLine(QtCore.QPointF(self.x, self.y+0.5*self.brushSize), QtCore.QPointF(self.x, self.height))
+            painter.drawLine(QtCore.QPointF(self.x, self.y-0.5*self.brushSize - 3), QtCore.QPointF(self.x, self.y-0.5*self.brushSize))
+            painter.drawLine(QtCore.QPointF(self.x, self.y+0.5*self.brushSize), QtCore.QPointF(self.x, self.y+0.5*self.brushSize + 3))
 
             painter.setPen(self.penSolid)
             painter.drawEllipse(QtCore.QPointF(self.x, self.y), 0.5*self.brushSize, 0.5*self.brushSize)
@@ -1655,7 +1655,6 @@ class ImageScene(QtGui.QGraphicsView):
     axisColor = [QtGui.QColor(255,0,0,255), QtGui.QColor(0,255,0,255), QtGui.QColor(0,0,255,255)]
     
     def __borderMarginIndicator__(self, margin):
-        print "__borderMarginIndicator__()", margin
         """
         update the border margin indicator (left, right, top, bottom)
         to reflect the new given margin
