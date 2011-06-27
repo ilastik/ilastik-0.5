@@ -724,9 +724,11 @@ class ClassifierPredictThread(ThreadBase):
                     if activeItem.overlayMgr["Classification/Segmentation"] is None:
                         ov = tho.ThresholdOverlay(foregrounds, [], autoAdd = True, autoVisible = True)
                         activeItem.overlayMgr["Classification/Segmentation"] = ov
+                        activeItem.overlayMgr["Classification/Segmentation"].displayable3D = True
                     else:
                         ov = activeItem.overlayMgr["Classification/Segmentation"]
                         ov.setForegrounds(foregrounds)
+                        activeItem.overlayMgr["Classification/Segmentation"].displayable3D = True
     
     
                 all =  range(len(descriptions))
