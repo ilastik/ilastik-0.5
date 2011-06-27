@@ -827,7 +827,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     
     if len(sys.argv) < 2:
-        raise RuntimeError("Usage: python volumeeditor.py <testmode>")
+        raise RuntimeError("Usage: python volumeeditor.py <testmode> (hugeslab or cuboid)")
     testmode = sys.argv[1]
     
     s = QSplitter()
