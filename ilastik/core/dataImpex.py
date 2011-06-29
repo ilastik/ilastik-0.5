@@ -169,44 +169,7 @@ class DataImpex(object):
                     if logger is not None:        
                         logger.repaint()
                 z = z + 1
-        '''            
-        firstlist = fileList[options.channels[0]]
-        for index, filename in enumerate(firstlist):
-            if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
-                try:
-                    img_data = DataImpex.vigraReadImageWrapper(filename)
-                    if options.rgb > 1:
-                        image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
-                    else:
-                        image[:,:, z-options.offsets[2],options.channels[0]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
-                        #load other channels if needed
-                        if (len(options.channels)>1):
-                            img_data = DataImpex.vigraReadImageWrapper(fileList[options.channels[1]][index])
-                            image[:,:,z-options.offsets[2],options.channels[1]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
-                            if (len(options.channels)>2):                                
-                                img_data = DataImpex.vigraReadImageWrapper(fileList[options.channels[2]][index])
-                                image[:,:,z-options.offsets[2],options.channels[2]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
-                            else:
-                                #only 2 channels are selected. Fill the 3d channel with zeros
-                                #TODO: zeros create an unnecessary memory overhead in features
-                                #change this logic to something better
-                                ch = set([0,1,2])
-                                not_filled = ch.difference(options.channels)
-                                nf_ind = not_filled.pop()
-                                image[:,:,z-options.offsets[2],nf_ind]=0
-                    if logger is not None:                           
-                        logger.insertPlainText(".")
-                except Exception, e:
-                    allok = False
-                    print e 
-                    s = "Error loading file " + filename + "as Slice " + str(z-options.offsets[2])
-                    if logger is not None:
-                        logger.appendPlainText(s)
-                        logger.appendPlainText("")
-                if logger is not None:        
-                    logger.repaint()
-            z = z + 1
-        '''
+
         if options.invert:
             image = 255 - image             
                  

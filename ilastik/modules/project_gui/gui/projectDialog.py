@@ -145,16 +145,15 @@ class ProjectDlg(QtGui.QDialog):
     def on_loadFileButton_clicked(self):
 
         fl = fileloader.FileLoader(self)
-        
         fileList, options = fl.exec_()
         if fileList is None:
             return
-        loaded = False
+
         try:
-            self.project.loadFile(fl.fileList, fl.options)
+            self.project.loadFile(fileList, options)
         except Exception, e:
             QtGui.QErrorMessage.qtHandler().showMessage(str(e))
-        for filename in fl.fileList[fl.options.channels[0]]:
+        for filename in fileList[options.channels[0]]:
             
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)
