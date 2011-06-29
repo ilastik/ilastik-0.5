@@ -171,8 +171,6 @@ class MeshExtractor(QThread):
 #*******************************************************************************
 
 class MeshExtractorDialog(QDialog):
-    done = pyqtSignal()
-    
     def __init__(self, parent=None):
         QDialog.__init__(self, parent)
         
@@ -222,7 +220,7 @@ class MeshExtractorDialog(QDialog):
         self.extractor.start()
     
     def onMeshesExtracted(self):
-        self.done.emit()
+        self.emit(SIGNAL("done()"))
 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
