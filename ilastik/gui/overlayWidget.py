@@ -112,7 +112,7 @@ class OverlayListWidget(QListWidget):
     def onItemDoubleClick(self, itemIndex):
         self.currentItem = item = self.itemFromIndex(itemIndex)
         if item.checkState() == 2:
-            dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
+            dialog = QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
             dialog.slider.connect(dialog.slider, SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
             dialog.exec_()
         else:
