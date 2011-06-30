@@ -30,7 +30,7 @@ from PyQt4.QtGui import QGraphicsView, QVBoxLayout, QLabel, QGraphicsScene, QPix
                         QTableWidgetItem, QItemDelegate, QStyle, QHBoxLayout, QIcon, QHeaderView, \
                         QAbstractItemView, QDialog, QToolButton, QErrorMessage, QApplication, \
                         QTableWidget, QGroupBox, QBrush, QColor, QPalette, QStyleOptionViewItem, \
-                        QFont, QPen, QPolygon, QSlider
+                        QFont, QPen, QPolygon, QSlider, QSizePolicy
 from PyQt4.QtCore import Qt, QRect, QSize, QEvent, QPointF, QPoint
 
 import numpy
@@ -43,12 +43,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 class PreView(QGraphicsView):
     def __init__(self, previewImage=None):
-        QGraphicsView.__init__(self)
-        
-        self.setMinimumWidth(200)
-        self.setMinimumHeight(200)
-        self.setMaximumWidth(200)
-        self.setMaximumHeight(200)       
+        QGraphicsView.__init__(self)    
         
         self.zoom = 2
         self.scale(self.zoom, self.zoom) 
@@ -176,7 +171,7 @@ class FeatureTableWidgetHHeader(QTableWidgetItem):
         # ------------------------------------------------
         self.sigma = sigma
         self.brushSize = int(3.0*self.sigma + 0.5)*2 + 1
-        self.headerSize = QSize(40,30)
+        #self.headerSize = QSize(40,30)
         self.pixmapSize = QSize(61, 61)
         
         self.setNameAndBrush(self.sigma)
@@ -203,7 +198,7 @@ class FeatureTableWidgetHHeader(QTableWidgetItem):
         painter.end()
         self.setIcon(QIcon(pixmap))
         self.setTextAlignment(Qt.AlignVCenter)
-        self.setSizeHint(self.headerSize)
+        #self.setSizeHint(self.headerSize)
         
     def setIconAndTextColor(self, color):
         self.setNameAndBrush(self.sigma, color)
@@ -274,8 +269,6 @@ class FeatureTableWidget(QTableWidget):
         #layout
         # ------------------------------------------------
         self.setCornerButtonEnabled(False)
-        self.setMinimumWidth(560)
-        #self.setMinimumHeight(100)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.setSelectionMode(0)
         self.setShowGrid(False)
@@ -305,6 +298,8 @@ class FeatureTableWidget(QTableWidget):
         self.fillTabelWithItems()  
         self.setOldSelectedFeatures() 
         self.updateParentCell() 
+        
+        self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
                         
     # methods
     # ------------------------------------------------
@@ -483,20 +478,20 @@ class FeatureTableWidget(QTableWidget):
         
         
     def setHAndVHeaderForegroundColor(self, c, r):       
-        
+        p = QPalette()
         for i in range(self.columnCount()):
             col = self.horizontalHeaderItem(i)
             if i == c:
-                col.setIconAndTextColor(Qt.lightGray)
+                col.setIconAndTextColor(p.highlight().color())
             else:
-                col.setIconAndTextColor(Qt.black)
+                col.setIconAndTextColor(p.text().color())
             
         for j in range(self.rowCount()):
             row = self.verticalHeaderItem(j)
             if j == r:
-                row.setIconAndTextColor(Qt.lightGray)
+                row.setIconAndTextColor(p.highlight().color())
             else:
-                row.setIconAndTextColor(Qt.black)
+                row.setIconAndTextColor(p.text().color())
         
         
     def featureTableItemDoubleClicked(self, row, column):
@@ -584,7 +579,6 @@ class SliderDlg(QDialog):
         buttonsLayout.addWidget(self.ok)
 
         self.layout.addLayout(buttonsLayout)
-        self.layout.addStretch()
         
         self.layout.setContentsMargins(10, 0, 10, 0)
         labelsLayout.setContentsMargins(0, 0, 0, 0)
@@ -666,7 +660,6 @@ class FeatureDlg(QDialog):
         buttonsLayout.addWidget(self.cancel)
         viewAndButtonLayout.addLayout(buttonsLayout)
         tableAndViewLayout.addLayout(viewAndButtonLayout)
-        tableAndViewLayout.addStretch()
         tableAndViewGroupBox.setLayout(tableAndViewLayout)
         #tableAndViewGroupBox.updateGeometry()
         self.layout.addWidget(tableAndViewGroupBox)
@@ -720,40 +713,13 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setStyle("cleanlooks")
     
-    w = QWidget()
-    l = QHBoxLayout()
-    w.setLayout(l)
     ex = FeatureDlg()
 #    ex.setGrouping(g)
 #    numpy.random.randint
 #    ex.setRawData()
 #    ex.ok.clicked.connect(onAccepted)
-    l.addWidget(ex)
-    t = QTableWidget()
     
-    t.setColumnCount(3)
-    t.setRowCount(4)
-    t.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-    t.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
-    t.setEditTriggers(QAbstractItemView.NoEditTriggers)
-    t.setSelectionMode(0)
-    t.setShowGrid(False)
-    #t.viewport().installEventFilter(self)
-    t.setMouseTracking(1)
-    t.verticalHeader().setHighlightSections(False)
-    t.verticalHeader().setClickable(True)
-    t.horizontalHeader().setHighlightSections(False)
-    t.horizontalHeader().setClickable(True)
-    #t.itemDelegator = ItemDelegate(self)
-    #t.setItemDelegate(self.itemDelegator)
-    t.horizontalHeader().setMouseTracking(1)
-    #t.horizontalHeader().installEventFilter(self)
-    t.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
-    t.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
-    
-    
-    l.addWidget(t)
-    w.show()
-    w.raise_()
+    ex.show()
+    ex.raise_()
     app.exec_()
             
