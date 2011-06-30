@@ -13,8 +13,8 @@ class SelectionAccessor(object):
         self.overlay = overlay
         self.inputData = self.overlay.inputData
         self.shape = self.inputData.shape
-        self.dtype = self.inputData.dtype
-        
+        #self.dtype = self.inputData.dtype  
+        self.dtype = numpy.uint8
         
     def __getitem__(self, key):
         input = self.inputData[key]
