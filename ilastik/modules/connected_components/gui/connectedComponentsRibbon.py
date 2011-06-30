@@ -7,7 +7,6 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.modules.connected_components.core.connectedComponentsMgr import BackgroundOverlayItem
-#import ilastik.gui.volumeeditor as ve
 from backgroundWidget import BackgroundWidget
 from guiThread import CC
 from labelSelectionForm import LabelSelectionForm

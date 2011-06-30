@@ -9,7 +9,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
-import ilastik.gui.volumeeditor as ve
+import volumeeditor as ve
                     
                     
 #*******************************************************************************

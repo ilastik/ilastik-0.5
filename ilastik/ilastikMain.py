@@ -83,7 +83,7 @@ from ilastik.core.randomSeed import RandomSeed
 #from ilastik.core import connectedComponentsMgr
 #from ilastik.core import projectMgr
 
-from ilastik.gui import volumeeditor as ve
+import volumeeditor as ve
 from ilastik.core.dataImpex import DataImpex
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons

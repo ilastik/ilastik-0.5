@@ -8,7 +8,7 @@ import ilastik.gui
 from projectDialog import ProjectDlg, ProjectSettingsDlg
 from ilastik.core import projectClass
 from ilastik.gui.overlayWidget import OverlayWidget
-from ilastik.gui import volumeeditor as ve
+import volumeeditor as ve
 
 #*******************************************************************************
 # P r o j e c t T a b                                                          *

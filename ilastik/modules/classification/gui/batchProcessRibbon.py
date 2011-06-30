@@ -38,7 +38,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.modules.classification.gui import *
 from ilastik.modules.classification.gui.batchProcessDlg import BatchProcess
 
-from ilastik.gui import volumeeditor as ve
+import volumeeditor as ve
 
 #*******************************************************************************
 # A u t o m a t e T a b                                                        *

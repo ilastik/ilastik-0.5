@@ -36,7 +36,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 
 from ilastik.gui.overlayWidget import OverlayWidget
 from ilastik.gui.shortcutmanager import shortcutManager
-from ilastik.gui import volumeeditor as ve
+import volumeeditor as ve
 from ilastik.modules.help.gui.about import About
 
 #*******************************************************************************

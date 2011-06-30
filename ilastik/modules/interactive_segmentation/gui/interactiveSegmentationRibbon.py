@@ -14,7 +14,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 from seedWidget import SeedListWidget
 from ilastik.gui.overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui.overlayWidget import OverlayWidget
-from ilastik.gui.volumeeditor import DummyLabelWidget
+from volumeeditor import DummyLabelWidget
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.volume import DataAccessor
 
