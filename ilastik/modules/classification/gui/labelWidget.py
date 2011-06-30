@@ -67,7 +67,7 @@ class LabelListItem(QListWidgetItem):
 #*******************************************************************************
 
 class LabelListWidget(BaseLabelWidget,  QGroupBox):
-    itemSelectionChanged = pyqtSignal(int)
+    itemSelectionChanged = pyqtSignal()
     
     def __init__(self,  labelMgr,  volumeLabelDescriptions, volumeEditor,  overlayItem):
         QGroupBox.__init__(self, "Labels")
@@ -277,6 +277,7 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
     def changeLabel(self):
         for i in range(0, len(self.volumeEditor.imageScenes)):
             self.volumeEditor.imageScenes[i].crossHairCursor.setColor(self.listWidget.currentItem().color)
+        self.itemSelectionChanged.emit()
             
     def ensureLabelOverlayVisible(self):
         if self.volumeEditor.overlayWidget.getOverlayRef(self.overlayItem.key) == None:

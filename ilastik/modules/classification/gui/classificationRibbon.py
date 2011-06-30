@@ -42,7 +42,7 @@ class ClassificationTab(IlastikTabBase, QWidget):
         raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
                         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
-        
+
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
         
