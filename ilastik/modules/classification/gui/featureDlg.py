@@ -33,7 +33,7 @@ from PyQt4.QtGui import QGraphicsView, QVBoxLayout, QLabel, QGraphicsScene, QPix
                         QFont, QPen, QPolygon, QSlider
 from PyQt4.QtCore import Qt, QRect, QSize, QEvent, QPointF, QPoint
 
-
+import numpy
 import sys
 from ilastik.modules.classification.core import featureMgr
 import qimage2ndarray
@@ -75,6 +75,8 @@ class PreView(QGraphicsView):
         #self.hudLayout.addStretch()
         
         self.grscene = QGraphicsScene()
+        if previewImage is None:
+            previewImage = (numpy.random.rand(100,100)*256).astype(numpy.uint8)
         pixmapImage = QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
         self.setScene(self.grscene)
@@ -265,7 +267,6 @@ class FeatureTableWidget(QTableWidget):
         self.groupScaleValues = []
         self.tmpSelectedItems = []
         self.ilastik = ilastik
-        self.setStyleSheet("background-color:transparent;")
         self.setIconSize(QSize(30, 30))
         #self.setAlternatingRowColors(True)    
         self.isSliderOpen = False    
@@ -681,9 +682,9 @@ class FeatureDlg(QDialog):
     # ------------------------------------------------
     def setMemReq(self):
         featureSelectionList = self.featureTableWidget.createFeatureList()
-        memReq = self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)
-        self.memReqLabel.setText("%8.2f MB" % memReq)
-    
+        #TODO
+        #memReq = self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)
+        #self.memReqLabel.setText("%8.2f MB" % memReq)
     
     def on_okClicked(self):
         featureSelectionList = self.featureTableWidget.createFeatureList()
@@ -705,6 +706,11 @@ class FeatureDlg(QDialog):
         
         
 if __name__ == "__main__":
+    #make the program quit on Ctrl+C
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    from PyQt4.QtGui import *
+    
 #    def onAccepted():
 #        global ex
 #        print ex.adfasdfdf
@@ -712,13 +718,42 @@ if __name__ == "__main__":
 #    g = GroupName("Banane", "Birne")
     
     app = QApplication(sys.argv)
+    app.setStyle("cleanlooks")
+    
+    w = QWidget()
+    l = QHBoxLayout()
+    w.setLayout(l)
     ex = FeatureDlg()
 #    ex.setGrouping(g)
 #    numpy.random.randint
 #    ex.setRawData()
 #    ex.ok.clicked.connect(onAccepted)
+    l.addWidget(ex)
+    t = QTableWidget()
     
-    ex.show()
-    ex.raise_()
+    t.setColumnCount(3)
+    t.setRowCount(4)
+    t.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+    t.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+    t.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    t.setSelectionMode(0)
+    t.setShowGrid(False)
+    #t.viewport().installEventFilter(self)
+    t.setMouseTracking(1)
+    t.verticalHeader().setHighlightSections(False)
+    t.verticalHeader().setClickable(True)
+    t.horizontalHeader().setHighlightSections(False)
+    t.horizontalHeader().setClickable(True)
+    #t.itemDelegator = ItemDelegate(self)
+    #t.setItemDelegate(self.itemDelegator)
+    t.horizontalHeader().setMouseTracking(1)
+    #t.horizontalHeader().installEventFilter(self)
+    t.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
+    t.verticalHeader().setResizeMode(QHeaderView.ResizeToContents)
+    
+    
+    l.addWidget(t)
+    w.show()
+    w.raise_()
     app.exec_()
             
