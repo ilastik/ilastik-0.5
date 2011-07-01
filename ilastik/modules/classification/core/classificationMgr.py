@@ -511,7 +511,18 @@ class ClassificationMgr(object):
             
         self._trainingL = trainingL
         self._trainingF = trainingF
-        self._trainingIndices = indices     
+        self._trainingIndices = indices   
+        
+    def isReadyForTraining(self):
+        F, L = self.getTrainingMatrix()
+        if L.shape[0] < 2:
+            return False
+        
+        if len( numpy.unique( L[:,...] )) < 2:
+            return False
+        
+        return True
+        
 
     def getTrainingMatrix(self, sigma = 0):
         """
@@ -811,7 +822,7 @@ class ClassifierInteractiveThread(ThreadBase):
 
     def run(self):
         self.ilastik.activeImageLock.acquire()
-        F, L = self.classificationMgr.getTrainingMatrix()
+        #F, L = self.classificationMgr.getTrainingMatrix()
         self.ilastik.activeImageLock.release()
         self.dataPending.set()
         while not self.stopped:

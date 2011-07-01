@@ -47,8 +47,9 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         
         ov = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
         
-        overlayWidget.addOverlayRef(ov.getRef())
         overlayWidget.addOverlayRef(raw.getRef())
+        overlayWidget.addOverlayRef(ov.getRef())
+        
                 
         self.ilastik.labelWidget.setLabelWidget(LabelListWidget(self.ilastik.project.dataMgr.module["Classification"].labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov))
     
@@ -115,7 +116,11 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         gc.collect()
                     
     def on_btnStartLive_clicked(self, state):
-        if state:
+        if not self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].isReadyForTraining():
+            QtGui.QMessageBox.information(self, 'Classification', 'Not enough labels given for training')
+            return
+        
+        if self.btnStartLive.text() == 'Start Live Prediction':
             self.ilastik.ribbon.getTab('Classification').btnStartLive.setText('Stop Live Prediction')
             self.classificationInteractive = ClassificationInteractive(self.ilastik)
         else:
@@ -123,6 +128,9 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             self.ilastik.ribbon.getTab('Classification').btnStartLive.setText('Start Live Prediction')
         
     def on_btnTrainPredict_clicked(self):
+        if not self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].isReadyForTraining():
+            QtGui.QMessageBox.information(self, 'Classification', 'Not enough labels given for training')
+            return
         self.classificationTrain = ClassificationTrain(self.ilastik)
         self.connect(self.classificationTrain, QtCore.SIGNAL("trainingFinished()"), self.on_trainingFinished)
         
