@@ -235,7 +235,7 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
 
         action = menu.exec_(QtGui.QCursor.pos())
         if action == removeAction:
-            if QtGui.QMessageBox.question(self, "Remove label", "Really remove label" + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)  != QtGui.QMessageBox.Cancel:
+            if QtGui.QMessageBox.question(self, "Remove label", "Really clear " + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QtGui.QMessageBox.Cancel | QtGui.QMessageBox.Ok)  != QtGui.QMessageBox.Cancel:
                 self.removeLabel(item,  index)
         elif action == renameAction:
             newName, ok = QtGui.QInputDialog.getText(self, "Enter Labelname", "Labelname:", text = item.text())
