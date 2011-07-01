@@ -448,7 +448,10 @@ class MainWindow(QMainWindow):
 
     def createImageWindows(self, dataVol):
         gc.collect()
-        self.labelWidget = ve.VolumeEditor(dataVol, self,  sharedOpenglWidget = self.sharedOpenGLWidget)
+        print "MainWindow.createImageWindows: ", dataVol.shape
+        from volumeeditor.helper import ViewManager
+        vm = ViewManager(dataVol[0,:,:,:,0])
+        self.labelWidget = ve.VolumeEditor(dataVol.shape, self,  sharedOpenglWidget = self.sharedOpenGLWidget, viewManager=vm)
 
         if self.project.dataMgr._currentModuleName is None:
             self.project.dataMgr._currentModuleName = "Project"
