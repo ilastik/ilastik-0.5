@@ -816,11 +816,11 @@ class VolumeEditor(QtGui.QWidget):
             for index, item in enumerate(reversed(self.overlayWidget.overlays)):
                 if item.visible:
                     tempoverlays.append(item.getOverlaySlice(self.selSlices[i],i, self.selectedTime, item.channel)) 
-            if len(self.overlayWidget.overlays) > 0:
-                tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.getOverlayRef("Raw Data").channel)
-            else:
-                tempImage = None
-            tempImage = None
+#            if len(self.overlayWidget.overlays) > 0:
+#                tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(self.selSlices[i], i, self.selectedTime, self.overlayWidget.getOverlayRef("Raw Data").channel)
+#            else:
+#                tempImage = None
+#            tempImage = None
 #            if self.labelWidget.volumeLabels is not None:
 #                if self.labelWidget.volumeLabels.data is not None:
 #                    tempLabels = self.labelWidget.volumeLabels.data.getSlice(self.selSlices[i],i, self.selectedTime, 0)
@@ -1029,12 +1029,12 @@ class VolumeEditor(QtGui.QWidget):
             if item.visible:
                 tempoverlays.append(item.getOverlaySlice(self.selSlices[axis],axis, self.selectedTime, 0))
 
-        if len(self.overlayWidget.overlays) > 0:
-            tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
-        else:
-            tempImage = None            
+#        if len(self.overlayWidget.overlays) > 0:
+#            tempImage = self.overlayWidget.getOverlayRef("Raw Data")._data.getSlice(num, axis, self.selectedTime, self.selectedChannel)
+#        else:
+#            tempImage = None            
 
-        self.imageScenes[axis].updatePatches(patches, tempImage, tempoverlays)
+        self.imageScenes[axis].updatePatches(patches, None, tempoverlays)
 
         self.emit(QtCore.SIGNAL('newLabelsPending()'))
             
@@ -1965,7 +1965,7 @@ class ImageScene(QtGui.QGraphicsView):
         
         print "finished thread"
 
-    def updatePatches(self, patchNumbers ,image, overlays = ()):
+    def updatePatches(self, patchNumbers, image, overlays = ()):
         stuff = [patchNumbers, image, overlays, self.min, self.max]
         #print patchNumbers
         if patchNumbers is not None:
@@ -2390,30 +2390,31 @@ class ImageScene(QtGui.QGraphicsView):
             
             (posX, posY, posZ) = self.coordinateUnderCursor()
             
-            if self.axis == 0:
-                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
-                self.updateInfoLabels(posX, posY, posZ, colorValues)
-                if len(self.volumeEditor.imageScenes) > 2:
-                    yView = self.volumeEditor.imageScenes[1].crossHairCursor
+            if self.volumeEditor.overlayWidget.getOverlayRef("Raw Data") is not None:
+                if self.axis == 0:
+                    colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
+                    self.updateInfoLabels(posX, posY, posZ, colorValues)
+                    if len(self.volumeEditor.imageScenes) > 2:
+                        yView = self.volumeEditor.imageScenes[1].crossHairCursor
+                        zView = self.volumeEditor.imageScenes[2].crossHairCursor
+                        yView.setVisible(False)
+                        zView.showYPosition(x, y)
+                elif self.axis == 1:
+                    colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
+                    self.updateInfoLabels(posX, posY, posZ, colorValues)
+                    xView = self.volumeEditor.imageScenes[0].crossHairCursor
                     zView = self.volumeEditor.imageScenes[2].crossHairCursor
-                    yView.setVisible(False)
-                    zView.showYPosition(x, y)
-            elif self.axis == 1:
-                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
-                self.updateInfoLabels(posX, posY, posZ, colorValues)
-                xView = self.volumeEditor.imageScenes[0].crossHairCursor
-                zView = self.volumeEditor.imageScenes[2].crossHairCursor
-                
-                zView.showXPosition(x, y)
-                xView.setVisible(False)
-            else:
-                colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
-                self.updateInfoLabels(posX, posY, posZ, colorValues)
-                xView = self.volumeEditor.imageScenes[0].crossHairCursor
-                yView = self.volumeEditor.imageScenes[1].crossHairCursor
-                
-                xView.showXPosition(y, x)
-                yView.showXPosition(x, y)
+                    
+                    zView.showXPosition(x, y)
+                    xView.setVisible(False)
+                else:
+                    colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
+                    self.updateInfoLabels(posX, posY, posZ, colorValues)
+                    xView = self.volumeEditor.imageScenes[0].crossHairCursor
+                    yView = self.volumeEditor.imageScenes[1].crossHairCursor
+                    
+                    xView.showXPosition(y, x)
+                    yView.showXPosition(x, y)
         else:
             self.unsetCursor()
                 
