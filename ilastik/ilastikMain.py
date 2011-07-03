@@ -36,6 +36,8 @@ from PyQt4.QtGui import QApplication, QButtonGroup, QComboBox, QDialog,\
                         QVBoxLayout, QWidget
 from PyQt4.QtOpenGL import QGLWidget
 
+from volumeeditor.viewManager import ViewManager
+
 import vigra
 vigraVersion = vigra.version.split('.')
 if int(vigraVersion[0]) < 1 or int(vigraVersion[1]) < 8 or int(vigraVersion[2]) < 0:
@@ -448,7 +450,6 @@ class MainWindow(QMainWindow):
 
     def createImageWindows(self, dataVol):
         gc.collect()
-        from volumeeditor.helper import ViewManager
         vm = ViewManager(dataVol[0,:,:,:,0])
         self.labelWidget = ve.VolumeEditor(dataVol.shape, self,  sharedOpenglWidget = self.sharedOpenGLWidget, viewManager=vm)
 
