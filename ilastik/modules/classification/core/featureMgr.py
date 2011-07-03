@@ -33,6 +33,7 @@ from ilastik.core.utilities import irange
 from ilastik.core import dataMgr
 from ilastik.core.volume import DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
+from ilastik.core.blockAccessor import BlockAccessor
 import h5py
 
 import traceback
@@ -240,7 +241,7 @@ class FeatureThread(ThreadBase):
 
     def computeNumberOfJobs(self):
         for image in self.dataMgr:
-            blockA = dataMgr.BlockAccessor(image.module["Classification"]["featureM"],64)
+            blockA = BlockAccessor(image.module["Classification"]["featureM"],64)
             self.jobs += image._dataVol._data.shape[0] * len(self.featureMgr.featureItems) * blockA._blockCount
 
     def calcFeature(self, image, featureBlockAccessor, offset, size, feature, blockNum):
@@ -279,7 +280,7 @@ class FeatureThread(ThreadBase):
     def run(self):
         jobs = []
         for image in self.items:
-            featureBlockAccessor = dataMgr.BlockAccessor(image.module["Classification"]["featureM"],64)
+            featureBlockAccessor = BlockAccessor(image.module["Classification"]["featureM"],64)
             for blockNum in range(featureBlockAccessor._blockCount):
                 for i, feature in enumerate(self.featureMgr.featureItems):
                     job = jobMachine.IlastikJob(FeatureThread.calcFeature, [self, image, featureBlockAccessor, self.featureMgr.featureOffsets[i], self.featureMgr.featureSizes[i], feature, blockNum])

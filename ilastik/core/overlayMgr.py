@@ -41,7 +41,6 @@ still i decided to put them here in the core part!?!
 
 """
 
-
 from ilastik.core.volume import DataAccessor
 
 from ilastikdeps.core.overlayMgr import OverlaySlice, OverlayItemReference, OverlayItem
@@ -124,7 +123,6 @@ class OverlayMgr():
                 return True
         return False
             
-    
     def keys(self):
         return self._dict.keys()
     
@@ -142,7 +140,6 @@ class OverlayMgr():
                 #print "adding to non active image", value.dataItemImage
                 if value.dataItemImage.module[self.dataMgr._currentModuleName] is not None:
                     value.dataItemImage.module[self.dataMgr._currentModuleName].addOverlayRef(value.getRef())
-            
             
     def __getitem__(self,  key):
         #if the requested key does not exist, construct a group corresponding to the key

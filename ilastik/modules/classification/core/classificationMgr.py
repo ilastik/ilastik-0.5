@@ -55,7 +55,7 @@ from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
 import classifiers.classifierRandomForest as defaultRF
-from ilastik.core.dataMgr import BlockAccessor
+from ilastik.core.blockAccessor import BlockAccessor
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 
 import featureMgr

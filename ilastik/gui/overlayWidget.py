@@ -149,7 +149,7 @@ class OverlayListWidget(QListWidget):
             return None
 
     def addOverlayRef(self, overlayRef):
-        #this dirty hack allows to keep the user interaction layer (labels, seeds, ect) on top
+        #this dirty hack allows to keep the user interaction layer (labels, seeds, etc.) on top
         if self.count()>1:
             self.insertItem(1,OverlayListWidgetItem(overlayRef))
         else:

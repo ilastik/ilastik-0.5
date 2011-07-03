@@ -71,7 +71,6 @@ class Project(object):
         self.trainingLabels = None
         self.trainingFeatureNames = None
         
- 
     def saveToDisk(self, fileName = None):
         """ Save the whole project including data, features, labels and settings to 
         and hdf5 file with ending ilp """
@@ -109,7 +108,6 @@ class Project(object):
     @staticmethod
     def loadFromDisk(fileName, featureCache):
         fileHandle = h5py.File(fileName,'r')
-        # p = pickle.load(fileHandle)
         
         # extract basic project settings
         projectG = fileHandle['Project']
@@ -122,7 +120,6 @@ class Project(object):
         n = len(dataG)
         
         dataMgr = dataMgrModule.DataMgr.deserialize(projectG, dataG)
-
         
         project = Project( name, labeler, description, dataMgr)
         project.filename = fileName
@@ -132,7 +129,6 @@ class Project(object):
         
     def loadStack(self, path, fileList, options):
         #TODO: maybe get rid of path later on
-        
         try:
             theDataItem = dataImpex.DataImpex.importDataItem(fileList, options)
         except MemoryError:
@@ -184,4 +180,3 @@ class Project(object):
     
     def removeFile(self, fileIndex):
         self.dataMgr.remove(fileIndex)
-        
