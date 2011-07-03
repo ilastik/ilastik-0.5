@@ -448,7 +448,6 @@ class MainWindow(QMainWindow):
 
     def createImageWindows(self, dataVol):
         gc.collect()
-        print "MainWindow.createImageWindows: ", dataVol.shape
         from volumeeditor.helper import ViewManager
         vm = ViewManager(dataVol[0,:,:,:,0])
         self.labelWidget = ve.VolumeEditor(dataVol.shape, self,  sharedOpenglWidget = self.sharedOpenGLWidget, viewManager=vm)

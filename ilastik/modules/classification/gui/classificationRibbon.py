@@ -44,19 +44,23 @@ class ClassificationTab(IlastikTabBase, QWidget):
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
         overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
-        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
-        
-        ov = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
-        
-        overlayWidget.addOverlayRef(ov.getRef())
+        #initial overlays: raw data and labels
+        labelOverlay = self.ilastik._activeImage.overlayMgr["Classification/Labels"]
+        overlayWidget.addOverlayRef(labelOverlay.getRef())
         overlayWidget.addOverlayRef(raw.getRef())
+        self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
                 
         #set the label widget
         #in which the user can modify the classes present in his problem
         #and switch between them
-        l = LabelListWidget(self.ilastik.project.dataMgr.module["Classification"].labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov)
+        l = LabelListWidget(self.ilastik.project.dataMgr.module["Classification"].labelMgr,\
+                            self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],\
+                            self.ilastik.labelWidget,\
+                            labelOverlay)
         self.ilastik.labelWidget.customContextMenuRequested.connect(l.onImageSceneContext)
         self.ilastik.labelWidget.setLabelWidget(l)
+        
+        self.ilastik.labelWidget.drawManager.drawOnto = labelOverlay
         
     def on_deActivation(self):
         if self.ilastik.project is None:
