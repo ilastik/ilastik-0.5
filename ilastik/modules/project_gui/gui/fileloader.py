@@ -39,6 +39,7 @@ with warnings.catch_warnings():
 import ilastik.gui
 
 from ilastik.gui import loadOptionsWidget
+from ilastik.gui.previewTable import PreviewTable
 from ilastik.core import loadOptionsMgr
 
 #*******************************************************************************
@@ -281,7 +282,7 @@ class FileLoader(QDialog):
                 self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotPreviewFiles(self):
-        self.fileTableWidget = loadOptionsWidget.previewTable(self.fileList)
+        self.fileTableWidget = PreviewTable(self.fileList)
         self.fileTableWidget.exec_()
                 
     def slotLoad(self):

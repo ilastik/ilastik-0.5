@@ -281,58 +281,6 @@ class LoadOptionsWidget(QWidget):
             self.sizeY.setValue(0)
 
 #*******************************************************************************
-# p r e v i e w T a b l e                                                      *
-#*******************************************************************************
-
-class previewTable(QDialog):
-    def __init__(self, fileList, parent=None, newProject = True):
-        QWidget.__init__(self, parent)
-        self.setWindowTitle("Preview")
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        self.fileList = fileList
-        self.fileListTable = QTableWidget()
-        self.fillFileTable()        
-        self.fileListTable.setHorizontalHeaderLabels(["channel 1", "channel 2", "channel 3"])
-        self.fileListTable.resizeRowsToContents()
-        self.fileListTable.resizeColumnsToContents()
-        self.layout.addWidget(self.fileListTable)
-
-    def fillFileTable(self):
-        if (len(self.fileList)==0):
-            self.fileListTable.setRowCount(1)
-            self.fileListTable.setColumnCount(3)
-            self.fileListTable.setItem(0, 0, QTableWidgetItem(QString("file1")))
-            self.fileListTable.setItem(0, 1, QTableWidgetItem(QString("file2")))
-            self.fileListTable.setItem(0, 2, QTableWidgetItem(QString("file3")))
-            return
-        nfiles = len(self.fileList[0])
-        self.fileListTable.setRowCount(nfiles)
-        self.fileListTable.setColumnCount(len(self.fileList))
-        #it's so ugly... but i don't know how to fill a whole column by list slicing
-        if (len(self.fileList)==1):
-            #single channel data
-            self.fileListTable.setRowCount(len(self.fileList[0]))
-            self.fileListTable.setColumnCount(1)       
-            for i in range(0, len(self.fileList[0])):
-                filename = os.path.basename(self.fileList[0][i])
-                self.fileListTable.setItem(i, 0, QTableWidgetItem(QString(filename)))
-        if (len(self.fileList)==3):
-            #multichannel data
-            nfiles = max([len(self.fileList[0]), len(self.fileList[1]), len(self.fileList[2])])
-            self.fileListTable.setRowCount(nfiles)
-            self.fileListTable.setColumnCount(3)
-            for i in range(0, len(self.fileList[0])):
-                filename = os.path.basename(self.fileList[0][i])
-                self.fileListTable.setItem(i, 0, QTableWidgetItem(QString(filename)))
-            for i in range(0, len(self.fileList[1])):
-                filename = os.path.basename(self.fileList[1][i])
-                self.fileListTable.setItem(i, 1, QTableWidgetItem(QString(filename)))
-            for i in range(0, len(self.fileList[2])):
-                filename = os.path.basename(self.fileList[2][i])
-                self.fileListTable.setItem(i, 2, QTableWidgetItem(QString(filename)))
-
-#*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
 

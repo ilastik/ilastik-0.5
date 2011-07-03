@@ -37,6 +37,7 @@ import os
 import ilastik.gui
 
 from ilastik.gui import loadOptionsWidget
+from ilastik.gui.previewTable import PreviewTable
 from ilastik.core import loadOptionsMgr
 
 #*******************************************************************************
@@ -121,12 +122,7 @@ class StackLoader(QDialog):
         self.image = None
 
     def toggleMultiChannel(self, int):
-        if self.multiChannel.checkState() == 0:
-            self.multiChannelFrame.setVisible(False)
-        else:
-            self.multiChannelFrame.setVisible(True)
-
-
+        self.multiChannelFrame.setVisible(self.multiChannel.checkState())
 
     def pathChanged(self, text):
         self.fileList = []
@@ -170,38 +166,28 @@ class StackLoader(QDialog):
         #which is a problem on Windows, as we don't use QDir to open dirs
         self.path.setText(str(QDir.convertSeparators(tempname)))
         
-
     def slotPreviewFiles(self):
-        self.fileTableWidget = loadOptionsWidget.previewTable(self.fileList)
+        self.fileTableWidget = PreviewTable(self.fileList)
         self.fileTableWidget.exec_()
 
     def slotLoad(self):
         self.optionsWidget.fillOptions(self.options)
         self.accept()
 
-            
     def exec_(self):
         if QDialog.exec_(self) == QDialog.Accepted:
             return  str(self.path.text()), self.fileList, self.options
         else:
             return None, None, None
        
-def test():
-    """Text editor demo"""
-    #from spyderlib.utils.qthelpers import qapplication
-    app = QApplication([""])
-    
-    dialog = StackLoader()
-    print dialog.show()
-    app.exec_()
-
-
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
 
 if __name__ == "__main__":
-    test()
-
-
-
+    import sys
+    app = QApplication(sys.argv)
+    
+    dialog = StackLoader()
+    dialog.show()
+    app.exec_()
