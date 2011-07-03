@@ -35,9 +35,11 @@ from PyQt4.QtGui import QAbstractItemView, QAction, QActionGroup, QColor,\
                         QVBoxLayout
 
 from ilastik.gui.baseLabelWidget import BaseLabelWidget
-import numpy
-        
 from ilastik.gui.iconMgr import ilastikIcons
+
+import numpy, copy
+from functools import partial
+        
 
 #*******************************************************************************
 # L a b e l L i s t I t e m                                                    *
@@ -98,9 +100,9 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
         self.listWidget.setSelectionMode(QAbstractItemView.SingleSelection)
         self.initFromVolumeLabelDescriptions(volumeLabelDescriptions)
     
-    def onImageSceneContext(self, imageScene, pos):
+    def onImageSceneContext(self, pos):
         menu = QMenu('Labeling menu', self)
-       
+        
         labelList = []
         
         volumeLabel = self.volumeEditor.labelWidget.volumeLabelDescriptions
@@ -119,22 +121,18 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
             icon = QIcon(pixmap)
             
             act = QAction(icon, labelName, menu)
-            i = imageScene.labelWidget.listWidget.model().index(labelIndex-1,0)
-            # print self.volumeEditor.labelView.selectionModel()
-            act.triggered.connect(lambda i=i: imageScene.onContextSetLabel(i))
+            i = self.listWidget.model().index(labelIndex-1,0)
             labelList.append(menu.addAction(act))
-            
-        if imageScene.drawManager.erasing is False:
+        
+        eraseAct = None    
+        if self.volumeEditor.drawManager.erasing:
             eraseAct = QAction("Enable eraser", menu)
-            menu.addAction(eraseAct)
-            eraseAct.triggered.connect(lambda: imageScene.drawManager.toggleErase())
         else:
             eraseAct = QAction("Disable eraser", menu)
-            menu.addAction(eraseAct)
-            eraseAct.triggered.connect(lambda: imageScene.drawManager.toggleErase())
-            
+        menu.addAction(eraseAct)
+        eraseAct.triggered.connect(lambda: self.volumeEditor.drawManager.toggleErase())
+        
         menu.addSeparator()
-        # brushM = labeling.addMenu("Brush size")
         brushGroup = QActionGroup(self)
 
         act = menu.addAction("Brush Sizes")
@@ -143,17 +141,17 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
         act.setFont(font)
         menu.addSeparator()
         
-        defaultBrushSizes = [(1, ""), (3, " Tiny"),(5, " Small"),(7, " Medium"),(11, " Large"),(23, " Huge"),(31, " Megahuge"),(61, " Gigahuge")]
-        brush = []
-        for ind, bSizes in enumerate(defaultBrushSizes):
-            b = bSizes[0]
-            desc = bSizes[1]
-            act = QAction("  " + str(b) + desc, brushGroup)
+        defaultBrushSizes = [(1, ""), (3, " Tiny"), (5, " Small"), (7, " Medium"), (11, " Large"), \
+                             (23, " Huge"), (31, " Megahuge"), (61, " Gigahuge")]
+        for brushSize, desc in defaultBrushSizes:
+            act = QAction("  %d %s" % (brushSize, desc), brushGroup)
             act.setCheckable(True)
-            act.triggered.connect(lambda b=b: imageScene.drawManager.setBrushSize(b))
-            if b == imageScene.drawManager.getBrushSize():
-                act.setChecked(True)
-            brush.append(menu.addAction(act))
+            #see here for the suggestion to use partial
+            #http://stackoverflow.com/questions/6084331/pyqt-creating-buttons-from-dictionary
+            #why does a lambda not work here?
+            act.triggered.connect(partial(self.volumeEditor.drawManager.setBrushSize, brushSize))
+            act.setChecked(brushSize == self.volumeEditor.drawManager.getBrushSize())
+            menu.addAction(act)
         
         action = menu.exec_(QCursor.pos())
         

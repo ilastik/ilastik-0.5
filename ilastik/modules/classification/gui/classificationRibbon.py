@@ -55,8 +55,9 @@ class ClassificationTab(IlastikTabBase, QWidget):
         #in which the user can modify the classes present in his problem
         #and switch between them
         l = LabelListWidget(self.ilastik.project.dataMgr.module["Classification"].labelMgr,  self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"],  self.ilastik.labelWidget,  ov)
-        self.ilastik.labelWidget.customContextMenuRequested.connect(l.onContext)
+        self.ilastik.labelWidget.customContextMenuRequested.connect(l.onImageSceneContext)
         self.ilastik.labelWidget.setLabelWidget(l)
+        
     def on_deActivation(self):
         if self.ilastik.project is None:
             return
