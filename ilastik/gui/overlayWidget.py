@@ -60,7 +60,7 @@ class OverlayListWidgetItem(QListWidgetItem):
     def __getattr__(self,  name):
         if name == "color":
             return self.overlayItemReference.color
-        raise AttributeError,  name
+        raise AttributeError, name
 
 #*******************************************************************************
 # Q A l p h a S l i d e r D i a l o g                                          *
@@ -85,15 +85,15 @@ class OverlayListWidget(QListWidget):
         self.volumeEditor = volumeEditor
         self.overlayWidget = overlayWidget
         self.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.connect(self, SIGNAL("customContextMenuRequested(QPoint)"), self.onContext)
-        self.connect(self, SIGNAL("clicked(QModelIndex)"), self.onItemClick)
-        self.connect(self, SIGNAL("doubleClicked(QModelIndex)"), self.onItemDoubleClick)
+        self.customContextMenuRequested.connect(self.onContext)
+        self.clicked.connect(self.onItemClick)
+        self.doubleClicked.connect(self.onItemDoubleClick)
         self.currentItem = None
         #add the overlays to the gui
         for overlay in self.overlayWidget.overlays:
             if overlay.overlayItem != None:
                 self.addItem(OverlayListWidgetItem(overlay))
-            #dont forget to remove overlayreferences whose base overlayItem has been deleted from somewhere else by now:
+            #don't forget to remove overlay references whose base overlayItem has been deleted from somewhere else by now:
             else:
                 self.overlayWidget.overlays.remove(overlay)
 
@@ -113,21 +113,14 @@ class OverlayListWidget(QListWidget):
         self.currentItem = item = self.itemFromIndex(itemIndex)
         if item.checkState() == 2:
             dialog = QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
-            dialog.slider.connect(dialog.slider, SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
+            dialog.slider.valueChanged.connect(self.setCurrentItemAlpha)
             dialog.exec_()
         else:
             self.onItemClick(itemIndex)
-    
-    
-    
             
     def setCurrentItemAlpha(self, num):
         self.currentItem.overlayItemReference.alpha = 1.0 * num / 20.0
         self.volumeEditor.repaint()
-        
-#    def clearOverlays(self):
-#        self.clear()
-#        self.overlayWidget.overlays = []
 
     def moveUp(self, row):
         item = self.takeItem(row)
@@ -181,7 +174,7 @@ class OverlayListWidget(QListWidget):
             
         if item.overlayItemReference.colorTable is None:
             colorAction = menu.addAction("Change Color")
-            if item.overlayItemReference.linkColor is True:
+            if item.overlayItemReference.linkColor:
                 colorAction.setEnabled(False)
             if item.overlayItemReference.autoAlphaChannel:
                 alphaChannelAction = menu.addAction("Disable intensity blending")
@@ -217,17 +210,10 @@ class OverlayListWidget(QListWidget):
             smooth     = item.overlayItemReference.overlayItem.smooth3D
             vol        = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
             colorTable = item.overlayItemReference.colorTable
-            
             print "  - will not extract the following labels:", suppress
             print "  - volume to show has shape", vol.shape, "and dtype =", vol.dtype
-            #print "  - color table"
-            #for i, c in enumerate(colorTable):
-                #c = QColor.fromRgba(c)
-                #print "    %03d.) (%03d, %03d, %03d)" % (i, c.red(), c.green(), c.blue())
-            
             self.volumeEditor.overview.SetColorTable(colorTable)
-            self.volumeEditor.overview.DisplayObjectMeshes(vol, suppress, smooth)
-            
+            self.volumeEditor.overview.DisplayObjectMeshes(vol, suppress, smooth) 
         elif action == colorAction:
             color = QColorDialog().getColor()
             item.overlayItemReference.colorTable = None
@@ -244,8 +230,7 @@ class OverlayListWidget(QListWidget):
             self.currentItem = item
             dialog = OverlayListWidget.QAlphaSliderDialog(1, 20, round(item.overlayItemReference.alpha*20))
             dialog.slider.connect(dialog.slider, SIGNAL('valueChanged(int)'), self.setCurrentItemAlpha)
-            dialog.exec_()
-            
+            dialog.exec_()  
         elif action == exportAction:
             timeOffset = item.overlayItemReference._data.shape[0]>1
             sliceOffset = item.overlayItemReference._data.shape[1]>1
@@ -273,14 +258,12 @@ class OverlayListWidget(QListWidget):
             if item.overlayItemReference.overlayItem == overlayItem:
                 item.setText(newName)
 
-
     def getLabelNames(self):
         labelNames = []
         for idx, it in enumerate(self.descriptions):
             labelNames.append(it.name)
         return labelNames
        
-      
     def toggleVisible(self,  item):
         state = not(item.overlayItemReference.visible)
         item.overlayItemReference.visible = state
@@ -302,8 +285,6 @@ class OverlayListWidget(QListWidget):
             else:
                 item.overlayItemReference.decChannel()
             self.volumeEditor.repaint()
-        
-
 
 #*******************************************************************************
 # O v e r l a y W i d g e t                                                    *
@@ -359,8 +340,6 @@ class OverlayWidget(QGroupBox):
         overlayListLayout.addLayout(upDownLayout)
         
         addRemoveCreateLayout = QHBoxLayout()
-        #addRemoveCreateLayout.setMargin(0)
-        #addRemoveCreateLayout.setSpacing(5)
        
         self.buttonAdd = QToolButton()
         self.buttonAdd.setToolTip("Add an already existing overlay to this view")
@@ -401,7 +380,6 @@ class OverlayWidget(QGroupBox):
         self.buttonUp.setEnabled(newRow != 0)
         self.buttonDown.setEnabled(newRow != self.overlayListWidget.count()-1)
         
-    
     def buttonUpClicked(self):
         number = self.overlayListWidget.currentRow()
         if number > 0:
@@ -417,8 +395,7 @@ class OverlayWidget(QGroupBox):
             item = self.overlays.pop(number)
             self.overlays.insert(number+1, item)
             self.overlayListWidget.volumeEditor.repaint()    
-        
-        
+            
     def buttonCreateClicked(self):
         dlg = OverlayCreateSelectionDlg(self.volumeEditor.ilastik)
         answer = dlg.exec_()
@@ -430,7 +407,6 @@ class OverlayWidget(QGroupBox):
                 name = str(name[0])
                 self.volumeEditor.ilastik.project.dataMgr[self.volumeEditor.ilastik._activeImageNumber].overlayMgr[name] = answer
                 self.volumeEditor.repaint()
-        
         
     def buttonAddClicked(self):
         dlg = OverlaySelectionDialog(self.volumeEditor.ilastik,  singleSelection = False)
