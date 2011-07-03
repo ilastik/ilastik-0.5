@@ -119,7 +119,7 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
             icon = QIcon(pixmap)
             
             act = QAction(icon, labelName, menu)
-            i = imageScene.volumeEditor.labelWidget.listWidget.model().index(labelIndex-1,0)
+            i = imageScene.labelWidget.listWidget.model().index(labelIndex-1,0)
             # print self.volumeEditor.labelView.selectionModel()
             act.triggered.connect(lambda i=i: imageScene.onContextSetLabel(i))
             labelList.append(menu.addAction(act))
