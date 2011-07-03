@@ -1,5 +1,3 @@
-from ilastik.core.overlayMgr import OverlayReferenceMgr
-
 from PyQt4.QtCore import QObject
 
 #*******************************************************************************
@@ -55,7 +53,7 @@ class BaseModuleDataItemMgr(PropertyMgr, QObject):
         self.dataItem = dataItemImage        
         PropertyMgr.__init__(self, dataItemImage)
         QObject.__init__(self)
-        self.overlayReferences = OverlayReferenceMgr()
+        self.overlayReferences = []
         self.globalMgr = None
         
     def onModuleStart(self):

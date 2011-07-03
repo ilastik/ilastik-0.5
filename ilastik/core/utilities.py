@@ -31,8 +31,7 @@ def irange(sequence):
     return zip(xrange(len(sequence)), sequence)
  
 def debug(*args):
-    if True:
-        print args
+    print args
         
 def irangeIfTrue(sequence):
     res = []

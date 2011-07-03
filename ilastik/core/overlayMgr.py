@@ -46,14 +46,6 @@ from ilastik.core.volume import DataAccessor
 from ilastikdeps.core.overlayMgr import OverlaySlice, OverlayItemReference, OverlayItem
 
 #*******************************************************************************
-# O v e r l a y R e f e r e n c e M g r                                        *
-#*******************************************************************************
-
-class OverlayReferenceMgr(list):
-    def __init__(self):
-        list.__init__(self)
-
-#*******************************************************************************
 # O v e r l a y M g r                                                          *
 #*******************************************************************************
 
