@@ -73,15 +73,6 @@ class LoadOptionsWidget(QWidget):
         tempLayout.addWidget(QLabel("Z"))
         tempLayout.addWidget( self.offsetZ)
         tempLayoutRight.addLayout(tempLayout)
-        #self.layout.addLayout(tempLayout)
-        #tempForm.addRow(QLabel("From:"), tempLayout)
-#        tempGrid.addWidget(QLabel("From:"), 0, 0)
-#        tempGrid.addWidget(QLabel("X"), 0, 1)
-#        tempGrid.addWidget(self.offsetX, 0, 2)
-#        tempGrid.addWidget(QLabel("Y"), 0, 3)
-#        tempGrid.addWidget(self.offsetY, 0, 4)
-#        tempGrid.addWidget(QLabel("Z"), 0, 5)
-#        tempGrid.addWidget(self.offsetZ, 0, 6)
         
         tempLayout = QHBoxLayout()
         self.sizeX = QSpinBox()
@@ -100,7 +91,6 @@ class LoadOptionsWidget(QWidget):
         tempLayout.addWidget(QLabel("Z"))
         tempLayout.addWidget( self.sizeZ)
         tempLayoutRight.addLayout(tempLayout)
-        #self.layout.addWidget(QLabel("Subvolume End Offsets:"))
         
         tempLayoutLeft = QVBoxLayout()
         tempLayoutLeft.addWidget(QLabel("From:"))
@@ -111,24 +101,11 @@ class LoadOptionsWidget(QWidget):
         tempLayout.addLayout(tempLayoutRight)
         tempLayout.addStretch()
         self.layout.addLayout(tempLayout)
-#        tempForm.addRow(QLabel("To:"), tempLayout)
-#        self.layout.addLayout(tempForm)
-#        tempGrid.addWidget(QLabel("To:"), 1, 0)
-#        x = QLabel("X")
-#        x.setAlignment(Qt.AlignCenter)
-#        tempGrid.addWidget(x, 1, 1)
-#        tempGrid.addWidget(self.sizeX, 1, 2)
-#        tempGrid.addWidget(QLabel("Y"), 1, 3)
-#        tempGrid.addWidget(self.sizeY, 1, 4)
-#        tempGrid.addWidget(QLabel("Z"), 1, 5)
-#        tempGrid.addWidget(self.sizeZ, 1, 6)
-#        self.layout.addLayout(tempGrid)
-        
-        
+
         tempLayout = QHBoxLayout()
         self.resCheck = QCheckBox("Data with varying resolution:")
         
-        # TODO: renable this as soon its impemented
+        # TODO: re-enable this as soon its implemented
         self.resCheck.setVisible(False)
         
         self.connect(self.resCheck, SIGNAL("stateChanged(int)"), self.toggleResolution)
@@ -174,7 +151,6 @@ class LoadOptionsWidget(QWidget):
         tempLayout.addWidget(self.normalize)
         self.layout.addLayout(tempLayout) 
 
-
         tempLayout = QHBoxLayout()
         self.downsample = QCheckBox("Downsample Subvolume to Size:")
         self.connect(self.downsample, SIGNAL("stateChanged(int)"), self.toggleDownsample)      
@@ -195,7 +171,6 @@ class LoadOptionsWidget(QWidget):
         self.downsampleFrame.setLayout(tempLayout)
         self.downsampleFrame.setVisible(False)
         self.layout.addWidget(self.downsampleFrame)
-    
         
         tempLayout = QHBoxLayout()
         self.alsoSave = QCheckBox("also save to Destination File:")
@@ -213,7 +188,6 @@ class LoadOptionsWidget(QWidget):
         self.alsoSaveFrame.setLayout(tempLayout)
         self.alsoSaveFrame.setVisible(False)
         self.layout.addWidget(self.alsoSaveFrame)
-
 
     def toggleAlsoSave(self, int):
         if self.alsoSave.checkState() == 0:
@@ -241,7 +215,6 @@ class LoadOptionsWidget(QWidget):
         except Exception as e:
             self.resolution = [1,1,1]
 
-
     def off2Changed(self):
         try:
             if self.offsetX.value() >= self.sizeX.value():
@@ -253,7 +226,6 @@ class LoadOptionsWidget(QWidget):
         except Exception as e:
             pass
 
-
     def off1Changed(self):
         try:
             if self.offsetX.value() >= self.sizeX.value():
@@ -264,8 +236,6 @@ class LoadOptionsWidget(QWidget):
                 self.sizeZ.setValue(self.offsetZ.value()+1)               
         except Exception as e:
             pass
-
-
 
     def slotFile(self):
         filename= QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
@@ -361,3 +331,19 @@ class previewTable(QDialog):
             for i in range(0, len(self.fileList[2])):
                 filename = os.path.basename(self.fileList[2][i])
                 self.fileListTable.setItem(i, 2, QTableWidgetItem(QString(filename)))
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
+if __name__ == "__main__":
+    import sys
+    from PyQt4.QtGui import QApplication
+
+    #make the program quit on Ctrl+C
+    import signal; signal.signal(signal.SIGINT, signal.SIG_DFL)
+    
+    app = QApplication(sys.argv)
+    l = LoadOptionsWidget()
+    l.show()
+    app.exec_()
