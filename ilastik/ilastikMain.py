@@ -53,7 +53,6 @@ print "Using numpy version %s ... ok" % (numpy.__version__)
 from OpenGL.GL import *
 try:
     from OpenGL.GLX import *
-#    XInitThreads()
 except:
     pass
 
@@ -64,7 +63,7 @@ import platform
 
 from PyQt4 import QtCore, QtOpenGL, QtGui
 
-app = QApplication(sys.argv) #(sys.argv
+app = QApplication(sys.argv)
 
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
@@ -75,22 +74,14 @@ import ilastik.modules
 #load core functionality
 ilastik.modules.loadModuleCores()
 
-#from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
-#import ilastik.gui
-#from ilastik.core import projectMgr, activeLearning
-
 from ilastik.modules.classification.core import featureMgr
 from ilastik.core.randomSeed import RandomSeed 
-
-#from ilastik.core import connectedComponentsMgr
-#from ilastik.core import projectMgr
 
 import volumeeditor as ve
 from ilastik.core.dataImpex import DataImpex
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
-#import ilastik.gui.ribbons.standardRibbons
 
 import threading
 import warnings
@@ -98,8 +89,6 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 import getopt
-
-
 
 # Please no import *
 from ilastik.gui.shortcutmanager import shortcutManager
@@ -179,7 +168,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
         self.setWindowIcon(QIcon(ilastikIcons.Ilastik))
 
-        self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
+        self.activeImageLock = threading.Semaphore(1) #prevent changing of _activeImageNumber during thread stuff
 
         self.previousTabText = ""
 
@@ -244,7 +233,7 @@ class MainWindow(QMainWindow):
             # print help information and exit:
             print str(err) # will print something like "option -a not recognized"
 
-        if self.opengl == None:   #no command line option for opengl was given, ask user interactively
+        if self.opengl == None:   #no command line option for openGL was given, ask user interactively
             dlg = RenderChoiceDialog()
             dlg.exec_()
 
@@ -362,7 +351,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.fileSelectorList)
         widget.setLayout(layout)
         self.ribbonToolbar.addWidget(widget)
-        #self.ribbonToolbar.addWidget(self.fileSelectorList)
         self.fileSelectorList.connect(self.fileSelectorList, SIGNAL("currentIndexChanged(int)"), self.changeImage)
 
         self.ribbon.setCurrentIndex (0)
@@ -545,7 +533,6 @@ if __name__ == "__main__":
         del mainwindow.labelWidget
     del mainwindow
     del randomseed
-
 
     del ilastik.core.jobMachine.GLOBAL_WM
 
