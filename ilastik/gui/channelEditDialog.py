@@ -36,8 +36,8 @@ from PyQt4.QtGui import QDialog, QGroupBox, QHBoxLayout, QListWidget,\
 #*******************************************************************************
 
 class EditChannelsDialog(QDialog):
-    def __init__(self, selectedChannels, numOfChannels, parent):
-        QWidget.__init__(self, parent=None)
+    def __init__(self, selectedChannels, numOfChannels, parent=None):
+        QWidget.__init__(self, parent)
         self.setWindowTitle("Edit Channels")
         
         self.selectedChannels = selectedChannels
@@ -74,11 +74,8 @@ class EditChannelsDialog(QDialog):
         confirmButtons.addWidget(self.okay)
         confirmButtons.addWidget(self.cancel)
         
-        
         self.mainLayout.addLayout(confirmButtons)
-        
         self.setLayout(self.mainLayout)
-        
         
     def exec_(self):
         if QDialog.exec_(self) == QDialog.Accepted:
@@ -91,3 +88,17 @@ class EditChannelsDialog(QDialog):
             return result
         else:
             return None
+
+#*******************************************************************************
+# i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
+#*******************************************************************************
+
+if __name__ == "__main__":
+    #make the program quit on Ctrl+C
+    import signal; signal.signal(signal.SIGINT, signal.SIG_DFL)
+    from PyQt4.QtGui import QApplication
+    import sys
+    
+    app = QApplication(sys.argv)
+    e = EditChannelsDialog([2,3,4],10)
+    e.exec_()
