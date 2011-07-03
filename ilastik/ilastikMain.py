@@ -38,6 +38,13 @@ from PyQt4.QtOpenGL import QGLWidget
 
 from volumeeditor.viewManager import ViewManager
 
+import traceback
+def fixme():
+    #returns a string with the filename and line number of the caller
+    #together with a 'FIXME' notice
+    top = traceback.extract_stack()[-2]
+    return "FIXME [%s:%d]" % (os.path.basename(top[0]), top[1])
+
 import vigra
 vigraVersion = vigra.version.split('.')
 if int(vigraVersion[0]) < 1 or int(vigraVersion[1]) < 8 or int(vigraVersion[2]) < 0:
@@ -364,7 +371,8 @@ class MainWindow(QMainWindow):
                 enabled = True
             self.ribbon.setTabEnabled(i, enabled)
         if self.labelWidget is not None:
-            self.labelWidget.labelWidget.setEnabled(not state)
+            print fixme(), "self.labelWidget.labelWidget.setEnabled"
+            #self.labelWidget.labelWidget.setEnabled(not state)
 
     def tabChanged(self,  index):
         """

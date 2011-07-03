@@ -41,8 +41,6 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         overlayWidget.setVisible(False)
         
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
-        
-        self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
     
     def on_deActivation(self):
         pass

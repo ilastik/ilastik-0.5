@@ -40,7 +40,6 @@ from ilastik.gui.iconMgr import ilastikIcons
 import numpy, copy
 from functools import partial
         
-
 #*******************************************************************************
 # L a b e l L i s t I t e m                                                    *
 #*******************************************************************************
@@ -70,6 +69,9 @@ class LabelListItem(QListWidgetItem):
 
 class LabelListWidget(BaseLabelWidget,  QGroupBox):
     itemSelectionChanged = pyqtSignal()
+    labelColorTable = [QColor(Qt.red), QColor(Qt.green), QColor(Qt.yellow), \
+                       QColor(Qt.blue), QColor(Qt.magenta), \
+                       QColor(Qt.darkYellow), QColor(Qt.lightGray)]
     
     def __init__(self,  labelMgr,  volumeLabelDescriptions, volumeEditor,  overlayItem):
         QGroupBox.__init__(self, "Labels")
@@ -92,10 +94,9 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
         self.listWidget.customContextMenuRequested.connect(self.onContext)
         self.colorTab = []
         self.items = []
-        self.labelColorTable = [QColor(Qt.red), QColor(Qt.green), QColor(Qt.yellow), QColor(Qt.blue), QColor(Qt.magenta) , QColor(Qt.darkYellow), QColor(Qt.lightGray)]
-        #self.connect(self, SIGNAL("currentTextChanged(QString)"), self.changeText)
-        
-        self.listWidget.itemSelectionChanged.connect(self.changeLabel)
+        def onLabelChange():
+            self.itemSelectionChanged.emit()
+        self.listWidget.itemSelectionChanged.connect(onLabelChange)
         self.labelPropertiesChanged_callback = None
         self.listWidget.setSelectionMode(QAbstractItemView.SingleSelection)
         self.initFromVolumeLabelDescriptions(volumeLabelDescriptions)
@@ -109,7 +110,7 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
 
         act = menu.addAction("Labels")
         act.setEnabled(False)
-        font = QFont( "Helvetica", 10, QFont.Bold, True)
+        font = QFont("Helvetica", 10, QFont.Bold, True)
         act.setFont(font)
         
         for index, item in enumerate(volumeLabel):
@@ -137,7 +138,7 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
 
         act = menu.addAction("Brush Sizes")
         act.setEnabled(False)
-        font = QFont( "Helvetica", 10, QFont.Bold, True)
+        font = QFont("Helvetica", 10, QFont.Bold, True)
         act.setFont(font)
         menu.addSeparator()
         
@@ -157,6 +158,9 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
         
     def currentItem(self):
         return self.listWidget.currentItem()
+    
+    def currentIndex(self):
+        return self.listWidget.row(self.listWidget.currentItem())
     
     def initFromVolumeLabelDescriptions(self, volumeLabelDescriptions):
         self.volumeLabelDescriptions = volumeLabelDescriptions
@@ -217,7 +221,6 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
 
     def onContext(self, pos):
         index = self.listWidget.indexAt(pos)
-
         if not index.isValid():
             return
 
@@ -227,9 +230,9 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
         menu = QMenu(self)
 
         removeAction = menu.addAction("Remove")
-        colorAction = menu.addAction("Change Color")
+        colorAction  = menu.addAction("Change Color")
         renameAction = menu.addAction("Change Name")
-        clearAction = menu.addAction("Clear Label")
+        clearAction  = menu.addAction("Clear Label")
 
         action = menu.exec_(QCursor.pos())
         if action == removeAction:
@@ -240,12 +243,10 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
             if ok:
                 item.setText(newName)
                 result = self.labelMgr.changeLabelName(index.row(),str(newName))
-                #print result
         elif action == clearAction:
             if QMessageBox.question(self, "Clear label", "Really clear label" + self.volumeLabelDescriptions[index.row()].name + "?", buttons = QMessageBox.Cancel | QMessageBox.Ok)  != QMessageBox.Cancel:
                 number = self.volumeLabelDescriptions[index.row()].number
-                self.labelMgr.clearLabel(number)                
-            
+                self.labelMgr.clearLabel(number)                 
         elif action == colorAction:
             color = QColorDialog().getColor()
             item.setColor(color)
@@ -271,11 +272,6 @@ class LabelListWidget(BaseLabelWidget,  QGroupBox):
         else:
             i = self.listWidget.model().index(self.listWidget.model().rowCount()-1,0)
         self.listWidget.selectionModel().setCurrentIndex(i, QItemSelectionModel.ClearAndSelect)
-        
-    def changeLabel(self):
-        for i in range(0, len(self.volumeEditor.imageScenes)):
-            self.volumeEditor.imageScenes[i].crossHairCursor.setColor(self.listWidget.currentItem().color)
-        self.itemSelectionChanged.emit()
             
     def ensureLabelOverlayVisible(self):
         if self.volumeEditor.overlayWidget.getOverlayRef(self.overlayItem.key) == None:

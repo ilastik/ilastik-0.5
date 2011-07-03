@@ -59,7 +59,10 @@ class ClassificationTab(IlastikTabBase, QWidget):
                             labelOverlay)
         self.ilastik.labelWidget.customContextMenuRequested.connect(l.onImageSceneContext)
         self.ilastik.labelWidget.setLabelWidget(l)
-        
+        def onLabelChange():
+            #labels start with 1
+            self.ilastik.labelWidget.drawManager.drawnNumber = l.currentIndex()+1
+        l.itemSelectionChanged.connect(onLabelChange)
         self.ilastik.labelWidget.drawManager.drawOnto = labelOverlay
         
     def on_deActivation(self):
