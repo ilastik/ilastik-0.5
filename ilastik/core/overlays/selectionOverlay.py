@@ -1,7 +1,7 @@
 import numpy
 import overlayBase
 import ilastik.core.overlayMgr as overlayMgr
-
+from volumeeditor.overlayItem import OverlayItem
 
 #*******************************************************************************
 # S e l e c t i o n A c c e s s o r                                            *
@@ -41,7 +41,7 @@ class SelectionAccessor(object):
 # S e l e c t i o n O v e r l a y                                              *
 #*******************************************************************************
 
-class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
+class SelectionOverlay(overlayBase.OverlayBase, OverlayItem):
     def __init__(self, inputData, color):
         overlayBase.OverlayBase.__init__(self)
         
@@ -57,7 +57,7 @@ class SelectionOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         
         self.generateColorTab()
         
-        overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, color = self.color, colorTable = self.colorTable, autoAdd = True, autoVisible = True,  linkColorTable = True)        
+        OverlayItem.__init__(self, accessor, alpha = 1.0, color = self.color, colorTable = self.colorTable, autoAdd = True, autoVisible = True,  linkColorTable = True)        
 
     def generateColorTab(self):
         colorTab = []

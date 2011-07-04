@@ -43,7 +43,8 @@ still i decided to put them here in the core part!?!
 
 from ilastik.core.volume import DataAccessor
 
-from ilastikdeps.core.overlayMgr import OverlaySlice, OverlayItemReference, OverlayItem
+from volumeeditor.overlaySlice import OverlaySlice
+from volumeeditor.overlayItem import OverlayItemReference, OverlayItem
 
 #*******************************************************************************
 # O v e r l a y M g r                                                          *
