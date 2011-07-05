@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
+# -*- coding: utf-8 -*-
 #    Copyright 2010, 2011 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
 #    
 #    Redistribution and use in source and binary forms, with or without modification, are
@@ -42,6 +42,7 @@ from ilastik.gui import loadOptionsWidget
 from ilastik.gui.previewTable import PreviewTable
 from ilastik.core import loadOptionsMgr
 
+
 #*******************************************************************************
 # F i l e L o a d e r                                                          *
 #*******************************************************************************
@@ -57,6 +58,9 @@ class FileLoader(QDialog):
         self.fileList = []
         self.options = loadOptionsMgr.loadOptions()
         
+        self.channelPathWidgets = []
+        self.channelButtons = []
+        
         tempLayout = QHBoxLayout()
         self.path = QLineEdit("")
         self.connect(self.path, SIGNAL("textEdited(QString)"), self.pathChanged)
@@ -67,43 +71,15 @@ class FileLoader(QDialog):
         self.layout.addWidget(QLabel("Path to the file:"))
         self.layout.addLayout(tempLayout)
         
-        tempLayout = QHBoxLayout()
-        self.multiChannel = QCheckBox("Load Multichannel data as one image:")
-        self.connect(self.multiChannel, SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
-        tempLayout.addWidget(self.multiChannel)
-        self.layout.addLayout(tempLayout)
-       
         self.multiChannelFrame = QFrame()
+             
         tempLayout = QFormLayout()
-        tempLayout1 = QHBoxLayout()
-        self.redPath = QLineEdit("")
-        self.connect(self.redPath, SIGNAL("textChanged(QString)"), self.redPathChanged)
-        self.redButton = QPushButton("Select")
-        self.connect(self.redButton, SIGNAL('clicked()'), self.slotRedPath)
-        tempLayout1.addWidget(self.redPath)
-        tempLayout1.addWidget(self.redButton)
-        tempLayout.addRow(QLabel("red:"), tempLayout1)
-        
-        tempLayout1 = QHBoxLayout()
-        self.greenPath = QLineEdit("")
-        self.connect(self.greenPath, SIGNAL("textChanged(QString)"), self.greenPathChanged)
-        self.greenButton = QPushButton("Select")
-        self.connect(self.greenButton, SIGNAL('clicked()'), self.slotGreenPath)
-        tempLayout1.addWidget(self.greenPath)
-        tempLayout1.addWidget(self.greenButton)
-        tempLayout.addRow(QLabel("green:"), tempLayout1)
-        
-        tempLayout1 = QHBoxLayout()
-        self.bluePath = QLineEdit("")
-        self.connect(self.bluePath, SIGNAL("textChanged(QString)"), self.bluePathChanged)
-        self.blueButton = QPushButton("Select")
-        self.connect(self.blueButton, SIGNAL('clicked()'), self.slotBluePath)
-        tempLayout1.addWidget(self.bluePath)
-        tempLayout1.addWidget(self.blueButton)
-        tempLayout.addRow(QLabel("blue:"), tempLayout1)
+        self.addChannelButton = QPushButton("  Append more spectral channels")
+        self.connect(self.addChannelButton, SIGNAL('clicked()'), self.slotAddChannel)
+        tempLayout.addRow(QLabel(" "), self.addChannelButton)
         
         self.multiChannelFrame.setLayout(tempLayout)
-        self.multiChannelFrame.setVisible(False)
+
         self.layout.addWidget(self.multiChannelFrame)        
 
         tempLayout = QHBoxLayout()
@@ -149,143 +125,116 @@ class FileLoader(QDialog):
                 m.setText("No advanced options available for the selected type " + fExt)
                 m.exec_()
                 self.optionCheck.setCheckState(False)
-                
-            
-    def toggleMultiChannel(self, int):
-        if self.multiChannel.checkState() == 0:
-            self.multiChannelFrame.setVisible(False)
-            templist = []
-            for item in self.fileList:
-                templist.extend(item)
-            self.updateFileList(templist)
-        else:
-            self.multiChannelFrame.setVisible(True)
-            #this call fills the line edits with channel filenames
-            if (len(self.fileList)>0):
-                templist = self.fileList[0]
-                self.updateFileList(templist)    
         
     def pathChanged(self, text):
         path = str(self.path.text())
         templist = sorted(glob.glob(path), key=str.lower)
-        self.updateFileList(templist)
+        self.updateFileListNew(0, templist)
         
-    def redPathChanged(self, text):
-        path = str(self.redPath.text())
-        if (os.path.isfile(path)):
-            if len(self.fileList) == 0:
-                self.fileList.append([path])
-                self.fileList.append([])
-                self.fileList.append([])
-                self.options.channels.append(0)
-            else:
-                if len(self.fileList[0]) == 0:
-                    self.fileList[0] = [path]
-                    self.options.channels.append(0)
-                else:
-                    self.fileList[0] = [path]
-            if (self.optionCheck.checkState()==1):
-                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
-            
-    def greenPathChanged(self, text):
-        path = str(self.greenPath.text())
-        if (os.path.isfile(path)):
-            if len(self.fileList) == 0:
-                self.fileList.append([])
-                self.fileList.append([])
-                self.fileList.append([])
-            elif len(self.fileList) == 1:
-                self.fileList.append([])
-                self.fileList.append([])
-                
-            if len(self.fileList[1]) == 0:
-                self.fileList[1] = [path]
-                self.options.channels.append(1)
-            else:
-                self.fileList[1] = [path]
-            if (self.optionCheck.checkState()==1):
-                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
-            
-    def bluePathChanged(self, text):
-        path = str(self.bluePath.text())
-        if (os.path.isfile(path)):
-            if len(self.fileList) == 0:
-                self.fileList.append([])
-                self.fileList.append([])
-                self.fileList.append([])
-            elif len(self.fileList) == 1:
-                self.fileList.append([])
-                self.fileList.append([])
-                
-            if len(self.fileList[2]) == 0:
-                self.fileList[2] = [path]
-                self.options.channels.append(2)
-            else:
-                self.fileList[2] = [path]
-            if (self.optionCheck.checkState()==1):
-                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
-                
     def slotDir(self):
-        path = self.path.text()
-        templist1 = QFileDialog.getOpenFileNames(self, "", path)
+        path = ilastik.gui.LAST_DIRECTORY
+        filenames = QFileDialog.getOpenFileNames(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QFileInfo(filenames[0]).path()
+        
         templist = []
-        for item in templist1:
+        for item in filenames:
             templist.append(str(QDir.convertSeparators(item)))
-        self.updateFileList(templist)
+        self.updateFileListNew(0, templist)
         if (len(templist)>0):
             path_to_display = templist[0]
             if (len(templist)>1):
                 path_to_display = path_to_display + " ..."
             self.path.setText(QString(path_to_display))
         
-    def slotRedPath(self):
-        path = ilastik.gui.LAST_DIRECTORY
-        filename = QFileDialog.getOpenFileName(self, "", path)
-        ilastik.gui.LAST_DIRECTORY = QFileInfo(filename).path()
-        self.redPath.setText(filename)
-        #self.redPathChanged(filename)
         
-    def slotGreenPath(self):
-        path = ilastik.gui.LAST_DIRECTORY
-        filename = QFileDialog.getOpenFileName(self, "", path)
-        ilastik.gui.LAST_DIRECTORY = QFileInfo(filename).path()
-        self.greenPath.setText(filename)
-        #self.greenPathChanged(filename)
+    def slotAddChannel(self):
+        
+        newPath = QLineEdit("")
+        self.channelPathWidgets.append(newPath)
+        newButton = QPushButton("Select")
+        self.channelButtons.append(newButton)
+        nch = len(self.channelPathWidgets)
+        label = "%d" % nch      
+        
+        #FEEL THE POWER OF PYTHON
+        receiverPath = lambda callingPath=nch-1: self.channelPathChanged(callingPath)
+        self.connect(self.channelPathWidgets[nch-1], SIGNAL('editingFinished()'), receiverPath)
+        
+        receiverButton = lambda callingButton=nch-1: self.channelButtonClicked(callingButton)
+        self.connect(self.channelButtons[nch-1], SIGNAL('clicked()'), receiverButton)
+        
+        tempLayout = QHBoxLayout()
+        tempLayout.addWidget(newPath)
+        tempLayout.addWidget(newButton)
+        self.multiChannelFrame.layout().addRow(QLabel(label), tempLayout)       
+        
+        if len(self.channelPathWidgets)==1 and len(self.path.text())>0:
+            #this is the first time the button is pressed and there is already something in the path
+            #replicate the first channel from the path and add space for the second one
+            self.channelPathWidgets[nch-1].setText(self.path.text())
+            #the file list has been updated when the path was changed, no need to do it here
+            self.slotAddChannel()
+        else:
+            self.fileList.append([])
     
-    def slotBluePath(self):
+
+    def channelButtonClicked(self, calling):
         path = ilastik.gui.LAST_DIRECTORY
-        filename = QFileDialog.getOpenFileName(self, "",path)
-        ilastik.gui.LAST_DIRECTORY = QFileInfo(filename).path()
-        self.bluePath.setText(filename)
-        #self.bluePathChanged(filename)
+        filenames = QFileDialog.getOpenFileNames(self, "", path)
+        ilastik.gui.LAST_DIRECTORY = QFileInfo(filenames[0]).path()
+
+        templist = []
+        for f in filenames:
+            templist.append(str(QDir.convertSeparators(f)))
+        self.updateFileListNew(calling, templist)
+        newText = filenames[0]
+        if len(filenames)>1:
+            newText = filenames[0]+"..."
+        self.channelPathWidgets[calling].setText(newText)
+        
     
-    def updateFileList(self, templist):
-        self.fileList = []    
-        if (len(templist)>0):
-            if self.multiChannel.checkState() == 0:
-                self.fileList.append(templist)
-                self.options.channels.append(0)
-            else:
-                self.fileList.append([templist[0]])
-                self.redPath.setText(QString(self.fileList[0][0]))
-                self.options.channels.append(0)
-                if len(templist) > 1:
-                    self.fileList.append([templist[1]])
-                    self.greenPath.setText(QString(self.fileList[1][0]))
-                    self.options.channels.append(1)
-                if len(templist) > 2:
-                    self.fileList.append([templist[2]])
-                    self.bluePath.setText(QString(self.fileList[2][0]))
-                    self.options.channels.append(2)
-            #this call fills the shape
-            if (self.optionCheck.checkState()==1):
-                self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
+    def channelPathChanged(self, calling):
+        #is there more than 1 file? Not very probable, but let's check anyway
+        text = self.channelPathWidgets[calling].text()
+        filenames = []
+        if ',' in text:
+            templist = text.split(',')
+            for f in templist:
+                tempname = str(QDir.convertSeparators(f))
+                if os.path.isfile(tempname):
+                    filenames.append(tempname)
+        else:
+            tempname = str(QDir.convertSeparators(text))
+            if os.path.isfile(tempname):
+                filenames.append(tempname)
+        self.updateFileListNew(calling, filenames)
+        
+
+    def updateFileListNew(self, col, filenames):
+        if len(self.fileList)==0:
+            self.fileList.append([])
+        if len(self.fileList)<col+1:
+            print "!!! something went wrong with allocating enough file lists !!!"
+            return
+        self.fileList[col]=filenames
+        #this call fills the shape
+        if (self.optionCheck.checkState()==1):
+            self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotPreviewFiles(self):
         self.fileTableWidget = PreviewTable(self.fileList)
         self.fileTableWidget.exec_()
                 
     def slotLoad(self):
+        #remove unused channels, we don't support loading only green or blue anymore
+        newlist = []
+        for f in self.fileList:
+            if len(f)>0:
+                newlist.append(f)
+        self.fileList = newlist
+        for i in range(len(self.fileList)):
+            self.options.channels.append(i)
+            
         if self.optionCheck.checkState() == 0:
          
             self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
@@ -297,6 +246,11 @@ class FileLoader(QDialog):
             self.optionsWidget.fillOptions(self.options)
         
         self.accept()
-    
+
+    def exec_(self):
+        if QDialog.exec_(self) == QDialog.Accepted:
+            return  self.fileList, self.options
+        else:
+            return None, None    
     
     

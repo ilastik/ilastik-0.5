@@ -1,8 +1,11 @@
+
 import numpy
 import vigra
 import os
 import warnings
 import pickle
+import struct
+import array
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
@@ -13,6 +16,8 @@ from ilastik.core.volume import DataAccessor as DataAccessor
 from ilastik.core.overlayMgr import OverlayItem
 from ilastik.core.overlayAttributes import OverlayAttributes
 from ilastik.core.LOCIwrapper import reader as LOCIreader
+
+import traceback
 
 #*******************************************************************************
 # D a t a I m p e x                                                            *
@@ -65,8 +70,13 @@ class DataImpex(object):
                 for item in range(image.shape[3]):
                     theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[options.channels[0]][item])
                     itemList.append(theDataItem)
+        elif fExt == '.img':
+            #reading an Analyze 7.5 file
+            image = DataImpex.readHdrImgFiles(fBase)
+            theDataItem = DataImpex.initDataItemFromArray(image, fileName)
+            itemList.append(theDataItem)
+        
         else:
-
             for file in fileList:
                 seriesList=LOCIreader(file[0])
                 i=1
@@ -112,7 +122,7 @@ class DataImpex(object):
  
         #remove alpha channel
         if len(data.shape) == 3:
-            # prevent tranparent channel
+            # prevent transparent channel
             if data.shape[2] == 4:
                 data = data[:,:,0:-1]
             # vigra axistag version now delivers always a '1'
@@ -130,8 +140,8 @@ class DataImpex(object):
         #This method also exports the stack as .h5 file, if options.destfile is not None
         if (len(fileList) == 0):
             return None
-        if len(options.channels)>1:
-            nch = 3
+        if len(fileList)>1:
+            nch = len(fileList)
         else:
             nch = options.rgb
         try: 
@@ -145,42 +155,30 @@ class DataImpex(object):
         #loop over provided images
         z = 0
         allok = True
-        firstlist = fileList[options.channels[0]]
-        for index, filename in enumerate(firstlist):
-            if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
-                try:
-                    img_data = DataImpex.vigraReadImageWrapper(filename)
-                    if options.rgb > 1:
-                        image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
-                    else:
-                        image[:,:, z-options.offsets[2],options.channels[0]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
-                        #load other channels if needed
-                        if (len(options.channels)>1):
-                            img_data = DataImpex.vigraReadImageWrapper(fileList[options.channels[1]][index])
-                            image[:,:,z-options.offsets[2],options.channels[1]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
-                            if (len(options.channels)>2):                                
-                                img_data = DataImpex.vigraReadImageWrapper(fileList[options.channels[2]][index])
-                                image[:,:,z-options.offsets[2],options.channels[2]] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
-                            else:
-                                #only 2 channels are selected. Fill the 3d channel with zeros
-                                #TODO: zeros create an unnecessary memory overhead in features
-                                #change this logic to something better
-                                ch = set([0,1,2])
-                                not_filled = ch.difference(options.channels)
-                                nf_ind = not_filled.pop()
-                                image[:,:,z-options.offsets[2],nf_ind]=0
-                    if logger is not None:                           
-                        logger.insertPlainText(".")
-                except Exception, e:
-                    allok = False
-                    print e 
-                    s = "Error loading file " + filename + "as Slice " + str(z-options.offsets[2])
-                    if logger is not None:
-                        logger.appendPlainText(s)
-                        logger.appendPlainText("")
-                if logger is not None:        
-                    logger.repaint()
-            z = z + 1
+
+        for ich in range(nch):
+            z = 0
+            for index, filename in enumerate(fileList[ich]):
+                if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
+                    try:
+                        img_data = DataImpex.vigraReadImageWrapper(filename)
+                        #Why did we need this options.rbg thing? Why not always load all channels?
+                        if options.rgb>1:
+                            image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
+                        else:
+                            image[:, :, z-options.offsets[2], ich] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
+                        if logger is not None:                           
+                            logger.insertPlainText(".")
+                    except Exception, e:
+                        allok = False
+                        print e 
+                        s = "Error loading file " + filename + "as Slice " + str(z-options.offsets[2])
+                        if logger is not None:
+                            logger.appendPlainText(s)
+                            logger.appendPlainText("")
+                    if logger is not None:        
+                        logger.repaint()
+                z = z + 1
 
         if options.invert:
             image = 255 - image             
@@ -259,9 +257,9 @@ class DataImpex(object):
                 print e
                 raise
             if (len(tempimage.shape)==3):
-                return (tempimage.shape[0], tempimage.shape[1], 1, tempimage.shape[2])
+                return (tempimage.shape[1], tempimage.shape[0], 1, tempimage.shape[2])
             else:
-                return (tempimage.shape[0], tempimage.shape[1], 1, 1)
+                return (tempimage.shape[1], tempimage.shape[0], 1, 1)
 
     @staticmethod                
     def importOverlay(dataItem, filename, prefix="File Overlays/", attrs=None):
@@ -380,9 +378,82 @@ class DataImpex(object):
         formats = [x for x in formats if x in ['png', 'tif']]
         return formats
 
-#           if self.multiChannel.checkState() > 0 and len(self.options.channels)>1:
-#      if (len(self.fileList[self.channels[0]])!=len(self.fileList[self.channels[1]])) or (len(self.channels)>2 and (len(self.fileList[0])!=len(self.fileList[1]))):
-#         QtGui.QErrorMessage.qtHandler().showMessage("Chosen channels don't have an equal number of files. Check with Preview files button")
-#should it really reject?
-#        self.reject()
-#        return        
+
+    @staticmethod
+    def readHdrImgFiles(filename):
+        #filename should be passed without extension
+        #Read header file to identify the dimensions of image in .img file, 
+        #pixel depth and pixel dimension, because this information we need to 
+        #arrange information from .img file in numpy.ndarray correctly.
+        #We read all first 38 elements from file with decoding in int_short format. 
+        #And next 8 elements with decoding in float format. 
+        #All information concerning the location of relevant data in .hdr and .img 
+        #you can find by taking look at format description: http://eeg.sourceforge.net/ANALYZE75.pdf
+        #Written by Darya Trofimova
+        hdr_filename = filename+'.hdr'
+        number_of_elements_short = 38
+        number_of_elements_float = 8
+        bytes_for_short = 2
+        bytes_for_float = 4
+        point_with_dim_begins = 20
+        short_values = numpy.zeros(shape=(number_of_elements_short,1))
+        float_values = numpy.zeros(shape=(number_of_elements_float,1))
+        with open(hdr_filename, 'rb') as f1:
+            for i in range(len(short_values)):
+                short_values[i] = struct.unpack('h', f1.read(bytes_for_short))[0]
+            for j in range(len(float_values)):
+                float_values[j] = struct.unpack('f', f1.read(bytes_for_float))[0]
+        
+        number_of_dim = sum(short_values[point_with_dim_begins])
+        
+        # we create an array 'dim' with values of dimensions of image file
+        dim = list()
+        for k in range(1, int(number_of_dim+1)):
+            dim.append(int(sum(short_values[point_with_dim_begins+k])))
+         
+        #print dim[0], dim[1], dim[2], dim[3]
+        bitpix = sum(short_values[36])
+        
+        # need to make a operator for doing this
+        pix_dim = list()
+        pix_dim = map(float, pix_dim)
+        for l in range(1,4):
+            pix_dim.append(sum(float_values[l]))
+        
+        #we need here to indicate 'bytes' and 'decode' somehow. 
+        #We do it knowing the size of bitpix from .hdr file.
+        
+        result1 = {
+          '16': lambda: 'h',
+          '32': lambda: 'i',
+          '64': lambda: 'f'
+          }
+        decode = result1.get(str(int(bitpix)))()
+          
+        result2 = {
+          '16': lambda: '2',
+          '32': lambda: '4',
+          '64': lambda: '8'
+          }
+        bytes = int(result2.get(str(int(bitpix)))())
+          
+        #Read the .img file with the decoding format, bytes and size information from the header file.
+          
+        img_filename = filename+'.img'
+        totalBytes = os.path.getsize(img_filename)
+        number_var = totalBytes/bytes
+        #print number_var
+        img_values = numpy.zeros(shape=(1,int(dim[3]),int(dim[2]),int(dim[1]),int(dim[0])), dtype=numpy.int16)
+        #print img_values.shape
+        with open(img_filename, 'rb') as f2:
+            for i in reversed(range(int(dim[2]))):
+                for j in range(int(dim[1])):
+                    for k in range(int(dim[0])):
+                        img_values[0,0,i,j,k] = struct.unpack(decode, f2.read(bytes))[0]
+        
+        #the counter i must go in opposite direction because we want our picture's (0, 0) 
+        #in the left top corner.
+        #img_values = img_values.reshape((dim[0],dim[1],dim[2]))
+        
+        return img_values 
+            
