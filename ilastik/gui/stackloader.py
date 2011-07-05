@@ -56,6 +56,7 @@ class StackLoader(QDialog):
         #internally, it's a list of lists of filenames
         #for each channel
         self.fileList = []
+        self.channelIDs = []
         self.options = loadOptionsMgr.loadOptions()
 
         tempLayout = QHBoxLayout()
