@@ -28,7 +28,7 @@
 #    or implied, of their employers.
 
 from PyQt4.QtCore import QDir, QFileInfo, SIGNAL
-from PyQt4.QtGui import QApplication, QCheckBox, QDialog, QFileDialog, QFrame,\
+from PyQt4.QtGui import QApplication, QCheckBox, QDialog, QFileDialog, QFormLayout, QFrame,\
                         QHBoxLayout, QLabel, QLineEdit, QPlainTextEdit,\
                         QPushButton, QVBoxLayout, QWidget
 
@@ -69,31 +69,19 @@ class StackLoader(QDialog):
         self.layout.addLayout(tempLayout)
 
         tempLayout = QHBoxLayout()
-        self.multiChannel = QCheckBox("Load MultiChannel data as one image:")
+        self.multiChannel = QCheckBox("Load MultiChannel data from separate channel images:")
         self.connect(self.multiChannel, SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         self.layout.addLayout(tempLayout) 
         
         self.multiChannelFrame = QFrame()
-        tempLayout = QVBoxLayout()
-        tempLayout1 = QHBoxLayout()
-        tempLayout1.addWidget(QLabel("Enter channel identifiers, e.g. GFP"))
-        tempLayout.addLayout(tempLayout1)
-        tempLayout2 = QHBoxLayout()
-        self.redChannelId = QLineEdit("")
-        self.connect(self.redChannelId, SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.blueChannelId = QLineEdit("")
-        self.connect(self.blueChannelId, SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.greenChannelId = QLineEdit("")
-        self.connect(self.greenChannelId, SIGNAL("textChanged(QString)"), self.pathChanged)
-        tempLayout2.addWidget(QLabel("Red:"))
-        tempLayout2.addWidget(self.redChannelId)
-        tempLayout2.addWidget(QLabel("Green:"))
-        tempLayout2.addWidget(self.greenChannelId)
-        tempLayout2.addWidget(QLabel("Blue:"))
-        tempLayout2.addWidget(self.blueChannelId)
-        tempLayout.addLayout(tempLayout2)
+        tempLayout = QFormLayout()
+        self.addChannelButton = QPushButton("  Add channel identifier")
+        self.connect(self.addChannelButton, SIGNAL('clicked()'), self.slotAddChannel)
+        tempLayout.addRow(QLabel(" "), self.addChannelButton)
+        
         self.multiChannelFrame.setLayout(tempLayout)
+        
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
 
@@ -122,9 +110,38 @@ class StackLoader(QDialog):
         self.image = None
 
     def toggleMultiChannel(self, int):
-        self.multiChannelFrame.setVisible(self.multiChannel.checkState())
+        if self.multiChannel.checkState() == 0:
+            self.multiChannelFrame.setVisible(False)
+        else:
+            self.multiChannelFrame.setVisible(True)
+            if len(self.channelIDs)==0:
+                self.slotAddChannel()
+    
+    def slotAddChannel(self):
+        newID = QLineEdit()
+        newID.setToolTip("Enter identifier for this channel's files, e.g. GFP or ch01")
+        self.channelIDs.append(newID)
+        nch = len(self.channelIDs)
+        label = "Channel %d identifier" % nch
+        receiver = lambda callingChannel=nch-1: self.channelIDChanged(callingChannel)
+        self.connect(self.channelIDs[nch-1], SIGNAL('editingFinished()'), receiver)
+        
+        self.multiChannelFrame.layout().addRow(QLabel(label), newID)
+        if len(self.channelIDs)>1:
+            self.fileList.append([])
+
+    def channelIDChanged(self, channel):
+        #if one identifier changes, we only have to change that filelist
+        if len(self.fileList)<channel+1:
+            print "!!! something went wrong with allocating enough lists for channels !!!"
+            return
+        temp = os.path.splitext(str(self.path.text()))[0]
+        chfiles = temp + "*" + str(self.channelIDs[channel].text()) + "*"
+        self.fileList[channel] = sorted(glob.glob(chfiles), key=str.lower)
+        self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def pathChanged(self, text):
+        #if path changes, we have to redo all lookups for all channels
         self.fileList = []
         self.options.channels = []
         if self.multiChannel.checkState() == 0:
@@ -133,28 +150,12 @@ class StackLoader(QDialog):
             #self.fileList.append(glob.glob(str(self.path.text())))
             self.options.channels.append(0)
         else:
-            #not all channels have to be filled
-            if (len(str(self.redChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathred = temp+"*"+str(self.redChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathred), key=str.lower))
-                self.options.channels.append(0)
-            else:
-                self.fileList.append([])    
-            if (len(str(self.greenChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathgreen = temp+"*"+str(self.greenChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathgreen), key=str.lower))
-                self.options.channels.append(1)
-            else:
-                self.fileList.append([])
-            if (len(str(self.blueChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathblue = temp+"*"+str(self.blueChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathblue), key=str.lower))
-                self.options.channels.append(2)
-            else:
-                self.fileList.append([])
+            nch = len(self.channelIDs)
+            temp = os.path.splitext(str(self.path.text()))[0]
+            for ich in range(nch):
+                chfiles = temp + "*" + str(self.channelIDs[ich].text()) + "*"
+                self.fileList[ich] = sorted(glob.glob(chfiles), key=str.lower)
+                self.options.channels.append(ich)                
         self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotDir(self):
@@ -166,14 +167,16 @@ class StackLoader(QDialog):
         #which is a problem on Windows, as we don't use QDir to open dirs
         self.path.setText(str(QDir.convertSeparators(tempname)))
         
+
     def slotPreviewFiles(self):
         self.fileTableWidget = PreviewTable(self.fileList)
         self.fileTableWidget.exec_()
 
-    def slotLoad(self):
+    def slotLoad(self):    
         self.optionsWidget.fillOptions(self.options)
         self.accept()
 
+            
     def exec_(self):
         if QDialog.exec_(self) == QDialog.Accepted:
             return  str(self.path.text()), self.fileList, self.options
