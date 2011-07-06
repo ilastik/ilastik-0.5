@@ -31,7 +31,7 @@
 Watershed iterative segmentation plugin
 """
 
-import numpy
+import numpy, traceback, sys
 
 from segmentorBase import SegmentorBase
 from enthought.traits.api import Enum, Bool, Float, Int, String, on_trait_change
@@ -43,12 +43,13 @@ try:
     import vigra.svs
     ok = True
 except Exception, e:
-    print "####################################"
-    print
+    print e
+    traceback.print_exc(file=sys.stdout)
+    print "##################################################"
+    print " Interactive Segmentation 'segmentorWSit' plugin"
     print "    please update to the latest"
     print "    private vigra repository !!!"
-    print
-    print "####################################"
+    print "##################################################"
 
 if ok:
 #*******************************************************************************

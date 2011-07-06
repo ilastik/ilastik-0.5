@@ -520,6 +520,8 @@ if __name__ == "__main__":
     #the app
     mainwindow.raise_()
     
+    mainwindow.showMaximized()
+    
     splashScreen.finish(mainwindow)
     
     randomseed = RandomSeed()

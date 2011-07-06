@@ -53,7 +53,7 @@ class SeedListItem(QtGui.QListWidgetItem):
         pixmap = QtGui.QPixmap(16, 16)
         pixmap.fill(color)
         icon = QtGui.QIcon(pixmap)
-        self.setIcon(icon)      
+        self.setIcon(icon)     
 
 #*******************************************************************************
 # S e e d L i s t W i d g e t                                                  *
@@ -67,6 +67,8 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.layout().setMargin(5)
         
         self.listWidget = QtGui.QListWidget(self)
+        self.listWidget.itemSelectionChanged.connect(self.onItemSelected)
+        
         self.overlayItem = overlayItem
         
         #Label selector
@@ -92,8 +94,11 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.initFromVolumeLabels(volumeLabels)
     
-        if self.listWidget.model().rowCount() == 0:
-            self.addLabel("Background", 1, QtGui.QColor(255,0,0))   
+    def onItemSelected(self):
+        item = self.listWidget.selectedItems()[0]
+        if item is None: return
+        print "<><><> item selected"
+        self.volumeEditor.drawManager.updateCrossHair()
     
     def currentItem(self):
         return self.listWidget.currentItem()
@@ -190,6 +195,9 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.volumeEditor.emit(QtCore.SIGNAL("seedRemoved(int)"), item.number)
         self.volumeEditor.repaint()
         
+        #just select the first item in the list so we have some selection
+        self.listWidget.selectionModel().setCurrentIndex(self.listWidget.model().index(0,0), QtGui.QItemSelectionModel.ClearAndSelect)
+            
     def buildColorTab(self):
         origColorTable = self.volumeLabels.getColorTab()
         self.overlayItem.colorTable = self.colorTab = origColorTable
@@ -242,4 +250,3 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         else:
             i = self.listWidget.model().index(self.listWidget.model().rowCount()-1,0)
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
-
