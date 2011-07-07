@@ -260,11 +260,6 @@ class MainWindow(QMainWindow):
         print "* OpenGL:"
         print "  - Using OpenGL for slice views:", self.opengl
         print "  - Using OpenGL for 3D view:    ", self.openglOverview
-        
-        #if we have OpenGL, a shared QGLWidget is set up,
-        self.sharedOpenGLWidget = None
-        if self.opengl:
-            self.sharedOpenGLWidget = QGLWidget()
 
         self.project = None
         if project != None:
@@ -449,7 +444,7 @@ class MainWindow(QMainWindow):
     def createImageWindows(self, dataVol):
         gc.collect()
         vm = ViewManager(dataVol[0,:,:,:,0])
-        self.labelWidget = ve.VolumeEditor(dataVol.shape, self,  sharedOpenglWidget = self.sharedOpenGLWidget, viewManager=vm)
+        self.labelWidget = ve.VolumeEditor(dataVol.shape, self,  useGL=self.opengl, viewManager=vm)
 
         if self.project.dataMgr._currentModuleName is None:
             self.project.dataMgr._currentModuleName = "Project"
