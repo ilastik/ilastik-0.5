@@ -179,7 +179,7 @@ class DataItemImage(DataItemBase):
                     print "couldn't serialize something"
                     
     def updateOverlays(self):
-        ov = overlayMgr.OverlayItem(self._dataVol._data, color = QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False, min = 0, max = 255)
+        ov = overlayMgr.OverlayItem(self._dataVol, color = QColor(255, 255, 255), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True, autoAlphaChannel = False, min = 0, max = 255)
         self.overlayMgr["Raw Data"] = ov
             
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
