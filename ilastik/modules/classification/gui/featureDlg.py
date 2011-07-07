@@ -224,13 +224,26 @@ class ItemDelegate(QItemDelegate):
         else:
             option.state = QStyle.State_On
         if item.isSelected() == True:
-            painter.fillRect(option.rect, option.palette.highlight ())
+            pass
+            #painter.fillRect(option.rect, option.palette.highlight ())
         else:
             if verticalHeader.isParent: 
-                painter.fillRect(option.rect, option.palette.alternateBase())
+                pass
+                #painter.fillRect(option.rect, option.palette.alternateBase())
             else:
-                painter.fillRect(option.rect, option.palette.light())
-        self.parent.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, option, painter)
+                pass
+                #painter.fillRect(option.rect, option.palette.light())
+                
+        if option.state == Qt.Unchecked:
+            painter.setBrush(QBrush(Qt.green))
+            painter.setPen(Qt.green)
+            painter.drawRect(option.rect.adjusted(-3,-3,3,3))
+        elif option.state == Qt.Checked:
+            painter.setBrush(QBrush(Qt.red))
+            painter.setPen(Qt.red)
+            painter.drawRect(option.rect.adjusted(-3,-3,3,3))
+                    
+        #self.parent.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, option, painter)
         self.parent.update()
 
 
