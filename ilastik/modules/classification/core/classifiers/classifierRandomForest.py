@@ -1,6 +1,7 @@
 from classifierBase import *
 
 from PyQt4.QtGui import QInputDialog
+import h5py
 
 #*******************************************************************************
 # C l a s s i f i e r R a n d o m F o r e s t                                  *
@@ -94,10 +95,11 @@ class ClassifierRandomForest(ClassifierBase):
           
             treeCount = 0
             for t in trees:
-                #print "before"
-                #print allForestsPath+"/"+t+"/_options/tree_count_"
-                #print "after"
-                treeCount += h5G.file[allForestsPath+"/"+t+"/_options/tree_count_"][0]
+                if isinstance(h5G.file[allForestsPath+"/"+t+"/_options"], h5py.highlevel.Dataset):
+                    # old verson of Random Forest safes tree count differently in a dataset at position: 9
+                    treeCount += h5G.file[allForestsPath+"/"+t+"/_options"][9]
+                else:
+                    treeCount += h5G.file[allForestsPath+"/"+t+"/_options/tree_count_"][0]
             print "total number of RandomForest trees = ", treeCount
             ClassifierRandomForest.treeCount = treeCount
       
