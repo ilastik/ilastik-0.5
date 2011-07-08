@@ -90,6 +90,7 @@ import getopt
 from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core
 import ilastik.gui
+from ilastik.gui import __path__ as  ilastikGuiPath
 
 #make the program quit on Ctrl+C
 import signal
@@ -500,7 +501,7 @@ class MainWindow(QtGui.QMainWindow):
 #*******************************************************************************
 
 if __name__ == "__main__":
-    splashImage = QtGui.QPixmap("gui/logos/ilastik-splash.png")
+    splashImage = QtGui.QPixmap(os.path.join(os.path.abspath(ilastikGuiPath[0]), 'logos/ilastik-splash.png'))
     painter = QtGui.QPainter()
     painter.begin(splashImage)
     painter.drawText(QtCore.QPointF(270,110), ilastik.core.readInBuildInfo())

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from PyQt4 import QtCore, QtGui
-import sys
+import sys, os
 import webbrowser
 from ilastik.core import readInBuildInfo
+from ilastik.gui import __path__ as ilastikGuiPath
+
 
 
 #*******************************************************************************
@@ -80,7 +82,7 @@ class About(QtGui.QDialog):
         self.setWindowTitle('About')
 
         background = QtGui.QLabel("", self)
-        pixmap = QtGui.QPixmap("gui/logos/ilastik-splash.png")
+        pixmap = QtGui.QPixmap(os.path.join(os.path.abspath(ilastikGuiPath[0]), 'logos/ilastik-splash.png'))
         background.setPixmap(pixmap)
         background.adjustSize()
 
