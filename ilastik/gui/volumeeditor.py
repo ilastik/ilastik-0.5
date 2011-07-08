@@ -2240,18 +2240,39 @@ class ImageScene(QtGui.QGraphicsView):
             self.dragMode = True
             if self.ticker.isActive():
                 self.deltaPan = QtCore.QPointF(0, 0)
+            
+        if event.buttons() == QtCore.Qt.LeftButton:
+            if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier:
+                mousePos = self.mapToScene(event.pos())
+                x = mousePos.x()
+                y = mousePos.y()
+                
+                  
+                if self.axis == 0:
+                    self.volumeEditor.changeSlice(x, 1)
+                    self.volumeEditor.changeSlice(y, 2)
+                elif self.axis == 1:
+                    self.volumeEditor.changeSlice(x, 0)
+                    self.volumeEditor.changeSlice(y, 2)
+                elif self.axis ==2:
+                    self.volumeEditor.changeSlice(x, 0)
+                    self.volumeEditor.changeSlice(y, 1)
+                    
+                    
         if not self.volumeEditor.labelWidget.currentItem():
             return
         
         if event.buttons() == QtCore.Qt.LeftButton:
-            #don't draw if flicker the view
-            if self.ticker.isActive():
-                return
-            if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
-                self.drawManager.setErasing()
-                self.tempErase = True
-            mousePos = self.mapToScene(event.pos())
-            self.beginDraw(mousePos)
+            if not QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier:
+                #don't draw if flicker the view
+                if self.ticker.isActive():
+                    return
+                if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
+                    self.drawManager.setErasing()
+                    self.tempErase = True
+                mousePos = self.mapToScene(event.pos())
+                self.beginDraw(mousePos)
+
             
         if event.buttons() == QtCore.Qt.RightButton:
             #make sure that we have the cursor at the correct position
@@ -2365,7 +2386,7 @@ class ImageScene(QtGui.QGraphicsView):
         return (posX, posY, posZ)
     
     #TODO oli
-    def mouseMoveEvent(self,event):
+    def mouseMoveEvent(self, event):
         if self.dragMode == True:
             self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
             self.panning()
@@ -2427,20 +2448,7 @@ class ImageScene(QtGui.QGraphicsView):
 
 
     def mouseDoubleClickEvent(self, event):
-        mousePos = self.mapToScene(event.pos())
-        x = mousePos.x()
-        y = mousePos.y()
-        
-          
-        if self.axis == 0:
-            self.volumeEditor.changeSlice(x, 1)
-            self.volumeEditor.changeSlice(y, 2)
-        elif self.axis == 1:
-            self.volumeEditor.changeSlice(x, 0)
-            self.volumeEditor.changeSlice(y, 2)
-        elif self.axis ==2:
-            self.volumeEditor.changeSlice(x, 0)
-            self.volumeEditor.changeSlice(y, 1)
+        pass
 
     def onContext(self, pos):
         if type(self.volumeEditor.labelWidget) == DummyLabelWidget: return
