@@ -194,17 +194,18 @@ class ProjectDlg(QtGui.QDialog):
                 
     @QtCore.pyqtSignature("")   
     def on_removeFile_clicked(self):
-        # Get row and fileName to remove
-        row = self.tableWidget.currentRow()
-        fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
-        print "remove Filename in row: ", fileName, " -- ", row
-        self.project.removeFile(row)
-        # Remove Row from display Table
-        self.tableWidget.removeRow(row)
-        try:
-            del self.thumbList[row]
-        except IndexError:
-            pass
+        if self.tableWidget.rowCount() > 1:
+            # Get row and fileName to remove
+            row = self.tableWidget.currentRow()
+            fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
+            print "remove Filename in row: ", fileName, " -- ", row
+            self.project.removeFile(row)
+            # Remove Row from display Table
+            self.tableWidget.removeRow(row)
+            try:
+                del self.thumbList[row]
+            except IndexError:
+                pass
         
         
         
