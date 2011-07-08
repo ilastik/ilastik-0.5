@@ -84,7 +84,7 @@ ilastik.modules.loadModuleCores()
 from ilastik.modules.classification.core import featureMgr
 from ilastik.core.randomSeed import RandomSeed 
 
-import volumeeditor as ve
+from volumeeditor.volumeeditor import VolumeEditor
 from volumeeditor.overlaySlice import OverlaySlice
 
 from ilastik.core.dataImpex import DataImpex
@@ -444,7 +444,7 @@ class MainWindow(QMainWindow):
     def createImageWindows(self, dataVol):
         gc.collect()
         vm = ViewManager(dataVol[0,:,:,:,0])
-        self.labelWidget = ve.VolumeEditor(dataVol.shape, self,  useGL=self.opengl, viewManager=vm)
+        self.labelWidget = VolumeEditor(dataVol.shape, self,  useGL=self.opengl, viewManager=vm)
 
         if self.project.dataMgr._currentModuleName is None:
             self.project.dataMgr._currentModuleName = "Project"
