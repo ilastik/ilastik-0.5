@@ -270,6 +270,7 @@ class MainWindow(QtGui.QMainWindow):
             dataItem.overlayMgr[ov.key] = ov
 
         self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject)
+        self.shortcutSaveAs = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+S"), self, self.saveProjectAs, self.saveProjectAs)
         self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
         self.tabChanged(0)
 
@@ -390,22 +391,36 @@ class MainWindow(QtGui.QMainWindow):
 
         if self.labelWidget is not None:
             self.labelWidget.repaint()
-
+            
+    def saveProjectAs(self):
+        if hasattr(self,'project'):
+            fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
+            fn = str(fileName)
+            if len(fn) > 4:
+                if fn[-4:] != '.ilp':
+                    fn = fn + '.ilp'
+            self.project.filename = fn        
+            ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
+            self.saveProject()
+            QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(self.project.filename), QtGui.QMessageBox.Ok)           
 
     def saveProject(self):
         if hasattr(self,'project'):
             if self.project.filename is not None:
-                self.project.saveToDisk()
+                pb = QtGui.QProgressDialog('Saving %s...' % self.project.filename,'Saving...',0,0, self)
+                pb.setCancelButton(None)
+                
+                t = QtCore.QThread()
+                t.finished.connect(pb.close)
+                
+                def foo():
+                    self.project.saveToDisk()                 
+                t.run = foo
+                t.start()
+                pb.exec_()
+                t.wait()
             else:
-                fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
-                fn = str(fileName)
-                if len(fn) > 4:
-                    if fn[-4:] != '.ilp':
-                        fn = fn + '.ilp'
-                    if self.project.saveToDisk(fn):
-                        QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
-                        
-                ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
+                self.saveProjectAs()
             print "saved Project to ", self.project.filename
 
     def projectModified(self):
