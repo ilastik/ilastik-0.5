@@ -80,7 +80,7 @@ class About(QtGui.QDialog):
         self.setWindowTitle('About')
 
         background = QtGui.QLabel("", self)
-        pixmap = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")
+        pixmap = QtGui.QPixmap("gui/logos/ilastik-splash.png")
         background.setPixmap(pixmap)
         background.adjustSize()
 

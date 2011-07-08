@@ -500,7 +500,7 @@ class MainWindow(QtGui.QMainWindow):
 #*******************************************************************************
 
 if __name__ == "__main__":
-    splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")
+    splashImage = QtGui.QPixmap("gui/logos/ilastik-splash.png")
     painter = QtGui.QPainter()
     painter.begin(splashImage)
     painter.drawText(QtCore.QPointF(270,110), ilastik.core.readInBuildInfo())
