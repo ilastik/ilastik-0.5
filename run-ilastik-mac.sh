@@ -1,7 +1,7 @@
-export DYLD_FALLBACK_LIBRARY_PATH=/ilastik/lib:/ilastik/Frameworks
+export DYLD_FALLBACK_LIBRARY_PATH=~/ilastik_deps_build/lib:~/ilastik_deps_build/Frameworks
 
 export PYTHONPATH=.
 
-export PATH=/ilastik/bin:PATH
+export PATH=~/ilastik_deps_build/bin:PATH
 
 python ./ilastik/ilastikMain.py
