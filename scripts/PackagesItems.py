@@ -180,7 +180,7 @@ class PythonPackage(Package):
 
     def make(self):
         if platform.system() == 'Darwin':
-            self.system("find . -name Makefile | xargsips -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
+            self.system("find . -name Makefile | xargs -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
      	self.system("make DESTDIR=%s" % self.prefix)
      	
     def makeInstall(self):
