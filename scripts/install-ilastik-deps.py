@@ -237,6 +237,19 @@ if 'vtk' in c:
 	VTKGitPackage()
 
 # # # # # # # # # # # # #
+#New Stuff for the Graph
+
+
+if "greenlet" in c:
+    GreenletPackage()
+
+if "psutil" in c:
+    PsutilPackage()
+    
+
+
+
+#########################
 
 if ('fixes' in c) and ('download' not in sys.argv[0]):
     if platform.system() == "Darwin":

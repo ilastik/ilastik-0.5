@@ -173,8 +173,6 @@ class Package:
         else:
             cmd = self.configure_linux()
         self.system(cmd)
-
-
         
     def make(self):
         self.gmake()

@@ -348,6 +348,45 @@ class H5pyPackage(Package):
     def makeInstall(self):
         cmd = pythonExecutable+" setup.py install"
         self.system(cmd)
+#############################################################################################################
+
+class GreenletPackage(Package):
+    src_uri = 'http://pypi.python.org/packages/source/g/greenlet/greenlet-0.3.1.tar.gz'
+    correctMD5sum = '8d75d7f3f659e915e286e1b0fa0e1c4d'
+    workdir = 'greenlet-0.3.1'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        cmd = pythonExecutable+" setup.py build"
+        self.system(cmd)
+        
+    def makeInstall(self):
+        cmd = pythonExecutable+" setup.py install"
+        self.system(cmd)
+        
+#############################################################################################################
+class PsutilPackage(Package):
+    src_uri = 'http://psutil.googlecode.com/files/psutil-0.3.0.tar.gz'
+    
+    workdir = 'psutil-0.3.0'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        cmd = pythonExecutable+" setup.py build"
+        self.system(cmd)
+        
+    def makeInstall(self):
+        cmd = pythonExecutable+" setup.py install"
+        self.system(cmd)
+  
+
+    
+
+
 
 ##############################################################################################################
 
