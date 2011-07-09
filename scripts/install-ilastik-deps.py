@@ -89,8 +89,8 @@ else:
     os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir,)
 ###################################################################################################
 
-all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'png', 'slib', 'zlib',
-    'python', 'nose', 'setuptools',
+all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'zlib','png', 'slib',
+    'python', 'nose', 'setuptools', 'py2app',
     'hdf5',
     'numpy', 'h5py', 'boost', 'sip',
     'lis', 'vigra', 
@@ -99,8 +99,9 @@ all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'png', 'slib', 'zlib',
     'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
     'vtk',
     'fixes']
-if platform.system() == "Darwin":
-    all.append('py2app')
+
+#if platform.system() == "Darwin":
+#    all.append('py2app')
 
 c = sys.argv[1:]
 

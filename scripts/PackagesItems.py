@@ -590,7 +590,7 @@ class CStraehlePackage(Package):
 ###################################################################################################
         
 class VigraPackage(Package):
-    src_uri = 'hg://http://www.informatik.uni-hamburg.de/~meine/hg/vigra'
+    src_uri = 'git@github.com:ukoethe/vigra.git'
     workdir = 'vigra'
     
     def configure(self):
