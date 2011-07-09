@@ -128,6 +128,8 @@ all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'zlib','png', 'slib',
     'pyopenglaccellerate', 'pyopengl',
     'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
     'vtk',
+    'greenlet',
+    'psutil',
     'fixes']
 
 #if platform.system() == "Darwin":

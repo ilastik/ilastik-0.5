@@ -163,6 +163,9 @@ OPTIONS = {'argv_emulation': False,
                 'enthought.pyface.ui.null',
                 'enthought.pyface.ui.null.action.*',
                 'qimage2ndarray',
+                #New Graph stuff
+                'greenlet',
+                'psutil',
              ],
             'frameworks': [],
           }
