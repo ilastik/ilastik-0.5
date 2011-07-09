@@ -30,6 +30,16 @@ find dist/ilastik.app -name \*.h5 | xargs rm
 find dist/ilastik.app -name \*.ilp | xargs rm
 rm -f scripts/ilastik.dmg
 
+#Dirty patch for saving tiff files with qt
+#mkdir ilastik.app/Contents/plugins/
+#mkdir ilastik.app/Contents/plugins/imageformats
+#cp ~/ilastik_deps_build/plugins/imageformats/libqtiff.dylib ilastik.app/Contents/plugins/imageformats/
+
+
+
+
+
+
 mv dist/ilastik.app scripts/
 rm -rf dist
 rm -rf build

@@ -63,7 +63,9 @@ __builtin__.pythonIncludePath  = pythonVersionPath + "/include/python" + pythonV
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 APP = ['ilastik/ilastikMain.py']
-DATA_FILES = [  installDir+"/lib/qt_menu.nib",
+DATA_FILES = [  #installDir+'/plugins/imageformats/libqtiff.dylib',
+                #installDir+'/plugins/imageformats/libqjpeg.dylib',
+                installDir+"/lib/qt_menu.nib",
                 installDir+"/lib/libvigraimpex.3.dylib",
                 installDir+"/library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages/vigra/vigranumpycore.so",
                 installDir+"/lib/libvtkCommonPythonD.5.9.dylib",
@@ -126,7 +128,9 @@ DATA_FILES = [  installDir+"/lib/qt_menu.nib",
                 pythonSitePackages+"/VTK-5.9.0-py2.6.egg/vtk/vtkCommonPythonSIP.so",
             ]
             
+
 OPTIONS = {'argv_emulation': False,
+           'packages':['PyQt4'],
            'includes':[\
                 'distutils', 'sip', 'ctypes','ctypes.util','h5py._stub','h5py._conv','h5py.utils',
 				# http://permalink.gmane.org/gmane.comp.python.enthought.devel/26705
