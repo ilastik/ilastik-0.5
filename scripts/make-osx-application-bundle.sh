@@ -46,4 +46,4 @@ rm -rf build
 
 cd scripts
 
-#hdiutil create -imagekey zlib-level=9 -srcfolder ilastik.app ilastik.dmg
+hdiutil create -imagekey zlib-level=9 -srcfolder ilastik.app ilastik.dmg
