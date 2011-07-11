@@ -36,7 +36,7 @@ from PyQt4.QtGui import QApplication, QButtonGroup, QComboBox, QDialog,\
                         QVBoxLayout, QWidget
 from PyQt4.QtOpenGL import QGLWidget
 
-from volumeeditor.viewManager import ViewManager
+from volumeeditor.navigationControler import NavigationControler
 
 import traceback
 def fixme():
@@ -443,8 +443,8 @@ class MainWindow(QMainWindow):
 
     def createImageWindows(self, dataVol):
         gc.collect()
-        vm = ViewManager(dataVol[0,:,:,:,0])
-        self.labelWidget = VolumeEditor(dataVol.shape, self,  useGL=self.opengl, viewManager=vm)
+        self.labelWidget = VolumeEditor(dataVol.shape, self,  useGL=self.opengl)
+        vm = NavigationControler(self.labelWidget._imageViews, dataVol[0,:,:,:,0])
 
         if self.project.dataMgr._currentModuleName is None:
             self.project.dataMgr._currentModuleName = "Project"
