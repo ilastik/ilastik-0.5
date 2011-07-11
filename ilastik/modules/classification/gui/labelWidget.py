@@ -215,9 +215,13 @@ class LabelListWidget(BaseLabelWidget,  QtGui.QGroupBox):
 
     def buildColorTab(self):
         self.overlayItem.colorTable = self.colorTab = self.volumeLabelDescriptions.getColorTab()
+        
 
 
+    
     def onContext(self, pos):
+        if not self._contextMenuEnables:
+            return
         index = self.listWidget.indexAt(pos)
 
         if not index.isValid():

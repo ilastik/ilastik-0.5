@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from ilastik.gui.baseLabelWidget import BaseLabelWidget
 
 #    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
 #    
@@ -303,7 +304,7 @@ class VolumeUpdate():
 # D u m m y L a b e l W i d g e t                                              *
 #*******************************************************************************
 
-class DummyLabelWidget(QtGui.QWidget):
+class DummyLabelWidget(QtGui.QWidget, BaseLabelWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.setFixedSize(QtCore.QSize(0,0))
