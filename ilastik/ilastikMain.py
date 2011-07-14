@@ -443,8 +443,7 @@ class MainWindow(QMainWindow):
 
     def createImageWindows(self, dataVol):
         gc.collect()
-        self.labelWidget = VolumeEditor(dataVol.shape, self,  useGL=self.opengl)
-        vm = NavigationControler(self.labelWidget._imageViews, dataVol[0,:,:,:,0], self.labelWidget.overlayWidget)
+        self.labelWidget = VolumeEditor(dataVol.shape, self, useGL=self.opengl)
 
         if self.project.dataMgr._currentModuleName is None:
             self.project.dataMgr._currentModuleName = "Project"

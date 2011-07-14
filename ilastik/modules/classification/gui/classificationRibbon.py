@@ -15,6 +15,8 @@ from ilastik.modules.classification.gui.labelWidget import LabelListWidget
 from ilastik.modules.classification.gui.featureDlg import FeatureDlg
 from ilastik.modules.classification.gui.classifierSelectionDialog import ClassifierSelectionDlg
 
+from volumeeditor.navigationControler import NavigationControler
+
 #*******************************************************************************
 # C l a s s i f i c a t i o n T a b                                            *
 #*******************************************************************************
@@ -49,6 +51,8 @@ class ClassificationTab(IlastikTabBase, QWidget):
         overlayWidget.addOverlayRef(labelOverlay.getRef())
         overlayWidget.addOverlayRef(raw.getRef())
         self.ilastik.labelWidget.setOverlayWidget(overlayWidget)
+        
+        nc = NavigationControler(self.ilastik.labelWidget._imageViews, self.parent.project.dataMgr[0]._dataVol._data.shape[1:4], overlayWidget )
                 
         #set the label widget
         #in which the user can modify the classes present in his problem
