@@ -395,14 +395,15 @@ class MainWindow(QtGui.QMainWindow):
     def saveProjectAs(self):
         if hasattr(self,'project'):
             fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
-            fn = str(fileName)
-            if len(fn) > 4:
-                if fn[-4:] != '.ilp':
-                    fn = fn + '.ilp'
-            self.project.filename = fn        
-            ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
-            self.saveProject()
-            QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(self.project.filename), QtGui.QMessageBox.Ok)           
+            if fileName:
+                fn = str(fileName)
+                if len(fn) > 4:
+                    if fn[-4:] != '.ilp':
+                        fn = fn + '.ilp'
+                self.project.filename = fn        
+                ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
+                self.saveProject()
+                QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(self.project.filename), QtGui.QMessageBox.Ok)           
 
     def saveProject(self):
         if hasattr(self,'project'):
