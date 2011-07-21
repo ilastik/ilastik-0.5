@@ -79,8 +79,8 @@ class BatchProcess(QtGui.QDialog):
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotProcess)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
-        tempLayout.addWidget(self.okButton)
         tempLayout.addWidget(self.loadButton)
+        tempLayout.addWidget(self.okButton)
         self.layout.addStretch()
         self.layout.addLayout(tempLayout)
         
