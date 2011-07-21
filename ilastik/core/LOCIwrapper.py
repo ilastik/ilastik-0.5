@@ -5,7 +5,7 @@ import numpy
 try:
     import jpype
 except:
-    print "Please install jpype if you want to read microscopy formats images like LIF."
+    "Please install jpype if you want to read microscopy formats images like LIF."
 import os
 
 
