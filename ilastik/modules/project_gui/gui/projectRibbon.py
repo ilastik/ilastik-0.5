@@ -57,14 +57,18 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.btnSaveAs    = TabButton('Save as', ilastikIcons.Save, 'Save current project to file')
         self.btnEdit    = TabButton('Edit', ilastikIcons.Edit, 'Edit current project')
         self.btnOptions = TabButton('Options', ilastikIcons.Edit, 'Edit ilastik options')
+        self.btnQuit    = TabButton('Quit ilastik', ilastikIcons.Quit, 'Quit ilastik')
         
         tl.addWidget(self.btnNew)
         tl.addWidget(self.btnOpen)
         tl.addWidget(self.btnSave)
         tl.addWidget(self.btnSaveAs)
         tl.addWidget(self.btnEdit)
-        tl.addStretch()
         tl.addWidget(self.btnOptions)
+        tl.addStretch()
+        tl.addWidget(self.btnQuit)
+        
+        
         
         self.btnSave.setEnabled(False)
         self.btnSaveAs.setEnabled(False)
@@ -80,6 +84,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnSaveAs, QtCore.SIGNAL('clicked()'), self.on_btnSaveAs_clicked)
         self.connect(self.btnEdit, QtCore.SIGNAL('clicked()'), self.on_btnEdit_clicked)
         self.connect(self.btnOptions, QtCore.SIGNAL('clicked()'), self.on_btnOptions_clicked)
+        self.connect(self.btnQuit, QtCore.SIGNAL('clicked()'), self.ilastik.close)
         
     # Custom Callbacks
     def on_btnNew_clicked(self):

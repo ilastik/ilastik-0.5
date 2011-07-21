@@ -66,6 +66,7 @@ class ilastikIcons(object):
     ZoomOut = iconPath + 'actions/zoom-out.png'
     Cut = iconPath + 'actions/edit-cut.png'
     Find = iconPath + 'actions/edit-find.png'
+    Quit = iconPath + 'actions/process-stop.png'
     
     Ilastik = iconPath + 'ilastik-icon.png'
     
