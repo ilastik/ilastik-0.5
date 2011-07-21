@@ -2,6 +2,7 @@ from classifierBase import *
 import warnings
 import numpy
 import vigra
+from PyQt4.QtGui import QInputDialog
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
@@ -21,16 +22,30 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
     #0 means pixel based classification
     #-1 means whole dataset
     minContext = 0
-    treeCount = 10
+    treeCount = 100
 
-    def __init__(self, treeCount = 10):
+    def __init__(self):
         ClassifierBase.__init__(self)
-        self.treeCount = treeCount
         self.oob = 0
         self.variableImportance = numpy.zeros( (1, ) )
+        
+    @classmethod
+    def settings(cls):
+        (number, ok) = QInputDialog.getInt(None, "Random Forest parameters", \
+                                                 "Number of trees (minimum 20, maximum 255)", \
+                                                  cls.treeCount, 20, 255)
+        if ok:
+            cls.treeCount = number
+        print "setting number of trees to", cls.treeCount
 
     def train(self, features, labels, isInteractive):
         self.RF = None
+        assert self.numWorkers > 0, "Need at least one worker. Use setWorker() method..."
+
+        thisTreeCount = int(self.treeCount/self.numWorkers)
+        if(self.workerNumber == self.numWorkers-1):
+            thisTreeCount += int(self.treeCount % self.numWorkers)
+        
         if features.shape[0] != labels.shape[0]:
             # #features != # labels"
             return
@@ -48,7 +63,7 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
         # Have to set this becauce the new rf dont set mtry properly by default
         # mtry = max(1,int(numpy.sqrt(features.shape[1]))+1) 
         
-        self.RF = vigra.learning.RandomForest(treeCount=self.treeCount)
+        self.RF = vigra.learning.RandomForest(treeCount=thisTreeCount)
         if isInteractive:
             self.oob = self.RF.learnRF(features, labels)
             self.variableImportance = numpy.zeros( (1, ) )
