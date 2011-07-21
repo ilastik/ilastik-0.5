@@ -149,6 +149,7 @@ class DataImpex(object):
         z = 0
         allok = True
         firstlist = fileList[options.channels[0]]
+
         for index, filename in enumerate(firstlist):
             if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                 try:

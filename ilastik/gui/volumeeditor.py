@@ -491,12 +491,12 @@ class VolumeEditor(QtGui.QWidget):
         self.sliceSelectors.append(sliceSpin)
         
         # Check box for slice intersection marks
-        sliceIntersectionBox = QtGui.QCheckBox("Slice Intersection")
-        sliceIntersectionBox.setEnabled(True)        
-        self.toolBoxLayout.addWidget(sliceIntersectionBox)
+        self.sliceIntersectionBox = QtGui.QCheckBox("Slice Intersection")
+        self.sliceIntersectionBox.setEnabled(True)        
+        self.toolBoxLayout.addWidget(self.sliceIntersectionBox)
         for scene in self.imageScenes:
-            self.connect(sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
-        sliceIntersectionBox.setCheckState(QtCore.Qt.Checked)
+            self.connect(self.sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
+        self.sliceIntersectionBox.setChecked(self.imageScenes[0].sliceIntersectionMarker.isVisible)
 
         self.selSlices = []
         self.selSlices.append(0)
@@ -1530,7 +1530,7 @@ class SliceIntersectionMarker(QtGui.QGraphicsItem) :
         self.x = 0
         self.y = 0
         
-        self.isVisible = False
+        self.isVisible = True
 
     def setPosition(self, x, y):
         self.x = x
@@ -1841,7 +1841,14 @@ class ImageScene(QtGui.QGraphicsView):
             self.sliceIntersectionMarker.setColor(self.axisColor[0], self.axisColor[1])
                     
         self.scene.addItem(self.sliceIntersectionMarker)
-
+        
+        # Test for 3D view... 
+        if self.volumeEditor.image.shape[1] == 1:
+            self.sliceIntersectionMarker.isVisible = False
+        else:
+            self.sliceIntersectionMarker.isVisible = True
+            
+        
         self.tempErase = False
 
     def imageSceneFullScreen(self):
