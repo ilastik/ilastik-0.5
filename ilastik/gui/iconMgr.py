@@ -68,7 +68,7 @@ class ilastikIcons(object):
     Find = iconPath + 'actions/edit-find.png'
     Quit = iconPath + 'actions/process-stop.png'
     
-    Ilastik = iconPath + 'ilastik-icon.png'
+    Ilastik = ilastikPath + '/gui/logos/ilastik-icon.png'
     
     #22x22
     iconPath = ilastikPath+'/gui/icons/22x22/'
