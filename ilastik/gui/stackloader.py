@@ -75,7 +75,7 @@ class StackLoader(QtGui.QDialog):
         tempLayout.addWidget(self.multiChannel)
         tempLayout_.addLayout(tempLayout) 
         
-        tempFrame.setLayout(tempLayout_)
+        tempFrame.setLayout(tempLayout_) 
         self.layout.addWidget(tempFrame)      
         
         self.multiChannelFrame = QtGui.QFrame()
