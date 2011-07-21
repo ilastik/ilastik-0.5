@@ -39,6 +39,27 @@ class shortcutManagerDlg(QtGui.QDialog):
                     l.addWidget(QtGui.QLabel(desc), i,1)
                 grpBox.setLayout(l)
                 tempLayout.addWidget(grpBox)
+                
+            grpBox = QtGui.QGroupBox('Mouse')
+            l = QtGui.QGridLayout(self)
+            
+            customShortcuts ={\
+                               'MouseWheel' : 'Change slice', \
+                               'Alt+MouseWheel' : 'Change slice (fast)', \
+                               'Ctrl+MouseWheel' : "Zoom", \
+                               'Ctrl+MouseLeftClick' : "Change slices by jumping to position", \
+                               'MouseLeftClick' : "Label pixels (when in Classification Tab)", \
+                               'Shift+MouseLeftClick' : "Erase labels (when in Classification Tab)", \
+                               'MouseRightClick on image' : 'Label context menu (when in Classification Tab)', \
+                              } 
+            i = 0
+            for key, val in customShortcuts.iteritems():
+                l.addWidget(QtGui.QLabel(key), i,0)
+                l.addWidget(QtGui.QLabel(val), i, 1)
+                i+=1
+            grpBox.setLayout(l)
+            tempLayout.addWidget(grpBox)
+            
             
             self.setLayout(tempLayout)
             self.show()
