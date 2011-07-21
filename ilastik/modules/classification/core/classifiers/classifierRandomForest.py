@@ -29,10 +29,11 @@ class ClassifierRandomForest(ClassifierBase):
     
     @classmethod
     def settings(cls):
-        (number, ok) = QInputDialog.getInt(None, "Random Forest parameters", "Number of trees", cls.treeCount, 20, 255)
+        (number, ok) = QInputDialog.getInt(None, "Random Forest parameters", \
+                                                 "Number of trees (minimum 20, maximum 255)", \
+                                                  cls.treeCount, 20, 255)
         if ok:
             cls.treeCount = number
-        
         print "setting number of trees to", cls.treeCount
 
     def train(self, features, labels, isInteractive):
