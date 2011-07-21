@@ -256,11 +256,6 @@ p, li { white-space: pre-wrap; }
           <string>File</string>
          </property>
         </column>
-        <column>
-         <property name="text">
-          <string>Labels</string>
-         </property>
-        </column>
        </widget>
       </item>
      </layout>

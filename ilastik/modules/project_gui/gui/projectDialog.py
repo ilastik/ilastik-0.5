@@ -91,7 +91,7 @@ class ProjectDlg(QtGui.QDialog):
             #r.setCheckState(checker(d._dataVol.labels._data != None))
             
             #r.setFlags(r.flags() & flagOFF);
-            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
         self.oldFiles = rowCount+1
         self.exec_()
@@ -153,10 +153,10 @@ class ProjectDlg(QtGui.QDialog):
             r = QtGui.QTableWidgetItem(filename)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             # labels
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Checked)
-            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#            r = QtGui.QTableWidgetItem()
+#            r.data(QtCore.Qt.CheckStateRole)
+#            r.setCheckState(QtCore.Qt.Checked)
+#            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
 
             self.initThumbnail(filename)
@@ -182,12 +182,12 @@ class ProjectDlg(QtGui.QDialog):
                 r = QtGui.QTableWidgetItem(file_name)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                 # labels
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
+#                r = QtGui.QTableWidgetItem()
+#                r.data(QtCore.Qt.CheckStateRole)
+#                r.setCheckState(QtCore.Qt.Checked)
 
 
-                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
                 self.initThumbnail(file_name)
                 self.tableWidget.setCurrentCell(0, 0)
