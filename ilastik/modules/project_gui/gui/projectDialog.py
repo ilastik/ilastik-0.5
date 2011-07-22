@@ -62,7 +62,6 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def updateDlg(self, project):
-        print "in update Dialog"
         self.project = project
         #self.dataMgr = project.dataMgr        
         self.projectName.setText(project.name)
@@ -124,7 +123,7 @@ class ProjectDlg(QtGui.QDialog):
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Unchecked)
 
-                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
                 
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
