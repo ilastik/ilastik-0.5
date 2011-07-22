@@ -211,11 +211,14 @@ class ItemDelegate(QItemDelegate):
         verticalHeader = self.parent().verticalHeaderItem(index.row())
         
         if tableWidgetCell.featureState == Qt.Unchecked:
+            painter.fillRect(option.rect.adjusted(3,3,-3,-3), QColor(255,0,0))
             option.state = QStyle.State_Off
         elif tableWidgetCell.featureState == Qt.PartiallyChecked:
             option.state = QStyle.State_NoChange
+            painter.fillRect(option.rect.adjusted(3,3,-3,-3), QColor(255,255,0))
         else:
             option.state = QStyle.State_On
+            painter.fillRect(option.rect.adjusted(3,3,-3,-3), QColor(0,255,0))
         if tableWidgetCell.isSelected():
             pass
             #painter.fillRect(option.rect, option.palette.highlight ())
@@ -226,15 +229,6 @@ class ItemDelegate(QItemDelegate):
             else:
                 pass
                 #painter.fillRect(option.rect, option.palette.light())
-                
-        if option.state == Qt.Unchecked:
-            painter.setBrush(QBrush(Qt.green))
-            painter.setPen(Qt.green)
-            painter.drawRect(option.rect.adjusted(-3,-3,3,3))
-        elif option.state == Qt.Checked:
-            painter.setBrush(QBrush(Qt.red))
-            painter.setPen(Qt.red)
-            painter.drawRect(option.rect.adjusted(-3,-3,3,3))
                     
         #self.parent.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, option, painter)
         self.parent().update()
@@ -281,6 +275,8 @@ class FeatureTableWidget(QTableWidget):
         self.setIconSize(QSize(30, 30))
         self.isSliderOpen = False    
         self.selection = []
+        self._sigmas = None
+        self._featureGroups = None
         #layout
         # ------------------------------------------------
         self.setCornerButtonEnabled(False)
@@ -294,7 +290,7 @@ class FeatureTableWidget(QTableWidget):
         self.horizontalHeader().setHighlightSections(False)
         self.horizontalHeader().setClickable(True)
         self.itemDelegate = ItemDelegate(self)
-        self.setItemDelegate(self.itemDelegator)
+        self.setItemDelegate(self.itemDelegate)
         self.horizontalHeader().setMouseTracking(True)
         self.horizontalHeader().installEventFilter(self)
         self.horizontalHeader().setResizeMode(QHeaderView.ResizeToContents)
@@ -305,33 +301,92 @@ class FeatureTableWidget(QTableWidget):
         self.verticalHeader().sectionClicked.connect(self.expandOrCollapseVHeader)
         self.horizontalHeader().sectionDoubleClicked.connect(self.hHeaderDoubleclicked)
         
-        self.loadSelection()
-        self.setHHeaderNames()
-        self.setVHeaderNames()
-        self.collapsAllRows()
-        self.fillTabelWithItems()  
-        self.setOldSelectedFeatures() 
-        self.updateParentCell() 
+#        self.loadSelection()
+#        self.setHHeaderNames()
+#        self.setVHeaderNames()
+#        self.collapsAllRows()
+#        self.fillTabelWithItems()  
+#        self.setSelectedFeatures() 
+#        self.updateParentCell()
+
+#        self.setFeatureGroups(featureMgr.ilastikFeatureGroups.groups)
+#        self.setSigmas(self.defaultGroupScaleValues)
+#        self.createTable()
+        
         
         self.setSizePolicy(QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding))
                         
     # methods
     # ------------------------------------------------
     
-    def loadSelection(self):
-        if not len(featureMgr.ilastikFeatureGroups.newSelection) == 0:
-            self.selection = featureMgr.ilastikFeatureGroups.newSelection
-            self.groupScaleValues = featureMgr.ilastikFeatureGroups.newGroupScaleValues
-        else:
-            self.selection = featureMgr.ilastikFeatureGroups.selection
-            self.groupScaleValues = self.defaultGroupScaleValues
+    def setSigmas(self, sigmas):
+        self._sigmas = sigmas
+        
+    def setFeatureGroups(self, featureGroups):
+        self._featureGroups = featureGroups
     
+    def setChangeSizeCallback(self, changeSizeCallback):
+        self.changeSizeCallback = changeSizeCallback
+    
+    
+    def createSelectedFeaturesBoolMatrix(self):
+        matrix = [ [False for k in range(self.columnCount())] for j in range(self.rowCount()) ]
+        for c in range(self.columnCount()):
+            for r in range(self.rowCount()):
+                item = self.item(r,c)
+                if not item.isRootNode:
+                    if item.featureState == 2:
+                        matrix[c][r] = True         
+        return matrix
+    
+    def createSelectedFeatureList(self):
+        result = []
+        for c in range(self.columnCount()):
+            for r in range(self.rowCount()):
+                item = self.item(r,c)
+                if not item.isRootNode:
+                    if item.featureState == 2:
+                        result.append([self.verticalHeaderItem(r).feature, str(self.horizontalHeaderItem(c).sigma)])
+        return result
+    
+    def createFeatureList(self):
+        result = []
+        for c in range(self.columnCount()):
+            for r in range(self.rowCount()):
+                item = self.item(r,c)
+                if not item.isRootNode:
+                    if item.featureState == 2:
+                        result.append((self.verticalHeaderItem(r).feature, self.horizontalHeaderItem(c).sigma))
+        return result
+    
+    def createTable(self):
+        if self._sigmas is None:
+            raise RuntimeError("No sigmas set!")
+        self.setHHeaderNames()
+        if self._featureGroups is None:
+            raise RuntimeError("No featuregroups set!")
+        self.setVHeaderNames()
+        self.collapsAllRows()
+        self.fillTabelWithItems()
+        self.updateParentCell()
+        
     #TODO .99999999999 
     def createSigmaList(self):
         result = []
         for c in range(self.columnCount()):
             result.append(self.horizontalHeaderItem(c).sigma)
         return result
+        
+        
+    def loadSelection(self):
+        if not len(featureMgr.ilastikFeatureGroups.newSelection) == 0:
+            self.selection = featureMgr.ilastikFeatureGroups.newSelection
+            self._sigmas = featureMgr.ilastikFeatureGroups.newGroupScaleValues
+        else:
+            self.selection = featureMgr.ilastikFeatureGroups.selection
+            self._sigmas = self.defaultGroupScaleValues
+    
+    
             
     
     def hHeaderDoubleclicked(self, col):
@@ -341,52 +396,14 @@ class FeatureTableWidget(QTableWidget):
         self.horizontalHeaderItem(col).setNameAndBrush(sliderdlg.exec_())
         self.isSliderOpen = False
       
-    def createSelectedFeatureList(self):
-        result = []
-        for c in range(self.columnCount()):
-            for r in range(self.rowCount()):
-                item = self.item(r,c)
-                if not item.isRootNode:
-                    if item.featureState == 2:
-                        result.append([self.verticalHeaderItem(r).name, str(self.horizontalHeaderItem(c).sigma)])
-        return result
-        
-    
-    def setOldSelectedFeatures(self):
-        if len(self.selection) == 0:
-            return
-        if len(self.selection[0]) == 2:
-            for feature in self.selection:
-                for c in range(self.columnCount()):
-                    for r in range(self.rowCount()):
-                        if feature[0] == self.verticalHeaderItem(r).name and feature[1] == str(self.horizontalHeaderItem(c).sigma):
-                            self.item(r,c).setFeatureState(2)
-        else:
-            i = -1
-            for r in range(self.rowCount()):
-                if self.verticalHeaderItem(r).isRootNode:
-                    i+=1
-                for c in range(self.columnCount()):
-                    if self.selection[i][c]:
+     
+    def setSelectedFeatures(self, selectedFeatures):
+        for feature in selectedFeatures:
+            for c in range(self.columnCount()):
+                for r in range(self.rowCount()):
+                    if feature[0] == self.verticalHeaderItem(r).feature and feature[1] == str(self.horizontalHeaderItem(c).sigma):
                         self.item(r,c).setFeatureState(2)
-    
-    
-    def createFeatureList(self):
-        result = []
-        for c in range(self.columnCount()):
-            for r in range(self.rowCount()):
-                item = self.item(r,c)
-                if not item.isRootNode:
-                    if item.featureState == 2:
-                        feat = self.verticalHeaderItem(r).feature
-                        sigma = self.horizontalHeaderItem(c).sigma
-                        result.append(feat(sigma))
-        return result
-    
-
-    def setChangeSizeCallback(self, changeSizeCallback):
-        self.changeSizeCallback = changeSizeCallback
-        
+        self.updateParentCell()
    
     def fillTabelWithItems(self):
         for j in range(self.columnCount()):
@@ -421,10 +438,6 @@ class FeatureTableWidget(QTableWidget):
                 self.hideRow(i)
             else:
                 self.verticalHeaderItem(i).setCollapsed()
-    
-    def _toirgendwas(self):
-        self._fasjdfjkasdfkdsaf
-        self._dsafadsfadsf
     
     def tableItemSelectionChanged(self):
         for item in self.selectedItems():
@@ -528,15 +541,15 @@ class FeatureTableWidget(QTableWidget):
 
     
     def setHHeaderNames(self):
-        self.setColumnCount(len(self.groupScaleValues))
-        for c in range(len(self.groupScaleValues)):
-            hHeader = FeatureTableWidgetHHeader(self.groupScaleValues[c])
+        self.setColumnCount(len(self._sigmas))
+        for c in range(len(self._sigmas)):
+            hHeader = FeatureTableWidgetHHeader(self._sigmas[c])
             self.setHorizontalHeaderItem(c, hHeader)
 
     
     def setVHeaderNames(self):
         row = 0
-        for i in featureMgr.ilastikFeatureGroups.groups.keys():
+        for i in self._featureGroups.keys():
             self.insertRow(row)
             vHeader = FeatureTableWidgetVHeader(i, feature=None)
             vHeader.setSizeHint(QSize(260,30))
@@ -544,9 +557,9 @@ class FeatureTableWidget(QTableWidget):
             parent = self.verticalHeaderItem(row)
             parent.isRootNode = True
             row += 1
-            for j in featureMgr.ilastikFeatureGroups.groups[i]:
+            for j in self._featureGroups[i]:
                 self.insertRow(row)
-                self.setVerticalHeaderItem(row, FeatureTableWidgetVHeader(j.name, feature=j))
+                self.setVerticalHeaderItem(row, FeatureTableWidgetVHeader(j[1], j[0]))
                 #Tooltip
                 #self.verticalHeaderItem(row).setData(3, j.name)
                 parent.children.append(row)
@@ -644,8 +657,8 @@ class FeatureDlg(QDialog):
         
         # init
         # ------------------------------------------------
-        self.setWindowTitle("Spatial Features")
-        self.setWindowIcon(QIcon(ilastikIcons.Select))
+#        self.setWindowTitle("Spatial Features")
+#        self.setWindowIcon(QIcon(ilastikIcons.Select))
         self.ilastik = parent
         # widgets and layouts
         # ------------------------------------------------
@@ -693,26 +706,28 @@ class FeatureDlg(QDialog):
     # methods
     # ------------------------------------------------
     def setMemReq(self):
-        featureSelectionList = self.featureTableWidget.createFeatureList()
+#        featureSelectionList = self.featureTableWidget.createFeatureList()
         #TODO
         #memReq = self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)
         #self.memReqLabel.setText("%8.2f MB" % memReq)
+        pass
     
     def on_okClicked(self):
-        featureSelectionList = self.featureTableWidget.createFeatureList()
-        selectedFeatureList = self.featureTableWidget.createSelectedFeatureList()
-        sigmaList = self.featureTableWidget.createSigmaList()
-        featureMgr.ilastikFeatureGroups.newGroupScaleValues = sigmaList
-        featureMgr.ilastikFeatureGroups.newSelection = selectedFeatureList
-        res = self.parent().project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)
-        if res is True:
-            self.parent().labelWidget.setBorderMargin(int(self.parent().project.dataMgr.Classification.featureMgr.maxContext))
-            self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)           
-            self.accept() 
-        else:
-            QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
-            self.on_cancelClicked()
-            
+#        featureSelectionList = self.featureTableWidget.createFeatureList()
+#        selectedFeatureList = self.featureTableWidget.createSelectedFeatureList()
+#        sigmaList = self.featureTableWidget.createSigmaList()
+#        featureMgr.ilastikFeatureGroups.newGroupScaleValues = sigmaList
+#        featureMgr.ilastikFeatureGroups.newSelection = selectedFeatureList
+#        res = self.parent().project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)
+#        if res is True:
+#            self.parent().labelWidget.setBorderMargin(int(self.parent().project.dataMgr.Classification.featureMgr.maxContext))
+#            self.ilastik.project.dataMgr.Classification.featureMgr.computeMemoryRequirement(featureSelectionList)           
+#            self.accept() 
+#        else:
+#            QErrorMessage.qtHandler().showMessage("Not enough Memory, please select fewer features !")
+#            self.on_cancelClicked()
+        self.accept()
+    
     def on_cancelClicked(self):
         self.reject()
         
@@ -722,26 +737,49 @@ if __name__ == "__main__":
     import signal
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     from PyQt4.QtGui import *
-    
-#    def onAccepted():
-#        global ex
-#        print ex.adfasdfdf
-#    
-#    g = GroupName("Banane", "Birne")
-    
-    groups
+
     
     app = QApplication(sys.argv)
     app.setStyle("cleanlooks")
     
-    ex = FeatureDlg()
-#   
-#     ex.setGrouping(g)
+    ex1 = FeatureDlg()
+    ex1.setWindowTitle("ex1")
+    ex1.featureTableWidget.setSigmas([0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0])
+    ex1.featureTableWidget.setFeatureGroups({"Color": [(111, "Banana")], "Edge": [(222, "Mango"), (333, "Cherry")]})
+    ex1.featureTableWidget.createTable()
+    ex1.show()
+    ex1.raise_()
+    
+    ex2 = FeatureDlg()
+    ex2.setWindowTitle("ex2")
+    ex2.featureTableWidget.setSigmas([0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0])
+    ex2.featureTableWidget.setFeatureGroups({"Color": [(111, "Banana")], "Edge": [(222, "Mango"), (333, "Cherry")]})
+    ex2.featureTableWidget.createTable()
+    ex2.show()
+    ex2.raise_()
+    
+    
+    def test():
+        selectedFeatures = ex1.featureTableWidget.createSelectedFeatureList()
+        ex2.featureTableWidget.setSelectedFeatures(selectedFeatures)
+        
+        
+        
+    ex1.accepted.connect(test)
+    
+    
+#    ex2 = FeatureDlg()
+#    ex2.featureTableWidget.setSigmas([1, 2, 3])
+#    ex2.featureTableWidget.setFeatureGroups({"Color": [(111, "1")], "Edge": [(222, "2"), (333, "3")], "Bla": [(444, "4"),(555, "5"),(666, "6"),(777,"7")]})
+#    ex2.featureTableWidget.createTable()
+#    ex2.show()
+#    ex2.raise_()
+
+    
+#    ex.setGrouping(g)
 #    numpy.random.randint
 #    ex.setRawData()
 #    ex.ok.clicked.connect(onAccepted)
     
-    ex.show()
-    ex.raise_()
-    app.exec_()
-            
+    
+    app.exec_()       
