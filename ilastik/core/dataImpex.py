@@ -175,6 +175,12 @@ class DataImpex(object):
                                 image[:,:,z-options.offsets[2],nf_ind]=0
                     if logger is not None:                           
                         logger.insertPlainText(".")
+                    
+                    if image.shape[2] == 1:
+                        # FIXME: workaround for different handling of 2D and 3D...
+                        image = image.swapaxes(1,0)
+                        options.shape = (options.shape[1], options.shape[0]) + options.shape[2:]
+                        
                 except Exception, e:
                     allok = False
                     s = "Error loading file " + filename + "as Slice " + str(z-options.offsets[2])

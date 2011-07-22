@@ -126,7 +126,7 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.layout.addWidget(self.resolutionFrame)    
 
         tempLayout = QtGui.QHBoxLayout()
-        self.invert = QtGui.QCheckBox("Invert Colors?")
+        self.invert = QtGui.QCheckBox("Invert Colors? (8-bit images)")
         tempLayout.addWidget(self.invert)
         self.layout.addLayout(tempLayout) 
 
