@@ -365,6 +365,8 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.setTabEnabled(i, enabled)
         if self.labelWidget is not None:
             self.labelWidget.labelWidget.setContextMenuEnabled(not state)
+            if hasattr(self.labelWidget.labelWidget, 'addLabelButton' ):
+                self.labelWidget.labelWidget.addLabelButton.setEnabled(not state)
 
     def tabChanged(self,  index):
         """
@@ -422,7 +424,6 @@ class MainWindow(QtGui.QMainWindow):
                 t.wait()
             else:
                 self.saveProjectAs()
-            print "saved Project to ", self.project.filename
 
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
