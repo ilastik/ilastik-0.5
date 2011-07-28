@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from PyQt4 import QtGui, QtCore
 
 #*******************************************************************************
 # s h o r t c u t M a n a g e r                                                *
@@ -27,7 +27,34 @@ class shortcutManagerDlg(QtGui.QDialog):
         self.setWindowTitle("Shortcuts")
         self.setMinimumWidth(500)
         if len(s.shortcuts)>0:
-            tempLayout = QtGui.QVBoxLayout()
+            scrollArea = QtGui.QScrollArea(self)
+            scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+            
+            mainWidget = QtGui.QWidget(self)
+            
+            scrollArea.setWidget(mainWidget)
+            scrollArea.setWidgetResizable(True)
+            
+            tempLayout = QtGui.QVBoxLayout(mainWidget)
+            
+            mainWidget.setLayout(tempLayout)
+            
+            customShortcuts ={\
+                               'Navigation': \
+                                 {'MouseWheel' : 'Change slice', \
+                                  'Alt+MouseWheel' : 'Change slice (fast)', \
+                                  'Ctrl+MouseWheelUp' : "Zoom in", \
+                                  'Ctrl+MouseWheelDown' : "Zoom out ", \
+                                  'Ctrl+MouseLeftClick' : "Change slices by jumping to position", \
+                                  }, \
+                                'Labeling': \
+                                { 'MouseLeftClick' : "Label pixels", \
+                                  'Shift+MouseLeftClick' : "Erase labels", \
+                                  'MouseRightClick on image' : 'Label context menu', \
+                                }
+                              } 
+            
+            
             
             for group in s.shortcuts.keys():
                 grpBox = QtGui.QGroupBox(group)
@@ -37,31 +64,18 @@ class shortcutManagerDlg(QtGui.QDialog):
                     desc = s.shortcuts[group][sc]
                     l.addWidget(QtGui.QLabel(str(sc)), i,0)
                     l.addWidget(QtGui.QLabel(desc), i,1)
+                    
+                if group in customShortcuts:
+                    for j, sc in enumerate(customShortcuts[group]):
+                        l.addWidget(QtGui.QLabel(str(sc)), i + j + 1, 0)
+                        l.addWidget(QtGui.QLabel(customShortcuts[group][sc]), i + j + 1, 1)
+                    
                 grpBox.setLayout(l)
                 tempLayout.addWidget(grpBox)
-                
-            grpBox = QtGui.QGroupBox('Mouse')
-            l = QtGui.QGridLayout(self)
             
-            customShortcuts ={\
-                               'MouseWheel' : 'Change slice', \
-                               'Alt+MouseWheel' : 'Change slice (fast)', \
-                               'Ctrl+MouseWheel' : "Zoom", \
-                               'Ctrl+MouseLeftClick' : "Change slices by jumping to position", \
-                               'MouseLeftClick' : "Label pixels (when in Classification Tab)", \
-                               'Shift+MouseLeftClick' : "Erase labels (when in Classification Tab)", \
-                               'MouseRightClick on image' : 'Label context menu (when in Classification Tab)', \
-                              } 
-            i = 0
-            for key, val in customShortcuts.iteritems():
-                l.addWidget(QtGui.QLabel(key), i,0)
-                l.addWidget(QtGui.QLabel(val), i, 1)
-                i+=1
-            grpBox.setLayout(l)
-            tempLayout.addWidget(grpBox)
-            
-            
-            self.setLayout(tempLayout)
+            mainLayout = QtGui.QVBoxLayout(self)
+            mainLayout.addWidget(scrollArea)
+            self.setLayout(mainLayout)
             self.show()
         else:
             l = QtGui.QVBoxLayout()
