@@ -189,7 +189,7 @@ class PythonPackage(Package):
 ##################################################################################
 
 class NosePackage(Package):
-    src_uri ='http://somethingaboutorange.com/mrl/projects/nose/nose-1.0.0.tar.gz'
+    src_uri ='http://pypi.python.org/packages/source/n/nose/nose-1.0.0.tar.gz'
     workdir = 'nose-1.0.0'
     
     def unpack(self):
