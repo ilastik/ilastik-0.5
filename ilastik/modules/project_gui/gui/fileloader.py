@@ -233,7 +233,6 @@ class FileLoader(QtGui.QDialog):
             self.options.channels.append(i)
             
         if self.optionCheck.checkState() == 0:
-         
             self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
             self.optionsWidget.fillDefaultOptions(self.options)
         else:

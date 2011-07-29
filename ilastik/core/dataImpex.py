@@ -245,7 +245,11 @@ class DataImpex(object):
                 #3d data looks like (1, x, y, z, c)
                 return (shape[1], shape[2], shape[3], shape[4])
         
-        
+        elif fExt == '.img':
+            #analyze 7.5 file, read the shape from corresponding hdr file
+            stuff = DataImpex.readHdrImgShape(fBase)
+            print "...reading analyze 7.5 image with ", stuff[0][0], "channels..."
+            return (int(stuff[0][3]),int(stuff[0][2]),int(stuff[0][1]),int(stuff[0][0]))
         
         else :
             try:
@@ -377,16 +381,8 @@ class DataImpex(object):
 
 
     @staticmethod
-    def readHdrImgFiles(filename):
-        #filename should be passed without extension
-        #Read header file to identify the dimensions of image in .img file, 
-        #pixel depth and pixel dimension, because this information we need to 
-        #arrange information from .img file in numpy.ndarray correctly.
-        #We read all first 38 elements from file with decoding in int_short format. 
-        #And next 8 elements with decoding in float format. 
-        #All information concerning the location of relevant data in .hdr and .img 
-        #you can find by taking look at format description: http://eeg.sourceforge.net/ANALYZE75.pdf
-        #Written by Darya Trofimova
+    def readHdrImgShape(filename):
+        #filename should be passed without an extension
         hdr_filename = filename+'.hdr'
         number_of_elements_short = 38
         number_of_elements_float = 8
@@ -410,13 +406,30 @@ class DataImpex(object):
          
         #print dim[0], dim[1], dim[2], dim[3]
         bitpix = sum(short_values[36])
-        
+        return dim, bitpix, short_values
+
+    @staticmethod
+    def readHdrImgFiles(filename):
+        #filename should be passed without extension
+        #Read header file to identify the dimensions of image in .img file, 
+        #pixel depth and pixel dimension, because this information we need to 
+        #arrange information from .img file in numpy.ndarray correctly.
+        #We read all first 38 elements from file with decoding in int_short format. 
+        #And next 8 elements with decoding in float format. 
+        #All information concerning the location of relevant data in .hdr and .img 
+        #you can find by taking look at format description: http://eeg.sourceforge.net/ANALYZE75.pdf
+        #Written by Darya Trofimova
+
+        dim, bitpix, short_values = DataImpex.readHdrImgShape(filename)
         # need to make a operator for doing this
+        #FIXME: why do we need this variable? it's not used anywhere. 
+        #FIXME: comment out for now
+        '''
         pix_dim = list()
         pix_dim = map(float, pix_dim)
         for l in range(1,4):
             pix_dim.append(sum(float_values[l]))
-        
+        '''
         #we need here to indicate 'bytes' and 'decode' somehow. 
         #We do it knowing the size of bitpix from .hdr file.
         
