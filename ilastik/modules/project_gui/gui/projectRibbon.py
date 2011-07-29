@@ -54,17 +54,24 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.btnNew     = TabButton('New', ilastikIcons.New, 'Create new project')
         self.btnOpen    = TabButton('Open', ilastikIcons.Open, 'Open existing project')
         self.btnSave    = TabButton('Save', ilastikIcons.Save, 'Save current project to file')
+        self.btnSaveAs    = TabButton('Save as', ilastikIcons.Save, 'Save current project to file')
         self.btnEdit    = TabButton('Edit', ilastikIcons.Edit, 'Edit current project')
         self.btnOptions = TabButton('Options', ilastikIcons.Edit, 'Edit ilastik options')
+        self.btnQuit    = TabButton('Quit ilastik', ilastikIcons.Quit, 'Quit ilastik')
         
         tl.addWidget(self.btnNew)
         tl.addWidget(self.btnOpen)
         tl.addWidget(self.btnSave)
+        tl.addWidget(self.btnSaveAs)
         tl.addWidget(self.btnEdit)
-        tl.addStretch()
         tl.addWidget(self.btnOptions)
+        tl.addStretch()
+        tl.addWidget(self.btnQuit)
+        
+        
         
         self.btnSave.setEnabled(False)
+        self.btnSaveAs.setEnabled(False)
         self.btnEdit.setEnabled(False)
         self.btnOptions.setEnabled(False)
         
@@ -74,14 +81,17 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnNew, QtCore.SIGNAL('clicked()'), self.on_btnNew_clicked)
         self.connect(self.btnOpen, QtCore.SIGNAL('clicked()'), self.on_btnOpen_clicked)
         self.connect(self.btnSave, QtCore.SIGNAL('clicked()'), self.on_btnSave_clicked)
+        self.connect(self.btnSaveAs, QtCore.SIGNAL('clicked()'), self.on_btnSaveAs_clicked)
         self.connect(self.btnEdit, QtCore.SIGNAL('clicked()'), self.on_btnEdit_clicked)
         self.connect(self.btnOptions, QtCore.SIGNAL('clicked()'), self.on_btnOptions_clicked)
+        self.connect(self.btnQuit, QtCore.SIGNAL('clicked()'), self.ilastik.close)
         
     # Custom Callbacks
     def on_btnNew_clicked(self):
         self.parent.projectDlg = ProjectDlg(self.parent)
         if self.parent.projectDlg.exec_() == QtGui.QDialog.Accepted:
             self.btnSave.setEnabled(True)
+            self.btnSaveAs.setEnabled(True)
             self.btnEdit.setEnabled(True)
             self.btnOptions.setEnabled(True)
             self.parent.updateFileSelector()
@@ -90,11 +100,15 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             
     def on_btnSave_clicked(self):
         self.parent.saveProject()
+        
+    def on_btnSaveAs_clicked(self):
+        self.parent.saveProjectAs()
     
     def openProject(self, fileName):
         labelWidget = None
         self.parent.project = projectClass.Project.loadFromDisk(str(fileName), self.parent.featureCache)
         self.btnSave.setEnabled(True)
+        self.btnSaveAs.setEnabled(True)
         self.btnEdit.setEnabled(True)
         self.btnOptions.setEnabled(True)
         self.parent.updateFileSelector()

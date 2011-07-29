@@ -35,6 +35,7 @@ class BaseLabelWidget(object):
     def __init__(self,  parent = None):
         self.colorTab = None
         self.overlays = []
+        self._contextMenuEnables = True
      
     def onImageSceneContext(self, imageScene, pos):
         """ reimplement this method to provide a context menu at position pos
@@ -43,10 +44,14 @@ class BaseLabelWidget(object):
             FIXME this function does not really belong in this class
             move to somewhere more appropriate during refactoring"""
         pass
+    
+    def setContextMenuEnabled(self, state):
+        self._contextMenuEnables = state
      
     def ensureLabelOverlayVisible(self):
         pass
         
     def currentItem(self):
         return None
+    
         

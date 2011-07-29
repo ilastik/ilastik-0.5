@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from ilastik.gui.baseLabelWidget import BaseLabelWidget
 
 #    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
 #    
@@ -303,7 +304,7 @@ class VolumeUpdate():
 # D u m m y L a b e l W i d g e t                                              *
 #*******************************************************************************
 
-class DummyLabelWidget(QtGui.QWidget):
+class DummyLabelWidget(QtGui.QWidget, BaseLabelWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
         self.setFixedSize(QtCore.QSize(0,0))
@@ -490,12 +491,12 @@ class VolumeEditor(QtGui.QWidget):
         self.sliceSelectors.append(sliceSpin)
         
         # Check box for slice intersection marks
-        sliceIntersectionBox = QtGui.QCheckBox("Slice Intersection")
-        sliceIntersectionBox.setEnabled(True)        
-        self.toolBoxLayout.addWidget(sliceIntersectionBox)
+        self.sliceIntersectionBox = QtGui.QCheckBox("Slice Intersection")
+        self.sliceIntersectionBox.setEnabled(True)        
+        self.toolBoxLayout.addWidget(self.sliceIntersectionBox)
         for scene in self.imageScenes:
-            self.connect(sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
-        sliceIntersectionBox.setCheckState(QtCore.Qt.Checked)
+            self.connect(self.sliceIntersectionBox, QtCore.SIGNAL("stateChanged(int)"), scene.setSliceIntersection)
+        self.sliceIntersectionBox.setChecked(self.imageScenes[0].sliceIntersectionMarker.isVisible)
 
         self.selSlices = []
         self.selSlices.append(0)
@@ -1529,7 +1530,7 @@ class SliceIntersectionMarker(QtGui.QGraphicsItem) :
         self.x = 0
         self.y = 0
         
-        self.isVisible = False
+        self.isVisible = True
 
     def setPosition(self, x, y):
         self.x = x
@@ -1840,7 +1841,14 @@ class ImageScene(QtGui.QGraphicsView):
             self.sliceIntersectionMarker.setColor(self.axisColor[0], self.axisColor[1])
                     
         self.scene.addItem(self.sliceIntersectionMarker)
-
+        
+        # Test for 3D view... 
+        if self.volumeEditor.image.shape[1] == 1:
+            self.sliceIntersectionMarker.isVisible = False
+        else:
+            self.sliceIntersectionMarker.isVisible = True
+            
+        
         self.tempErase = False
 
     def imageSceneFullScreen(self):
@@ -2240,18 +2248,39 @@ class ImageScene(QtGui.QGraphicsView):
             self.dragMode = True
             if self.ticker.isActive():
                 self.deltaPan = QtCore.QPointF(0, 0)
+            
+        if event.buttons() == QtCore.Qt.LeftButton:
+            if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier:
+                mousePos = self.mapToScene(event.pos())
+                x = mousePos.x()
+                y = mousePos.y()
+                
+                  
+                if self.axis == 0:
+                    self.volumeEditor.changeSlice(x, 1)
+                    self.volumeEditor.changeSlice(y, 2)
+                elif self.axis == 1:
+                    self.volumeEditor.changeSlice(x, 0)
+                    self.volumeEditor.changeSlice(y, 2)
+                elif self.axis ==2:
+                    self.volumeEditor.changeSlice(x, 0)
+                    self.volumeEditor.changeSlice(y, 1)
+                    
+                    
         if not self.volumeEditor.labelWidget.currentItem():
             return
         
         if event.buttons() == QtCore.Qt.LeftButton:
-            #don't draw if flicker the view
-            if self.ticker.isActive():
-                return
-            if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
-                self.drawManager.setErasing()
-                self.tempErase = True
-            mousePos = self.mapToScene(event.pos())
-            self.beginDraw(mousePos)
+            if not QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ControlModifier:
+                #don't draw if flicker the view
+                if self.ticker.isActive():
+                    return
+                if QtGui.QApplication.keyboardModifiers() == QtCore.Qt.ShiftModifier:
+                    self.drawManager.setErasing()
+                    self.tempErase = True
+                mousePos = self.mapToScene(event.pos())
+                self.beginDraw(mousePos)
+
             
         if event.buttons() == QtCore.Qt.RightButton:
             #make sure that we have the cursor at the correct position
@@ -2365,7 +2394,7 @@ class ImageScene(QtGui.QGraphicsView):
         return (posX, posY, posZ)
     
     #TODO oli
-    def mouseMoveEvent(self,event):
+    def mouseMoveEvent(self, event):
         if self.dragMode == True:
             self.deltaPan = QtCore.QPointF(event.pos() - self.lastPanPoint)
             self.panning()
@@ -2427,20 +2456,7 @@ class ImageScene(QtGui.QGraphicsView):
 
 
     def mouseDoubleClickEvent(self, event):
-        mousePos = self.mapToScene(event.pos())
-        x = mousePos.x()
-        y = mousePos.y()
-        
-          
-        if self.axis == 0:
-            self.volumeEditor.changeSlice(x, 1)
-            self.volumeEditor.changeSlice(y, 2)
-        elif self.axis == 1:
-            self.volumeEditor.changeSlice(x, 0)
-            self.volumeEditor.changeSlice(y, 2)
-        elif self.axis ==2:
-            self.volumeEditor.changeSlice(x, 0)
-            self.volumeEditor.changeSlice(y, 1)
+        pass
 
     def onContext(self, pos):
         if type(self.volumeEditor.labelWidget) == DummyLabelWidget: return

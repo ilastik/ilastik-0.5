@@ -55,7 +55,11 @@ class StackLoader(QtGui.QDialog):
         self.fileList = []
         self.channelIDs = []
         self.options = loadOptionsMgr.loadOptions()
+        
+       
+        tempFrame =  QtGui.QFrame()
 
+        tempLayout_ = QtGui.QVBoxLayout()
         tempLayout = QtGui.QHBoxLayout()
         self.path = QtGui.QLineEdit("")
         self.connect(self.path, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
@@ -63,14 +67,17 @@ class StackLoader(QtGui.QDialog):
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
         tempLayout.addWidget(self.path)
         tempLayout.addWidget(self.pathButton)
-        self.layout.addWidget(QtGui.QLabel("Path to Image Stack:"))
-        self.layout.addLayout(tempLayout)
+        tempLayout_.addWidget(QtGui.QLabel("Path to Image Stack:"))
+        tempLayout_.addLayout(tempLayout)
 
         tempLayout = QtGui.QHBoxLayout()
         self.multiChannel = QtGui.QCheckBox("Load MultiChannel data from separate channel images:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
-        self.layout.addLayout(tempLayout) 
+        tempLayout_.addLayout(tempLayout) 
+        
+        tempFrame.setLayout(tempLayout_) 
+        self.layout.addWidget(tempFrame)      
         
         self.multiChannelFrame = QtGui.QFrame()
         tempLayout = QtGui.QFormLayout()
@@ -83,10 +90,8 @@ class StackLoader(QtGui.QDialog):
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
 
-        tempLayout = QtGui.QHBoxLayout()
         self.optionsWidget = loadOptionsWidget.LoadOptionsWidget()
-        tempLayout.addWidget(self.optionsWidget)
-        self.layout.addLayout(tempLayout)
+        self.layout.addWidget(self.optionsWidget)
 
         tempLayout = QtGui.QHBoxLayout()
         self.loadButton = QtGui.QPushButton("Load")

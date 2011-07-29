@@ -79,8 +79,8 @@ class BatchProcess(QtGui.QDialog):
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotProcess)
         tempLayout.addStretch()
         tempLayout.addWidget(self.cancelButton)
-        tempLayout.addWidget(self.okButton)
         tempLayout.addWidget(self.loadButton)
+        tempLayout.addWidget(self.okButton)
         self.layout.addStretch()
         self.layout.addLayout(tempLayout)
         
@@ -103,7 +103,7 @@ class BatchProcess(QtGui.QDialog):
         
 
     def slotDir(self):
-        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "HDF5 (*.h5);; Images (*.jpg *.tiff *.tif *.png *.jpeg)")
+        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "Images (*.jpg *.tiff *.tif *.png *.jpeg *.h5)")
         
         for s in selection:
             self.filenames.append(str(s))

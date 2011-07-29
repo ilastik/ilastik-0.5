@@ -62,7 +62,6 @@ class ProjectDlg(QtGui.QDialog):
 
     @QtCore.pyqtSignature("")
     def updateDlg(self, project):
-        print "in update Dialog"
         self.project = project
         #self.dataMgr = project.dataMgr        
         self.projectName.setText(project.name)
@@ -91,7 +90,7 @@ class ProjectDlg(QtGui.QDialog):
             #r.setCheckState(checker(d._dataVol.labels._data != None))
             
             #r.setFlags(r.flags() & flagOFF);
-            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
         self.oldFiles = rowCount+1
         self.exec_()
@@ -133,7 +132,7 @@ class ProjectDlg(QtGui.QDialog):
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Unchecked)
 
-                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
                 
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
@@ -162,10 +161,10 @@ class ProjectDlg(QtGui.QDialog):
             r = QtGui.QTableWidgetItem(filename)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
             # labels
-            r = QtGui.QTableWidgetItem()
-            r.data(QtCore.Qt.CheckStateRole)
-            r.setCheckState(QtCore.Qt.Checked)
-            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#            r = QtGui.QTableWidgetItem()
+#            r.data(QtCore.Qt.CheckStateRole)
+#            r.setCheckState(QtCore.Qt.Checked)
+#            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
 
             self.initThumbnail(filename)
@@ -191,29 +190,30 @@ class ProjectDlg(QtGui.QDialog):
                 r = QtGui.QTableWidgetItem(file_name)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
                 # labels
-                r = QtGui.QTableWidgetItem()
-                r.data(QtCore.Qt.CheckStateRole)
-                r.setCheckState(QtCore.Qt.Checked)
+#                r = QtGui.QTableWidgetItem()
+#                r.data(QtCore.Qt.CheckStateRole)
+#                r.setCheckState(QtCore.Qt.Checked)
 
 
-                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
+#                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
                 self.initThumbnail(file_name)
                 self.tableWidget.setCurrentCell(0, 0)
                 
     @QtCore.pyqtSignature("")   
     def on_removeFile_clicked(self):
-        # Get row and fileName to remove
-        row = self.tableWidget.currentRow()
-        fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
-        print "remove Filename in row: ", fileName, " -- ", row
-        self.project.removeFile(row)
-        # Remove Row from display Table
-        self.tableWidget.removeRow(row)
-        try:
-            del self.thumbList[row]
-        except IndexError:
-            pass
+        if self.tableWidget.rowCount() > 1:
+            # Get row and fileName to remove
+            row = self.tableWidget.currentRow()
+            fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
+            print "remove Filename in row: ", fileName, " -- ", row
+            self.project.removeFile(row)
+            # Remove Row from display Table
+            self.tableWidget.removeRow(row)
+            try:
+                del self.thumbList[row]
+            except IndexError:
+                pass
         
         
         

@@ -135,6 +135,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self._seedIndicesList                 = None
         self.segmentorInstance                = None
         self.potentials                       = None
+        
+        self.initialized = False
+        
+        self.rebuildDonePolicy = False
     
     def __reset(self):
         self.clearSeeds()
@@ -172,12 +176,18 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
            For example, big arrays are allocated only after the user has decided
            to switch to this particular tab."""
         
-        from ilastik.modules.interactive_segmentation.core import startupOutputPath   
-        self.outputPath = startupOutputPath
+        if self.initialized:
+            print "interactive segmentation module is already initialized"
+            return
+        
+        from ilastik.modules.interactive_segmentation.core import startupOutputPath 
+        if startupOutputPath is not None:  
+            self.outputPath = startupOutputPath
         
         self.__createSeedsData()
-           
-        if not self.outputPath:
+        
+        if self.outputPath is None:
+            print "  no output path set --> nothing to do"
             return
         else:
             print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
@@ -209,7 +219,10 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         if self._dataItemImage.overlayMgr[d["overlay"]] is None:
             overlayName = "File Overlays/"+d["overlay"]
         
+        print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
         self.calculateWeights(self._dataItemImage.overlayMgr[overlayName]._data[0,:,:,:,0], d["borderIndicator"])
+    
+        self.initialized = True
     
     def calculateWeights(self, volume, borderIndicator, normalizePotential=True, sigma=1.0):
         """Calculate the weights indicating borderness from the raw data"""
@@ -262,6 +275,19 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         assert self._currentSegmentsKey
         self.saveCurrentSegmentsAs(self._currentSegmentsKey, overwrite=True)
     
+    def setRebuildDonePolicy(self, alwaysRebuild):
+        if alwaysRebuild:
+            print "setting rebuild 'done' policy to 'always rebuild'"
+        else:
+            print "setting rebuild 'done' policy to 'sloppy'"
+        self.rebuildDonePolicy = alwaysRebuild
+    
+    def loadSegmentation(self, filename):
+        F = h5py.File(filename, 'r')
+        seg = F['volume/data'].value
+        F.close()
+        return seg
+    
     def saveCurrentSegmentsAs(self, key, overwrite = False):
         """ Save the currently segmented segments as a group with the name 'key'.
             A directory with the same name is created in self.outputPath holding
@@ -277,12 +303,25 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             self.emit(SIGNAL('doneOverlaysAvailable()'))
         
         if overwrite:
+            oldSeg = None
+            if not self.rebuildDonePolicy:
+                print "  NOT updating the done overlay correctly"
+                segFile = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
+                print "    loading old segmentation '%s'" % segFile
+                oldSeg = self.loadSegmentation(segFile)
+            
             shutil.rmtree(self.outputPath+'/'+str(key))
             labelsToDelete = copy.deepcopy(self._mapKeysToLabels[key])
+            
             del self._mapKeysToLabels[key]
             for l in labelsToDelete:
                 del self._mapLabelsToKeys[l]
-            self.__rebuildDone()
+                
+            if self.rebuildDonePolicy:       
+                self.__rebuildDone()
+            else:
+                print "    removing old segmentation"
+                self.done[numpy.where(oldSeg > 1)] = 0
             
         elif os.path.exists(self.outputPath+'/'+str(key)):
             raise RuntimeError("trying to overwrite '%s'", self.outputPath+'/'+str(key))
@@ -362,6 +401,13 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         for l in labelsForKey:
             del self._mapLabelsToKeys[l] 
         
+        removedSegmentation = None
+        if not self.rebuildDonePolicy:
+            print " - NOT updating the done overlay correctly"
+            removedSegmentationFilename = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
+            print "   loading old segmentation '%s'" % removedSegmentationFilename
+            removedSegmentation = self.loadSegmentation(removedSegmentationFilename)
+        
         path = self.outputPath+'/'+str(key)
         print " - removing storage path '%s'" % (path)
         shutil.rmtree(path)
@@ -376,7 +422,11 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         
         self.__saveMapping()
         
-        self.__rebuildDone()
+        if self.rebuildDonePolicy:
+            self.__rebuildDone()
+        else:
+            print " - removing the object from the done overlay (sloppy)"
+            self.done[numpy.where(removedSegmentation > 1)] = 0
         
         #write out done file again
         f = h5py.File(self.outputPath + "/done.h5", 'w')

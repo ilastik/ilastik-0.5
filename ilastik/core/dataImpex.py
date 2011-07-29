@@ -155,7 +155,6 @@ class DataImpex(object):
         #loop over provided images
         z = 0
         allok = True
-
         for ich in range(nch):
             z = 0
             for index, filename in enumerate(fileList[ich]):

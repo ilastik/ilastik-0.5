@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#    Copyright 2010 C Sommer, C Straehle, U Koethe, FA Hamprecht. All rights reserved.
+#    Copyright 2011 C Sommer, C Straehle, T Kroeger, U Koethe, FA Hamprecht. All rights reserved.
 #
 #    Redistribution and use in source and binary forms, with or without modification, are
 #    permitted provided that the following conditions are met:
@@ -90,6 +90,7 @@ import getopt
 from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core
 import ilastik.gui
+from ilastik.gui import __path__ as  ilastikGuiPath
 
 #make the program quit on Ctrl+C
 import signal
@@ -269,6 +270,7 @@ class MainWindow(QtGui.QMainWindow):
             dataItem.overlayMgr[ov.key] = ov
 
         self.shortcutSave = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+S"), self, self.saveProject, self.saveProject)
+        self.shortcutSaveAs = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+S"), self, self.saveProjectAs, self.saveProjectAs)
         self.shortcutFullscreen = QtGui.QShortcut(QtGui.QKeySequence("Ctrl+Shift+F"), self, self.showFullscreen, self.showFullscreen)
         self.tabChanged(0)
 
@@ -362,7 +364,9 @@ class MainWindow(QtGui.QMainWindow):
                 enabled = True
             self.ribbon.setTabEnabled(i, enabled)
         if self.labelWidget is not None:
-            self.labelWidget.labelWidget.setEnabled(not state)
+            self.labelWidget.labelWidget.setContextMenuEnabled(not state)
+            if hasattr(self.labelWidget.labelWidget, 'addLabelButton' ):
+                self.labelWidget.labelWidget.addLabelButton.setEnabled(not state)
 
     def tabChanged(self,  index):
         """
@@ -389,23 +393,37 @@ class MainWindow(QtGui.QMainWindow):
 
         if self.labelWidget is not None:
             self.labelWidget.repaint()
-
-
-    def saveProject(self):
+            
+    def saveProjectAs(self):
         if hasattr(self,'project'):
-            if self.project.filename is not None:
-                self.project.saveToDisk()
-            else:
-                fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
+            fileName = QtGui.QFileDialog.getSaveFileName(self, "Save Project", ilastik.gui.LAST_DIRECTORY, "Project Files (*.ilp)")
+            if fileName:
                 fn = str(fileName)
                 if len(fn) > 4:
                     if fn[-4:] != '.ilp':
                         fn = fn + '.ilp'
-                    if self.project.saveToDisk(fn):
-                        QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
-                        
+                self.project.filename = fn        
                 ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fn).path()
-            print "saved Project to ", self.project.filename
+                self.saveProject()
+                QtGui.QMessageBox.information(self, 'Success', "The project has been saved successfully to:\n %s" % str(self.project.filename), QtGui.QMessageBox.Ok)           
+
+    def saveProject(self):
+        if hasattr(self,'project'):
+            if self.project.filename is not None:
+                pb = QtGui.QProgressDialog('Saving %s...' % self.project.filename,'Saving...',0,0, self)
+                pb.setCancelButton(None)
+                
+                t = QtCore.QThread()
+                t.finished.connect(pb.close)
+                
+                def foo():
+                    self.project.saveToDisk()                 
+                t.run = foo
+                t.start()
+                pb.exec_()
+                t.wait()
+            else:
+                self.saveProjectAs()
 
     def projectModified(self):
         self.updateFileSelector() #this one also changes the image
@@ -500,7 +518,7 @@ class MainWindow(QtGui.QMainWindow):
 #*******************************************************************************
 
 if __name__ == "__main__":
-    splashImage = QtGui.QPixmap("ilastik/gui/logos/ilastik-splash.png")
+    splashImage = QtGui.QPixmap(os.path.join(os.path.abspath(ilastikGuiPath[0]), 'logos/ilastik-splash.png'))
     painter = QtGui.QPainter()
     painter.begin(splashImage)
     painter.drawText(QtCore.QPointF(270,110), ilastik.core.readInBuildInfo())
@@ -519,6 +537,8 @@ if __name__ == "__main__":
     #On OS X, the window has to be raised in order to be visible directly after starting
     #the app
     mainwindow.raise_()
+    
+    mainwindow.showMaximized()
     
     splashScreen.finish(mainwindow)
     
