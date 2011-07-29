@@ -272,7 +272,9 @@ class LoadOptionsWidget(QtGui.QWidget):
             else:
                 self.sizeZ.setValue(shape[2])
         except Exception as e:
+            print "Pre-reading data shape failed"
             print e
+            print "Loading the full dataset"
             self.sizeZ.setValue(0)
             self.sizeX.setValue(0)
             self.sizeY.setValue(0)
