@@ -53,6 +53,7 @@ class StackLoader(QtGui.QDialog):
         #internally, it's a list of lists of filenames
         #for each channel
         self.fileList = []
+        self.channelIDs = []
         self.options = loadOptionsMgr.loadOptions()
         
        
@@ -70,7 +71,7 @@ class StackLoader(QtGui.QDialog):
         tempLayout_.addLayout(tempLayout)
 
         tempLayout = QtGui.QHBoxLayout()
-        self.multiChannel = QtGui.QCheckBox("Load MultiChannel data as one image:")
+        self.multiChannel = QtGui.QCheckBox("Load MultiChannel data from separate channel images:")
         self.connect(self.multiChannel, QtCore.SIGNAL("stateChanged(int)"), self.toggleMultiChannel)
         tempLayout.addWidget(self.multiChannel)
         tempLayout_.addLayout(tempLayout) 
@@ -79,26 +80,13 @@ class StackLoader(QtGui.QDialog):
         self.layout.addWidget(tempFrame)      
         
         self.multiChannelFrame = QtGui.QFrame()
-        tempLayout = QtGui.QVBoxLayout()
-        tempLayout1 = QtGui.QHBoxLayout()
-        tempLayout1.addWidget(QtGui.QLabel("Enter channel identifiers, e.g. GFP"))
-
-        tempLayout.addLayout(tempLayout1)
-        tempLayout2 = QtGui.QHBoxLayout()
-        self.redChannelId = QtGui.QLineEdit("")
-        self.connect(self.redChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.blueChannelId = QtGui.QLineEdit("")
-        self.connect(self.blueChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        self.greenChannelId = QtGui.QLineEdit("")
-        self.connect(self.greenChannelId, QtCore.SIGNAL("textChanged(QString)"), self.pathChanged)
-        tempLayout2.addWidget(QtGui.QLabel("Red:"))
-        tempLayout2.addWidget(self.redChannelId)
-        tempLayout2.addWidget(QtGui.QLabel("Green:"))
-        tempLayout2.addWidget(self.greenChannelId)
-        tempLayout2.addWidget(QtGui.QLabel("Blue:"))
-        tempLayout2.addWidget(self.blueChannelId)
-        tempLayout.addLayout(tempLayout2)
+        tempLayout = QtGui.QFormLayout()
+        self.addChannelButton = QtGui.QPushButton("  Add channel identifier")
+        self.connect(self.addChannelButton, QtCore.SIGNAL('clicked()'), self.slotAddChannel)
+        tempLayout.addRow(QtGui.QLabel(" "), self.addChannelButton)
+        
         self.multiChannelFrame.setLayout(tempLayout)
+        
         self.multiChannelFrame.setVisible(False)
         self.layout.addWidget(self.multiChannelFrame)        
 
@@ -129,10 +117,34 @@ class StackLoader(QtGui.QDialog):
             self.multiChannelFrame.setVisible(False)
         else:
             self.multiChannelFrame.setVisible(True)
+            if len(self.channelIDs)==0:
+                self.slotAddChannel()
+    
+    def slotAddChannel(self):
+        newID = QtGui.QLineEdit()
+        newID.setToolTip("Enter identifier for this channel's files, e.g. GFP or ch01")
+        self.channelIDs.append(newID)
+        nch = len(self.channelIDs)
+        label = "Channel %d identifier" % nch
+        receiver = lambda callingChannel=nch-1: self.channelIDChanged(callingChannel)
+        self.connect(self.channelIDs[nch-1], QtCore.SIGNAL('editingFinished()'), receiver)
+        
+        self.multiChannelFrame.layout().addRow(QtGui.QLabel(label), newID)
+        if len(self.channelIDs)>1:
+            self.fileList.append([])
 
-
+    def channelIDChanged(self, channel):
+        #if one identifier changes, we only have to change that filelist
+        if len(self.fileList)<channel+1:
+            print "!!! something went wrong with allocating enough lists for channels !!!"
+            return
+        temp = os.path.splitext(str(self.path.text()))[0]
+        chfiles = temp + "*" + str(self.channelIDs[channel].text()) + "*"
+        self.fileList[channel] = sorted(glob.glob(chfiles), key=str.lower)
+        self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def pathChanged(self, text):
+        #if path changes, we have to redo all lookups for all channels
         self.fileList = []
         self.options.channels = []
         if self.multiChannel.checkState() == 0:
@@ -141,28 +153,12 @@ class StackLoader(QtGui.QDialog):
             #self.fileList.append(glob.glob(str(self.path.text())))
             self.options.channels.append(0)
         else:
-            #not all channels have to be filled
-            if (len(str(self.redChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathred = temp+"*"+str(self.redChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathred), key=str.lower))
-                self.options.channels.append(0)
-            else:
-                self.fileList.append([])    
-            if (len(str(self.greenChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathgreen = temp+"*"+str(self.greenChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathgreen), key=str.lower))
-                self.options.channels.append(1)
-            else:
-                self.fileList.append([])
-            if (len(str(self.blueChannelId.text()))>0):
-                temp = os.path.splitext(str(self.path.text()))[0]
-                pathblue = temp+"*"+str(self.blueChannelId.text())+"*"
-                self.fileList.append(sorted(glob.glob(pathblue), key=str.lower))
-                self.options.channels.append(2)
-            else:
-                self.fileList.append([])
+            nch = len(self.channelIDs)
+            temp = os.path.splitext(str(self.path.text()))[0]
+            for ich in range(nch):
+                chfiles = temp + "*" + str(self.channelIDs[ich].text()) + "*"
+                self.fileList[ich] = sorted(glob.glob(chfiles), key=str.lower)
+                self.options.channels.append(ich)                
         self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def slotDir(self):
@@ -179,7 +175,7 @@ class StackLoader(QtGui.QDialog):
         self.fileTableWidget = loadOptionsWidget.previewTable(self.fileList)
         self.fileTableWidget.exec_()
 
-    def slotLoad(self):
+    def slotLoad(self):    
         self.optionsWidget.fillOptions(self.options)
         self.accept()
 

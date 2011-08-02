@@ -100,6 +100,15 @@ class ProjectDlg(QtGui.QDialog):
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader(self)
         path, fileList, options = sl.exec_()
+        len0 = len(fileList[0])
+        diff = 0
+        for f in fileList:
+            if len(f)!=len0 and len(f)!=0:
+                diff = 1
+                break
+        if diff>0:
+            QtGui.QErrorMessage.qtHandler().showMessage("Different number of files for different channels. Doesn't work.")
+            return
         if path is None:
             return
         loaded = False
@@ -135,15 +144,15 @@ class ProjectDlg(QtGui.QDialog):
     def on_loadFileButton_clicked(self):
 
         fl = fileloader.FileLoader(self)
-        #imageData = sl.exec_()
-        fl.exec_()
+        fileList, options = fl.exec_()
+        if fileList is None:
+            return
 
-        loaded = False
         try:
-            self.project.loadFile(fl.fileList, fl.options)
+            self.project.loadFile(fileList, options)
         except Exception, e:
             QtGui.QErrorMessage.qtHandler().showMessage(str(e))
-        for filename in fl.fileList[fl.options.channels[0]]:
+        for filename in fileList[options.channels[0]]:
             
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)

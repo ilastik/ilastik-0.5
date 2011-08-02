@@ -159,12 +159,36 @@ class Project(object):
 
     def loadFile(self, fileList, options):
         itemList = []
-        try:
-            itemList = dataImpex.DataImpex.importDataItems(fileList, options)
-        except Exception, e:
-            traceback.print_exc(file=sys.stdout)
-            print e
-            raise e
+        
+        #if loading normal images, behave like addFile, but call importDataItems in case
+        #an .h5 file is passed with options
+        if len(options.channels)==1:
+            #if loading normal images, behave like addFile, but call importDataItems in case
+            #an .h5 file is passed with options
+            for f in fileList[0]:            
+                try:
+                    fBase, fExt = os.path.splitext(f)
+                    if fExt=='.h5' or fExt=='.img':
+                        print fBase
+                        item = dataImpex.DataImpex.importDataItems([[f]], options)
+                        itemList.extend(item) #item is a list
+                    else:
+                        item = dataImpex.DataImpex.importDataItem(f, None)
+                        itemList.append(item)
+                        
+                except Exception, e:
+                    traceback.print_exc(file=sys.stdout)
+                    print e
+                    raise e
+        else:
+            #A multispectral image should be combined. They all have the same shape.
+            try:
+                item = dataImpex.DataImpex.importDataItems(fileList, options)
+                itemList.extend(item)
+            except Exception, e:
+                traceback.print_exc(file=sys.stdout)
+                print e
+                raise e
         for index, item in enumerate(itemList):
             self.dataMgr.append(item, True)
         return True

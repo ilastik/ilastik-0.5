@@ -260,7 +260,7 @@ class LoadOptionsWidget(QtGui.QWidget):
 
     def setShapeInfo(self, fileList, channels):
         #read the shape information from the first file in the list
-        #TODO: this is calling the dataImpex - it's baaaaad, it shouldn't be done        
+        #TODO: this is calling the dataImpex - it's baaaaad, it shouldn't be done
         try:            
             shape = dataImpex.DataImpex.readShape(fileList[channels[0]][0])
             self.rgb = shape[3]
@@ -272,7 +272,9 @@ class LoadOptionsWidget(QtGui.QWidget):
             else:
                 self.sizeZ.setValue(shape[2])
         except Exception as e:
+            print "Pre-reading data shape failed"
             print e
+            print "Loading the full dataset"
             self.sizeZ.setValue(0)
             self.sizeX.setValue(0)
             self.sizeY.setValue(0)
@@ -290,7 +292,7 @@ class previewTable(QtGui.QDialog):
         self.fileList = fileList
         self.fileListTable = QtGui.QTableWidget()
         self.fillFileTable()        
-        self.fileListTable.setHorizontalHeaderLabels(["channel 1", "channel 2", "channel 3"])
+        #self.fileListTable.setHorizontalHeaderLabels(["channel 1", "channel 2", "channel 3"])
         self.fileListTable.resizeRowsToContents()
         self.fileListTable.resizeColumnsToContents()
         self.layout.addWidget(self.fileListTable)
@@ -303,10 +305,7 @@ class previewTable(QtGui.QDialog):
             self.fileListTable.setItem(0, 1, QtGui.QTableWidgetItem(QtCore.QString("file2")))
             self.fileListTable.setItem(0, 2, QtGui.QTableWidgetItem(QtCore.QString("file3")))
             return
-        nfiles = len(self.fileList[0])
-        self.fileListTable.setRowCount(nfiles)
-        self.fileListTable.setColumnCount(len(self.fileList))
-        #it's so ugly... but i don't know how to fill a whole column by list slicing
+
         if (len(self.fileList)==1):
             #single channel data
             self.fileListTable.setRowCount(len(self.fileList[0]))
@@ -314,6 +313,23 @@ class previewTable(QtGui.QDialog):
             for i in range(0, len(self.fileList[0])):
                 filename = os.path.basename(self.fileList[0][i])
                 self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+        else:
+            #multichannel data
+            maxlen = len(self.fileList[0])
+            for f in self.fileList:
+                if len(f)>maxlen:
+                    maxlen = len(f)
+            self.fileListTable.setRowCount(maxlen)
+            self.fileListTable.setColumnCount(len(self.fileList))
+            for i in range(len(self.fileList)):
+                for j in range(len(self.fileList[i])):
+                    filename = os.path.basename(self.fileList[i][j])
+                    self.fileListTable.setItem(j, i, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+        
+                    
+            
+        
+        '''
         if (len(self.fileList)==3):
             #multichannel data
             nfiles = max([len(self.fileList[0]), len(self.fileList[1]), len(self.fileList[2])])
@@ -328,3 +344,4 @@ class previewTable(QtGui.QDialog):
             for i in range(0, len(self.fileList[2])):
                 filename = os.path.basename(self.fileList[2][i])
                 self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(filename)))
+        '''
