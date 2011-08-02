@@ -29,7 +29,7 @@
 
 from PyQt4 import QtCore, QtGui
 import os, traceback, sys
-from overlaySelectionDlg import OverlaySelectionDialog, OverlayCreateSelectionDlg
+from overlaySelectionDlg import OverlaySelectionDialog
 from ilastik.gui import overlayDialogs
 import ilastik.gui.exportDialog as exportDialog
 from ilastik.gui.iconMgr import ilastikIcons
