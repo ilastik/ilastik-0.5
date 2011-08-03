@@ -318,25 +318,40 @@ class FeatureTableWidget(QTableWidget):
         
     def setChangeSizeCallback(self, changeSizeCallback):
         self.changeSizeCallback = changeSizeCallback
+        
+    def setSelectedFeatureBoolMatrix(self, featureMatrix):
+        r = 0
+        for row in range(self.rowCount()):
+            if self.verticalHeaderItem(row).isRootNode:
+                continue
+            for column in range(self.columnCount()):
+                if featureMatrix[r][column]:
+                    self.item(row, column).setFeatureState(Qt.Checked)
+            r+=1
+        self._updateParentCell()
     
-    def setSelectedFeatures(self, selectedFeatures):
-        for feature in selectedFeatures:
+    def setSelectedFeatureList(self, featureList):
+        for feature in featureList:
             for r,c in self._tableEntries():
                 if feature[0] == self.verticalHeaderItem(r).vHeaderName and feature[1] == str(self.horizontalHeaderItem(c).sigma):
                     self.item(r,c).setFeatureState(Qt.Checked)
         self._updateParentCell()
     
     def createSelectedFeaturesBoolMatrix(self):
-        matrix = []
-        for c in range(self.columnCount()):
-            matrix.append([])
-            for r in range(self.rowCount()):
-                item = self.item(r,c)
+        i = 0
+        for r in range(self.rowCount()):
+            if not self.verticalHeaderItem(r).isRootNode:
+                i+=1
+        matrix = [[False for k in range(self.columnCount())] for j in range(i)]
+        x=0
+        for row in range(self.rowCount()):
+            for column in range(self.columnCount()):
+                item = self.item(row,column)
                 if not item.isRootNode: 
                     if item.featureState == Qt.Checked:
-                        matrix[c].append(True)
-                    else:
-                        matrix[c].append(False)
+                        matrix[x][column] = True
+            if not self.verticalHeaderItem(row).isRootNode:
+                x+=1
         return matrix
     
     def createSelectedFeatureList(self):
@@ -372,9 +387,9 @@ class FeatureTableWidget(QTableWidget):
         return result
     
     def _tableEntries(self):
-        for c in range(self.columnCount()):
-            for r in range(self.rowCount()):
-                yield r,c
+        for row in range(self.rowCount()):
+            for column in range(self.columnCount()):
+                yield row,column
             
     def sizeHint(self):
         height = 200
