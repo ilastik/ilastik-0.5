@@ -92,8 +92,8 @@ class OverlaySelectionDialog(QDialog):
     def _showOverlayImageInPreView(self, currentTreeItem):
         print currentTreeItem.item.name
     
-    def createOverlayTreeWidget(self, overlayDict, forbiddenOverlays, preSelectedOverlays):
-        self.overlayTreeWidget.addOverlaysToTreeWidget(overlayDict, forbiddenOverlays, preSelectedOverlays)
+    def createOverlayTreeWidget(self, overlayDict, forbiddenOverlays, preSelectedOverlays, singleOverlaySelection):
+        self.overlayTreeWidget.addOverlaysToTreeWidget(overlayDict, forbiddenOverlays, preSelectedOverlays, singleOverlaySelection)
         
     def _on_add_selectedClicked(self):
         self.accept()
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     ex1 = OverlaySelectionDialog()
     a = SimpleObject("Labels")
     b = SimpleObject("Raw Data")
-    ex1.createOverlayTreeWidget({"Classification/Labels/Channel A/xz": a, "Raw Data": b}, [], [])
+    ex1.createOverlayTreeWidget({"Classification/Labels/Channel A/xz": a, "Raw Data": b}, [], [], True)
     ex1.show()
     ex1.raise_()  
       
