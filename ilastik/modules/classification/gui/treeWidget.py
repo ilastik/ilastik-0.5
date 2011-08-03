@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import pyqtSignal
+from PyQt4.QtGui import QTreeWidgetItem, QTreeWidget, QTreeWidgetItemIterator
+from PyQt4.QtCore import pyqtSignal, Qt, QEvent, SIGNAL
 
 
-class OverlayTreeWidgetIter(QtGui.QTreeWidgetItemIterator):
+class OverlayTreeWidgetIter(QTreeWidgetItemIterator):
     def __init__(self, *args):
-        QtGui.QTreeWidgetItemIterator.__init__(self, *args)
+        QTreeWidgetItemIterator.__init__(self, *args)
     def next(self):
         self.__iadd__(1)
         value = self.value()
@@ -15,7 +15,7 @@ class OverlayTreeWidgetIter(QtGui.QTreeWidgetItemIterator):
             return False
 
 
-class OverlayTreeWidgetItem(QtGui.QTreeWidgetItem):
+class OverlayTreeWidgetItem(QTreeWidgetItem):
     def __init__(self, item, overlayPathName):
         """
         item:            OverlayTreeWidgetItem
@@ -23,15 +23,15 @@ class OverlayTreeWidgetItem(QtGui.QTreeWidgetItem):
                          full name of the overlay, for example 'File Overlays/My Data'
         """
         self.overlayPathName = overlayPathName
-        QtGui.QTreeWidgetItem.__init__(self, [item.name])
+        QTreeWidgetItem.__init__(self, [item.name])
         self.item = item
 
 
-class OverlayTreeWidget(QtGui.QTreeWidget):
+class OverlayTreeWidget(QTreeWidget):
     spacePressed = pyqtSignal()
     
     def __init__(self, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
         
         self.singleOverlaySelection = True
         
@@ -42,8 +42,9 @@ class OverlayTreeWidget(QtGui.QTreeWidget):
         self.itemChanged.connect(self.treeItemChanged)
 
 
-    def addOverlaysToTreeWidget(self, overlayDict, forbiddenOverlays, preSelectedOverlays):
-        testItem = QtGui.QTreeWidgetItem("a")
+    def addOverlaysToTreeWidget(self, overlayDict, forbiddenOverlays, preSelectedOverlays, singleOverlaySelection):
+        self.singleOverlaySelection = singleOverlaySelection
+        testItem = QTreeWidgetItem("a")
         for keys in overlayDict.keys():
             if overlayDict[keys] in forbiddenOverlays:
                 continue
@@ -56,20 +57,20 @@ class OverlayTreeWidget(QtGui.QTreeWidget):
                     self.addTopLevelItem(newItemsChild)                   
                     boolStat = False
                     if overlayDict[keys] in preSelectedOverlays:
-                        newItemsChild.setCheckState(0, 2)
+                        newItemsChild.setCheckState(0, Qt.Checked)
                     else:
-                        newItemsChild.setCheckState(0, 0)
+                        newItemsChild.setCheckState(0, Qt.Unchecked)
                     
                 elif i+1 == len(split) and len(split) > 1:
                     newItemsChild = OverlayTreeWidgetItem(overlayDict[keys], keys)
                     testItem.addChild(newItemsChild)
                     if overlayDict[keys] in preSelectedOverlays:
-                        newItemsChild.setCheckState(0, 2)
+                        newItemsChild.setCheckState(0, Qt.Checked)
                     else:
-                        newItemsChild.setCheckState(0, 0)
+                        newItemsChild.setCheckState(0, Qt.Unchecked)
                     
                 elif self.topLevelItemCount() == 0 and i+1 < len(split):
-                    newItem = QtGui.QTreeWidgetItem([split[i]])
+                    newItem = QTreeWidgetItem([split[i]])
                     self.addTopLevelItem(newItem)
                     testItem = newItem
                     boolStat = True
@@ -82,13 +83,13 @@ class OverlayTreeWidget(QtGui.QTreeWidget):
                                 boolStat = True
                                 break
                             elif n+1 == self.topLevelItemCount():
-                                newItem = QtGui.QTreeWidgetItem([split[i]])
+                                newItem = QTreeWidgetItem([split[i]])
                                 self.addTopLevelItem(newItem)
                                 testItem = newItem
                                 boolStat = True
                         
                     elif testItem.childCount() == 0:
-                        newItem = QtGui.QTreeWidgetItem([split[i]])
+                        newItem = QTreeWidgetItem([split[i]])
                         testItem.addChild(newItem)
                         testItem = newItem
                         boolStat = True
@@ -99,32 +100,24 @@ class OverlayTreeWidget(QtGui.QTreeWidget):
                                 boolStat = True
                                 break
                             elif x+1 == testItem.childCount():
-                                newItem = QtGui.QTreeWidgetItem([split[i]])
+                                newItem = QTreeWidgetItem([split[i]])
                                 testItem.addChild(newItem)
                                 testItem = newItem
                                 boolStat = True
                                 
     def treeItemChanged(self, item, column):
-        print "itemChanged"
         currentItem = item
-        it = OverlayTreeWidgetIter(self, QtGui.QTreeWidgetItemIterator.Checked)
-        i = 0
+        it = OverlayTreeWidgetIter(self, QTreeWidgetItemIterator.Checked)
         while (it.value()):
-            if self.singleOverlaySelection == True and currentItem.checkState(column) == 2:
+            if self.singleOverlaySelection == True and currentItem.checkState(column) == Qt.Checked:
                 if it.value() != currentItem:
-                    it.value().setCheckState(0, 0)
+                    it.value().setCheckState(0, Qt.Unchecked)
             it.next()
-            i += 1
-        if i == 0:
-#            self.addSelectedButton.setEnabled(False)
-            pass
-        else:
-#            self.addSelectedButton.setEnabled(True)
-            pass
+
                                 
     def createSelectedItemList(self):
         selectedItemList = []
-        it = OverlayTreeWidgetIter(self, QtGui.QTreeWidgetItemIterator.Checked)
+        it = OverlayTreeWidgetIter(self, QTreeWidgetItemIterator.Checked)
         while (it.value()):
             selectedItemList.append(it.value().item)
             it.next()
@@ -134,16 +127,17 @@ class OverlayTreeWidget(QtGui.QTreeWidget):
     def spacePressedTreewidget(self):
         for item in self.selectedItems():
             if item.childCount() == 0:
-                if item.checkState(0) == 0:
-                    item.setCheckState(0, 2)
+                if item.checkState(0) == Qt.Unchecked:
+                    item.setCheckState(0, Qt.Checked)
                 else: 
-                    item.setCheckState(0, 0)
+                    item.setCheckState(0, Qt.Unchecked)
                     
     def event(self, event):
-        if (event.type()==QtCore.QEvent.KeyPress) and (event.key()==QtCore.Qt.Key_Space):
-            self.emit(QtCore.SIGNAL("spacePressed"))
+        if (event.type()==QEvent.KeyPress) and (event.key()==Qt.Key_Space):
+            self.emit(SIGNAL("spacePressed"))
             return True
-        return QtGui.QTreeWidget.event(self, event)
+        return QTreeWidget.event(self, event)
+    
 
 class SimpleObject:
     def __init__(self, name):
