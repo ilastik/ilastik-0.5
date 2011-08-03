@@ -82,7 +82,7 @@ class FeatureDlg(QDialog):
         self.layout.addWidget(self.tableAndViewGroupBox)
         
         self.layout.setContentsMargins(0,0,0,0)
-        self.tableAndViewGroupBox.setContentsMargins(0,10,0,0)
+        self.tableAndViewGroupBox.setContentsMargins(4,10,4,4)
         self.tableAndViewLayout.setContentsMargins(0,10,0,0)
         
         self.featureTableWidget.brushSizeChanged.connect(self.preView.setFilledBrsuh)
@@ -138,7 +138,13 @@ if __name__ == "__main__":
     from PyQt4.QtGui import *
     
     app = QApplication(sys.argv)
-    app.setStyle("cleanlooks")
+    
+#    app.setStyle("windows")
+#    app.setStyle("motif")
+#    app.setStyle("cde")
+#    app.setStyle("plastique")
+#    app.setStyle("macintosh")
+#    app.setStyle("cleanlooks")
     
     ex1 = FeatureDlg()
     ex1.createFeatureTable({"Color": [SimpleObject("Banana")], "Edge": [SimpleObject("Mango"), SimpleObject("Cherry")]}, [0.3, 0.7, 1, 1.6, 3.5, 5.0, 10.0])
@@ -166,8 +172,8 @@ if __name__ == "__main__":
     
     
     def test():
-        selectedFeatures = ex1.featureTableWidget.createSelectedFeatureList()
-        ex2.featureTableWidget.setSelectedFeatures(selectedFeatures)
+        selectedFeatures = ex1.featureTableWidget.createSelectedFeaturesBoolMatrix()
+        ex2.featureTableWidget.setSelectedFeatureBoolMatrix(selectedFeatures)
             
     ex1.accepted.connect(test)
     
