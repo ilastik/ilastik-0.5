@@ -53,3 +53,13 @@ backup.py
 .gitignore
 
 widgets/labelListModel.py
+
+widgets/treeWidget.py
+
+widgets/tableWidget.py
+
+widgets/preView.py
+
+widgets/overlaySelectionDlg.py
+
+widgets/featureDlg.py
