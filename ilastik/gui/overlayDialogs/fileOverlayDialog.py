@@ -94,7 +94,7 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
             
             ov = dataImpex.DataImpex.importOverlay(activeItem, file_name, attrs=self.attrs)
             if ov is None:
-                print "No _data item loaded"
+                print "No data item loaded"
     
         except Exception, e:
             traceback.print_exc()
