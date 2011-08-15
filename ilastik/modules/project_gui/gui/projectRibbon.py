@@ -96,6 +96,7 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.btnOptions.setEnabled(True)
             self.parent.updateFileSelector()
             self.parent._activeImageNumber = 0
+            self.parent.on_otherProject()
             self.ilastik.setTabBusy(False)
             
     def on_btnSave_clicked(self):
