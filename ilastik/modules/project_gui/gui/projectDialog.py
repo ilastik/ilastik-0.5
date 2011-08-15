@@ -174,6 +174,7 @@ class ProjectDlg(QtGui.QDialog):
     def on_addFile_clicked(self):
         #global LAST_DIRECTORY
         fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ilastik.gui.LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.tiff *.gif *.h5)")
+
         fileNames.sort()
         loaded = False
         try:
