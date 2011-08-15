@@ -57,19 +57,21 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
             self.ui.colorButton.setStyleSheet("* { background-color: rgb(%d,%d,%d) }" % (c.red(), c.green(), c.blue()));
     
     def chooseFilename(self):
-        print "choose filename clicked"
-        fileName = QtGui.QFileDialog.getOpenFileName(self.ilastik, "Open Image", gui.LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.gif *.h5)")
+        fileName = QtGui.QFileDialog.getOpenFileName(self.ilastik, "Open Overlay", gui.LAST_DIRECTORY, "Overlay files(*.h5)")
         self.filenameEdit.setText(fileName)
         
-        attrs = self.attrs = OverlayAttributes(str(fileName))
-        
-        self.ui.useColorTableFromFileButton.setEnabled(attrs.colorTable is not None)
-        if(attrs.colorTable is not None):
-            self.ui.useColorTableFromFileButton.setChecked(True)
-       
-        self.updateColor() 
-       
-        self.ui.nameEdit.setText(attrs.key)
+        try:
+            attrs = self.attrs = OverlayAttributes(str(fileName))
+            
+            self.ui.useColorTableFromFileButton.setEnabled(attrs.colorTable is not None)
+            if(attrs.colorTable is not None):
+                self.ui.useColorTableFromFileButton.setChecked(True)
+           
+            self.updateColor() 
+           
+            self.ui.nameEdit.setText(attrs.key)
+        except:
+            QtGui.QMessageBox.warning(self, 'Open Overlay', 'Selected file is not a valid Overlay File.')
         
     def exec_(self):
         if not QtGui.QDialog.exec_(self):
