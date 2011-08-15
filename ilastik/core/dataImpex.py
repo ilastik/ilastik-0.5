@@ -347,7 +347,7 @@ class DataImpex(object):
                             else:
                                 dtype_ = numpy.uint8
                         
-                        vigra.impex.writeImage(data.swapaxes(1,0), fn, dtype=dtype_)
+                        vigra.impex.writeImage(data, fn, dtype=dtype_)
                         print "Exported file ", fn
         else:
             for t in range(overlayItem._data.shape[0]):
@@ -369,10 +369,12 @@ class DataImpex(object):
                         if mi >= 0 and 1 < ma <= 255:
                             data = data.astype(numpy.uint8)
                             dtype_ = 'NATIVE'
-                        else:
-                            dtype_ = numpy.uint8
+                    else:
+                        dtype_ = numpy.uint8
+
+
                     
-                    vigra.impex.writeImage(data, fn, dtype=dtype_)
+                    vigra.impex.writeImage(data.T, fn, dtype=dtype_)
                     print "Exported file ", fn
 
     @staticmethod

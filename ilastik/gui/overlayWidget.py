@@ -280,14 +280,14 @@ class OverlayListWidget(QtGui.QListWidget):
             formatList = dataImpex.DataImpex.exportFormatList()
             formatList.append("h5")
             expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset, parent=self.volumeEditor.ilastik)
-            expdlg.exec_()
-            try:
-                tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
-                filename = str(QtCore.QDir.convertSeparators(tempname))
-                dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference.overlayItem, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
-            except Exception, e:
-                print e
-                traceback.print_exc(file=sys.stdout)
+            if expdlg.exec_():
+                try:
+                    tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
+                    filename = str(QtCore.QDir.convertSeparators(tempname))
+                    dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference.overlayItem, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
+                except Exception, e:
+                    print e
+                    traceback.print_exc(file=sys.stdout)
         else:
             channelAct = channelActions[0]
             if action == channelAct:
