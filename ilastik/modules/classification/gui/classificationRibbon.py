@@ -101,7 +101,12 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSelectFeatures.setEnabled(True)
         self.btnStartLive.setEnabled(False)
         self.btnTrainPredict.setEnabled(False)
+        
         self.btnExportClassifier.setEnabled(False)
+        if hasattr(self.ilastik, 'project'):
+            if len(self.ilastik.project.dataMgr.module["Classification"]["classificationMgr"].classifiers) > 0:
+                self.btnExportClassifier.setEnabled(True) 
+        
         self.btnClassifierOptions.setEnabled(True)
         
     def on_btnSelectFeatures_clicked(self):

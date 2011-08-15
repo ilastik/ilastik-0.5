@@ -152,6 +152,7 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         if 'prediction' in h5G.keys():
             self["prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
         
+        
 
 
 #*******************************************************************************
@@ -290,7 +291,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
             print """Could not find entry FeatureSelection/UserSelection in project file
                      Probably this file is too old. Skipping..."""
           
-        classifiers = []
+        
         f = h5G.file
         g = h5G.name + '/classifiers'
         print "  -> looking for classifiers in", g
@@ -299,6 +300,15 @@ class ClassificationModuleMgr(BaseModuleMgr):
         
         for cid in classifiers:
             self.classifier.deserialize(f[h5G.name +  '/classifiers/' + cid])
+            
+#         Does not work, since the file is already opened with h5py and vigra cannot reopen it
+#         throws 'Unable to open file'   
+#        self.classifiers = []
+#        for cid in classifiers:
+#            print h5G.file.filename
+#            print h5G.name + '/classifiers/' + cid
+#            self.classifiers.append(self.classifier.loadRFfromFile(h5G.file.filename, h5G.name +  '/classifiers/' + cid))
+        
         
 #*******************************************************************************
 # C l a s s i f i c a t i o n M g r                                            *

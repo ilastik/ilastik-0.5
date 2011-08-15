@@ -90,7 +90,8 @@ class ClassifierRandomForest(ClassifierBase):
            trees (in a very hackish way)."""
         thisForestPath = h5G.name
         allForestsPath = thisForestPath[0:thisForestPath.rfind("/")]
-      
+        classifier = []
+        
         if allForestsPath in h5G.file:
             trees = h5G.file[allForestsPath].keys()
           
