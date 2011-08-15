@@ -2460,6 +2460,7 @@ class ImageScene(QtGui.QGraphicsView):
         self.volumeEditor.labelWidget.onImageSceneContext(self, pos)
 
     def onContextSetLabel(self, i):
+        self.drawManager.disableErasing()
         self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
         self.drawManager.updateCrossHair()
 
