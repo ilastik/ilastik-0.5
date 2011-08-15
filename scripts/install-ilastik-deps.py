@@ -1,5 +1,35 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+#    Copyright 2010 L Fiaschi, T Kroeger, M Nullmaier C Sommer, C Straehle, U Koethe, FA Hamprecht. 
+#    All rights reserved.
+#    
+#    Redistribution and use in source and binary forms, with or without modification, are
+#    permitted provided that the following conditions are met:
+#    
+#       1. Redistributions of source code must retain the above copyright notice, this list of
+#          conditions and the following disclaimer.
+#    
+#       2. Redistributions in binary form must reproduce the above copyright notice, this list
+#          of conditions and the following disclaimer in the documentation and/or other materials
+#          provided with the distribution.
+#    
+#    THIS SOFTWARE IS PROVIDED BY THE ABOVE COPYRIGHT HOLDERS ``AS IS'' AND ANY EXPRESS OR IMPLIED
+#    WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+#    FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS OR
+#    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#    CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#    SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+#    ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#    NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+#    ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#    
+#    The views and conclusions contained in the software and documentation are those of the
+#    authors and should not be interpreted as representing official policies, either expressed
+#    or implied, of their employers.
+
+
+
 import __builtin__
 import platform
 import urllib2, os, sys, tarfile, shutil
@@ -89,8 +119,8 @@ else:
     os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir,)
 ###################################################################################################
 
-all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'png', 'slib', 'zlib',
-    'python', 'nose', 'setuptools',
+all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'zlib','png', 'slib',
+    'python', 'nose', 'setuptools', 'py2app',
     'hdf5',
     'numpy', 'h5py', 'boost', 'sip',
     'lis', 'vigra', 
@@ -98,9 +128,12 @@ all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'png', 'slib', 'zlib',
     'pyopenglaccellerate', 'pyopengl',
     'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
     'vtk',
+    'greenlet',
+    'psutil',
     'fixes']
-if platform.system() == "Darwin":
-    all.append('py2app')
+
+#if platform.system() == "Darwin":
+#    all.append('py2app')
 
 c = sys.argv[1:]
 
@@ -206,6 +239,19 @@ if 'vtk' in c:
 	VTKGitPackage()
 
 # # # # # # # # # # # # #
+#New Stuff for the Graph
+
+
+if "greenlet" in c:
+    GreenletPackage()
+
+if "psutil" in c:
+    PsutilPackage()
+    
+
+
+
+#########################
 
 if ('fixes' in c) and ('download' not in sys.argv[0]):
     if platform.system() == "Darwin":
