@@ -218,11 +218,15 @@ class OverlayListWidget(QtGui.QListWidget):
 
         channelMenu = QtGui.QMenu("Select Channel", menu)
         channelActions = []
+        action = channelMenu.addAction('All')
+        channelActions.append(action)
+        channelMenu.setActiveAction(action)
+        
         for i in range(item.overlayItemReference.numChannels):
             action = channelMenu.addAction(str(i))
             channelActions.append(action)
-            if item.overlayItemReference.channel == i:
-                channelMenu.setActiveAction(action)
+#            if item.overlayItemReference.channel == i:
+#                channelMenu.setActiveAction(action)
             
         menu.addMenu(channelMenu)
         exportAction = menu.addAction("Export")        
@@ -285,7 +289,11 @@ class OverlayListWidget(QtGui.QListWidget):
                 print e
                 traceback.print_exc(file=sys.stdout)
         else:
-            for index,  channelAct in enumerate(channelActions):
+            channelAct = channelActions[0]
+            if action == channelAct:
+                item.overlayItemReference.setChannel(-1)
+                self.volumeEditor.repaint()
+            for index,  channelAct in enumerate(channelActions[1:]):
                 if action == channelAct:
                     item.overlayItemReference.setChannel(index)
                     self.volumeEditor.repaint()

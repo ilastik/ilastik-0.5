@@ -40,6 +40,9 @@ class DataAccessor():
             self.rgb = data.rgb
             self.shape = data.shape
             self.dtype = data.dtype
+            self.channel = 0
+            if self.rgb:
+                self.channel = -1
         else:
 
             if len(data.shape) == 5:
@@ -89,6 +92,11 @@ class DataAccessor():
             if autoRgb:
                 if data.shape[-1] == 3:
                     self.rgb = True
+                    
+            if self.rgb:
+                self.channel = -1
+            else:
+                self.channel = 0
 
             self.shape = self._data.shape
             self.dtype = self._data.dtype
@@ -101,7 +109,7 @@ class DataAccessor():
         self._data[key] = data
 
     def getSlice(self, num, axis, time = 0, channel = 0):
-        if self.rgb is True:
+        if self.rgb is True and channel == -1:
             if axis == 0:
                 return self._data[time, num, :,: , :]
             elif axis == 1:
@@ -109,6 +117,8 @@ class DataAccessor():
             elif axis ==2:
                 return self._data[time, :,: ,num,  :]
         else:
+            if channel == -1:
+                channel = 0
             if axis == 0:
                 return self._data[time, num, :,: , channel]
             elif axis == 1:
