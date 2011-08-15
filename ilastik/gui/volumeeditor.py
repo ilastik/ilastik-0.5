@@ -687,12 +687,14 @@ class VolumeEditor(QtGui.QWidget):
 
     def toggleFullscreenX(self):
         self.maximizeSliceView(0)
-    
+        
     def toggleFullscreenY(self):
         self.maximizeSliceView(1)
+
         
     def toggleFullscreenZ(self):
         self.maximizeSliceView(2)
+
         
     def nextChannel(self):
         self.channelSpin.setValue(self.selectedChannel + 1)
@@ -717,6 +719,7 @@ class VolumeEditor(QtGui.QWidget):
             self.grid.toggleMaximized(2)
         if axis == 0:
             self.grid.toggleMaximized(1)
+        
     
     def nextLabel(self):
         self.labelWidget.nextLabel()
@@ -1855,34 +1858,28 @@ class ImageScene(QtGui.QGraphicsView):
         
         if self.volumeEditor.imageScenes[0] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenX()
-            self.fullScreenButton.setVisible(False)
-            self.normalScreenButton.setVisible(True)
             
         if self.volumeEditor.imageScenes[1] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenY()
-            self.fullScreenButton.setVisible(False)
-            self.normalScreenButton.setVisible(True)
+
         if self.volumeEditor.imageScenes[2] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenZ()
-            self.fullScreenButton.setVisible(False)
-            self.normalScreenButton.setVisible(True)
+            
+
             
     def imageSceneNormalScreen(self):
         
         if self.volumeEditor.imageScenes[0] == self.normalScreenButton.parent():
             self.volumeEditor.toggleFullscreenX()
-            self.fullScreenButton.setVisible(True)
-            self.normalScreenButton.setVisible(False)
+
             
         if self.volumeEditor.imageScenes[1] == self.normalScreenButton.parent():
             self.volumeEditor.toggleFullscreenY()
-            self.fullScreenButton.setVisible(True)
-            self.normalScreenButton.setVisible(False)
+
             
         if self.volumeEditor.imageScenes[2] == self.normalScreenButton.parent():
             self.volumeEditor.toggleFullscreenZ()
-            self.fullScreenButton.setVisible(True)
-            self.normalScreenButton.setVisible(False)
+
             
     def setImageSceneFullScreenLabel(self):
         self.allVisible = True
