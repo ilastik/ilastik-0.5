@@ -112,6 +112,6 @@ class ClassifierRandomForest(ClassifierBase):
         classifier = cls()
         classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
         classifier.treeCount = classifier.RF.treeCount()
-        classifier.unique_vals = range(classifier.RF.labelCount())
+        classifier.unique_vals = numpy.asarray(range(classifier.RF.labelCount())) + 1
         return classifier
 

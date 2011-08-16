@@ -49,13 +49,6 @@ class FeatureDlg(QtGui.QDialog):
         self.ilastik = parent
         self.initDlg()
 
-        if self.parent.project.dataMgr.module["Classification"].featureMgr is not None:
-            self.oldFeatureItems = self.parent.project.dataMgr.module["Classification"].featureMgr.featureItems
-        else:
-            self.oldFeatureItems = []
-
-
-
         self.hudColor = QtGui.QColor("red")
         self.groupMaskSizesList = ilastikFeatureGroups.groupMaskSizes
         self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
@@ -136,12 +129,17 @@ class FeatureDlg(QtGui.QDialog):
         self.featureTable.setShowGrid(False)
 
         if len(featureMgr.ilastikFeatureGroups.selection) == self.featureTable.rowCount() and len(featureMgr.ilastikFeatureGroups.selection[0]) ==  self.featureTable.columnCount():
-                for r in range(self.featureTable.rowCount()):
-                    for c in range(self.featureTable.columnCount()):
-                        item = QtGui.QTableWidgetItem()
-                        if featureMgr.ilastikFeatureGroups.selection[r][c]:
-                            item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
-                        self.featureTable.setItem(r, c, item)
+            for r in range(self.featureTable.rowCount()):
+                for c in range(self.featureTable.columnCount()):
+                    item = QtGui.QTableWidgetItem()
+                    if featureMgr.ilastikFeatureGroups.selection[r][c]:
+                        item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
+                    self.featureTable.setItem(r, c, item)
+            
+            if self.parent.project.dataMgr.module["Classification"].featureMgr is not None:
+                self.oldFeatureItems = featureMgr.ilastikFeatureGroups.createList()
+            else:
+                self.oldFeatureItems = []
         else:
             print "Selected and available features differ(project saved with different verison of ilastik or other features), resetting featuretable...."
             featureMgr.ilastikFeatureGroups.selection = []
@@ -319,6 +317,20 @@ class FeatureDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")
     def on_confirmButtons_accepted(self):
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
+        featuresChanged = False
+        if len(self.oldFeatureItems) == len(featureSelectionList):
+            for a,b in zip(self.oldFeatureItems, featureSelectionList):
+                if a.name != b.name or a.sigma != b.sigma:
+                    featuresChanged = True
+        else:
+            featuresChanged = True
+        
+        if not featuresChanged and len(self.parent.project.dataMgr.Classification.classificationMgr.classifiers) > 0:
+            self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
+        else:
+            self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(False)
+            
+                    
         res = self.parent.project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
             #print "features have maximum needed margin of:", self.parent.project.dataMgr.Classification.featureMgr.maxSigma*3

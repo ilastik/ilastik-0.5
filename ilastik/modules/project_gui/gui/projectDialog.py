@@ -270,6 +270,7 @@ class ProjectSettingsDlg(QtGui.QDialog):
         self.ilastik = ilastik
         
         
+        
 
 
         self.layout = QtGui.QVBoxLayout()
