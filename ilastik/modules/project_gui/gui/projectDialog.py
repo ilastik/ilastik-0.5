@@ -247,7 +247,9 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
-        for row in range(self.oldFiles, self.tableWidget.rowCount()):
+        rev_list = range(self.oldFiles, self.tableWidget.rowCount())
+        rev_list.reverse()
+        for row in rev_list:
             fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
             self.project.removeFile(row)
         self.reject() 

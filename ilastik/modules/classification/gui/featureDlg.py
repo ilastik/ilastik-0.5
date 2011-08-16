@@ -66,8 +66,7 @@ class FeatureDlg(QtGui.QDialog):
             if previewImage.max() <= 4095:
                 previewImage = (previewImage.astype(numpy.float32)*255.0/4095.0).astype(numpy.uint8)
             else:
-                previewImage = (previewImage.astype(numpy.float32)*255.0/65535.0).astype(numpy.uint8)
-                 
+                previewImage = (previewImage.astype(numpy.float32)*255.0/65535.0).astype(numpy.uint8)      
         pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
         self.circle = self.grscene.addEllipse(96, 96, 0, 0)
