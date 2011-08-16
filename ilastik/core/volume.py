@@ -100,6 +100,7 @@ class DataAccessor():
 
             self.shape = self._data.shape
             self.dtype = self._data.dtype
+        
 
 
     def __getitem__(self, key):

@@ -62,6 +62,11 @@ class OverlaySlice():
         self._data = data
         self.min = min
         self.max = max
+        
+    def dmax(self):
+        if not hasattr(self, '_dmax'):
+            self._dmax = self._data.max()
+        return self._dmax
 
 
 #*******************************************************************************
@@ -264,6 +269,7 @@ class OverlayItem(object):
         data = data - dmin
         dmax = numpy.max(data)
         data = 255*data/dmax
+        print 'Bad'*100
         return data
 
     @classmethod

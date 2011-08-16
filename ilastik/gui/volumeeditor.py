@@ -1335,8 +1335,9 @@ class ImageSceneRenderThread(QtCore.QThread):
                             
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                             
+#                            
                             origitemColor = None
-                            if isinstance(origitem.color,  long) or isinstance(origitem.color,  int):
+                            if isinstance(origitem.color,  long) or isinstance(origitem.color, int):
                                 origitemColor = QtGui.QColor.fromRgba(long(origitem.color))
                             else:
                                 origitemColor = origitem.color
@@ -1344,9 +1345,14 @@ class ImageSceneRenderThread(QtCore.QThread):
                             # if itemdata is uint16
                             # convert it for displayporpuse
                             if itemcolorTable is None and itemdata.dtype == numpy.uint16:
-                                print '*** Normalizing your data for display purpose'
-                                print '*** I assume you have 12bit data'
-                                itemdata = (itemdata*255.0/4095.0).astype(numpy.uint8)
+                                omax = origitem.dmax()
+                                if omax <= 4095:
+                                    print '*** Normalizing your data for display purpose only, assuming you have 12bit data'
+                                    itemdata = (itemdata.astype(numpy.float32)*255.0/4095.0).astype(numpy.uint8)
+                                else:
+                                    print '*** Normalizing your data for display purpose only, assuming you have 16bit data'
+                                    itemdata = (itemdata.astype(numpy.float32)*255.0/65535.0).astype(numpy.uint8)
+                                    
                             
                             if itemcolorTable != None:         
                                 if itemdata.dtype != 'uint8':
@@ -1389,11 +1395,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         normalize = (origitem.min, origitem.max)
                                 else:
                                     normalize = False
-                                    
                                                
                                 if origitem.autoAlphaChannel is False:
                                     if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
-                                        image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+                                        image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
                                         image0 = image1
                                     else:
                                         tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'float32')
@@ -1967,8 +1972,7 @@ class ImageScene(QtGui.QGraphicsView):
         self.drawTimer.stop()
         del self.drawTimer
         del self.ticker
-        
-        print "finished thread"
+
 
     def updatePatches(self, patchNumbers, image, overlays = ()):
         stuff = [patchNumbers, image, overlays, self.min, self.max]
@@ -2008,6 +2012,9 @@ class ImageScene(QtGui.QGraphicsView):
             else:
                 self.min = 0
                 self.max = 255
+                
+                
+                
         ########### 
         #TODO: This doing something twice (see above)
         self.updatePatches(range(self.patchAccessor.patchCount), image, overlays)

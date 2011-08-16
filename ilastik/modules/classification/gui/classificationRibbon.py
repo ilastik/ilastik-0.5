@@ -105,7 +105,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnClassifierOptions.setEnabled(True)
         
     def on_btnSelectFeatures_clicked(self):
-        preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
+        preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3].copy()
         newFeatureDlg = FeatureDlg(self.ilastik, preview)
         answer = newFeatureDlg.exec_()
         if answer == QtGui.QDialog.Accepted:

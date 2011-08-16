@@ -114,9 +114,13 @@ class DataImpex(object):
     def vigraReadImageWrapper(fileName):
         data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
         fBase, fExt = os.path.splitext(fileName)
+        dmax = data.max()
+        dmin = data.min()
+        if data.dtype == numpy.float32 and (2**16 > dmin > 0)  and (2**16 > dmax > 255):
+            data = data.astype(numpy.uint16) 
         
         # Check for bug in Olympus microscopes
-        if data.max() > 2**15 and fExt in ['.tif','.tiff']:
+        if data.min() > 2**15 and fExt in ['.tif','.tiff']:
             print "Detected Olympus microscope bug..."
             data = (data - 2**15).astype(numpy.uint16)
  
