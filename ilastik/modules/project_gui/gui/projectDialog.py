@@ -174,6 +174,7 @@ class ProjectDlg(QtGui.QDialog):
     def on_addFile_clicked(self):
         #global LAST_DIRECTORY
         fileNames = QtGui.QFileDialog.getOpenFileNames(self, "Open Image", ilastik.gui.LAST_DIRECTORY, "Image Files (*.png *.jpg *.bmp *.tif *.tiff *.gif *.h5)")
+
         fileNames.sort()
         loaded = False
         try:
@@ -246,7 +247,9 @@ class ProjectDlg(QtGui.QDialog):
     
     @QtCore.pyqtSignature("")    
     def on_confirmButtons_rejected(self):
-        for row in range(self.oldFiles, self.tableWidget.rowCount()):
+        rev_list = range(self.oldFiles, self.tableWidget.rowCount())
+        rev_list.reverse()
+        for row in rev_list:
             fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
             self.project.removeFile(row)
         self.reject() 
@@ -265,6 +268,7 @@ class ProjectSettingsDlg(QtGui.QDialog):
 
         self.project = project
         self.ilastik = ilastik
+        
         
         
 
