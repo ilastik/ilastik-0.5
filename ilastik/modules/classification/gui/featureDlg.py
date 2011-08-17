@@ -128,6 +128,7 @@ class FeatureDlg(QtGui.QDialog):
         #self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.featureTable.setShowGrid(False)
 
+        self.oldFeatureItems = []
         if len(featureMgr.ilastikFeatureGroups.selection) == self.featureTable.rowCount() and len(featureMgr.ilastikFeatureGroups.selection[0]) ==  self.featureTable.columnCount():
             for r in range(self.featureTable.rowCount()):
                 for c in range(self.featureTable.columnCount()):
@@ -138,10 +139,10 @@ class FeatureDlg(QtGui.QDialog):
             
             if self.parent.project.dataMgr.module["Classification"].featureMgr is not None:
                 self.oldFeatureItems = featureMgr.ilastikFeatureGroups.createList()
-            else:
-                self.oldFeatureItems = []
+                
         else:
-            print "Selected and available features differ(project saved with different verison of ilastik or other features), resetting featuretable...."
+            print " * Selected features as saved in the project file differ from the available features in this ilastik version."
+            print " * reseting selection"
             featureMgr.ilastikFeatureGroups.selection = []
             for r in range(self.featureTable.rowCount()):
                 featureMgr.ilastikFeatureGroups.selection.append([])
@@ -317,18 +318,15 @@ class FeatureDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")
     def on_confirmButtons_accepted(self):
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
-        featuresChanged = False
+        self.featuresChanged = False
         if len(self.oldFeatureItems) == len(featureSelectionList):
             for a,b in zip(self.oldFeatureItems, featureSelectionList):
                 if a.name != b.name or a.sigma != b.sigma:
                     featuresChanged = True
         else:
-            featuresChanged = True
+            self.featuresChanged = True
         
-        if not featuresChanged and len(self.parent.project.dataMgr.Classification.classificationMgr.classifiers) > 0:
-            self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
-        else:
-            self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(False)
+        
             
                     
         res = self.parent.project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)

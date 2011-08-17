@@ -115,6 +115,10 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         answer = newFeatureDlg.exec_()
         if answer == QtGui.QDialog.Accepted:
             self.featureComputation = FeatureComputation(self.ilastik)
+            if not newFeatureDlg.featuresChanged and len(self.parent.project.dataMgr.Classification.classificationMgr.classifiers) > 0:
+                self.parent.ribbon.getTab('Classification').featuresChanged = False
+            else:
+                self.parent.ribbon.getTab('Classification').featuresChanged = True
         newFeatureDlg.close()
         newFeatureDlg.deleteLater()
         del newFeatureDlg

@@ -291,13 +291,12 @@ class ClassificationModuleMgr(BaseModuleMgr):
             userSelection = h5G['FeatureSelection']['UserSelection']
             featureMgr.ilastikFeatureGroups.selection = userSelection.value
         except:
-            print """Could not find entry FeatureSelection/UserSelection in project file
-                     Probably this file is too old. Skipping..."""
+            pass
           
         
         f = h5G.file
         g = h5G.name + '/classifiers'
-        print "  -> looking for classifiers in", g
+        print "* searching for classifiers..."
         if g in f:
             classifiers = f[g].keys()
         

@@ -102,7 +102,6 @@ class ClassifierRandomForest(ClassifierBase):
                     treeCount += h5G.file[allForestsPath+"/"+t+"/_options"][9]
                 else:
                     treeCount += h5G.file[allForestsPath+"/"+t+"/_options/tree_count_"][0]
-            print "total number of RandomForest trees = ", treeCount
             ClassifierRandomForest.treeCount = treeCount
       
         return 0
