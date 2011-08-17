@@ -153,7 +153,6 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
             self["prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
         
 
-
 #*******************************************************************************
 # C l a s s i f i c a t i o n M o d u l e M g r                                *
 #*******************************************************************************
@@ -299,7 +298,27 @@ class ClassificationModuleMgr(BaseModuleMgr):
         
         for cid in classifiers:
             self.classifier.deserialize(f[h5G.name +  '/classifiers/' + cid])
+            
+
+    def computeAreas(self, labels, relative):
+        pred_overlay = self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Classification/Segmentation"]
+        if pred_overlay is None:
+            return None
+        pred = pred_overlay._data
+        #print min(pred), max(pred)
+        areas = []
+        for i in labels:
+            #label value is i+1
+            indices = numpy.where(pred[:]==i+1)
+            areas.append(len(indices[0]))
+        total = 0
+        if relative is True:
+            total = sum(areas)
+        else:
+            total = pred.shape[0]*pred.shape[1]*pred.shape[2]*pred.shape[3]*pred.shape[4]
         
+        return areas, total
+    
 #*******************************************************************************
 # C l a s s i f i c a t i o n M g r                                            *
 #*******************************************************************************

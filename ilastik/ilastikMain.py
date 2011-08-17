@@ -160,6 +160,7 @@ class MainWindow(QtGui.QMainWindow):
     def __init__(self, parent=None):
 
         QtGui.QMainWindow.__init__(self)
+	print "AAAAAAAAAAAAAAAAAAAAAAAAaa"
         self.fullScreen = False
         self.setGeometry(50, 50, 800, 600)
         self.setWindowTitle("ilastik " + str(ILASTIK_VERSION))

@@ -11,6 +11,8 @@ from ilastik.modules.classification.gui.guiThreads import *
 from ilastik.modules.classification.gui.labelWidget import LabelListWidget
 from ilastik.modules.classification.gui.featureDlg import FeatureDlg
 from ilastik.modules.classification.gui.classifierSelectionDialog import ClassifierSelectionDlg
+from ilastik.modules.classification.gui.segAreaSelectionDialog import SegAreaSelectionDialog
+
 
 
 #*******************************************************************************
@@ -69,12 +71,14 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnStartLive         = TabButton('Start Live Prediction', ilastikIcons.Play)
         self.btnStartLive.setCheckable(True)
         self.btnTrainPredict      = TabButton('Train and Predict', ilastikIcons.System)
+        self.btnSegTable          = TabButton('Segmentation Table', ilastikIcons.Select)
         self.btnExportClassifier  = TabButton('Export Classifier', ilastikIcons.Select)
         self.btnClassifierOptions = TabButton('Classifier Options', ilastikIcons.Select)
         
         self.btnSelectFeatures.setToolTip('Select and compute features')
         self.btnStartLive.setToolTip('Toggle interactive prediction of the current image while labeling')
         self.btnTrainPredict.setToolTip('Train and predict all images offline; this step is necessary for automation')
+        self.btnSegTable.setToolTip('Show a table of class areas in the segmented image')
         self.btnExportClassifier.setToolTip('Save current classifier and its feature settings')
         self.btnClassifierOptions.setToolTip('Select a classifier and change its settings')
         
@@ -84,6 +88,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.btnStartLive)
         tl.addWidget(self.btnTrainPredict)
         tl.addStretch()
+        tl.addWidget(self.btnSegTable)
         tl.addWidget(self.btnExportClassifier)
         tl.addWidget(self.btnClassifierOptions)
         
@@ -94,6 +99,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnSelectFeatures, QtCore.SIGNAL('clicked()'), self.on_btnSelectFeatures_clicked)
         self.connect(self.btnStartLive, QtCore.SIGNAL('toggled(bool)'), self.on_btnStartLive_clicked)
         self.connect(self.btnTrainPredict, QtCore.SIGNAL('clicked()'), self.on_btnTrainPredict_clicked)
+        self.connect(self.btnSegTable, QtCore.SIGNAL('clicked()'), self.on_btnSegTable_clicked)
         self.connect(self.btnExportClassifier, QtCore.SIGNAL('clicked()'), self.on_btnExportClassifier_clicked)
         self.connect(self.btnClassifierOptions, QtCore.SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
         
@@ -159,3 +165,34 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
     def on_btnClassifierOptions_clicked(self):
         dialog = ClassifierSelectionDlg(self.parent)
         self.parent.project.dataMgr.module["Classification"].classifier = dialog.exec_()
+        
+    def on_btnSegTable_clicked(self):
+        descriptions =  self.parent.project.dataMgr.module["Classification"]["labelDescriptions"]
+        desc_names = []
+        for i, d in enumerate(descriptions):
+            tempstr = str(i)+" "+d.name
+            desc_names.append(tempstr)
+        dlg = SegAreaSelectionDialog(self.ilastik, desc_names)
+        usedlabels, relative, filename = dlg.exec_()
+        print usedlabels, relative, filename
+        #labels = [x.text() for x in usedlabels]
+        #call core function
+        areas, total = self.parent.project.dataMgr.Classification.computeAreas(usedlabels, relative)
+        print "Segmented areas:"
+        f= None
+        if len(filename)>0:
+            f = open(filename, "w")
+        for i, a in enumerate(areas):
+            st = descriptions[usedlabels[i]].name + " area: " + str(a*100./total) + "%\n"
+            print st
+            if f is not None:
+                f.write(st)
+        strtotal = "total: " + str(total) + " pixels" + "\n"
+        print strtotal
+        if f is not None:
+            f.write(strtotal)
+            f.close()
+        
+        
+        
+        
