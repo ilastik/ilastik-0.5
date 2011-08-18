@@ -63,3 +63,9 @@ widgets/preView.py
 widgets/overlaySelectionDlg.py
 
 widgets/featureDlg.py
+
+widgets/
+
+lazyflow_/
+
+volumeeditor/
