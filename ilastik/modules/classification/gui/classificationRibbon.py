@@ -80,11 +80,9 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSelectFeatures.setToolTip('Select and compute features')
         self.btnStartLive.setToolTip('Toggle interactive prediction of the current image while labeling')
         self.btnTrainPredict.setToolTip('Train and predict all images offline; this step is necessary for automation')
-<<<<<<< HEAD
-        self.btnSegTable.setToolTip('Show a table of class areas in the segmented image')
-=======
         self.btnJustPredict.setToolTip('Predict all images (use trained classifier)')
->>>>>>> rc-05-06
+        self.btnSegTable.setToolTip('Show a table of class areas in the segmented image')
+
         self.btnExportClassifier.setToolTip('Save current classifier and its feature settings')
         self.btnClassifierOptions.setToolTip('Select a classifier and change its settings')
         
@@ -106,11 +104,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnSelectFeatures, QtCore.SIGNAL('clicked()'), self.on_btnSelectFeatures_clicked)
         self.connect(self.btnStartLive, QtCore.SIGNAL('toggled(bool)'), self.on_btnStartLive_clicked)
         self.connect(self.btnTrainPredict, QtCore.SIGNAL('clicked()'), self.on_btnTrainPredict_clicked)
-<<<<<<< HEAD
         self.connect(self.btnSegTable, QtCore.SIGNAL('clicked()'), self.on_btnSegTable_clicked)
-=======
         self.connect(self.btnJustPredict, QtCore.SIGNAL('clicked()'), self.on_btnJustPredict_clicked)
->>>>>>> rc-05-06
         self.connect(self.btnExportClassifier, QtCore.SIGNAL('clicked()'), self.on_btnExportClassifier_clicked)
         self.connect(self.btnClassifierOptions, QtCore.SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
         
