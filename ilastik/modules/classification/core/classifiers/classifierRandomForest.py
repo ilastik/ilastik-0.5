@@ -90,7 +90,8 @@ class ClassifierRandomForest(ClassifierBase):
            trees (in a very hackish way)."""
         thisForestPath = h5G.name
         allForestsPath = thisForestPath[0:thisForestPath.rfind("/")]
-      
+        classifier = []
+        
         if allForestsPath in h5G.file:
             trees = h5G.file[allForestsPath].keys()
           
@@ -101,7 +102,6 @@ class ClassifierRandomForest(ClassifierBase):
                     treeCount += h5G.file[allForestsPath+"/"+t+"/_options"][9]
                 else:
                     treeCount += h5G.file[allForestsPath+"/"+t+"/_options/tree_count_"][0]
-            print "total number of RandomForest trees = ", treeCount
             ClassifierRandomForest.treeCount = treeCount
       
         return 0
@@ -111,6 +111,6 @@ class ClassifierRandomForest(ClassifierBase):
         classifier = cls()
         classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
         classifier.treeCount = classifier.RF.treeCount()
-        classifier.unique_vals = range(classifier.RF.labelCount())
+        classifier.unique_vals = numpy.asarray(range(classifier.RF.labelCount())) + 1
         return classifier
 

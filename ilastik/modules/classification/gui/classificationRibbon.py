@@ -71,6 +71,8 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnStartLive         = TabButton('Start Live Prediction', ilastikIcons.Play)
         self.btnStartLive.setCheckable(True)
         self.btnTrainPredict      = TabButton('Train and Predict', ilastikIcons.System)
+
+        self.btnJustPredict       = TabButton('Predict', ilastikIcons.System)
         self.btnSegTable          = TabButton('Segmentation Table', ilastikIcons.Select)
         self.btnExportClassifier  = TabButton('Export Classifier', ilastikIcons.Select)
         self.btnClassifierOptions = TabButton('Classifier Options', ilastikIcons.Select)
@@ -78,7 +80,11 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSelectFeatures.setToolTip('Select and compute features')
         self.btnStartLive.setToolTip('Toggle interactive prediction of the current image while labeling')
         self.btnTrainPredict.setToolTip('Train and predict all images offline; this step is necessary for automation')
+<<<<<<< HEAD
         self.btnSegTable.setToolTip('Show a table of class areas in the segmented image')
+=======
+        self.btnJustPredict.setToolTip('Predict all images (use trained classifier)')
+>>>>>>> rc-05-06
         self.btnExportClassifier.setToolTip('Save current classifier and its feature settings')
         self.btnClassifierOptions.setToolTip('Select a classifier and change its settings')
         
@@ -87,6 +93,7 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.btnSelectFeatures)
         tl.addWidget(self.btnStartLive)
         tl.addWidget(self.btnTrainPredict)
+        tl.addWidget(self.btnJustPredict)
         tl.addStretch()
         tl.addWidget(self.btnSegTable)
         tl.addWidget(self.btnExportClassifier)
@@ -99,7 +106,11 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnSelectFeatures, QtCore.SIGNAL('clicked()'), self.on_btnSelectFeatures_clicked)
         self.connect(self.btnStartLive, QtCore.SIGNAL('toggled(bool)'), self.on_btnStartLive_clicked)
         self.connect(self.btnTrainPredict, QtCore.SIGNAL('clicked()'), self.on_btnTrainPredict_clicked)
+<<<<<<< HEAD
         self.connect(self.btnSegTable, QtCore.SIGNAL('clicked()'), self.on_btnSegTable_clicked)
+=======
+        self.connect(self.btnJustPredict, QtCore.SIGNAL('clicked()'), self.on_btnJustPredict_clicked)
+>>>>>>> rc-05-06
         self.connect(self.btnExportClassifier, QtCore.SIGNAL('clicked()'), self.on_btnExportClassifier_clicked)
         self.connect(self.btnClassifierOptions, QtCore.SIGNAL('clicked()'), self.on_btnClassifierOptions_clicked)
         
@@ -107,15 +118,20 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSelectFeatures.setEnabled(True)
         self.btnStartLive.setEnabled(False)
         self.btnTrainPredict.setEnabled(False)
+        self.btnJustPredict.setEnabled(False)
         self.btnExportClassifier.setEnabled(False)
         self.btnClassifierOptions.setEnabled(True)
         
     def on_btnSelectFeatures_clicked(self):
-        preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3]
+        preview = self.parent.project.dataMgr[0]._dataVol._data[0,0,:,:,0:3].copy()
         newFeatureDlg = FeatureDlg(self.ilastik, preview)
         answer = newFeatureDlg.exec_()
         if answer == QtGui.QDialog.Accepted:
             self.featureComputation = FeatureComputation(self.ilastik)
+            if not newFeatureDlg.featuresChanged and len(self.parent.project.dataMgr.Classification.classificationMgr.classifiers) > 0:
+                self.parent.ribbon.getTab('Classification').featuresChanged = False
+            else:
+                self.parent.ribbon.getTab('Classification').featuresChanged = True
         newFeatureDlg.close()
         newFeatureDlg.deleteLater()
         del newFeatureDlg
@@ -139,6 +155,9 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             return
         self.classificationTrain = ClassificationTrain(self.ilastik)
         self.connect(self.classificationTrain, QtCore.SIGNAL("trainingFinished()"), self.on_trainingFinished)
+        
+    def on_btnJustPredict_clicked(self):
+        self.classificationPredict = ClassificationPredict(self.ilastik)
         
     def on_trainingFinished(self):
         print "Training finished"

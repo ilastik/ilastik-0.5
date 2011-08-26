@@ -152,6 +152,7 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         if 'prediction' in h5G.keys():
             self["prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
         
+        
 
 #*******************************************************************************
 # C l a s s i f i c a t i o n M o d u l e M g r                                *
@@ -259,17 +260,20 @@ class ClassificationModuleMgr(BaseModuleMgr):
                 c.serialize(str(fileName), pathToGroup + "classifiers/rf_%03d" % i, False)
                 print "Write random forest #%03d" % i
                 
-    @staticmethod    
-    def importClassifiers(fileName):
+    @staticmethod
+    def importClassifiers(fileName, prefix='classifiers'):
         hf = h5py.File(fileName,'r')
-        temp = hf['classifiers'].keys()
-        hf.close()
-        del hf
-        
-        classifiers = []
-        for cid in temp:
-            classifiers.append(defaultRF.ClassifierRandomForest.loadRFfromFile(fileName, 'classifiers/' + cid))   
-        return classifiers
+        if prefix in hf:
+            temp = hf[prefix].keys()
+            hf.close()
+            del hf
+            
+            classifiers = []
+            for cid in temp:
+                classifiers.append(defaultRF.ClassifierRandomForest.loadRFfromFile(fileName, prefix + '/' + cid))   
+            return classifiers
+        else:
+            raise ImportError('No Classifiers in prefix')
           
     def serialize(self, h5G):
         featureG = h5G.create_group('FeatureSelection')        
@@ -286,13 +290,12 @@ class ClassificationModuleMgr(BaseModuleMgr):
             userSelection = h5G['FeatureSelection']['UserSelection']
             featureMgr.ilastikFeatureGroups.selection = userSelection.value
         except:
-            print """Could not find entry FeatureSelection/UserSelection in project file
-                     Probably this file is too old. Skipping..."""
+            pass
           
-        classifiers = []
+        
         f = h5G.file
         g = h5G.name + '/classifiers'
-        print "  -> looking for classifiers in", g
+        print "* searching for classifiers..."
         if g in f:
             classifiers = f[g].keys()
         
@@ -580,7 +583,7 @@ class ClassificationMgr(object):
         self._trainingF = [numpy.zeros((0, 1), 'float32')]
         self._trainingL = [numpy.zeros((0, 1), 'uint8')]
         self._trainingIndices = [numpy.zeros((0, 1), 'uint32')]
-        self.classifiers = []
+        #self.classifiers = []
         
         for index, item in enumerate(self.dataMgr):
             self.clearFeaturesAndTrainingForImage(item)
@@ -696,8 +699,6 @@ class ClassifierPredictThread(ThreadBase):
             self.dataMgr.featureLock.acquire()
             try:
                 prop = item.module["Classification"]
-                
-                
                 if len(self.classifiers) > 0 and prop["featureM"] is not None:
                     #make a little test _prediction to get the shape and see if it works:
                     tempPred = None

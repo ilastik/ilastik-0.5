@@ -32,6 +32,8 @@ from ilastik.core import ILASTIK_VERSION
 import traceback
 
 import warnings
+from ilastik.modules.classification.core.classificationMgr import ClassificationMgr, ClassificationModuleMgr
+from ilastik.modules.classification.core.featureMgr import FeatureMgr
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
@@ -109,7 +111,6 @@ class Project(object):
     @staticmethod
     def loadFromDisk(fileName, featureCache):
         fileHandle = h5py.File(fileName,'r')
-        # p = pickle.load(fileHandle)
         
         # extract basic project settings
         projectG = fileHandle['Project']
@@ -117,17 +118,26 @@ class Project(object):
         name = projectG['Name'].value
         labeler = projectG['Labeler'].value 
         description = projectG['Description'].value
+        
         # init dataMgr 
-        
-        n = len(dataG)
-        
         dataMgr = dataMgrModule.DataMgr.deserialize(projectG, dataG)
-
-        
-        project = Project( name, labeler, description, dataMgr)
+        project = Project(name, labeler, description, dataMgr)
         project.filename = fileName
-        
         fileHandle.close()
+        
+        #try to load classifier
+        #note this cannot be done in the deserialization (vigra hdf5 vs h5py)
+        
+        try:
+            classifiers = ClassificationModuleMgr.importClassifiers(fileName, prefix='/Project/classifiers')
+            dataMgr.Classification.classificationMgr.classifiers = classifiers
+
+        except IndexError:
+            print 'No classifier found in ilastik project'
+        except Exception as e:
+            pass
+            
+        
         return project
         
     def loadStack(self, path, fileList, options):

@@ -34,6 +34,7 @@ from ilastik.gui.iconMgr import ilastikIcons
 import qimage2ndarray
 from ilastik.modules.classification.core.featureMgr import ilastikFeatureGroups
 import copy
+import numpy
 
 #*******************************************************************************
 # F e a t u r e D l g                                                          *
@@ -48,19 +49,17 @@ class FeatureDlg(QtGui.QDialog):
         self.ilastik = parent
         self.initDlg()
 
-        if self.parent.project.dataMgr.module["Classification"].featureMgr is not None:
-            self.oldFeatureItems = self.parent.project.dataMgr.module["Classification"].featureMgr.featureItems
-        else:
-            self.oldFeatureItems = []
-
-
-
         self.hudColor = QtGui.QColor("red")
         self.groupMaskSizesList = ilastikFeatureGroups.groupMaskSizes
         self.graphicsView.setDragMode(QtGui.QGraphicsView.ScrollHandDrag)
         self.graphicsView.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.graphicsView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.grscene = QtGui.QGraphicsScene()
+        if previewImage.dtype == numpy.uint16:
+            if previewImage.max() <= 4095:
+                previewImage = (previewImage.astype(numpy.float32)*255.0/4095.0).astype(numpy.uint8)
+            else:
+                previewImage = (previewImage.astype(numpy.float32)*255.0/65535.0).astype(numpy.uint8)      
         pixmapImage = QtGui.QPixmap(qimage2ndarray.array2qimage(previewImage))
         self.grscene.addPixmap(pixmapImage)
         self.circle = self.grscene.addEllipse(96, 96, 0, 0)
@@ -129,15 +128,21 @@ class FeatureDlg(QtGui.QDialog):
         #self.featureTable.verticalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
         self.featureTable.setShowGrid(False)
 
+        self.oldFeatureItems = []
         if len(featureMgr.ilastikFeatureGroups.selection) == self.featureTable.rowCount() and len(featureMgr.ilastikFeatureGroups.selection[0]) ==  self.featureTable.columnCount():
-                for r in range(self.featureTable.rowCount()):
-                    for c in range(self.featureTable.columnCount()):
-                        item = QtGui.QTableWidgetItem()
-                        if featureMgr.ilastikFeatureGroups.selection[r][c]:
-                            item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
-                        self.featureTable.setItem(r, c, item)
+            for r in range(self.featureTable.rowCount()):
+                for c in range(self.featureTable.columnCount()):
+                    item = QtGui.QTableWidgetItem()
+                    if featureMgr.ilastikFeatureGroups.selection[r][c]:
+                        item.setIcon(QtGui.QIcon(ilastikIcons.Preferences))
+                    self.featureTable.setItem(r, c, item)
+            
+            if self.parent.project.dataMgr.module["Classification"].featureMgr is not None:
+                self.oldFeatureItems = featureMgr.ilastikFeatureGroups.createList()
+                
         else:
-            print "Selected and available features differ(project saved with different verison of ilastik or other features), resetting featuretable...."
+            print " * Selected features as saved in the project file differ from the available features in this ilastik version."
+            print " * reseting selection"
             featureMgr.ilastikFeatureGroups.selection = []
             for r in range(self.featureTable.rowCount()):
                 featureMgr.ilastikFeatureGroups.selection.append([])
@@ -313,6 +318,17 @@ class FeatureDlg(QtGui.QDialog):
     @QtCore.pyqtSignature("")
     def on_confirmButtons_accepted(self):
         featureSelectionList = featureMgr.ilastikFeatureGroups.createList()
+        self.featuresChanged = False
+        if len(self.oldFeatureItems) == len(featureSelectionList):
+            for a,b in zip(self.oldFeatureItems, featureSelectionList):
+                if a.name != b.name or a.sigma != b.sigma:
+                    featuresChanged = True
+        else:
+            self.featuresChanged = True
+        
+        
+            
+                    
         res = self.parent.project.dataMgr.Classification.featureMgr.setFeatureItems(featureSelectionList)
         if res is True:
             #print "features have maximum needed margin of:", self.parent.project.dataMgr.Classification.featureMgr.maxSigma*3

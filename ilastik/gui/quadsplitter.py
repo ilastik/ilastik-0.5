@@ -133,6 +133,7 @@ class QuadView(QWidget):
     
     def __init__(self, parent=None):
         QWidget.__init__(self, parent)
+        self.volumeEditor = parent
 
         #split up <-> down
         self.splitVertical    = QSplitter(Qt.Vertical, self)
@@ -172,7 +173,14 @@ class QuadView(QWidget):
         if maximized:
             self.splitVertical.setParent(None)
             self.layout.addWidget(self.dockableContainer[i])
+            for i in range(3):
+                self.volumeEditor.imageScenes[i].fullScreenButton.setVisible(False)
+                self.volumeEditor.imageScenes[i].normalScreenButton.setVisible(True)
         else:
+            for i in range(3):
+                self.volumeEditor.imageScenes[i].fullScreenButton.setVisible(True)
+                self.volumeEditor.imageScenes[i].normalScreenButton.setVisible(False)
+            
             for i in range(4):
                 self.dockableContainer[i].setParent(None)
             for i in range(4):
@@ -182,7 +190,10 @@ class QuadView(QWidget):
                     self.dockableContainer[i].setParent(self.splitHorizontal2)
             self.layout.addWidget(self.splitVertical)
             self.__resizeEqual()
+            
         self.maximized = maximized
+            
+
     
     def toggleMaximized(self, i):
         self.setMaximized(not self.maximized, i)

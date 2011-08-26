@@ -1,7 +1,6 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#    Copyright 2010 L Fiaschi, T Kroeger, M Nullmaier C Sommer, C Straehle, U Koethe, FA Hamprecht. 
+#    Copyright 2011 L Fiaschi, T Kroeger, M Nullmaier, C Sommer, C Straehle, U Koethe, FA Hamprecht. 
 #    All rights reserved.
 #    
 #    Redistribution and use in source and binary forms, with or without modification, are
@@ -28,67 +27,47 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
-import sys, re, os
 
-def br():
-    sys.stdout.write('#')
-    for i in range(79):
-        sys.stdout.write('*')
-    sys.stdout.write('\n')
+#	The collection of scripts in this folderdownload and install all the dependencies required for
+# 	the master branch of ilastik starting from version 0.56 .
+#   These scripts have been tested on a clean machine running Mac Os X Snow Leopard 10.6.7
+#	
+#   
+#	GETTING STARTED	(Mac Os X)
+#
+#	There are some basic ingredients needed: 
+#	Install the Mac Os X Developers Enviroment with XCode from Mac Os X original Dvd
+#	Install  CMake
+#	Install  git
+#
+#	Create a folder called ilastik at the root of the computer and give to your user full rights to write into it. 
+#   
+#	sudo mkdir /ilastik
+#   sudo chown yourusername /ilastik 
 
-def spacedText(t):
-    pos = 0
-    sys.stdout.write('# ')
-    pos += 2
 
-    for i in range(len(t)):
-        sys.stdout.write("%s " % t[i])
-        pos += 2
-    for i in range(pos, 79):
-        sys.stdout.write(' ')
-    sys.stdout.write('*\n')
+#	COMPILING 
+# 	To install all the dependencies:
+#	
+#	python install-ilastik-deps.py all
+#
+#   To resume the installation process from a certain package:
+#
+#	python install-ilastik-deps.py from packagename
+#
+#	To install a certain package:
+#  
+#	python install-ilastik-deps.py packagename
 
-#c = sys.argv[1]
-#br()
-#spacedText(c)
-#br()
 
-os.system("cp '%s' /tmp/file.py" % (sys.argv[1]))
-f = open('/tmp/file.py', 'r')
-lines = f.readlines()
+# 	All the packages will be installed at:
+#	~/ilastik_deps_build
 
-g = open(sys.argv[1], 'w')
-sys.stdout = g
 
-comment = False
-for n, l in enumerate(lines):
-    for i in range(l.count('"""')):
-        comment = not comment
-        
-    if comment:
-        sys.stdout.write(l)
-        continue
-    
-    classRegEx = re.search("class ([\w]+)(\([\w]+\))?", l)
-    if classRegEx or l.find("__main__") > 0:
-        text = ''
-        if classRegEx:
-            text = classRegEx.group(1)
-        else:
-            text = 'if __name__ == "__main__"'
-        
-        commentRegEx = re.search("^[\s]*#", l)
-        if commentRegEx:
-            sys.stdout.write(l)
-            continue #this is just a comment
-        
-        if n>2 and lines[n-2].startswith('#******') > 0:
-            sys.stdout.write(l)
-            continue
-        else:
-            br()
-            spacedText(text)
-            br()
-            sys.stdout.write("\n")
-    
-    sys.stdout.write(l)
+#	RUN ILASTIK (Mac Os X)
+#	execute ../run-ilastik-mac.sh
+
+#   CREATE AN ILASTIK BOUNDLE (Mac Os X)
+#	
+#   execute ./make-osx-application-bundle.sh
+

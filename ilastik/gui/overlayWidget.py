@@ -218,11 +218,15 @@ class OverlayListWidget(QtGui.QListWidget):
 
         channelMenu = QtGui.QMenu("Select Channel", menu)
         channelActions = []
+        action = channelMenu.addAction('All')
+        channelActions.append(action)
+        channelMenu.setActiveAction(action)
+        
         for i in range(item.overlayItemReference.numChannels):
             action = channelMenu.addAction(str(i))
             channelActions.append(action)
-            if item.overlayItemReference.channel == i:
-                channelMenu.setActiveAction(action)
+#            if item.overlayItemReference.channel == i:
+#                channelMenu.setActiveAction(action)
             
         menu.addMenu(channelMenu)
         exportAction = menu.addAction("Export")        
@@ -276,16 +280,20 @@ class OverlayListWidget(QtGui.QListWidget):
             formatList = dataImpex.DataImpex.exportFormatList()
             formatList.append("h5")
             expdlg = exportDialog.ExportDialog(formatList, timeOffset, sliceOffset, channelOffset, parent=self.volumeEditor.ilastik)
-            expdlg.exec_()
-            try:
-                tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
-                filename = str(QtCore.QDir.convertSeparators(tempname))
-                dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference.overlayItem, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
-            except Exception, e:
-                print e
-                traceback.print_exc(file=sys.stdout)
+            if expdlg.exec_():
+                try:
+                    tempname = str(expdlg.path.text()) + "/" + str(expdlg.prefix.text())
+                    filename = str(QtCore.QDir.convertSeparators(tempname))
+                    dataImpex.DataImpex.exportOverlay(filename, expdlg.format, item.overlayItemReference.overlayItem, expdlg.timeOffset, expdlg.sliceOffset, expdlg.channelOffset)
+                except Exception, e:
+                    print e
+                    traceback.print_exc(file=sys.stdout)
         else:
-            for index,  channelAct in enumerate(channelActions):
+            channelAct = channelActions[0]
+            if action == channelAct:
+                item.overlayItemReference.setChannel(-1)
+                self.volumeEditor.repaint()
+            for index,  channelAct in enumerate(channelActions[1:]):
                 if action == channelAct:
                     item.overlayItemReference.setChannel(index)
                     self.volumeEditor.repaint()

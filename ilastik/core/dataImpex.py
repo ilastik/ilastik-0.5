@@ -114,9 +114,13 @@ class DataImpex(object):
     def vigraReadImageWrapper(fileName):
         data = vigra.impex.readImage(fileName).swapaxes(0,1).view(numpy.ndarray)
         fBase, fExt = os.path.splitext(fileName)
+        dmax = data.max()
+        dmin = data.min()
+        if data.dtype == numpy.float32 and (2**16 > dmin > 0)  and (2**16 > dmax > 255):
+            data = data.astype(numpy.uint16) 
         
         # Check for bug in Olympus microscopes
-        if data.max() > 2**15 and fExt in ['.tif','.tiff']:
+        if data.min() > 2**15 and fExt in ['.tif','.tiff']:
             print "Detected Olympus microscope bug..."
             data = (data - 2**15).astype(numpy.uint16)
  
@@ -347,7 +351,7 @@ class DataImpex(object):
                             else:
                                 dtype_ = numpy.uint8
                         
-                        vigra.impex.writeImage(data.swapaxes(1,0), fn, dtype=dtype_)
+                        vigra.impex.writeImage(data, fn, dtype=dtype_)
                         print "Exported file ", fn
         else:
             for t in range(overlayItem._data.shape[0]):
@@ -369,10 +373,12 @@ class DataImpex(object):
                         if mi >= 0 and 1 < ma <= 255:
                             data = data.astype(numpy.uint8)
                             dtype_ = 'NATIVE'
-                        else:
-                            dtype_ = numpy.uint8
+                    else:
+                        dtype_ = numpy.uint8
+
+
                     
-                    vigra.impex.writeImage(data, fn, dtype=dtype_)
+                    vigra.impex.writeImage(data.T, fn, dtype=dtype_)
                     print "Exported file ", fn
 
     @staticmethod

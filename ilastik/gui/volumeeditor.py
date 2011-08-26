@@ -687,12 +687,14 @@ class VolumeEditor(QtGui.QWidget):
 
     def toggleFullscreenX(self):
         self.maximizeSliceView(0)
-    
+        
     def toggleFullscreenY(self):
         self.maximizeSliceView(1)
+
         
     def toggleFullscreenZ(self):
         self.maximizeSliceView(2)
+
         
     def nextChannel(self):
         self.channelSpin.setValue(self.selectedChannel + 1)
@@ -717,6 +719,7 @@ class VolumeEditor(QtGui.QWidget):
             self.grid.toggleMaximized(2)
         if axis == 0:
             self.grid.toggleMaximized(1)
+        
     
     def nextLabel(self):
         self.labelWidget.nextLabel()
@@ -1332,8 +1335,9 @@ class ImageSceneRenderThread(QtCore.QThread):
                             
                             itemdata = origitem._data[bounds[0]:bounds[1],bounds[2]:bounds[3]]
                             
+#                            
                             origitemColor = None
-                            if isinstance(origitem.color,  long) or isinstance(origitem.color,  int):
+                            if isinstance(origitem.color,  long) or isinstance(origitem.color, int):
                                 origitemColor = QtGui.QColor.fromRgba(long(origitem.color))
                             else:
                                 origitemColor = origitem.color
@@ -1341,9 +1345,14 @@ class ImageSceneRenderThread(QtCore.QThread):
                             # if itemdata is uint16
                             # convert it for displayporpuse
                             if itemcolorTable is None and itemdata.dtype == numpy.uint16:
-                                print '*** Normalizing your data for display purpose'
-                                print '*** I assume you have 12bit data'
-                                itemdata = (itemdata*255.0/4095.0).astype(numpy.uint8)
+                                omax = origitem.dmax()
+                                if omax <= 4095:
+                                    print '*** Normalizing your data for display purpose only, assuming you have 12bit data'
+                                    itemdata = (itemdata.astype(numpy.float32)*255.0/4095.0).astype(numpy.uint8)
+                                else:
+                                    print '*** Normalizing your data for display purpose only, assuming you have 16bit data'
+                                    itemdata = (itemdata.astype(numpy.float32)*255.0/65535.0).astype(numpy.uint8)
+                                    
                             
                             if itemcolorTable != None:         
                                 if itemdata.dtype != 'uint8':
@@ -1386,11 +1395,10 @@ class ImageSceneRenderThread(QtCore.QThread):
                                         normalize = (origitem.min, origitem.max)
                                 else:
                                     normalize = False
-                                    
                                                
                                 if origitem.autoAlphaChannel is False:
                                     if len(itemdata.shape) == 3 and itemdata.shape[2] == 3:
-                                        image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize)
+                                        image1 = qimage2ndarray.array2qimage(itemdata.swapaxes(0,1), normalize=False)
                                         image0 = image1
                                     else:
                                         tempdat = numpy.zeros(itemdata.shape[0:2] + (3,), 'float32')
@@ -1855,34 +1863,28 @@ class ImageScene(QtGui.QGraphicsView):
         
         if self.volumeEditor.imageScenes[0] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenX()
-            self.fullScreenButton.setVisible(False)
-            self.normalScreenButton.setVisible(True)
             
         if self.volumeEditor.imageScenes[1] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenY()
-            self.fullScreenButton.setVisible(False)
-            self.normalScreenButton.setVisible(True)
+
         if self.volumeEditor.imageScenes[2] == self.fullScreenButton.parent():
             self.volumeEditor.toggleFullscreenZ()
-            self.fullScreenButton.setVisible(False)
-            self.normalScreenButton.setVisible(True)
+            
+
             
     def imageSceneNormalScreen(self):
         
         if self.volumeEditor.imageScenes[0] == self.normalScreenButton.parent():
             self.volumeEditor.toggleFullscreenX()
-            self.fullScreenButton.setVisible(True)
-            self.normalScreenButton.setVisible(False)
+
             
         if self.volumeEditor.imageScenes[1] == self.normalScreenButton.parent():
             self.volumeEditor.toggleFullscreenY()
-            self.fullScreenButton.setVisible(True)
-            self.normalScreenButton.setVisible(False)
+
             
         if self.volumeEditor.imageScenes[2] == self.normalScreenButton.parent():
             self.volumeEditor.toggleFullscreenZ()
-            self.fullScreenButton.setVisible(True)
-            self.normalScreenButton.setVisible(False)
+
             
     def setImageSceneFullScreenLabel(self):
         self.allVisible = True
@@ -1970,8 +1972,7 @@ class ImageScene(QtGui.QGraphicsView):
         self.drawTimer.stop()
         del self.drawTimer
         del self.ticker
-        
-        print "finished thread"
+
 
     def updatePatches(self, patchNumbers, image, overlays = ()):
         stuff = [patchNumbers, image, overlays, self.min, self.max]
@@ -2011,6 +2012,9 @@ class ImageScene(QtGui.QGraphicsView):
             else:
                 self.min = 0
                 self.max = 255
+                
+                
+                
         ########### 
         #TODO: This doing something twice (see above)
         self.updatePatches(range(self.patchAccessor.patchCount), image, overlays)
@@ -2463,6 +2467,7 @@ class ImageScene(QtGui.QGraphicsView):
         self.volumeEditor.labelWidget.onImageSceneContext(self, pos)
 
     def onContextSetLabel(self, i):
+        self.drawManager.disableErasing()
         self.volumeEditor.labelWidget.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
         self.drawManager.updateCrossHair()
 

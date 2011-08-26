@@ -67,14 +67,17 @@ class ExportDialog(QtGui.QDialog):
         self.channelOffsetBox = None
         if timeOffset == True:
             self.timeOffsetBox = QtGui.QSpinBox()
+            self.timeOffsetBox.setMaximum(2000)
             l.addWidget(QtGui.QLabel("Time Offset"))
             l.addWidget(self.timeOffsetBox)
         if sliceOffset == True:
             self.sliceOffsetBox = QtGui.QSpinBox()
+            self.sliceOffsetBox.setMaximum(2000)
             l.addWidget(QtGui.QLabel("Slice Offset"))
             l.addWidget(self.sliceOffsetBox)
         if channelOffset == True:
             self.channelOffsetBox = QtGui.QSpinBox()
+            self.channelOffsetBox.setMaximum(2000)
             l.addWidget(QtGui.QLabel("Channel Offset"))
             l.addWidget(self.channelOffsetBox)
         if self.timeOffsetBox is not None or self.sliceOffsetBox is not None or self.channelOffsetBox is not None:
@@ -83,6 +86,7 @@ class ExportDialog(QtGui.QDialog):
         l = QtGui.QHBoxLayout()
         l.addStretch()
         b = QtGui.QPushButton("Ok")
+        b.setDefault(True)
         self.connect(b, QtCore.SIGNAL("clicked()"), self.export)
         l.addWidget(b)
         b = QtGui.QPushButton("Cancel")
@@ -99,16 +103,19 @@ class ExportDialog(QtGui.QDialog):
         self.path.setText(dir)
             
     def export(self):
-        self.timeOffset = self.timeOffsetBox.value() if self.timeOffsetBox else 0
-        self.sliceOffset = self.sliceOffsetBox.value() if self.sliceOffsetBox else 0
-        self.channelOffset = self.channelOffsetBox.value() if self.channelOffsetBox else 0
-        self.format = self.formatList[self.formatBox.currentIndex()]
-        self.accept()
+        if QtCore.QFileInfo(self.path.text()).exists():
+            self.timeOffset = self.timeOffsetBox.value() if self.timeOffsetBox else 0
+            self.sliceOffset = self.sliceOffsetBox.value() if self.sliceOffsetBox else 0
+            self.channelOffset = self.channelOffsetBox.value() if self.channelOffsetBox else 0
+            self.format = self.formatList[self.formatBox.currentIndex()]
+            self.accept()
+        else:
+            QtGui.QMessageBox.information(self, 'Export', 'Please select a path.')
 
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
-            return None
+            return True
         else:
-            return None
+            return False
 
 

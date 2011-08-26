@@ -59,7 +59,8 @@ class FeatureComputation(QtCore.QObject):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
-        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)        
+        self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)   
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(not self.parent.ribbon.getTab('Classification').featuresChanged)      
         self.parent.setTabBusy(False)
                     
     def featureShow(self, item):
@@ -80,6 +81,7 @@ class ClassificationTrain(QtCore.QObject):
         self.parent.setTabBusy(True)
         #process all unaccounted label changes
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
@@ -125,6 +127,7 @@ class ClassificationTrain(QtCore.QObject):
         self.parent.statusBar().hide()
 
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
@@ -140,6 +143,7 @@ class ClassificationInteractive(object):
         self.stopped = False
         
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(False)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
 
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
@@ -233,6 +237,7 @@ class ClassificationInteractive(object):
         self.finalize()
 
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         
@@ -241,6 +246,7 @@ class ClassificationInteractive(object):
     
     def finalize(self):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
         self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
         self.parent.project.dataMgr.Classification.classificationMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
@@ -259,6 +265,7 @@ class ClassificationPredict(QtCore.QObject):
     def start(self):
         self.parent.setTabBusy(True)       
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
@@ -307,6 +314,7 @@ class ClassificationPredict(QtCore.QObject):
         self.parent.statusBar().removeWidget(self.myClassificationProgressBar)
         self.parent.statusBar().hide()
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
+        self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnStartLive.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnExportClassifier.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)

@@ -143,11 +143,12 @@ class FeatureMgr():
         self.setFeatureItems(featureItems)
         
     @staticmethod
-    def loadFeatureItemsFromFile(fileName):
+    def loadFeatureItemsFromFile(fileName, prefix='features'):
         featureItems = []
         f = h5py.File(fileName,'r')
-        for fgrp in f['features'].values():
+        for fgrp in f[prefix].values():
             featureItems.append(FeatureBase.deserialize(fgrp))
+        f.close()
             
         return featureItems
 
@@ -305,7 +306,7 @@ class FeatureGroups(object):
         self.groupMaskSizes = map(lambda x: int(3.0*x+0.5)*2+1,self.groupScaleValues)
         self.groups = {}
         self.createGroups()
-        self.selection = [ [False for k in self.groupScaleNames] for j in self.groups ]
+        self.selection = [[False for k in self.groupScaleNames] for j in self.groups ]
         
     def createGroups(self):
         for c in FeatureBase.__subclasses__():

@@ -62,6 +62,11 @@ class OverlaySlice():
         self._data = data
         self.min = min
         self.max = max
+        
+    def dmax(self):
+        if not hasattr(self, '_dmax'):
+            self._dmax = self._data.max()
+        return self._dmax
 
 
 #*******************************************************************************
@@ -84,7 +89,7 @@ class OverlayItemReference(object):
         self.autoAlphaChannel = self.overlayItem.autoAlphaChannel
         if self.overlayItem.linkColorTable is False:
             self.colorTable = self.overlayItem.getColorTab()
-        self.channel = 0
+        self.channel = self.overlayItem._data.channel
         self.numChannels = self.overlayItem._data.shape[4]
 
     def __getitem__(self, args):
@@ -101,7 +106,7 @@ class OverlayItemReference(object):
         
       
     def getOverlaySlice(self, num, axis, time = 0, channel = 0):
-        return OverlaySlice(self.overlayItem._data.getSlice(num,axis,time,self.channel), self.color, self.alpha, self.getColorTab(), self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
+        return OverlaySlice(self.overlayItem._data.getSlice(num, axis, time, self.channel), self.color, self.alpha, self.getColorTab(), self.overlayItem.min, self.overlayItem.max, self.autoAlphaChannel)       
         
     def __getattr__(self,  name):
         if name == "colorTable":
@@ -144,7 +149,7 @@ class OverlayItemReference(object):
             self.channel -= 1
             
     def setChannel(self,  channel):
-        if channel >= 0 and channel < self.numChannels :
+        if channel >= -1 and channel < self.numChannels :
             self.channel = channel
         else:
             raise Exception
@@ -264,6 +269,7 @@ class OverlayItem(object):
         data = data - dmin
         dmax = numpy.max(data)
         data = 255*data/dmax
+        print 'Bad'*100
         return data
 
     @classmethod
