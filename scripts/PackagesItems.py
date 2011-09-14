@@ -189,8 +189,8 @@ class PythonPackage(Package):
 ##################################################################################
 
 class NosePackage(Package):
-    src_uri ='http://pypi.python.org/packages/source/n/nose/nose-1.0.0.tar.gz'
-    workdir = 'nose-1.0.0'
+    src_uri ='http://pypi.python.org/packages/source/n/nose/nose-1.1.2.tar.gz'
+    workdir = 'nose-1.1.2'
     
     def unpack(self):
         Package.unpack(self)
@@ -271,9 +271,8 @@ class QtPackage(Package):
 ###########################################################################################################
 
 class PyQtPackage(Package):
-    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-x11-gpl-4.8.4.tar.gz"
-    correctMD5sum = '97c5dc1042feb5b3fe20baabad055af1'
-    workdir = 'PyQt-x11-gpl-4.8.4'
+    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-4.8.5.tar.gz"
+    workdir = 'PyQt-x11-gpl-4.8.5'
 
     def configure_darwin(self):
         return """%s configure.py \\
@@ -291,9 +290,8 @@ class PyQtPackage(Package):
 ##########################################################################################################
 
 class SipPackage(Package):
-    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.12.3.tar.gz'
-    correctMD5sum = 'd0f1fa60494db04b4d115d4c2d92f79e'
-    workdir = 'sip-4.12.3'
+    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.12.4.tar.gz'
+    workdir = 'sip-4.12.4'
     
     def configure_darwin(self):
         return pythonExecutable+" configure.py --arch=x86_64 -s MacOSX10.6.sdk" # +self.prefix + "/include/sip "
