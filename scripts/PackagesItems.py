@@ -586,12 +586,41 @@ class CStraehlePackage(Package):
         pass    
 
 ###################################################################################################
-        
+
+
+class PriowsGitPackage(Package):
+    src_uri = "file:///home/cstraehl/Projects/PHD/code/src/priows"
+    workdir = 'priows'
+
+    def unpack(self):
+        Package.unpack(self)
+                
+    def configure(self):
+        cmd = """%s . \\
+        -DDEPENDENCY_SEARCH_PREFIX=%s \\
+        -DCMAKE_INSTALL_PREFIX=%s \\
+        -DBOOST_ROOT=%s \\
+        -DCMAKE_BUILD_TYPE=Release \\
+        -DPYTHON_EXECUTABLE=%s \\
+        -DPYTHON_LIBRARY:FILEPATH=%s \\
+        -DPYTHON_LIBRARIES:FILEPATH=%s \\
+        -DPYTHON_INCLUDE_PATH:PATH=%s \\
+        -DPYTHON_INCLUDE_DIR:PATH=%s \\
+        """ % (cmake, self.prefix, self.prefix, self.prefix, \
+               pythonExecutable, pythonLibrary, pythonLibrary, pythonIncludePath, pythonIncludePath)
+        self.system(cmd)
+
+    def make(self, parallel = multiprocessing.cpu_count()):
+        self.system(make + " -j" + str(parallel))
+
+###################################################################################################
+
 class VigraPackage(Package):
     src_uri = 'git://github.com/ukoethe/vigra.git'
     workdir = 'vigra'
     
     def configure(self):
+        self.system("git checkout 608c3521d8e9c6ee4b7297b8ebbef79e4108a623")
         dylibext = "dylib"
         if platform.system() != "Darwin":
             dylibext = "so"

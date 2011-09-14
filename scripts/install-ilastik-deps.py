@@ -97,7 +97,7 @@ all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'png', 'slib', 'zlib',
     'qt', 'pyqt', 'qimage2ndarray',
     'pyopenglaccellerate', 'pyopengl',
     'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
-    'vtk',
+    'vtk', "priows",
     'fixes']
 if platform.system() == "Darwin":
     all.append('py2app')
@@ -206,6 +206,9 @@ if 'vtk' in c:
 	VTKGitPackage()
 
 # # # # # # # # # # # # #
+
+if 'priows' in c:
+  PriowsGitPackage()
 
 if ('fixes' in c) and ('download' not in sys.argv[0]):
     if platform.system() == "Darwin":
