@@ -271,7 +271,7 @@ class QtPackage(Package):
 ###########################################################################################################
 
 class PyQtPackage(Package):
-    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-4.8.5.tar.gz"
+    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-x11-gpl-4.8.5.tar.gz"
     workdir = 'PyQt-x11-gpl-4.8.5'
 
     def configure_darwin(self):
