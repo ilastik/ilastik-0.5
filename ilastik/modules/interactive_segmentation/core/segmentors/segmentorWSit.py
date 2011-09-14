@@ -40,7 +40,7 @@ from enthought.traits.ui.api import Item, View, Group
 ok = False
 
 try:
-    import vigra.svs
+    import vigra.priows
     ok = True
 except Exception, e:
     print e
@@ -187,7 +187,7 @@ if ok:
                 useDifference = False
             
             #print self.dontUseSuperVoxels
-            self.segmentor = vigra.svs.segmentor(self.weights, useDifference, 0, 255, 2048, self.dontUseSuperVoxels)
+            self.segmentor = vigra.priows.segmentor(self.weights, useDifference, 0, 255, 2048, self.dontUseSuperVoxels)
     
             
             self.getBasins()
