@@ -64,21 +64,20 @@ if ok:
 
         dontUseSuperVoxels = Bool(False)
         edgeWeights = Enum("Average", "Difference")
-        algorithm = Enum("Watershed", "Graphcut", "Randomwalk")        
         bias = Float(0.95)
-        biasThreshold = Float(128)
+        biasThreshold = Float(64)
         biasedLabel = Int(1)
         sigma = Float(0.2)
-        lis_options = String("-i bicgstab -tol 1.0e-9")
+        addVirtualBackgroundSeeds = Bool(False)
         
-        viewWS = Group(Item('bias'),Item('biasThreshold'),  Item('biasedLabel'), visible_when = 'algorithm=="Watershed"')
-        viewRW = Group(Item('sigma'), Item('lis_options'), visible_when = 'algorithm=="Randomwalk"')
-        viewGC = Group(Item('sigma'), visible_when = 'algorithm=="Graphcut"')
+        advanced = Bool(False)
 
-        view = View( Item('edgeWeights'), Item('dontUseSuperVoxels'), Item('algorithm'), buttons = ['OK', 'Cancel'],  )        
+        viewWS = Group(Item('bias'),Item('biasThreshold'),  Item('biasedLabel'), Item("addVirtualBackgroundSeeds"), visible_when = 'advanced==True')
 
-        inlineConfig = View(Item('algorithm'), Group(viewWS, viewRW, viewGC))
-        default = View(Item('bias'))
+        view = View( Item('edgeWeights'), Item('dontUseSuperVoxels'), buttons = ['OK', 'Cancel'],  )
+
+        inlineConfig = View(Group(viewWS))
+        default = View(Item('bias'), Item("advanced"),Group(viewWS))
         
         lastBorderState = False        
         
@@ -133,19 +132,8 @@ if ok:
         def segment3D(self, labelVolume, labelValues, labelIndices):
             print "setting seeds"
             self.segmentor.setSeeds(labelValues, labelIndices)
-            if self.algorithm == "Graphcut":
-                print "Executing Graphcut with sigma = %d"  % (self.sigma,)
-                self.basinLabels = self.segmentor.doGC(self.sigma)
-            elif self.algorithm == "Watershed":
-                print "Executing Watershed with bias %d and biasedLabel %d" % (self.bias,  self.biasedLabel,)
-                self.basinLabels = self.segmentor.doWS(self.bias,  self.biasThreshold, self.biasedLabel)
-            elif self.algorithm == "Randomwalk":
-                print "Executing Random Walk with sigma %f, and lis options %s" % (self.sigma,  self.lis_options,)
-                self.basinLabels = self.segmentor.doRW(self.sigma,  self.lis_options)
-                
-                self.basinPotentials = self.segmentor.getBasinPotentials()
-                
-                self.potentials = SegmentorWSiter.IndexedAccessorWithChannel(self.volumeBasins,self.basinPotentials)
+            print "Executing Watershed with bias %d and biasedLabel %d. Adding virtual background seeds: %r" % (self.bias,  self.biasedLabel,self.addVirtualBackgroundSeeds)
+            self.basinLabels = self.segmentor.doWS(self.bias,  self.biasThreshold, self.biasedLabel, self.addVirtualBackgroundSeeds)
                 
             self.getBasins()
             
