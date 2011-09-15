@@ -122,6 +122,73 @@ class HessianOfGaussianEigenvalues(FeatureBase):
         return result
 
 
+#*******************************************************************************
+# F i r s t H e s s i a n O f G a u s s i a n E i g e n v a l u e s                      *
+#*******************************************************************************
+
+class FirstHessianOfGaussianEigenvalue(FeatureBase):
+    name = "First Eigenvalue of Hessian matrix"
+    groups = ['FirstHessianEig']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        def hessianOfGaussianEigenvalues(data, sigma):
+            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, sigma))[...,0:1]
+        func = hessianOfGaussianEigenvalues
+        result = self.applyToAllChannels(data, func, self.sigma)
+        return result
+
+    def compute3d(self, data):
+        def hessianOfGaussianEigenvalues(data, sigma):
+            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, sigma))[...,0:1]
+        func = hessianOfGaussianEigenvalues
+        result = self.applyToAllChannels(data, func, self.sigma)
+        return result
+
+
+#*******************************************************************************
+# F i r s t H e s s i a n O f G a u s s i a n E i g e n v a l u e s T i m e s R a w
+#*******************************************************************************
+
+class FirstHessianOfGaussianEigenvalueTimesRaw(FeatureBase):
+    name = "First Eigenvalue of Hessian matrix times Raw data"
+    groups = ['FirstHessianEigTimesRaw']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        def hessianOfGaussianEigenvalues(data, sigma):
+            a = vigra.filters.gaussianSmoothing(data, sigma)
+            a.shape = a.shape + (1,)
+            b= vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, sigma))[...,0:1]
+            print a.shape, b.shape
+            return b*(255-a)
+        func = hessianOfGaussianEigenvalues
+        result = self.applyToAllChannels(data, func, self.sigma)
+        return result
+
+    def compute3d(self, data):
+        def hessianOfGaussianEigenvalues(data, sigma):
+            a = vigra.filters.gaussianSmoothing(data, sigma)
+            a.shape = a.shape + (1,)
+            b= vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, sigma))[...,0:1]
+            print a.shape, b.shape
+            return b*(255-a)
+        func = hessianOfGaussianEigenvalues
+        result = self.applyToAllChannels(data, func, self.sigma)
+        return result
+
 
 #*******************************************************************************
 # S t r u c t u r e T e n s o r E i g e n v a l u e s                          *

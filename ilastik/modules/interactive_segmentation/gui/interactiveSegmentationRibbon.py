@@ -87,9 +87,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         if self.ilastik.project is None: return
-
-        self._initContent()
-        self._initConnects()
+        if self.firstInit:
+          self._initContent()
+          self._initConnects()
         self.interactionLog = []
         self.defaultSegmentor = False
         
@@ -97,9 +97,12 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         addRaw = True
         for r in ovs:
-          if r.name == "Raw Data":
-            addRaw = False
-            break
+          try:
+            if r.name == "Raw Data":
+              addRaw = False
+              break
+          except:
+            pass
         if addRaw:
           if "Raw Data" in self.ilastik._activeImage.overlayMgr.keys():
               raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
@@ -182,7 +185,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.maybeEnableSegmentButton()
         
     def maybeEnableSegmentButton(self):
-        print self.seedsAvailable, self.weightsSetUp
         self.btnSegment.setEnabled(self.seedsAvailable and self.weightsSetUp)
 
     def on_numColorsNeeded(self, numColors):
@@ -339,6 +341,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.parent.statusBar().removeWidget(self.progressBar)
         self.parent.statusBar().hide()
+        self.maybeEnableSegmentButton()
         
     def on_setupWeights(self, weights = None):
         self.ilastik.labelWidget.interactionLog = []
