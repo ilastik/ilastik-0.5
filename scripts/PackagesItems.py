@@ -589,7 +589,7 @@ class CStraehlePackage(Package):
 
 
 class PriowsGitPackage(Package):
-    src_uri = "file:///home/cstraehl/Projects/PHD/code/src/priows"
+    src_uri = "git://github.com/cstraehl/priows.git"
     workdir = 'priows'
 
     def unpack(self):
