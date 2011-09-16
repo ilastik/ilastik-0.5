@@ -381,12 +381,13 @@ class Qimage2ndarrayPackage(Package):
 
 class VTKGitPackage(Package):
     src_uri = "git://vtk.org/VTK.git"
+    revision = "e9e1ab0f4dd60a43cd5d369a1cfc71cca673e989"
     workdir = 'VTK'
     
     def unpack(self):
         Package.unpack(self, copyToWork=False)
     
-    def configure(self):
+    def configure(self):                                       
         cmd = cmake + """\\
         -DVTK_PYTHON_SETUP_ARGS=--prefix='%s'\\
         -DSIP_EXECUTABLE:FILEPATH=%s/sip\\
@@ -618,9 +619,9 @@ class PriowsGitPackage(Package):
 class VigraPackage(Package):
     src_uri = 'git://github.com/ukoethe/vigra.git'
     workdir = 'vigra'
+    revision = "608c3521d8e9c6ee4b7297b8ebbef79e4108a623"
     
     def configure(self):
-        self.system("git checkout 608c3521d8e9c6ee4b7297b8ebbef79e4108a623")
         dylibext = "dylib"
         if platform.system() != "Darwin":
             dylibext = "so"

@@ -92,6 +92,9 @@ class Package:
             else:
                 print "* update from git"
                 os.system(cd+' distfiles/'+self.workdir + ' && '+git+' pull')
+            if hasattr(self, "revision"):
+                print "* checking out revision", self.revision
+                os.system(cd+' distfiles/'+self.workdir + ' && '+git+' reset --hard '+self.revision)
         elif self.src_uri.startswith('hg://'):
             src = self.src_uri[5:]
             if not os.path.exists('distfiles/'+self.workdir):
