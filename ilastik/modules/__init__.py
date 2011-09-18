@@ -29,6 +29,7 @@
 
 import traceback, os,  sys
 from ilastik.core.baseModuleMgr import BaseModuleMgr
+disabled = ["connected_components"]
 #
 #Import other segmentation plugins dynamically
 #
@@ -44,7 +45,7 @@ def loadModuleCores():
     pathext = os.path.dirname(__file__)
     abspath = os.path.abspath(pathext)
     for f in os.listdir(abspath):
-        if os.path.isdir(abspath + "/" + f):
+        if os.path.isdir(abspath + "/" + f) and f not in disabled:
             module_name = f # Handles no-extension files, etc.
             try:
                 module = __import__('ilastik.modules.' + module_name + '.core')
@@ -64,7 +65,7 @@ def loadModuleGuis():
     pathext = os.path.dirname(__file__)
     abspath = os.path.abspath(pathext)
     for f in os.listdir(abspath):
-        if os.path.isdir(abspath + "/" + f):
+        if os.path.isdir(abspath + "/" + f) and f not in disabled:
             module_name = f # Handles no-extension files, etc.
             try:
                 module = __import__('ilastik.modules.' + module_name + '.gui')
