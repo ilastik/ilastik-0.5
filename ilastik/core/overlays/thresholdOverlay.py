@@ -141,7 +141,7 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
                                 dRaw = dRaw.swapaxes(0, 2).view()
                                 res = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
                                 res = res.swapaxes(0, 2).view()
-                                data[t, :, :, :, c] = res                                          
+                                data[t, :, :, :, c] = res.squeeze()                                          
                             else:
                                 dRaw = d[t,0,:,:,c].astype('float32').view(vigra.ScalarImage)           
                                 data[t,0,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
