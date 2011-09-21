@@ -103,10 +103,10 @@ class ConnectedComponentsItemModuleMgr(BaseModuleDataItemMgr):
                 for nl in newLabels:
                     indic =  list(numpy.nonzero(nl._data))
                     indic[0] = indic[0] + nl.offsets[0]
-                    indic[1] += nl.offsets[1]
-                    indic[2] += nl.offsets[2]
-                    indic[3] += nl.offsets[3]
-                    indic[4] += nl.offsets[4]
+                    indic[1] = indic[1] + nl.offsets[1]
+                    indic[2] = indic[2] + nl.offsets[2]
+                    indic[3] = indic[3] + nl.offsets[3]
+                    indic[4] = indic[4] + nl.offsets[4]
                     for i in range(0, len(indic[0])):
                         selector = (indic[0][i],indic[1][i],indic[2][i],indic[3][i],indic[4][i])
                         backclass = self.inputData[selector]
