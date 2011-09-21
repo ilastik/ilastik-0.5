@@ -43,9 +43,9 @@ class LabelSelectionForm(QtGui.QDialog):
         
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
-            chosen = self.descList.selectedItems()
-            if chosen is not None:
-                return chosen[0].text(), int(self.minsize.text()), int(self.maxsize.text())
+            chosen = [x.row() for x in self.descList.selectedIndexes()]
+            if chosen is not None and len(chosen)>0:
+                return chosen[0], int(self.minsize.text()), int(self.maxsize.text())
             else:
                 print "No label selected!"
                 return None, None, None
