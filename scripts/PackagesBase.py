@@ -94,7 +94,7 @@ class Package:
         
         self.download()
         if 'download' in sys.argv[0]:
-	    return
+          return
 
         self.unpack()
         self.configure()
@@ -114,7 +114,7 @@ class Package:
         	raise RuntimeError("Failed to execute '%s'" % cmd)
     
     def download(self):
-        if self.src_uri.endswith('.git'):
+        if self.src_uri.endswith(".git") or self.src_uri[0:6] == "file:/":
             if not os.path.exists('distfiles/'+self.workdir):
                 print "* cloning from git"
                 os.system(cd+' distfiles && '+git+' clone ' + self.src_uri + ' ' + self.workdir)
@@ -138,7 +138,7 @@ class Package:
         print "* unpacking ", self.filename, "to", 'work' + '/' + self.workdir
         if os.path.exists('work' + '/' + self.workdir): shutil.rmtree('work' + '/' + self.workdir)
 
-        if  self.src_uri.endswith('.git') or self.src_uri.startswith('hg://'):
+        if  self.src_uri.endswith('.git') or self.src_uri.startswith('hg://') or self.src_uri[0:6] == "file:/":
             if copyToWork:
                 cmd = "cp -r distfiles/"+self.workdir+" work/"+self.workdir
                 print "* Copying to work directory via '%s'" % cmd,

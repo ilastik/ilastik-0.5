@@ -126,9 +126,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
         
         if startupOutputPath is not None:
+            print "Initializing segmentor..."
             self.segmentorInit()
    
-    def segmentorInit(self):     
+    def segmentorInit(self):
+        self.btnChooseWeights.setEnabled(True)
         statusBar = self.parent.statusBar()
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMinimum(0)
@@ -158,6 +160,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.seedOverlay.displayable3D = True
         self.seedOverlay.backgroundClasses = set([0])
         self.seedOverlay.smooth3D = False
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        s.outputPath = startupOutputPath
+        self.maybeEnableSegmentButton()
 
     def on_seedsAvailable(self, b):
         self.seedsAvailable = b
@@ -217,11 +222,11 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.btnChooseDir)
         tl.addWidget(self.btnChooseWeights)
         tl.addWidget(self.btnSegment)        
-        tl.addWidget(self.inlineSettings)
         tl.addWidget(self.btnSave)
         tl.addWidget(self.btnSaveAs)
         tl.addWidget(self.btnRebuildDone)
         tl.addStretch()
+        tl.addWidget(self.inlineSettings)
         tl.addWidget(self.btnSegmentorsOptions)
         
         self.btnChooseDir.setEnabled(True)
@@ -230,7 +235,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnSave.setEnabled(False)
         self.btnChooseDimensions.setEnabled(False)
         self.btnSegmentorsOptions.setEnabled(False)
-        
+        self.btnChooseWeights.setEnabled(False)
         self.setLayout(tl)
         
     def _initConnects(self):

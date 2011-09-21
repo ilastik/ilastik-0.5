@@ -29,3 +29,5 @@ curdiff.patch
 backup.py
 1
 .gitignore
+
+.DS_Store

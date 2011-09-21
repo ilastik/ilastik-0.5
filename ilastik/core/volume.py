@@ -212,18 +212,18 @@ class DataAccessor():
          
     @staticmethod
     def deserialize(h5G, name = 'data', offsets=(0, 0, 0), shape=(0, 0, 0)):
-        if (h5G[name].value.shape[1]==1):
+        if (h5G[name].shape[1]==1):
             #2d _data
             if shape == (0,0,0):        
-                data = h5G[name].value[:,:,offsets[0]:, offsets[1]:, :]
+                data = h5G[name][:,:,offsets[0]:, offsets[1]:, :]
             else:
-                data = h5G[name].value[:,:,offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1], :]
+                data = h5G[name][:,:,offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1], :]
         else:
             #3 and more d _data:
             if shape == (0,0,0):        
-                data = h5G[name].value[:,offsets[0]:, offsets[1]:, offsets[2]:, :]
+                data = h5G[name][:,offsets[0]:, offsets[1]:, offsets[2]:, :]
             else:
-                data = h5G[name].value[:,offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1], offsets[2]:offsets[2]+shape[2],:]
+                data = h5G[name][:,offsets[0]:offsets[0]+shape[0], offsets[1]:offsets[1]+shape[1], offsets[2]:offsets[2]+shape[2],:]
         return DataAccessor(data, channels = True)
         
 #*******************************************************************************

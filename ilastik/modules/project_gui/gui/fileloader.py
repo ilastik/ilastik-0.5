@@ -90,7 +90,7 @@ class FileLoader(QtGui.QDialog):
             #check if the file is the correct type for options
             fBase, fExt = os.path.splitext(str(self.fileList[0]))
             fExt=fExt[:-2]
-            if fExt in [".tiff", ".jpeg", ".gif", ".jpg", ".tif", ".png"]:
+            if fExt in [".tiff", ".jpeg", ".gif", ".jpg", ".tif", ".png", ".h5"]:
                 self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
                 self.optionsFrame.setVisible(True)
             else:

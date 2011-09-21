@@ -253,6 +253,9 @@ if "psutil" in c:
 
 #########################
 
+if 'priows' in c:
+  PriowsGitPackage()
+
 if ('fixes' in c) and ('download' not in sys.argv[0]):
     if platform.system() == "Darwin":
         cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"

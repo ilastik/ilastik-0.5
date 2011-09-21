@@ -25,7 +25,7 @@ os.system(cmd)
 
 # copy ilastik proper:
 
-os.system("cp -v ../run-ilastik-linux.sh linux-bin/")
+os.system("cp -v ./run-ilastik-linux.sh linux-bin/")
 os.system("""cd ../ilastik && find . -not -path ./scripts \\
                                    -not -name \*.h5 \\
                                    -not -name \*.ilp \\
