@@ -1,5 +1,7 @@
 import numpy, vigra
 import os.path
+from ilastik.gui import numpy2vtk
+import vtk
 
 #*******************************************************************************
 # s i z e _ i n _ p i x e l s                                                  *
@@ -135,17 +137,72 @@ class pc_projection_3d():
         self.max_spread_y = self.max_spread_y/2+10
         self.max_spread_z = self.max_spread_z/2
         
-        from enthought.mayavi import mlab
+        #from enthought.mayavi import mlab
         # Returns the current scene.
-        self.scene = mlab.figure(size = (2*self.max_spread_x, 2*self.max_spread_y), bgcolor = (1., 1., 1.))
+        #self.scene = mlab.figure(size = (2*self.max_spread_x, 2*self.max_spread_y), bgcolor = (1., 1., 1.))
         
-        self.engine = mlab.get_engine()
+        #self.engine = mlab.get_engine()
         
         
     def getName(self):
         return "3d projection"
     
     def generateOutput(self, obj_points):
+        x = min(obj_points[0]) + (max(obj_points[0])-min(obj_points[0]))/2
+        y = min(obj_points[1]) + (max(obj_points[1])-min(obj_points[1]))/2
+        z = min(obj_points[2]) + (max(obj_points[2])-min(obj_points[2]))/2
+        
+        minx = max(x-self.max_spread_x, 0)
+        maxx = min(x+self.max_spread_x, self.objectsInputOverlay._data.shape[1])
+        miny = max(y-self.max_spread_y, 0)
+        maxy = min(y+self.max_spread_y, self.objectsInputOverlay._data.shape[2])
+        minz = max(z-self.max_spread_z, 0)
+        maxz = min(z+self.max_spread_z, self.objectsInputOverlay._data.shape[3])
+        image_comp = self.objectsInputOverlay._data[0, minx:maxx, miny:maxy, minz:maxz, 0]
+        
+        value = self.objectsInputOverlay._data[0, obj_points[0][0], obj_points[1][0], obj_points[2][0], 0]
+        image = numpy.where(image_comp==value, 1, 0)
+        dataImporter = numpy2vtk.toVtkImageData(image.astype(numpy.uint8))
+        
+        cubes = vtk.vtkMarchingCubes()
+        cubes.SetInput(dataImporter)
+        cubes.SetValue(0, 1)
+        
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInput(cubes.GetOutput())
+        mapper.ScalarVisibilityOff()
+        
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(1, 1, 1)
+        
+        ren = vtk.vtkRenderer()
+        renWin = vtk.vtkRenderWindow()
+        renWin.AddRenderer(ren)
+        ren.AddActor(actor)
+        ren.SetBackground(1, 1, 1)
+        #renWin.SetSize(2*self.max_spread_x, 2*self.max_spread_y)
+        renWin.SetSize(200, 200)
+        renWin.Render()
+        
+        w2i = vtk.vtkWindowToImageFilter()
+        writer = vtk.vtkPNGWriter()
+        w2i.SetInput(renWin)
+        w2i.Update()
+        writer.SetInput(w2i.GetOutput())
+        
+        fname = str(self.counter)+".png"
+        fname = os.path.join(self.outputdir, fname)
+
+        writer.SetFileName(fname)
+        writer.Write()
+        
+        self.counter = self.counter+1
+        
+        strtowrite = "<img src=\"" + fname + "\"/>"
+        return strtowrite
+    
+    def generateOutputOld(self, obj_points):
         from enthought.mayavi.sources.api import ArraySource
         x = min(obj_points[0]) + (max(obj_points[0])-min(obj_points[0]))/2
         y = min(obj_points[1]) + (max(obj_points[1])-min(obj_points[1]))/2
@@ -236,6 +293,7 @@ class pc_projection_3d():
         return strtowrite
         
     def cleanUp(self):
-        from enthought.mayavi import mlab
-        mlab.close()
+        pass
+        #from enthought.mayavi import mlab
+        #mlab.close()
                     
