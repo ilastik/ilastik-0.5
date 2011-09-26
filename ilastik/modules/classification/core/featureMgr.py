@@ -118,6 +118,7 @@ class FeatureMgr():
     
     def exportFeatureItems(self, fileName):
         try:
+            print fileName
             h5file = h5py.File(str(fileName),'a')
             if 'features' in h5file.keys():
                 del h5file['features']

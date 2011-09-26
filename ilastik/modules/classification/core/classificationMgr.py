@@ -271,7 +271,8 @@ class ClassificationModuleMgr(BaseModuleMgr):
             
             classifiers = []
             for cid in temp:
-                classifiers.append(defaultRF.ClassifierRandomForest.loadRFfromFile(fileName, prefix + '/' + cid))   
+                print prefix + '/' + cid
+                classifiers.append(defaultRF.ClassifierRandomForest.loadRFfromFile(fileName, str(prefix + '/' + cid)))   
             return classifiers
         else:
             raise ImportError('No Classifiers in prefix')
