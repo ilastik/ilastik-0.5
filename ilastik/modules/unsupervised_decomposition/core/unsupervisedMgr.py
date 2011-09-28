@@ -68,12 +68,13 @@ class UnsupervisedDecompositionModuleMgr(BaseModuleMgr):
         #create overlays for unsupervised decomposition:
         if self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname] is None:
             data = self.decompThread.result[:,:,:,:,:]
-            myColor = OverlayItem.qrgb(0, 0, 0)
+            myColor = OverlayItem.qrgb(255, 255, 255)
             for o in range(0, data.shape[4]):
-                data2 = OverlayItem.normalizeForDisplay(data[:,:,:,:,o:(o+1)])
+                data2 = OverlayItem.normalizeForDisplay(data[:,:,:,:,o])
                 # for some strange reason we have to invert the data before displaying it
-                ov = OverlayItem(255 - data2, color = myColor, alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = True)
-                self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %d" % (o+1)] = ov
+                ov = OverlayItem(data2, color=myColor, alpha=1.0, colorTable=None, 
+                                 autoAdd=True, autoVisible=False, autoAlphaChannel=False)
+                self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Unsupervised/" + self.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod.shortname + " component %02d" % (o+1)] = ov
             # remove outdated overlays (like PCA components 5-10 if a decomposition with 4 components is done)
             numOverlaysBefore = len(self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr.keys())
             finished = False
