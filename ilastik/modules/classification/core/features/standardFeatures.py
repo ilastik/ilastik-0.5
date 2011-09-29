@@ -28,56 +28,94 @@
 #    or implied, of their employers.
 
 from ilastik.modules.classification.core.features.featureBase import *
-import vigra
+import vigra 
 
-#*******************************************************************************
-# H e s s i a n O f G a u s s i a n                                            *
-#*******************************************************************************
 
-class HessianOfGaussian(FeatureBase):
-    name = "Hessian matrix of Gaussian"
-    groups = ['Orientation']
-    numOutputChannels2d = 3
-    numOutputChannels3d = 6
+class GaussianSmoothing(FeatureBase):
+    name = "Gaussian Smoothing"
+    groups = ['Color']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
 
     def __init__(self, sigma):
         FeatureBase.__init__(self,sigma)
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        if hasattr(vigra.filters, 'hessianOfGaussian2D'):
-            # Vigra with axistags
-            def hessianOfGaussianEigenvalues(data, sigma):
-                return vigra.filters.hessianOfGaussian2D(data, sigma)
-            func = hessianOfGaussianEigenvalues
-        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
-            # Vigra without axistags
-            func = vigra.filters.hessianOfGaussian
-        else:
-            raise RuntimeError('Vigra version does not have hessianOfGausian')
-        
+        func = vigra.filters.gaussianSmoothing
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        if hasattr(vigra.filters, 'hessianOfGaussian3D'):
-            # Vigra with axistags
-            def hessianOfGaussianEigenvalues(data, sigma):
-                return vigra.filters.hessianOfGaussian3D(data, sigma)
-            func = hessianOfGaussianEigenvalues
-        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
-            # Vigra without axistags
-            func = vigra.filters.hessianOfGaussian
-        else:
-            raise RuntimeError('Vigra version does not have hessianOfGausian')
-        
+        func = vigra.filters.gaussianSmoothing
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
 
-#*******************************************************************************
-# H e s s i a n O f G a u s s i a n E i g e n v a l u e s                      *
-#*******************************************************************************
+class MedianFilter(FeatureBase):
+    name = "Median Filter"
+    groups = ['Median']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        func = vigra.filters.discMedian
+        result = self.applyToAllChannels(data.astype(numpy.uint8), func, int(self.sigma))
+        return result
+
+    def compute3d(self, data):
+        func = vigra.filters.discMedian
+        result = self.applyToAllChannels(data.astype(numpy.uint8), func, int(self.sigma))
+        return result
+
+"""
+class MophologicalErosion(FeatureBase):
+    name = "Morphological Erosion"
+    groups = ['Morphology']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        func = vigra.filters.multiGrayscaleErosion
+
+        result = self.applyToAllChannels(data.astype(numpy.uint8), func, int(self.sigma))
+        return result
+
+    def compute3d(self, data):
+        func = vigra.filters.multiGrayscaleErosion
+        result = self.applyToAllChannels(data.astype(numpy.uint8), func, int(self.sigma))
+        return result
+
+
+class MophologicalClosing(FeatureBase):
+    name = "Morphological Closing"
+    groups = ['Morphology']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        func = vigra.filters.multiGrayscaleClosing
+
+        result = self.applyToAllChannels(data.astype(numpy.uint8), func, int(self.sigma))
+        return result
+
+    def compute3d(self, data):
+        func = vigra.filters.multiGrayscaleErosion
+        result = self.applyToAllChannels(data.astype(numpy.uint8), func, int(self.sigma))
+        return result
+"""
 
 class HessianOfGaussianEigenvalues(FeatureBase):
     name = "Eigenvalues of Hessian matrix of Gaussian"
@@ -91,41 +129,20 @@ class HessianOfGaussianEigenvalues(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        if hasattr(vigra.filters, 'hessianOfGaussian2D'):
-            # Vigra with axistags
-            def hessianOfGaussianEigenvalues(data, sigma):
-                return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, sigma))
-            func = hessianOfGaussianEigenvalues
-        
-        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
-            # Vigra without axistags
-            func = vigra.filters.hessianOfGaussianEigenvalues
-        else:
-            raise RuntimeError('Vigra version does not have hessianOfGausian')
-        
+        def hessianOfGaussianEigenvalues(data, sigma):
+            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian2D(data, sigma))
+        func = hessianOfGaussianEigenvalues
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        if hasattr(vigra.filters, 'hessianOfGaussian3D'):
-            # Vigra with axistags
-            def hessianOfGaussianEigenvalues(data, sigma):
-                return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, sigma))
-            func = hessianOfGaussianEigenvalues
-        elif hasattr(vigra.filters, 'hessianOfGaussianEigenvalues'):
-            # Vigra without axistags
-            func = vigra.filters.hessianOfGaussianEigenvalues
-        else:
-            raise RuntimeError('Vigra version does not have hessianOfGausian')
-        
+        def hessianOfGaussianEigenvalues(data, sigma):
+            return vigra.filters.tensorEigenvalues(vigra.filters.hessianOfGaussian3D(data, sigma))
+        func = hessianOfGaussianEigenvalues
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
 
-
-#*******************************************************************************
-# S t r u c t u r e T e n s o r E i g e n v a l u e s                          *
-#*******************************************************************************
 
 class StructureTensorEigenvalues(FeatureBase):
     name = "Eigenvalues of structure tensor"
@@ -149,10 +166,6 @@ class StructureTensorEigenvalues(FeatureBase):
 
 
 
-#*******************************************************************************
-# G a u s s i a n G r a d i e n t M a g n i t u d e                            *
-#*******************************************************************************
-
 class GaussianGradientMagnitude(FeatureBase):
     name = "Gradient Magnitude of Gaussian"
     groups = ['Edge']
@@ -174,13 +187,10 @@ class GaussianGradientMagnitude(FeatureBase):
         return result
 
 
-#*******************************************************************************
-# G a u s s i a n S m o o t h i n g                                            *
-#*******************************************************************************
 
-class GaussianSmoothing(FeatureBase):
-    name = "Gaussian Smoothing"
-    groups = ['Color']
+class LaplacianOfGaussian(FeatureBase):
+    name = "Laplacian of Gaussian"
+    groups = ['Laplacian']
     numOutputChannels2d = 1
     numOutputChannels3d = 1
 
@@ -189,18 +199,15 @@ class GaussianSmoothing(FeatureBase):
         self.minContext = int(numpy.ceil(sigma * 3.5))
 
     def compute2d(self, data):
-        func = vigra.filters.gaussianSmoothing
+        func = vigra.filters.laplacianOfGaussian
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
-        func = vigra.filters.gaussianSmoothing
+        func = vigra.filters.laplacianOfGaussian
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
-#*******************************************************************************
-# S t r u c t u r e T e n s o r                                                *
-#*******************************************************************************
 
 class StructureTensor(FeatureBase):
     name = "Structure Tensor"
@@ -222,34 +229,7 @@ class StructureTensor(FeatureBase):
         result = self.applyToAllChannels(data, func, self.sigma, self.sigma / 2.0)
         return result
 
-#*******************************************************************************
-# L a p l a c i a n O f G a u s s i a n                                        *
-#*******************************************************************************
 
-class LaplacianOfGaussian(FeatureBase):
-    name = "Laplacian of Gaussian"
-    groups = ['Edge']
-    numOutputChannels2d = 1
-    numOutputChannels3d = 1
-
-    def __init__(self, sigma):
-        FeatureBase.__init__(self,sigma)
-        self.minContext = int(numpy.ceil(sigma * 3.5))
-
-    def compute2d(self, data):
-        func = vigra.filters.laplacianOfGaussian
-        result = self.applyToAllChannels(data, func, self.sigma)
-        return result
-
-    def compute3d(self, data):
-        func = vigra.filters.laplacianOfGaussian
-        result = self.applyToAllChannels(data, func, self.sigma)
-        return result
-
-
-#*******************************************************************************
-# D i f f e r e n c e O f G a u s s i a n s                                    *
-#*******************************************************************************
 
 class DifferenceOfGaussians(FeatureBase):
     name = "Difference of Gaussians"
@@ -273,6 +253,77 @@ class DifferenceOfGaussians(FeatureBase):
             return vigra.filters.gaussianSmoothing(data, sigma) - vigra.filters.gaussianSmoothing(data, sigma * 0.66)
         func = differenceOfGaussians
         result = self.applyToAllChannels(data, func, self.sigma) 
+        return result
+
+class AnisotropicDifferenceOfGaussians(FeatureBase):
+    name = "Difference of Gaussians Anisotropic"
+    groups = ['Anisotropic']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5*1.66))
+
+    def compute2d(self, data):
+        def differenceOfGaussians(data, sigma):
+            return vigra.filters.gaussianSmoothing(data, sigma) - vigra.filters.gaussianSmoothing(data, sigma * 0.66)
+        func = differenceOfGaussians
+        result = self.applySliceBySlice(data, func, self.sigma) 
+        return result
+
+    def compute3d(self, data):
+        def differenceOfGaussians(data, sigma):
+            return vigra.filters.gaussianSmoothing(data, sigma) - vigra.filters.gaussianSmoothing(data, sigma * 0.66)
+        func = differenceOfGaussians
+        result = self.applySliceBySlice(data, func, self.sigma) 
+        return result
+
+
+
+class GaussianSmoothingAnisotropic(FeatureBase):
+    name = "Gaussian Smoothing Anisotropic"
+    groups = ['Anisotropic']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        func = vigra.filters.gaussianSmoothing
+        result = self.applyToAllChannels(data, func, (self.sigma,self.sigma,0.1))
+        return result
+
+    def compute3d(self, data):
+        func = vigra.filters.gaussianSmoothing
+        result = self.applySliceBySlice(data, func, self.sigma)
+        return result
+
+
+
+
+
+
+class GaussianGradientMagnitudeAnisotropic(FeatureBase):
+    name = "Gaussian Gradient Magnitude Anisotropic"
+    groups = ['Anisotropic']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        func = vigra.filters.gaussianGradientMagnitude
+        result = self.applyToAllChannels(data, func, self.sigma)
+        return result
+
+    def compute3d(self, data):
+        func = vigra.filters.gaussianGradientMagnitude
+        result = self.applySliceBySlice(data, func, self.sigma)
         return result
 
 #LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))

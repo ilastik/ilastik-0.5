@@ -27,11 +27,8 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 import numpy
-
-#*******************************************************************************
-# F e a t u r e B a s e                                                        *
-#*******************************************************************************
-
+import ilastik.modules.classification.core.features
+import vigra
 class FeatureBase(object):
     """
     A Base class for feature plugins, all subclasses of this class
@@ -110,12 +107,42 @@ class FeatureBase(object):
     def applyToAllChannels(self, data, func, *args):
         result = []
         for channel in range(data.shape[-1]):
-            tres = func(data[...,channel], *args)
+            t=data[...,channel].squeeze()
+            
+            tres = func(t, *args)
             if len(tres.shape) != len(data.shape):
                 tres.shape = tres.shape + (1,)
             result.append(tres)
         return numpy.concatenate(result, axis=-1)
+    
+    def applySliceBySlice(self, data, func, *args):
+        result=[]
+        for channel in range(data.shape[-1]):
+            #print "INTO SLICE BY SLICE", data.shape
+            for slice in range(data.shape[-2]):
+                
+                tres = func(data[...,slice,channel], *args).view(numpy.ndarray)
+        if len(tres.shape) != len(data.shape):
+                tres.shape = tres.shape + (1,)
+        result.append(tres)
+        return numpy.concatenate(result,axis=1)
+    
+    
+    def reshapeBeforeApply(self,factor,data,func,*args):
+        result = []
+        if range(data.shape[-1])>1 or range(data.shape[0])>1: raise
         
+        temp=data[1,:,:,:,1]
+        
+        oldshape=data.shape
+        newshape=tuple([x*factor for x in oldshape])
+        temp=vigra.sampling.resizeVolumeSplineInterpolation(temp.astype('float32').view(numpy.ndarray),newshape)
+        tres = func(data[...], *args)
+        tres=vigra.sampling.resizeVolumeSplineInterpolation(tres.astype('float32').view(numpy.ndarray),oldshape)
+        tres.shape = (1,)+tres.shape + (1,)
+        result.append(tres)
+        return numpy.concatenate(result, axis=-1)
+    
     def serialize(self, h5grp):
         h5grp.create_dataset('name',data=self.name)
         h5grp.create_dataset('class',data=self.__class__.__name__)
@@ -129,11 +156,10 @@ class FeatureBase(object):
         # _name = h5grp['name']
         _class = h5grp['class']
         _sigma = h5grp['sigma']
-        import ilastik.modules.classification.core
-        st='ilastik.modules.classification.core.features.standardFeatures.' + _class.value + '(' + str(_sigma.value) + ')'
-        print "############",st
-        return eval(st)
+
+        return eval('ilastik.modules.classification.core.features.standardFeatures.' + _class.value + '(' + str(_sigma.value) + ')')
 
     def __str__(self):
         return self.name
+
 
