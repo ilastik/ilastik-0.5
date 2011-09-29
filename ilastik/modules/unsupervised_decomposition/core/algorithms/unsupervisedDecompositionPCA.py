@@ -11,7 +11,7 @@ class UnsupervisedDecompositionPCA(UnsupervisedDecompositionBase):
     #human readable information
     name = "Principal Component Analysis (PCA)" 
     shortname = "PCA"
-    description = "also known as Karhunen-Loeve or Hotelling transform"
+    description = "Also known as Karhunen-Loeve or Hotelling transform"
     author = "M. Hanselmann, HCI - University of Heidelberg"
     homepage = "http://hci.iwr.uni-heidelberg.de"
     
