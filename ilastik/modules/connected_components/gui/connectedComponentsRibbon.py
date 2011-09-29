@@ -68,12 +68,12 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.btnInputOverlay = TabButton('Select Overlay', ilastikIcons.Select)
         self.btnCC           = TabButton('CC', ilastikIcons.System)
         self.btnCCBack       = TabButton('CC with background', ilastikIcons.System)
-        self.btnFilter       = TabButton('Filter synapses', ilastikIcons.System)
+        self.btnFilter       = TabButton('Filter objects', ilastikIcons.System)
         
         self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
         self.btnCC.setToolTip('Run connected components on the selected overlay')
         self.btnCCBack.setToolTip('Run connected components with background')
-        self.btnFilter.setToolTip('Perform synapse filtering and dilation')
+        self.btnFilter.setToolTip('Filter connected components by size and dilate')
         
         self.btnInputOverlay.setEnabled(True)
         self.btnCC.setEnabled(False)

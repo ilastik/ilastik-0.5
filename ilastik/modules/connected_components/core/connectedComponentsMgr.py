@@ -103,10 +103,10 @@ class ConnectedComponentsItemModuleMgr(BaseModuleDataItemMgr):
                 for nl in newLabels:
                     indic =  list(numpy.nonzero(nl._data))
                     indic[0] = indic[0] + nl.offsets[0]
-                    indic[1] += nl.offsets[1]
-                    indic[2] += nl.offsets[2]
-                    indic[3] += nl.offsets[3]
-                    indic[4] += nl.offsets[4]
+                    indic[1] = indic[1] + nl.offsets[1]
+                    indic[2] = indic[2] + nl.offsets[2]
+                    indic[3] = indic[3] + nl.offsets[3]
+                    indic[4] = indic[4] + nl.offsets[4]
                     for i in range(0, len(indic[0])):
                         selector = (indic[0][i],indic[1][i],indic[2][i],indic[3][i],indic[4][i])
                         backclass = self.inputData[selector]
@@ -162,7 +162,7 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"]._data = DataAccessor(self.ccThread.result)
             
-    def filterSynapses(self, inputOverlay, label, minsize, maxsize):
+    def filterSynapses(self, inputOverlay, labelnum, minsize, maxsize):
         #This is a special function to filter synapses. It assumes that the input overlay
         #is a threhsold overlay and computes it for equal probabilities, and then dilates the
         #the current connected components to the size of their counterparts in the equal 
@@ -171,8 +171,8 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
         
         #FIXME: This function is very specific and is only put here until ilastik 0.6 allows 
         #to make it into a special workflow. Remove as soon as possible!
-        parts = label.split(" ")
-        labelnum = int(parts[0])
+        #parts = label.split(" ")
+        #labelnum = int(parts[0])
         #labelname = parts[1]
         thres = self.dataMgr[self.dataMgr._activeImageNumber].Connected_Components.inputData
         cc = self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"]

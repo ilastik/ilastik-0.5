@@ -1,5 +1,7 @@
 import numpy, vigra
 import os.path
+from ilastik.gui import numpy2vtk
+import vtk
 
 #*******************************************************************************
 # s i z e _ i n _ p i x e l s                                                  *
@@ -135,18 +137,10 @@ class pc_projection_3d():
         self.max_spread_y = self.max_spread_y/2+10
         self.max_spread_z = self.max_spread_z/2
         
-        from enthought.mayavi import mlab
-        # Returns the current scene.
-        self.scene = mlab.figure(size = (2*self.max_spread_x, 2*self.max_spread_y), bgcolor = (1., 1., 1.))
-        
-        self.engine = mlab.get_engine()
-        
-        
     def getName(self):
         return "3d projection"
     
     def generateOutput(self, obj_points):
-        from enthought.mayavi.sources.api import ArraySource
         x = min(obj_points[0]) + (max(obj_points[0])-min(obj_points[0]))/2
         y = min(obj_points[1]) + (max(obj_points[1])-min(obj_points[1]))/2
         z = min(obj_points[2]) + (max(obj_points[2])-min(obj_points[2]))/2
@@ -161,81 +155,49 @@ class pc_projection_3d():
         
         value = self.objectsInputOverlay._data[0, obj_points[0][0], obj_points[1][0], obj_points[2][0], 0]
         image = numpy.where(image_comp==value, 1, 0)
+        image = image.astype(numpy.uint8)
         
-        #image = self.overlay._data[0, minx:maxx, miny:maxy, minz:maxz, 0]
-        src = ArraySource(scalar_data=image)
-        self.engine.add_source(src)
+        dataImporter = numpy2vtk.toVtkImageData(image)
         
-
-        #axes are needed to get all the images at the same scale
-        from enthought.mayavi.modules.api import Axes
-        axes = Axes()
-        self.engine.add_module(axes)
+        cubes = vtk.vtkMarchingCubes()
+        cubes.SetInput(dataImporter)
+        cubes.SetValue(0, 1)
         
-        from enthought.mayavi.modules.api import IsoSurface
-        iso = IsoSurface()
-        self.engine.add_module(iso)
-        iso.contour.contours = [1, 2]
-        iso.actor.mapper.scalar_visibility = False
-        iso.actor.property.specular_color = (0.58, 0.58, 0.58)
-        iso.actor.property.diffuse_color = (0.58, 0.58, 0.58)
-        iso.actor.property.ambient_color = (0.58, 0.58, 0.58)
-        iso.actor.property.color = (0.58, 0.58, 0.58)
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInput(cubes.GetOutput())
+        mapper.ScalarVisibilityOff()
+        
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(1, 1, 1)
+        
+        ren = vtk.vtkRenderer()
+        renWin = vtk.vtkRenderWindow()
+        renWin.AddRenderer(ren)
+        ren.AddActor(actor)
+        ren.SetBackground(1, 1, 1)
+        renWin.SetSize(2*self.max_spread_x, 2*self.max_spread_y)
+        #renWin.SetSize(200, 200)
+        
+        renWin.Render()
+        
+        w2i = vtk.vtkWindowToImageFilter()
+        writer = vtk.vtkPNGWriter()
+        w2i.SetInput(renWin)
+        w2i.Update()
+        writer.SetInput(w2i.GetOutput())
+        
         fname = str(self.counter)+".png"
         fname = os.path.join(self.outputdir, fname)
-        from enthought.mayavi import mlab
-        azimuth, elevation, d, f = mlab.view()
-        el_deg = numpy.rad2deg(elevation)
-        az_deg = numpy.rad2deg(azimuth)
-        mean = numpy.zeros((1, 3))
-        if len(obj_points[0])>100:
-            #TODO: This part is not really ready yet, but somehow works
-            matr = numpy.array(obj_points)
-            matr = matr.transpose()
-            mean = numpy.mean(matr, 0)
-            meanmatr = numpy.zeros(matr.shape)
-            meanmatr[:, 0]=mean[0]
-            meanmatr[:, 1]=mean[1]
-            meanmatr[:, 2]=mean[2]
-            
-            matr = matr - meanmatr
-            u, s, vh = numpy.linalg.svd(matr, full_matrices=False)            
-            
-            
-            normal_index = numpy.argmin(s)
-            normal_vector = vh[normal_index, :]
-            elevation = numpy.arccos(normal_vector[2])
-            azimuth = numpy.arctan(normal_vector[0]/normal_vector[1])
-            el_deg = numpy.rad2deg(elevation)
-            az_deg = numpy.rad2deg(azimuth)
-            if normal_vector[1]<0 and normal_vector[0]<0:
-                az_deg = az_deg + 180
-            elif normal_vector[1]<0 and normal_vector[0]>0:
-                az_deg = az_deg + 360
-            elif normal_vector[1]>0 and normal_vector[0]<0:
-                az_deg = az_deg + 180
-            
-        else:
-            pass
+
+        writer.SetFileName(fname)
+        writer.Write()
         
-        #print fname
-        #print image.shape
-        #a, e, d, f = self.scene.scene.view()
-        #print a, e, d, f
-        #self.scene.scene.view(azimuth, elevation, d, f)
-        
-        #mlab.view(numpy.rad2deg(azimuth), numpy.rad2deg(elevation), 'auto', focalpoint=[mean[0], mean[1], mean[2]])
-        mlab.view(az_deg, el_deg)
-        #self.scene.scene.camera.azimuth(azimuth)
-        #self.scene.scene.camera.elevation(elevation)
-        
-        self.scene.scene.save(fname)
         self.counter = self.counter+1
-        src.remove()
+        
         strtowrite = "<img src=\"" + fname + "\"/>"
         return strtowrite
-        
+    
     def cleanUp(self):
-        from enthought.mayavi import mlab
-        mlab.close()
+        pass
                     

@@ -164,7 +164,7 @@ class DataImpex(object):
             for index, filename in enumerate(fileList[ich]):
                 if z >= options.offsets[2] and z < options.offsets[2] + options.shape[2]:
                     try:
-                        img_data = DataImpex.vigraReadImageWrapper(filename)
+                        img_data = DataImpex.vigraReadImageWrapper(filename).swapaxes(0, 1)
                         #Why did we need this options.rbg thing? Why not always load all channels?
                         if options.rgb>1:
                             image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
