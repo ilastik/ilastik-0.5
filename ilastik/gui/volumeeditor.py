@@ -2426,7 +2426,6 @@ class ImageScene(QtGui.QGraphicsView):
             if self.volumeEditor.overlayWidget.getOverlayRef("Raw Data") is not None:
                 if self.axis == 0:
                     colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posX, 0, time=0, channel=0)._data[x,y]
-                    self.updateInfoLabels(posX, posY, posZ, colorValues)
                     if len(self.volumeEditor.imageScenes) > 2:
                         yView = self.volumeEditor.imageScenes[1].crossHairCursor
                         zView = self.volumeEditor.imageScenes[2].crossHairCursor
@@ -2434,7 +2433,6 @@ class ImageScene(QtGui.QGraphicsView):
                         zView.showYPosition(x, y)
                 elif self.axis == 1:
                     colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posY, 1, time=0, channel=0)._data[x,y]
-                    self.updateInfoLabels(posX, posY, posZ, colorValues)
                     xView = self.volumeEditor.imageScenes[0].crossHairCursor
                     zView = self.volumeEditor.imageScenes[2].crossHairCursor
                     
@@ -2442,12 +2440,17 @@ class ImageScene(QtGui.QGraphicsView):
                     xView.setVisible(False)
                 else:
                     colorValues = self.volumeEditor.overlayWidget.getOverlayRef("Raw Data").getOverlaySlice(posZ, 2, time=0, channel=0)._data[x,y]
-                    self.updateInfoLabels(posX, posY, posZ, colorValues)
                     xView = self.volumeEditor.imageScenes[0].crossHairCursor
                     yView = self.volumeEditor.imageScenes[1].crossHairCursor
                     
                     xView.showXPosition(y, x)
                     yView.showXPosition(x, y)
+                    
+                if self.volumeEditor.grid is None:
+                    # 2D mode
+                    posX = posZ
+                    posZ = 0
+                self.updateInfoLabels(posX, posY, posZ, colorValues)
         else:
             self.unsetCursor()
                 

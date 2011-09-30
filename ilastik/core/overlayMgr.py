@@ -40,7 +40,7 @@ overlays seem to enjoy heavy usage in the gui part of the program,
 still i decided to put them here in the core part!?!
 
 """
-
+import numpy
 
 from ilastik.core.volume import DataAccessor
 
@@ -172,7 +172,9 @@ class OverlayItem(object):
     A Item that holds some scalar or multichannel _data and their drawing related settings.
     OverlayItems are held by the OverlayMgr
     """
-    def __init__(self, data, color = 0, alpha = 0.4, colorTable = None, autoAdd = False, autoVisible = False,  linkColorTable = False, autoAlphaChannel = True, min = None, max = None):
+    def __init__(self, data, color=0, alpha=0.4, colorTable=None, autoAdd=False, 
+                       autoVisible=False,  linkColorTable=False, autoAlphaChannel=True, 
+                       min=None, max=None):
         #whether this overlay can be displayed in 3D using
         #extraction of meshes
         self.displayable3D = False
@@ -264,12 +266,10 @@ class OverlayItem(object):
 
     @classmethod
     def normalizeForDisplay(cls, data):
-        import numpy
         dmin = numpy.min(data)
         data = data - dmin
         dmax = numpy.max(data)
-        data = 255*data/dmax
-        print 'Bad'*100
+        data = 255.0*data/dmax
         return data
 
     @classmethod
