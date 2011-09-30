@@ -81,8 +81,11 @@ class ClassifierRandomForest(ClassifierBase):
     def serialize(self, fileName, pathInFile, overwriteFlag=False):
         # cannot serilaze into grp because can not pass h5py handle to vigra yet
         # works only with new RF version
-        self.RF.writeHDF5(fileName, pathInFile, overwriteFlag)
-
+        try:
+            self.RF.writeHDF5(fileName, pathInFile, overwriteFlag)
+        except:
+            self.RF.writeHDF5(fileName, pathInFile)
+        
     @classmethod
     def deserialize(cls, h5G):
         """FIXME: we do not load the complete random forest here, but require the user to re-train
