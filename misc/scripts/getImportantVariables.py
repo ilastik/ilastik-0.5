@@ -43,8 +43,9 @@ def getImportantVariables(classFile, nDims, nSel, plotName):
             subImp = varImpMatrix[featOffset:featOffset+nChannels[iFeat],-1]
             # we are interested in the maximum variable importance over all sub-features
             maxChannel = amax(subImp,axis=0)
-            varImp[rf, groupDict[groupNames[iFeat]], kernelDict[sigmas[iFeat]]] = max(maxChannel, \
-                varImp[rf, groupDict[groupNames[iFeat]], kernelDict[sigmas[iFeat]]])
+            l=str(groupNames[iFeat])
+            varImp[rf, groupDict[l], kernelDict[sigmas[iFeat]]] = max(maxChannel, \
+                varImp[rf, groupDict[l], kernelDict[sigmas[iFeat]]])
             featOffset = featOffset + nChannels[iFeat]
     fid.close()
     # extract median
