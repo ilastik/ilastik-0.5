@@ -300,7 +300,7 @@ class QtPackage(Package):
 ###########################################################################################################
 
 class PyQtPackage(Package):
-    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-x11-gpl-4.8.4.tar.gz"
+    src_uri = "http://pkgs.fedoraproject.org/repo/pkgs/PyQt4/PyQt-x11-gpl-4.8.4.tar.gz/97c5dc1042feb5b3fe20baabad055af1/PyQt-x11-gpl-4.8.4.tar.gz"
     correctMD5sum = '97c5dc1042feb5b3fe20baabad055af1'
     workdir = 'PyQt-x11-gpl-4.8.4'
 
