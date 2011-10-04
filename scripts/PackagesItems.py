@@ -218,7 +218,7 @@ class PythonPackage(Package):
 ##################################################################################
 
 class NosePackage(Package):
-    src_uri ='http://somethingaboutorange.com/mrl/projects/nose/nose-1.0.0.tar.gz'
+    src_uri ='http://pkgs.fedoraproject.org/repo/pkgs/python-nose/nose-1.0.0.tar.gz/9542d4c66e04880d8144990de76e0b88/nose-1.0.0.tar.gz'
     workdir = 'nose-1.0.0'
     
     def unpack(self):
@@ -320,7 +320,7 @@ class PyQtPackage(Package):
 ##########################################################################################################
 
 class SipPackage(Package):
-    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.12.3.tar.gz'
+    src_uri = 'http://pkgs.fedoraproject.org/repo/pkgs/sip/sip-4.12.3.tar.gz/d0f1fa60494db04b4d115d4c2d92f79e/sip-4.12.3.tar.gz'
     correctMD5sum = 'd0f1fa60494db04b4d115d4c2d92f79e'
     workdir = 'sip-4.12.3'
     
