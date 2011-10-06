@@ -54,15 +54,15 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         tl.setMargin(0)
         
         self.btnChooseOverlays      = TabButton('Select Overlay', ilastikIcons.Select)
-        self.btnDecompose           = TabButton('decompose', ilastikIcons.Play)
+        self.btnDecompose           = TabButton('Decompose', ilastikIcons.Play)
         self.btnUnsupervisedOptions = TabButton('Unsupervised Decomposition Options', ilastikIcons.System)
 
         self.btnDecompose.setEnabled(False)     
         self.btnUnsupervisedOptions.setEnabled(False)     
         
         self.btnChooseOverlays.setToolTip('Choose the overlays for unsupervised decomposition')
-        self.btnDecompose.setToolTip('perform unsupervised decomposition')
-        self.btnUnsupervisedOptions.setToolTip('select an unsupervised decomposition plugin and change settings')
+        self.btnDecompose.setToolTip('Perform unsupervised decomposition')
+        self.btnUnsupervisedOptions.setToolTip('Select an unsupervised decomposition plugin and change settings')
         
         tl.addWidget(self.btnChooseOverlays)
         tl.addWidget(self.btnDecompose)

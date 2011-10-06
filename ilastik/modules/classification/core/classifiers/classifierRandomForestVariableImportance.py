@@ -70,7 +70,7 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
         else:
             self.oob, self.variableImportance = self.RF.learnRFWithFeatureSelection(features, labels)
             ClassifierBase.printLock.acquire()
-            a = self.variableImportance
+            a = self.variableImportance.view(numpy.ndarray)
             varStr = " ".join([str(i) + ": " + "%7.4f"%k for i,k in enumerate(a[:,-1])])
             print "Gini Importance: " + varStr
             ClassifierBase.printLock.release()
@@ -87,7 +87,10 @@ class ClassifierRandomForestVariableImportance(ClassifierBase):
     def serialize(self, fileName, pathInFile, overWriteFlag=False):
         # cannot serialize into group because can not pass h5py handle to vigra yet
         # works only with new RF version
-        tmp = self.RF.writeHDF5(fileName, pathInFile, overWriteFlag)
+        try:
+            tmp = self.RF.writeHDF5(fileName, pathInFile, overWriteFlag)
+        except:
+            tmp = self.RF.writeHDF5(fileName, pathInFile)
         f = h5py.File(fileName, 'r+')
         f.create_dataset(pathInFile+'/Variable importance', data=self.variableImportance)
         f.create_dataset(pathInFile+'/OOB', data=self.oob)
