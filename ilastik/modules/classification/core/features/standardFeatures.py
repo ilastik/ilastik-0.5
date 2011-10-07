@@ -51,7 +51,7 @@ class GaussianSmoothing(FeatureBase):
         result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
-
+"""
 class MedianFilter(FeatureBase):
     name = "Median Filter"
     groups = ['Median']
@@ -71,7 +71,7 @@ class MedianFilter(FeatureBase):
         func = vigra.filters.discMedian
         result = self.applyToAllChannels(data.astype(numpy.uint8), func, int(self.sigma))
         return result
-
+"""
 """
 class MophologicalErosion(FeatureBase):
     name = "Morphological Erosion"
@@ -188,26 +188,6 @@ class GaussianGradientMagnitude(FeatureBase):
 
 
 
-class LaplacianOfGaussian(FeatureBase):
-    name = "Laplacian of Gaussian"
-    groups = ['Laplacian']
-    numOutputChannels2d = 1
-    numOutputChannels3d = 1
-
-    def __init__(self, sigma):
-        FeatureBase.__init__(self,sigma)
-        self.minContext = int(numpy.ceil(sigma * 3.5))
-
-    def compute2d(self, data):
-        func = vigra.filters.laplacianOfGaussian
-        result = self.applyToAllChannels(data, func, self.sigma)
-        return result
-
-    def compute3d(self, data):
-        func = vigra.filters.laplacianOfGaussian
-        result = self.applyToAllChannels(data, func, self.sigma)
-        return result
-
 
 class StructureTensor(FeatureBase):
     name = "Structure Tensor"
@@ -269,7 +249,7 @@ class AnisotropicDifferenceOfGaussians(FeatureBase):
         def differenceOfGaussians(data, sigma):
             return vigra.filters.gaussianSmoothing(data, sigma) - vigra.filters.gaussianSmoothing(data, sigma * 0.66)
         func = differenceOfGaussians
-        result = self.applySliceBySlice(data, func, self.sigma) 
+        result = self.applyToAllChannels(data, func, self.sigma) 
         return result
 
     def compute3d(self, data):
@@ -293,17 +273,13 @@ class GaussianSmoothingAnisotropic(FeatureBase):
 
     def compute2d(self, data):
         func = vigra.filters.gaussianSmoothing
-        result = self.applyToAllChannels(data, func, (self.sigma,self.sigma,0.1))
+        result = self.applyToAllChannels(data, func, self.sigma)
         return result
 
     def compute3d(self, data):
         func = vigra.filters.gaussianSmoothing
         result = self.applySliceBySlice(data, func, self.sigma)
         return result
-
-
-
-
 
 
 class GaussianGradientMagnitudeAnisotropic(FeatureBase):
@@ -325,6 +301,28 @@ class GaussianGradientMagnitudeAnisotropic(FeatureBase):
         func = vigra.filters.gaussianGradientMagnitude
         result = self.applySliceBySlice(data, func, self.sigma)
         return result
+
+
+class LaplacianOfGaussian(FeatureBase):
+    name = "Anisotropic Laplacian of Gaussian"
+    groups = ['Anisotropic']
+    numOutputChannels2d = 1
+    numOutputChannels3d = 1
+
+    def __init__(self, sigma):
+        FeatureBase.__init__(self,sigma)
+        self.minContext = int(numpy.ceil(sigma * 3.5))
+
+    def compute2d(self, data):
+        func = vigra.filters.laplacianOfGaussian
+        result = self.applyToAllChannels(data, func, self.sigma)
+        return result
+
+    def compute3d(self, data):
+        func = vigra.filters.laplacianOfGaussian
+        result = self.applySliceBySlice(data, func, self.sigma)
+        return result
+
 
 #LocalFeature('Canny', ['Sigma' ], (1, 1), lambda x, s: vigra.analysis.cannyEdgeImage(x, s, 0, 1))
 #morphologicalOpening = LocalFeature('Morph Opening', ['Sigma' ], (1, 1), lambda x, s: vigra.morphology.discOpening(x.astype(numpy.uint8), int(s * 1.5 + 1)))

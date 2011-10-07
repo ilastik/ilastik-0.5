@@ -120,8 +120,8 @@ class FeatureBase(object):
         for channel in range(data.shape[-1]):
             #print "INTO SLICE BY SLICE", data.shape
             for slice in range(data.shape[-2]):
-                
-                tres = func(data[...,slice,channel], *args).view(numpy.ndarray)
+                tres = func(data[...,slice,channel].view(numpy.ndarray), *args).view(numpy.ndarray)
+                print tres.shape, "UUUUUUUUUUUUUUUUU"
         if len(tres.shape) != len(data.shape):
                 tres.shape = tres.shape + (1,)
         result.append(tres)
