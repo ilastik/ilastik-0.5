@@ -27,8 +27,6 @@ from channelsjobs.cellsMgrBrdU import BrdUSegmentation
 from channelsjobs.cellsMgrDapy import GyrusSegmentation
 from channelsjobs.cellsMgrDcX import DcxSegmentation
 
-import Image
-
 from exporterImagesToFolders import exporterToIm
 
 
@@ -89,7 +87,6 @@ class process_series(object):
         self.ExportResults()
         
         print "Processed file: " + self.currentfileName
-        
         print "Saving the images to the folder: " + self.dirResultsImages
         self.ExportImages()
         
@@ -112,7 +109,7 @@ class process_series(object):
         
         DM=self.Cells.distanceMatrix
         
-        numpy.savetxt(self.fileDistanceMatrixName,DM,fmt='%1.3f')
+        numpy.savetxt(self.fileDistanceMatrixName,DM,fmt='%3.3f')
 
         
     def _exportChannelsResults(self):
@@ -164,7 +161,6 @@ class process_series(object):
         #self.pickleStuff(self.DapyChannel,'Dapy_ch')
         #self.pickleStuff(self.Gyrus.segmented, "segmentedgyrus")
         
-    
         exporter=exporterToIm(self.dirResultsImages,self.Gyrus,self.DapyChannel,self.Cells,self.BrdUChannel,self.Dcx,self.DcxChannel)
         exporter.export()
     

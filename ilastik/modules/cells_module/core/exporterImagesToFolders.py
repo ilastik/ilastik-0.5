@@ -1,9 +1,56 @@
-import Image,ImageDraw, ImageFont, os
+
 import numpy
 from random import randint
+import os
+import vigra
+
+from numpy import require,uint8,float32
+
+import qimage2ndarray
+
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+
+
+def blend(im1,im2,alpha):
+    
+    assert im1.shape[-1]==3,"%f"%im1.shape[-1]
+    assert im1.shape==im2.shape
+    res=numpy.where(im2!=0,im1*(1-alpha)+alpha*im2.astype(numpy.float32),im1)
+    return res.astype(uint8)
+
+def Gray2RGB(im):
+    temp=numpy.zeros(im.shape+(1,),dtype=numpy.uint8)
+    temp[...,0]=im
+    return numpy.concatenate([temp,temp,temp],axis=-1).astype(uint8)
+
+def RGB2Gray(im):
+    return numpy.mean(im,axis=-1).astype(uint8)
+    
+def colorMask(mask,color=[255,0,0]):
+    res=Gray2RGB(mask)
+    
+    res[...,0]=numpy.where(mask!=0,color[0],0)
+    res[...,1]=numpy.where(mask!=0,color[1],0)
+    res[...,2]=numpy.where(mask!=0,color[2],0)
+    return res
+
+    
+def draw(im,Labels):
+    labels=Labels.astype(numpy.uint32)
+    print labels.shape
+    c1=vigra.analysis.regionImageToEdgeImage(labels,1)
+    im2=im.copy()
+    if im2.shape[-1]==1: im2=numpy.dstack([im2,im2,im2])
+    im2[:,:,0]=numpy.where(c1!=0,0,im2[:,:,0])
+    im2[:,:,1]=numpy.where(c1!=0,255,im2[:,:,1])
+    im2[:,:,2]=numpy.where(c1!=0,0,im2[:,:,2])
+    return im2
+    
 class exporterToIm(object):
     
     def __init__(self,folder,Gyrus,Dapy_channel,Cells,BrdU_channel,Dcx,Dcx_channel):
+        self.app=QApplication([])
         
         self.dirresultsimages=folder
         if not os.path.exists(self.dirresultsimages): os.mkdir(self.dirresultsimages)
@@ -12,38 +59,47 @@ class exporterToIm(object):
         self.Cells=Cells
         self.Dcx=Dcx
         self.BrdUChannel=BrdU_channel.view(numpy.ndarray).astype(numpy.uint8)
-        self.DapyChannel=Dapy_channel
-        self.DcxChannel=Dcx_channel
+        self.DapyChannel=Dapy_channel.view(numpy.ndarray).astype(numpy.uint8)
+        self.DcxChannel=Dcx_channel.view(numpy.ndarray).astype(numpy.uint8)
         
         self.coloredVolume=None
         
     def export(self):
-        
-        self._exportImages()
-    
-    
-    def _exportImages(self):
-        
         self._colorTheCells()
-                
-        for i in range(self.Gyrus.segmented.shape[-1]):
-            dapyIm=self.BrdUChannel[:,:,i].T
-            segmentedGyrIm=self.Gyrus.segmented[:,:,i].T.astype(numpy.uint8)*255
+        self._exportGyrusImages()
+        self._exportImagesCells()
+    
+    def _exportGyrusImages(self,alpha=0.2):
+        im1=Gray2RGB(self.DapyChannel)
+        im2=colorMask(self.Gyrus.segmented*255,[255,0,0])
+        #import pylab
+        #pylab.imshow(im2[:,:,0,:])
+        #pylab.show()
+        im1=blend(im1,im2,alpha)
+        im2=colorMask(self.Gyrus.interior*255,[0,255,0])
+        im1=blend(im1,im2,alpha)
+        for z in range(im1.shape[-2]):
+            name=os.path.join(self.dirresultsimages,"gyrus%.2d.png"%z)
+            print name
+            vigra.impex.writeImage(im1[:,:,z,:],name)
+    
+    def _exportImagesCells(self):
+                        
+        for i in range(self.coloredVolume.shape[-2]):
+            im=self.coloredVolume[:,:,i,:]
             
-            im1=Image.fromarray(segmentedGyrIm)
-            im1=im1.convert("RGB")
-            im2=self.getImFromColeredVolume(i)
-            
-            im=Image.blend(im1, im2,0.9)
-            
+            im=qimage2ndarray.array2qimage(im.swapaxes(0,1))
             for k in self.Cells.DictCenters.iterkeys():
                 x=self.Cells.DictCenters[k][0]
                 y=self.Cells.DictCenters[k][1]
                 z=self.Cells.DictCenters[k][2]
+                name=os.path.join(self.dirresultsimages,"cells%.2d.png"%i)
                 if z==i:
                     self._drawText(im,(x,y),str(k))
             
-            im.save(self.dirresultsimages + '/res_' +str(i) +'.tiff', "TIFF" )
+            im=qimage2ndarray.rgb_view(im).swapaxes(0,1)        
+            vigra.impex.writeImage(draw(im,self.Gyrus.segmented[:,:,i]+self.Gyrus.interior[:,:,i]),name)
+         
     
     def _colorTheCells(self):
         xh=self.BrdUChannel.shape[0]
@@ -66,20 +122,20 @@ class exporterToIm(object):
             temp[x,y,z,:]=self._randColor()
         
         self.coloredVolume=temp
-    
+    """
     def getImFromColeredVolume(self,i):
         slice=self.coloredVolume[:,:,i,:]
-        slice=numpy.swapaxes(slice, 0, 1)
+        #slice=numpy.swapaxes(slice, 0, 1)
         #print "here", slice.shape
         im=Image.fromarray(slice,"RGB")
        
         return im
-    
+    """
     def _randColor(self):
         return [randint(0, 150), randint(0, 255), randint(0, 200)]
 
      
-        
+    """    
     def _drawText(self,im,pos=(0,0),str="0",size=int(12)):
         font_path="/usr/share/fonts/truetype/freefont/FreeSerif.ttf"
         font=ImageFont.truetype(font_path,12)     
@@ -87,7 +143,7 @@ class exporterToIm(object):
         draw = ImageDraw.Draw(im)
         
         draw.text(pos,str,font=font, fill="red")
-    
+    """
     def _combineArray(self,arr1,arr2,alfa=0.9):
         return (alfa*(arr1)+(1-alfa)*arr2).astype(numpy.uint8)
     def _combineImage(self,image1,image2,alfa=0.9):
@@ -112,6 +168,19 @@ class exporterToIm(object):
         output = open(name+'.pkl', 'wb')
         pickle.dump(obj,output)
         output.close()
+        
+    def _drawText(self,im,pos,string):
+        p=QPainter(im)
+        p.setPen(QColor(255,0,0))
+        y,x=pos
+        
+        p.drawText(QRectF(x,y,100,100),QString(str(string)))
+        #p.drawText(QRect(0, 0, 100, 100));
+        
+        p.end()
+        #im.save('test.png')
+        #im=qimage2ndarray.rgb_view(im)
+        return im
 
 
 ##################################################################TESTING#######################
@@ -130,13 +199,17 @@ def load(filename):
 
         
 if __name__=="__main__":
-    testdataFolder='/home/lfiaschi/Desktop/ilastik-0.5.06-cells-counting-ready/ilastik/modules/cells_module/core/test_exporter/'
-    testResultsFolder='/home/lfiaschi/Desktop/ilastik-0.5.06-cells-counting-ready/ilastik/modules/cells_module/core/test_exporter/Results'
+    testdataFolder='/Users/lfiaschi/phd/workspace/ilastik-github/ilastik/modules/cells_module/core/test_data_batch/test-exported-images/'
+    testResultsFolder='/Users/lfiaschi/phd/workspace/ilastik-github/ilastik/modules/cells_module/core/test_data_batch/test-exported-images/results'
     if not os.path.exists(testResultsFolder): os.mkdir(testResultsFolder)
 
     BrdU_channel=load(testdataFolder+'BrdU_ch.pkl')
     Cells=load(testdataFolder+'Cells.pkl')
     
+    a={1: [range(100,150),range(100,150),list(numpy.zeros(50))]}
+    Cells.DictPositions=a
+    Cells.DictCenters={1: [120,120,0]}
+    Cells.DictCenters={2: [202,220,0],1:[120,120,0]}
     Dcx_channel=load(testdataFolder+'Dcx_ch.pkl')
     Dcx=load(testdataFolder+'Dcx.pkl')
     

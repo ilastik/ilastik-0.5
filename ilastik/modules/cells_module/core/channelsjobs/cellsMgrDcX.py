@@ -114,7 +114,7 @@ class DcxSegmentation(object):
 
 #test
 if __name__ == "__main__":
-    print "Rewrite the test "
+    print "Rewrite the test ..........."
     """
     import os, sys, numpy,pickle,pprint
     path=os.path.dirname(sys.argv[0])
