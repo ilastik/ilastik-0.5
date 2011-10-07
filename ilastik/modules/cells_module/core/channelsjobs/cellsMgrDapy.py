@@ -45,12 +45,13 @@ class GyrusSegmentation(object):
         self.segment() #Segment the image append self.segmented
 
         self.removeSmallImpurities() #to eliminte small false positive that could disturb the hull
-        self.Hull()    #Calculate the hulll append self.res that contains the interiot
-        self.distanceTransform()  #calculate the distance transform  append self.distancetransformed  
-        
-        #get some interesting data
         self.getGyrusVolume()
         self.getGyrusAreaPerSlice()
+        
+        
+        self.Hull()    #Calculate the hulll append self.res that contains the interiot
+        self.distanceTransform()  #calculate the distance transform  append self.distancetransformed  
+        #get some interesting data
         self.getInteriorAreaPerSlice()
         self.getInteriorVolume()
     
@@ -73,28 +74,28 @@ class GyrusSegmentation(object):
         di = DataItemImage('')
         try:
             di.setDataVol(DataAccessor(self.smoothed))
-        except:
+        except Exception,e:
             print self.smoothed.shape
             print self.smoothed.dtype 
-            raise RuntimeError('Cannot Append the data')
+            print e
+        
         dataMgr.append(di, alreadyLoaded=True)
         
         #print "Here2"
         
         # Load classifier from hdf5
         try:
-            #print self.fileNameToClassifier
+            print "Loading the classifier ", self.fileNameToClassifier
             #print type(self.fileNameToClassifier)
             classifiers = ClassificationModuleMgr.importClassifiers(self.fileNameToClassifier)
             #print "passato"
-        except:
-            raise RuntimeError('cannot Load Classifier ' +self.fileNameToClassifier)
-        
-        try:
+        except Exception,e:
+            print e
             
+        try:
             dataMgr.module["Classification"]["classificationMgr"].classifiers = classifiers                 
-        except:
-            raise RuntimeError('cannot append the classfiers')
+        except Exception,e:
+            print e
         
         #print "Here3"
 
@@ -136,12 +137,11 @@ class GyrusSegmentation(object):
         
         #self.probMap=vigra.filters.gaussianSmoothing(self.probMap,(2,2,0)).view(numpy.ndarray)
         self.segmented=(self.probMap>0.5)
-
-        
         self.segmented=self.segmented.astype(numpy.uint8)
         self.segmented=vigra.filters.discClosing(self.segmented,4)
         self.segmented=self.segmented.astype(numpy.uint8).view(numpy.ndarray)
-	self.segmented=vigra.filters.discErosion(self.segmented,2)
+        self.segmented=vigra.filters.discErosion(self.segmented,2).view(numpy.ndarray).astype(numpy.uint8)
+        
     def removeSmallImpurities(self):
         """Remove Small impurities ad get the Gyrus Volume"""
 
@@ -180,9 +180,10 @@ class GyrusSegmentation(object):
         	    
         		#print "warning empty sequence found"
         		#pass
-            except:
-        		print 'No gyrus found'
-        		pass
+            except Exception,e:
+                print 'No gyrus found'
+                print e
+                pass
         
         
     def getGyrusVolume(self):
@@ -194,27 +195,24 @@ class GyrusSegmentation(object):
     def Hull(self):
         """ find the set of points that define the Hulll"""
         
-        self.res=numpy.zeros(self.weights.shape,'uint8') #the vector that contains the interior        
+        self.interior=numpy.zeros(self.weights.shape,'uint8') #the vector that contains the interior        
         
         for i in range(self.weights.shape[2]):
-	    #vigra.impex.writeVolume(self.segmented*255,path+'/testDapyImages/ResultTest/interior_before','.tif')
+	        #vigra.impex.writeVolume(self.segmented*255,path+'/testDapyImages/ResultTest/interior_before','.tif')
             
             H=Hull2DObject()
-            self.res[:,:,i]=H.calculate(self.segmented[:,:,i].view(numpy.ndarray))
+            self.interior[:,:,i]=H.calculate(self.segmented[:,:,i].view(numpy.ndarray))
             #vigra.impex.writeImage(H.mask*255,path+'/testDapyImages/ResultTest/mask'+str(i)+'.tif')
             #self.res[:,:,i]=Hull2DObject().calculate(self.segmented[:,:,i].view(numpy.ndarray))
             
-	    #vigra.impex.writeVolume(self.res*255,path+'/testDapyImages/ResultTest/interior_before','.tif')
+	        #vigra.impex.writeVolume(self.res*255,path+'/testDapyImages/ResultTest/interior_before','.tif')
             
     def distanceTransform(self):
-        if self.use3D==True or self.use3D==None:
-            self.distanceTransformed=vigra.filters.distanceTransform3D(self.res.astype(numpy.float32)) #distance trasform of the gyrus interier
-            self.distanceTransformed=self.distanceTransformed - vigra.filters.distanceTransform3D(1-self.res.astype(numpy.float32))*self.physSize[0]*self.physSize[1]
-        else:
-            raise
-            self.distanceTransformed=numpy.zeros(self.res.shape, "float32")
-            for i in range(self.res.shape[2]):
-                self.distanceTransformed[:,:,i]=vigra.filters.distanceTransform2D(self.res[:,:,i].view(numpy.ndarray).astype(numpy.float32))
+        self.interior=numpy.require(self.interior,numpy.float32)
+        self.interior=self.interior.view(numpy.ndarray)
+        self.distanceTransformed=numpy.zeros(self.interior.shape, "float32")
+        for i in range(self.interior.shape[2]):
+            self.distanceTransformed[:,:,i]=vigra.filters.distanceTransform2D(self.interior[:,:,i]).view(numpy.ndarray).self.physSize[0]
             
     
     def getGyrusAreaPerSlice(self):
@@ -223,8 +221,8 @@ class GyrusSegmentation(object):
             self.GyrusArea[i]=self.segmented[:,:,i].sum()*self.physSize[0]*self.physSize[1]    
   
     def getInteriorAreaPerSlice(self):
-        self.InteriorArea=numpy.zeros(self.weights.shape[2])
-        for i in range(self.weights.shape[2]):
+        self.InteriorArea=numpy.zeros(self.interior.shape[2])
+        for i in range(self.interior.shape[2]):
             self.InteriorArea[i]=self.res[:,:,i].sum()*self.physSize[0]*self.physSize[1]
             
     def getAverageIntensityPerSlice(self):
@@ -248,13 +246,15 @@ if __name__ == "__main__":
     print path
     
     try:
-        h=h5py.File(path+'/testDapyImages/NesCreDkk1 No2 Slice 1_series_0_CH_0.h5','r')
-    except:
-        raise
+        h=h5py.File(path+'/ch0.ilp','r')
+    except Exception,e:
+        
+        print path+'/ch0.ilp'
+        print e
     
-    testdata=numpy.array(h['volume/data'][:,:,:,:15,:])
+    testdata=numpy.array(h['DataSets/dataItem00/data'][:,:,:,:,:])
     testdata=testdata.squeeze()
-    
+    print testdata.shape
     h.close()
     
     #testdata=vigra.impex.readVolume(path+'/testDapyImages/C1-lif_to_test_ana0000.tif')
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     #testdata = vigra.filters.gaussianSmoothing(testdata.astype(numpy.float32), 2)
     #testdata = vigra.sampling.resizeVolumeSplineInterpolation(testdata,(512,512,15))
     #print "smoothed"
-    Gyrus=GyrusSegmentation(testdata.view(numpy.ndarray).astype(numpy.float32),use3D='None',filenametoclassifier=path+'/testDapyImages/classifierGyrus.h5')
+    Gyrus=GyrusSegmentation(testdata.view(numpy.ndarray).astype(numpy.float32),use3D='None',filenametoclassifier=path+'/ch0_classifier.h5')
     #print type(Gyrus.res)
     vigra.impex.writeVolume(Gyrus.res*255,path+'/testDapyImages/ResultTest/interior','.tif')
     vigra.impex.writeVolume(Gyrus.segmented*255,path+'/testDapyImages/ResultTest/gyrus','.tif')
