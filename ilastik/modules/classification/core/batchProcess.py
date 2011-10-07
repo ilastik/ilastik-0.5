@@ -260,7 +260,7 @@ class BatchProcessCore(object):
                         classificationPredict.start()
                         classificationPredict.wait()
                         
-                        classificationPredict.generateOverlays()
+#                        classificationPredict.generateOverlays()
 
                         dm[0].serialize(gw)
                         self.printStuff(" done\n")
