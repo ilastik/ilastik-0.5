@@ -2,8 +2,6 @@ import vigra
 import numpy
 import h5py
 
-
-from scipy import ndimage
 import gc
 
 from ilastik.core.dataMgr import DataMgr, DataItemImage
@@ -15,9 +13,7 @@ from ilastik.core.jobMachine import JobMachine, IlastikJob
 
 
 from ilastik.modules.cells_module.core.Auxiliary import *
-
-    
-            
+      
 class DcxSegmentation(object):
     """decide weather a cell is positive or not"""
     def __init__(self,dictPositions,weights,fileNameToClassifier):
@@ -45,7 +41,8 @@ class DcxSegmentation(object):
         # Load classifier from hdf5
         try:
             classifiers = ClassificationModuleMgr.importClassifiers(self.fileNameToClassifier)
-        except:
+        except Exception,e:
+            print e
             raise RuntimeError('cannot Load Classifier ' + self.fileNameToClassifier)
         
         dataMgr.module["Classification"]["classificationMgr"].classifiers = classifiers                 
@@ -117,6 +114,8 @@ class DcxSegmentation(object):
 
 #test
 if __name__ == "__main__":
+    print "Rewrite the test "
+    """
     import os, sys, numpy,pickle,pprint
     path=os.path.dirname(sys.argv[0])
     print path
@@ -131,4 +130,4 @@ if __name__ == "__main__":
     Dcx=DcxSegmentation(d,testdata.view(numpy.ndarray).astype(numpy.float32))
     pprint.pprint(Dcx.DictIntDcX)
     pprint.pprint(Dcx.averageIntSlice)
-    
+    """

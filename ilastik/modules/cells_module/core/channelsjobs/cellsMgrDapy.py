@@ -22,16 +22,16 @@ from ilastik.modules.cells_module.core.Auxiliary import *
 
 
 class GyrusSegmentation(object):
-    def __init__(self,weights=None,use3D=None, filenametoclassifier='',physicalSize=(0.7576*2,0.7576*2,1/2)):
+    def __init__(self,weights=None, filenametoclassifier='',physicalSize=(0.7576*2,0.7576*2,1/2.0)):
         
         self.physSize=physicalSize
         print "Physical Size", self.physSize
         self.voxelVol=physicalSize[0]*physicalSize[1]*physicalSize[2]
         
-        self.res=None    #contains the interior in self res
+        self.interior=None    #contains the interior in self res
         self.weights=weights
 
-        self.setParameters({'smooth_before': 'False','filter_radius': 2.0,'use3D':use3D,  'fileNameToClassifier': filenametoclassifier  }) 
+        self.setParameters({'smooth_before': 'False','filter_radius': 2.0, 'fileNameToClassifier': filenametoclassifier  }) 
         self._exec()
     
     def _exec(self):
@@ -54,6 +54,8 @@ class GyrusSegmentation(object):
         #get some interesting data
         self.getInteriorAreaPerSlice()
         self.getInteriorVolume()
+        
+        self.res=self.interior
     
     def setParameters(self, paramsDict):
         self.__dict__.update(paramsDict)
@@ -136,11 +138,14 @@ class GyrusSegmentation(object):
         gc.collect()
         
         #self.probMap=vigra.filters.gaussianSmoothing(self.probMap,(2,2,0)).view(numpy.ndarray)
+        self.probMap=self.probMap.view(numpy.ndarray).astype(numpy.float32)
+        for z in range(self.probMap.shape[-1]):
+            self.probMap[:,:,z]=vigra.filters.gaussianSmoothing(self.probMap[:,:,z],2).view(numpy.ndarray).squeeze()
         self.segmented=(self.probMap>0.5)
         self.segmented=self.segmented.astype(numpy.uint8)
-        self.segmented=vigra.filters.discClosing(self.segmented,4)
+        #self.segmented=vigra.filters.discClosing(self.segmented,4)
         self.segmented=self.segmented.astype(numpy.uint8).view(numpy.ndarray)
-        self.segmented=vigra.filters.discErosion(self.segmented,2).view(numpy.ndarray).astype(numpy.uint8)
+        #self.segmented=vigra.filters.discErosion(self.segmented,2).view(numpy.ndarray).astype(numpy.uint8)
         
     def removeSmallImpurities(self):
         """Remove Small impurities ad get the Gyrus Volume"""
@@ -148,10 +153,8 @@ class GyrusSegmentation(object):
         for i in range(self.segmented.shape[2]):
             try:
         		temp=vigra.analysis.labelImageWithBackground(self.segmented[:,:,i])
-        		sizes=numpy.bincount(temp)
+        		sizes=numpy.bincount(temp.flatten())
         		sizes=sizes[1:]
-        		
-        		
         		index=sizes.argmax()+1
         		temp=numpy.where(temp==index,1,0)
         		self.segmented[:,:,i]=temp
@@ -212,7 +215,7 @@ class GyrusSegmentation(object):
         self.interior=self.interior.view(numpy.ndarray)
         self.distanceTransformed=numpy.zeros(self.interior.shape, "float32")
         for i in range(self.interior.shape[2]):
-            self.distanceTransformed[:,:,i]=vigra.filters.distanceTransform2D(self.interior[:,:,i]).view(numpy.ndarray).self.physSize[0]
+            self.distanceTransformed[:,:,i]=vigra.filters.distanceTransform2D(self.interior[:,:,i]).view(numpy.ndarray)*self.physSize[0]
             
     
     def getGyrusAreaPerSlice(self):
@@ -223,7 +226,7 @@ class GyrusSegmentation(object):
     def getInteriorAreaPerSlice(self):
         self.InteriorArea=numpy.zeros(self.interior.shape[2])
         for i in range(self.interior.shape[2]):
-            self.InteriorArea[i]=self.res[:,:,i].sum()*self.physSize[0]*self.physSize[1]
+            self.InteriorArea[i]=self.interior[:,:,i].sum()*self.physSize[0]*self.physSize[1]
             
     def getAverageIntensityPerSlice(self):
         self.averageIntSlice=numpy.zeros(self.weights.shape[2])
@@ -231,7 +234,7 @@ class GyrusSegmentation(object):
             self.averageIntSlice[i]=self.weights[:,:,i].mean()
 
     def getInteriorVolume(self):
-        self.InteriorVolume=self.res.sum()*self.voxelVol      
+        self.InteriorVolume=self.interior.sum()*self.voxelVol      
 
 
 
@@ -246,11 +249,12 @@ if __name__ == "__main__":
     print path
     
     try:
-        h=h5py.File(path+'/ch0.ilp','r')
+        h=h5py.File(path+'/testDapyImages/ch0.ilp','r')
     except Exception,e:
         
         print path+'/ch0.ilp'
         print e
+        raise
     
     testdata=numpy.array(h['DataSets/dataItem00/data'][:,:,:,:,:])
     testdata=testdata.squeeze()
@@ -263,7 +267,7 @@ if __name__ == "__main__":
     #testdata = vigra.filters.gaussianSmoothing(testdata.astype(numpy.float32), 2)
     #testdata = vigra.sampling.resizeVolumeSplineInterpolation(testdata,(512,512,15))
     #print "smoothed"
-    Gyrus=GyrusSegmentation(testdata.view(numpy.ndarray).astype(numpy.float32),use3D='None',filenametoclassifier=path+'/ch0_classifier.h5')
+    Gyrus=GyrusSegmentation(testdata.view(numpy.ndarray).astype(numpy.float32),filenametoclassifier=path+'/testDapyImages/ch0_classifier.h5')
     #print type(Gyrus.res)
     vigra.impex.writeVolume(Gyrus.res*255,path+'/testDapyImages/ResultTest/interior','.tif')
     vigra.impex.writeVolume(Gyrus.segmented*255,path+'/testDapyImages/ResultTest/gyrus','.tif')
@@ -274,11 +278,13 @@ if __name__ == "__main__":
     
     print "Comparing the results"
     
-    groundInterior=vigra.impex.readVolume(path+'/testDapyImages/ResultTest/Ground_truth/interior00.tif')
-    if groundInterior.all()!=Gyrus.res.all(): raise
+    groundInterior=vigra.impex.readVolume(path+'/testDapyImages/GroundTruth/interior00.tif').view(numpy.ndarray).squeeze()
+    print groundInterior.shape,groundInterior.dtype
+    print Gyrus.interior.shape,Gyrus.interior.dtype
+    numpy.testing.assert_array_equal(groundInterior,Gyrus.res*255)
     
-    groundGyrus=vigra.impex.readVolume(path+'/testDapyImages/ResultTest/Ground_truth/gyrus00.tif')
-    if groundGyrus.all()!=Gyrus.segmented.all(): raise
+    groundGyrus=vigra.impex.readVolume(path+'/testDapyImages/GroundTruth/gyrus00.tif').view(numpy.ndarray).squeeze()
+    numpy.testing.assert_array_equal(groundGyrus,Gyrus.segmented*255)
     
     print "ok!"
        

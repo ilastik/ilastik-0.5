@@ -5,7 +5,7 @@ import vigra
 import numpy
 import h5py
 
-from scipy import ndimage
+#from scipy import ndimage
 
 
 from PyQt4.QtGui import *
@@ -14,6 +14,17 @@ from PyQt4.QtCore import *
 from qimage2ndarray import rgb_view
 
 
+def medianPointCloud(labelImage):
+    maxLabel=labelImage.max()
+    print maxLabel
+    res=numpy.zeros((maxLabel,2),dtype=numpy.float32)
+    for label in range(1,maxLabel+1):
+        tmp=numpy.transpose(numpy.nonzero(labelImage==label))
+        tmp=numpy.median(tmp,axis=0)
+        print tmp
+        res[label-1,0]=tmp[0]
+        res[label-1,1]=tmp[1]
+    return res
 
 ######Auxiliary Classes#####
 
@@ -66,7 +77,10 @@ class Hull2DObject(object):
         #vigra.impex.writeVolume(msk2*255,'mask_hull','.tiff')
         
         
-        CM=ndimage.measurements.center_of_mass(self.segmented[:,:])
+        #CM=ndimage.measurements.center_of_mass(self.segmented)
+        #print "CM 1       gahgfhjagfg", CM
+        CM=medianPointCloud(self.segmented).squeeze()
+        #print "CM 2       gahgfhjagfg", CM
         
         #CM=ndimage.measurements.center_of_mass(self.mask)
         
@@ -89,7 +103,7 @@ class Hull2DObject(object):
     
     def makeMask(self,points):
         """this function transfor a set of points into a mask filling the polygon"""
-    
+        points=points.view(numpy.ndarray)
         i=QImage(QSize(self.segmented.shape[0],self.segmented.shape[1]),QImage.Format_RGB32)
         p=QPainter(i)
         
@@ -149,8 +163,6 @@ class PositionsDictionary3D(object):
 
 def computeDistanceMatrix(dictCenters,phySize=(1,1,1)):
     """get a dictionary of centers coordinates position and give back a relative distance matrix, not put missing value in the dict"""
-    
-    import numpy
     if dictCenters!={}:
         Max=max(dictCenters)
         

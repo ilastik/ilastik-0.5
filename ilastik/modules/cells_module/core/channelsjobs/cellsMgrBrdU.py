@@ -3,7 +3,7 @@ import numpy
 import h5py
 
 
-from scipy import ndimage
+
 import gc
 
 from ilastik.core.dataMgr import DataMgr, DataItemImage
@@ -13,19 +13,21 @@ from ilastik.modules.classification.core.classificationMgr import ClassifierPred
 from ilastik.core.volume import DataAccessor
 from ilastik.core.jobMachine import JobMachine, IlastikJob
 
-
 from ilastik.modules.cells_module.core.Auxiliary import *
 
 
 
 class BrdUSegmentation(object):
     
-    def __init__(self, weights, fileNameToClassifier,maskForFilter,physicalSize=(0.7576*2,0.7576*2,1/2)):
+    def __init__(self, weights, fileNameToClassifier,maskForFilter,physicalSize=(0.7576*2,0.7576*2,1/2.0),sigmaPmap=1,sigmaWeights=1):
         
         self.physSize=physicalSize
         self.voxelVol=physicalSize[0]*physicalSize[1]*physicalSize[2]
         
         print "Physical Size", self.physSize
+        
+        self.sigmaP=sigmaPmap #smooth the pamp before watershed
+        self.sigmaW=sigmaWeights #smooth the pamp before watershed
         
         #internal stastes
         self.weights=weights.view(numpy.ndarray)
@@ -54,7 +56,7 @@ class BrdUSegmentation(object):
         self.CreateProbMap()
         
         self.CellsSegmentationFromProbmap()
-        self.probMap=None #throw out the pmap
+        #self.probMap=None #throw out the pmap
         gc.collect()
         
         
@@ -73,16 +75,33 @@ class BrdUSegmentation(object):
         
         # Add data item di to dataMgr
         di = DataItemImage('')
-        di.setDataVol(DataAccessor(self.weights))
+        try:
+            di.setDataVol(DataAccessor(self.weights))
+        except Exception,e:
+            print e
+            raise
+        
         dataMgr.append(di, alreadyLoaded=True)
+        
+        #print "Here2"
         
         # Load classifier from hdf5
         try:
+            print "Loading the classifier ", self.fileNameToClassifier
+            #print type(self.fileNameToClassifier)
             classifiers = ClassificationModuleMgr.importClassifiers(self.fileNameToClassifier)
-        except: 
-            raise RuntimeError('unable to open the file ' + self.fileNameToClassifier)
-        dataMgr.module["Classification"]["classificationMgr"].classifiers = classifiers                 
-
+            #print "passato"
+        except Exception,e:
+            print e
+            raise
+            
+        try:
+            dataMgr.module["Classification"]["classificationMgr"].classifiers = classifiers                 
+        except Exception,e:
+            print e
+            raise
+        
+        #print "Here3"
 
         # Restore user selection of feature items from hdf5
         featureItems = []
@@ -91,24 +110,24 @@ class BrdUSegmentation(object):
             featureItems.append(FeatureBase.deserialize(fgrp))
         f.close()
         del f
-
+        # print "Here4"
         # Create FeatureMgr
         fm = FeatureMgr(dataMgr, featureItems)
-        
+        #print "Here5"
         # Compute features
         fm.prepareCompute(dataMgr)
         fm.triggerCompute()
         fm.joinCompute(dataMgr)
 
         # Predict with loaded classifier
-        
+        #print "Here6"
         classificationPredict = ClassifierPredictThread(dataMgr)
         classificationPredict.start()
         classificationPredict.wait()
 
         # Produce output image and select the probability map
-        
-        self.probMap = classificationPredict._prediction[0][0,:,:,:,0].copy()
+        self.probMap = []
+        self.probMap = classificationPredict._prediction[0][0,:,:,:,0].copy().view(numpy.ndarray)
         
         #clean up the memory
         
@@ -120,19 +139,34 @@ class BrdUSegmentation(object):
         del featureItems
         gc.collect()
         
-
-
+        try:
+            self.probMap=vigra.filters.gaussianSmoothing(self.probMap,self.sigmaP).view(numpy.ndarray).squeeze()
+        except:
+            try:
+                print "Warning!!!! the shape of the input is really small ", self.weights.shape
+                self.probMap=vigra.filters.gaussianSmoothing(self.probMap,self.sigmaP/2.0).view(numpy.ndarray).squeeze()
+            except Exception,e:
+                print e
+                pass
+        self.probMap=numpy.require(self.probMap,numpy.float32).view(numpy.ndarray)
         
         
-    def CellsSegmentationFromProbmap(self,bgmThresh=0.5):
+    def CellsSegmentationFromProbmap(self,bgmThresh=0.6):
         """segment the cells from the probability map
         assumes that the label of the cells is 0"""
-        try:
-            self.weights=vigra.filters.gaussianSmoothing(self.weights.astype(numpy.float32),1.00).view(numpy.ndarray)
-        except:
-            self.weights=vigra.filters.gaussianSmoothing(self.weights.astype(numpy.float32),0.5).view(numpy.ndarray)
+        self.weights=numpy.require(self.weights,numpy.float32)
         
-        fgm = vigra.analysis.extendedLocalMaxima3D(self.weights,1)
+        try:
+            self.weights=vigra.filters.gaussianSmoothing(self.weights,self.sigmaW).view(numpy.ndarray).squeeze()
+        except Exception,e:
+            print e
+            try:
+                print "Warning!!!! the shape of the input pmap is really small ", self.weights.shape
+                self.weights=vigra.filters.gaussianSmoothing(self.weights,self.sigmaW/2.0).view(numpy.ndarray).squeeze()
+            except:
+                self.weights=self.weights.astype(numpy.float32)
+        print self.weights.shape
+        fgm = vigra.analysis.extendedLocalMaxima3D(self.weights,1.0)
         
         
         
@@ -151,16 +185,8 @@ class BrdUSegmentation(object):
         seeds = (bgm1 + fgm1).astype(numpy.uint32)
         
         #crappy stuff needed to avoid crashing vigra
-        try:
-            self.segmented = vigra.analysis.watersheds(vigra.filters.gaussianGradientMagnitude(self.probMap, 1), 6, seeds)[0]
-        except:
-            try:
-                self.segmented = vigra.analysis.watersheds(vigra.filters.gaussianGradientMagnitude(self.probMap, 0.5), 6, seeds)[0]
-                print "avoiding crash of vigra, inside CellsMgrBrdU with sigma 0.3"
-            except:
-                self.segmented = vigra.analysis.watersheds(vigra.filters.gaussianGradientMagnitude(self.probMap, 0.1), 6, seeds)[0]
-                print "avoiding crash of vigra, inside CellsMgrBrdU with sigma 0.1"
         
+        self.segmented = vigra.analysis.watersheds(self.probMap, 6, seeds)[0]     
         self.segmented[numpy.where(self.segmented <= bgmMaxLabel)] = 0
         self.segmented[numpy.where(self.segmented > bgmMaxLabel)] -= bgmMaxLabel
         
@@ -177,6 +203,8 @@ class BrdUSegmentation(object):
     def FilterByOverlap(self):
         #to do : implement a margin
         print "Filtering Cells by Overlap with Gyrus and Interior"
+        #print "GGGGGGGGGGGGGGGGGGGGGGGGG",self.mask.shape
+        #print "FFFFFFFFFFFFFFFFFFFFFFFF",self.segmented.shape
         self.segmented[self.mask==0]=0 #put zero if they do not overlap with Gyrus  
         self.segmented=self.segmented.astype(numpy.float32)
         self.segmented=vigra.analysis.labelVolumeWithBackground(self.segmented,6)
@@ -193,7 +221,7 @@ class BrdUSegmentation(object):
                 
         minbound=filter[0]
         maxbound=filter[1]
-        temp=numpy.zeros(self.segmented.shape,dtype=numpy.uint8)
+        temp=numpy.zeros(self.segmented.shape,dtype=numpy.uint32)
         
         i=1
         for k in t.iterkeys():
@@ -203,7 +231,6 @@ class BrdUSegmentation(object):
                 temp[d[i][0],d[i][1],d[i][2]]=i
                 i=i+1
         
-        if i>255: raise RunTimeError('too Many cells') 
         
         self.DictPositions=d  
         self.segmented=temp
@@ -256,30 +283,34 @@ class BrdUSegmentation(object):
 if __name__ == "__main__":
     import os, sys, numpy,pickle
     path=os.path.dirname(sys.argv[0])
-    print path+ '/testDapyImages/NesCreDkk1 No2 Slice 1_series_0_CH_1.h5'
+    print path+'/testBrdUImages/ch1.ilp'
     
+     
     try:
-        h=h5py.File(path+'/testBrdUImages/NesCreDkk1 No2 Slice 1_series_0_CH_1.h5','r')
-    except:
+        h=h5py.File(path+'/testBrdUImages/ch1.ilp','r')
+    except Exception,e:
+        
+        print path+'/testBrdUImages/ch1.ilp'
+        print e
         raise
     
-    testdata=numpy.array(h['volume/data'][:,:,:,:15,:])
+    testdata=numpy.array(h['DataSets/dataItem00/data'][:,:,:,:,:])
     testdata=testdata.squeeze()
     #vigra.impex.writeVolume(testdata,path+'/testBrdUImages/ResultTest/original_before','.tif')
-    g=vigra.impex.readVolume(path+'/testBrdUImages/Gyrus_mask/gyrus00.tif')
-    i=vigra.impex.readVolume(path+'/testBrdUImages/Gyrus_mask/interior00.tif')
+    g=vigra.impex.readVolume(path+'/testDapyImages/GroundTruth/gyrus00.tif').view(numpy.ndarray).squeeze()
+    i=vigra.impex.readVolume(path+'/testDapyImages/GroundTruth/interior00.tif').view(numpy.ndarray).squeeze()
     print "The testdata !!!", testdata.shape,  testdata.dtype, type(testdata)
 
     
 
-    Cells=BrdUSegmentation(testdata.view(numpy.ndarray).astype(numpy.float32),path+'/testBrdUImages/classifiersCells_new',g+i,)
+    Cells=BrdUSegmentation(testdata.view(numpy.ndarray).astype(numpy.float32),path+'/testBrdUImages/ch1_classifier.h5',g+i,)
     vigra.impex.writeVolume(Cells.weights.astype(numpy.uint8),path+'/testBrdUImages/ResultTest/original','.tif')
     vigra.impex.writeVolume(Cells.segmented.astype(numpy.uint8)*255,path+'/testBrdUImages/ResultTest/segmented','.tif')
     
     
     
     print "Numbure of cells ", len(Cells.DictPositions)
-    
+    """
     output=open(path+'/testBrdUImages/ResultTest/DictPositions.pkl','wb')
     pickle.dump(Cells.DictPositions, output)
     output.close()
@@ -294,6 +325,6 @@ if __name__ == "__main__":
     
     print "print dict int BrdU",  Cells.DictIntBrdU
     print "print dict Centers", Cells.DictCenters
-    
+    """
  
  
