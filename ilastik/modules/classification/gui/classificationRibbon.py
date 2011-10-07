@@ -169,6 +169,15 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
             QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
             return
         
+        # Actually also the label description information should be saved from here
+        # labelDesc = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
+
+                
+        except RuntimeError as e:
+            QtGui.QMessageBox.warning(self, 'Error', str(e), QtGui.QMessageBox.Ok)
+            return
+        
+        
         QtGui.QMessageBox.information(self, 'Success', "The classifier and the feature information have been saved successfully to:\n %s" % str(fileName), QtGui.QMessageBox.Ok)
         
         

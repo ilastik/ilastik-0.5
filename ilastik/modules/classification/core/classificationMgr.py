@@ -49,7 +49,7 @@ except:
 from ilastik.core import dataMgr as DM
 from ilastik.core import activeLearning
 
-from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels
+from ilastik.core.volume import DataAccessor as DataAccessor, VolumeLabelDescriptionMgr, VolumeLabels, VolumeLabelDescription
 from ilastik.core import jobMachine
 from ilastik.core import overlayMgr
 import sys, traceback
@@ -726,6 +726,13 @@ class ClassifierPredictThread(ThreadBase):
 
             prediction = self._prediction
             descriptions =  self.dataMgr.module["Classification"]["labelDescriptions"]
+            
+            if len(descriptions) == 0:
+                # fallback: invent some label information, if we do not have
+                descriptions = [VolumeLabelDescription('Prediction_%02d' % k, k+ 1, 0, None) for k in range(prediction[0].shape[-1])]
+    
+                self.dataMgr.module["Classification"]["labelDescriptions"] = descriptions
+            
             classifiers = self.dataMgr.module["Classification"]["classificationMgr"].classifiers
             
             if prediction is not None and prediction[itemindex] is not None:

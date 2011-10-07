@@ -17,6 +17,7 @@ import errno
 import gc
 import json
 from ilastik.core import loadOptionsMgr
+from ilastik.core import jobMachine
 
 
 
@@ -143,7 +144,7 @@ class BatchOptions(object):
         self.writeSegmentation = False
         self.writeHDF5 = True
         self.writeImages = False
-        self.serializeProcessing = True
+        self.serializeProcessing = False
         
         self.featureList = None
         self.classifiers = None
@@ -255,19 +256,19 @@ class BatchProcessCore(object):
                         dm.module["Classification"]["classificationMgr"].classifiers = self.batchOptions.classifiers
                         if self.batchOptions.labelDescriptions is not None:
                             dm.module["Classification"]["labelDescriptions"] = self.batchOptions.labelDescriptions
-                        
+                            
                         classificationPredict = classificationMgr.ClassifierPredictThread(dm)
                         classificationPredict.start()
                         classificationPredict.wait()
-                        
-#                        classificationPredict.generateOverlays()
+                                                
+                        classificationPredict.generateOverlays()
 
-                        dm[0].serialize(gw)
-                        self.printStuff(" done\n")
-                        
-                        del fm
-                        del dm
-                        gc.collect()
+                    dm[0].serialize(gw)
+                    self.printStuff(" done\n")
+                    
+                    del fm
+                    del dm
+                    gc.collect()
                      
                 else: # non serialized
                     dm = dataMgr.DataMgr()
