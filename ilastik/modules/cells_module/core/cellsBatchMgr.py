@@ -20,7 +20,7 @@ import os
 
 
 
-from LOCIwrapper import reader
+
 
 #from ilastik.modules.cells_module.core.lifReader import readLif
 from channelsjobs.cellsMgrBrdU import BrdUSegmentation 
@@ -40,7 +40,6 @@ class process_series(object):
         
         
         self.destFolder=destFolder
-        
         self.physSize=physSize
         print "PhysSize", self.physSize
         self.voxelVol=physSize[0]*physSize[1]*physSize[2]
@@ -49,14 +48,7 @@ class process_series(object):
         #Create the list of data series
         base, ext = os.path.splitext(self.currentfileName)
         folder,file=os.path.split(base)
-        """
-        if ext==".lif":
-            self.processLifFile(self.currentfileName)
-        elif ext==".h5":
-            self.processHDF5File(self.currentfileName)
-        else:   
-            raise RuntimeError( "Unrecognized file format")
-        """
+        
             
         self.filenametoclassifierGyrus=fileNameToClassifierGyrus
         self.filenametoclassifierCells=fileNameToClassifierCells
@@ -185,41 +177,36 @@ class process_series(object):
 
 
 class BatchProcessingManager(object):
-    def __init__(self,fileNameList,fileNameToClassifierGyrus,fileNameToClassifierCells, fileNameToClassifierDcx, SaveLiftoHDF5 = "False",physSize=(1,1,1),destFolder=None):
+    def __init__(self,fileNameList,fileNameToClassifierGyrus,fileNameToClassifierCells, fileNameToClassifierDcx,physSize=(1,1,1),destFolder=None):
         "set the options for the current batch process"
         
         self.destFolder=destFolder
+        self.physSize=physSize
+        self.voxelVol=physSize[0]*physSize[1]*physSize[2]
+        print "Physical Size of the files ..... ... .. . . . ..", self.physSize
         
      
         
         if not os.path.exists(destFolder) and self.destFolder != None:  os.mkdir(destFolder)
         
-        self.physSize=physSize
-        print "Physical", self.physSize
-        self.voxelVol=physSize[0]*physSize[1]*physSize[2]
         self.fileNamesList=fileNameList
         self.fileNameToClassifierGyrus=fileNameToClassifierGyrus
         self.fileNameToClassifierCells=fileNameToClassifierCells
         self.fileNameToClassifierDcx=fileNameToClassifierDcx
-        self.SaveLiftoHDF5=SaveLiftoHDF5
         
         self.currentFileName=None
         self.listSeries=[]
         
     def Start(self):
         for currentfileName in self.fileNamesList:
-            self.currentfileName=str(currentfileName)
-            
+            self.currentfileName=str(currentfileName)            
             #Create the list of data series
             base, ext = os.path.splitext(self.currentfileName)
-            if ext==".lif":
-                self.processLifFile(self.currentfileName)
-            elif ext==".h5":
+            if ext==".h5":
                 self.processHDF5File(self.currentfileName)
             else:
                 raise RuntimeError("Unrecognized file format " + ext)
             
-            #process the list of data for the defined file
             print "Start processing file: " + str(self.currentfileName)     
             self.processListSeries(self.currentfileName)
             
@@ -234,43 +221,19 @@ class BatchProcessingManager(object):
             
             #try to call the garbage collector
             del PS
+            gc.collect()
             
             
         
         self.listSeries=[]
         gc.collect()
-           
-    def processLifFile(self,fileName):        
-
-        try:
-            if not jpype.isJVMStarted():
-                path = '-Djava.class.path=' + os.getcwd() + '/ilastik/modules/cells_module/core/loci_tools.jar'
-                print "Loading the Java machine @ " + path
-                jpype.startJVM(jpype.getDefaultJVMPath(),path)
-        except:
-            print "JVM Start failed, probably it has been started already..."
-            
-        print "Loading File: " + fileName
-        
-        
-        
-        try:
-            self.listSeries=reader(str(fileName))
-        except:  
-            print "ERROR Unable to load the file: "   + fileName
-        print "This file contains " + str(len(self.listSeries)) +" series of data"
-        
-        if self.SaveLiftoHDF5=='True' :
-            pass #to implement export data to HDF5
-
-    
+               
     def processHDF5File(self,fileName):
         print "Loading File: " + fileName
         try:
             hf=h5py.File(fileName, 'r')
-               
-        except:
-            
+        except Exception,e:
+            print e
             raise RuntimeError("Unable to load the file: "   + fileName)
         
         
@@ -281,16 +244,10 @@ class BatchProcessingManager(object):
                 self.physSize=(a[0][0],a[1][0],a[2][0])
                 print "Phys Size into the file: ", self.physSize
         
-        
-        
-        
-        temp=numpy.zeros(hf['volume/data'].shape,hf['volume/data'].dtype)
-        #temp[:]=hf['volume/data'][:]
-        temp=numpy.asarray(hf['volume/data'])
-        self.listSeries.append(temp)
+        self.listSeries.append(hf['volume/data'].value)
         hf.close() 
          
-        #self.listSeries.append(hf['volume/data'].__array__()) 
+
         
 
         
@@ -311,23 +268,22 @@ def Run():
 
 
 def test():
+    import os,glob
     "Test the process manager"
-    testdataFolder='/home/lfiaschi/Desktop/ilastik-0.5.06-cells-counting-ready/ilastik/modules/cells_module/core/test_data_batch/'
+    testFolder='/Users/lfiaschi/phd/workspace/ilastik-github/ilastik/modules/cells_module/core/test_data_batch'
     
-    fileNames = ['file1.h5']
+    fileNames = sorted(glob.glob(testFolder + "/data/*.h5"))
     
-    for i,file in enumerate(fileNames):
-        fileNames[i]=testdataFolder+file
     
-    physSize=(0.757*2,0.757*2,1.0/2)
+    physSize=(0.757*2,0.757*2,1.0/2.0)
     
-    fileNameToClassifierGyrus=testdataFolder+"classifierGyrus"
-    fileNameToClassifierCells=testdataFolder+"classifierCells"
-    fileNameToClassifierDcx=testdataFolder+"classifierDcx"
+    fileNameToClassifierGyrus=testFolder+"/classifiers/classifierCh0.h5"
+    fileNameToClassifierCells=testFolder+"/classifiers/classifierCh1.h5"
+    fileNameToClassifierDcx=testFolder+"/classifiers/classifierCh2.h5"
     
     print fileNames
     
-    manager=BatchProcessingManager(fileNames,fileNameToClassifierGyrus,fileNameToClassifierCells,fileNameToClassifierDcx,physSize=physSize)
+    manager=BatchProcessingManager(fileNames,fileNameToClassifierGyrus,fileNameToClassifierCells,fileNameToClassifierDcx,physSize=physSize,destFolder=testFolder+"/results")
     manager.Start()
     
 
