@@ -88,6 +88,7 @@ class FeatureDlg(QtGui.QDialog):
 
         #determine the minimum x,y,z of all images
         min = self.ilastik.project.dataMgr[0]._dataVol._data.shape[3]
+        self.min =min
         for i, it in enumerate(self.ilastik.project.dataMgr):
             if it._dataVol._data.shape[2] < min:
                 min = it._dataVol._data.shape[2]
@@ -113,11 +114,14 @@ class FeatureDlg(QtGui.QDialog):
 
         for k, scaleName in irange(featureMgr.ilastikFeatureGroups.groupScaleNames):
             #only add features scales that fit within the minimum dimension of the smallest image
-            if featureMgr.ilastikFeatureGroups.groupScaleValues[k]*7 + 3< min:
-                rc = self.featureTable.columnCount()
-                self.featureTable.insertColumn(rc)
-            else:
-                print "Scale ", scaleName, " too large for image of size ", min
+            #if featureMgr.ilastikFeatureGroups.groupScaleValues[k]*7 + 3< min:
+            rc = self.featureTable.columnCount()
+            self.featureTable.insertColumn(rc)
+            #else:
+            #    print "Scale ", scaleName, " too large for image of size ", min
+            if featureMgr.ilastikFeatureGroups.groupScaleValues[k]*7 + 3> min:
+                print "Scale ", scaleName, " too large for image of size ", min, ' Use only Anisotropic at Larger Scales'
+                
         self.featureTable.setHorizontalHeaderLabels(featureMgr.ilastikFeatureGroups.groupScaleNames)
 
         #self.featureTable.resizeRowsToContents()
