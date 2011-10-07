@@ -27,6 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 import numpy
+import ilastik
 
 #*******************************************************************************
 # F e a t u r e B a s e                                                        *
