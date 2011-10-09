@@ -310,21 +310,6 @@ if __name__ == "__main__":
     
     
     print "Numbure of cells ", len(Cells.DictPositions)
-    """
-    output=open(path+'/testBrdUImages/ResultTest/DictPositions.pkl','wb')
-    pickle.dump(Cells.DictPositions, output)
-    output.close()
-    temp=numpy.zeros((972, 512, 15,3),dtype=numpy.uint8)
-    
-    temp[:,:,:,0]=Cells.weights.astype(numpy.uint8)
-    temp[:,:,:,1]=Cells.segmented.astype(numpy.uint8)*255
-    
-    print "Here", temp.shape
-    for i in range(15):
-        vigra.impex.writeImage(temp[:,:,i,:],path+'/testBrdUImages/ResultTest/colored'+str(i)+'.tif')
-    
-    print "print dict int BrdU",  Cells.DictIntBrdU
-    print "print dict Centers", Cells.DictCenters
-    """
+
  
  

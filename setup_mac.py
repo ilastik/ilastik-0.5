@@ -40,7 +40,7 @@ import os
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # Copied from install-ilastik-deps.py ==> move to common place
 
-__builtin__.installDir = os.environ["HOME"] + "/ilastik_deps_build"
+__builtin__.installDir = os.environ["HOME"]
 __builtin__.pythonVersion="2.7"
 __builtin__.gcc="/usr/bin/gcc"
 __builtin__.gpp="/usr/bin/g++"
@@ -69,7 +69,7 @@ DATA_FILES = [  #installDir+'/plugins/imageformats/libqtiff.dylib',
                 installDir+"/lib/libvigraimpex.3.dylib",
                 installDir+"/library/Frameworks/Python.framework/Versions/2.6/lib/python2.6/site-packages/vigra/vigranumpycore.so",
                 installDir+"/lib/libvtkCommonPythonD.5.9.dylib",
-                installDir+"/lib/libvtkPythonCore.5.9.dylib",
+                #installDir+"/lib/libvtkPythonCore.5.9.dylib",
                 installDir+"/lib/libvtkCommon.5.9.dylib",
                 installDir+"/lib/libvtkPythonCore.5.9.dylib",
                 installDir+"/lib/libvtksys.5.9.dylib",
@@ -130,43 +130,15 @@ DATA_FILES = [  #installDir+'/plugins/imageformats/libqtiff.dylib',
             
 
 OPTIONS = {'argv_emulation': False,
-           'packages':['PyQt4'],
-           'includes':[\
-                'distutils', 'sip', 'ctypes','ctypes.util','h5py._stub','h5py._conv','h5py.utils',
-				# http://permalink.gmane.org/gmane.comp.python.enthought.devel/26705
-                # The backends are dynamically imported and thus we need to
-                # tell py2app about them.
-                # Essential entries for bundling PyQt
-                'PyQt4.pyqtconfig', 'PyQt4.uic','PyQt4.QtCore','PyQt4.QtGui',
+           'packages':['PyQt4','numpy'],
+           'includes':['distutils','h5py.defs', 'sip', 'ctypes','ctypes.util','h5py._conv','h5py.utils','xml','xml.etree.ElementTree', 
+                'PyQt4.pyqtconfig','PyQt4.QtCore','PyQt4.QtGui',
                 'site', 'os','vtk',
                 'vtk.vtkCommonPythonSIP',
-                #'vtk.vtkFilteringPythonSIP',
                 'vtk.vtkRenderingPythonSIP',
                 'vtk.vtkFilteringPythonSIP',
                 'numpy.core.multiarray',
-                'vigra', 'h5py._proxy', 'csv', #'vigra.svs',
-                'enthought',
-                'enthought.qt',
-                'enthought.pyface.*',
-                'enthought.pyface.ui.qt4.*',
-                'enthought.pyface.ui.qt4.action.*',
-                'enthought.pyface.ui.qt4.timer.*',
-                'enthought.pyface.ui.qt4.wizard.*',
-                'enthought.pyface.ui.qt4.workbench.*',
-                'enthought.pyface.action.*',
-                'enthought.pyface.toolkit',
-                'enthought.traits',
-                'enthought.traits.api',
-                'enthought.traits.ui.*',
-                'enthought.traits.ui.qt4.*',
-                'enthought.traits.ui.qt4.extra.*',
-                'enthought.pyface.ui.null',
-                'enthought.pyface.ui.null.action.*',
-                'qimage2ndarray',
-                #New Graph stuff
-                'greenlet',
-                'psutil',
-             ],
+                'vigra', 'h5py._proxy', 'csv'],
             'frameworks': [],
           }
 
@@ -178,7 +150,7 @@ class ilastik_recipe(object):
         
         return dict(
             packages=['ilastik'],
-            prescripts=['osx-bundle-pre-launch.py']
+            #prescripts=['osx-bundle-pre-launch.py']
         )
 
 import py2app.recipes
@@ -186,8 +158,11 @@ py2app.recipes.ilastik   = ilastik_recipe()
 
 setup(
     app=APP,
-    data_files=DATA_FILES,
-    options={'py2app': OPTIONS},
-    setup_requires=['py2app'],
+    #data_files=DATA_FILES,
     iconfile='appIcon.icns',
+    setup_requires=['py2app'],
+    options={'py2app': OPTIONS}
+    
+    
+    
 )
