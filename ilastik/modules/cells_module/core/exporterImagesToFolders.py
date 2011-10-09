@@ -3,6 +3,7 @@ import numpy
 from random import randint
 import os
 import vigra
+import h5py
 
 from numpy import require,uint8,float32
 
@@ -66,8 +67,45 @@ class exporterToIm(object):
         
     def export(self):
         self._colorTheCells()
+        self._exportToHdf5()
         self._exportGyrusImages()
         self._exportImagesCells()
+    
+    def _exportToHdf5(self):
+        h,t=name=os.path.split(self.dirresultsimages)
+        name=os.path.join(self.dirresultsimages,t+'_processed.h5')
+        print name
+        f=h5py.File(name,'w')
+        g=f.create_group('ch0')
+        g.create_dataset('ch0_raw',shape=self.DapyChannel.shape,data=self.DapyChannel)
+        g.create_dataset('ch0_interior',shape=self.Gyrus.interior.shape,data=self.Gyrus.interior)
+        g.create_dataset('ch0_segmented',shape=self.Gyrus.segmented.shape,data=self.Gyrus.segmented)
+        g.create_dataset('ch0_Pmap',shape=self.Gyrus.probMap.shape,data=self.Gyrus.probMap)
+        
+        
+        g=f.create_group('ch1')
+        g.create_dataset('ch1_raw',shape=self.BrdUChannel.shape,data=self.BrdUChannel)
+        g.create_dataset('ch1_segmented_cells',shape=self.Cells.segmented.shape,dtype=self.Cells.segmented.dtype,data=self.Cells.segmented)
+        g.create_dataset('ch1_Pmap',shape=self.Cells.probMap.shape,data=self.Cells.probMap)
+        self._serializeDictToHdf5(g, 'positions', self.Cells.DictPositions)
+        self._serializeDictToHdf5(g, 'centers', self.Cells.DictCenters)
+        
+        
+        
+        g=f.create_group('ch2')
+        g.create_dataset('ch2_raw',shape=self.DcxChannel.shape,data=self.DcxChannel)
+        g.create_dataset('ch2_Pmap',shape=self.Dcx.probMap.shape,data=self.Dcx.probMap)
+        self._serializeDictToHdf5(g, 'intensities', self.Dcx.DictIntDcX)
+        f.close()
+        
+    
+    def _serializeDictToHdf5(self,g,name,diction):
+        g2=g.create_group(name)
+        for k in diction.iterkeys():
+            data=numpy.array(diction[k]).T
+            g2.create_dataset(str(k),shape=data.shape,dtype=data.dtype,data=data)
+            
+        
     
     def _exportGyrusImages(self,alpha=0.2):
         im1=Gray2RGB(self.DapyChannel)
@@ -115,51 +153,14 @@ class exporterToIm(object):
             x=self.Cells.DictPositions[k][0]
             y=self.Cells.DictPositions[k][1]
             z=self.Cells.DictPositions[k][2]
-            
-
-            
-            
+                    
             temp[x,y,z,:]=self._randColor()
         
         self.coloredVolume=temp
-    """
-    def getImFromColeredVolume(self,i):
-        slice=self.coloredVolume[:,:,i,:]
-        #slice=numpy.swapaxes(slice, 0, 1)
-        #print "here", slice.shape
-        im=Image.fromarray(slice,"RGB")
-       
-        return im
-    """
+
     def _randColor(self):
         return [randint(0, 150), randint(0, 255), randint(0, 200)]
 
-     
-    """    
-    def _drawText(self,im,pos=(0,0),str="0",size=int(12)):
-        font_path="/usr/share/fonts/truetype/freefont/FreeSerif.ttf"
-        font=ImageFont.truetype(font_path,12)     
-        
-        draw = ImageDraw.Draw(im)
-        
-        draw.text(pos,str,font=font, fill="red")
-    """
-    def _combineArray(self,arr1,arr2,alfa=0.9):
-        return (alfa*(arr1)+(1-alfa)*arr2).astype(numpy.uint8)
-    def _combineImage(self,image1,image2,alfa=0.9):
-        temp=(alfa*(image1)+(1-alfa)*image2)
-        #print type(temp), temp.dtype, temp.shape, temp.max(), temp.min()
-        
-        im=Image.fromarray(temp.astype(numpy.uint8))
-        return im.convert("RGB")
-    
-    def _makeRGB(self,image):
-        list=[image,image,image]
-        return numpy.concatenate(list,axis=-1)
-    
-    def _extractRandomColor(self):
-        return [255,0,0]
-    
     
     def _pickleStuff(self,obj,name):
         """for debug purpose"""
