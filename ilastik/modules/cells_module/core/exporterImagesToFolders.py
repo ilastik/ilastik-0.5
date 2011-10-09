@@ -39,7 +39,7 @@ def colorMask(mask,color=[255,0,0]):
     
 def draw(im,Labels):
     labels=Labels.astype(numpy.uint32)
-    print labels.shape
+    #print labels.shape
     c1=vigra.analysis.regionImageToEdgeImage(labels,1)
     im2=im.copy()
     if im2.shape[-1]==1: im2=numpy.dstack([im2,im2,im2])
@@ -74,7 +74,7 @@ class exporterToIm(object):
     def _exportToHdf5(self):
         h,t=name=os.path.split(self.dirresultsimages)
         name=os.path.join(self.dirresultsimages,t+'_processed.h5')
-        print name
+        #print name
         f=h5py.File(name,'w')
         g=f.create_group('ch0')
         g.create_dataset('ch0_raw',shape=self.DapyChannel.shape,data=self.DapyChannel)
@@ -118,7 +118,7 @@ class exporterToIm(object):
         im1=blend(im1,im2,alpha)
         for z in range(im1.shape[-2]):
             name=os.path.join(self.dirresultsimages,"gyrus%.2d.png"%z)
-            print name
+            #print name
             vigra.impex.writeImage(im1[:,:,z,:],name)
     
     def _exportImagesCells(self):
@@ -126,12 +126,12 @@ class exporterToIm(object):
         for i in range(self.coloredVolume.shape[-2]):
             im=self.coloredVolume[:,:,i,:]
             
+            name=os.path.join(self.dirresultsimages,"cells%.2d.png"%i)
             im=qimage2ndarray.array2qimage(im.swapaxes(0,1))
             for k in self.Cells.DictCenters.iterkeys():
                 x=self.Cells.DictCenters[k][0]
                 y=self.Cells.DictCenters[k][1]
                 z=self.Cells.DictCenters[k][2]
-                name=os.path.join(self.dirresultsimages,"cells%.2d.png"%i)
                 if z==i:
                     self._drawText(im,(x,y),str(k))
             
@@ -217,8 +217,8 @@ if __name__=="__main__":
     Dapy_channel=load((testdataFolder+'Dapy_ch.pkl'))
     Gyrus=load(testdataFolder+'Gyrus.pkl')
     
-    print "creating the ex"
+    #print "creating the ex"
     ex=exporterToIm(testResultsFolder,Gyrus,Dapy_channel,Cells,BrdU_channel,Dcx,Dcx_channel)
-    print "export"
+    print "export ... . . . . .. . . . . . .. . . . .. . . . .. . . . .. . . . . . .. . . .. . "
     ex.export()
     print "END"

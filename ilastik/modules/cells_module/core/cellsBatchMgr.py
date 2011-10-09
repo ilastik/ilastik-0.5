@@ -263,8 +263,12 @@ def Run():
 
 
 
-def test():
-    import os,glob
+
+    
+
+if __name__ == "__main__":
+    import glob,time
+    start=time.time()
     "Test the process manager"
     testFolder='/Users/lfiaschi/phd/workspace/ilastik-github/ilastik/modules/cells_module/core/test_data_batch'
     
@@ -282,13 +286,7 @@ def test():
     manager=BatchProcessingManager(fileNames,fileNameToClassifierGyrus,fileNameToClassifierCells,fileNameToClassifierDcx,physSize=physSize,destFolder=testFolder+"/results")
     manager.Start()
     
-
-if __name__ == "__main__":
-    from timeit import Timer
-    t = Timer("test()","from __main__ import test")
-    
-    
-    print "Total batch process time " + str(numpy.mean(t.repeat(1,1)))
+    print "Total batch process time " + str(time.time()-start)
 
 
 
