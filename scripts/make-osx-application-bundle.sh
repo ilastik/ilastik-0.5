@@ -24,10 +24,13 @@ cp -rv ~/lib/qt_menu.nib dist/ilastik.app/Contents/Resources/
 rm -rf dist/ilastik.app/Contents/Resources/qt.conf
 touch dist/ilastik.app/Contents/Resources/qt.conf
 
-cp -v appIcon.icns dist/ilastik.app/Contents/Resources
+cp -v ../appIcon.icns dist/ilastik.app/Contents/Resources
 
 find dist/ilastik.app -name \*.h5 | xargs rm
 find dist/ilastik.app -name \*.ilp | xargs rm
+find dist/ilastik.app -name \*.png | xargs rm
+find dist/ilastik.app -name \*.tiff | xargs rm
+find dist/ilastik.app -name \*.jpg | xargs rm
 rm -f scripts/ilastik.dmg
 
 #Dirty patch for saving tiff files with qt
@@ -46,5 +49,5 @@ rm -rf build
 
 cd scripts
 
-#hdiutil create -imagekey zlib-level=9 -srcfolder ilastik.app ilastik.dmg
+hdiutil create -imagekey zlib-level=9 -srcfolder ilastik.app ilastik.dmg
 echo DONE

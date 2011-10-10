@@ -150,7 +150,7 @@ class ilastik_recipe(object):
         
         return dict(
             packages=['ilastik'],
-            #prescripts=['osx-bundle-pre-launch.py']
+            prescripts=['osx-bundle-pre-launch.py']
         )
 
 import py2app.recipes
