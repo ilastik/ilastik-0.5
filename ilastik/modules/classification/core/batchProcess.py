@@ -189,8 +189,20 @@ class BatchOptions(object):
         outputDir = json_input.get("output_dir", None)
         if outputDir is not None:
             outputDir = str(outputDir)
+            # try to create outputDir
+            try:
+                if not os.path.exists(outputDir):
+                    os.mkdir(outputDir)
+            except:
+                raise IOError("The output directory %s can not be created, aborting." % outputDir)
+                    
             
-        return BatchOptions(outputDir, classifierFile, fileList)
+        bo = BatchOptions(outputDir, classifierFile, fileList)
+        serializeProcessing = bool(json_input.get("tiledProcessing", False)) 
+        bo.serializeProcessing = serializeProcessing
+        
+        
+        return bo
 
     
 
@@ -226,11 +238,11 @@ class BatchProcessCore(object):
         for i, filename in enumerate(self.batchOptions.fileList):
             try:
                 # input handle
-                
                 theDataItem = dataImpex.DataImpex.importDataItem(filename, None)
                 
-                # output handle           
-                fw = h5py.File(str(filename) + '_processed.h5', 'w')
+                # output handle     
+                filen = os.path.split(filename)[1] 
+                fw = h5py.File(self.batchOptions.outputDir + '/' + filen + '_processed.h5', 'w')
                 gw = fw.create_group("volume")
                 
                 if self.batchOptions.serializeProcessing:
@@ -263,8 +275,8 @@ class BatchProcessCore(object):
                                                 
                         classificationPredict.generateOverlays()
 
-                    dm[0].serialize(gw)
-                    self.printStuff(" done\n")
+                        dm[0].serialize(gw)
+                        self.printStuff(" done\n")
                     
                     del fm
                     del dm
