@@ -4,8 +4,8 @@ import vigra
 import numpy
 import h5py
 
-from scipy import ndimage
-from matplotlib.nxutils import points_inside_poly
+
+
 
 import gc
 

@@ -4,7 +4,7 @@ import numpy
 import h5py
 
 
-from scipy import ndimage
+
 import gc
 
 from ilastik.core.dataMgr import DataMgr, DataItemImage

@@ -4,7 +4,7 @@ from PyQt4 import QtGui, QtCore
 import numpy
 import random
 import vigra
-from scipy import ndimage
+
 
 import ilastik.gui
 from ilastik.gui.iconMgr import ilastikIcons

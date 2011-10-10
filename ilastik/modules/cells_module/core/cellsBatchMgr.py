@@ -10,7 +10,7 @@ except:
 import sys
 import gc
 
-from scipy import ndimage
+
 
 
 from PyQt4 import QtGui, QtCore
