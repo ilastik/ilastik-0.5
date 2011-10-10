@@ -91,7 +91,7 @@ class FileLoader(QtGui.QDialog):
             fBase, fExt = os.path.splitext(str(self.fileList[0]))
             fExt=fExt[:-2]
             if fExt in [".tiff", ".jpeg", ".gif", ".jpg", ".tif", ".png", ".h5"]:
-                self.optionsWidget.setShapeInfo(self.fileList,self.options.channels)
+                self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
                 self.optionsFrame.setVisible(True)
             else:
                 m = QtGui.QMessageBox(self)

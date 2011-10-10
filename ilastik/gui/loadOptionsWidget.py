@@ -261,8 +261,16 @@ class LoadOptionsWidget(QtGui.QWidget):
     def setShapeInfo(self, fileList, channels):
         #read the shape information from the first file in the list
         #TODO: this is calling the dataImpex - it's baaaaad, it shouldn't be done
-        try:            
-            shape = dataImpex.DataImpex.readShape(fileList[channels[0]][0])
+        try:
+            if len(channels) == 0:
+                channel = 0
+            else:
+                channel = channels[0]
+            
+            if channel >= len(channels):
+                channel = 0
+                            
+            shape = dataImpex.DataImpex.readShape(fileList[channel][0])
             self.rgb = shape[3]
             self.sizeX.setValue(shape[0])
             self.sizeY.setValue(shape[1])
