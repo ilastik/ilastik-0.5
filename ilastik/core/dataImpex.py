@@ -454,24 +454,41 @@ class DataImpex(object):
           '64': lambda: '8'
           }
         bytes = int(result2.get(str(int(bitpix)))())
-          
+        
         #Read the .img file with the decoding format, bytes and size information from the header file.
           
         img_filename = filename+'.img'
         totalBytes = os.path.getsize(img_filename)
         number_var = totalBytes/bytes
-        #print number_var
-        img_values = numpy.zeros(shape=(1,int(dim[3]),int(dim[2]),int(dim[1]),int(dim[0])), dtype=numpy.int16)
-        #print img_values.shape
+        
+        img_values = numpy.zeros(shape=(1, int(dim[3]),int(dim[2]),int(dim[1]),int(dim[0])), dtype=numpy.int16)
+        
+        newbytes = int(dim[0])*int(dim[1])*bytes
+        decode_all = ""
+        for i in range(int(dim[0])*int(dim[1])):
+            decode_all = decode_all + decode
+              
+        temparray = numpy.zeros(int(dim[0])*int(dim[1]))         
+        
         with open(img_filename, 'rb') as f2:
             for i in reversed(range(int(dim[2]))):
-                for j in range(int(dim[1])):
-                    for k in range(int(dim[0])):
-                        img_values[0,0,i,j,k] = struct.unpack(decode, f2.read(bytes))[0]
-        
+                temparray[:] = struct.unpack(decode_all, f2.read(newbytes))[:]
+                img_values[0,0,i,:,:] = temparray.reshape(int(dim[1]), int(dim[0]))
         #the counter i must go in opposite direction because we want our picture's (0, 0) 
         #in the left top corner.
         #img_values = img_values.reshape((dim[0],dim[1],dim[2]))
         
-        return img_values 
+        #print img_values.shape
+        nonzeros = img_values.shape[4]
+        nonzeros_idx = []
+        for c in range(img_values.shape[4]):
+            if numpy.all(img_values[0, 0, :, :, c]<20):
+                nonzeros = nonzeros - 1
+            else:
+                nonzeros_idx.append(c)
+        img_values_nz = numpy.zeros((1, img_values.shape[1], img_values.shape[2], img_values.shape[3], nonzeros))
+        for ic, c in enumerate(nonzeros_idx):
+            img_values_nz[...,ic] = img_values[...,c]
+        
+        return img_values_nz 
             
