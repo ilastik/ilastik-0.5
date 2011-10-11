@@ -276,7 +276,7 @@ class LoadOptionsWidget(QtGui.QWidget):
             self.sizeY.setValue(shape[1])
             if shape[2] == 1: 
                 #2d data (1, 1, x, y, c)
-                self.sizeZ.setValue(len(fileList[channels[0]]))
+                self.sizeZ.setValue(len(fileList[channel]))
             else:
                 self.sizeZ.setValue(shape[2])
         except Exception as e:

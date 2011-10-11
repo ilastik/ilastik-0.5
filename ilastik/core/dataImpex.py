@@ -29,10 +29,6 @@ class DataImpex(object):
     """
         
     @staticmethod
-    def loadVolumeFromGroup(h5grp):
-        di = DataItemImage
-    
-    @staticmethod
     def importDataItem(filename, options):
         #call this method when you expect to get a single _data item back, such
         #as when you load a stack from a directory
@@ -45,7 +41,7 @@ class DataImpex(object):
         else:
             #this is just added for backward compatibility with 'Add' button
             #of the Project Dialog
-            return DataImpex.loadFromFile(filename)
+            return DataImpex.loadFromFile(filename, options)
     
     @staticmethod
     def importDataItems(fileList, options):
@@ -58,18 +54,21 @@ class DataImpex(object):
         fBase, fExt = os.path.splitext(fileName)
         formatList = vigra.impex.listExtensions().split(' ')
         formatList.append("h5")
+        
         if fExt == '.h5':
             theDataItem = dataMgr.DataItemImage(fileName)
             f = h5py.File(fileName, 'r')
             g = f['volume']
             theDataItem.deserialize(g, options.offsets, options.shape)
-            itemList.append(theDataItem)       
+            itemList.append(theDataItem)     
+              
         elif str(fExt)[1:] in formatList:
             image = DataImpex.loadStack(fileList, options, None)
             if image is not None:
                 for item in range(image.shape[3]):
                     theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[options.channels[0]][item])
                     itemList.append(theDataItem)
+                    
         elif fExt == '.img':
             #reading an Analyze 7.5 file
             image = DataImpex.readHdrImgFiles(fBase)
@@ -89,24 +88,84 @@ class DataImpex(object):
         return itemList
         
     @staticmethod
-    def loadFromFile(fileName):
+    def loadFromFile(fileName, options=None):
         # Load an image or a stack from a single file
         theDataItem = dataMgr.DataItemImage(fileName)
-        print fileName
-        fBase, fExt = os.path.splitext(fileName)
+        _, fExt = os.path.splitext(fileName)
         if fExt == '.h5':
             f = h5py.File(fileName, 'r')
             g = f['volume']
-            theDataItem.deserialize(g)
-
+            
+            if options is not None:
+                theDataItem.deserialize(g, options.offsets, options.shape)
+            else:
+                theDataItem.deserialize(g) 
+            is3D = True
         else:
             # I have to do a cast to at.Image which is useless in here, BUT, when i py2exe it,
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
-            
             data = DataImpex.vigraReadImageWrapper(fileName)
-
+            if options is not None:
+                data = data[options.offsets[1]:options.offsets[1]+options.shape[1], options.offsets[0]: options.offsets[0]+options.shape[0], :]
+                if options.destShape is not None:
+                    options.destShape = (options.destShape[2], options.destShape[1], options.destShape[0],)
+                options.shape = (options.shape[2], options.shape[1], options.shape[0],)
+                
             dataAcc = DataAccessor(data)
             theDataItem._dataVol = dataAcc
+            is3D = False
+            
+        
+                
+        if options is not None:
+            image = theDataItem._dataVol._data
+            
+            if options.normalize:
+                maximum = numpy.max(image)
+                minimum = numpy.min(image)
+                image = (image - minimum) * (255.0 / (maximum - minimum)) 
+                image = image.astype(numpy.float32)
+            
+            nch = options.rgb
+            if image.dtype in [numpy.uint16, numpy.float64]:
+                raise RuntimeError('Image is 16 bit. Cannot apply the selected option. Please use the option normalize')
+            
+            
+            if options.destShape is not None:
+                if is3D:
+                    result = numpy.zeros((1,) + options.destShape + (nch,), 'float32')
+                else:
+                    result = numpy.zeros((1,) + options.destShape + (nch,), 'float32')
+                for i in range(nch):
+                    if is3D:
+                        cresult = vigra.filters.gaussianSmoothing(image[0,:,:,:,i].view(vigra.Volume), 1.0)
+                        cresult = vigra.sampling.resizeVolumeSplineInterpolation(cresult, options.destShape)
+                        result[0, :,:,:,i] = cresult[:,:,:]
+                    else:
+                        cresult = vigra.filters.gaussianSmoothing(image[0,0,:,:,i].view(vigra.ScalarImage), 1.0)
+                        cresult = vigra.sampling.resizeImageSplineInterpolation(cresult, options.destShape[1:3])
+                        result[0,0,:,:,i] = cresult[:,:]
+                    
+                image = result
+            else:
+                options.destShape = options.shape  
+                
+            image = image.reshape(1, options.destShape[0], options.destShape[1], options.destShape[2], nch)
+            
+            if options.grayscale:
+                image = image.view(numpy.ndarray)
+                result = numpy.average(image, axis = 4)
+                options.rgb = 1
+                image = result.astype(numpy.uint8)
+                image = image.reshape(image.shape + (1,))
+                nch = 1
+                
+            if options.invert:
+                # Invert can only be savely used in combination with normalize, so far.
+                image = 255 - image
+
+            theDataItem._dataVol = DataAccessor(image)
+            
         theDataItem.updateOverlays()
         return theDataItem
     
@@ -141,6 +200,7 @@ class DataImpex(object):
 
     @staticmethod
     def loadStack(fileList, options, logger = None):
+        print 'load stack...'
         #This method also exports the stack as .h5 file, if options.destfile is not None
         if (len(fileList) == 0):
             return None
@@ -181,22 +241,17 @@ class DataImpex(object):
                             logger.appendPlainText("")
                     if logger is not None:        
                         logger.repaint()
-                z = z + 1
-
-        if options.invert:
-            image = 255 - image             
+                z = z + 1           
                  
         if options.destShape is not None:
             result = numpy.zeros(options.destShape + (nch,), 'float32')
             for i in range(nch):
-                cresult = vigra.filters.gaussianSmoothing(image[:,:,:,i].view(vigra.Volume), 2.0)
-                cresult = vigra.sampling.resizeVolumeSplineInterpolation(cresult,options.destShape)
+                cresult = vigra.filters.gaussianSmoothing(image[:,:,:,i].view(vigra.Volume), 1.0)
+                cresult = vigra.sampling.resizeVolumeSplineInterpolation(cresult, options.destShape)
                 result[:,:,:,i] = cresult[:,:,:]
             image = result
         else:
-            options.destShape = options.shape
-        
-        
+            options.destShape = options.shape  
 
         if options.grayscale:
             image = image.view(numpy.ndarray)
@@ -211,9 +266,12 @@ class DataImpex(object):
             minimum = numpy.min(image)
             image = (image - minimum) * (255.0 / (maximum - minimum)) 
             image = image.astype(numpy.uint8)
+            
+        if options.invert:
+            # Invert can only be savely used in combination with normalize, so far.
+            image = 255 - image  
         
         image = image.reshape(1,options.destShape[0],options.destShape[1],options.destShape[2],nch)
-        print options.destfile
         try:
             if options.destfile != None:
                 print "Saving to file ", options.destfile
@@ -224,7 +282,7 @@ class DataImpex(object):
                 g.create_dataset("data",data=temp_image)
                 f.close()
         except:
-            print "ERROR saving File ", options.destfile
+            print "Error in saving to h5 file file ", options.destfile
             
         if allok:
             return image

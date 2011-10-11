@@ -142,7 +142,6 @@ class Project(object):
         
     def loadStack(self, path, fileList, options):
         #TODO: maybe get rid of path later on
-        
         try:
             theDataItem = dataImpex.DataImpex.importDataItem(fileList, options)
         except MemoryError:
@@ -177,13 +176,12 @@ class Project(object):
             #an .h5 file is passed with options
             for f in fileList[0]:            
                 try:
-                    fBase, fExt = os.path.splitext(f)
-                    if fExt=='.h5' or fExt=='.img':
-                        print fBase
+                    _, fExt = os.path.splitext(f)
+                    if fExt=='.img':
                         item = dataImpex.DataImpex.importDataItems([[f]], options)
                         itemList.extend(item) #item is a list
                     else:
-                        item = dataImpex.DataImpex.importDataItem(f, None)
+                        item = dataImpex.DataImpex.importDataItem(f, options)
                         itemList.append(item)
                         
                 except Exception, e:
