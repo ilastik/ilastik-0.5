@@ -119,7 +119,7 @@ class process_series(object):
         self.Header=['File Name','Data Series N',
 		             'Used Classifier Gyrus', 'Used Classifier Cells', 'Used Classifier Dcx',  
                      
-                     'cell id','Z_center','Distance from Interior','Cell Volume',
+                     'cell id','Z_center','X_center','Y_center','Distance from Interior','Cell Volume',
                      'Cell Average BrdU Intensity','Cell Average Dcx Intensity', 'Positive to Dcx',
                      'Gyrus Volume =' + str(self.Gyrus.GyrusVolume) ,'Gyrus Area',
                      "Interior Volume= " + str(self.Gyrus.InteriorVolume), "Interior Area",
@@ -138,7 +138,7 @@ class process_series(object):
 		              
                       self.filenametoclassifierGyrus, self.filenametoclassifierCells,  self.fileNameToClassifierDcx,
                       
-                      k, z, self.Gyrus.distanceTransformed[x][y][z],   len(self.Cells.DictPositions[k][0])*self.voxelVol,
+                      k, z,x,y, self.Gyrus.distanceTransformed[x][y][z],   len(self.Cells.DictPositions[k][0])*self.voxelVol,
                       self.Cells.DictIntBrdU[k],self.Dcx.DictIntDcX[k],self.Dcx.dictPositiveCells[k],
                       self.Gyrus.GyrusVolume,self.Gyrus.GyrusArea[z],
                       self.Gyrus.InteriorVolume,self.Gyrus.InteriorArea[z],

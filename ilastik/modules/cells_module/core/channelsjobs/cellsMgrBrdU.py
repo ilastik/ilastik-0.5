@@ -60,13 +60,13 @@ class BrdUSegmentation(object):
         gc.collect()
         
         #self.DictPositions=PositionsDictionary3D.setdict(self.segmented)
-        print "GGGGGGGUGAG",self.DictPositions
+        #print "GGGGGGGUGAG",self.DictPositions
         self.FilterByOverlap()  #filters the cells on the overlap with gyrus and interior
         self.DictPositions=PositionsDictionary3D.setdict(self.segmented)
-        print "GGGGGGGUGAG",self.DictPositions
+        #print "GGGGGGGUGAG",self.DictPositions
         
         self.FilterBySize()                                             
-        print "GGGGGGGUGAG2",self.DictPositions
+        #print "GGGGGGGUGAG2",self.DictPositions
         
         
         self.SetDictIntBrdU() #set the dictionary with the Cell average BrdU luminescence value
