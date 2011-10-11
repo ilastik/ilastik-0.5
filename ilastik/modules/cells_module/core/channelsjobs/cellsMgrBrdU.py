@@ -62,7 +62,11 @@ class BrdUSegmentation(object):
         
         self.FilterByOverlap()  #filters the cells on the overlap with gyrus and interior
         self.DictPositions=PositionsDictionary3D.setdict(self.segmented)
+        print "GGGGGGGUGAG",self.DictPositions
+        
         self.FilterBySize()                                             
+        print "GGGGGGGUGAG2",self.DictPositions
+        
         
         self.SetDictIntBrdU() #set the dictionary with the Cell average BrdU luminescence value
         self.SetDictCenters()
@@ -151,7 +155,7 @@ class BrdUSegmentation(object):
         self.probMap=numpy.require(self.probMap,numpy.float32).view(numpy.ndarray)
         
         
-    def CellsSegmentationFromProbmap(self,bgmThresh=0.6):
+    def CellsSegmentationFromProbmap(self,bgmThresh=0.45):
         """segment the cells from the probability map
         assumes that the label of the cells is 0"""
         self.weights=numpy.require(self.weights,numpy.float32)
@@ -191,8 +195,8 @@ class BrdUSegmentation(object):
         self.segmented[numpy.where(self.segmented > bgmMaxLabel)] -= bgmMaxLabel
         
         
-        
-        
+        print "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHJGhjfghdsfghdsagf ",self.segmented.max()        
+        #vigra.impex.writeVolume(self.segmented*255,'/home/lfiaschi/Desktop/test/00.png')
 
     def getAverageIntensityPerSlice(self):
         self.averageIntSlice=numpy.zeros(self.weights.shape[2])
@@ -208,12 +212,12 @@ class BrdUSegmentation(object):
         self.segmented[self.mask==0]=0 #put zero if they do not overlap with Gyrus  
         self.segmented=self.segmented.astype(numpy.float32)
         self.segmented=vigra.analysis.labelVolumeWithBackground(self.segmented,6)
-    
+        print "FILTERINGOOOOHJGhjfghdsfghdsagf ",self.segmented.max() 
     
     
        
     
-    def FilterBySize(self,filter=(15,1500)):
+    def FilterBySize(self,filter=(6,1500)):
         print "Filtering Cells by Size"
         d={}
         t=self.DictPositions
