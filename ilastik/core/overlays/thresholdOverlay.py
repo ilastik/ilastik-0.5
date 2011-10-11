@@ -132,7 +132,7 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
             #smooth only the foreground!
             for index, d in enumerate(dsets):
                 if index < len(self.foregrounds) and new_fg is True:
-                    data = numpy.ndarray(d.shape, 'float32')
+                    data = numpy.ndarray(d.shape, numpy.float32)
                     for t in range(d.shape[0]):
                         for c in range(d.shape[-1]):
                             if d.shape[1] > 1:
@@ -143,8 +143,9 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
                                 res = res.swapaxes(0, 2).view()
                                 data[t, :, :, :, c] = res.squeeze()                                          
                             else:
-                                dRaw = d[t,0,:,:,c].astype('float32').view(vigra.ScalarImage)           
-                                data[t,0,:,:,c] = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
+                                dRaw = numpy.asarray(d[t, 0, :, :, c])
+                                res = vigra.filters.gaussianSmoothing(dRaw, self.sigma)
+                                data[t, 0, :, :, c] = res.squeeze()
                     dataAcc = DataAccessor(data)
                     dsets_new.append(dataAcc)
                 else:
@@ -157,7 +158,7 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
     def setThresholds(self, thresholds):
         if (len(thresholds)==2):
             print "setting probability ratio threshold to: ", thresholds[0]/thresholds[1]
-        self.thresholds = numpy.zeros((len(self.dsets)),'float32' )
+        self.thresholds = numpy.zeros((len(self.dsets)), numpy.float32 )
         for index, t in enumerate(thresholds):
             self.thresholds[index] = t
             
