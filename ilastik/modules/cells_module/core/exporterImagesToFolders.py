@@ -70,6 +70,7 @@ class exporterToIm(object):
         self._exportToHdf5()
         self._exportGyrusImages()
         self._exportImagesCells()
+        self._exportImagesDcx()
     
     def _exportToHdf5(self):
         h,t=name=os.path.split(self.dirresultsimages)
@@ -127,18 +128,45 @@ class exporterToIm(object):
             im=self.coloredVolume[:,:,i,:]
             
             name=os.path.join(self.dirresultsimages,"cells%.2d.png"%i)
-            im=qimage2ndarray.array2qimage(im.swapaxes(0,1))
+            shape=im.shape
+            im=qimage2ndarray.array2qimage(im)#.swapaxes(0,1))
+            
+            
+     
+            
             for k in self.Cells.DictCenters.iterkeys():
                 x=self.Cells.DictCenters[k][0]
                 y=self.Cells.DictCenters[k][1]
                 z=self.Cells.DictCenters[k][2]
                 if z==i:
+                   
                     self._drawText(im,(x,y),str(k))
             
-            im=qimage2ndarray.rgb_view(im).swapaxes(0,1)        
+            im=qimage2ndarray.rgb_view(im)#.swapaxes(0,1)        
             vigra.impex.writeImage(draw(im,self.Gyrus.segmented[:,:,i]+self.Gyrus.interior[:,:,i]),name)
          
-    
+    def _exportImagesDcx(self):
+                        
+        for i in range(self.DcxChannel.shape[-1]):
+            im=Gray2RGB(self.DcxChannel[:,:,i])
+            
+            name=os.path.join(self.dirresultsimages,"dcx%.2d.png"%i)
+            shape=im.shape
+            im=qimage2ndarray.array2qimage(im)#.swapaxes(0,1))
+            
+            
+     
+            
+            for k in self.Cells.DictCenters.iterkeys():
+                x=self.Cells.DictCenters[k][0]
+                y=self.Cells.DictCenters[k][1]
+                z=self.Cells.DictCenters[k][2]
+                if z==i:
+                   
+                    self._drawText(im,(x,y),str(k))
+            
+            im=qimage2ndarray.rgb_view(im)#.swapaxes(0,1)        
+            vigra.impex.writeImage(draw(im,self.Gyrus.segmented[:,:,i]+self.Gyrus.interior[:,:,i]),name)    
     def _colorTheCells(self):
         xh=self.BrdUChannel.shape[0]
         yh=self.BrdUChannel.shape[1]
@@ -175,7 +203,7 @@ class exporterToIm(object):
         p.setPen(QColor(255,0,0))
         y,x=pos
         
-        p.drawText(QRectF(x,y,100,100),QString(str(string)))
+        p.drawText(QRectF(x,y,200,200),QString(str(string)))
         #p.drawText(QRect(0, 0, 100, 100));
         
         p.end()

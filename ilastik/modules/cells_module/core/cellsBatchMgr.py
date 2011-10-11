@@ -68,8 +68,8 @@ class process_series(object):
     def process(self):               
         
         print "Segmenting the Dapy Channel"
-        print self.DapyChannel.shape
-        print self.DapyChannel.dtype
+        #print self.DapyChannel.shape
+        #print self.DapyChannel.dtype
         self.Gyrus=GyrusSegmentation(self.DapyChannel,filenametoclassifier=self.filenametoclassifierGyrus,physicalSize=self.physSize)
         
         print "Segmenting the BrdU channel"

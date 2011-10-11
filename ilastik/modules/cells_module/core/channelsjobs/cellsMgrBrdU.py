@@ -19,7 +19,7 @@ from ilastik.modules.cells_module.core.Auxiliary import *
 
 class BrdUSegmentation(object):
     
-    def __init__(self, weights, fileNameToClassifier,maskForFilter,physicalSize=(0.7576*2,0.7576*2,1/2.0),sigmaPmap=1,sigmaWeights=1):
+    def __init__(self, weights, fileNameToClassifier,maskForFilter,physicalSize=(0.7576*2,0.7576*2,1/2.0),sigmaPmap=0.2,sigmaWeights=2):
         
         self.physSize=physicalSize
         self.voxelVol=physicalSize[0]*physicalSize[1]*physicalSize[2]
@@ -59,7 +59,8 @@ class BrdUSegmentation(object):
         #self.probMap=None #throw out the pmap
         gc.collect()
         
-        
+        #self.DictPositions=PositionsDictionary3D.setdict(self.segmented)
+        print "GGGGGGGUGAG",self.DictPositions
         self.FilterByOverlap()  #filters the cells on the overlap with gyrus and interior
         self.DictPositions=PositionsDictionary3D.setdict(self.segmented)
         print "GGGGGGGUGAG",self.DictPositions
@@ -155,7 +156,7 @@ class BrdUSegmentation(object):
         self.probMap=numpy.require(self.probMap,numpy.float32).view(numpy.ndarray)
         
         
-    def CellsSegmentationFromProbmap(self,bgmThresh=0.45):
+    def CellsSegmentationFromProbmap(self,bgmThresh=0.40):
         """segment the cells from the probability map
         assumes that the label of the cells is 0"""
         self.weights=numpy.require(self.weights,numpy.float32)
@@ -169,16 +170,13 @@ class BrdUSegmentation(object):
                 self.weights=vigra.filters.gaussianSmoothing(self.weights,self.sigmaW/2.0).view(numpy.ndarray).squeeze()
             except:
                 self.weights=self.weights.astype(numpy.float32)
-        print self.weights.shape
+                print self.weights.shape
         fgm = vigra.analysis.extendedLocalMaxima3D(self.weights,1.0)
-        
         
         
         fgm[numpy.where(self.probMap < bgmThresh)] = 0 #delete small maxima
         
         fgm1 = vigra.analysis.labelVolumeWithBackground(fgm, 6, float(0)) #marca i massimi in differenti label
-        
-    
         
         bgm = (self.probMap < bgmThresh).astype(numpy.float32)
         bgm1 = vigra.analysis.labelVolumeWithBackground(bgm, 6, float(0))
@@ -195,7 +193,7 @@ class BrdUSegmentation(object):
         self.segmented[numpy.where(self.segmented > bgmMaxLabel)] -= bgmMaxLabel
         
         
-        print "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHJGhjfghdsfghdsagf ",self.segmented.max()        
+        #print "OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHJGhjfghdsfghdsagf ",self.segmented.max()        
         #vigra.impex.writeVolume(self.segmented*255,'/home/lfiaschi/Desktop/test/00.png')
 
     def getAverageIntensityPerSlice(self):
@@ -209,10 +207,13 @@ class BrdUSegmentation(object):
         print "Filtering Cells by Overlap with Gyrus and Interior"
         #print "GGGGGGGGGGGGGGGGGGGGGGGGG",self.mask.shape
         #print "FFFFFFFFFFFFFFFFFFFFFFFF",self.segmented.shape
+        #print "BEFOREFILTERINGOOOOHJGhjfghdsfghdsagf ",self.segmented.max() 
+        #vigra.impex.writeVolume((self.mask*255).astype(numpy.uint8),'/home/lfiaschi/Desktop/test/test0','.tif')
+        #vigra.impex.writeVolume((self.segmented*255).astype(numpy.uint8),'/home/lfiaschi/Desktop/test/othertest0','.tif')
         self.segmented[self.mask==0]=0 #put zero if they do not overlap with Gyrus  
         self.segmented=self.segmented.astype(numpy.float32)
         self.segmented=vigra.analysis.labelVolumeWithBackground(self.segmented,6)
-        print "FILTERINGOOOOHJGhjfghdsfghdsagf ",self.segmented.max() 
+        #print "FILTERINGOOOOHJGhjfghdsfghdsagf ",self.segmented.max() 
     
     
        
