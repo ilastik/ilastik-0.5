@@ -156,9 +156,9 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.downY.setRange(0,10000)
         self.downZ = QtGui.QSpinBox()
         self.downZ.setRange(0,10000)
-        tempLayout.addWidget( self.downX)
-        tempLayout.addWidget( self.downY)
-        tempLayout.addWidget( self.downZ)
+        tempLayout.addWidget(self.downX)
+        tempLayout.addWidget(self.downY)
+        tempLayout.addWidget(self.downZ)
         self.downsampleFrame.setLayout(tempLayout)
         self.downsampleFrame.setVisible(False)
         self.layout.addWidget(self.downsampleFrame)
@@ -273,12 +273,21 @@ class LoadOptionsWidget(QtGui.QWidget):
             shape = dataImpex.DataImpex.readShape(fileList[channel][0])
             self.rgb = shape[3]
             self.sizeX.setValue(shape[0])
+            self.downX.setValue(shape[0])
+            self.sizeX.setMaximum(shape[0])
+            
             self.sizeY.setValue(shape[1])
+            self.downY.setValue(shape[1])
+            self.sizeY.setMaximum(shape[1])
             if shape[2] == 1: 
                 #2d data (1, 1, x, y, c)
                 self.sizeZ.setValue(len(fileList[channel]))
+                self.downZ.setValue(len(fileList[channel]))
+                self.sizeZ.setMaximum(len(fileList[channel]))
             else:
                 self.sizeZ.setValue(shape[2])
+                self.downZ.setValue(shape[2])
+                self.sizeZ.setMaximum(shape[2])
         except Exception as e:
             print "Pre-reading data shape failed"
             print e
