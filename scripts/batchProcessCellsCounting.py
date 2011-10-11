@@ -1,17 +1,18 @@
 
-
-dataFolder='/Users/lfiaschi/phd/workspace/ilastik-github/ilastik/modules/cells_module/core/test_data_batch/'
-destFolder='/Users/lfiaschi/Desktop/test'
+#Remember to put / at the end of the path
+dataFolder='/home/lfiaschi/Data/ana-martin/desiree/NesCreERT2Dkk_4weeks/clustered/cluster0/'
+#Here you don't need
+destFolder=dataFolder+'results'
 
 #File Name to the Gyrus Classifier
-fileNameToClassifierGyrus=dataFolder+"classifiers/classifierCh0.h5"
+fileNameToClassifierGyrus=dataFolder+"classifiers/classifier_ch0.h5"
 #File Name to the Cells Classifier
-fileNameToClassifierCells=dataFolder+"classifiers/classifierCh1.h5"
+fileNameToClassifierCells=dataFolder+"classifiers/classifier_ch1.h5"
 #File Name to the Dcx Classifier
-fileNameToClassifierDcx=dataFolder+"classifiers/classifierCh2.h5"
+fileNameToClassifierDcx=dataFolder+"classifiers/classifier_ch2.h5"
 
-#The [hysicical dimensions
-physSize=(0.757*2,0.757*2,1.0/2.0)
+#The  dimensions are taken directly from the files if not specified
+#physSize=(0.757*2,0.757*2,1.0/2.0)
 
 
 #ACTUAL FUNCTINALITY DO NOT CHANGE
@@ -21,7 +22,7 @@ from ilastik.modules.cells_module.core.cellsBatchMgr import *
 start=time.time()
 "Test the process manager"
 
-fileNames = sorted(glob.glob(dataFolder + "data/*.h5"))
+fileNames = sorted(glob.glob(dataFolder + "*.h5"))
 
 print "THE FILES TO BE PROCESSED ARE: ################################################"
 for filename in fileNames:
@@ -37,7 +38,7 @@ print fileNameToClassifierCells
 print "##########################################################"
 
 
-manager=BatchProcessingManager(fileNames,fileNameToClassifierGyrus,fileNameToClassifierCells,fileNameToClassifierDcx,physSize=physSize,destFolder=destFolder)
+manager=BatchProcessingManager(fileNames,fileNameToClassifierGyrus,fileNameToClassifierCells,fileNameToClassifierDcx,destFolder=destFolder)
 manager.Start()
 
 print "Total batch process time " + str(time.time()-start)
