@@ -115,8 +115,6 @@ class DataImpex(object):
             theDataItem._dataVol = dataAcc
             is3D = False
             
-        
-                
         if options is not None:
             image = theDataItem._dataVol._data
             
@@ -165,6 +163,17 @@ class DataImpex(object):
                 image = 255 - image
 
             theDataItem._dataVol = DataAccessor(image)
+            
+            if options.destfile != None:
+                try:
+                    print "Saving to file %s" % options.destfile,
+                    f = h5py.File(options.destfile, 'w')
+                    g = f.create_group("volume")   
+                    g.create_dataset("data",data=image)
+                    f.close()
+                    print 'done'
+                except Exception, e:
+                    print 'failed', e
             
         theDataItem.updateOverlays()
         return theDataItem
