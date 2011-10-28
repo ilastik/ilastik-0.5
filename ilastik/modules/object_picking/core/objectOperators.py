@@ -170,6 +170,7 @@ class pc_projection_3d():
         actor = vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(1, 1, 1)
+        actor.RotateY(90)
         
         ren = vtk.vtkRenderer()
         renWin = vtk.vtkRenderWindow()
