@@ -242,7 +242,7 @@ class OverlayListWidget(QtGui.QListWidget):
             print "3D view"
             suppress   = item.overlayItemReference.overlayItem.backgroundClasses
             smooth     = item.overlayItemReference.overlayItem.smooth3D
-            vol        = item.overlayItemReference._data[0,:,:,:,item.overlayItemReference.channel]
+            vol        = item.overlayItemReference._data[self.volumeEditor.selectedTime,:,:,:,item.overlayItemReference.channel]
             colorTable = item.overlayItemReference.colorTable
             
             print "  - will not extract the following labels:", suppress

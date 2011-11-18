@@ -102,10 +102,20 @@ class MeshExtractor(QThread):
             smoother.NormalizeCoordinatesOn()
             smoother.Update()
 
+
+        triangleCellNormals = vtk.vtkPolyDataNormals()
+        triangleCellNormals.SetInput(smoother.GetOutput())
+        triangleCellNormals.ComputeCellNormalsOn()
+        triangleCellNormals.ComputePointNormalsOff()
+        triangleCellNormals.ConsistencyOn()
+        triangleCellNormals.AutoOrientNormalsOn()
+        triangleCellNormals.Update() #creates vtkPolyData
+
+
         self.newStep.emit(QString("Preparing meshes"))
         qDebug("*** Preparing meshes ***")
         if self.smooth:
-            selector.SetInput(smoother.GetOutput())
+            selector.SetInput(triangleCellNormals.GetOutput())
         else:
             selector.SetInput(discreteCubes.GetOutput())
         selector.SetInputArrayToProcess(0, 0, 0,
@@ -137,7 +147,7 @@ class MeshExtractor(QThread):
                 continue
 
             #select the cells for a given label
-            selector.ThresholdBetween(i, i)
+            selector.ThresholdBetween(i-0.5, i+0.5)
             selector.Update()
             
             #this seems to be a bug in VTK, why should this call be necessary?
