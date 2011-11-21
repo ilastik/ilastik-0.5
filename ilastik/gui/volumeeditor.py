@@ -490,6 +490,20 @@ class VolumeEditor(QtGui.QWidget):
         sliceSpin.setRange(0,self.image.shape[3] - 1)
         self.sliceSelectors.append(sliceSpin)
         
+
+        sliceSpin = QtGui.QSpinBox()
+        sliceSpin.setEnabled(True)
+        self.connect(sliceSpin, QtCore.SIGNAL("valueChanged(int)"), self.setTime)
+        if self.image.shape[0] > 1: #only show when needed
+            tempLay = QtGui.QHBoxLayout()
+            tempLay.addWidget(QtGui.QLabel("<pre>T:</pre>"))
+            tempLay.addWidget(sliceSpin, 1)
+            self.toolBoxLayout.addLayout(tempLay)
+        sliceSpin.setRange(0,self.image.shape[0] - 1)
+        self.sliceSelectors.append(sliceSpin)
+
+
+
         # Check box for slice intersection marks
         self.sliceIntersectionBox = QtGui.QCheckBox("Slice Intersection")
         self.sliceIntersectionBox.setEnabled(True)        

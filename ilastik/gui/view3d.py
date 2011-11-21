@@ -424,7 +424,7 @@ class OverviewScene(QWidget):
             if self.colorTable:
                 c = self.colorTable[i]
                 c = QColor.fromRgba(c)
-                actor.GetProperty().SetColor(c.red()/255.0, c.green()/255.0, c.blue()/255.0)
+                actor.GetProperty().SetSpecularColor(c.red()/255.0, c.green()/255.0, c.blue()/255.0)
             
             self.qvtk.renderer.AddActor(actor)
         

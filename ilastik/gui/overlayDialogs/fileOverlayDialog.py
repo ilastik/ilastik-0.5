@@ -93,6 +93,7 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
             self.attrs.key = str(self.ui.nameEdit.text())
             
             ov = dataImpex.DataImpex.importOverlay(activeItem, file_name, attrs=self.attrs)
+            ov.displayable3D = True
             if ov is None:
                 print "No data item loaded"
     
