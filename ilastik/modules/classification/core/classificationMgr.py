@@ -45,7 +45,6 @@ except:
     ThreadBase = threading.Thread
     have_qt = False
     
-
 from ilastik.core import dataMgr as DM
 from ilastik.core import activeLearning
 
@@ -56,6 +55,7 @@ import sys, traceback
 import classifiers.classifierRandomForest as defaultRF
 from ilastik.core.dataMgr import BlockAccessor
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
+import ilastik.core.overlays.thresholdOverlay as tho
 
 import featureMgr
 import labelMgr
@@ -132,20 +132,39 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
     
     
     def serialize(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+        self.serializeCustom(h5g, destbegin, destend, srcbegin, srcend, destshape, True)
+
+    def serializeCustom(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0), writeLabels = True ):
         #for now save the labels and prediction in the old format
         #TODO: change that when we are certain about the new project file format
+        print " - Serializing " + str(self) + ": " + str(destbegin) + ".." + str(destend) + ", " + str(srcbegin) + ".." + str(srcend) + ", " + str(destshape)
+        descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"] 
         vl = VolumeLabels(self.dataItemImage.overlayMgr["Classification/Labels"]._data)
-        vl.descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"]
-        vl.serialize(h5g, "labels", destbegin, destend, srcbegin, srcend, destshape)
+        vl.descriptions = descriptions                                                  
+        if writeLabels:                                                                 
+            print " - serializing Classification/Labels " + str(vl) + ": " + str(h5g) + " /labels" 
+            vl.serialize(h5g, "labels", destbegin, destend, srcbegin, srcend, destshape)
 
-        if len(vl.descriptions) > 0:
-            prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(vl.descriptions),), 'float32')
-            for d in vl.descriptions:
+        if len(descriptions) > 0:                                                     
+            prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(descriptions),), 'float32') 
+            for d in descriptions:                                                     
                 if self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name] is not None:
                     prediction[:,:,:,:,d.number-1] = self.dataItemImage.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+                    print " - serializing Classification/Prediction/" + d.name + "..." 
             prediction = DataAccessor(prediction)
-            prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape )
-        
+            print " - serializing Classification/Prediction/(all) " + str(prediction) + ": " + str(h5g) + " /prediction"
+            prediction.serialize(h5g, 'prediction', destbegin, destend, srcbegin, srcend, destshape)
+
+        ov = self.dataItemImage.overlayMgr["Classification/Segmentation"]              
+        if ov is not None:                                                             
+            print " - serializing Classification/Segmentation: " + str(ov)             
+            ov._data.serialize(h5g, 'segmentation', destbegin, destend, srcbegin, srcend, destshape) 
+        ov = self.dataItemImage.overlayMgr["Classification/Uncertainty"]              
+        if ov is not None:                                                          
+            print " - serializing Classification/Uncertainty: " + str(ov)            
+            ov._data.serialize(h5g, 'uncertainty', destbegin, destend, srcbegin, srcend, destshape)
+
+
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
         labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
         self["labels"] = labels
@@ -277,7 +296,8 @@ class ClassificationModuleMgr(BaseModuleMgr):
             raise ImportError('No Classifiers in prefix')
           
     def serialize(self, h5G):
-        featureG = h5G.create_group('FeatureSelection')        
+        featureG = h5G.create_group('FeatureSelection')
+        print " - serializing feature group " + str(featureG) 
         try:
             featureG.create_dataset('UserSelection', data=featureMgr.ilastikFeatureGroups.selection)
         except:
@@ -676,12 +696,11 @@ class ClassifierPredictThread(ThreadBase):
             print "######### Exception in ClassifierPredictThread ##########"
             print e
             traceback.print_exc(file=sys.stdout)         
-        #print "Prediction Job ", bnr, "/", fm._blockCount, "with classifiers ", len(self.classifiers),  " finished"
+#        print "Prediction Job ", bnr, "/", fm._blockCount, "with classifiers ", len(self.classifiers),  " finished"
             
             
     
     def run(self):
-        
         for itemindex, item in enumerate(self.dataMgr):
             cnt = 0
             interactiveMessagePrint( "Feature Item" )
@@ -697,7 +716,7 @@ class ClassifierPredictThread(ThreadBase):
                         tfm.shape = (1,) + (tfm.shape[-1],) 
                         tempPred = self.classifiers[0].predict(tfm)
                         featureBlockAccessor = BlockAccessor(prop["featureM"], 64)
-                                            
+                                        
                         if tempPred is not None:
                             self.currentPred = numpy.ndarray((prop["featureM"].shape[0:4]) + (tempPred.shape[1],) , 'float32')
                             jobs= []
@@ -720,35 +739,52 @@ class ClassifierPredictThread(ThreadBase):
                 print e
                 traceback.print_exc(file=sys.stdout)                
                 self.dataMgr.featureLock.release()
-                
-    def generateOverlays(self, activeImage = None):
-        for itemindex, activeItem in enumerate(self.dataMgr):
 
+    def generateOverlays(self, activeImage=None, 
+                               makePrediction=True, 
+                               makeSegmentation=True, 
+                               makeUncertainty=True): 
+        
+        for itemindex, activeItem in enumerate(self.dataMgr):
             prediction = self._prediction
             descriptions =  self.dataMgr.module["Classification"]["labelDescriptions"]
             
             if len(descriptions) == 0:
                 # fallback: invent some label information, if we do not have
-                descriptions = [VolumeLabelDescription('Prediction_%02d' % k, k+ 1, 0, None) for k in range(prediction[0].shape[-1])]
-    
-                self.dataMgr.module["Classification"]["labelDescriptions"] = descriptions
+                m = prediction[0].shape[-1]                                            
+                descriptions = [VolumeLabelDescription('Prediction_%02d' % k, k+ 1, 0, None) for k in range(m)]
+
+                if makePrediction:                                                   
+                    self.dataMgr.module["Classification"]["labelDescriptions"] = descriptions
             
             classifiers = self.dataMgr.module["Classification"]["classificationMgr"].classifiers
             
             if prediction is not None and prediction[itemindex] is not None:
                 foregrounds = []
+                foregroundNames = []                                      
                 for p_i, p_num in enumerate(classifiers[0].unique_vals):
                     #create Overlay for _prediction:
-                    ov = overlayMgr.OverlayItem(prediction[itemindex][:,:,:,:,p_i],  color = long(descriptions[p_num-1].color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1)
+                    color = long(descriptions[p_num-1].color)                         
+                    name = descriptions[p_num - 1].name                                 
+                    data = prediction[itemindex][:, :, :, :, p_i]                      
+                    ov = overlayMgr.OverlayItem(data, color, alpha=0.4, 
+                                                             colorTable=None, 
+                                                             autoAdd = True, 
+                                                             autoVisible = True, 
+                                                             min = 0, 
+                                                             max = 1) 
                     ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
-                    activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name] = ov
-                    ov = activeItem.overlayMgr["Classification/Prediction/" + descriptions[p_num-1].name]
+                    if makePrediction:                                                  
+                        activeItem.overlayMgr["Classification/Prediction/" + name] = ov 
+                        ov = activeItem.overlayMgr["Classification/Prediction/" + name] 
                     ov.setColorGetter(descriptions[p_num-1].getColor, descriptions[p_num-1])
                     foregrounds.append(ov)
+                    foregroundNames.append(name)                                        
     
-                import ilastik.core.overlays.thresholdOverlay as tho
-                
-                if len(foregrounds) > 1:
+
+                # new condition "makeSegmentation"
+                # by Daniel Alievsky 
+                if makeSegmentation and len(foregrounds) > 1:                           
                     if activeItem.overlayMgr["Classification/Segmentation"] is None:
                         ov = tho.ThresholdOverlay(foregrounds, [], autoAdd = True, autoVisible = True)
                         activeItem.overlayMgr["Classification/Segmentation"] = ov
@@ -772,9 +808,12 @@ class ClassifierPredictThread(ThreadBase):
     
                     margin = activeLearning.computeEnsembleMargin(prediction[itemindex][:,:,:,:,:])
 
-                    #create Overlay for uncertainty:
-                    ov = overlayMgr.OverlayItem(margin, color = long(65535 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
-                    activeItem.overlayMgr["Classification/Uncertainty"] = ov
+                    # new condition "makeUncertainty"
+                    # by Daniel Alievsky 
+                    if makeUncertainty:                                                                            
+                        #create Overlay for uncertainty:
+                        ov = overlayMgr.OverlayItem(margin, color = long(65535 << 16), alpha = 1.0, colorTable = None, autoAdd = True, autoVisible = False, min = 0, max = 1)
+                        activeItem.overlayMgr["Classification/Uncertainty"] = ov
             else:
                 print "Prediction for item ", itemindex, "is None, not generating Overlays"
 
