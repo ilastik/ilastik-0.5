@@ -392,21 +392,27 @@ class DataImpex(object):
             #except Exception, e:
             #    print e
             f.close()
-            return
-        
-        if overlayItem._data.shape[1]>1:
-            #3d _data
-            for t in range(overlayItem._data.shape[0]):
-                for z in range(overlayItem._data.shape[3]):
-                    for c in range(overlayItem._data.shape[-1]):
-                        fn = filename
-                        data = overlayItem._data[t,:,:,z,c]
-                        if overlayItem._data.shape[0]>1:
+        else:
+            DataImpex.exportToStack(filename, format, overlayItem._data, timeOffset = 0, sliceOffset = 0, channelOffset = 0)
+            
+    @staticmethod
+    def exportToStack(filename, format, data, timeOffset = 0, sliceOffset = 0, channelOffset = 0, channelName='channel'):
+        if len(data.shape) == 4:
+            # no channels given, add singelton
+            data.shape = data.shape + (1,)
+        # 3D Data
+        if data.shape[1]>1:          
+            for t in range(data.shape[0]):
+                for z in range(data.shape[3]):
+                    for c in range(data.shape[-1]):
+                        fn = filename                        
+                        if data.shape[0]>1:
                             fn = fn + ("_time%03i" %(t+timeOffset))
                         fn = fn + ("_z%05i" %(z+sliceOffset))
-                        if overlayItem._data.shape[-1]>1:
-                            fn = fn + ("_channel%03i" %(c+channelOffset))
+                        if data.shape[-1]>1:
+                            fn = fn + ("_%s%03i" %(channelName,c+channelOffset))
                         fn = fn + "." + format
+                        data = data[t,:,:,z,c]
                         
                         dtype_ = None
                         if data.dtype == numpy.float32:
@@ -420,21 +426,24 @@ class DataImpex(object):
                         
                         vigra.impex.writeImage(data, fn, dtype=dtype_)
                         print "Exported file ", fn
+        # 2D Data
         else:
-            for t in range(overlayItem._data.shape[0]):
-                for c in range(overlayItem._data.shape[-1]):
+            for t in range(data.shape[0]):
+                for c in range(data.shape[-1]):
                     fn = filename
-                    data = overlayItem._data[t, 0, :, :, c]
-                    if overlayItem._data.shape[0]>1:
-                        fn = fn + ("_time%03i" %(t+timeOffset))
-                    if overlayItem._data.shape[-1]>1:
-                        fn = fn + ("_channel%03i" %(c+channelOffset))
+                    if data.shape[0]>1:
+                        fn = fn + ("_time%05i" %(t+timeOffset))
+                    if data.shape[-1]>1:
+                        fn = fn + ("_%s%05i" %(channelName,c+channelOffset))
                     fn = fn + "." + format
+                    data = data[t, 0, :, :, c]
                     
                     # dtype option for tif images when dtype is not uint8
                     # specifing dtype in the write function leads to scaling!
                     # be careful nbyte also scales, which is typically fine
+                    dtype_ = None
                     if data.dtype == numpy.float32:
+                        
                         mi = data.min()
                         ma = data.max()
                         if mi >= 0 and 1 < ma <= 255:
@@ -443,8 +452,6 @@ class DataImpex(object):
                     else:
                         dtype_ = numpy.uint8
 
-
-                    
                     vigra.impex.writeImage(data.T, fn, dtype=dtype_)
                     print "Exported file ", fn
 
