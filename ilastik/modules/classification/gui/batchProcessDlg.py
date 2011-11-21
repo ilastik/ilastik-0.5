@@ -140,7 +140,7 @@ class BatchProcess(QtGui.QDialog):
             outputDir = os.path.split(str(self.filenames[0]))[0]
         
         descr = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
-        bo = BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames, descr)
+        bo = BatchOptions(outputDir, 'gui-mode-no-classifier-file-name-needed', self.filenames, descr)
         bo.writeUncertainty = self.writeUncertainty.isChecked()
         bo.writePrediction = self.writePrediction.isChecked()
         bo.writeSegmentation = self.writeSegmentation.isChecked()

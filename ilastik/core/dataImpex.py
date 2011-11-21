@@ -412,19 +412,19 @@ class DataImpex(object):
                         if data.shape[-1]>1:
                             fn = fn + ("_%s%03i" %(channelName,c+channelOffset))
                         fn = fn + "." + format
-                        data = data[t,:,:,z,c]
+                        data_ = data[t,:,:,z,c]
                         
                         dtype_ = None
-                        if data.dtype == numpy.float32:
-                            mi = data.min()
-                            ma = data.max()
+                        if data_.dtype == numpy.float32:
+                            mi = data_.min()
+                            ma = data_.max()
                             if mi >= 0 and 1 < ma <= 255:
-                                data = data.astype(numpy.uint8)
+                                data_ = data_.astype(numpy.uint8)
                                 dtype_ = 'NATIVE'
                             else:
                                 dtype_ = numpy.uint8
                         
-                        vigra.impex.writeImage(data, fn, dtype=dtype_)
+                        vigra.impex.writeImage(data_, fn, dtype=dtype_)
                         print "Exported file ", fn
         # 2D Data
         else:
