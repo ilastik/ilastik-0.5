@@ -32,19 +32,13 @@ class BatchProcess(QtGui.QDialog):
         self.filesView = QtGui.QListWidget()
         self.filesView.setMinimumHeight(300)
         
-        self.outputDir = QtGui.QLineEdit("")
+        
         self.writeSegmentation = QtGui.QCheckBox("Write segmentation")
-        self.writeFeatures = QtGui.QCheckBox("Write features")
+        self.writeUncertainty = QtGui.QCheckBox("Write uncertainty")
+        self.writePrediction = QtGui.QCheckBox("Write prediction")
         
-        self.writeSegmentation.setEnabled(False)
-        self.writeFeatures.setEnabled(False)
-        
-        # Oli TODO: implement these options 
-        self.writeSegmentation.setVisible(False)
-        self.writeFeatures.setVisible(False)
-        
-        self.serializeProcessing = QtGui.QCheckBox("Blockwise processing (saves memory)")
-        self.serializeProcessing.setCheckState(False)
+        self.tiledProcessing = QtGui.QCheckBox("Blockwise processing (saves memory)")
+        self.tiledProcessing.setCheckState(False)
         
         self.pathButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel), "Add to selection")
         self.removeButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.RemSel), "Remove from selection")
@@ -64,11 +58,25 @@ class BatchProcess(QtGui.QDialog):
         
         self.layout.addLayout(tempLayout)
         self.layout.addWidget(self.filesView)
-        self.layout.addWidget(self.writeFeatures)
+        self.layout.addWidget(self.tiledProcessing)
+        self.tiledProcessing.clicked.connect(self.cb_toggle_tiled_mode)
+        self.layout.addWidget(QtGui.QLabel('Output directory'))
+        outputFolderWidget = QtGui.QWidget()
+        outputFolderWidget_layout = QtGui.QHBoxLayout()
+        self.outputDir = QtGui.QLineEdit("")
+        self.btn_selectOutputDir = QtGui.QPushButton('Select')
+        outputFolderWidget_layout.addWidget(self.outputDir)
+        outputFolderWidget_layout.addWidget(self.btn_selectOutputDir)
+        self.btn_selectOutputDir.clicked.connect(self.cb_select_output_dir)
+        
+        outputFolderWidget.setLayout(outputFolderWidget_layout)
+        
+        self.layout.addWidget(outputFolderWidget)
+        self.layout.addWidget(QtGui.QLabel('Export to png files'))
         self.layout.addWidget(self.writeSegmentation)
-        self.layout.addWidget(self.serializeProcessing)
-
-
+        self.layout.addWidget(self.writeUncertainty)
+        self.layout.addWidget(self.writePrediction)
+        
         tempLayout = QtGui.QHBoxLayout()
         self.cancelButton = QtGui.QPushButton("Cancel")
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
@@ -89,7 +97,21 @@ class BatchProcess(QtGui.QDialog):
         self.logger.setVisible(False)
         self.layout.addWidget(self.logger)        
         self.image = None
+        
+    def cb_select_output_dir(self):
+        folder = QtGui.QFileDialog.getExistingDirectory(caption='Select output folder..')
+        if folder:
+            self.outputDir.setText(folder)
 
+    def cb_toggle_tiled_mode(self):
+        if self.tiledProcessing.checkState():
+            self.writeSegmentation.setEnabled(False)
+            self.writeUncertainty.setEnabled(False)
+            self.writePrediction.setEnabled(False)
+        else:
+            self.writeSegmentation.setEnabled(True)
+            self.writeUncertainty.setEnabled(True)
+            self.writePrediction.setEnabled(True)
         
     def removeSelectedEntry(self):
         itemIndex = self.filesView.currentRow()
@@ -99,12 +121,9 @@ class BatchProcess(QtGui.QDialog):
             del self.filenames[itemIndex]
         for a in self.filenames:
             print a
-        
-        
 
     def slotDir(self):
         selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "Images (*.jpg *.tiff *.tif *.png *.jpeg *.h5)")
-        
         for s in selection:
             self.filenames.append(str(s))
             
@@ -116,13 +135,16 @@ class BatchProcess(QtGui.QDialog):
         self.filesView.clear()
 
     def slotProcess(self):
-        outputDir = os.path.split(str(self.filenames[0]))[0]
+        outputDir = str(self.outputDir.text())
+        if not os.path.exists(outputDir):
+            outputDir = os.path.split(str(self.filenames[0]))[0]
+        
         descr = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
-
         bo = BatchOptions(outputDir, 'gui-mode-no-file-name-needed', self.filenames, descr)
-        bo.writeFeatures = self.writeFeatures.isChecked()
+        bo.writeUncertainty = self.writeUncertainty.isChecked()
+        bo.writePrediction = self.writePrediction.isChecked()
         bo.writeSegmentation = self.writeSegmentation.isChecked()
-        bo.serializeProcessing = self.serializeProcessing.isChecked()
+        bo.tiledProcessing = self.tiledProcessing.isChecked()
         self.process(bo)
     
     
@@ -150,10 +172,7 @@ class BatchProcess(QtGui.QDialog):
             return  self.image
         else:
             return None
-
-
-
-       
+ 
 def test():
     """Text editor demo"""
     app = QtGui.QApplication([""])
