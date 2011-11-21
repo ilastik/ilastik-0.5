@@ -1,5 +1,7 @@
 import os
 import sys
+import numpy                                                    
+import re                                                       
 import ilastik.modules
 ilastik.modules.loadModuleCores()
 from ilastik.core import dataMgr
@@ -9,6 +11,7 @@ from ilastik.modules.classification.core.featureMgr import FeatureMgr
 
 from ilastik.modules.classification.core import classificationMgr
 from ilastik.core import dataImpex
+from ilastik.core.volume import DataAccessor                    
 
 import traceback
 import getopt
@@ -18,6 +21,7 @@ import gc
 import json
 from ilastik.core import loadOptionsMgr
 from ilastik.core import jobMachine
+from ilastik.core.dataImpex import DataImpex
 
 
 
@@ -88,8 +92,10 @@ class MainBatch():
             fm.joinCompute(self.dataMgr)
             #print "generated features image"   
 
-            self.dataMgr.module["Classification"]["classificationMgr"].classifiers = self.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
-            self.dataMgr.module["Classification"]["labelDescriptions"] = self.project.dataMgr.module["Classification"]["labelDescriptions"]
+            self.dataMgr.module["Classification"]["classificationMgr"].classifiers = \
+                self.project.dataMgr.module["Classification"]["classificationMgr"].classifiers
+            self.dataMgr.module["Classification"]["labelDescriptions"] = \
+                self.project.dataMgr.module["Classification"]["labelDescriptions"]
 
             #print "generate classifiers image"   
             classificationPredict = classificationMgr.ClassifierPredictThread(self.dataMgr)
@@ -141,10 +147,28 @@ class BatchOptions(object):
         
         self.writePrediction = True
         self.writeFeatures = False
-        self.writeSegmentation = False
+        self.writeSegmentation = True
+        self.writeUncertainty = True                           
+        self.writeSourceData = True                             
         self.writeHDF5 = True
         self.writeImages = False
-        self.serializeProcessing = False
+        self.tiledProcessing = False
+        self.pngResults = True
+        self.h5Results = True
+        
+        # Export to raw byte arrays 
+        # by Daniel Alievsky (Smart Imaging Technologies)
+        self.rawSources = False                                 
+        self.rawSourceDimX = -1                                 
+        self.rawSourceDimY = -1                                 
+        self.rawSourceDataType = "byte"                         
+        self.rawCastRawSourceToFloat = False                       
+        self.rawResults = False     
+                                    
+        # Customized tile sizes
+        # by Daniel Alievsky (Smart Imaging Technologies)
+        self.tileDim = 128                                      
+        self.tileOverlap = 30                                   
         
         self.featureList = None
         self.classifiers = None
@@ -198,15 +222,34 @@ class BatchOptions(object):
                     
             
         bo = BatchOptions(outputDir, classifierFile, fileList)
-        serializeProcessing = bool(json_input.get("tiledProcessing", False)) 
-        bo.serializeProcessing = serializeProcessing
-        
-        
+        bo.tiledProcessing = bool(json_input.get("tiledProcessing", False))          
+
+        options = json_input.get("options", None);                                      
+        if options is not None:                                                         
+            bo.writeSourceData = bool(options.get("writeSourceData", True))             
+            bo.writePrediction = bool(options.get("writePrediction", True))             
+            bo.writeSegmentation = bool(options.get("writeSegmentation", True))         
+            bo.writeUncertainty = bool(options.get("writeUncertainty", True))    
+            bo.pngResults = bool(options.get("pngResults", False))                      
+            bo.h5Results = bool(options.get("h5Results", True))  
+                 
+            # Export to raw byte arrays 
+            # by Daniel Alievsky (Smart Imaging Technologies)
+            bo.rawResults = bool(options.get("rawResults", False))                                             
+            bo.rawSources = bool(options.get("rawSources", False))                      
+            bo.rawSourceDimX = long(options.get("rawSourceDimX", -1))                   
+            bo.rawSourceDimY = long(options.get("rawSourceDimY", -1))                   
+            bo.rawSourceDataType = str(options.get("rawSourceDataType", "byte"))        
+            bo.rawCastRawSourceToFloat = bool(options.get("rawCastRawSourceToFloat", False))   
+            
+            # Customized tile sizes
+            # by Daniel Alievsky (Smart Imaging Technologies)
+            bo.tileDim = long(options.get("tileDim", bo.tileDim))                       
+            bo.tileOverlap = long(options.get("tileOverlap", bo.tileOverlap))      
+
         return bo
 
-    
 
-    
 #*******************************************************************************
 # B a t c h P r o c e s s C o r e                                              *
 #*******************************************************************************
@@ -218,35 +261,76 @@ class BatchProcessCore(object):
     def printStuff(self, stuff):
         print stuff
         
-    def writeSegmentationToDish(self):
+    def _writeSegmentationToDisk(self, data, baseFilename):
+        if self.batchOptions.pngResults:
+            fn = "".join((baseFilename, "_segmentation"))
+            DataImpex.exportToStack(fn, 'png', data)
+            
+        # Export to raw byte arrays 
+        # by Daniel Alievsky (Smart Imaging Technologies) 
+        if self.batchOptions.rawResults:
+            fn = "".join((baseFilename, "_segmentation.raw"))
+            print "Writing raw segmentation (",str(data.dtype),") into",fn
+            data.tofile(fn)
+                     
+    def _writeUncertaintyToDisk(self, data, baseFilename):
+        if self.batchOptions.pngResults:
+            fn = "".join((baseFilename, "_uncertainty"))
+            DataImpex.exportToStack(fn, 'png', data)
+            
+        # Export to raw byte arrays 
+        # by Daniel Alievsky (Smart Imaging Technologies) 
+        if self.batchOptions.rawResults:
+            fn = "".join((baseFilename, "_uncertainty.raw"))
+            print "Writing raw segmentation (", str(data.dtype), ") into" , fn
+            data.tofile(fn)
+               
+    def _writePredictionToDisk(self, data, baseFilename, classLabel, predictionName):   
+        if self.batchOptions.pngResults:
+            fn = "".join((baseFilename, "_prediction_%03d" % classLabel))
+            DataImpex.exportToStack(fn, 'png', data)
+            
+        # Export to raw byte arrays 
+        # by Daniel Alievsky (Smart Imaging Technologies) 
+        if self.batchOptions.rawResults:
+            fn = "".join((baseFilename, "_prediction_%03d.raw" % classLabel))
+            print "Writing raw segmentation (", str(data.dtype), ") into ", fn
+            data.tofile(fn)
+        
+    def _writeFeaturesToDisk(self, image, baseFilename):
         """
         to be implemented
-        take care that also single files and/or hdf5 output should be supported
         """
         
-    def writeFeaturesToDish(self):
-        """
-        to be implemented
-        """
-        
-    def writePredictionToDish(self):
-        """
-        to be implemented
-        """
-        
+
     def process(self):
-        for i, filename in enumerate(self.batchOptions.fileList):
+        for filename in self.batchOptions.fileList:
             try:
+                bo = self.batchOptions  
+                                         
                 # input handle
-                theDataItem = dataImpex.DataImpex.importDataItem(filename, None)
+                theDataItem = self.readSource(filename)  
                 
+                # Support for working with raw byte arrays
+                # added by Daniel Alievsky (Smart Imaging Technologies)     
+                if bo.rawSources:                                                       
+                    p = re.compile("%BAND%")                                            
+                    filename = p.sub("bands", filename) # more readable file name       
+
                 # output handle     
                 filen = os.path.split(filename)[1] 
-                fw = h5py.File(self.batchOptions.outputDir + '/' + filen + '_processed.h5', 'w')
-                gw = fw.create_group("volume")
+                fw = None                                                               
+                gw = None                                                               
                 
-                if self.batchOptions.serializeProcessing:
-                    mpa = dataMgr.MultiPartDataItemAccessor(theDataItem, 128, 30)
+                # Tiled processing mode
+                # note that: exporting results to PNG or Raw does not work in that mode
+                if bo.tiledProcessing:                           
+                    self.printStuff(" Starting with tiling...")                         
+                    if bo.rawResults:                                                   
+                        raise IOError("Tiled processing with raw serialization is not implemented yet: please set options.rawResults to false") 
+                    fw = h5py.File(bo.outputDir + '/' + filen + '_processed.h5', 'w')   
+                    gw = fw.create_group("volume")                                      
+                    mpa = dataMgr.MultiPartDataItemAccessor(theDataItem, bo.tileDim, bo.tileOverlap)  
 
                     for blockNr in range(mpa.getBlockCount()):                       
 
@@ -258,59 +342,71 @@ class BatchProcessCore(object):
                         dm.append(di, alreadyLoaded = True)
                                   
                         fm = dm.Classification.featureMgr      
-                        fm.setFeatureItems(self.batchOptions.featureList)
-                        
-        
+                        fm.setFeatureItems(bo.featureList)                              
+
                         fm.prepareCompute(dm)
                         fm.triggerCompute()
                         fm.joinCompute(dm)
         
-                        dm.module["Classification"]["classificationMgr"].classifiers = self.batchOptions.classifiers
-                        if self.batchOptions.labelDescriptions is not None:
-                            dm.module["Classification"]["labelDescriptions"] = self.batchOptions.labelDescriptions
-                            
+                        dm.module["Classification"]["classificationMgr"].classifiers = bo.classifiers  
+                        if bo.labelDescriptions is not None:                                           
+                            dm.module["Classification"]["labelDescriptions"] = bo.labelDescriptions   
+
+                        self.printStuff(" Starting classifier (serializing)...\n")      
                         classificationPredict = classificationMgr.ClassifierPredictThread(dm)
                         classificationPredict.start()
                         classificationPredict.wait()
                                                 
-                        classificationPredict.generateOverlays()
+                        self.printStuff(" Generating overlays...\n")                    
+                        classificationPredict.generateOverlays(makePrediction=bo.writePrediction, makeSegmentation=bo.writeSegmentation, makeUncertainty=bo.writeUncertainty)  
 
-                        dm[0].serialize(gw)
-                        self.printStuff(" done\n")
+                        self.writeResultToDisk(dm, gw, filen)                      
+                        self.printStuff(" done\n")                                      
                     
                     del fm
                     del dm
                     gc.collect()
                      
-                else: # non serialized
+                # Non tiled processing mode
+                else:
+                    self.printStuff(" Starting...")                                     
+                                                     
                     dm = dataMgr.DataMgr()
                     dm.append(theDataItem, True)                    
+
+                    self.printStuff(" Features...")                                     
+                    fm = dm.Classification.featureMgr
+                    fm.setFeatureItems(bo.featureList)                                 
     
-                    fm = dm.Classification.featureMgr      
-                    fm.setFeatureItems(self.batchOptions.featureList)
-    
+                    self.printStuff(" Preparing...")                                    
                     fm.prepareCompute(dm)
                     fm.triggerCompute()
                     fm.joinCompute(dm)
     
-                    dm.module["Classification"]["classificationMgr"].classifiers = self.batchOptions.classifiers
-                    if self.batchOptions.labelDescriptions is not None:
-                        dm.module["Classification"]["labelDescriptions"] = self.batchOptions.labelDescriptions
+                    dm.module["Classification"]["classificationMgr"].classifiers = bo.classifiers  
+                    if bo.labelDescriptions is not None:                                           
+                        dm.module["Classification"]["labelDescriptions"] = bo.labelDescriptions   
     
+                    self.printStuff(" Starting classifier (not serializing)...")        
                     classificationPredict = classificationMgr.ClassifierPredictThread(dm)
                     classificationPredict.start()
                     classificationPredict.wait()
                     
-                    classificationPredict.generateOverlays()
+                    self.printStuff(" Generating overlays...")                          
+                    classificationPredict.generateOverlays(makePrediction=bo.writePrediction, makeSegmentation=bo.writeSegmentation, makeUncertainty=bo.writeUncertainty)  
                     
-                    dm[0].serialize(gw)
-                    self.printStuff(" done\n")
+                    if bo.h5Results:                                               
+                        fw = h5py.File(bo.outputDir + '/' + filen + '_processed.h5', 'w') 
+                        gw = fw.create_group("volume") 
+                    self.writeResultToDisk(dm, gw, filen)     
+                    self.printStuff(" done\n")                                          
                     
                     del fm
                     del dm
                     gc.collect()
 
-                fw.close()
+                if not fw == None:                                                      
+                    fw.close()
                     
             except Exception, e:
                 print "Error: BatchProcessCore.proces() "
@@ -318,6 +414,112 @@ class BatchProcessCore(object):
                 print e
 
             yield filename
+            
+    def _readRawSource(self, fileName):
+        """ """
+        dimX = self.batchOptions.rawSourceDimX
+        dimY = self.batchOptions.rawSourceDimY
+        if dimX <= 0 or dimY <= 0:
+            raise IOError("In rawSources mode, config_file must contain positive rawSourceDimX and rawSourceDimY values")
+        if self.batchOptions.rawSourceDataType == "byte":
+            srcType = numpy.uint8
+        elif self.batchOptions.rawSourceDataType == "short":
+            srcType = numpy.uint16
+        elif self.batchOptions.rawSourceDataType == "int":
+            srcType = numpy.int32
+        elif self.batchOptions.rawSourceDataType == "long":
+            srcType = numpy.int64
+        elif self.batchOptions.rawSourceDataType == "float":
+            srcType = numpy.float32
+        elif self.batchOptions.rawSourceDataType == "double":
+            srcType = numpy.float64
+        else:
+            raise IOError("Unknown rawSourceDataType=" + str(self.batchOptions.rawSourceDataType))
+        self.printStuff(" Reading raw RGB data " + str(fileName) + " (" + str(dimX) + "x" + str(dimY) + "x" + str(srcType) + ")...")
+        p = re.compile("%BAND%")
+        npr = numpy.fromfile(p.sub("r", fileName), srcType, dimX * dimY)
+        npg = numpy.fromfile(p.sub("g", fileName), srcType, dimX * dimY)
+        npb = numpy.fromfile(p.sub("b", fileName), srcType, dimX * dimY)
+        data = numpy.empty(shape=(1, 1, dimY, dimX, 3), dtype=srcType)
+        data[:,:,:,:,0] = npr.reshape((1, 1, dimY, dimX))
+        data[:,:,:,:,1] = npg.reshape((1, 1, dimY, dimX))
+        data[:,:,:,:,2] = npb.reshape((1, 1, dimY, dimX))
+        if self.batchOptions.rawCastRawSourceToFloat and srcType != numpy.float32:
+            # Don't sure, is it really necessary, but reading PNG/JPEG/GIF leads to float32 arrays
+            self.printStuff(" Casting raw data to numpy.float32")
+            data = data.astype(numpy.float32)
+        theDataItem = dataMgr.DataItemImage(fileName)
+        dataAcc = DataAccessor(data)
+        theDataItem._dataVol = dataAcc
+        return theDataItem
+        
+
+    def readSource(self, fileName):     
+        self.printStuff(" Reading image " + str(fileName) + "...")                                         
+        
+        if self.batchOptions.rawSources:
+            return self._readRawSource(fileName)
+        else:
+            theDataItem = dataImpex.DataImpex.importDataItem(fileName, None)
+        
+        return theDataItem
+
+    def writeResultToDisk(self, dataMgr, hdfGroup, fileName):                            
+        self.printStuff(" Serialization of " + str(dataMgr[0]) + "...")
+        
+        # write h5 output for non-tiled and tiled mode 
+        if self.batchOptions.h5Results:
+            dataItemImage = dataMgr[0]
+            if not self.batchOptions.tiledProcessing:
+                dataItemImage.serialize(hdfGroup)
+            else:
+                destbegin = (0,0,0)
+                destend = (0,0,0)
+                srcbegin = (0,0,0)
+                srcend = (0,0,0)
+                destshape = (0,0,0)
+                if dataItemImage._writeEnd != (0,0,0): # used in tiling mode (self.batchOptions.tiledProcessing)
+                    destbegin = dataItemImage._writeBegin
+                    destend = dataItemImage._writeEnd
+                    srcbegin = dataItemImage._readBegin
+                    srcend = dataItemImage._readEnd
+                    destshape = dataItemImage._writeShape
+                dataItemImage.module['Classification'].serializeCustom(hdfGroup, destbegin, destend, srcbegin, srcend, destshape, writeLabels=False)
+          
+        # tiled processing only supports h5        
+        if self.batchOptions.tiledProcessing:
+            if self.batchOptions.rawResults or self.batchOptions.pngResults:
+                self.printStuff('Warning: Can not write PNG or RAW files in tiled processing mode! Only h5 results can be exported...')
+            return
+        
+        baseFileName = os.path.splitext(fileName)[0]
+        baseFileName = os.path.join(self.batchOptions.outputDir, "".join((baseFileName, "_processed")))
+        image = dataMgr[0].module['Classification'].dataItemImage
+        
+        # write segmentation
+        if self.batchOptions.writeSegmentation:
+            if image.overlayMgr["Classification/Segmentation"] is not None:
+                seg = image.overlayMgr["Classification/Segmentation"][:,:,:,:,:].astype(numpy.uint8)
+                self._writeSegmentationToDisk(seg, baseFileName)
+                
+        # write uncertainty
+        if self.batchOptions.writeUncertainty:
+            if image.overlayMgr["Classification/Uncertainty"] is not None:
+                unc = image.overlayMgr["Classification/Uncertainty"][:,:,:,:,:]*255
+                self._writeUncertaintyToDisk(unc, baseFileName)
+         
+        # write prediction       
+        if self.batchOptions.writePrediction:
+            descriptions = dataMgr.module["Classification"]["labelDescriptions"]
+            if descriptions is not None and len(descriptions) > 0:
+                for k, d in enumerate(descriptions):
+                    if image.overlayMgr["Classification/Prediction/" + d.name] is not None:
+                        pred = image.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+                        self._writePredictionToDisk(pred, baseFileName, k, d.name)
+
+            
+
+
 
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
@@ -363,7 +565,7 @@ if __name__ == "__main__":
     batchOptions.setFeaturesAndClassifier()
     batchProcess = BatchProcessCore(batchOptions)
     for i in batchProcess.process():
-        print "Processing " + str(i) + "\n"
+        print "Processed " + str(i) + "\n"                                              
     
     del jobMachine.GLOBAL_WM
     
