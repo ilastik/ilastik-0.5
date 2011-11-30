@@ -66,7 +66,8 @@ class DataImpex(object):
             image = DataImpex.loadStack(fileList, options, None)
             if image is not None:
                 for item in range(image.shape[3]):
-                    theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], fileList[options.channels[0]][item])
+                    theDataItem = DataImpex.initDataItemFromArray(image[:, :, :, item, :], 
+                                                                  fileList[options.channels[0]][item])
                     itemList.append(theDataItem)
                     
         elif fExt == '.img':
@@ -106,7 +107,8 @@ class DataImpex(object):
             # the result of vigra.impex.readImage is numpy.ndarray? I don't know why... (see featureMgr compute)
             data = DataImpex.vigraReadImageWrapper(fileName)
             if options is not None:
-                data = data[options.offsets[1]:options.offsets[1]+options.shape[1], options.offsets[0]: options.offsets[0]+options.shape[0], :]
+                data = data[options.offsets[1]:options.offsets[1]+options.shape[1], 
+                            options.offsets[0]: options.offsets[0]+options.shape[0], :]
                 if options.destShape is not None:
                     options.destShape = (options.destShape[2], options.destShape[1], options.destShape[0],)
                 options.shape = (options.shape[2], options.shape[1], options.shape[0],)
@@ -236,9 +238,11 @@ class DataImpex(object):
                         img_data = DataImpex.vigraReadImageWrapper(filename).swapaxes(0, 1)
                         #Why did we need this options.rbg thing? Why not always load all channels?
                         if options.rgb>1:
-                            image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1],:]
+                            image[:,:,z-options.offsets[2],:] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], 
+                                                                         options.offsets[1]:options.offsets[1]+options.shape[1],:]
                         else:
-                            image[:, :, z-options.offsets[2], ich] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0], options.offsets[1]:options.offsets[1]+options.shape[1]]
+                            image[:, :, z-options.offsets[2], ich] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0],
+                                                                               options.offsets[1]:options.offsets[1]+options.shape[1]]
                         if logger is not None:                           
                             logger.insertPlainText(".")
                     except Exception, e:

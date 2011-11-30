@@ -123,7 +123,8 @@ class BatchProcess(QtGui.QDialog):
             print a
 
     def slotDir(self):
-        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", filter = "Images (*.jpg *.tiff *.tif *.png *.jpeg *.h5)")
+        selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", 
+                                                       filter = "Images (*.jpg *.tiff *.tif *.png *.jpeg *.h5)")
         for s in selection:
             self.filenames.append(str(s))
             
@@ -145,8 +146,7 @@ class BatchProcess(QtGui.QDialog):
         bo.writePrediction = self.writePrediction.isChecked()
         bo.writeSegmentation = self.writeSegmentation.isChecked()
         bo.tiledProcessing = self.tiledProcessing.isChecked()
-        self.process(bo)
-    
+        self.process(bo) 
     
     def printStuff(self, stuff):
         self.logger.insertPlainText(stuff)
