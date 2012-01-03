@@ -108,6 +108,7 @@ class ClassifierRandomForest(ClassifierBase):
     
     @classmethod
     def loadRFfromFile(cls, fileName, pathInFile):
+        print fileName, pathInFile
         classifier = cls()
         classifier.RF = vigra.learning.RandomForest(fileName, pathInFile)
         classifier.treeCount = classifier.RF.treeCount()
