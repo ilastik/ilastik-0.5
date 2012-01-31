@@ -67,6 +67,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.weightsSetUp   = False
         self.seedsAvailable = False
+        
+        self._initContent()
+        self._initConnects()
     
     def on_doneOverlaysAvailable(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
@@ -87,8 +90,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_activation(self):
         if self.ilastik.project is None: return
 
-        self._initContent()
-        self._initConnects()
+
         self.interactionLog = []
         self.defaultSegmentor = False
         
@@ -187,11 +189,20 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             return
         self.interactionLog = self.ilastik.labelWidget.interactionLog
         self.ilastik.labelWidget.interactionLog = None
-        if self.ilastik.labelWidget._history != self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history:
-            self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history = self.ilastik.labelWidget._history
         
-        if self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history is not None:
-            self.ilastik.labelWidget._history = self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history
+        if self.ilastik.labelWidget._history is None:
+            return
+        
+        s = self.ilastik._activeImage.Interactive_Segmentation
+        self.btnSegment.clicked.connect(s.segment)
+        self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
+        
+        if self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume is not None:
+            if self.ilastik.labelWidget._history != self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history:
+                self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history = self.ilastik.labelWidget._history
+            
+            if self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history is not None:
+                self.ilastik.labelWidget._history = self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history
         
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -236,21 +247,23 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.btnChooseDimensions.setEnabled(False)
         self.btnSegmentorsOptions.setEnabled(False)
         self.btnChooseWeights.setEnabled(False)
+        print 'setLayout before'
         self.setLayout(tl)
+        print 'setLayout after'
         
     def _initConnects(self):
-        s = self.ilastik._activeImage.Interactive_Segmentation
+        
         
         self.btnChooseDir.clicked.connect(self.on_btnChooseDir_clicked)
         self.btnRebuildDone.toggled.connect(self.on_btnRebuildDone_toggled)
         self.btnChooseWeights.clicked.connect(self.on_btnChooseWeights_clicked)
-        self.btnSegment.clicked.connect(s.segment)
+        
         self.btnSaveAs.clicked.connect(self.on_btnSaveAs_clicked)
         self.btnSave.clicked.connect(self.on_btnSave_clicked)
         self.btnChooseDimensions.clicked.connect(self.on_btnDimensions)
         self.btnSegmentorsOptions.clicked.connect(self.on_btnSegmentorsOptions_clicked)
         
-        self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
+        
     
     def on_btnChooseDir_clicked(self):
         startupOutputPath = str(QFileDialog.getExistingDirectory(None, "Select empty directory to store segmentations in"))

@@ -18,4 +18,5 @@ if not startupOutputPath:
     print "*   and where to load from on initialization with the flag"
     print "*   --segmentations-dir"
     print "*"
+    startupOutputPath = '.'
 del toRemove
