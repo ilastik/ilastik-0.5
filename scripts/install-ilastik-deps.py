@@ -36,7 +36,7 @@ import urllib2, os, sys, tarfile, shutil
 from hashlib import md5
 
 ####__builtin__.installDir="/ilastik"
-__builtin__.installDir = os.environ["HOME"] + "/ilastik_deps_build"
+__builtin__.installDir = os.environ["HOME"]
 
 __builtin__.pythonVersion="2.7"
 
@@ -139,7 +139,7 @@ c = sys.argv[1:]
 
 if 'all' in c:
     c = all
-    os.system("rm -rf " + installDir + "/*")
+    #os.system("rm -rf " + installDir + "/*")
 
 
 if 'from' in c:
@@ -252,9 +252,6 @@ if "psutil" in c:
 
 
 #########################
-
-if 'priows' in c:
-  PriowsGitPackage()
 
 if ('fixes' in c) and ('download' not in sys.argv[0]):
     if platform.system() == "Darwin":

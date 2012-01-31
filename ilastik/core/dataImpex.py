@@ -326,7 +326,7 @@ class DataImpex(object):
             #analyze 7.5 file, read the shape from corresponding hdr file
             stuff = DataImpex.readHdrImgShape(fBase)
             print "...reading analyze 7.5 image with ", stuff[0][0], "channels..."
-            return (int(stuff[0][3]),int(stuff[0][2]),int(stuff[0][1]),int(stuff[0][0]))        
+            return (int(stuff[0][3]),int(stuff[0][2]),int(stuff[0][1]),int(stuff[0][0]))
         
         else :
             try:
@@ -493,7 +493,6 @@ class DataImpex(object):
         bitpix = sum(short_values[36])
         return dim, bitpix, short_values
 
-
     @staticmethod
     def readHdrImgFiles(filename):
         #filename should be passed without extension
@@ -505,7 +504,8 @@ class DataImpex(object):
         #All information concerning the location of relevant data in .hdr and .img 
         #you can find by taking look at format description: http://eeg.sourceforge.net/ANALYZE75.pdf
         #Written by Darya Trofimova
-        
+
+        dim, bitpix, short_values = DataImpex.readHdrImgShape(filename)
         dim, bitpix, short_values = DataImpex.readHdrImgShape(filename)
         # need to make a operator for doing this
         #FIXME: why do we need this variable? it's not used anywhere. 
