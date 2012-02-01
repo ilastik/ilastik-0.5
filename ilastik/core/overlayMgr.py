@@ -393,6 +393,7 @@ class OverlayMgr():
                 it.name = value.name = key.split('/')[-1]
                 it._data = value._data
                 it.color = value.color
+                it.colorTable = value.colorTable
                 res = it
             #update the key
             res.key = key
