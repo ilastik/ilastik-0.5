@@ -168,7 +168,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             color = self.labelColorTable[number]
         number +=1
         self.addLabel(name, number, color)
-        self.buildColorTab()
         
     def addLabel(self, labelName, labelNumber, color):
         self.labelMgr.addLabel(labelName,  labelNumber,  color.rgba())
@@ -201,7 +200,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def buildColorTab(self):
         origColorTable = self.volumeLabels.getColorTab()
         self.overlayItem.colorTable = self.colorTab = origColorTable
-
+                
     def count(self):
         return self.listWidget.count()
 
