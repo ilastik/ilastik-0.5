@@ -151,7 +151,6 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.classificationPredict = ClassificationPredict(self.ilastik)
         
     def on_trainingFinished(self):
-        print "Training finished"
         self.classificationPredict = ClassificationPredict(self.ilastik)
         
     def on_btnExportClassifier_clicked(self):

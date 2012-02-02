@@ -97,7 +97,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     def onItemSelected(self):
         item = self.listWidget.selectedItems()[0]
         if item is None: return
-        print "<><><> item selected"
         self.volumeEditor.drawManager.updateCrossHair()
     
     def currentItem(self):
@@ -108,7 +107,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         doneOverlay = overlayMgr["Segmentation/Done"]
         if not doneOverlay: return
         c = imageScene.coordinateUnderCursor()
-        print "Right click on coordinate", c
         label = doneOverlay._data[0,c[0],c[1],c[2],0]
         if label == 0: return
         
@@ -233,7 +231,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
             self.volumeEditor.repaint()
 
     def nextLabel(self):
-        print "next seed"
         i = self.listWidget.selectedIndexes()[0].row()
         if i+1 == self.listWidget.model().rowCount():
             i = self.listWidget.model().index(0,0)
@@ -242,7 +239,6 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.listWidget.selectionModel().setCurrentIndex(i, QtGui.QItemSelectionModel.ClearAndSelect)
 
     def prevLabel(self):
-        print "prev seed"
         i = self.listWidget.selectedIndexes()[0].row()
         if i >  0:
             i = self.listWidget.model().index(i-1,0)
