@@ -72,7 +72,7 @@ class BatchProcess(QtGui.QDialog):
         outputFolderWidget.setLayout(outputFolderWidget_layout)
         
         self.layout.addWidget(outputFolderWidget)
-        self.layout.addWidget(QtGui.QLabel('Export to png files'))
+        self.layout.addWidget(QtGui.QLabel('Export classification result'))
         self.layout.addWidget(self.writeSegmentation)
         self.layout.addWidget(self.writeUncertainty)
         self.layout.addWidget(self.writePrediction)

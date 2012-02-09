@@ -287,7 +287,7 @@ class BatchProcessCore(object):
                
     def _writePredictionToDisk(self, data, baseFilename, classLabel, predictionName):   
         if self.batchOptions.pngResults:
-            fn = "".join((baseFilename, "_prediction_%03d" % classLabel))
+            fn = "_".join((baseFilename, predictionName))
             DataImpex.exportToStack(fn, 'png', data)
             
         # Export to raw byte arrays 
