@@ -40,17 +40,20 @@ class BatchProcess(QtGui.QDialog):
         self.tiledProcessing = QtGui.QCheckBox("Blockwise processing (saves memory)")
         self.tiledProcessing.setCheckState(False)
         
+        self.curImgBtn = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel), "Add current images")
         self.pathButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel), "Add to selection")
         self.removeButton = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.RemSel), "Remove from selection")
         self.clearSelectionBtn = QtGui.QPushButton("Clear all")
         
         
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
+        self.connect(self.curImgBtn, QtCore.SIGNAL('clicked()'), self.addCurrentImages)
         self.connect(self.removeButton, QtCore.SIGNAL('clicked()'), self.removeSelectedEntry)
         self.connect(self.clearSelectionBtn, QtCore.SIGNAL('clicked()'), self.clearSelection)
         
         tempLayout = QtGui.QHBoxLayout()
         
+        tempLayout.addWidget(self.curImgBtn)
         tempLayout.addWidget(self.pathButton)
         tempLayout.addWidget(self.removeButton)
         tempLayout.addWidget(self.clearSelectionBtn)
@@ -121,6 +124,15 @@ class BatchProcess(QtGui.QDialog):
             del self.filenames[itemIndex]
         for a in self.filenames:
             print a
+            
+    def addCurrentImages(self):
+        selection = [self.ilastik.project.dataMgr[i].fileName for i in range(len(self.ilastik.project.dataMgr))]
+        
+        for s in selection:
+            self.filenames.append(str(s))
+            
+        for f in selection:
+            self.filesView.addItem(f)
 
     def slotDir(self):
         selection = QtGui.QFileDialog.getOpenFileNames(self, "Select .h5 or image Files", 
