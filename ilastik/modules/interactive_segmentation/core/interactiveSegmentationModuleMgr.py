@@ -38,6 +38,7 @@ import ilastik
 from ilastik.core.volume import VolumeLabels
 from ilastik.core.baseModuleMgr import BaseModuleDataItemMgr, BaseModuleMgr
 from ilastik.modules.connected_components.core.connectedComponentsMgr import ConnectedComponents
+from ilastik.core import overlayMgr
 
 import seedMgr
 from segmentors import segmentorBase
@@ -187,8 +188,8 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         self.__createSeedsData()
         
         if self.outputPath is None:
-            print "  no output path set --> nothing to do"
-            return
+            print "  no output path set --> setting to '.'"
+            self.outputPath = "."
         else:
             print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
         
@@ -496,8 +497,9 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         
     def __createSeedsData(self):
+        print "__createSeedsData"
         if self.seedLabelsVolume is None:
-            l = numpy.zeros(self._dataItemImage.shape[0:-1] + (1, ),  'uint8')
+            l = numpy.zeros(self._dataItemImage.shape[0:-1] + (1, ), 'uint8')
             self.seedLabelsVolume = VolumeLabels(l)
         
         if not self.outputPath: return
@@ -679,5 +681,13 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
                             
     def onNewImage(self, dataItemImage):
         dataItemImage.Interactive_Segmentation.setModuleMgr(self)
+        
+        s = dataItemImage.Interactive_Segmentation
+        s.init()
+        self.seedOverlay = overlayMgr.OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
+        dataItemImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
+        
+        
+        
 
     

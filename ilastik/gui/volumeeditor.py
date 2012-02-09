@@ -741,13 +741,6 @@ class VolumeEditor(QtGui.QWidget):
     def prevLabel(self):
         self.labelWidget.nextLabel()
 
-    def onLabelSelected(self):
-        print "onLabelSelected() Warning: am i used anymore?"
-#        if self.labelWidget.currentItem() is not None:
-#            self.drawManager.setBrushColor(self.labelWidget.currentItem().color)
-#            for i in range(3):
-#                self.imageScenes[i].crossHairCursor.setColor(self.labelWidget.currentItem().color)
-
     def onOverlaySelected(self, index):
         if self.labelWidget.currentItem() is not None:
             pass
@@ -875,8 +868,7 @@ class VolumeEditor(QtGui.QWidget):
             self.labelWidget.close()
             del self.labelWidget
         self.labelWidget = widget
-        self.connect(self.labelWidget, QtCore.SIGNAL("itemSelectionChanged()"), self.onLabelSelected)
-        self.toolBoxLayout.insertWidget( 0, self.labelWidget)
+        self.toolBoxLayout.insertWidget(0, self.labelWidget)
         if isinstance(widget, DummyLabelWidget):
             oldMargins = list(self.toolBoxLayout.getContentsMargins())
             oldMargins[1] = 0
