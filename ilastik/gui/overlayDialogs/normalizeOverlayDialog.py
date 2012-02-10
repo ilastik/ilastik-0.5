@@ -20,6 +20,12 @@ class NormalizeOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog)
         d = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.ilastik, singleSelection = True)
         o = d.exec_()
         if o is not None:
+            # FIXME: This is strange: if you pick raw data as overlay and it is uint16 and should 
+            #        contain 12-bit data, then it arrives here with max=255 !?!?!
+            
+            # TODO: Here should pop up the dialog, which asks for new min and max values, use the
+            #       the current one as init values for the dialog spinbox
+             
             self.overlayItem = NormalizeOverlay(o[0], 50, 200)
             self.volumeEditor = ilastik_.labelWidget
             self.project = ilastik_.project
