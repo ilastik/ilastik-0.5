@@ -27,7 +27,7 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 import numpy
-from enthought.traits.api import HasTraits
+from traits.api import HasTraits
 
 #*******************************************************************************
 # S e g m e n t o r B a s e                                                    *

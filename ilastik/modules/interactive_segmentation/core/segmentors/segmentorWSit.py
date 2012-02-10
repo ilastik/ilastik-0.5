@@ -34,8 +34,8 @@ Watershed iterative segmentation plugin
 import numpy, traceback, sys
 
 from segmentorBase import SegmentorBase
-from enthought.traits.api import Enum, Bool, Float, Int, String, on_trait_change
-from enthought.traits.ui.api import Item, View, Group
+from traits.api import Enum, Bool, Float, Int, String, on_trait_change
+from traitsui.api import Item, View, Group
 
 ok = False
 
@@ -131,7 +131,7 @@ if ok:
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
             print "setting seeds"
-            self.segmentor.setSeeds(labelValues, labelIndices)
+            self.segmentor.setSeeds(labelValues.ravel().astype(numpy.uint8), labelIndices.ravel().astype(numpy.uint32))
             print "Executing Watershed with bias %d and biasedLabel %d. Adding virtual background seeds: %r" % (self.bias,  self.biasedLabel,self.addVirtualBackgroundSeeds)
             self.basinLabels = self.segmentor.doWS(self.bias,  self.biasThreshold, self.biasedLabel, self.addVirtualBackgroundSeeds)
                 

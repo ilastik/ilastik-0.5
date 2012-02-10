@@ -228,9 +228,9 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         """Calculate the weights indicating borderness from the raw data"""
         #TODO: this , until now, only supports gray scale and 2D!
         if borderIndicator == "Brightness":
-            weights = volume[:,:,:].view(vigra.ScalarVolume)
+            weights = volume[:,:,:].astype(numpy.float32)
         elif borderIndicator == "Darkness":
-            weights = (-volume[:,:,:] + 255).view(vigra.ScalarVolume)
+            weights = (-volume[:,:,:] + 255).astype(numpy.float32)
         elif borderIndicator == "Gradient Magnitude":
             weights = numpy.ndarray(volume.shape, numpy.float32)
             if weights.shape[0] == 1:
