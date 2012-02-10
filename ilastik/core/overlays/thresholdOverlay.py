@@ -168,3 +168,7 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
             thres.append(1.0 / len(self.dsets))
         self.setThresholds(thres)
         
+
+    
+
+        

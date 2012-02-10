@@ -1,7 +1,7 @@
 from PyQt4 import QtCore, QtGui
 import overlayDialogBase
 import ilastik.gui.overlaySelectionDlg
-from ilastik.core.overlays.thresholdOverlay import ThresholdOverlay 
+from ilastik.core.overlays.thresholdOverlay import ThresholdOverlay
 
 #*******************************************************************************
 # S l i d e r R e c e i v e r                                                  *
@@ -199,4 +199,6 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
             return self.overlayItem
         else:
-            return None        
+            return None  
+        
+
