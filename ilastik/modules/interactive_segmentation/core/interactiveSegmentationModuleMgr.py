@@ -247,13 +247,9 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             
         self.setupWeights(weights)
     
-    def setupWeights(self, weights = None):
-        if weights is None:
-            weights = self._segmentationWeights
-        else:
-            self._segmentationWeights = weights
-        if self.globalMgr.segmentor is not None:
-            self.globalMgr.segmentor.setupWeights(weights)
+    def setupWeights(self, weights):
+        self._segmentationWeights = weights
+        self.globalMgr.segmentor.setupWeights(weights)
         self.emit(SIGNAL('weightsSetup()'))
     
     def segmentKeyForLabel(self, label):
@@ -288,101 +284,101 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         F.close()
         return seg
     
-    def saveCurrentSegmentsAs(self, key, overwrite = False):
-        """ Save the currently segmented segments as a group with the name 'key'.
-            A directory with the same name is created in self.outputPath holding
-            all information about seeds and segments."""
-                
-        print "save current segments as '%s'" %  (key)
-
-        assert self.outputPath
-        
-        #make sure we have a 'done' overlay
-        if self.done is None:
-            self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint16)
-            self.emit(SIGNAL('doneOverlaysAvailable()'))
-        
-        if overwrite:
-            oldSeg = None
-            if not self.rebuildDonePolicy:
-                print "  NOT updating the done overlay correctly"
-                segFile = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
-                print "    loading old segmentation '%s'" % segFile
-                oldSeg = self.loadSegmentation(segFile)
-            
-            shutil.rmtree(self.outputPath+'/'+str(key))
-            labelsToDelete = copy.deepcopy(self._mapKeysToLabels[key])
-            
-            del self._mapKeysToLabels[key]
-            for l in labelsToDelete:
-                del self._mapLabelsToKeys[l]
-                
-            if self.rebuildDonePolicy:       
-                self.__rebuildDone()
-            else:
-                print "    removing old segmentation"
-                self.done[numpy.where(oldSeg > 1)] = 0
-            
-        elif os.path.exists(self.outputPath+'/'+str(key)):
-            raise RuntimeError("trying to overwrite '%s'", self.outputPath+'/'+str(key))
-        #create directory to store the segment in     
-        path = self.outputPath+'/'+str(key)
-        print " - saving to '%s'" % (path),
-        os.makedirs(path)
-        
-        print "segmentation",
-        f = h5py.File(path + "/segmentation.h5", 'w')
-        f.create_group('volume')
-        tmp = self.segmentation[0,:,:,:,0]
-        tmp.shape = (1,) + tmp.shape + (1,)
-        f.create_dataset('volume/data', data=tmp, dtype = tmp.dtype, chunks=True, compression='gzip')
-        f.close(); del f
-        
-        print "seeds"
-        f = h5py.File(path + "/seeds.h5", 'w')
-        f.create_group('volume')
-        f.create_dataset('volume/data', data=self.seedLabelsVolume._data[:,:,:,:,:], 
-                         dtype = self.seedLabelsVolume._data.dtype,
-                         chunks=True, compression='gzip')
-        f.close(); del f
-
-        #compute connected components on current segmentation
-        print " - computing CC of current segments"  
-        connectedComponentsComputer = ConnectedComponents()
-        prevMaxLabel = numpy.max(self.done)
-        print "   - previous number of labels was %d" % (prevMaxLabel)
-        cc = connectedComponentsComputer.connect(self.segmentation[0,:,:,:,:], background=set([1]))            
-        self.done[:,:,:,:,:] = numpy.where(cc>0, cc+int(prevMaxLabel), self.done)
-        
-        f = h5py.File(self.outputPath + "/done.h5", 'w')
-        f.create_group('volume')
-        f.create_dataset('volume/data', data=self.done, dtype=numpy.uint16, chunks=True, compression='gzip')
-        f.close()
-    
-        numCC = numpy.max(cc)
-        print "   - there are %d segments to be saved as '%s'" % (numCC, key)
-        print " - saving"
-        for i in range(prevMaxLabel+1,prevMaxLabel+numCC+1):
-            print "   - label %d now known as '%s'" % (i, key)
-            self._mapLabelsToKeys[i] = key
-            if key not in self._mapKeysToLabels.keys():
-                self._mapKeysToLabels[key] = set()
-            self._mapKeysToLabels[key].add(i)
-
-        self.__saveMapping()
-
-        self.__reset()
-        
-        #Clear the segmentation
-        #The association with the overlay will be broken,
-        #but this is not so bad because the overlay is 'fixed' via
-        #the overlaysChanged() notification. This is not nice, but works...
-        self.segmentation = None
-        
-        self.emit(SIGNAL('saveAsPossible(bool)'), False)
-        self.emit(SIGNAL('savePossible(bool)'),   False)
-        
-        self.emit(SIGNAL('overlaysChanged()'))
+#    def saveCurrentSegmentsAs(self, key, overwrite = False):
+#        """ Save the currently segmented segments as a group with the name 'key'.
+#            A directory with the same name is created in self.outputPath holding
+#            all information about seeds and segments."""
+#                
+#        print "save current segments as '%s'" %  (key)
+#
+#        assert self.outputPath
+#        
+#        #make sure we have a 'done' overlay
+#        if self.done is None:
+#            self.done = numpy.zeros(self._dataItemImage.shape, numpy.uint16)
+#            self.emit(SIGNAL('doneOverlaysAvailable()'))
+#        
+#        if overwrite:
+#            oldSeg = None
+#            if not self.rebuildDonePolicy:
+#                print "  NOT updating the done overlay correctly"
+#                segFile = self.outputPath+'/'+str(key)+'/'+'segmentation.h5'
+#                print "    loading old segmentation '%s'" % segFile
+#                oldSeg = self.loadSegmentation(segFile)
+#            
+#            shutil.rmtree(self.outputPath+'/'+str(key))
+#            labelsToDelete = copy.deepcopy(self._mapKeysToLabels[key])
+#            
+#            del self._mapKeysToLabels[key]
+#            for l in labelsToDelete:
+#                del self._mapLabelsToKeys[l]
+#                
+#            if self.rebuildDonePolicy:       
+#                self.__rebuildDone()
+#            else:
+#                print "    removing old segmentation"
+#                self.done[numpy.where(oldSeg > 1)] = 0
+#            
+#        elif os.path.exists(self.outputPath+'/'+str(key)):
+#            raise RuntimeError("trying to overwrite '%s'", self.outputPath+'/'+str(key))
+#        #create directory to store the segment in     
+#        path = self.outputPath+'/'+str(key)
+#        print " - saving to '%s'" % (path),
+#        os.makedirs(path)
+#        
+#        print "segmentation",
+#        f = h5py.File(path + "/segmentation.h5", 'w')
+#        f.create_group('volume')
+#        tmp = self.segmentation[0,:,:,:,0]
+#        tmp.shape = (1,) + tmp.shape + (1,)
+#        f.create_dataset('volume/data', data=tmp, dtype = tmp.dtype, chunks=True, compression='gzip')
+#        f.close(); del f
+#        
+#        print "seeds"
+#        f = h5py.File(path + "/seeds.h5", 'w')
+#        f.create_group('volume')
+#        f.create_dataset('volume/data', data=self.seedLabelsVolume._data[:,:,:,:,:], 
+#                         dtype = self.seedLabelsVolume._data.dtype,
+#                         chunks=True, compression='gzip')
+#        f.close(); del f
+#
+#        #compute connected components on current segmentation
+#        print " - computing CC of current segments"  
+#        connectedComponentsComputer = ConnectedComponents()
+#        prevMaxLabel = numpy.max(self.done)
+#        print "   - previous number of labels was %d" % (prevMaxLabel)
+#        cc = connectedComponentsComputer.connect(self.segmentation[0,:,:,:,:], background=set([1]))            
+#        self.done[:,:,:,:,:] = numpy.where(cc>0, cc+int(prevMaxLabel), self.done)
+#        
+#        f = h5py.File(self.outputPath + "/done.h5", 'w')
+#        f.create_group('volume')
+#        f.create_dataset('volume/data', data=self.done, dtype=numpy.uint16, chunks=True, compression='gzip')
+#        f.close()
+#    
+#        numCC = numpy.max(cc)
+#        print "   - there are %d segments to be saved as '%s'" % (numCC, key)
+#        print " - saving"
+#        for i in range(prevMaxLabel+1,prevMaxLabel+numCC+1):
+#            print "   - label %d now known as '%s'" % (i, key)
+#            self._mapLabelsToKeys[i] = key
+#            if key not in self._mapKeysToLabels.keys():
+#                self._mapKeysToLabels[key] = set()
+#            self._mapKeysToLabels[key].add(i)
+#
+#        self.__saveMapping()
+#
+#        self.__reset()
+#        
+#        #Clear the segmentation
+#        #The association with the overlay will be broken,
+#        #but this is not so bad because the overlay is 'fixed' via
+#        #the overlaysChanged() notification. This is not nice, but works...
+#        self.segmentation = None
+#        
+#        self.emit(SIGNAL('saveAsPossible(bool)'), False)
+#        self.emit(SIGNAL('savePossible(bool)'),   False)
+#        
+#        self.emit(SIGNAL('overlaysChanged()'))
     
     def discardCurrentSegmentation(self):
         self.segmentation = None
@@ -638,6 +634,7 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
     def segment(self):
         labels, indices = self.getSeeds()
         self.globalMgr.segmentor.segment(self.seedLabelsVolume._data[0,:,:,:], labels, indices)
+        print 'Unique seeds', numpy.unique(self.seedLabelsVolume._data[0,:,:,:])
         self.segmentation = ArrayWrapper(self.globalMgr.segmentor.segmentation)
         if(hasattr(self.globalMgr.segmentor, "potentials")):
             self.potentials = ArrayWrapper(self.globalMgr.segmentor.potentials)
@@ -649,12 +646,6 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             self.borders = None
         
         self.emit(SIGNAL('newSegmentation()'))
-        if self._currentSegmentsKey == None:
-            self.emit(SIGNAL('saveAsPossible(bool)'), True)
-            self.emit(SIGNAL('savePossible(bool)'), False)
-        else:
-            self.emit(SIGNAL('saveAsPossible(bool)'), False)
-            self.emit(SIGNAL('savePossible(bool)'), True)
                
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         print "serializing interactive segmentation"

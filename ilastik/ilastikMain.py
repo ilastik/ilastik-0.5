@@ -310,8 +310,9 @@ class MainWindow(QtGui.QMainWindow):
         self.activeImageLock.release()
 
         # Notify tabs
-        self.ribbon.widget(self.ribbon.currentIndex()).on_activation()
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
+        self.ribbon.widget(self.ribbon.currentIndex()).on_activation()
+        
         self.fileSelectorList.setEnabled(True)
 
     def historyUndo(self):
