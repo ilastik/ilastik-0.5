@@ -187,41 +187,41 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         
         self.__createSeedsData()
         
-        if self.outputPath is None:
-            print "  no output path set --> setting to '.'"
-            self.outputPath = "."
-        else:
-            print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
-        
-        if not os.path.exists(self.outputPath+'/'+'config.txt'): return
-        
-        f = open(self.outputPath+'/'+'config.txt')
-        lines = f.readlines()
-        d = dict()
-        for l in lines:
-            l = l.split('='); key = l[0].strip(); val = l[1].strip()
-            d[key] = val
-        
-        #FIXME: make sure that we have the overlay loaded!!!
-        if self._dataItemImage.overlayMgr[d["overlay"]] is None \
-           and self._dataItemImage.overlayMgr["File Overlays/"+d["overlay"]] is None:
-            from PyQt4.QtGui import QMessageBox
-            
-            QMessageBox.critical(None, "Needed overlay not found",
-                                 """The overlay '%s' was not found.<br />
-                                    I cannot continue from here.<br />
-                                    Either use the "Classification tab" to re-calculate the
-                                    corresponding feature every time you open Ilastik, or use
-                                    the overlay saving and loading features to load the
-                                    overlay from a file.""" % d["overlay"])
-            raise RuntimeError("Overlay not available")
-        
-        overlayName = d["overlay"]
-        if self._dataItemImage.overlayMgr[d["overlay"]] is None:
-            overlayName = "File Overlays/"+d["overlay"]
-        
-        print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-        self.calculateWeights(self._dataItemImage.overlayMgr[overlayName]._data[0,:,:,:,0], d["borderIndicator"])
+#        if self.outputPath is None:
+#            print "  no output path set --> setting to '.'"
+#            self.outputPath = "."
+#        else:
+#            print "interactive segmentation: initial outputPath was set to '%s'" % (self.outputPath)
+#        
+#        if not os.path.exists(self.outputPath+'/'+'config.txt'): return
+#        
+#        f = open(self.outputPath+'/'+'config.txt')
+#        lines = f.readlines()
+#        d = dict()
+#        for l in lines:
+#            l = l.split('='); key = l[0].strip(); val = l[1].strip()
+#            d[key] = val
+#        
+#        #FIXME: make sure that we have the overlay loaded!!!
+#        if self._dataItemImage.overlayMgr[d["overlay"]] is None \
+#           and self._dataItemImage.overlayMgr["File Overlays/"+d["overlay"]] is None:
+#            from PyQt4.QtGui import QMessageBox
+#            
+#            QMessageBox.critical(None, "Needed overlay not found",
+#                                 """The overlay '%s' was not found.<br />
+#                                    I cannot continue from here.<br />
+#                                    Either use the "Classification tab" to re-calculate the
+#                                    corresponding feature every time you open Ilastik, or use
+#                                    the overlay saving and loading features to load the
+#                                    overlay from a file.""" % d["overlay"])
+#            raise RuntimeError("Overlay not available")
+#        
+#        overlayName = d["overlay"]
+#        if self._dataItemImage.overlayMgr[d["overlay"]] is None:
+#            overlayName = "File Overlays/"+d["overlay"]
+#        
+#        print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+#        self.calculateWeights(self._dataItemImage.overlayMgr[overlayName]._data[0,:,:,:,0], d["borderIndicator"])
     
         self.initialized = True
     

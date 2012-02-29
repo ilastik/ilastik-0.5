@@ -339,7 +339,7 @@ class BatchProcessCore(object):
                         dm = dataMgr.DataMgr()
                                         
                         di = mpa.getDataItem(blockNr)
-                        dm.append(di, alreadyLoaded = True)
+                        dm.append(di, alreadyLoaded=True)
                                   
                         fm = dm.Classification.featureMgr      
                         fm.setFeatureItems(bo.featureList)                              
