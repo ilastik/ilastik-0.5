@@ -405,10 +405,10 @@ class OverlaySelectionDialog(QtGui.QDialog):
                 self.pixmapImage = self.grscene.addPixmap(QtGui.QPixmap.fromImage(image0))
             else:
                 
-                if currentItem.item.min is not None:
-                    self.pixmapImage = self.grscene.addPixmap(QtGui.QPixmap(qimage2ndarray.gray2qimage(imageArray, normalize = (currentItem.item.min, currentItem.item.max))))
-                else:
-                    self.pixmapImage = self.grscene.addPixmap(QtGui.QPixmap(qimage2ndarray.gray2qimage(imageArray)))
+#                if currentItem.item.min is not None:
+#                    self.pixmapImage = self.grscene.addPixmap(QtGui.QPixmap(qimage2ndarray.gray2qimage(imageArray.copy(), normalize = (currentItem.item.min, currentItem.item.max))))
+#                else:
+                self.pixmapImage = self.grscene.addPixmap(QtGui.QPixmap(qimage2ndarray.gray2qimage(imageArray.copy(), True)))
             self.grview.setScene(self.grscene)
 
 
