@@ -73,6 +73,7 @@ class ThresholdOverlay(overlayBase.OverlayBase, overlayMgr.OverlayItem):
         overlayMgr.OverlayItem.__init__(self, accessor, alpha = 1.0, autoAdd = autoAdd, autoVisible = autoVisible,  linkColorTable = True)
         self.linkColorTable = True
         self.color = None
+        self.name = "Threshold"
         
     def getColorTab(self):
         colorTab = []

@@ -455,7 +455,9 @@ class OverlayWidget(QtGui.QGroupBox):
             dlg_creation = answer(self.volumeEditor.ilastik)
             answer = dlg_creation.exec_()
             if answer is not None:
-                name = QtGui.QInputDialog.getText(self,"Edit Name", "Please Enter the name of the new Overlay:", text = "Custom Overlays/My Overlay" )
+                name = QtGui.QInputDialog.getText(self,"Edit Name", 
+                                                       "Please Enter the name of the new Overlay:", 
+                                                       text = "Custom Overlays/%s" % answer.name )
                 name = str(name[0])
                 self.volumeEditor.ilastik.project.dataMgr[self.volumeEditor.ilastik._activeImageNumber].overlayMgr[name] = answer
                 self.volumeEditor.repaint()
