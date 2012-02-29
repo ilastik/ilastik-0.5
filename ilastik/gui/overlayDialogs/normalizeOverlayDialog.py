@@ -12,7 +12,7 @@ class NormalizeOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog)
     description = """Use this overlay to normalize the color or intensity values to a min / max range (e.g. to make raw data in 16-bit visible)"""
             
     
-    def __init__(self, ilastik_instance, overlay_item_ref=None):
+    def __init__(self, ilastik_instance, overlayItem=None):
         QtGui.QDialog.__init__(self)
         self.setWindowTitle("Normalize OVerlay")
         self.ilastik = ilastik_instance
@@ -20,17 +20,36 @@ class NormalizeOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog)
         self.project = ilastik_instance.project
         self.volumeEditor = ilastik_instance.labelWidget
         
+        if overlayItem is None:
+            sel_dlg = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.ilastik, singleSelection=True)
+            choosen_overlay = sel_dlg.exec_()
+            if choosen_overlay is not None:
+                self.selected_overlay = choosen_overlay[0] 
+                self.buildDlg()
+                self._lbl_overlay.setText(self.selected_overlay.name)
+                self._spin_min.setValue(self.selected_overlay._data._data.min())
+                self._spin_max.setValue(self.selected_overlay._data._data.max())
+                self.overlayItem = NormalizeOverlay(self.selected_overlay, int(self._spin_min.value()), int(self._spin_max.value()))
+            
+        else:
+            self.overlayItem = overlayItem
+            self.selected_overlay = overlayItem.overlay
+            self.buildDlg()
+            self._lbl_overlay.setText(self.overlayItem.overlay.name)
+            self._spin_min.setValue(self.overlayItem.nMin)
+            self._spin_max.setValue(self.overlayItem.nMax)
+            
+        
+    def buildDlg(self):
+        
         self.mainlayout = QtGui.QVBoxLayout()
         
         self.controls_widget = QtGui.QWidget()
         self.controls_layout = QtGui.QHBoxLayout()
         self.controls_widget.setLayout(self.controls_layout)
         self.controls_layout.addWidget(QtGui.QLabel('Overlay:'))
-        self._lbl_overlay = QtGui.QLabel('no overlay selected')
+        self._lbl_overlay = QtGui.QLabel('')
         self.controls_layout.addWidget(self._lbl_overlay)
-        self._btn_select_overlay = QtGui.QPushButton('Select')
-        self._btn_select_overlay.clicked.connect(self.selectOverlayToNormalize)
-        self.controls_layout.addWidget(self._btn_select_overlay)
         self.mainlayout.addWidget(self.controls_widget)
         
         self.controls_widget = QtGui.QWidget()
@@ -40,7 +59,7 @@ class NormalizeOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog)
         self._spin_min = QtGui.QSpinBox()
         self._spin_min.setMinimum(0)
         self._spin_min.setMaximum(2**16)
-        self._spin_min.setValue(20)
+        self._spin_min.setValue(0)
 
         self.controls_layout.addWidget(self._spin_min)
         self.mainlayout.addWidget(self.controls_widget)
@@ -52,7 +71,7 @@ class NormalizeOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog)
         self._spin_max = QtGui.QSpinBox()
         self._spin_max.setMinimum(0)
         self._spin_max.setMaximum(2**16)
-        self._spin_max.setValue(400)
+        self._spin_max.setValue(255)
 
         self.controls_layout.addWidget(self._spin_max)
         self.mainlayout.addWidget(self.controls_widget)
@@ -74,20 +93,14 @@ class NormalizeOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog)
         
         self.setLayout(self.mainlayout)
         
-        if overlay_item_ref is not None:
-            self.selected_overlay = overlay_item_ref
-            self._lbl_overlay.setText(self.selected_overlay.name)
             
-    def selectOverlayToNormalize(self):
-        sel_dlg = ilastik.gui.overlaySelectionDlg.OverlaySelectionDialog(self.ilastik, singleSelection=True)
-        choosen_overlay = sel_dlg.exec_()
-        if choosen_overlay is not None:
-            self.selected_overlay = choosen_overlay[0] 
-            self._lbl_overlay.setText(self.selected_overlay.name)
        
     def okClicked(self):
         if self.selected_overlay is not None:
-            self.overlayItem = NormalizeOverlay(self.selected_overlay, int(self._spin_min.value()), int(self._spin_max.value()))
+            self.overlayItem.nMin = self._spin_min.value()
+            self.overlayItem.nMax = self._spin_max.value()
+            self.overlayItem.normalize()
+            self.volumeEditor.repaint()
             self.accept()
         else:
             QtGui.QMessageBox.information(self, "Normalize Overlay", "Please choose an overlay to normalize.")
