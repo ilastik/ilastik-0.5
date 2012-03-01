@@ -311,7 +311,7 @@ class MainWindow(QtGui.QMainWindow):
 
         # Notify tabs
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
-        self.ribbon.widget(self.ribbon.currentIndex()).on_activation()
+        # self.ribbon.widget(self.ribbon.currentIndex()).on_activation()
         
         self.fileSelectorList.setEnabled(True)
 

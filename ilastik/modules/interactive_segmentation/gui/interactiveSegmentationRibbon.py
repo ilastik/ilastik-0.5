@@ -73,7 +73,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self._initConnects()
         
     def on_imageChanged(self):
-        pass#self.firstInit = True
+        #Finally, initialize the core module   
+        s = self.ilastik._activeImage.Interactive_Segmentation     
+        self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
+        self.connect(s, QtCore.SIGNAL('newSegmentation()'), self.on_newSegmentation)
+        self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
+        self.btnSegment.clicked.connect(s.segment)
+        self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
+        self.maybeEnableSegmentButton()
     
     def on_doneOverlaysAvailable(self):
         s = self.ilastik._activeImage.Interactive_Segmentation
@@ -99,10 +106,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.overlayWidget = OverlayWidget(self.ilastik.labelWidget, self.ilastik.project.dataMgr)
         self.ilastik.labelWidget.setOverlayWidget(self.overlayWidget)
         
-        
-        
         s = self.ilastik._activeImage.Interactive_Segmentation
-        #add 'Seeds' overlay
+
         self.seedOverlay = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
         
         self.seedWidget = SeedListWidget(self.ilastik.project.dataMgr.Interactive_Segmentation.seedMgr,  
@@ -117,6 +122,15 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             self.seedOverlay.displayable3D = True
             self.seedOverlay.backgroundClasses = set([0])
             self.seedOverlay.smooth3D = False
+            s = self.ilastik._activeImage.Interactive_Segmentation     
+            self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
+            self.connect(s, QtCore.SIGNAL('newSegmentation()'), self.on_newSegmentation)
+            self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
+            self.btnSegment.clicked.connect(s.segment)
+            self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
+            self.maybeEnableSegmentButton()
+            
+            self.firstInit = False
         
         raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
         self.overlayWidget.addOverlayRef(raw.getRef())
@@ -124,39 +138,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.ilastik.labelWidget.interactionLog = self.interactionLog
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
-
-        #Finally, initialize the core module        
-        s = self.ilastik._activeImage.Interactive_Segmentation
-        #self.connect(s, QtCore.SIGNAL('overlaysChanged()'), self.on_overlaysChanged)
-        #self.connect(s, QtCore.SIGNAL('doneOverlaysAvailable()'), self.on_doneOverlaysAvailable)
-        self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
-        self.connect(s, QtCore.SIGNAL('newSegmentation()'), self.on_newSegmentation)
-        #self.connect(s, QtCore.SIGNAL('numColorsNeeded(int)'), self.on_numColorsNeeded)
-        self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
-        self.btnSegment.clicked.connect(s.segment)
-        self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
-
-        self.segmentorInit()
-   
-    def segmentorInit(self):
-
         self.btnChooseWeights.setEnabled(True)
-        statusBar = self.parent.statusBar()
-        self.progressBar = QtGui.QProgressBar()
-        self.progressBar.setMinimum(0)
-        self.progressBar.setMaximum(0)
-        self.progressBar.setValue(1)
 
-        self.progressBar.setFormat(' Initializing...')
-        statusBar.addWidget(self.progressBar)
-        statusBar.show()
-        QtGui.qApp.processEvents(QtCore.QEventLoop.WaitForMoreEvents)
-
-        self.parent.statusBar().removeWidget(self.progressBar)
-        self.parent.statusBar().hide()
-
-        self.firstInit = False
-        self.maybeEnableSegmentButton()
+        
 
     def on_seedsAvailable(self, b):
         self.seedsAvailable = b
@@ -164,21 +148,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def maybeEnableSegmentButton(self):
         self.btnSegment.setEnabled(self.seedsAvailable and self.weightsSetUp)
-
-    def on_numColorsNeeded(self, numColors):
-        """make sure that there are enough label colors.
-           numColors refers to the _total_ number of colors,
-           including the background. Note that the background label color
-           is always present."""
-        
-        if self.seedWidget.count() >= numColors: return
-        
-        for _ in range(numColors-self.seedWidget.count()):
-            self.seedWidget.createLabel()
     
     def on_deActivation(self):
-        if self.ilastik.project is None:
-            return
+        if self.ilastik.project is None: return
         self.interactionLog = self.ilastik.labelWidget.interactionLog
         self.ilastik.labelWidget.interactionLog = None
         if self.ilastik.labelWidget._history != self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history:
@@ -187,15 +159,13 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         if self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history is not None:
             self.ilastik.labelWidget._history = self.ilastik._activeImage.Interactive_Segmentation.seedLabelsVolume._history
 
-        
     def _initContent(self):
         self.seedWidget = None
         tl = QtGui.QHBoxLayout()
         tl.setMargin(0)
         
         self.btnChooseWeights     = TabButton('Choose Input Weights', ilastikIcons.Select)
-        self.btnSegment           = TabButton('Segment', ilastikIcons.Play)
-        
+        self.btnSegment           = TabButton('Segment', ilastikIcons.Play)        
         self.btnSegmentorsOptions = TabButton('Change Segmentor', ilastikIcons.System)
         
         self.only2D = False
@@ -260,7 +230,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         s.calculateWeights(volume, borderIndicator)
         
         
-        
+        self.weightsSetUp = True
         
         self.parent.statusBar().removeWidget(self.progressBar)
         self.parent.statusBar().hide()
@@ -276,49 +246,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self._seedL = None
         self._seedIndices = None
     
-#    def on_overlaysChanged(self):
-#        if type(self.parent.labelWidget.labelWidget) is DummyLabelWidget: return
-#        
-#        s = self.ilastik._activeImage.Interactive_Segmentation
-#        
-#        if s.segmentation is None:
-#            #the segmentation has been cleared, remove overlay
-#            self.activeImage.overlayMgr.remove("Segmentation/Segmentation")
-#            self.segmentationOverlay = None
-#        elif self.activeImage.overlayMgr["Segmentation/Segmentation"] is None:
-#            #ensure that we have a 'Segmentation' overlay which will display the result of the segmentation algorithm
-#            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
-#            origColorTable[1] = 255
-#            
-#            self.segmentationOverlay = OverlayItem(self.localMgr.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
-#            #this overlay can be shown in 3D
-#            #the label 0 never occurs, label 1 is assigned to the background  class
-#            self.segmentationOverlay.displayable3D = True
-#            self.segmentationOverlay.backgroundClasses = set([1])
-#            self.activeImage.overlayMgr["Segmentation/Segmentation"] = self.segmentationOverlay
-#
-#        if s.segmentation is not None:
-#            #create Overlay for segmentation:
-#            res = self.localMgr.segmentation
-#            self.segmentationOverlay._data = DataAccessor(res)
-#            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
-#            origColorTable[1] = 255            
-#            self.segmentationOverlay.colorTable = origColorTable
-#            
-#        if self.localMgr.potentials is not None:
-#            origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
-#            ov = OverlayItem(self.localMgr.potentials,color = origColorTable[1], alpha = 1.0, autoAdd = True, autoVisible = True, min = 0.0, max = 1.0)
-#            self.activeImage.overlayMgr["Segmentation/Potentials"] = ov
-#        else:
-#            self.activeImage.overlayMgr.remove("Segmentation/Potentials")
-#            
-#        if hasattr(self.localMgr, 'borders') and self.localMgr.borders is not None:
-#            ov = OverlayItem(self.localMgr.borders, color = QtGui.QColor(), alpha = 1.0, autoAdd = True, autoVisible = False, min = 0, max = 1.0)
-#            self.activeImage.overlayMgr["Segmentation/Supervoxels"] = ov
-#        else:
-#            self.activeImage.overlayMgr.remove("Segmentation/Supervoxels")
-#    
-#        self.parent.labelWidget.repaint()
     
     def on_newSegmentation(self):
         if type(self.parent.labelWidget.labelWidget) is DummyLabelWidget: return
@@ -346,10 +273,6 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.segmentationOverlay.colorTable = origColorTable            
             
         if hasattr(self.localMgr, 'borders') and self.localMgr.borders is not None:
-            #colorTab = []
-            #for i in range(256):
-            #    color = QtGui.QColor(random.randint(0,255),random.randint(0,255),random.randint(0,255)).rgba()
-            #    colorTab.append(color)
             ov = OverlayItem(self.localMgr.borders, color = QtGui.QColor(), alpha = 1.0, autoAdd = True, autoVisible = False, min = 0, max = 1.0)
             self.activeImage.overlayMgr["Segmentation/Supervoxels"] = ov
         else:
