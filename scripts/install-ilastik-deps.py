@@ -35,13 +35,13 @@ import platform
 import urllib2, os, sys, tarfile, shutil
 from hashlib import md5
 
-####__builtin__.installDir="/ilastik"
-__builtin__.installDir = os.environ["HOME"]
+__builtin__.installDir=os.environ["HOME"]+"/ilastik-build"
+#__builtin__.installDir = os.environ["HOME"]
 
 __builtin__.pythonVersion="2.7"
 
-__builtin__.gcc="/usr/bin/gcc"
-__builtin__.gpp="/usr/bin/g++"
+__builtin__.gcc="/usr/bin/llvm-gcc"
+__builtin__.gpp="/usr/bin/llvm-g++"
 __builtin__.ls="/bin/ls"
 __builtin__.cd="cd"
 __builtin__.make="/usr/bin/make"
@@ -49,7 +49,7 @@ __builtin__.pwd="/bin/pwd"
 if platform.system() == "Darwin":
   __builtin__.cmake="/usr/local/bin/cmake"
   __builtin__.hg="/usr/local/bin/hg"
-  __builtin__.git="/usr/local/git/bin/git"
+  __builtin__.git="/usr/bin/git"
 else:
   __builtin__.cmake="/usr/bin/cmake"
   __builtin__.hg="/usr/bin/hg"
@@ -63,10 +63,12 @@ __builtin__.pythonBinaryPath   = pythonVersionPath+"/bin"
 __builtin__.pythonSharePath    = pythonVersionPath+"/share"
 if platform.system() == "Darwin":
   __builtin__.pythonLibrary      = pythonVersionPath+"/lib/libpython"+pythonVersion+".dylib"
+  __builtin__.pythonSitePackages = pythonVersionPath + "/lib/python" + pythonVersion
 else:
   __builtin__.pythonLibrary      = pythonVersionPath+"/lib/libpython"+pythonVersion+".so"
+  __builtin__.pythonSitePackages = pythonVersionPath + "/lib/python" + pythonVersion + "/site-packages"
+  
 __builtin__.pythonExecutable   = pythonBinaryPath + "/python" + pythonVersion
-__builtin__.pythonSitePackages = pythonVersionPath + "/lib/python" + pythonVersion + "/site-packages"
 __builtin__.pythonIncludePath  = pythonVersionPath + "/include/python" + pythonVersion
 
 from PackagesItems import *
@@ -95,7 +97,7 @@ os.environ["CMAKE_PREFIX_PATH"]    = installDir
 os.environ["CMAKE_INSTALL_PREFIX"] = installDir
 os.environ["CMAKE_INCLUDE_PATH"]   = installDir+"/include"
 os.environ["CMAKE_LIBRARY_PATH"]   = installDir+"/lib"
-os.environ["PATH"]                 = installDir+"bin:/usr/bin:/bin"
+os.environ["PATH"]                 = installDir+"bin:"+installDir+"/Frameworks/Python.framework/Versions/2.7/bin:/usr/bin:/bin"
 os.environ["LIBRARY_PATH"]         = installDir+"/lib"
 os.environ["C_INCLUDE_PATH"]       = installDir+"/include"
 os.environ["CPLUS_INCLUDE_PATH"]   = installDir+"/include"
@@ -108,27 +110,42 @@ if platform.system() == "Darwin":
     #Packages that use setuptools have to know where Python is installed
     #see: http://stackoverflow.com/questions/3390558/installing-setuptools-in-a-private-version-of-python
     os.environ["FRAMEWORK_PATH"]       = installDir+"/Frameworks"
-    os.environ["CC"]                   = gcc+" -arch x86_64"
-    os.environ["CXX"]                  = gpp+" -arch x86_64"
+    os.environ["CC"]                   = "gcc-4.2 -arch x86_64"
+    os.environ["CXX"]                  = "g++-4.2 -arch x86_64"
+    #see http://www.scipy.org/Installing_SciPy/Mac_OS_X
+    #Quote from the above:
+    #  "The default C compiler on Lion is llvm-gcc-4.2, which has so far proven to be problematic.
+    #   We recommend to use gcc-4.2, or alternatively clang.
+    #   The Fortran flag "-ff2c" has been reported to be necessary."
+    #os.environ["FFLAGS"]               = "-ff2c"
     os.environ["LDFLAGS"]              = "-arch x86_64"
     os.environ["BASEFLAGS"]            = "-arch x86_64"
     os.environ["LDFLAGS"]              = "-L"+installDir+"/lib" + " " + "-F"+installDir+"/Frameworks"
     os.environ["CPPFLAGS"]             = "-I"+installDir+"/include"
     os.environ["MACOSX_DEPLOYMENT_TARGET"]="10.6"
+    os.environ["PREFIX"] 			   += ":" + pythonBinaryPath
+    os.environ["EXEC_PREFIX"] 		   = ":" + pythonBinaryPath
+    #for qt4.8
+    #os.environ["CXXFLAGS"]  		   ="-fvisibility=hidden"
+    #os.environ["LD"]                   = "gcc-4.2"
+    #os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir)
+    #os.environ["DYLD_LIBRARY_PATH"] = "%s/lib" % (installDir)
 else:
-    os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir,)
+    os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir)
 ###################################################################################################
 
-all = ['fftw3f', 'fftw3', 'jpeg', 'tiff', 'zlib','png', 'slib',
-    'python', 'nose', 'setuptools', 'py2app',
+all = ['python', 'zlib', 'slib', 
+	'fftw3f', 'fftw3', 'jpeg', 'tiff', 'png',
+	'setuptools','nose', 'py2app',
     'hdf5',
     'numpy', 'h5py', 'boost', 'sip',
     'lis', 'vigra', 
     'qt', 'pyqt', 'qimage2ndarray',
-    'pyopenglaccellerate', 'pyopengl',
-    'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
+    #'pyopenglaccellerate', 'pyopengl',
+    #'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
     'vtk',
     'greenlet',
+    'blist',
     'psutil',
     'fixes']
 
@@ -170,14 +187,20 @@ if 'slib' in c:
 	
 # # # # # # # # # # # # #
 os.environ["PYTHONPATH"] = pythonSitePackages #installDir+"/bin:" + pythonSitePackages
-os.environ["PATH"]       = os.environ["PATH"] + ':' + pythonBinaryPath
+# /Users/opetra/ilastik-build/Frameworks/Python.framework/Versions/2.7/lib//python2.7/
+#add python binaries to system search path, make sure they are found before /usr/bin and /bin
+os.environ["PATH"]       = pythonBinaryPath + ":" + os.environ["PATH"]
+
+if 'env' in c:
+    for k,v in os.environ.iteritems():
+		print k,v
 
 if 'python' in c:
 	PythonPackage()
-if 'nose' in c:
-	NosePackage()
 if 'setuptools' in c:
     SetuptoolsPackage()
+if 'nose' in c:
+	NosePackage()
 if platform.system() == "Darwin":
     if 'py2app' in c:
         Py2appPackage()
@@ -247,6 +270,9 @@ if "greenlet" in c:
 
 if "psutil" in c:
     PsutilPackage()
+    
+if "blist" in c:
+	BlistPackage()
     
 
 

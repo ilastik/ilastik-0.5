@@ -38,9 +38,9 @@ import multiprocessing
 ###################################################################################################
 
 class FFTW3(Package):
-    src_uri = 'http://fftw.org/fftw-3.2.2.tar.gz'
-    correctMD5sum = 'b616e5c91218cc778b5aa735fefb61ae'
-    workdir = 'fftw-3.2.2'
+    src_uri = 'http://www.fftw.org/fftw-3.3.1.tar.gz'
+    #correctMD5sum = 'b616e5c91218cc778b5aa735fefb61ae'
+    workdir = 'fftw-3.3.1'
     
     def conf_all(self):
         return " --enable-shared --enable-portable-binary --disable-fortran --prefix=" + self.prefix
@@ -54,9 +54,9 @@ class FFTW3(Package):
 ###################################################################################################
 
 class FFTW3F(Package):
-    src_uri = 'http://fftw.org/fftw-3.2.2.tar.gz'
-    correctMD5sum = 'b616e5c91218cc778b5aa735fefb61ae'
-    workdir = 'fftw-3.2.2'
+    src_uri = 'http://www.fftw.org/fftw-3.3.1.tar.gz'
+    #correctMD5sum = 'b616e5c91218cc778b5aa735fefb61ae'
+    workdir = 'fftw-3.3.1'
 
     def conf_all(self):
         return " --enable-single --enable-shared --enable-portable-binary --disable-fortran --prefix=" + self.prefix
@@ -70,8 +70,8 @@ class FFTW3F(Package):
 ###################################################################################################
 
 class JpegPackage(Package):
-    src_uri = 'http://www.ijg.org/files/jpegsrc.v8c.tar.gz'
-    workdir = 'jpeg-8c'
+    src_uri = 'http://www.ijg.org/files/jpegsrc.v8d.tar.gz'
+    workdir = 'jpeg-8d'
     
     def configure_darwin(self):
         return "./configure --disable-dependency-tracking --enable-static=no --prefix=" + self.prefix
@@ -82,14 +82,18 @@ class JpegPackage(Package):
 ###################################################################################################
 
 class TiffPackage(Package):
-    src_uri = 'http://download.osgeo.org/libtiff/tiff-3.9.4.tar.gz'
-    workdir ='tiff-3.9.4'
+    src_uri = 'ftp://ftp.remotesensing.org/pub/libtiff/tiff-3.9.6.tar.gz'
+    workdir ='tiff-3.9.6'
     
     def configure_darwin(self):
         return """./configure --enable-static=no \\
                              --disable-dependency-tracking \\
                              --with-apple-opengl-framework \\
-                             --prefix=%s""" % self.prefix
+                             --with-zlib-include-dir=%s/include \\
+                             --with-zlib-lib-dir=%s/lib \\
+                             --with-jpeg-include-dir=%s/include \\
+                             --with-jpeg-lib-dir=%s/lib \\
+                             --prefix=%s""" % (self.prefix, self.prefix, self.prefix, self.prefix, self.prefix)
 
     def configure_linux(self):
         return """./configure --prefix=%s""" % self.prefix
@@ -97,13 +101,14 @@ class TiffPackage(Package):
 ###################################################################################
 
 class PngPackage(Package):
-    src_uri = 'http://prdownloads.sourceforge.net/libpng/libpng-1.4.5.tar.gz'
-    workdir = 'libpng-1.4.5'
+    src_uri = 'http://sourceforge.net/projects/libpng/files/libpng14/1.4.9/libpng-1.4.9.tar.gz'
+    workdir = 'libpng-1.4.9'
     
     def configure_darwin(self):
         return """./configure --disable-dependency-tracking \\
                              --enable-static=no \\
-                             --prefix=%s""" % self.prefix
+                             --with-zlib-prefix=%s \\
+                             --prefix=%s""" % (self.prefix, self.prefix)
 
     def configure_linux(self):
         return """./configure --enable-static=no \\
@@ -125,8 +130,8 @@ class SlibPackage(Package):
 ###################################################################################################
         
 class ZlibPackage(Package):
-    src_uri = 'http://zlib.net/zlib-1.2.5.tar.gz'
-    workdir = 'zlib-1.2.5'
+    src_uri = 'http://zlib.net/zlib-1.2.6.tar.gz'
+    workdir = 'zlib-1.2.6'
     
     def unpack(self):
         Package.unpack(self)
@@ -141,9 +146,9 @@ class ZlibPackage(Package):
 ###################################################################################################
 
 class Hdf5Package(Package):
-    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.7.tar.gz'
+    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.8.tar.gz'
     #correctMD5sum = 'df131d156634608e4a7bf26baeafc940'
-    workdir ='hdf5-1.8.7'
+    workdir ='hdf5-1.8.8'
     
     def unpack(self):
         Package.unpack(self)
@@ -151,7 +156,8 @@ class Hdf5Package(Package):
     def configure_darwin(self):
         return """./configure --disable-dependency-tracking \\
                              --enable-static=no \\
-                             --prefix='%s'""" % self.prefix
+                             --with-zlib=%s \\
+                             --prefix='%s'""" % (self.prefix, self.prefix)
 
     def configure_linux(self):
         return """./configure --enable-static=no \\
@@ -160,8 +166,8 @@ class Hdf5Package(Package):
 ###################################################################################################
 
 class BoostPackage(Package):
-    src_uri = 'http://downloads.sourceforge.net/project/boost/boost/1.45.0/boost_1_45_0.tar.bz2'
-    workdir = 'boost_1_45_0'
+    src_uri = 'http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.bz2'
+    workdir = 'boost_1_49_0'
     
     #def unpack(self):
     #    pass
@@ -174,8 +180,9 @@ class BoostPackage(Package):
             os.environ["CC"]  = gcc#+" -arch x86_64"
             os.environ["CXX"] = gpp#+" -arch x86_64"
         cmd = """./bootstrap.sh --prefix=%s \\
+        						--libdir==%s/lib \\
                                 --with-python=%s \\
-                                --with-libraries=python""" % (self.prefix, pythonExecutable)
+                                --with-libraries=python""" % (self.prefix, self.prefix, pythonExecutable)
         self.system(cmd)
         if platform.system() == "Darwin":
             os.environ["CC"]  = self.oldCC
@@ -185,23 +192,22 @@ class BoostPackage(Package):
         pass
     
     def makeInstall(self):
-        self.system("./bjam install --prefix=%s" % self.prefix)
+        self.system("./bjam install --prefix=%s toolset=darwin address-model=64 macosx-version-min=10.6 cxxflags='-arch x86_64'" % self.prefix)
 
 ################################################################################
 
 class PythonPackage(Package):
-    src_uri = 'http://www.python.org/ftp/python/2.7.1/Python-2.7.1.tar.bz2'
-    workdir = 'Python-2.7.1'
+    src_uri = 'http://python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2'
+    workdir = 'Python-2.7.2'
     #patches=['patch-Mac-PythonLauncher-Makefile.in.diff']
     
     def unpack(self):
         Package.unpack(self)
     
     def configure_darwin(self):
-        return """DESTDIR=%s \\
-                 ./configure --prefix=%s \\
+        return """./configure --prefix=%s \\
                              --enable-framework=%s/Frameworks \\
-               """ % (self.prefix,self.prefix,self.prefix)
+               """ % (self.prefix,self.prefix)
 
     def configure_linux(self):
         return "DESTDIR=%s ./configure --prefix=%s --enable-shared" \
@@ -210,31 +216,44 @@ class PythonPackage(Package):
     def make(self):
         if platform.system() == 'Darwin':
             self.system("find . -name Makefile | xargs -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
-     	self.system("make DESTDIR=%s" % self.prefix)
-     	
+     	self.system("make")
+
     def makeInstall(self):
-        self.system("make install DESTDIR=''")
-    
+        self.system("make install")
+    	pass
 ##################################################################################
 
 class NosePackage(Package):
-    src_uri ='http://pkgs.fedoraproject.org/repo/pkgs/python-nose/nose-1.0.0.tar.gz/9542d4c66e04880d8144990de76e0b88/nose-1.0.0.tar.gz'
-    workdir = 'nose-1.0.0'
+    src_uri ='http://pkgs.fedoraproject.org/repo/pkgs/python-nose/nose-1.1.2.tar.gz/144f237b615e23f21f6a50b2183aa817/nose-1.1.2.tar.gz'
+    workdir = 'nose-1.1.2'
     
     def unpack(self):
         Package.unpack(self)
     def configure(self):
         pass
-    def make(self):        
+    def make(self):     
+        self.system(pythonExecutable+" setup.py build")
+    def makeInstall(self):
+        self.system(pythonExecutable+" setup.py install")
+        
+class BlistPackage(Package):
+    src_uri ='http://pypi.python.org/packages/source/b/blist/blist-1.3.4.tar.gz#md5=02e8bf33cffec9cc802f4567f39ffa6f'
+    workdir = 'blist-1.3.4'
+    
+    def unpack(self):
+        Package.unpack(self)
+    def configure(self):
         pass
+    def make(self):     
+        self.system(pythonExecutable+" setup.py build")
     def makeInstall(self):
         self.system(pythonExecutable+" setup.py install")
 
 ###################################################################################################
 
 class NumpyPackage(Package):
-    src_uri = 'http://sourceforge.net/projects/numpy/files/NumPy/1.5.1/numpy-1.5.1.tar.gz'
-    workdir = 'numpy-1.5.1'
+    src_uri = 'http://sourceforge.net/projects/numpy/files/NumPy/1.6.1/numpy-1.6.1.tar.gz'
+    workdir = 'numpy-1.6.1'
     
     def configure(self):
         pass
@@ -248,10 +267,10 @@ class NumpyPackage(Package):
 ######################################################################################        
 
 class QtPackage(Package):
-    src_uri = 'http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.7.2.tar.gz'
-    correctMD5sum = '66b992f5c21145df08c99d21847f4fdb'
-    workdir = 'qt-everywhere-opensource-src-4.7.2'
-    patches = ['qtbug-15370.patch']
+    src_uri = 'http://download.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.0.tar.gz'
+    #correctMD5sum = 'e8a5fdbeba2927c948d9f477a6abe904'
+    workdir = 'qt-everywhere-opensource-src-4.8.0'
+    #patches = ['qtbug-15370.patch']
     
     def unpack(self):
         Package.unpack(self)
@@ -268,24 +287,6 @@ class QtPackage(Package):
         cmd = """echo 'yes' | ./configure %s \\
         -opensource \\
         -arch x86_64 \\
-        -optimized-qmake\\
-        -nomake examples\\
-        -nomake demos\\
-        -nomake docs\\
-        -nomake translations\\
-        -nomake tools\\
-        -no-multimedia -no-xmlpatterns -no-svg -no-audio-backend -no-phonon -no-phonon-backend -no-svg -no-webkit\\
-        -no-openssl\\
-        -no-declarative -no-declarative-debug\\
-        -no-script -no-scripttools -no-javascript-jit\\
-        -no-sql-sqlite -no-sql-sqlite2 -no-sql-psql -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci\\
-        -no-sql-odbc -no-sql-sqlite_symbian -no-sql-tds\\
-        -no-pch\\
-        -no-dbus\\
-        -no-cups\\
-        -no-nis\\
-        -qt-libpng\\
-        -fast -release -shared -no-accessibility\\
         --prefix=%s""" % (macosxspecial,self.prefix,)
         self.system(cmd)
         
@@ -300,14 +301,13 @@ class QtPackage(Package):
 ###########################################################################################################
 
 class PyQtPackage(Package):
-    src_uri = "http://pkgs.fedoraproject.org/repo/pkgs/PyQt4/PyQt-x11-gpl-4.8.4.tar.gz/97c5dc1042feb5b3fe20baabad055af1/PyQt-x11-gpl-4.8.4.tar.gz"
-    correctMD5sum = '97c5dc1042feb5b3fe20baabad055af1'
-    workdir = 'PyQt-x11-gpl-4.8.4'
+    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-4.9.1.tar.gz"
+    #correctMD5sum = '97c5dc1042feb5b3fe20baabad055af1'
+    workdir = 'PyQt-mac-gpl-4.9.1'
 
     def configure_darwin(self):
         return """%s configure.py \\
         --confirm-license \\
-        --no-designer-plugin \\
         -q %s/bin/qmake \\
         --use-arch=x86_64""" % (pythonExecutable, self.prefix)
 
@@ -320,12 +320,12 @@ class PyQtPackage(Package):
 ##########################################################################################################
 
 class SipPackage(Package):
-    src_uri = 'http://pkgs.fedoraproject.org/repo/pkgs/sip/sip-4.12.3.tar.gz/d0f1fa60494db04b4d115d4c2d92f79e/sip-4.12.3.tar.gz'
+    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.2.tar.gz'
     correctMD5sum = 'd0f1fa60494db04b4d115d4c2d92f79e'
-    workdir = 'sip-4.12.3'
+    workdir = 'sip-4.13.2'
     
     def configure_darwin(self):
-        return pythonExecutable+" configure.py --arch=x86_64 -s MacOSX10.6.sdk" # +self.prefix + "/include/sip "
+        return pythonExecutable+" configure.py --arch=x86_64 --deployment-target=10.6" # +self.prefix + "/include/sip "
     
     def configure_linux(self):
         return pythonExecutable+" configure.py" # +self.prefix + "/include/sip "
@@ -333,16 +333,17 @@ class SipPackage(Package):
 ############################################################################################################
 
 class H5pyPackage(Package):
-    src_uri = 'http://h5py.googlecode.com/files/h5py-1.3.1.tar.gz'
+    src_uri = 'http://h5py.googlecode.com/files/h5py-2.0.1.tar.gz'
     
-    workdir = 'h5py-1.3.1'
+    workdir = 'h5py-2.0.1'
     
     def configure(self):
-        cmd = pythonExecutable+" setup.py configure --hdf5=" + self.prefix
-        self.system(cmd)
-    
+        #cmd = pythonExecutable+" setup.py configure --hdf5=" + self.prefix
+        #self.system(cmd)
+    	pass
+    	
     def make(self):
-        cmd = pythonExecutable+" setup.py build"
+        cmd = pythonExecutable+" setup.py build --hdf5=" + self.prefix
         self.system(cmd)
         
     def makeInstall(self):
@@ -352,7 +353,7 @@ class H5pyPackage(Package):
 
 class GreenletPackage(Package):
     src_uri = 'http://pypi.python.org/packages/source/g/greenlet/greenlet-0.3.1.tar.gz'
-    correctMD5sum = '8d75d7f3f659e915e286e1b0fa0e1c4d'
+    #correctMD5sum = '8d75d7f3f659e915e286e1b0fa0e1c4d'
     workdir = 'greenlet-0.3.1'
     
     def configure(self):
@@ -450,13 +451,13 @@ class Qimage2ndarrayPackage(Package):
 ################################################################################################
 
 class VTKGitPackage(Package):
-    src_uri = "git://vtk.org/VTK.git"
+    src_uri = "http://www.vtk.org/files/release/5.8/vtk-5.8.0.tar.gz"
     workdir = 'VTK'
     
     def unpack(self):
-        Package.unpack(self, copyToWork=False)
+        Package.unpack(self, copyToWork=True)
     
-    def configure(self):
+    def configure_darwin(self):
         cmd = cmake + """\\
         -DVTK_PYTHON_SETUP_ARGS=--prefix='%s'\\
         -DSIP_EXECUTABLE:FILEPATH=%s/sip\\
@@ -504,30 +505,28 @@ class VTKGitPackage(Package):
         -DVTK_WRAP_UI=ON \\
         -DVTK_USE_TK:BOOL=OFF \\
         -DDESIRED_QT_VERSION=4 \\
-        ../../distfiles/VTK""" % (pythonVersionPath, pythonBinaryPath, pythonIncludePath, pythonSharePath, \
+        ../../work/VTK""" % (pythonVersionPath, pythonBinaryPath, pythonIncludePath, pythonSharePath, \
         pythonExecutable, pythonIncludePath, pythonLibrary, \
         self.prefix)
         self.system(cmd)
-
-    def makeInstall(self):
         cmd = "make install"
         if platform.system() != "Darwin":
             #FIXME: on 'make install', cmake complains about this missing file
             #why?
             self.system("touch Utilities/metaIOConfig.h")
             cmd = "LD_LIBRARY_PATH=%s make install" % (self.prefix + "/lib",)
-        self.system(cmd)
+        self.system(cmd)        
 
 
 #####################################################################################################################################
 
 class LISPackage(Package):
-    src_uri = 'http://www.ssisc.org/lis/dl/lis-1.2.53.tar.gz'
+    src_uri = 'http://www.ssisc.org/lis/dl/lis-1.2.62.tar.gz'
     correctMD5sum = '275597239e7c47ab5aadeee7b7e2c6ce'
-    workdir = 'lis-1.2.53'
+    workdir = 'lis-1.2.62'
     
     def configure_darwin(self):
-        return './configure --enable-omp --prefix=%s --enable-shared=yes' % (self.prefix)
+        return './configure --enable-omp --prefix=%s --enable-shared=yes --enable-64bit' % (self.prefix)
         
     def configure_linux(self):
         return './configure --enable-omp --prefix=%s --enable-shared=yes' % (self.prefix)
@@ -686,7 +685,7 @@ class PriowsGitPackage(Package):
 ###################################################################################################
 
 class VigraPackage(Package):
-    src_uri = 'git@github.com:ukoethe/vigra.git'
+    src_uri = 'git://github.com/ukoethe/vigra.git'
     workdir = 'vigra'
     
     def configure(self):
@@ -718,6 +717,7 @@ class VigraPackage(Package):
         
         #reconfigure now that we have added the private dir!
         self.system(cmd)
-        
+
     def make(self, parallel = multiprocessing.cpu_count()):
-        self.system(make + " -j" + str(parallel))
+        self.system(make)
+
