@@ -108,6 +108,7 @@ class BatchProcess(QtGui.QDialog):
 
     def cb_toggle_tiled_mode(self):
         if self.tiledProcessing.checkState():
+            self.writePrediction.setChecked(True)
             self.writeSegmentation.setEnabled(False)
             self.writeUncertainty.setEnabled(False)
             self.writePrediction.setEnabled(False)
