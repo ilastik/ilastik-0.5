@@ -485,7 +485,7 @@ class BatchProcessCore(object):
                     srcend = dataItemImage._readEnd
                     destshape = dataItemImage._writeShape
                 dataItemImage.module['Classification'].serializeCustom(hdfGroup, destbegin, destend, srcbegin, srcend, destshape, writeLabels=False)
-          
+
         # tiled processing only supports h5        
         if self.batchOptions.tiledProcessing:
             if self.batchOptions.rawResults or self.batchOptions.pngResults:

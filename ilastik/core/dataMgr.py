@@ -322,7 +322,7 @@ class DataItemImage(DataItemBase):
     
     def serialize(self, h5G, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
         if destend != (0,0,0):
-            self._dataVol.serialize(h5G, destbegin, destend, srcbegin, srcend, destshape)
+            self._dataVol.serialize(h5G, 'data', destbegin, destend, srcbegin, srcend, destshape)
         elif self._writeEnd != (0,0,0):
             
             destbegin = self._writeBegin

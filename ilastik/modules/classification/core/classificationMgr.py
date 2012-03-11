@@ -138,6 +138,18 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         #for now save the labels and prediction in the old format
         #TODO: change that when we are certain about the new project file format
         print " - Serializing " + str(self) + ": " + str(destbegin) + ".." + str(destend) + ", " + str(srcbegin) + ".." + str(srcend) + ", " + str(destshape)
+        if destend != (0,0,0):
+            self.dataItemImage._dataVol.serialize(h5g, 'data', destbegin, destend, srcbegin, srcend, destshape)
+        elif self.dataItemImage._writeEnd != (0,0,0):
+            
+            destbegin = self.dataItemImage._writeBegin
+            destend =  self.dataItemImage._writeEnd
+            srcbegin =  self.dataItemImage._readBegin
+            srcend =  self.dataItemImage._readEnd
+            destshape = self.dataItemImage._writeShape
+            
+            self.dataItemImage._dataVol.serialize(h5g, "data", destbegin, destend, srcbegin, srcend, destshape)
+        
         descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"] 
         vl = VolumeLabels(self.dataItemImage.overlayMgr["Classification/Labels"]._data)
         vl.descriptions = descriptions                                                  
