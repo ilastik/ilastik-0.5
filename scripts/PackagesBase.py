@@ -136,7 +136,9 @@ class Package:
         
     def unpack(self, copyToWork=True):
         print "* unpacking ", self.filename, "to", 'work' + '/' + self.workdir
-        if os.path.exists('work' + '/' + self.workdir): shutil.rmtree('work' + '/' + self.workdir)
+        if os.path.exists('work' + '/' + self.workdir): 
+        	#return  
+        	shutil.rmtree('work' + '/' + self.workdir)
 
         if  self.src_uri.endswith('.git') or self.src_uri.startswith('hg://') or self.src_uri[0:6] == "file:/":
             if copyToWork:
@@ -149,7 +151,7 @@ class Package:
                 print "* Creating empty work directory via '%s'" % cmd
                 os.system(cmd)
         
-        if self.filename.find('.tar') > -1:
+        if self.filename.find('.tar') > -1 or self.filename.find('.tgz') > -1:
 
             tar = tarfile.open('distfiles/' + self.filename)
             tar.extractall('work')

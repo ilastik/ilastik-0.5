@@ -40,8 +40,8 @@ __builtin__.installDir=os.environ["HOME"]+"/ilastik-build"
 
 __builtin__.pythonVersion="2.7"
 
-__builtin__.gcc="/usr/bin/llvm-gcc"
-__builtin__.gpp="/usr/bin/llvm-g++"
+__builtin__.gcc="gcc-4.2"
+__builtin__.gpp="g++-4.2"
 __builtin__.ls="/bin/ls"
 __builtin__.cd="cd"
 __builtin__.make="/usr/bin/make"
@@ -127,27 +127,26 @@ if platform.system() == "Darwin":
     os.environ["EXEC_PREFIX"] 		   = ":" + pythonBinaryPath
     #for qt4.8
     #os.environ["CXXFLAGS"]  		   ="-fvisibility=hidden"
-    #os.environ["LD"]                   = "gcc-4.2"
+    #os.environ["LD"]                   = "gcc-4.2 -arch x86_64"
     #os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir)
     #os.environ["DYLD_LIBRARY_PATH"] = "%s/lib" % (installDir)
 else:
     os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir)
 ###################################################################################################
 
-all = ['python', 'zlib', 'slib', 
+all = ['readline', 'gdbm', 'python', 'zlib', 'slib', 
 	'fftw3f', 'fftw3', 'jpeg', 'tiff', 'png',
 	'setuptools','nose', 'py2app',
     'hdf5',
     'numpy', 'h5py', 'boost', 'sip',
     'lis', 'vigra', 
     'qt', 'pyqt', 'qimage2ndarray',
-    #'pyopenglaccellerate', 'pyopengl',
-    #'enthoughtbase', 'traits', 'traitsgui', 'traitsbackendqt',
     'vtk',
     'greenlet',
     'blist',
     'psutil',
-    'fixes']
+    #'fixes'
+    ]
 
 #if platform.system() == "Darwin":
 #    all.append('py2app')
@@ -169,126 +168,141 @@ if 'from' in c:
     for i in range(index,len(all)):
         print all[i]
         c.append(all[i])
- 
-if 'fftw3f' in c:
-	FFTW3F()
-if 'fftw3' in c:
-	FFTW3()
-if 'jpeg' in c:
-	JpegPackage()
-if 'tiff' in c:
-	TiffPackage()
-if 'zlib' in c:
-    ZlibPackage()
-if 'png' in c:
-	PngPackage()
-if 'slib' in c:
-	SlibPackage()
+
+for p in c:
+        
+	if 'readline' == p:
+		ReadlinePackage()
+	elif 'gdbm'  == p:
+		GdbmPackage()
+	elif 'ipython'  == p:
+		ipythonPackage()
+	elif 'zlib'  == p:
+	    ZlibPackage()
+	elif 'slib'  == p:
+		SlibPackage()
+	elif 'fftw3f'  == p:
+		FFTW3F()
+	elif 'fftw3'  == p:
+		FFTW3()
+	elif 'jpeg'  == p:
+		JpegPackage()
+	elif 'tiff'  == p:
+		TiffPackage()
+	elif 'png'  == p:
+		PngPackage()
 	
 # # # # # # # # # # # # #
-os.environ["PYTHONPATH"] = pythonSitePackages #installDir+"/bin:" + pythonSitePackages
-# /Users/opetra/ilastik-build/Frameworks/Python.framework/Versions/2.7/lib//python2.7/
-#add python binaries to system search path, make sure they are found before /usr/bin and /bin
-os.environ["PATH"]       = pythonBinaryPath + ":" + os.environ["PATH"]
+	os.environ["PYTHONPATH"] = pythonSitePackages #installDir+"/bin:" + pythonSitePackages
+	# /Users/opetra/ilastik-build/Frameworks/Python.framework/Versions/2.7/lib//python2.7/
+	#add python binaries to system search path, make sure they are found before /usr/bin and /bin
+	os.environ["PATH"]       = pythonBinaryPath + ":" + os.environ["PATH"]
 
-if 'env' in c:
-    for k,v in os.environ.iteritems():
-		print k,v
+	elif 'env'  == p:
+    	for k,v in os.environ.iteritems():
+			print k,v
 
-if 'python' in c:
-	PythonPackage()
-if 'setuptools' in c:
-    SetuptoolsPackage()
-if 'nose' in c:
-	NosePackage()
-if platform.system() == "Darwin":
-    if 'py2app' in c:
-        Py2appPackage()
+	elif 'python'  == p:
+		PythonPackage()
+	elif 'setuptools'  == p:
+    	SetuptoolsPackage()
+	elif 'nose'  == p:
+		NosePackage()
+	if platform.system() == "Darwin":
+    	if 'py2app'  == p:
+        	Py2appPackage()
 
 # # # # # # # # # # # # #
 	
-if 'hdf5' in c:
-	Hdf5Package()
+	elif 'hdf5'  == p:
+		Hdf5Package()
 
 # # # # # # # # # # # # #
 
-if 'numpy' in c:
-	NumpyPackage()
-if 'h5py' in c:
-	H5pyPackage()
-if 'boost' in c:
-	BoostPackage()
-if 'sip' in c:
-	SipPackage()
+	elif 'numpy'  == p:
+		NumpyPackage()
+	elif 'h5py'  == p:
+		H5pyPackage()
+	elif 'boost'  == p:
+		BoostPackage()
+	elif 'sip'  == p:
+		SipPackage()
 
 # # # # # # # # # # # # #	
 	
-if 'lis' in c:
-    LISPackage()
-if 'vigra' in c:
-    ##############################################CStraehlePackage()
-    VigraPackage()
+	elif 'lis'  == p:
+    	LISPackage()
+	elif 'vigra'  == p:
+    	##############################################CStraehlePackage()
+    	VigraPackage()
     
 # # # # # # # # # # # # #
 
-if 'qt' in c:
-	QtPackage()
-if 'pyqt' in c:
-	PyQtPackage()
-if 'qimage2ndarray' in c:
-	Qimage2ndarrayPackage()
+	elif 'qt'  == p:
+		QtPackage()
+	elif 'pyqt'  == p:
+		PyQtPackage()
+	elif 'qimage2ndarray'  == p:
+		Qimage2ndarrayPackage()
 	
 # # # # # # # # # # # # #
 
-if 'pyopenglaccellerate' in c:
-	PyOpenGLAccelleratePackage()#
-if 'pyopengl' in c:
-	PyOpenGLPackage()
+	elif 'pyopenglaccellerate'  == p:
+		PyOpenGLAccelleratePackage()#
+	elif 'pyopengl'  == p:
+		PyOpenGLPackage()
 
 # # # # # # # # # # # # #
 
-if 'enthoughtbase' in c:
-	EnthoughtBasePackage()
-if 'traits' in c:
-	TraitsPackage()
-if 'traitsgui' in c:
-	TraitsGUIPackage()
-if 'traitsbackendqt' in c:
-	TraitsBackendQtPackage()
+	elif 'enthoughtbase'  == p:
+		EnthoughtBasePackage()
+	elif 'traits'  == p:
+		TraitsPackage()
+	elif 'traitsgui'  == p:
+		TraitsGUIPackage()
+	elif 'traitsbackendqt'  == p:
+		TraitsBackendQtPackage()
 
 # # # # # # # # # # # # #
 
-if 'vtk' in c:
-	VTKGitPackage()
+	elif 'vtk'  == p:
+		VTKGitPackage()
 
 # # # # # # # # # # # # #
 #New Stuff for the Graph
 
 
-if "greenlet" in c:
-    GreenletPackage()
+	elif "greenlet"  == p:
+    	GreenletPackage()
 
-if "psutil" in c:
-    PsutilPackage()
+	elif "psutil"  == p:
+    	PsutilPackage()
     
-if "blist" in c:
-	BlistPackage()
+	elif "blist"  == p:
+		BlistPackage()
     
 
 
 
 #########################
+	elif "drtile"  == p:
+		cmd = """ %s /Users/opetra/hci/repositories/lazyflow/lazyflow/drtile
+		""" % (cmake)
+		os.system(cmd)
+	
+	elif ('fixes'  == p) and ('download' not in sys.argv[0]):
+    	if platform.system() == "Darwin":
+        	cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
+        	print "Workaround #1: ", cmd
+        	os.system(cmd)
+    
+    	cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
+    	print "Workaround #2: ", cmd
+    	os.system(cmd)
+    
+    	cmd = "cp -rv work/vigra/vigranumpy/src/core/vigranumpycore.so "+installDir+"/lib"
+    	print "Workaround #3: ", cmd
+    	os.system(cmd)    
 
-if ('fixes' in c) and ('download' not in sys.argv[0]):
-    if platform.system() == "Darwin":
-        cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
-        print "Workaround #1: ", cmd
-        os.system(cmd)
-    
-    cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
-    print "Workaround #2: ", cmd
-    os.system(cmd)
-    
-    cmd = "cp -rv work/vigra/vigranumpy/src/core/vigranumpycore.so "+installDir+"/lib"
-    print "Workaround #3: ", cmd
-    os.system(cmd)    
+	else:
+		raise RuntimeError('=> 'p, ' <= Package does not exist')

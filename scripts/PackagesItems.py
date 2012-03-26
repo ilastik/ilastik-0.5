@@ -165,6 +165,55 @@ class Hdf5Package(Package):
 
 ###################################################################################################
 
+class ReadlinePackage(Package):
+    src_uri = 'http://ftp.u-tx.net/gnu/readline/readline-6.2.tar.gz'
+    workdir = 'readline-6.2'
+    patches = ['readline62-001.patch', 'readline62-002.patch']
+    
+    def configure(self):
+        
+        cmd = """./configure --prefix=%s --enable-multibyte""" % self.prefix
+        self.system(cmd)
+
+    def make(self):
+        pass
+    
+    def makeInstall(self):
+        self.system("make install")
+        
+class GdbmPackage(Package):
+    src_uri = 'ftp://ftp.gnu.org/gnu/gdbm/gdbm-1.10.tar.gz'
+    workdir = 'gdbm-1.10'
+    
+    def configure(self):
+        
+        cmd = """./configure --prefix=%s \\
+        --disable-dependency-tracking \\
+        """ % self.prefix
+        self.system(cmd)
+
+    def make(self):
+        pass
+    
+    def makeInstall(self):
+        self.system("make install")
+        
+class ipythonPackage(Package):
+	src_uri = 'http://archive.ipython.org/release/0.12/ipython-0.12.tar.gz'
+	workdir = 'ipython-0.12'
+	
+	def configure(self):
+		cmd = """%s setup.py build""" % (pythonExecutable)
+		self.system(cmd)
+	def make(self):
+		pass
+	def makeInstall(self):
+		cmd = """%s setup.py install""" % (pythonExecutable)
+		self.system(cmd)
+
+###################################################################################################
+
+
 class BoostPackage(Package):
     src_uri = 'http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.bz2'
     workdir = 'boost_1_49_0'
@@ -197,9 +246,8 @@ class BoostPackage(Package):
 ################################################################################
 
 class PythonPackage(Package):
-    src_uri = 'http://python.org/ftp/python/2.7.2/Python-2.7.2.tar.bz2'
-    workdir = 'Python-2.7.2'
-    #patches=['patch-Mac-PythonLauncher-Makefile.in.diff']
+    src_uri = 'http://www.python.org/ftp/python/2.7.3/Python-2.7.3rc1.tgz'
+    workdir = 'Python-2.7.3rc1'
     
     def unpack(self):
         Package.unpack(self)
@@ -214,10 +262,10 @@ class PythonPackage(Package):
                 % (self.prefix,self.prefix)
 
     def make(self):
-        if platform.system() == 'Darwin':
-            self.system("find . -name Makefile | xargs -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
-     	self.system("make")
-
+        #if platform.system() == 'Darwin':
+        #    self.system("find . -name Makefile | xargs -n1 sed -i '.bkp' -e \"s|PYTHONAPPSDIR=/Applications/|PYTHONAPPSDIR=%s/Applications/|g\"" %  self.prefix)
+     	#self.system("make")
+		pass
     def makeInstall(self):
         self.system("make install")
     	pass
@@ -268,9 +316,8 @@ class NumpyPackage(Package):
 
 class QtPackage(Package):
     src_uri = 'http://download.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.0.tar.gz'
-    #correctMD5sum = 'e8a5fdbeba2927c948d9f477a6abe904'
     workdir = 'qt-everywhere-opensource-src-4.8.0'
-    #patches = ['qtbug-15370.patch']
+    patches = ['qtbug-15370.patch']
     
     def unpack(self):
         Package.unpack(self)
@@ -285,17 +332,16 @@ class QtPackage(Package):
 
         
         cmd = """echo 'yes' | ./configure %s \\
+        --prefix=%s \\
         -opensource \\
-        -arch x86_64 \\
-        --prefix=%s""" % (macosxspecial,self.prefix,)
+        -arch x86_64 """ % (macosxspecial,self.prefix)
         self.system(cmd)
         
     def make(self, parallel = multiprocessing.cpu_count()):
         self.system(make + " -j" + str(parallel))
         
         #Also install Designer, which is needed by VTK
-        self.system(("cd tools/designer && ../../bin/qmake && %s -j"
-                     + str(parallel) + " && %s install")
+        self.system(("cd tools/designer && ../../bin/qmake && %s " + " && %s install")
                     % (make, make))
         
 ###########################################################################################################
@@ -309,7 +355,8 @@ class PyQtPackage(Package):
         return """%s configure.py \\
         --confirm-license \\
         -q %s/bin/qmake \\
-        --use-arch=x86_64""" % (pythonExecutable, self.prefix)
+        --use-arch=x86_64 \\
+        --verbose """ % (pythonExecutable, self.prefix)
 
     def configure_linux(self):
         return """%s configure.py \\
@@ -689,7 +736,7 @@ class VigraPackage(Package):
     workdir = 'vigra'
     
     def configure(self):
-        self.system("git checkout 608c3521d8e9c6ee4b7297b8ebbef79e4108a623")
+        #self.system("git checkout 608c3521d8e9c6ee4b7297b8ebbef79e4108a623")
         dylibext = "dylib"
         if platform.system() != "Darwin":
             dylibext = "so"
@@ -704,18 +751,9 @@ class VigraPackage(Package):
         -DPYTHON_LIBRARY:FILEPATH=%s \\
         -DPYTHON_LIBRARIES:FILEPATH=%s \\
         -DPYTHON_INCLUDE_PATH:PATH=%s \\
-        -DPYTHON_INCLUDE_DIR:PATH=%s \\
-        -DLIS_INCLUDE_DIR=%s/include \\
-        -DLIS_LIBRARY=%s/lib/liblis.%s\\
+        -DPYTHON_INCLUDE_DIR:PATH=%s\\
         """ % (cmake, self.prefix, self.prefix, self.prefix, \
-               pythonExecutable, pythonLibrary, pythonLibrary, pythonIncludePath, pythonIncludePath, \
-               self.prefix, self.prefix, dylibext,)
-        self.system(cmd)
-        
-        os.system('cd work/vigra && patch --forward -p0 < ../../files/vigra_include_private.patch')
-        #############self.system('cd vigranumpy && cp -r ../../cstraehl-vigranumpy private')
-        
-        #reconfigure now that we have added the private dir!
+               pythonExecutable, pythonLibrary, pythonLibrary, pythonIncludePath, pythonIncludePath)
         self.system(cmd)
 
     def make(self, parallel = multiprocessing.cpu_count()):

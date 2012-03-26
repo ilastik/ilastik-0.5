@@ -1,0 +1,91 @@
+From 448ab7cd150ab7bb7d12bcac76bc2ce1c72298bd Mon Sep 17 00:00:00 2001
+From: Mike McQuaid <mike.mcquaid@kdab.com>
+Date: Tue, 17 Jan 2012 16:44:00 +0000
+Subject: [PATCH] Add missing llvm-gcc-4.2 SSE 4.2 intrinsics.
+
+Change-Id: Iea6ca8fe764de85a7bb3d955384e72762163db1e
+Reviewed-by: Thiago Macieira <thiago.macieira@intel.com>
+---
+ src/corelib/tools/qsimd_p.h |   66 +++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 66 insertions(+), 0 deletions(-)
+
+diff --git a/src/corelib/tools/qsimd_p.h b/src/corelib/tools/qsimd_p.h
+index 2fc6d88..785564b 100644
+--- src/corelib/tools/qsimd_p.h
++++ src/corelib/tools/qsimd_p.h
+@@ -95,6 +95,72 @@ QT_BEGIN_HEADER
+ // SSE4.2 intrinsics
+ #if defined(QT_HAVE_SSE4_2) && (defined(__SSE4_2__) || defined(Q_CC_MSVC))
+ #include <nmmintrin.h>
++
++// Add missing intrisics in some compilers (e.g. llvm-gcc)
++#ifndef _SIDD_UBYTE_OPS
++#define _SIDD_UBYTE_OPS                 0x00
++#endif
++
++#ifndef _SIDD_UWORD_OPS
++#define _SIDD_UWORD_OPS                 0x01
++#endif
++
++#ifndef _SIDD_SBYTE_OPS
++#define _SIDD_SBYTE_OPS                 0x02
++#endif
++
++#ifndef _SIDD_SWORD_OPS
++#define _SIDD_SWORD_OPS                 0x03
++#endif
++
++#ifndef _SIDD_CMP_EQUAL_ANY
++#define _SIDD_CMP_EQUAL_ANY             0x00
++#endif
++
++#ifndef _SIDD_CMP_RANGES
++#define _SIDD_CMP_RANGES                0x04
++#endif
++
++#ifndef _SIDD_CMP_EQUAL_EACH
++#define _SIDD_CMP_EQUAL_EACH            0x08
++#endif
++
++#ifndef _SIDD_CMP_EQUAL_ORDERED
++#define _SIDD_CMP_EQUAL_ORDERED         0x0c
++#endif
++
++#ifndef _SIDD_POSITIVE_POLARITY
++#define _SIDD_POSITIVE_POLARITY         0x00
++#endif
++
++#ifndef _SIDD_NEGATIVE_POLARITY
++#define _SIDD_NEGATIVE_POLARITY         0x10
++#endif
++
++#ifndef _SIDD_MASKED_POSITIVE_POLARITY
++#define _SIDD_MASKED_POSITIVE_POLARITY  0x20
++#endif
++
++#ifndef _SIDD_MASKED_NEGATIVE_POLARITY
++#define _SIDD_MASKED_NEGATIVE_POLARITY  0x30
++#endif
++
++#ifndef _SIDD_LEAST_SIGNIFICANT
++#define _SIDD_LEAST_SIGNIFICANT         0x00
++#endif
++
++#ifndef _SIDD_MOST_SIGNIFICANT
++#define _SIDD_MOST_SIGNIFICANT          0x40
++#endif
++
++#ifndef _SIDD_BIT_MASK
++#define _SIDD_BIT_MASK                  0x00
++#endif
++
++#ifndef _SIDD_UNIT_MASK
++#define _SIDD_UNIT_MASK                 0x40
++#endif
++
+ #endif
+ 
+ // AVX intrinsics
+-- 
+1.7.6
+
