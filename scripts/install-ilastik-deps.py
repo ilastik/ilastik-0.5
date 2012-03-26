@@ -35,7 +35,7 @@ import platform
 import urllib2, os, sys, tarfile, shutil
 from hashlib import md5
 
-__builtin__.installDir=os.environ["HOME"]+"/ilastik-build"
+__builtin__.installDir=os.environ["HOME"]+"/ilastik-build-test"
 #__builtin__.installDir = os.environ["HOME"]
 
 __builtin__.pythonVersion="2.7"
@@ -192,25 +192,25 @@ for p in c:
 	elif 'png'  == p:
 		PngPackage()
 	
-# # # # # # # # # # # # #
+    # # # # # # # # # # # # #
 	os.environ["PYTHONPATH"] = pythonSitePackages #installDir+"/bin:" + pythonSitePackages
 	# /Users/opetra/ilastik-build/Frameworks/Python.framework/Versions/2.7/lib//python2.7/
 	#add python binaries to system search path, make sure they are found before /usr/bin and /bin
 	os.environ["PATH"]       = pythonBinaryPath + ":" + os.environ["PATH"]
 
-	elif 'env'  == p:
-    	for k,v in os.environ.iteritems():
+	if 'env'  == p:
+		for k,v in os.environ.iteritems():
 			print k,v
-
+			
 	elif 'python'  == p:
 		PythonPackage()
 	elif 'setuptools'  == p:
-    	SetuptoolsPackage()
+		SetuptoolsPackage()
 	elif 'nose'  == p:
 		NosePackage()
 	if platform.system() == "Darwin":
-    	if 'py2app'  == p:
-        	Py2appPackage()
+		if 'py2app'  == p:
+			Py2appPackage()
 
 # # # # # # # # # # # # #
 	
@@ -231,10 +231,10 @@ for p in c:
 # # # # # # # # # # # # #	
 	
 	elif 'lis'  == p:
-    	LISPackage()
+		LISPackage()
 	elif 'vigra'  == p:
-    	##############################################CStraehlePackage()
-    	VigraPackage()
+		##############################################CStraehlePackage()
+		VigraPackage()
     
 # # # # # # # # # # # # #
 
@@ -273,11 +273,9 @@ for p in c:
 
 
 	elif "greenlet"  == p:
-    	GreenletPackage()
-
+		GreenletPackage()
 	elif "psutil"  == p:
-    	PsutilPackage()
-    
+		PsutilPackage()
 	elif "blist"  == p:
 		BlistPackage()
     
@@ -291,10 +289,10 @@ for p in c:
 		os.system(cmd)
 	
 	elif ('fixes'  == p) and ('download' not in sys.argv[0]):
-    	if platform.system() == "Darwin":
-        	cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
-        	print "Workaround #1: ", cmd
-        	os.system(cmd)
+		if platform.system() == "Darwin":
+			cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
+			print "Workaround #1: ", cmd
+			os.system(cmd)
     
     	cmd = "mv %s/PyQt4/uic/port_v3 %s/PyQt4/uic/_port_v3" % (pythonSitePackages, pythonSitePackages)
     	print "Workaround #2: ", cmd
@@ -302,7 +300,7 @@ for p in c:
     
     	cmd = "cp -rv work/vigra/vigranumpy/src/core/vigranumpycore.so "+installDir+"/lib"
     	print "Workaround #3: ", cmd
-    	os.system(cmd)    
+    	os.system(cmd)
 
-	else:
-		raise RuntimeError('=> 'p, ' <= Package does not exist')
+#    else:
+#    	raise RuntimeError('=> 'p, ' <= Package does not exist')
