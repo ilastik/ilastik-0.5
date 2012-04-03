@@ -40,8 +40,8 @@ __builtin__.installDir=os.environ["HOME"]+"/ilastik-build-test"
 
 __builtin__.pythonVersion="2.7"
 
-__builtin__.gcc="gcc-4.2"
-__builtin__.gpp="g++-4.2"
+__builtin__.gcc="gcc"
+__builtin__.gpp="g++"
 __builtin__.ls="/bin/ls"
 __builtin__.cd="cd"
 __builtin__.make="/usr/bin/make"
@@ -110,8 +110,8 @@ if platform.system() == "Darwin":
     #Packages that use setuptools have to know where Python is installed
     #see: http://stackoverflow.com/questions/3390558/installing-setuptools-in-a-private-version-of-python
     os.environ["FRAMEWORK_PATH"]       = installDir+"/Frameworks"
-    os.environ["CC"]                   = "gcc-4.2 -arch x86_64"
-    os.environ["CXX"]                  = "g++-4.2 -arch x86_64"
+    os.environ["CC"]                   = "gcc -arch x86_64"
+    os.environ["CXX"]                  = "g++ -arch x86_64"
     #see http://www.scipy.org/Installing_SciPy/Mac_OS_X
     #Quote from the above:
     #  "The default C compiler on Lion is llvm-gcc-4.2, which has so far proven to be problematic.
@@ -214,7 +214,7 @@ for p in c:
 
 # # # # # # # # # # # # #
 	
-	elif 'hdf5'  == p:
+	if 'hdf5'  == p:
 		Hdf5Package()
 
 # # # # # # # # # # # # #
@@ -287,7 +287,7 @@ for p in c:
 		cmd = """ %s /Users/opetra/hci/repositories/lazyflow/lazyflow/drtile
 		""" % (cmake)
 		os.system(cmd)
-	
+'''	
 	elif ('fixes'  == p) and ('download' not in sys.argv[0]):
 		if platform.system() == "Darwin":
 			cmd = "cp -rv work/" + QtPackage.workdir + "/src/gui/mac/qt_menu.nib "+installDir+"/lib"
@@ -301,6 +301,6 @@ for p in c:
     	cmd = "cp -rv work/vigra/vigranumpy/src/core/vigranumpycore.so "+installDir+"/lib"
     	print "Workaround #3: ", cmd
     	os.system(cmd)
-
+'''
 #    else:
 #    	raise RuntimeError('=> 'p, ' <= Package does not exist')

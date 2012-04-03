@@ -315,8 +315,8 @@ class NumpyPackage(Package):
 ######################################################################################        
 
 class QtPackage(Package):
-    src_uri = 'http://download.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.0.tar.gz'
-    workdir = 'qt-everywhere-opensource-src-4.8.0'
+    src_uri = 'git://gitorious.org/qt/qt.git'
+    workdir = 'qt'
     patches = ['qtbug-15370.patch']
     
     def unpack(self):
@@ -334,7 +334,25 @@ class QtPackage(Package):
         cmd = """echo 'yes' | ./configure %s \\
         --prefix=%s \\
         -opensource \\
-        -arch x86_64 """ % (macosxspecial,self.prefix)
+        -arch x86_64 \\
+        -optimized-qmake\\
+        -nomake examples\\
+        -nomake demos\\
+        -nomake docs\\
+        -nomake translations\\
+        -nomake tools\\
+        -no-multimedia -no-xmlpatterns -no-svg -no-audio-backend -no-phonon -no-phonon-backend -no-svg \\
+        -no-script -no-scripttools -no-javascript-jit\\
+        -no-sql-sqlite -no-sql-sqlite2 -no-sql-psql -no-sql-db2 -no-sql-ibase -no-sql-mysql -no-sql-oci\\
+        -no-sql-odbc -no-sql-sqlite_symbian -no-sql-tds\\
+        -no-pch\\
+        -no-dbus\\
+        -no-cups\\
+        -no-nis\\
+        -qt-libpng\\
+        -fast -release -shared -no-accessibility\\
+        
+        """ % (macosxspecial,self.prefix)
         self.system(cmd)
         
     def make(self, parallel = multiprocessing.cpu_count()):
@@ -347,16 +365,16 @@ class QtPackage(Package):
 ###########################################################################################################
 
 class PyQtPackage(Package):
-    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-4.9.1.tar.gz"
+    src_uri = "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-snapshot-4.9.2-7df26c475ead.tar.gz"
     #correctMD5sum = '97c5dc1042feb5b3fe20baabad055af1'
-    workdir = 'PyQt-mac-gpl-4.9.1'
+    workdir = 'PyQt-mac-gpl-snapshot-4.9.2-7df26c475ead'
 
     def configure_darwin(self):
         return """%s configure.py \\
         --confirm-license \\
         -q %s/bin/qmake \\
         --use-arch=x86_64 \\
-        --verbose """ % (pythonExecutable, self.prefix)
+        --verbose""" % (pythonExecutable, self.prefix)
 
     def configure_linux(self):
         return """%s configure.py \\
@@ -367,12 +385,12 @@ class PyQtPackage(Package):
 ##########################################################################################################
 
 class SipPackage(Package):
-    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.2.tar.gz'
+    src_uri = 'http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.3-snapshot-0870e512d8dd.tar.gz'
     correctMD5sum = 'd0f1fa60494db04b4d115d4c2d92f79e'
-    workdir = 'sip-4.13.2'
+    workdir = 'sip-4.13.3-snapshot-0870e512d8dd'
     
     def configure_darwin(self):
-        return pythonExecutable+" configure.py --arch=x86_64 --deployment-target=10.6" # +self.prefix + "/include/sip "
+        return pythonExecutable+" configure.py --arch=x86_64 --deployment-target=10.6"
     
     def configure_linux(self):
         return pythonExecutable+" configure.py" # +self.prefix + "/include/sip "
