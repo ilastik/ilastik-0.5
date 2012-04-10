@@ -134,7 +134,16 @@ else:
     os.environ["LD_LIBRARY_PATH"] = "%s/lib" % (installDir)
 ###################################################################################################
 
-all = ['readline', 'gdbm', 'python', 'zlib', 'slib', 
+all = ['zlib', 'slib', 
+	'fftw3f', 'fftw3', 'jpeg', 'tiff', 'png',
+	'setuptools','nose', 'py2app',
+    'hdf5',
+     ########## 'sip',
+    'lis'
+    #'fixes'
+    ]
+
+all_mac = ['readline', 'gdbm', 'python', 'zlib', 'slib', 
 	'fftw3f', 'fftw3', 'jpeg', 'tiff', 'png',
 	'setuptools','nose', 'py2app',
     'hdf5',
