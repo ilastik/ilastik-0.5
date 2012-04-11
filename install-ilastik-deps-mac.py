@@ -57,12 +57,11 @@ os.environ["FRAMEWORK_PATH"]             = installDir + "/Frameworks"
 # second value is the method name in PackagesItems
 # packages need to be in the right installation order 
 all = [
-    ('cmake', 'CmakePackage'),
-    ('zlib', 'ZlibPackage'),                    ('slib', 'SlibPackage'),        ('readline', 'ReadlinePackage'), 
-    #('gdbm', 'GdbmPackage'),              
-    ('python', 'PythonPackage'),                ('ipython', 'IpythonPackage'),  ('git', 'GitPackage'),
+    ('zlib', 'ZlibPackage'),                    ('slib', 'SlibPackage'),        ('python', 'PythonPackage'), 
+    ('setuptools', 'SetuptoolsPackage'),              
+    ('readline', 'ReadlinePackage'),            ('ipython', 'IpythonPackage'),
     ('fftw3', 'FFTW3Package'),                  ('fftw3f', 'FFTW3FPackage'),    ('jpeg', 'JpegPackage'), 
-    ('tiff', 'TiffPackage'),                    ('png', 'PngPackage'),          ('setuptools', 'SetuptoolsPackage'), 
+    ('tiff', 'TiffPackage'),                    ('png', 'PngPackage'),           
     ('nose', 'NosePackage'),                    ('hdf5', 'Hdf5Package'),        ('numpy', 'NumpyPackage'), 
     ('h5py', 'H5pyPackage'),                    ('boost', 'BoostPackage'),      ('vigra', 'VigraPackage'),
     ('qt', 'QtPackage'),                        ('sip', 'SipPackage'),          ('pyqt', 'PyQtPackage'), 

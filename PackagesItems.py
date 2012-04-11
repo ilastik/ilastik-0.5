@@ -37,7 +37,7 @@ class ZlibPackage(Package):
     def configure_darwin(self):
         return ['./configure', '--64', '--prefix="($prefix)"', '--libdir="($prefix)/lib"', 
                 '--sharedlibdir="($prefix)/lib"', '--includedir="($prefix)/include"']
-                
+
 #===============================================================================
 # SlibPackage
 #===============================================================================
@@ -269,6 +269,9 @@ class QtPackage(Package):
                 '-L/usr/X11/lib', 
                 '-I/usr/X11/include', 
                 '-cocoa']
+        
+        def fixOrTest(self):
+            os.system('cp -rv work/' + self.workdir + '/src/gui/mac/qt_menu.nib ' + installDir + '/lib')
     
 #===============================================================================
 # SipPackage
@@ -299,7 +302,7 @@ class Qimage2ndarrayPackage(Package):
                     ("qimageview.extra_link_args.extend(['-framework', lib])",'#'),
                     ('for d in qt_lib_dirs:','#'),
                     ("qimageview.extra_link_args.append('-F' + d)",'#'),] 
-       
+    
     def configure_darwin(self):
         return ['python', 'setup.py', 'build',
                 '&&',

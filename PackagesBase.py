@@ -76,6 +76,7 @@ class Package:
         self.configure()
         self.make()
         self.makeInstall()
+        self.fixOrTest()
         
     def gmake(self, parallel = multiprocessing.cpu_count()):
         temp= 'make -j'+str(parallel)
@@ -123,7 +124,6 @@ class Package:
             
     def replaceALinesInFile(self, data):
         os.system('pwd')
-        self.system("edit " + data[0])
         for line in fileinput.input('work/'+self.workdir+'/'+data[0], inplace=1):
             for lines in data[1:]:
                 if lines[0] in line:
@@ -159,6 +159,6 @@ class Package:
     def makeInstall(self):
         self.system("make install")
 
-    def test(self):
+    def fixOrTest(self):
         pass
     
