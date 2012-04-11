@@ -49,7 +49,6 @@ os.environ["LDFLAGS"]                    = "-L" + installDir + "/lib -F" + insta
 os.environ["CPPFLAGS"]                   = "-I " + installDir + "/include"
 os.environ["PYTHONPATH"]                 = installDir + "/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages"
 os.environ["FRAMEWORK_PATH"]             = installDir + "/Frameworks"
-os.environ['CMAKE_INSTALL_PREFIX']       = installDir
 
 #===============================================================================
 # available packages
@@ -58,9 +57,10 @@ os.environ['CMAKE_INSTALL_PREFIX']       = installDir
 # second value is the method name in PackagesItems
 # packages need to be in the right installation order 
 all = [
+    ('cmake', 'CmakePackage'),
     ('zlib', 'ZlibPackage'),                    ('slib', 'SlibPackage'),        ('readline', 'ReadlinePackage'), 
     #('gdbm', 'GdbmPackage'),              
-    ('python', 'PythonPackage'),                ('ipython', 'IpythonPackage'),
+    ('python', 'PythonPackage'),                ('ipython', 'IpythonPackage'),  ('git', 'GitPackage'),
     ('fftw3', 'FFTW3Package'),                  ('fftw3f', 'FFTW3FPackage'),    ('jpeg', 'JpegPackage'), 
     ('tiff', 'TiffPackage'),                    ('png', 'PngPackage'),          ('setuptools', 'SetuptoolsPackage'), 
     ('nose', 'NosePackage'),                    ('hdf5', 'Hdf5Package'),        ('numpy', 'NumpyPackage'), 

@@ -8,6 +8,26 @@ import urllib2, os, tarfile, shutil
 import multiprocessing
         
 
+
+
+#===============================================================================
+# CmakePackage
+#===============================================================================
+class CmakePackage(Package):
+    src_uri = 'http://www.cmake.org/files/v2.8/cmake-2.8.7.tar.gz'
+    
+    def configure_darwin(self):
+        return ['./configure', '--prefix="($prefix)"']
+        
+#===============================================================================
+# GitPackage
+#===============================================================================
+class GitPackage(Package):
+    src_uri = 'http://git-core.googlecode.com/files/git-1.7.9.6.tar.gz'
+    
+    def configure_darwin(self):
+        return ['./configure', '--bindir="($prefix)/bin"', '--libdir="($prefix)/lib"', 
+                '--includedir="($prefix)/include"', '--prefix="($prefix)"']
 #===============================================================================
 # ZlibPackage
 #===============================================================================
