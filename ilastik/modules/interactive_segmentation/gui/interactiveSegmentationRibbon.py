@@ -52,7 +52,7 @@ class InlineSettingsWidget(QtGui.QWidget):
 #*******************************************************************************
 
 class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
-    name = 'Interactive Segmentation'
+    name = 'Interactive MST Segmentation'
     position = 3
     moduleName = "Interactive_Segmentation"
     
@@ -133,8 +133,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             self.firstInit = False
         
         raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
-        self.overlayWidget.addOverlayRef(raw.getRef())
         self.overlayWidget.addOverlayRef(self.seedOverlay.getRef())
+        self.overlayWidget.addOverlayRef(raw.getRef())
         
         self.ilastik.labelWidget.interactionLog = self.interactionLog
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget

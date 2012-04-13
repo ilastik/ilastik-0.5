@@ -179,7 +179,7 @@ class OverlayListWidget(QtGui.QListWidget):
 
     def addOverlayRef(self, overlayRef):
         #this dirty hack allows to keep the user interaction layer (labels, seeds, ect) on top
-        if self.count()>1:
+        if self.count()>=1:
             self.insertItem(1,OverlayListWidgetItem(overlayRef))
         else:
             self.insertItem(0,OverlayListWidgetItem(overlayRef))
@@ -493,7 +493,7 @@ class OverlayWidget(QtGui.QGroupBox):
                     break
         
         if overlayRef is not None:   
-            if len(self.overlays)>1: 
+            if len(self.overlays)>=1: 
                 self.overlays.insert(1,overlayRef)
             else:
                 self.overlays.insert(0,overlayRef)

@@ -28,14 +28,18 @@
 #    or implied, of their employers.
 
 """
-Watershed iterative segmentation plugin
+miminimum spanning tree segmentation plugin
 """
 
 import numpy, traceback, sys
 
 from segmentorBase import SegmentorBase
-from enthought.traits.api import Enum, Bool, Float, Int, String, on_trait_change
-from enthought.traits.ui.api import Item, View, Group
+try:
+  from enthought.traits.api import Enum, Bool, Float, Int, String, on_trait_change
+  from enthought.traits.ui.api import Item, View, Group
+except:
+  from traits.api import Enum, Bool, Float, Int, String, on_trait_change
+  from traitsui.api import Item, View, Group
 
 ok = False
 
@@ -57,9 +61,8 @@ if ok:
 #*******************************************************************************
 
     class SegmentorWSiter(SegmentorBase):
-        name = "Supervoxel Segmentation"
-        description = "Segmentation plug-in using sparse basin graph"
-        author = "C. N. Straehle, HCI - University of Heidelberg"
+        name = "Supervoxel MST Segmentation"
+        description = "Biased Minimum spanning tree segmentation using sparse basin graph"
         homepage = "http://hci.iwr.uni-heidelberg.de"
 
         dontUseSuperVoxels = Bool(False)
@@ -131,7 +134,7 @@ if ok:
 
         def segment3D(self, labelVolume, labelValues, labelIndices):
             print "setting seeds"
-            self.segmentor.setSeeds(labelValues, labelIndices)
+            self.segmentor.setSeeds(labelValues.squeeze().astype(numpy.uint8), labelIndices.squeeze().astype(numpy.uint32))
             print "Executing Watershed with bias %d and biasedLabel %d. Adding virtual background seeds: %r" % (self.bias,  self.biasedLabel,self.addVirtualBackgroundSeeds)
             self.basinLabels = self.segmentor.doWS(self.bias,  self.biasThreshold, self.biasedLabel, self.addVirtualBackgroundSeeds)
                 
