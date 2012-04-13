@@ -43,7 +43,7 @@ mkdir(installDir+'/Frameworks')
 os.environ["PATH"]                       = installDir + "/bin:" + os.environ["PATH"] 
 if '10.6' in platform.mac_ver()[0]:
 	os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.6"
-if '10.7' in platform.mac_ver()[0]:
+elif '10.7' in platform.mac_ver()[0]:
 	os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.7"
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = installDir + "/lib"
 os.environ["CC"]                         = "llvm-gcc"
