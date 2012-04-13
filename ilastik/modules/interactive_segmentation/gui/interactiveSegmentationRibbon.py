@@ -8,7 +8,7 @@ import random
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase, TabButton
 
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QFileDialog
+from PyQt4.QtGui import QFileDialog, QLabel
 
 from ilastik.gui.iconMgr import ilastikIcons
 from seedWidget import SeedListWidget
@@ -27,25 +27,24 @@ from ilastik.modules.interactive_segmentation.core import startupOutputPath
 #*******************************************************************************
 
 class InlineSettingsWidget(QtGui.QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         # The edit_traits call will generate the widget to embed.
         self.childWidget = QtGui.QHBoxLayout(self)
         self.childWidget.setMargin(0)
         self.childWidget.setSpacing(0)
-        
         self.ui = None
         
     def changeWidget(self, ui):
         if self.ui is not None:
             self.ui.close()
             self.childWidget.removeWidget(self.ui)
-            del self.ui
-        self.ui = None
+            self.ui = None
         if ui is not None:
             self.ui = ui
             self.childWidget.addWidget(self.ui)
             self.ui.setParent(self)
+            self.ui.show()
 
 #*******************************************************************************
 # I n t e r a c t i v e S e g m e n t a t i o n T a b                          *
@@ -162,7 +161,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def _initContent(self):
         self.seedWidget = None
         tl = QtGui.QHBoxLayout()
-        tl.setMargin(0)
+        #tl.setMargin(0)
         
         self.btnChooseWeights     = TabButton('Choose Input Weights', ilastikIcons.Select)
         self.btnSegment           = TabButton('Segment', ilastikIcons.Play)        
@@ -178,6 +177,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         tl.addWidget(self.btnSegment)        
 
         tl.addStretch()
+        self.inlineSettings = InlineSettingsWidget()
+        tl.addWidget(self.inlineSettings)
         tl.addWidget(self.btnSegmentorsOptions)
         
         self.btnSegment.setEnabled(False)
@@ -282,11 +283,12 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnSegmentorsOptions_clicked(self):
         dialog = SegmentorSelectionDlg(self.parent)
-        answer = dialog.exec_()
+        changed, answer = dialog.exec_()
         if answer != None:
             self.parent.project.dataMgr.Interactive_Segmentation.segmentor = answer
-            self.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber].Interactive_Segmentation._segmentationWeights)
-            ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings.childWidget)
+            ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings, view="default")
             self.inlineSettings.changeWidget(ui)
+            if changed:
+              answer.setupWeights(self.parent.project.dataMgr[self.parent._activeImageNumber].Interactive_Segmentation._segmentationWeights)
 
             

@@ -75,11 +75,10 @@ if ok:
         
         advanced = Bool(False)
 
-        viewWS = Group(Item('bias'),Item('biasThreshold'),  Item('biasedLabel'), Item("addVirtualBackgroundSeeds"), visible_when = 'advanced==True')
+        viewWS = Group(Item('biasThreshold'),  Item('biasedLabel'), Item("addVirtualBackgroundSeeds"), visible_when = 'advanced==True')
 
         view = View( Item('edgeWeights'), Item('dontUseSuperVoxels'), buttons = ['OK', 'Cancel'],  )
 
-        inlineConfig = View(Group(viewWS))
         default = View(Item('bias'), Item("advanced"),Group(viewWS))
         
         lastBorderState = False        

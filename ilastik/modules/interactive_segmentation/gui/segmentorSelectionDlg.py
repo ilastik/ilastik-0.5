@@ -82,11 +82,11 @@ class SegmentorSelectionDlg(QtGui.QDialog):
     def exec_(self):
         if QtGui.QDialog.exec_(self) == QtGui.QDialog.Accepted:
             if self.currentSegmentor != self.previousSegmentor:
-                return  self.currentSegmentor
+                return  True, self.currentSegmentor
             else:
-                return None
+                return False, self.currentSegmentor
         else:
-            return None #self.previousSegmentor
+            return None, None #self.previousSegmentor
 
 def test():
     """Text editor demo"""
