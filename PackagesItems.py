@@ -52,7 +52,7 @@ class SlibPackage(Package):
 # PythonPackage
 #===============================================================================
 class PythonPackage(Package):
-    src_uri='http://www.python.org/ftp/python/2.7.3/Python-2.7.3rc2.tgz'
+    src_uri='http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz'
 
     def configure_darwin(self):
         return ['./configure', '--prefix="($prefix)"', '--enable-framework="($prefix)/Frameworks"']
@@ -198,7 +198,9 @@ class BoostPackage(Package):
         return ['./bootstrap.sh', '--prefix="($prefix)"', '--libdir=="($prefix)/lib"', '--with-python="($prefix)/bin/python"', 
                 '--with-libraries=python',
                 '&&',
-                './bjam', 'install', '--prefix="($prefix)"', 'toolset=clang-darwin', 'address-model=64', 'macosx-version-min=10.6']
+                './bjam', 'install', '--prefix="($prefix)"', 'address-model=64', 
+                #'macosx-version-min=10.6'
+                ]
     
     def make(self):
         pass
@@ -296,12 +298,12 @@ class PyQtPackage(Package):
 #===============================================================================
 class Qimage2ndarrayPackage(Package):
     src_uri='http://kogs-www.informatik.uni-hamburg.de/~meine/software/qimage2ndarray/dist/qimage2ndarray-1.0.tar.gz'
-    replaceLines = ['setup.py', ('qt_inc_dir = config.qt_inc_dir', 'qt_inc_dir ="' + installDir + '/include"'), ('qt_lib_dir = config.qt_lib_dir','qt_lib_dir ="' + installDir + '/lib"'),
-                    ("# Qt is distributed as 'framework' on OS X; obviously we need this","    pass"),
-                    ('for lib in qt_libraries:','#'),
-                    ("qimageview.extra_link_args.extend(['-framework', lib])",'#'),
-                    ('for d in qt_lib_dirs:','#'),
-                    ("qimageview.extra_link_args.append('-F' + d)",'#'),] 
+    replaceLines = ['setup.py', ('qt_inc_dir = config.qt_inc_dir', 'qt_inc_dir ="' + installDir + '/include"\n'), ('qt_lib_dir=config.qt_lib_dir','qt_lib_dir="' + installDir + '/lib"'),
+                    ("# Qt is distributed as 'framework' on OS X; obviously we need this","    pass\n"),
+                    ('for lib in qt_libraries:','#\n'),
+                    ("qimageview.extra_link_args.extend(['-framework', lib])",'#\n'),
+                    ('for d in qt_lib_dirs:','#\n'),
+                    ("qimageview.extra_link_args.append('-F' + d)",'#\n'),] 
     
     def configure_darwin(self):
         return ['python', 'setup.py', 'build',
@@ -451,7 +453,7 @@ class VTKPackage(Package):
                 '-DTIFF_INCLUDE_DIR=($prefix)/include',
                 '-DTIFF_LIBRARY=($prefix)/lib/libtiff.dylib',
                 '-DZLIB_INCLUDE_DIR=($prefix)/include',
-                '-DZLIB_LIBRARY=($prefix)/lib/libz.so',
+                '-DZLIB_LIBRARY=($prefix)/lib/libz.dylib', 
                 '-DHDF5_HL_INCLUDE_DIR=($prefix)/include',
                 '-DCMAKE_INSTALL_PREFIX=($prefix)',
                 '../../work/($packageWorkDir)']

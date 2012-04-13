@@ -16,6 +16,7 @@ for index, item in enumerate(c):
         item = item.replace("--prefix=", "")
         __builtin__.installDir = item
         del c[index]
+        break
     else:
         __builtin__.installDir = os.environ["HOME"]+"/ilastik-build"
 
@@ -40,10 +41,13 @@ mkdir(installDir+'/Frameworks')
 # set environment variables 
 #===============================================================================
 os.environ["PATH"]                       = installDir + "/bin:" + os.environ["PATH"] 
-os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.6"
+if '10.6' in platform.mac_ver()[0]:
+	os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.6"
+if '10.7' in platform.mac_ver()[0]:
+	os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.7"
 os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = installDir + "/lib"
-os.environ["CC"]                         = "clang"
-os.environ["CXX"]                        = "clang++"
+os.environ["CC"]                         = "llvm-gcc"
+os.environ["CXX"]                        = "llvm-g++"
 #no space between "-L" and directory path!!! It will causes a compiler error 
 os.environ["LDFLAGS"]                    = "-L" + installDir + "/lib -F" + installDir + "/Frameworks"
 os.environ["CPPFLAGS"]                   = "-I " + installDir + "/include"
