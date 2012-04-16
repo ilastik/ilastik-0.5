@@ -1,4 +1,0 @@
-43c43
-< if sys.platform == 'darwin':
----
-> if sys.platform == '':
