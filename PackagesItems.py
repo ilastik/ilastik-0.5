@@ -273,7 +273,7 @@ class QtPackage(Package):
                 '-cocoa']
         
         def fixOrTest(self):
-            os.system('cp -rv work/' + self.workdir + '/src/gui/mac/qt_menu.nib ' + installDir + '/lib')
+            os.system('cp -rv work/%s/src/gui/mac/qt_menu.nib %s/lib' % (self.workdir, installDir))
     
 #===============================================================================
 # SipPackage
@@ -458,6 +458,22 @@ class VTKPackage(Package):
                 '-DCMAKE_INSTALL_PREFIX=($prefix)',
                 '../../work/($packageWorkDir)']
         
+class Test(Package):
+    src_uri='http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.2.tar.gz'
+    
+    def configure(self):
+    	pass
+    def make(self):
+    	pass
+    def makeInstall(self):
+    	pass
+    	
+    def fixOrTest(self):
+    	os.system('pwd')
+    	os.system('echo %s' % self.workdir)
+    	os.system('echo %s' % installDir)
+    	os.system('env')
+    
 
             
     

@@ -70,7 +70,7 @@ all = [
     ('h5py', 'H5pyPackage'),                    ('boost', 'BoostPackage'),      ('vigra', 'VigraPackage'),
     ('qt', 'QtPackage'),                        ('sip', 'SipPackage'),          ('pyqt', 'PyQtPackage'), 
     ('qimage2ndarray', 'Qimage2ndarrayPackage'),('vtk', 'VTKPackage'),          ('greenlet', 'GreenletPackage'),
-    ('blist', 'BlistPackage'),                  ('psutil', 'PsutilPackage'),
+    ('blist', 'BlistPackage'),                  ('psutil', 'PsutilPackage'),	('test', 'Test'),
     #'fixes'
     ]
 #===============================================================================
@@ -105,6 +105,6 @@ if not packages:
 for item in packages:
     package = getattr(PackagesItems, item[1])
     package()
-
+	
          
 
