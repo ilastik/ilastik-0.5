@@ -70,7 +70,10 @@ all = [
     ('h5py', 'H5pyPackage'),                    ('boost', 'BoostPackage'),      ('vigra', 'VigraPackage'),
     ('qt', 'QtPackage'),                        ('sip', 'SipPackage'),          ('pyqt', 'PyQtPackage'), 
     ('qimage2ndarray', 'Qimage2ndarrayPackage'),('vtk', 'VTKPackage'),          ('greenlet', 'GreenletPackage'),
-    ('blist', 'BlistPackage'),                  ('psutil', 'PsutilPackage'),	('test', 'Test'),
+    ('blist', 'BlistPackage'),                  ('psutil', 'PsutilPackage'),	('lazyflow', 'LazyflowPackage'),
+    ('volumina', 'VoluminaPackage'),			('widgets', 'WidgetsPackage'),	('techpreview', 'TechpreviewPackage'),
+    ('envscript', 'EnvironmentScript'),
+    #('test', 'Test'),
     #'fixes'
     ]
 #===============================================================================

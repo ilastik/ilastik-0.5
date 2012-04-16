@@ -143,6 +143,7 @@ class Package:
                        ('($pythonlib)',     self.prefix + '/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib'),
                        ('($pythonBinaryPath)',     self.prefix + '/Frameworks/Python.framework/Versions/2.7/bin'),
                        ('($pythonIncludePath)',     self.prefix + '/Frameworks/Python.framework/Versions/2.7/include/python2.7'),
+                       ('($pythonHeadersPath)',     self.prefix + '/Frameworks/Python.framework/Headers'),
                        ('($pythonSharePath)',     self.prefix + '/Frameworks/Python.framework/Versions/2.7/share'),
                        ('($pythonExecutable)',     self.prefix + '/Frameworks/Python.framework/Versions/2.7/bin/python'),
                        ('($packageWorkDir)',     self.workdir),

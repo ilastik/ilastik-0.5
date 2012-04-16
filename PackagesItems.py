@@ -36,7 +36,7 @@ class ZlibPackage(Package):
     
     def configure_darwin(self):
         return ['./configure', '--64', '--prefix="($prefix)"', '--libdir="($prefix)/lib"', 
-                '--sharedlibdir="($prefix)/lib"', '--includedir="($prefix)/include"']
+        		'--sharedlibdir="($prefix)/lib"', '--includedir="($prefix)/include"']
 
 #===============================================================================
 # SlibPackage
@@ -215,7 +215,7 @@ class VigraPackage(Package):
     src_uri = 'git://github.com/ukoethe/vigra.git'
     
     def configure_darwin(self):
-        return ['cmake .',
+        return ['cmake . ',
                 '-DDEPENDENCY_SEARCH_PREFIX=($prefix)', 
                 '-DCMAKE_INSTALL_PREFIX=($prefix)', 
                 '-DBOOST_ROOT=($prefix)', 
@@ -242,9 +242,7 @@ class QtPackage(Package):
                 '-nomake demos', 
                 '-nomake docs', 
                 '-nomake translations', 
-                #'-nomake tools', 
                 '-no-multimedia', 
-                #'-no-xmlpatterns', 
                 '-no-svg', 
                 '-no-audio-backend', 
                 '-no-phonon', 
@@ -270,10 +268,8 @@ class QtPackage(Package):
                 '-no-accessibility', 
                 '-L/usr/X11/lib', 
                 '-I/usr/X11/include', 
-                '-cocoa']
-        
-        def fixOrTest(self):
-            os.system('cp -rv work/%s/src/gui/mac/qt_menu.nib %s/lib' % (self.workdir, installDir))
+                '-cocoa',
+                ]
     
 #===============================================================================
 # SipPackage
@@ -400,7 +396,7 @@ class VTKPackage(Package):
     replaceLines = ['Wrapping/Python/CMakeLists.txt', ('SET(VTK_PYTHON_SETUP_ARGS','      SET(VTK_PYTHON_SETUP_ARGS --prefix=' + installDir + '/Frameworks/Python.framework/Versions/2.7 \n')]
     
     def configure_darwin(self):
-        return ['cmake',
+        return ['cmake . ',
                 '-DSIP_EXECUTABLE:FILEPATH=($pythonBinaryPath)/sip',
                 '-DSIP_INCLUDE_DIR:PATH=($pythonIncludePath)/sip',
                 '-DSIP_PYQT_DIR:PATH=($pythonSharePath)/sip/PyQt4',
@@ -457,26 +453,94 @@ class VTKPackage(Package):
                 '-DHDF5_HL_INCLUDE_DIR=($prefix)/include',
                 '-DCMAKE_INSTALL_PREFIX=($prefix)',
                 '../../work/($packageWorkDir)']
-        
-class Test(Package):
-    src_uri='http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.2.tar.gz'
-    
-    def configure(self):
-    	pass
-    def make(self):
-    	pass
-    def makeInstall(self):
-    	pass
-    	
-    def fixOrTest(self):
-    	os.system('pwd')
-    	os.system('echo %s' % self.workdir)
-    	os.system('echo %s' % installDir)
-    	os.system('env')
-    
 
-            
+#===============================================================================
+# LazyflowPackage
+#===============================================================================
+class LazyflowPackage(Package):
+    src_uri = 'git://github.com/Ilastik/lazyflow.git'
     
+    def configure_darwin(self):
+        return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+        		' && cd ($prefix)/%s/lazyflow/drtile' % (self.workdir), ' && pwd',
+        		' && cmake .',
+        		'-DBoost_INCLUDE_DIR=($prefix)/include',
+        		'-DBoost_PYTHON_LIBRARY_DEBUG=($prefix)/lib/libboost_python.dylib',
+        		'-DBoost_PYTHON_LIBRARY_RELEASE=($prefix)/lib/libboost_python.dylib',
+        		'-DPYTHON_INCLUDE_DIR=($pythonHeadersPath)',
+        		'-DPYTHON_LIBRARY=($pythonlib)',
+        		'-DVIGRA_IMPEX_LIBRARY=($prefix)/lib/libvigraimpex.dylib',
+        		'-DVIGRA_IMPEX_LIBRARY_DIR=($prefix)/lib',
+        		'-DVIGRA_INCLUDE_DIR=($prefix)/include',
+        		' && make',
+        		]
+    
+    def make(self):
+        pass
+    def makeInstall(self):
+        pass
+    
+#===============================================================================
+# VoluminaPackage
+#===============================================================================
+class VoluminaPackage(Package):
+    src_uri = 'git://github.com/Ilastik/volumina.git'
+    
+    def configure_darwin(self):
+        return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+				]
+            
+    def make(self):
+        pass
+    def makeInstall(self):
+        pass
+
+#===============================================================================
+# WidgetsPackage
+#===============================================================================
+class WidgetsPackage(Package):
+    src_uri = 'git://github.com/Ilastik/widgets.git'
+    
+    def configure_darwin(self):
+        return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+				]
+            
+    def make(self):
+        pass
+    def makeInstall(self):
+        pass
+
+#===============================================================================
+# TechpreviewPackage
+#===============================================================================
+class TechpreviewPackage(Package):
+    src_uri = 'git://github.com/Ilastik/techpreview.git'
+    
+    def configure_darwin(self):
+        return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+				]
+            
+    def make(self):
+        pass
+    def makeInstall(self):
+        pass
+    
+#===============================================================================
+# EnvironmentScript
+#===============================================================================
+class EnvironmentScript(object):
+    def __init__(self):
+        self.createFile()
+    
+    def createFile(self):
+        file = open('%s/activate.sh' % (installDir), "w")
+        file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/2.7/bin:$PATH\n" % (installDir, installDir))
+        file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/lib:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir))
+        file.write("export PYTHONPATH=%s/volumina:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages\n" % (installDir, installDir, installDir, installDir, installDir))
+        file.write("alias classificationWorkflow='python %s/techpreview/classification/classificationWorkflow.py'\n" % (installDir))
+        file.close()
+
+        
     
     
     
