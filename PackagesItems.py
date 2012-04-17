@@ -608,6 +608,22 @@ class TraitsGUIPackage(Package):
     def makeInstall(self):
         self.system("python setup.py install")    
     
+#===============================================================================
+# Vigra05Package
+#===============================================================================
+class Vigra05Package(Package):
+    src_uri = 'git://github.com/Ilastik/vigra-ilastik-05.git'
+    
+    def configure_darwin(self):
+        return ['cmake . ',
+                '-DDEPENDENCY_SEARCH_PREFIX=($prefix)', 
+                '-DCMAKE_INSTALL_PREFIX=($prefix)/vigra-ilastik-05', 
+                '-DBOOST_ROOT=($prefix)', 
+                '-DWITH_VIGRANUMPY=1', 
+                '-DCMAKE_BUILD_TYPE=Release', 
+                '-DPYTHON_INCLUDE_DIR=($pythonHeaders)',
+                '-DPYTHON_LIBRARY=($pythonlib)',
+                ]
     
     
     

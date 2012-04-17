@@ -73,7 +73,7 @@ all = [
     ('blist', 'BlistPackage'),                      ('psutil', 'PsutilPackage'),	        ('lazyflow', 'LazyflowPackage'),
     ('volumina', 'VoluminaPackage'),			    ('widgets', 'WidgetsPackage'),	        ('techpreview', 'TechpreviewPackage'),
     ('envscript', 'EnvironmentScript'),             ('enthought', 'EnthoughtBasePackage'),  ('traits', 'TraitsPackage'),
-    ('traitsbackendqt', 'TraitsBackendQtPackage'),  ('traitsgui', 'TraitsGUIPackage'),
+    ('traitsbackendqt', 'TraitsBackendQtPackage'),  ('traitsgui', 'TraitsGUIPackage'),      ('vigra05', 'Vigra05Package'),
     #('test', 'Test'),
     #'fixes'
     ]
