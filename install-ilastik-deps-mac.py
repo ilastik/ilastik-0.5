@@ -74,7 +74,8 @@ all = [
     ('volumina', 'VoluminaPackage'),			    ('widgets', 'WidgetsPackage'),	                ('techpreview', 'TechpreviewPackage'),
     ('ilastik06', 'Ilastik06EnvScript'),            ('enthought', 'EnthoughtBasePackage'),          ('traits', 'TraitsPackage'),
     ('traitsgui', 'TraitsGUIPackage'),              ('traitsbackendqt', 'TraitsBackendQtPackage'),  ('vigra05', 'Vigra05Package'),
-    ('ilastik', 'IlastikPackage'),                  ('ilastik05', 'Ilastik05EnvScript'),
+    ('ilastik', 'IlastikPackage'),                  ('ilastik05', 'Ilastik05EnvScript'),            ('pyopenglaccellerate', 'PyOpenGLAccelleratePackage'),
+    ('pyopengl', 'PyOpenGLPackage'),
     #('test', 'Test'),
     #'fixes'
     ]

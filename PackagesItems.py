@@ -607,7 +607,38 @@ class TraitsGUIPackage(Package):
     
     def makeInstall(self):
         self.system("python setup.py install")    
+
+#===============================================================================
+# PyOpenGLAccelleratePackage
+#===============================================================================
+class PyOpenGLAccelleratePackage(Package):
+    src_uri='http://pypi.python.org/packages/source/P/PyOpenGL-accelerate/PyOpenGL-accelerate-3.0.2a1.tar.gz'
     
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install") 
+            
+
+#===============================================================================
+# PyOpenGLPackage
+#===============================================================================
+class PyOpenGLPackage(Package):
+    src_uri='http://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-3.0.2a5.tar.gz'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install")
+        
 #===============================================================================
 # Vigra05Package
 #===============================================================================
