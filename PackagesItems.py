@@ -625,6 +625,7 @@ class Vigra05Package(Package):
                 '-DPYTHON_LIBRARY=($pythonlib)',
                 '-DPNG_LIBRARY=($prefix)/lib/libpng.dylib',
                 '-DPNG_PNG_INCLUDE_DIR=($prefix)/include',
+                '-DVIGRANUMPY_INSTALL_DIR=($prefix)/vigra-ilastik-05',
                 ]
     
 #===============================================================================
