@@ -688,7 +688,7 @@ class Ilastik05EnvScript(object):
         file = open('%s/ilastik05.sh' % (installDir), "w")
         file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/2.7/bin:$PATH\n" % (installDir, installDir))
         file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/vigra-ilastik-05/lib:%s/lib:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir, installDir))
-        file.write("export PYTHONPATH=%s/volumina:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages\n" % (installDir, installDir, installDir, installDir, installDir))
+        file.write("export PYTHONPATH=%s/volumina:%s/ilastik:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages\n" % (installDir, installDir, installDir, installDir, installDir, installDir))
         file.write("alias classificationWorkflow='python %s/techpreview/classification/classificationWorkflow.py'\n" % (installDir))
         file.write("alias ilastik05='python %s/ilastik/ilastik/ilastikMain.py'\n" % (installDir))
         file.write("alias ls='ls -G'\n")
