@@ -548,8 +548,65 @@ class EnvironmentScript(object):
         file.write("PS1='-> '")
         file.close()
 
-        
+#===============================================================================
+# EnthoughtBasePackage
+#===============================================================================
+class EnthoughtBasePackage(Package):
+    src_uri='http://enthought.com/repo/ets/EnthoughtBase-3.1.0.tar.gz'
     
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install") 
+        
+#===============================================================================
+# TraitsPackage
+#===============================================================================
+class TraitsPackage(Package):
+    src_uri='http://enthought.com/repo/ets/traits-4.0.0.tar.gz'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install")
+        
+#===============================================================================
+# TraitsBackendQtPackage
+#===============================================================================
+class TraitsBackendQtPackage(Package):
+    src_uri='http://enthought.com/repo/ets/TraitsBackendQt-3.6.0.tar.gz'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install")
+        
+#===============================================================================
+# TraitsGUIPackage
+#===============================================================================
+class TraitsGUIPackage(Package):
+    src_uri='http://enthought.com/repo/ets/TraitsGUI-3.6.0.tar.gz'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install")    
     
     
     
