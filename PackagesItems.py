@@ -607,7 +607,22 @@ class TraitsGUIPackage(Package):
         self.system("python setup.py build")
     
     def makeInstall(self):
-        self.system("python setup.py install")    
+        self.system("python setup.py install") 
+    
+#===============================================================================
+# TraitsuiPackage
+#===============================================================================
+class TraitsuiPackage(Package):
+    src_uri='http://enthought.com/repo/ets/traitsui-4.0.0.tar.gz'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install")   
 
 #===============================================================================
 # PyOpenGLAccelleratePackage
