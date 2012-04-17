@@ -623,8 +623,26 @@ class Vigra05Package(Package):
                 '-DCMAKE_BUILD_TYPE=Release', 
                 '-DPYTHON_INCLUDE_DIR=($pythonHeaders)',
                 '-DPYTHON_LIBRARY=($pythonlib)',
+                '-DPNG_LIBRARY=($prefix)/lib/libpng.dylib',
+                '-DPNG_PNG_INCLUDE_DIR=($prefix)/include',
                 ]
     
+#===============================================================================
+# IlastikPackage
+#===============================================================================
+class IlastikPackage(Package):
+    src_uri = 'git://github.com/Ilastik/ilastik.git'
+    
+    def configure_darwin(self):
+        return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+                'cd ($prefix)/%s' % (self.workdir),
+                'git checkout rc-final',
+                ]
+            
+    def make(self):
+        pass
+    def makeInstall(self):
+        pass
     
     
     
