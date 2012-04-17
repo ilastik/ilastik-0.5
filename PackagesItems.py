@@ -655,7 +655,7 @@ class Ilastik05EnvScript(object):
     def createFile(self):
         file = open('%s/ilastik05.sh' % (installDir), "w")
         file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/2.7/bin:$PATH\n" % (installDir, installDir))
-        file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/lib:%s/vigra-ilastik-05/lib\n" % (installDir, installDir))
+        file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/lib:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir))
         file.write("export PYTHONPATH=%s/volumina:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages\n" % (installDir, installDir, installDir, installDir, installDir))
         file.write("alias classificationWorkflow='python %s/techpreview/classification/classificationWorkflow.py'\n" % (installDir))
         file.write("txtred='\e[0;31m' # Red\n")
