@@ -72,9 +72,9 @@ all = [
     ('qimage2ndarray', 'Qimage2ndarrayPackage'),    ('vtk', 'VTKPackage'),                          ('greenlet', 'GreenletPackage'),
     ('blist', 'BlistPackage'),                      ('psutil', 'PsutilPackage'),	                ('lazyflow', 'LazyflowPackage'),
     ('volumina', 'VoluminaPackage'),			    ('widgets', 'WidgetsPackage'),	                ('techpreview', 'TechpreviewPackage'),
-    ('envscript', 'EnvironmentScript'),             ('enthought', 'EnthoughtBasePackage'),          ('traits', 'TraitsPackage'),
+    ('ilastik06', 'Ilastik06EnvScript'),            ('enthought', 'EnthoughtBasePackage'),          ('traits', 'TraitsPackage'),
     ('traitsgui', 'TraitsGUIPackage'),              ('traitsbackendqt', 'TraitsBackendQtPackage'),  ('vigra05', 'Vigra05Package'),
-    ('ilastik', 'IlastikPackage'),
+    ('ilastik', 'IlastikPackage'),                  ('ilastik05', 'Ilastik05EnvScript'),
     #('test', 'Test'),
     #'fixes'
     ]
