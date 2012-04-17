@@ -635,8 +635,8 @@ class IlastikPackage(Package):
     
     def configure_darwin(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
-                'cd ($prefix)/%s' % (self.workdir),
-                'git checkout rc-final',
+                '&& cd ($prefix)/%s' % (self.workdir),
+                '&& git checkout rc-final',
                 ]
             
     def make(self):
