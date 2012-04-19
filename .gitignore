@@ -1,9 +1,12 @@
 dist
+distfiles
 build
+work
 *,cover
 *.pyc
 *.swp
 .swp.*
+*.tgz
 *.backup
 nbproject
 *~
@@ -14,6 +17,7 @@ build/*
 *.project
 *.pydevproject
 *.settings
+*.gz
 run-ilastik-mine.sh
 test_bu.py
 test2backup.py

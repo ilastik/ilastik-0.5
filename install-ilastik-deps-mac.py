@@ -75,8 +75,8 @@ all = [
     ('ilastik06', 'Ilastik06EnvScript'),                    ('enthought', 'EnthoughtBasePackage'),          ('traits', 'TraitsPackage'),
     ('traitsgui', 'TraitsGUIPackage'),                      ('traitsbackendqt', 'TraitsBackendQtPackage'),  ('traitsui', 'TraitsuiPackage'),
     ('vigra05', 'Vigra05Package'),                          ('ilastik', 'IlastikPackage'),                  ('ilastik05', 'Ilastik05EnvScript'),            
-    ('pyopenglaccellerate', 'PyOpenGLAccelleratePackage'),  ('pyopengl', 'PyOpenGLPackage'),
-    #('test', 'Test'),
+    ('pyopenglaccellerate', 'PyOpenGLAccelleratePackage'),  ('pyopengl', 'PyOpenGLPackage'),                ('priows', 'PriowsPackage'),
+    ('fixes', 'Fixes'),
     #'fixes'
     ]
 #===============================================================================

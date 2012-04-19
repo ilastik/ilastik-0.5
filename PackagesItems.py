@@ -243,11 +243,10 @@ class QtPackage(Package):
                 '-nomake docs', 
                 '-nomake translations', 
                 '-no-multimedia', 
-                '-no-svg', 
+                #'-no-svg', 
                 '-no-audio-backend', 
                 '-no-phonon', 
                 '-no-phonon-backend', 
-                '-no-svg', 
                 '-no-sql-sqlite', 
                 '-no-sql-sqlite2', 
                 '-no-sql-psql', 
@@ -554,6 +553,7 @@ class Ilastik06EnvScript(object):
 #===============================================================================
 class EnthoughtBasePackage(Package):
     src_uri='http://enthought.com/repo/ets/EnthoughtBase-3.1.0.tar.gz'
+    replaceLines = ['enthought/qt/__init__.py', ("        sip.setapi('QString', 2)", "        sip.setapi('QString', 1)\n")]
     
     def configure(self):
         pass
@@ -672,7 +672,29 @@ class Vigra05Package(Package):
                 '-DPYTHON_LIBRARY=($pythonlib)',
                 '-DPNG_LIBRARY=($prefix)/lib/libpng.dylib',
                 '-DPNG_PNG_INCLUDE_DIR=($prefix)/include',
-                '-DVIGRANUMPY_INSTALL_DIR=($prefix)/vigra-ilastik-05',
+                '-DVIGRANUMPY_INSTALL_DIR=($prefix)/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages',
+                '-DZLIB_INCLUDE_DIR=($prefix)/include',
+                '-DZLIB_LIBRARY=($prefix)/lib/libz.dylib',
+                ]
+
+        
+#===============================================================================
+# PriowsPackage
+#===============================================================================
+class PriowsPackage(Package):
+    src_uri = 'git://github.com/cstraehl/priows.git'
+    
+    def configure_darwin(self):
+        return ['cmake . ',
+                '-DCMAKE_INSTALL_PREFIX=($prefix)/vigra-ilastik-05', 
+                '-DBOOST_ROOT=($prefix)',
+                '-DPYTHON_INCLUDE_DIR=($pythonHeaders)',
+                '-DPYTHON_LIBRARY=($pythonlib)',
+                '-DVIGRA_IMPEX_LIBRARY=($prefix)/vigra-ilastik-05/lib/libvigraimpex.dylib',
+                '-DVIGRA_NUMPY_CORE_LIBRARY=($prefix)/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra/vigranumpycore.so',
+                '-DPY_VIGRA=($prefix)/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra',
+                '-DVIGRA_INCLUDE_DIR=($prefix)/vigra-ilastik-05/include',
+                
                 ]
     
 #===============================================================================
@@ -703,7 +725,7 @@ class Ilastik05EnvScript(object):
         file = open('%s/ilastik05.sh' % (installDir), "w")
         file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/2.7/bin:$PATH\n" % (installDir, installDir))
         file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/vigra-ilastik-05/lib:%s/lib:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir, installDir))
-        file.write("export PYTHONPATH=%s/volumina:%s/ilastik:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages\n" % (installDir, installDir, installDir, installDir, installDir, installDir))
+        file.write("export PYTHONPATH=%s/volumina:%s/ilastik:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages\n" % (installDir, installDir, installDir, installDir, installDir, installDir))
         file.write("alias classificationWorkflow='python %s/techpreview/classification/classificationWorkflow.py'\n" % (installDir))
         file.write("alias ilastik05='python %s/ilastik/ilastik/ilastikMain.py'\n" % (installDir))
         file.write("alias ls='ls -G'\n")
@@ -716,6 +738,13 @@ class Ilastik05EnvScript(object):
         file.write("PROMPT_COMMAND=print_before_the_prompt\n")
         file.write("PS1='-> '")
         file.close()
+        
+class Fixes:
+    def __init__(self):
+        self.qtFix()
+    
+    def qtFix(self):
+        os.system('cp -rv work/qt-everywhere-opensource-src-4.8.1/src/gui/mac/qt_menu.nib %s/lib' % (installDir))
     
     
     
