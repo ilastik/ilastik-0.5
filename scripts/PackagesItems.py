@@ -125,8 +125,8 @@ class SlibPackage(Package):
 ###################################################################################################
         
 class ZlibPackage(Package):
-    src_uri = 'http://zlib.net/zlib-1.2.5.tar.gz'
-    workdir = 'zlib-1.2.5'
+    src_uri = 'http://zlib.net/zlib-1.2.6.tar.gz'
+    workdir = 'zlib-1.2.6'
     
     def unpack(self):
         Package.unpack(self)
@@ -141,9 +141,9 @@ class ZlibPackage(Package):
 ###################################################################################################
 
 class Hdf5Package(Package):
-    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.7.tar.gz'
+    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.8.tar.gz'
     #correctMD5sum = 'df131d156634608e4a7bf26baeafc940'
-    workdir ='hdf5-1.8.7'
+    workdir ='hdf5-1.8.8'
     
     def unpack(self):
         Package.unpack(self)
@@ -450,8 +450,8 @@ class Qimage2ndarrayPackage(Package):
 ################################################################################################
 
 class VTKGitPackage(Package):
-    src_uri = "git://vtk.org/VTK.git"
-    workdir = 'VTK'
+    src_uri = "http://www.vtk.org/files/release/5.8/vtk-5.8.0.tar.gz"
+    workdir = 'vtk-5.8.0'
     
     def unpack(self):
         Package.unpack(self, copyToWork=False)
@@ -686,11 +686,11 @@ class PriowsGitPackage(Package):
 ###################################################################################################
 
 class VigraPackage(Package):
-    src_uri = 'git@github.com:ukoethe/vigra.git'
+    src_uri = 'git://github.com/Ilastik/vigra-ilastik-05.git'
     workdir = 'vigra'
     
     def configure(self):
-        self.system("git checkout 608c3521d8e9c6ee4b7297b8ebbef79e4108a623")
+        self.system("git checkout ilastik-0.5-base")
         dylibext = "dylib"
         if platform.system() != "Darwin":
             dylibext = "so"
