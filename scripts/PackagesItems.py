@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#    Copyright 2011 L Fiaschi, T Kroeger, M Nullmaier, C Sommer, C Straehle, U Koethe, FA Hamprecht. 
+#    Copyright 2011 L Fiaschi, T Kroeger, M Nullmeier, C Sommer, C Straehle, U Koethe, FA Hamprecht. 
 #    All rights reserved.
 #    
 #    Redistribution and use in source and binary forms, with or without modification, are
