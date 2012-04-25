@@ -674,7 +674,7 @@ class PriowsPackage(Package):
         -DPYTHON_LIBRARIES:FILEPATH=%s \\
         -DPYTHON_INCLUDE_PATH:PATH=%s \\
         -DPYTHON_INCLUDE_DIR:PATH=%s \\
-        -DPY_VIGRA=%s \\
+        -DPY_VIGRA=%s/vigra \\
         """ % (cmake, self.prefix, self.prefix, self.prefix, \
                pythonExecutable, pythonLibrary, pythonLibrary,
                pythonIncludePath, pythonIncludePath, pythonSitePackages)
