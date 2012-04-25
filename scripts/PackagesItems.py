@@ -451,7 +451,7 @@ class Qimage2ndarrayPackage(Package):
 
 class VTKGitPackage(Package):
     src_uri = "http://www.vtk.org/files/release/5.8/vtk-5.8.0.tar.gz"
-    workdir = 'vtk-5.8.0'
+    workdir = 'VTK' # kitware is wonderful
     
     def unpack(self):
         Package.unpack(self)
