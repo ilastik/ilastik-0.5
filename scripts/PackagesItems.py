@@ -457,7 +457,7 @@ class VTKGitPackage(Package):
         Package.unpack(self)
     
     def configure(self):
-        cmd = cmake + """. \\
+        cmd = cmake + """ . \\
         -DVTK_PYTHON_SETUP_ARGS=--prefix='%s'\\
         -DSIP_EXECUTABLE:FILEPATH=%s/sip\\
         -DSIP_INCLUDE_DIR:PATH=%s/sip\\
