@@ -55,6 +55,9 @@ else:
   __builtin__.hg="/usr/bin/hg"
   __builtin__.git="/usr/bin/git"
 
+if "ILASTIK_GIT" in os.environ:
+  __builtin__.git = os.environ["ILASTIK_GIT"]
+
 if platform.system() == "Darwin":
   __builtin__.pythonVersionPath  = installDir+"/Frameworks/Python.framework/Versions/"+pythonVersion
 else:
