@@ -454,7 +454,7 @@ class VTKGitPackage(Package):
     workdir = 'vtk-5.8.0'
     
     def unpack(self):
-        Package.unpack(self, copyToWork=False)
+        Package.unpack(self)
     
     def configure(self):
         cmd = cmake + """\\
