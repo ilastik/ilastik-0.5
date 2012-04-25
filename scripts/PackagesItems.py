@@ -674,8 +674,10 @@ class PriowsPackage(Package):
         -DPYTHON_LIBRARIES:FILEPATH=%s \\
         -DPYTHON_INCLUDE_PATH:PATH=%s \\
         -DPYTHON_INCLUDE_DIR:PATH=%s \\
+        -DPY_VIGRA=%s \\
         """ % (cmake, self.prefix, self.prefix, self.prefix, \
-               pythonExecutable, pythonLibrary, pythonLibrary, pythonIncludePath, pythonIncludePath)
+               pythonExecutable, pythonLibrary, pythonLibrary,
+               pythonIncludePath, pythonIncludePath, pythonSitePackages)
         self.system(cmd)
 
     def make(self, parallel = multiprocessing.cpu_count()):
