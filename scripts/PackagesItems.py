@@ -504,7 +504,7 @@ class VTKGitPackage(Package):
         -DVTK_WRAP_UI=ON \\
         -DVTK_USE_TK:BOOL=OFF \\
         -DDESIRED_QT_VERSION=4 \\
-        ../../distfiles/VTK""" % (pythonVersionPath, pythonBinaryPath, pythonIncludePath, pythonSharePath, \
+        ../../work/VTK""" % (pythonVersionPath, pythonBinaryPath, pythonIncludePath, pythonSharePath, \
         pythonExecutable, pythonIncludePath, pythonLibrary, \
         self.prefix)
         self.system(cmd)
