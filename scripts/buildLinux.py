@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import os, sys
 
+os.system("rm -rf $HOME/ilastik_deps_build")
+os.system("mkdir  $HOME/ilastik_deps_build")
+os.system("cd $HOME && mv include lib plugins share bin $HOME/ilastik_deps_build")
+
 installDir = os.environ["HOME"] + "/ilastik_deps_build"
 
 # copy deps:
