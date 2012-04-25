@@ -658,14 +658,12 @@ class CStraehlePackage(Package):
 ###################################################################################################
 
 
-class PriowsGitPackage(Package):
-    src_uri = "file:///home/cstraehl/Projects/PHD/code/src/priows"
+class PriowsPackage(Package):
+    src_uri = 'git://github.com/cstraehl/priows.git'
     workdir = 'priows'
-
-    def unpack(self):
-        Package.unpack(self)
-                
+    
     def configure(self):
+        self.system("git checkout 8d0e063acc1d59f9ce838ea741e79deddbabe573")
         cmd = """%s . \\
         -DDEPENDENCY_SEARCH_PREFIX=%s \\
         -DCMAKE_INSTALL_PREFIX=%s \\

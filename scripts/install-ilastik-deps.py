@@ -203,8 +203,8 @@ if 'sip' in c:
 if 'lis' in c:
     LISPackage()
 if 'vigra' in c:
-    ##############################################CStraehlePackage()
     VigraPackage()
+    PriowsPackage()
     
 # # # # # # # # # # # # #
 
