@@ -368,9 +368,9 @@ class GreenletPackage(Package):
         
 #############################################################################################################
 class PsutilPackage(Package):
-    src_uri = 'http://psutil.googlecode.com/files/psutil-0.3.0.tar.gz'
+    src_uri = 'http://psutil.googlecode.com/files/psutil-0.4.1.tar.gz'
     
-    workdir = 'psutil-0.3.0'
+    workdir = 'psutil-0.4.1'
     
     def configure(self):
         pass
