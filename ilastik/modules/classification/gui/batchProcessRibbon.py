@@ -14,8 +14,8 @@ from ilastik.gui import volumeeditor as ve
 #*******************************************************************************
 
 class AutomateTab(IlastikTabBase, QtGui.QWidget):
-    name = 'Automate'
-    position = 100
+    name = 'Automate Classification'
+    position = 2
     moduleName = "Classification"
     
     def __init__(self, parent=None):

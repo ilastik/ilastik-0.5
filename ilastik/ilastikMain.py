@@ -489,7 +489,7 @@ class MainWindow(QtGui.QMainWindow):
             self.ribbon.widget(i).on_otherProject()
 
     def labelRemoved(self, number):
-        self.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
+        self.ribbon.getTab('Automate Classification').btnBatchProcess.setEnabled(False)
         if hasattr(self, "classificationInteractive"):
             self.classificationInteractive.updateThreadQueues()
 

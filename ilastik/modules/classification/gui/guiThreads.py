@@ -82,7 +82,7 @@ class ClassificationTrain(QtCore.QObject):
         #process all unaccounted label changes
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(False)
-        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
+        self.parent.ribbon.getTab('Automate Classification').btnBatchProcess.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(False)
         
@@ -128,7 +128,7 @@ class ClassificationTrain(QtCore.QObject):
 
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
-        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
+        self.parent.ribbon.getTab('Automate Classification').btnBatchProcess.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnSelectFeatures.setEnabled(True)
         
@@ -144,7 +144,7 @@ class ClassificationInteractive(object):
         
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(False)
-        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(False)
+        self.parent.ribbon.getTab('Automate Classification').btnBatchProcess.setEnabled(False)
 
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(False)
         self.parent.ribbon.getTab('Classification').btnClassifierOptions.setEnabled(False)
@@ -247,7 +247,7 @@ class ClassificationInteractive(object):
     def finalize(self):
         self.parent.ribbon.getTab('Classification').btnTrainPredict.setEnabled(True)
         self.parent.ribbon.getTab('Classification').btnJustPredict.setEnabled(True)
-        self.parent.ribbon.getTab('Automate').btnBatchProcess.setEnabled(True)
+        self.parent.ribbon.getTab('Automate Classification').btnBatchProcess.setEnabled(True)
         self.parent.project.dataMgr.Classification.classificationMgr.classifiers = list(self.classificationInteractive.classifiers)
         self.classificationInteractive =  None
         
