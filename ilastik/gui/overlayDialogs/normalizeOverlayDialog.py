@@ -27,8 +27,8 @@ class NormalizeOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog)
                 self.selected_overlay = choosen_overlay[0] 
                 self.buildDlg()
                 self._lbl_overlay.setText(self.selected_overlay.name)
-                self._spin_min.setValue(self.selected_overlay._data._data.min())
-                self._spin_max.setValue(self.selected_overlay._data._data.max())
+                self._spin_min.setValue(int(self.selected_overlay._data._data.min()))
+                self._spin_max.setValue(int(self.selected_overlay._data._data.max()))
                 self.overlayItem = NormalizeOverlay(self.selected_overlay, int(self._spin_min.value()), int(self._spin_max.value()))
             
         else:
