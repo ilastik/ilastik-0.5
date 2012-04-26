@@ -31,12 +31,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         if self.ilastik.project is None:
-            return
-        ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
-        if len(ovs) == 0:
-            raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
-            if raw is not None:
-                ovs.append(raw.getRef())        
+            return               
         
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
 
@@ -52,6 +47,10 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         ov = self.ilastik._activeImage.overlayMgr["Connected Components/Background"]
         
         self.ilastik.labelWidget.setLabelWidget(self.backgroundLabels)
+        
+        raw = self.ilastik._activeImage.overlayMgr["Raw Data"]
+        if raw is not None:
+            self.ilastik.labelWidget.overlayWidget.addOverlayRef(raw.getRef()) 
     
     def on_deActivation(self):
         if self.ilastik.project is None:

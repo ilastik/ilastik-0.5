@@ -90,7 +90,6 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         if len(answer) > 0:
             overlay = answer[0]
             self.parent.labelWidget.overlayWidget.addOverlayRef(overlay.getRef())
-            print overlay.key
             self.parent.project.dataMgr.connCompBackgroundKey = overlay.key
             
         self.btnCC.setEnabled(True)
