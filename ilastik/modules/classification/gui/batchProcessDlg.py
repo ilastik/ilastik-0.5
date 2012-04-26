@@ -37,7 +37,7 @@ class BatchProcess(QtGui.QDialog):
         self.writeUncertainty = QtGui.QCheckBox("Write uncertainty")
         self.writePrediction = QtGui.QCheckBox("Write prediction")
         
-        self.tiledProcessing = QtGui.QCheckBox("Blockwise processing (saves memory)")
+        self.tiledProcessing = QtGui.QCheckBox("Blockwise processing (saves memory, h5 output only)")
         self.tiledProcessing.setCheckState(False)
         
         self.curImgBtn = QtGui.QPushButton(QtGui.QIcon(ilastikIcons.AddSel), "Add current images")

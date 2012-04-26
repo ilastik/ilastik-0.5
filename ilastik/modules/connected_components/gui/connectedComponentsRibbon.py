@@ -68,6 +68,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.btnCC           = TabButton('CC', ilastikIcons.System)
         self.btnCCBack       = TabButton('CC with background', ilastikIcons.System)
         self.btnFilter       = TabButton('Filter objects', ilastikIcons.System)
+        self.btnFilter.setVisible(False)
         
         self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
         self.btnCC.setToolTip('Run connected components on the selected overlay')
@@ -117,6 +118,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.connComp = CC(self.ilastik)
         self.connComp.start(self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connCompBackgroundClasses)
         self.btnFilter.setEnabled(True)
+        self.btnFilter.setVisible(False)
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = True)
         
     def on_btnFilter_clicked(self):
