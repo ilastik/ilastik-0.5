@@ -20,7 +20,6 @@ from ilastik.core.volume import DataAccessor
 
 from segmentorSelectionDlg import SegmentorSelectionDlg
 
-from ilastik.modules.interactive_segmentation.core import startupOutputPath
 
 #*******************************************************************************
 # I n l i n e S e t t i n g s W i d g e t                                      *
