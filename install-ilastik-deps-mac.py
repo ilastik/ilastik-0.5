@@ -76,8 +76,7 @@ all = [
     ('traitsgui', 'TraitsGUIPackage'),                      ('traitsbackendqt', 'TraitsBackendQtPackage'),  ('traitsui', 'TraitsuiPackage'),
     ('vigra05', 'Vigra05Package'),                          ('ilastik', 'IlastikPackage'),                  ('ilastik05', 'Ilastik05EnvScript'),            
     ('pyopenglaccellerate', 'PyOpenGLAccelleratePackage'),  ('pyopengl', 'PyOpenGLPackage'),                ('priows', 'PriowsPackage'),
-    ('fixes', 'Fixes'),
-    #'fixes'
+    #('fixes', 'Fixes'),
     ]
 #===============================================================================
 # create the package list for the installation

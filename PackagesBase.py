@@ -161,5 +161,5 @@ class Package:
         self.system("make install")
 
     def fixOrTest(self):
-        pass
+        self.system("cd .. && rm -rf " + self.workdir)
     
