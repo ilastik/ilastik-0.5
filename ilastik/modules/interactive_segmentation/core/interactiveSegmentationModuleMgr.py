@@ -506,7 +506,6 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
         self.interactiveSegmentationModuleMgr = interactiveSegmentationModuleMgr
         
     def __createSeedsData(self):
-        print "__createSeedsData"
         if self.seedLabelsVolume is None:
             l = numpy.zeros(self._dataItemImage.shape[0:-1] + (1, ), 'uint8')
             self.seedLabelsVolume = VolumeLabels(l)
