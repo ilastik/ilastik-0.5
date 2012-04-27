@@ -696,7 +696,8 @@ class PriowsPackage(Package):
                 '-DVIGRA_IMPEX_LIBRARY=($prefix)/vigra-ilastik-05/lib/libvigraimpex.dylib',
                 '-DVIGRA_NUMPY_CORE_LIBRARY=($prefix)/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra/vigranumpycore.so',
                 '-DPY_VIGRA=($prefix)/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra',
-                '-DVIGRA_INCLUDE_DIR=($prefix)/vigra-ilastik-05/include',
+                '-DVIGRA_INCLUDE_DIR=($prefix)/vigra-ilastik-05/include',    
+                ]
 
 #===============================================================================
 # IlastikPackage
@@ -726,7 +727,7 @@ class Ilastik05EnvScript(object):
         file = open('%s/ilastik05.sh' % (installDir), "w")
         file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/2.7/bin:$PATH\n" % (installDir, installDir))
         file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/vigra-ilastik-05/lib:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra:%s/lib\n" % (installDir, installDir, installDir))
-        file.write("export PYTHONPATH=%s/volumina:%s/ilastik:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir, installDir, installDir, installDir, installDir))
+        file.write("export PYTHONPATH=%s/volumina:%s/ilastik:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir, installDir, installDir, installDir, installDir, installDir))
         file.write("alias classificationWorkflow='python %s/techpreview/classification/classificationWorkflow.py'\n" % (installDir))
         file.write("alias ilastik05='python %s/ilastik/ilastik/ilastikMain.py'\n" % (installDir))
         file.write("alias ls='ls -G'\n")
@@ -747,6 +748,20 @@ class Fixes:
     def qtFix(self):
         os.system('cp -rv work/qt-everywhere-opensource-src-4.8.1/src/gui/mac/qt_menu.nib %s/lib' % (installDir))
     
+#===============================================================================
+# Py2app
+#===============================================================================
+class Py2app(Package):
+    src_uri='http://pypi.python.org/packages/source/p/py2app/py2app-0.6.4.tar.gz'
+    
+    def configure(self):
+        pass
+    
+    def make(self):
+        self.system("python setup.py build")
+    
+    def makeInstall(self):
+        self.system("python setup.py install")
     
     
     
