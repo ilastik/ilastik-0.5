@@ -200,6 +200,7 @@ class WorkerManager(object):
             
         
     def stopWorkers(self):
+        #return
         for i,w in enumerate(self.workerPool):
             if not issubclass(w.__class__, JobMachineWorkerUnthreaded):
                 print "stopping worker thread ", str(i)
