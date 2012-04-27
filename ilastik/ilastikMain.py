@@ -27,6 +27,21 @@
 #    authors and should not be interpreted as representing official policies, either expressed
 #    or implied, of their employers.
 
+##### FIXMEE: This import is a tweak to make ilastik compile with py2app. The new cython system of h5py 2.0 make it hard for modulegraph to reconstruct internal dependencies
+import h5py
+try:
+    import h5py._stub
+except:
+    print ''
+try:
+    import  h5py._conv
+except:
+    print ''
+try:
+    from h5py import defs
+except:
+    print ''
+######
 import vigra
 vigraVersion = vigra.version.split('.')
 if int(vigraVersion[0]) < 1 or int(vigraVersion[1]) < 8 or int(vigraVersion[2]) < 0:
