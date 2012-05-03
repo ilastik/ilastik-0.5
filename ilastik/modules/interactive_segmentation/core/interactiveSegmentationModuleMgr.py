@@ -199,12 +199,12 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             else:
                 weights = vigra.filters.gaussianGradientMagnitude((volume[:,:,:]).astype(numpy.float32), sigma)
         try:
-          weights = (-volume[:,:,:] + 255).view(vigra.ScalarVolume)
+          weights = weights.view(vigra.ScalarVolume)
         except:
           # in new versions of vigra the vigra.ScalarVolume is not a subclass of numpy.ndarray anymore
           # thus the .view() call fails
           # but the axis swapping is already handled correctly, so we do not need to cast the ndarray anyway
-          weights = (-volume[:,:,:] + 255)
+          pass
 
                 
         if normalizePotential == True:
