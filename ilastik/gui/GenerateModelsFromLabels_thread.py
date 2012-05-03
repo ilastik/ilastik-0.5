@@ -103,19 +103,19 @@ class MeshExtractor(QThread):
             smoother.Update()
 
 
-        triangleCellNormals = vtk.vtkPolyDataNormals()
-        triangleCellNormals.SetInput(smoother.GetOutput())
-        triangleCellNormals.ComputeCellNormalsOn()
-        triangleCellNormals.ComputePointNormalsOff()
-        triangleCellNormals.ConsistencyOn()
-        triangleCellNormals.AutoOrientNormalsOn()
-        triangleCellNormals.Update() #creates vtkPolyData
+#        triangleCellNormals = vtk.vtkPolyDataNormals()
+#        triangleCellNormals.SetInput(smoother.GetOutput())
+#        triangleCellNormals.ComputeCellNormalsOn()
+#        triangleCellNormals.ComputePointNormalsOff()
+#        triangleCellNormals.ConsistencyOn()
+#        triangleCellNormals.AutoOrientNormalsOn()
+#        triangleCellNormals.Update() #creates vtkPolyData
 
 
         self.newStep.emit(QString("Preparing meshes"))
         qDebug("*** Preparing meshes ***")
         if self.smooth:
-            selector.SetInput(triangleCellNormals.GetOutput())
+            selector.SetInput(smoother.GetOutput())
         else:
             selector.SetInput(discreteCubes.GetOutput())
         selector.SetInputArrayToProcess(0, 0, 0,
