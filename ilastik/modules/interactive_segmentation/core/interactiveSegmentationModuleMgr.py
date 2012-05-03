@@ -138,6 +138,10 @@ class InteractiveSegmentationItemModuleMgr(BaseModuleDataItemMgr):
         self.potentials                       = None
         
         self.initialized = False
+
+        self.seedsAvailable = False
+        self.weightsSetUp = False
+        self.firstInit = True
         
         self.rebuildDonePolicy = False
     
