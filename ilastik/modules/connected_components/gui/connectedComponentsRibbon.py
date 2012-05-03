@@ -70,7 +70,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.btnFilter       = TabButton('Filter objects', ilastikIcons.System)
         self.btnFilter.setVisible(False)
         
-        self.btnInputOverlay.setToolTip('Select an overlay for connected components search')
+        self.btnInputOverlay.setToolTip('Select an overlay for connected components (such as the segmentation after classification)')
         self.btnCC.setToolTip('Run connected components on the selected overlay')
         self.btnCCBack.setToolTip('Run connected components with background')
         self.btnFilter.setToolTip('Filter connected components by size and dilate')
