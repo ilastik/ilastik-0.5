@@ -42,12 +42,15 @@ class AutomateTab(IlastikTabBase, QtGui.QWidget):
         tl.setMargin(0)
         
         self.btnBatchProcess = TabButton('Batch Process', ilastikIcons.Play)
-       
+        self.btnBatchProcess.setEnabled(False)
         self.btnBatchProcess.setToolTip('Select and batch predict files with the currently trained classifier')
         tl.addWidget(self.btnBatchProcess)
         tl.addStretch()
         
         self.setLayout(tl)
+    
+    def on_otherProject(self):
+        self.btnBatchProcess.setEnabled(True)
         
     def _initConnects(self):
         self.connect(self.btnBatchProcess, QtCore.SIGNAL('clicked()'), self.on_btnBatchProcess_clicked)
