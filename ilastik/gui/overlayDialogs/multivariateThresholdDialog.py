@@ -26,7 +26,7 @@ class MultivariateThresholdDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDi
     configuresClass = "ilastik.core.overlays.thresholdOverlay.ThresholdOverlay"
     name = "Thresholding Overlay"
     author = "C. N. S."
-    homepage = "hci"
+    homepage = ""
     description = """Use this to threshold probability maps (predictions). It also works for multi-class predictions. If you select all the classes as foreground and don't move the sliders, you will get the 'most probable class' segmentation. If you want it to be more sensitive to a certain class, move its slider up. If you want it to be less sensitive to a certain class, move its slider down. If you are only interested in a few classes (or even only one), select them as foreground and the rest of the classes as background. The probabilities of the background classes will be pulled into one class. There is also an option to smooth the probability maps before thresholding."""    
 
             

@@ -121,6 +121,7 @@ class RenderChoiceDialog(QtGui.QDialog):
         super(RenderChoiceDialog, self).__init__()
         layout = QtGui.QVBoxLayout(self)
         #choicesGroup = QtGui.QButtonGroup(self)
+        self.setWindowIcon(QtGui.QIcon(ilastikIcons.Ilastik))
         self.openglChoice   = QtGui.QRadioButton("Open GL")
         self.softwareChoice = QtGui.QRadioButton("Software")
         okButton = QtGui.QDialogButtonBox(QtGui.QDialogButtonBox.Ok, QtCore.Qt.Vertical)
