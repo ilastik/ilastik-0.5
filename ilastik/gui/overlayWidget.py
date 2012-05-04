@@ -229,7 +229,7 @@ class OverlayListWidget(QtGui.QListWidget):
 #                channelMenu.setActiveAction(action)
             
         menu.addMenu(channelMenu)
-        exportAction = menu.addAction("Export")        
+        exportAction = menu.addAction("Export Overlay")        
 
         configureDialogAction = -3
         
