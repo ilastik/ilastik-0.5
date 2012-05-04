@@ -13,10 +13,10 @@ import traceback, os
 
 class FileOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
     configuresClass = "ilastik.core.overlays.fileOverlayDialog.FileOverlayDialog"
-    name = "Add File(s) Overlay"
+    name = "Add Overlay from h5 file"
     author = "C. N. S."
-    homepage = "hci"
-    description = "add a new overlay from a file"         
+    homepage = ""
+    description = "Add a new overlay from a hdf5 file that was previously created by exporting an overlay as h5 file."         
     
     def __init__(self, ilastik, instance = None):
         QtGui.QDialog.__init__(self)
