@@ -28,13 +28,13 @@ class MyListWidgetItem(QtGui.QListWidgetItem):
 class OverlayCreateSelectionDlg(QtGui.QDialog):
     def __init__(self, ilastikMain):
         QtGui.QWidget.__init__(self, ilastikMain)
-        self.setWindowTitle("Overlay Dialog")
         self.ilastik = ilastikMain
 
         #get the absolute path of the 'ilastik' module
         ilastikPath = os.path.dirname(ilastik.__file__)
         uic.loadUi(ilastikPath+'/gui/classifierSelectionDlg.ui', self)
-
+        self.setWindowTitle("Add Overlay Dialog")
+        
         self.connect(self.buttonBox, QtCore.SIGNAL('accepted()'), self.accept)
         self.connect(self.buttonBox, QtCore.SIGNAL('rejected()'), self.reject)
         #self.connect(self.settingsButton, SIGNAL('pressed()'), self.classifierSettings)

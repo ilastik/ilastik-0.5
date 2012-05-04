@@ -19,12 +19,14 @@ class FileOverlayDialog(overlayDialogBase.OverlayDialogBase, QtGui.QDialog):
     description = "Add a new overlay from a hdf5 file that was previously created by exporting an overlay as h5 file."         
     
     def __init__(self, ilastik, instance = None):
-        QtGui.QDialog.__init__(self)
+        QtGui.QDialog.__init__(self, ilastik)
+        
         
         self.ilastik = ilastik
 
         ilastikPath = os.path.dirname(ilastikModule.__file__)
-        self.ui = uic.loadUi(os.path.join(ilastikPath,"gui/overlayDialogs/fileOverlayDialog.ui"), self)
+        self.ui = uic.loadUi(os.path.join(ilastikPath, "gui/overlayDialogs/fileOverlayDialog.ui"), self)
+        self.setWindowTitle("Add Overlay from h5 file")
         self.ui.filenameButton.clicked.connect(self.chooseFilename)
         self.ui.colorButton.setEnabled(False)
         self.ui.customColorButton.toggled.connect(self.customColorButtonToggled)
