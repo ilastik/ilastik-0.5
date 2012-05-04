@@ -80,7 +80,12 @@ class ClassificationTab(IlastikTabBase, QtGui.QWidget):
         self.btnExportClassifier.setToolTip('Save current classifier and its feature settings')
         self.btnClassifierOptions.setToolTip('Select a classifier and change its settings')
         
-        self.on_otherProject()
+        self.btnSelectFeatures.setEnabled(False)
+        self.btnStartLive.setEnabled(False)
+        self.btnTrainPredict.setEnabled(False)
+        self.btnJustPredict.setEnabled(False)
+        self.btnExportClassifier.setEnabled(False)
+        self.btnClassifierOptions.setEnabled(False)
         
         tl.addWidget(self.btnSelectFeatures)
         tl.addWidget(self.btnStartLive)
