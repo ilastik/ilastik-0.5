@@ -6,9 +6,9 @@ class OverlayDialogBase(object):
     
     configuresClass = "classname"
     name = "Base OverlayDialog"
-    author = "hci"
-    homepage = "hci"
-    description = "stuff"
+    author = "author"
+    homepage = "homepage"
+    description = "description"
     
     def __init__(self, instance, volumeEditor):
         """

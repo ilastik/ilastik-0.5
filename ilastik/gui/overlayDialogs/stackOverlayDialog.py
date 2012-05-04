@@ -11,10 +11,10 @@ from ilastik.gui import stackloader
 
 class StackOverlayDialog(overlayDialogBase.OverlayDialogBase):
     configuresClass = "ilastik.core.overlays.stackOverlayDialog.StackOverlayDialog"
-    name = "Add Stack Overlay"
+    name = "Add Stack Overlay (3D)"
     author = "C. N. S."
-    homepage = "hci"
-    description = "add a new overlays from image stack"    
+    homepage = ""
+    description = "Add a new overlays from image stack. Only 3D data is supported."    
 
             
     
