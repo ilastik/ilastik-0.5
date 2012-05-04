@@ -75,10 +75,10 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.btnCCBack.setToolTip('Run connected components with background')
         self.btnFilter.setToolTip('Filter connected components by size and dilate')
         
-        self.btnInputOverlay.setEnabled(True)
+        self.btnInputOverlay.setEnabled(False)
         self.btnCC.setEnabled(False)
         self.btnCCBack.setEnabled(False)
-        self.btnFilter.setEnabled(True)
+        self.btnFilter.setEnabled(False)
         
         tl.addWidget(self.btnInputOverlay)
         tl.addWidget(self.btnCC)
@@ -95,7 +95,9 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.connect(self.btnFilter, QtCore.SIGNAL('clicked()'), self.on_btnFilter_clicked)
         #self.connect(self.btnCCOptions, QtCore.SIGNAL('clicked()'), self.on_btnCCOptions_clicked)
         
-        
+    def on_otherProject(self):
+        self.btnInputOverlay.setEnabled(True)
+            
     def on_btnInputOverlay_clicked(self):
         dlg = OverlaySelectionDialog(self.ilastik,  singleSelection = True)
         answer = dlg.exec_()

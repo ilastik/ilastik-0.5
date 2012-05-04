@@ -71,7 +71,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     def on_imageChanged(self):
         #Finally, initialize the core module   
         if self.segmentationItemMgr is not None:
-          self.btnSegment.clicked.disconnect(self.segmentationItemMgr.segment)
+            self.btnSegment.clicked.disconnect(self.segmentationItemMgr.segment)
         s = self.ilastik._activeImage.Interactive_Segmentation     
         self.segmentationItemMgr = s
         self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
@@ -118,10 +118,10 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setLabelWidget(self.seedWidget)
         if self.segmentationItemMgr.firstInit:
             if self.seedWidget.count() == 0:
-              self.seedWidget.addLabel("Background", 1, QtGui.QColor(255,0,0))
-              self.seedWidget.createLabel() #make at least one object label so that we can start segmenting right away
-              self.seedOverlay.displayable3D = True
-              self.seedOverlay.backgroundClasses = set([0])
+                self.seedWidget.addLabel("Background", 1, QtGui.QColor(255,0,0))
+                self.seedWidget.createLabel() #make at least one object label so that we can start segmenting right away
+                self.seedOverlay.displayable3D = True
+                self.seedOverlay.backgroundClasses = set([0])
             self.connect(s, QtCore.SIGNAL('weightsSetup()'), self.on_setupWeights)
             self.connect(s, QtCore.SIGNAL('newSegmentation()'), self.on_newSegmentation)
             self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
@@ -136,6 +136,8 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         
         self.ilastik.labelWidget.interactionLog = self.interactionLog
         self.ilastik.labelWidget._history.volumeEditor = self.ilastik.labelWidget
+        
+    def on_otherProject(self):
         self.btnChooseWeights.setEnabled(True)
 
         

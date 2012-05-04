@@ -44,10 +44,14 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
 
         self.ilastik.labelWidget.setLabelWidget(ve.DummyLabelWidget())
         
-        self.btnUnsupervisedOptions.setEnabled(True)     
+          
                 
     def on_deActivation(self):
-        self.btnDecompose.setEnabled(False)  
+        pass
+    
+    def on_otherProject(self):
+        self.btnChooseOverlays.setEnabled(True)
+        self.btnUnsupervisedOptions.setEnabled(True) 
             
     def _initContent(self):
         tl = QtGui.QHBoxLayout()
@@ -63,6 +67,7 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         self.btnChooseOverlays.setToolTip('Choose the overlays for unsupervised decomposition')
         self.btnDecompose.setToolTip('Perform unsupervised decomposition')
         self.btnUnsupervisedOptions.setToolTip('Select an unsupervised decomposition plugin and change settings')
+        self.btnChooseOverlays.setEnabled(False)   
         
         tl.addWidget(self.btnChooseOverlays)
         tl.addWidget(self.btnDecompose)
