@@ -125,8 +125,8 @@ class SlibPackage(Package):
 ###################################################################################################
         
 class ZlibPackage(Package):
-    src_uri = 'http://zlib.net/zlib-1.2.6.tar.gz'
-    workdir = 'zlib-1.2.6'
+    src_uri = 'http://zlib.net/zlib-1.2.7.tar.gz'
+    workdir = 'zlib-1.2.7'
     
     def unpack(self):
         Package.unpack(self)
