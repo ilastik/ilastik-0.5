@@ -1,0 +1,145 @@
+#!/bin/bash
+
+if [ -z "$3" ]; then
+    echo "usage: $0" '<source-dir> <package-tag> <vm-image-file> [ <number-of-cpus> [ <memory-in-GB> [ <ssh-port> ] ] ]'
+    echo 'defaults: <number-of-cpus> = number of host cores / 2;'
+    echo '          <memory-in-GB> = 2 * <number-of-cpus>'
+    echo '          <ssh-port> = 2222'
+    exit 1
+fi
+
+Qemu_img=$3
+
+if [ -z "$4" ]; then
+    Qemu_hw_cpus=$((`cat /proc/cpuinfo|fgrep -i processor|wc -l` / 2))
+    Qemu_cpus=$(($Qemu_hw_cpus > 4 ? 4 : $Qemu_hw_cpus));
+else
+    Qemu_cpus=$4
+fi
+
+if [ -z "$5" ]; then
+    Qemu_mem=$((2 * $Qemu_cpus))G
+else
+    Qemu_mem=${5}G
+fi
+
+if [ -z "$6" ]; then
+    Qemu_ssh_port=2222
+else
+    Qemu_ssh_port=$6
+fi
+
+# assemble virtual machine's build script:
+#
+echo PKG_NAME=ilastik$2 >build-cmd
+cat >>build-cmd <<EOF
+    echo starting build-cmd:
+    rm -rf tmp # forego if necesary
+    mkdir tmp
+    cd tmp
+    export PATH=\${HOME}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin
+    tar xvf ../tree.tar && \
+    rm -f ../tree.tar && \
+    cd scripts && \
+    python ./install-ilastik-deps.py all && \
+    python ./buildLinux.py \$PKG_NAME && \
+    tar cvf /dev/sdc \${PKG_NAME}.tar.bz2
+    echo exiting build-cmd.
+EOF
+
+# uncomment the following for master virtual machine image maintenance with ssh:
+#### echo 'sleep 1d' >build-cmd
+
+echo building input files:
+(cd $1; tar cf - .) > tree.tar
+tar cvf input_blocked.tar -b 64 build-cmd tree.tar
+rm -f tree.tar
+
+# sparse file...
+rm -f output.tar
+dd oflag=append if=/dev/zero of=output.tar bs=1 count=0 seek=1G 2>/dev/null
+
+echo starting virtual machine, logging to build.log:
+
+env kvm -version 2>/dev/null
+if test $? -eq 126 -o  $? -eq 127  -o $? -eq 1 -o ! -w /dev/kvm -o ! -r /dev/kvm ; then
+    echo 'using (slow) Qemu software emulation'
+    if test -a /dev/kvm -a (! -w /dev/kvm -o ! -r /dev/kvm) ; then
+        echo '... because /dev/kvm in inaccessible: perform'
+        echo "    echo 'KERNEL==\"kvm\", GROUP=\"kvm\", MODE=\"0666\"' > /etc/udev/rules.d/95-qemu-kvm.rules"
+        echo "    rmmod kvm_intel # or: kvm_amd"
+        echo "    modprobe kvm_intel # or: kvm_amd"
+        echo 'as root in order to fix this'
+    else
+        if egrep '^flags.*(vmx|svm)' /proc/cpuinfo >/dev/null ; then
+            echo '... because probably KVM is not installed: perform'
+            echo "    apt-get install qemu-kvm"
+            echo 'as root in order to fix this'
+            echo '... or hardware virtualisation is disabled in the BIOS setup,'
+            echo 'try to enable it there, or else use another machine if'
+            echo 'possible.'
+        else
+            echo 'because this machine does not support hardware virtualisation:'
+            echo 'use another computer if possible.'
+        fi
+    fi
+    Qemu_command = qemu-system-x86_64
+else
+    echo 'using Qemu hardware emulation (KVM)'
+    Qemu_command = kvm
+fi
+$Qemu_command \
+    $Qemu_img -m $Qemu_mem -smp $Qemu_cpus \
+    -net nic -net user,hostfwd=tcp:127.0.0.1:${Qemu_ssh_port}-:22 \
+    -vnc none \
+    -serial file:build.log -hdb input_blocked.tar -hdc output.tar
+
+echo 'virtual machine is shut down, unpacking output (if any):'
+tar xvf output.tar
+
+# hints.
+
+# @)
+#
+# add all users using kvm to group kvm 
+# by editing /etc/group , at least for Ubuntu 10.04
+
+# a)
+#
+# mount master image (only if virtual machine does not run):
+# mkdir /tmp/mnt
+# mount -o loop,offset=32256 vm_fedora12_0.img /tmp/mnt/
+
+# b)
+#
+# ssh to virtual machine:
+# ssh -X -p 2222 -l ic localhost          # -p ${Qemu_ssh_port}
+# ssh -X -p 2222 -l root localhost        # -p ${Qemu_ssh_port}
+#
+# password is "straehle/git"
+
+# c)
+#
+# /etc/rc.local of virtual image, executed after startup of virtual machine:
+#
+# chgrp ic /dev/ttyS0     # virtual serial interfaces, writes to file build.log
+# chgrp ic /dev/sdb       # virtual hard drive, input via file input_blocked.tar
+# chgrp ic /dev/sdc       # virtual hard drive, output via file output.tar
+# su -l ic -c /home/ic/etc_rc.local-started # switch to user 'ic' and unpack input
+# /sbin/init 0            # shutdown virtual machine.
+
+# d)
+#
+# /home/ic/etc_rc.local-started of virtual image:
+#
+# #!/bin/bash
+# cd /home/ic
+# date >> my-dates
+# tar xvf /dev/sdb >/dev/ttyS0 2>&1  # unpack input tar file
+# bash ./build-cmd >/dev/ttyS0 2>&1  # start command script (from input tar file)
+
+# e)
+#
+# In Ubuntu, possibly disable kvm page merging
+# by editing /etc/default/qemu-kvm and following 
+# instructions there.
