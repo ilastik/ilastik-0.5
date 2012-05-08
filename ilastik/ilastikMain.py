@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#    Copyright 2011 C Sommer, C Straehle, T Kroeger, U Koethe, FA Hamprecht. All rights reserved.
+#    Copyright 2012 C Sommer, C Straehle, T Kroeger, U Koethe, FA Hamprecht. All rights reserved.
 #
 #    Redistribution and use in source and binary forms, with or without modification, are
 #    permitted provided that the following conditions are met:
@@ -49,7 +49,7 @@ import platform
 
 from PyQt4 import QtCore, QtOpenGL, QtGui
 
-app = QtGui.QApplication(sys.argv) #(sys.argv
+app = QtGui.QApplication(sys.argv)
 
 #force QT4 toolkit for the enthought traits UI
 os.environ['ETS_TOOLKIT'] = 'qt4'
@@ -59,34 +59,22 @@ import ilastik.modules
 
 #load core functionality
 ilastik.modules.loadModuleCores()
-
-#from ilastik.core import version, dataMgr, projectMgr,  activeLearning, onlineClassifcator, dataImpex, connectedComponentsMgr
-#import ilastik.gui
-#from ilastik.core import projectMgr, activeLearning
-
 from ilastik.modules.classification.core import featureMgr
-from ilastik.core.randomSeed import RandomSeed 
-
-#from ilastik.core import connectedComponentsMgr
-#from ilastik.core import projectMgr
 
 from ilastik.gui import volumeeditor as ve
 from ilastik.core.dataImpex import DataImpex
 from ilastik.gui import ctrlRibbon
 from ilastik.gui.iconMgr import ilastikIcons
 from ilastik.gui.ribbons.ilastikTabBase import IlastikTabBase
-#import ilastik.gui.ribbons.standardRibbons
 
 import threading
 import warnings
+
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     import h5py
 import getopt
 
-
-
-# Please no import *
 from ilastik.gui.shortcutmanager import shortcutManager
 import ilastik.core
 import ilastik.gui
@@ -165,8 +153,9 @@ class MainWindow(QtGui.QMainWindow):
         self.setGeometry(50, 50, 800, 600)
         self.setWindowTitle("ilastik " + str(ILASTIK_VERSION))
         self.setWindowIcon(QtGui.QIcon(ilastikIcons.Ilastik))
-
-        self.activeImageLock = threading.Semaphore(1) #prevent chaning of _activeImageNumber during thread stuff
+        
+        #prevent changing of _activeImageNumber during threading
+        self.activeImageLock = threading.Semaphore(1) 
 
         self.previousTabText = ""
 
@@ -229,9 +218,10 @@ class MainWindow(QtGui.QMainWindow):
 
         except getopt.GetoptError, err:
             # print help information and exit:
-            print str(err) # will print something like "option -a not recognized"
+            print str(err) 
 
-        if self.opengl == None:   #no command line option for opengl was given, ask user interactively
+        #no command line option for opengl was given, ask user interactively
+        if self.opengl == None:   
             dlg = RenderChoiceDialog()
             dlg.exec_()
 
@@ -312,7 +302,6 @@ class MainWindow(QtGui.QMainWindow):
 
         # Notify tabs
         self.ribbon.widget(self.ribbon.currentIndex()).on_imageChanged()
-        # self.ribbon.widget(self.ribbon.currentIndex()).on_activation()
         
         self.fileSelectorList.setEnabled(True)
 
@@ -516,12 +505,12 @@ class MainWindow(QtGui.QMainWindow):
         else:
             event.ignore()
            
-
 #*******************************************************************************
 # i f   _ _ n a m e _ _   = =   " _ _ m a i n _ _ "                            *
 #*******************************************************************************
 
 if __name__ == "__main__":
+    # Splash Screen
     splashImage = QtGui.QPixmap(os.path.join(os.path.abspath(ilastikGuiPath[0]), 'logos/ilastik-splash.png'))
     painter = QtGui.QPainter()
     painter.begin(splashImage)
@@ -530,32 +519,29 @@ if __name__ == "__main__":
 
     splashScreen = QtGui.QSplashScreen(splashImage)
     splashScreen.show()
-
     app.processEvents();
+    
+    # Load GUI modules
     ilastik.modules.loadModuleGuis()
 
+    # Open MainWindow
     mainwindow = MainWindow(sys.argv)
     mainwindow.setStyleSheet("QSplitter::handle { background-color: #CCCCCC;}")
 
     mainwindow.show()
-    #On OS X, the window has to be raised in order to be visible directly after starting
-    #the app
+    # On MacOS X, the window has to be raised in order to be visible directly after starting
     mainwindow.raise_()
     
     mainwindow.showMaximized()
-    
     splashScreen.finish(mainwindow)
-    
-    randomseed = RandomSeed()
     
     app.exec_()
     print "cleaning up..."
     if mainwindow.labelWidget is not None:
         del mainwindow.labelWidget
     del mainwindow
-    del randomseed
 
-
+    # Delete peristant worker queue
     del ilastik.core.jobMachine.GLOBAL_WM
 
 
