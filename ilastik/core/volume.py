@@ -369,7 +369,7 @@ class VolumeLabels():
                  
             descriptions = []
             for index, item in enumerate(colors):
-                descriptions.append(VolumeLabelDescription(names[index], numbers[index], long(colors[index]),  None))
+                descriptions.append(VolumeLabelDescription(names[index], numbers[index], long(colors[index]),  numpy.zeros(data.shape[0:-1],  'uint8')))
     
             vl =  VolumeLabels(data)
             vl.descriptions = descriptions

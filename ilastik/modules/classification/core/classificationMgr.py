@@ -135,12 +135,9 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         self.serializeCustom(h5g, destbegin, destend, srcbegin, srcend, destshape, True)
 
     def serializeCustom(self, h5g, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0), writeLabels = True ):
-        #for now save the labels and prediction in the old format
-        #TODO: change that when we are certain about the new project file format
         if destend != (0,0,0):
             self.dataItemImage._dataVol.serialize(h5g, 'data', destbegin, destend, srcbegin, srcend, destshape)
         elif self.dataItemImage._writeEnd != (0,0,0):
-            
             destbegin = self.dataItemImage._writeBegin
             destend =  self.dataItemImage._writeEnd
             srcbegin =  self.dataItemImage._readBegin
