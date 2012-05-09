@@ -152,9 +152,9 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
         descriptions = self.classificationModuleMgr.dataMgr.module["Classification"]["labelDescriptions"] 
         vl = VolumeLabels(self.dataItemImage.overlayMgr["Classification/Labels"]._data)
         vl.descriptions = descriptions                                                  
-        if writeLabels:                                                                 
-            print " - serializing Classification/Labels " + str(vl) + ": " + str(h5g) + " /labels" 
-            vl.serialize(h5g, "labels", destbegin, destend, srcbegin, srcend, destshape)
+                                                            
+        print " - serializing Classification/Labels " + str(vl) + ": " + str(h5g) + " /labels" 
+        vl.serialize(h5g, "labels", destbegin, destend, srcbegin, srcend, destshape, writeLabels)
 
         if len(descriptions) > 0:                                                     
             prediction = numpy.zeros(self.dataItemImage.shape[0:-1] + (len(descriptions),), 'float32') 
@@ -177,8 +177,9 @@ class ClassificationItemModuleMgr(BaseModuleDataItemMgr):
 
 
     def deserialize(self, h5G, offsets = (0,0,0), shape = (0,0,0)):
-        labels = VolumeLabels.deserialize(h5G, "labels",offsets, shape)
+        labels = VolumeLabels.deserialize(h5G, "labels", offsets, shape)
         self["labels"] = labels
+     
         if 'prediction' in h5G.keys():
             self["prediction"] = DataAccessor.deserialize(h5G, 'prediction', offsets, shape)
         
@@ -250,7 +251,7 @@ class ClassificationModuleMgr(BaseModuleMgr):
 
                     
         if dataItemImage.Classification["prediction"] is not None:
-            prediction = dataItemImage.Classification["prediction"]
+            prediction = dataItemImage.Classification["prediction"]  
             for index, descr in enumerate(self.dataMgr.module["Classification"]["labelDescriptions"]):
                 ov = overlayMgr.OverlayItem(DataAccessor(prediction[:,:,:,:,index:index+1], channels = False), color = long(descr.color), alpha = 0.4, colorTable = None, autoAdd = True, autoVisible = True, min = 0, max = 1.0)
                 ov.setColorGetter(descr.getColor, descr)
@@ -315,8 +316,6 @@ class ClassificationModuleMgr(BaseModuleMgr):
             traceback.print_exc()
         
     def deserialize(self, h5G):
-        print "ClassificationModuleMgr::deserialize"
-        
         #some old file version might not have these keys
         try:
             userSelection = h5G['FeatureSelection']['UserSelection']
@@ -763,7 +762,7 @@ class ClassifierPredictThread(ThreadBase):
             if len(descriptions) == 0:
                 # fallback: invent some label information, if we do not have
                 m = prediction[0].shape[-1]                                            
-                descriptions = [VolumeLabelDescription('Prediction_%02d' % k, k+ 1, 0, None) for k in range(m)]
+                descriptions = [VolumeLabelDescription('Prediction_%02d' % k, k + 1, 0, None) for k in range(m)]
 
                 if makePrediction:                                                   
                     self.dataMgr.module["Classification"]["labelDescriptions"] = descriptions
