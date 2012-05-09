@@ -97,8 +97,8 @@ class TiffPackage(Package):
 ###################################################################################
 
 class PngPackage(Package):
-    src_uri = 'http://prdownloads.sourceforge.net/libpng/libpng-1.4.5.tar.gz'
-    workdir = 'libpng-1.4.5'
+    src_uri = 'ftp://ftp.simplesystems.org/pub/libpng/png/src/libpng-1.4.11.tar.gz'
+    workdir = 'libpng-1.4.11'
     
     def configure_darwin(self):
         return """./configure --disable-dependency-tracking \\
@@ -125,8 +125,8 @@ class SlibPackage(Package):
 ###################################################################################################
         
 class ZlibPackage(Package):
-    src_uri = 'http://zlib.net/zlib-1.2.6.tar.gz'
-    workdir = 'zlib-1.2.6'
+    src_uri = 'http://zlib.net/zlib-1.2.7.tar.gz'
+    workdir = 'zlib-1.2.7'
     
     def unpack(self):
         Package.unpack(self)

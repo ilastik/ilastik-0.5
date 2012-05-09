@@ -21,6 +21,9 @@ def __numpyTypeToVtkType(dtype):
     elif dtype == numpy.uint32:
         #define VTK_UNSIGNED_INT    7
         return 7
+    elif dtype == numpy.int64:
+        #define VTK_LONG            8
+        return 8 
     else:
         raise RuntimeError("type conversion not implemented...")
     #define VTK_VOID            0
@@ -50,4 +53,5 @@ def toVtkImageData(a):
         importer.SetWholeExtent(0,a.shape[0]-1,0,a.shape[1]-1,0,a.shape[2]-1)
     importer.SetImportVoidPointer(a)
     importer.Update()
-    return importer.GetOutput() 
+    return importer.GetOutput()
+
