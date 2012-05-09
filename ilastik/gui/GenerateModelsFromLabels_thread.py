@@ -189,6 +189,7 @@ class MeshExtractorDialog(QDialog):
     
         l = QVBoxLayout()
         self.setLayout(l)
+        self.setWindowTitle('Rendering...')
         
         self.overallProgress = QProgressBar()
         self.overallProgress.setRange(0, 5)
