@@ -50,7 +50,7 @@ class InlineSettingsWidget(QtGui.QWidget):
 #*******************************************************************************
 
 class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
-    name = 'Interactive MST Segmentation'
+    name = 'Seeded Watershed'
     position = 3
     moduleName = "Interactive_Segmentation"
     
@@ -147,7 +147,14 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.maybeEnableSegmentButton()
         
     def maybeEnableSegmentButton(self):
-        self.btnSegment.setEnabled(self.segmentationItemMgr.seedsAvailable and self.segmentationItemMgr.weightsSetUp)
+      if self.segmentationItemMgr.seedsAvailable and self.segmentationItemMgr.weightsSetUp:
+          self.btnSegment.setEnabled(True)
+          if self.inlineSettings.ui is None:
+            ui = self.parent.project.dataMgr.Interactive_Segmentation.segmentor.getInlineSettingsWidget(self.inlineSettings, view="default")
+            self.inlineSettings.changeWidget(ui)
+      else:
+          self.btnSegment.setEnabled(False)
+        
     
     def on_deActivation(self):
         if self.ilastik.project is None: return

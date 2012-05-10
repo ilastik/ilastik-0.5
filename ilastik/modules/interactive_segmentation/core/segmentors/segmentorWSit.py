@@ -75,7 +75,7 @@ if ok:
         
         advanced = Bool(False)
 
-        viewWS = Group(Item('biasThreshold'),  Item('biasedLabel'), Item("addVirtualBackgroundSeeds"), visible_when = 'advanced==True')
+        viewWS = Group(Item('biasThreshold'),  Item('biasedLabel'), visible_when = 'advanced==True')
 
         view = View( Item('edgeWeights'), Item('dontUseSuperVoxels'), buttons = ['OK', 'Cancel'],  )
 
