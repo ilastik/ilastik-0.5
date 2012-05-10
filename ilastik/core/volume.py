@@ -300,14 +300,15 @@ class VolumeLabels():
         #TODO: clear the labvles
         pass
         
-    def serialize(self, h5G, name, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0) ):
+    def serialize(self, h5G, name, destbegin = (0,0,0), destend = (0,0,0), srcbegin = (0,0,0), srcend = (0,0,0), destshape = (0,0,0), writeLabels=True ):
         
         if name not in h5G.keys():
             group = h5G.create_group(name)
         else:
             group = h5G[name]
         
-        self._data.serialize(group, 'data', destbegin, destend, srcbegin, srcend, destshape)
+        if writeLabels:
+            self._data.serialize(group, 'data', destbegin, destend, srcbegin, srcend, destshape)
         
         tColor = []
         tName = []
@@ -322,6 +323,7 @@ class VolumeLabels():
             h5G[name].attrs['color'] = tColor 
             h5G[name].attrs['name'] = tName
             h5G[name].attrs['number'] = tNumber
+            h5G[name].attrs['shape'] = destshape
             
         if self._history is not None:
             self._history.serialize(group, '_history')        
@@ -346,8 +348,11 @@ class VolumeLabels():
     def deserialize(h5G, name ="labels", offsets = (0,0,0), shape=(0,0,0)):
         if name in h5G.keys():
             t = h5G[name]
-            if isinstance(t,h5py.highlevel.Group):
-                data = DataAccessor.deserialize(t, 'data', offsets, shape)
+            if isinstance(t, h5py.highlevel.Group):
+                if 'data' in t:
+                    data = DataAccessor.deserialize(t, 'data', offsets, shape)
+                else:
+                    data = None
             else:
                 data = DataAccessor.deserialize(h5G, name, offsets, shape)
             colors = []
@@ -357,6 +362,11 @@ class VolumeLabels():
                 colors = h5G[name].attrs['color']
                 names = h5G[name].attrs['name']
                 numbers = h5G[name].attrs['number']
+            if h5G[name].attrs.__contains__('shape'):
+                lab_shape = (1,) + h5G[name].attrs['shape'] + (1,)
+                if data is None:
+                    data = numpy.zeros(lab_shape, numpy.uint8)
+                 
             descriptions = []
             for index, item in enumerate(colors):
                 descriptions.append(VolumeLabelDescription(names[index], numbers[index], long(colors[index]),  numpy.zeros(data.shape[0:-1],  'uint8')))

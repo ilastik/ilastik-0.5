@@ -158,6 +158,7 @@ class ConnectedComponentsModuleMgr(BaseModuleMgr):
             colortab = OverlayItem.createDefault16ColorColorTable()
             myColor = OverlayItem.qrgb(255, 0, 0)
             ov = OverlayItem(self.ccThread.result, color = myColor, alpha = 1.0, colorTable = colortab, autoAdd = True, autoVisible = True)
+            ov.displayable3D = True
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"] = ov        
         else:
             self.dataMgr[self.dataMgr._activeImageNumber].overlayMgr["Connected Components/CC Results"]._data = DataAccessor(self.ccThread.result)

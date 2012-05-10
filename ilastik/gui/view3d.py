@@ -422,7 +422,7 @@ class OverviewScene(QWidget):
             self.qvtk.registerObject(actor)
             self.objects.append(actor)
             if self.colorTable:
-                c = self.colorTable[i]
+                c = self.colorTable[i % len(self.colorTable)]
                 c = QColor.fromRgba(c)
                 actor.GetProperty().SetColor(c.red()/255.0, c.green()/255.0, c.blue()/255.0)
             

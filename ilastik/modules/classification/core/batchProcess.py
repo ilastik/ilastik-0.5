@@ -393,7 +393,7 @@ class BatchProcessCore(object):
                     classificationPredict.wait()
                     
                     self.printStuff(" Generating overlays...")                          
-                    classificationPredict.generateOverlays(makePrediction=bo.writePrediction, makeSegmentation=bo.writeSegmentation, makeUncertainty=bo.writeUncertainty)  
+                    classificationPredict.generateOverlays(makePrediction=True, makeSegmentation=True, makeUncertainty=True)  
                     
                     if bo.h5Results:                                               
                         fw = h5py.File(bo.outputDir + '/' + filen + '_processed.h5', 'w') 
@@ -509,12 +509,13 @@ class BatchProcessCore(object):
                 self._writeUncertaintyToDisk(unc, baseFileName)
          
         # write prediction       
-        if self.batchOptions.writePrediction:
-            descriptions = dataMgr.module["Classification"]["labelDescriptions"]
-            if descriptions is not None and len(descriptions) > 0:
-                for k, d in enumerate(descriptions):
-                    if image.overlayMgr["Classification/Prediction/" + d.name] is not None:
-                        pred = image.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+        
+        descriptions = dataMgr.module["Classification"]["labelDescriptions"]
+        if descriptions is not None and len(descriptions) > 0:
+            for k, d in enumerate(descriptions):
+                if image.overlayMgr["Classification/Prediction/" + d.name] is not None:
+                    pred = image.overlayMgr["Classification/Prediction/" + d.name][:,:,:,:,0]
+                    if self.batchOptions.writePrediction:
                         self._writePredictionToDisk(pred, baseFileName, k, d.name)
 
             
