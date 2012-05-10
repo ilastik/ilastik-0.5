@@ -256,7 +256,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         origColorTable = copy.deepcopy(self.parent.labelWidget.labelWidget.colorTab)
         origColorTable[1] = 255
         
-        self.segmentationItemMgr.segmentationOverlay = OverlayItem(s.segmentation, color = 0, alpha = 1.0, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
+        self.segmentationItemMgr.segmentationOverlay = OverlayItem(s.segmentation, color = 0, alpha = 0.50, colorTable = origColorTable, autoAdd = True, autoVisible = True, linkColorTable = True)
         #this overlay can be shown in 3D
         #the label 0 never occurs, label 1 is assigned to the background  class
         self.segmentationItemMgr.segmentationOverlay.displayable3D = True
@@ -271,7 +271,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.segmentationItemMgr.segmentationOverlay.colorTable = origColorTable            
             
         if hasattr(self.localMgr, 'borders') and self.localMgr.borders is not None:
-            ov = OverlayItem(self.localMgr.borders, color = QtGui.QColor(), alpha = 1.0, autoAdd = True, autoVisible = False, min = 0, max = 1.0)
+            ov = OverlayItem(self.localMgr.borders, color = QtGui.QColor(), alpha = 0.50, autoAdd = True, autoVisible = False, min = 0, max = 1.0)
             self.activeImage.overlayMgr["Segmentation/Supervoxels"] = ov
         else:
             self.activeImage.overlayMgr.remove("Segmentation/Supervoxels")
