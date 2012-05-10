@@ -1,0 +1,10 @@
+/ilastik/vigra-ilastik-05/lib/libvigraimpex.dylib:
+	/ilastik/vigra-ilastik-05/lib/libvigraimpex.3.dylib (compatibility version 3.0.0, current version 3.180.0)
+	/ilastik/lib/libjpeg.8.dylib (compatibility version 13.0.0, current version 13.0.0)
+	/ilastik/lib/libpng15.15.dylib (compatibility version 26.0.0, current version 26.0.0)
+	/ilastik/lib/libz.so.1.2.6 (compatibility version 0.0.0, current version 0.0.0)
+	/ilastik/lib/libtiff.3.dylib (compatibility version 13.0.0, current version 13.6.0)
+	/ilastik/lib/libhdf5.7.dylib (compatibility version 8.0.0, current version 8.2.0)
+	/ilastik/lib/libhdf5_hl.7.dylib (compatibility version 8.0.0, current version 8.2.0)
+	/usr/lib/libstdc++.6.dylib (compatibility version 7.0.0, current version 52.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 159.1.0)

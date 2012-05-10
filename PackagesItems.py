@@ -55,7 +55,8 @@ class PythonPackage(Package):
     src_uri='http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz'
 
     def configure_darwin(self):
-        return ['./configure', '--prefix="($prefix)"', '--enable-framework="($prefix)/Frameworks"']
+        return ['./configure', '--prefix="($prefix)"', '--enable-framework="($prefix)/Frameworks"', '--with-zlib="($prefix)/lib/libz.so.1.2.6"',
+                'OPT="-fast -arch x86_64 -Wall -Wstrict-prototypes -fno-common -fPIC"', '--enable-unicode=ucs4 LDFLAGS="-arch x86_64"']
 
 #===============================================================================
 # FFTW3Package
@@ -195,7 +196,7 @@ class BoostPackage(Package):
     src_uri='http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz'
     
     def configure_darwin(self):
-        return ['./bootstrap.sh', '--prefix="($prefix)"', '--libdir=="($prefix)/lib"', '--with-python="($prefix)/bin/python"', 
+        return ['./bootstrap.sh', '--prefix="($prefix)"', '--libdir=="($prefix)/lib"', '--with-python="($prefix)/Frameworks/Python.framework/Versions/2.7/bin/python"', 
                 '--with-libraries=python',
                 '&&',
                 './bjam', 'install', '--prefix="($prefix)"', 'address-model=64', 
@@ -224,7 +225,7 @@ class VigraPackage(Package):
                 '-DPYTHON_INCLUDE_DIR=($pythonHeaders)',
                 '-DPYTHON_LIBRARY=($pythonlib)',
                 ]
-    
+
 #===============================================================================
 # QtPackage
 #===============================================================================
@@ -451,7 +452,7 @@ class VTKPackage(Package):
                 '-DTIFF_INCLUDE_DIR=($prefix)/include',
                 '-DTIFF_LIBRARY=($prefix)/lib/libtiff.dylib',
                 '-DZLIB_INCLUDE_DIR=($prefix)/include',
-                '-DZLIB_LIBRARY=($prefix)/lib/libz.dylib', 
+                '-DZLIB_LIBRARY=($prefix)/lib/libz.so.1.2.6', 
                 '-DHDF5_HL_INCLUDE_DIR=($prefix)/include',
                 '-DCMAKE_INSTALL_PREFIX=($prefix)',
                 '../../work/($packageWorkDir)']
@@ -474,6 +475,7 @@ class LazyflowPackage(Package):
         		'-DVIGRA_IMPEX_LIBRARY=($prefix)/lib/libvigraimpex.dylib',
         		'-DVIGRA_IMPEX_LIBRARY_DIR=($prefix)/lib',
         		'-DVIGRA_INCLUDE_DIR=($prefix)/include',
+                '-DVIGRA_NUMPY_CORE_LIBRARY=($prefix)/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra/vigranumpycore.so',
         		' && make',
         		]
     
@@ -538,7 +540,7 @@ class Ilastik06EnvScript(object):
         file = open('%s/ilastik06.sh' % (installDir), "w")
         file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/2.7/bin:$PATH\n" % (installDir, installDir))
         file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/lib:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir))
-        file.write("export PYTHONPATH=%s/volumina:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages\n" % (installDir, installDir, installDir, installDir, installDir))
+        file.write("export PYTHONPATH=%s/volumina:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages:%s/lazyflow/lazyflow/operators/obsolete\n" % (installDir, installDir, installDir, installDir, installDir, installDir))
         file.write("alias classificationWorkflow='python %s/techpreview/classification/classificationWorkflow.py'\n" % (installDir))
         file.write("alias ls='ls -G'\n")
         file.write("txtred='\e[0;31m' # Red\n")
@@ -677,9 +679,13 @@ class Vigra05Package(Package):
                 '-DPNG_PNG_INCLUDE_DIR=($prefix)/include',
                 '-DVIGRANUMPY_INSTALL_DIR=($prefix)/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages',
                 '-DZLIB_INCLUDE_DIR=($prefix)/include',
-                '-DZLIB_LIBRARY=($prefix)/lib/libz.dylib',
+                '-DZLIB_LIBRARY=($prefix)/lib/libz.so.1.2.6',
                 ]
-
+    def makeInstall(self):
+        pass
+    def fixOrTest(self):
+        pass
+    
         
 #===============================================================================
 # PriowsPackage
@@ -725,9 +731,9 @@ class Ilastik05EnvScript(object):
     
     def createFile(self):
         file = open('%s/ilastik05.sh' % (installDir), "w")
-        file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/2.7/bin:$PATH\n" % (installDir, installDir))
-        file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/vigra-ilastik-05/lib:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra:%s/lib\n" % (installDir, installDir, installDir))
-        file.write("export PYTHONPATH=%s/volumina:%s/ilastik:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra\n" % (installDir, installDir, installDir, installDir, installDir, installDir, installDir))
+        file.write("export PATH=%s/Frameworks/Python.framework/Versions/2.7/bin:%s/bin:$PATH\n" % (installDir, installDir))
+        #file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/vigra-ilastik-05/lib:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra:%s/lib\n" % (installDir, installDir, installDir))
+        file.write("export PYTHONPATH=%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages:%s/vigra-ilastik-05/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/vigra:%s/volumina:%s/ilastik:%s/widgets:%s/lazyflow:%s/lazyflow/lazyflow/drtile\n" % (installDir, installDir, installDir, installDir, installDir, installDir, installDir))
         file.write("alias classificationWorkflow='python %s/techpreview/classification/classificationWorkflow.py'\n" % (installDir))
         file.write("alias ilastik05='python %s/ilastik/ilastik/ilastikMain.py'\n" % (installDir))
         file.write("alias ls='ls -G'\n")
@@ -762,6 +768,24 @@ class Py2app(Package):
     
     def makeInstall(self):
         self.system("python setup.py install")
+        
+class FixPackage(Package):
+    replaceLines = ['/ilastik/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages/pyface-4.1.0-py2.7.egg/pyface/qt/__init__.py', 
+             ("sip.setapi('QString', 2)", "    sip.setapi('QString', 1)\n"),
+             ("sip.setapi('QVariant', 2)","    sip.setapi('QVariant', 1)\n")]
+    def download(self):
+        pass
+    def unpack(self):
+        pass
+    def configure(self):
+        pass
+    def make(self):
+        pass
+    def makeInstall(self):
+        pass
+    def fixOrTest(self):
+        pass
+    
     
     
     

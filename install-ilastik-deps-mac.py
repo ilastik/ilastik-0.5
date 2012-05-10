@@ -45,14 +45,21 @@ if '10.6' in platform.mac_ver()[0]:
 	os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.6"
 elif '10.7' in platform.mac_ver()[0]:
 	os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.7"
-os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = installDir + "/lib"
-os.environ["CC"]                         = "llvm-gcc"
-os.environ["CXX"]                        = "llvm-g++"
+#os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = installDir + "/lib"
+os.environ["CC"]                         = "clang"
+os.environ["CXX"]                        = "clang++"
 #no space between "-L" and directory path!!! It will causes a compiler error 
-os.environ["LDFLAGS"]                    = "-L" + installDir + "/lib -F" + installDir + "/Frameworks"
-os.environ["CPPFLAGS"]                   = "-I " + installDir + "/include"
-os.environ["PYTHONPATH"]                 = installDir + "/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages"
-os.environ["FRAMEWORK_PATH"]             = installDir + "/Frameworks"
+#os.environ["LDFLAGS"]                    = "-L" + installDir + "/lib -F" + installDir + "/Frameworks"
+#os.environ["CPPFLAGS"]                   = "-I " + installDir + "/include"
+#os.environ["PYTHONPATH"]                 = installDir + "/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages"
+# may be DYLD_FRAMEWORK_PATH
+#os.environ["FRAMEWORK_PATH"]             = installDir + "/Frameworks"
+os.environ["CFLAGS"]                     = "-O0 -arch x86_64"
+os.environ["CXXFLAGS"]                   = "-O0 -arch x86_64"
+#os.environ["FFLAGS"]                     = "-m64"
+#os.environ["FCLAGS"]                     = "-m64"
+#os.environ["LDFLAGS"]                    = ""
+
 
 #===============================================================================
 # available packages
@@ -76,7 +83,7 @@ all = [
     ('traitsgui', 'TraitsGUIPackage'),                      ('traitsbackendqt', 'TraitsBackendQtPackage'),  ('traitsui', 'TraitsuiPackage'),
     ('vigra05', 'Vigra05Package'),                          ('ilastik', 'IlastikPackage'),                  ('ilastik05', 'Ilastik05EnvScript'),            
     ('pyopenglaccellerate', 'PyOpenGLAccelleratePackage'),  ('pyopengl', 'PyOpenGLPackage'),                ('priows', 'PriowsPackage'),
-    ('py2app', 'Py2app'),                                   #('fixes', 'Fixes'),
+    ('py2app', 'Py2app'),                                   ('fix', 'FixPackage'),
     ]
 #===============================================================================
 # create the package list for the installation

@@ -1,0 +1,1 @@
+/ilastik/plugins/designer/libQVTKWidgetPlugin.dylib

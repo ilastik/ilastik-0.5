@@ -123,12 +123,18 @@ class Package:
             self.system(cmd)
             
     def replaceALinesInFile(self, data):
-        os.system('pwd')
-        for line in fileinput.input('work/'+self.workdir+'/'+data[0], inplace=1):
-            for lines in data[1:]:
-                if lines[0] in line:
-                    line = lines[1]
-            sys.stdout.write(line)
+        if data[0].startswith(self.prefix):
+            for line in fileinput.input(data[0], inplace=1):
+                for lines in data[1:]:
+                    if lines[0] in line:
+                        line = lines[1]
+                sys.stdout.write(line)
+        else:
+            for line in fileinput.input('work/'+self.workdir+'/'+data[0], inplace=1):
+                for lines in data[1:]:
+                    if lines[0] in line:
+                        line = lines[1]
+                sys.stdout.write(line)
             
     def configure(self):
         print "* Configuring the Package"
@@ -162,4 +168,5 @@ class Package:
 
     def fixOrTest(self):
         self.system("cd .. && rm -rf " + self.workdir)
+        os.system('python nameTool.py --prefix=' + installDir)
     
