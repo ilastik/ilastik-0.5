@@ -481,6 +481,11 @@ I'll have to abort now.""" % (mappingFileName, folderPath))
             self.emit(SIGNAL('doneOverlaysAvailable()'))
             
         self.__loadMapping()
+
+
+    def clearSeedIndices(self):
+        self._seedLabelsList = None
+        self._seedIndicesList = None
         
     def clearSeeds(self):
         self._hasSeeds = False

@@ -55,7 +55,7 @@ class SeedMgr(object):
 
     def changedLabel(self,  label):
         for imageIndex, imageItem in  enumerate(self.dataMgr):
-            for labelIndex,  labelItem in enumerate(imageItem.Interactive_Segmentation.seeds):
+            for labelIndex,  labelItem in enumerate(imageItem.Interactive_Segmentation.seedLabelsVolume.descriptions):
                 labelItem.name = label.name
                 labelItem.number = label.number
                 labelItem.color = label.color
@@ -64,20 +64,20 @@ class SeedMgr(object):
         self.dataMgr.featureLock.acquire()
         for index, item in enumerate(self.dataMgr):
             ldnr = -1
-            for j, ld in enumerate(item.Interactive_Segmentation.seeds.descriptions):
+            for j, ld in enumerate(item.Interactive_Segmentation.seedLabelsVolume.descriptions):
                 if ld.number == number:
                     ldnr = j
             if ldnr != -1:
-                item.Interactive_Segmentation.seeds.descriptions.pop(ldnr)
-                for j, ld in enumerate(item.Interactive_Segmentation.seeds.descriptions):
+                item.Interactive_Segmentation.seedLabelsVolume.descriptions.pop(ldnr)
+                if item.Interactive_Segmentation.seedLabelsVolume._history is not None:
+                    item.Interactive_Segmentation.seedLabelsVolume._history.removeLabel(number)
+                temp = numpy.where(item.Interactive_Segmentation.seedLabelsVolume._data[:,:,:,:,:] == number, 0, item.Interactive_Segmentation.seedLabelsVolume._data[:,:,:,:,:])
+                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
+                item.Interactive_Segmentation.seedLabelsVolume._data[:,:,:,:,:] = temp[:,:,:,:,:]
+                for j, ld in enumerate(item.Interactive_Segmentation.seedLabelsVolume.descriptions):
                     if ld.number > number:
                         ld.number -= 1
-                temp = numpy.where(item.Interactive_Segmentation.seeds._data[:,:,:,:,:] == number, 0, item.Interactive_Segmentation.seeds._data[:,:,:,:,:])
-                temp = numpy.where(temp[:,:,:,:,:] > number, temp[:,:,:,:,:] - 1, temp[:,:,:,:,:])
-                item.Interactive_Segmentation.seeds._data[:,:,:,:,:] = temp[:,:,:,:,:]
-                if item.Interactive_Segmentation.seeds._history is not None:
-                    item.Interactive_Segmentation.seeds._history.removeLabel(number)
-            item.Interactive_Segmentation.clearSeeds()
+                item.Interactive_Segmentation.clearSeedIndices() # forces the seeds to be rebuild from the full seed volume
             
         self.dataMgr.featureLock.release()
         
