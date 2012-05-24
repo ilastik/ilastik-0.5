@@ -151,7 +151,9 @@ class BatchProcess(QtGui.QDialog):
     def slotProcess(self):
         outputDir = str(self.outputDir.text())
         if not os.path.exists(outputDir):
-            outputDir = os.path.split(str(self.filenames[0]))[0]
+            QtGui.QMessageBox.information(self, 'Output folder', 'Please select an output path.')
+            return
+#            outputDir = os.path.split(str(self.filenames[0]))[0]
         
         descr = self.ilastik.project.dataMgr.module["Classification"]["labelDescriptions"]
         bo = BatchOptions(outputDir, 'gui-mode-no-classifier-file-name-needed', self.filenames, descr)
