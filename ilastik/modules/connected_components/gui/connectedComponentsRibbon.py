@@ -25,7 +25,6 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     def __init__(self, parent=None):
         IlastikTabBase.__init__(self, parent)
         QtGui.QWidget.__init__(self, parent)
-        
         self._initContent()
         self._initConnects()
         
@@ -42,7 +41,13 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.ilastik.labelWidget.setLabelWidget(self.backgroundLabels)
         
         #create ObjectsOverlay
-        ov = BackgroundOverlayItem(self.backgroundLabels, self.ilastik._activeImage.Connected_Components.background._data, color = 0, alpha = 1.0, autoAdd = True, autoVisible = True,  linkColorTable = True)
+        ov = BackgroundOverlayItem(self.backgroundLabels, 
+                                   self.ilastik._activeImage.Connected_Components.background._data, 
+                                   color=0, 
+                                   alpha=1.0, 
+                                   autoAdd=True, 
+                                   autoVisible=True,  
+                                   linkColorTable=True)
         self.ilastik._activeImage.overlayMgr["Connected Components/Background"] = ov
         ov = self.ilastik._activeImage.overlayMgr["Connected Components/Background"]
         
@@ -116,6 +121,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.connComp = CC(self.ilastik)       
         self.connComp.start(None)
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = False)
+        
     def on_btnCCBack_clicked(self):
         self.connComp = CC(self.ilastik)
         backgroundClassSet = self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connCompBackgroundClasses

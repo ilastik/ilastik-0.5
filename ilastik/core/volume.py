@@ -340,7 +340,7 @@ class VolumeLabels():
         for i in range(256):
             colorTab.append(long(0)) #QtGui.QColor(0,0,0,0).rgba()
 
-        for index,item in enumerate(self.descriptions):
+        for index, item in enumerate(self.descriptions):
             colorTab[item.number] = long(item.color)
         return colorTab
         

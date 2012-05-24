@@ -126,6 +126,7 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
         self.colorTab = self.volumeLabels.getColorTab()
         
     def getColorTab(self):
+        self.buildColorTab()
         return self.colorTab 
 
     def onContext(self, pos):
@@ -135,28 +136,17 @@ class BackgroundWidget(BaseLabelWidget,  QtGui.QGroupBox):
             return
 
         item = self.listWidget.itemAt(pos)
-        name = item.text()
 
         menu = QtGui.QMenu(self)
 
         colorAction = menu.addAction("Change Color")
-        if item.visible is True:
-            toggleHideAction = menu.addAction("Hide")
-        else:
-            toggleHideAction = menu.addAction("Show")
 
         action = menu.exec_(QtGui.QCursor.pos())
-        if action == toggleHideAction:
-            self.buildColorTab()
-            item.toggleVisible()
-        elif action == colorAction:
+        if action == colorAction:
             color = QtGui.QColorDialog().getColor()
             item.setColor(color)
             self.volumeLabels.descriptions[index.row()].color = color.rgba()
-            
-#            self.emit(QtCore.SIGNAL("labelPropertiesChanged()"))
-            if self.labelPropertiesChanged_callback is not None:
-                self.labelPropertiesChanged_callback()
+
             self.buildColorTab()
             self.volumeEditor.repaint()
 
