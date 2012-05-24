@@ -51,7 +51,7 @@ class InlineSettingsWidget(QtGui.QWidget):
 
 class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
     name = 'Seeded Watershed'
-    position = 3
+    position = 5
     moduleName = "Interactive_Segmentation"
     
     def __init__(self, parent=None):

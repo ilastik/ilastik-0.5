@@ -27,7 +27,6 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         
     def on_activation(self):
         if self.ilastik.project is None:
-            self.ilastik.setTabBusy(True)
             return
         ovs = self.ilastik._activeImage.module[self.__class__.moduleName].getOverlayRefs()
         if len(ovs) == 0:
@@ -97,7 +96,6 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
             self.parent.updateFileSelector()
             self.parent._activeImageNumber = 0
             self.parent.on_otherProject()
-            self.ilastik.setTabBusy(False)
             
     def on_btnSave_clicked(self):
         self.parent.saveProject()
@@ -114,7 +112,6 @@ class ProjectTab(IlastikTabBase, QtGui.QWidget):
         self.btnOptions.setEnabled(True)
         self.parent.updateFileSelector()
         self.parent.on_otherProject()
-        self.ilastik.setTabBusy(False)
         ilastik.gui.LAST_DIRECTORY = QtCore.QFileInfo(fileName).path()
         gc.collect()
         if labelWidget is not None:

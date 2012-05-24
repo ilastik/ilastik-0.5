@@ -16,7 +16,7 @@ import ilastik.gui.volumeeditor as ve
 
 class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
     name = 'Unsupervised Decomposition'
-    position = 2
+    position = 4
     moduleName = "Unsupervised_Decomposition"
     
     def __init__(self, parent=None):
@@ -52,6 +52,15 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
     def on_otherProject(self):
         self.btnChooseOverlays.setEnabled(True)
         self.btnUnsupervisedOptions.setEnabled(True) 
+        
+        if self.ilastik.project.dataMgr[0].shape[-1] < 2:
+            self.ilastik.ribbon.setTabEnabled(self.ilastik.ribbon.tabDict[self.name].position, False)
+            if self.ilastik.ribbon.tabDict[self.name].position not in self.ilastik.ribbon.disabled_tabs:
+                self.ilastik.ribbon.disabled_tabs.append(self.ilastik.ribbon.tabDict[self.name].position)
+        else:
+            self.ilastik.ribbon.setTabEnabled(self.ilastik.ribbon.tabDict[self.name].position, True)
+            if self.ilastik.ribbon.tabDict[self.name].position in self.ilastik.ribbon.disabled_tabs:
+                self.ilastik.ribbon.disabled_tabs.remove(self.ilastik.ribbon.tabDict[self.name].position)        
             
     def _initContent(self):
         tl = QtGui.QHBoxLayout()

@@ -19,7 +19,7 @@ from labelSelectionForm import LabelSelectionForm
 
 class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
     name = 'Connected Components'
-    position = 2
+    position = 3
     moduleName = "Connected_Components"
     
     def __init__(self, parent=None):

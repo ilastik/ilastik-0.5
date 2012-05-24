@@ -38,6 +38,7 @@ class IlastikTabWidget(QtGui.QTabWidget):
         self.setContentsMargins(0,0,0,0)
         self.tabDict = {}
         self.currentTabNumber = 0
+        self.disabled_tabs = []
         if parent:     
             self.connect(parent,QtCore.SIGNAL("orientationChanged(Qt::Orientation)"),self.orientationEvent)
 
