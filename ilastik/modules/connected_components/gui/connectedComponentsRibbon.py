@@ -118,7 +118,11 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = False)
     def on_btnCCBack_clicked(self):
         self.connComp = CC(self.ilastik)
-        self.connComp.start(self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connCompBackgroundClasses)
+        backgroundClassSet = self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connCompBackgroundClasses
+        if len(backgroundClassSet) == 0:
+            QtGui.QMessageBox.information(self, "Choose background", "Please indicate background class by using the background brush.")
+            return
+        self.connComp.start(backgroundClassSet)
         self.btnFilter.setEnabled(True)
         self.btnFilter.setVisible(False)
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = True)
