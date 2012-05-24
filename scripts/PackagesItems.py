@@ -663,7 +663,7 @@ class PriowsPackage(Package):
     workdir = 'priows'
     
     def configure(self):
-        self.system("git checkout 8d0e063acc1d59f9ce838ea741e79deddbabe573")
+        self.system("git checkout 6e36582dec7d00809044ba551a298e844bb7676d")
         cmd = """%s . \\
         -DDEPENDENCY_SEARCH_PREFIX=%s \\
         -DCMAKE_INSTALL_PREFIX=%s \\
