@@ -100,7 +100,11 @@ class UnsupervisedTab(IlastikTabBase, QtGui.QWidget):
         
     def on_btnDecompose_clicked(self):
         self.unsDec = UnsupervisedDecomposition(self.ilastik)
-        self.unsDec.start(self.overlays)
+        ok = self.unsDec.checkInput(self.overlays)
+        if ok is True:
+            self.unsDec.start(self.overlays)
+        else:
+            QtGui.QMessageBox.information(self, 'Decomposition not possible', ok)
 
     def on_btnUnsupervisedOptions_clicked(self):
         dialog = UnsupervisedSelectionDlg(self.parent)

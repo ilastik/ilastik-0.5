@@ -9,6 +9,22 @@ class UnsupervisedDecomposition(object):
     def __init__(self, parent):
         self.parent = parent
         self.ilastik = parent
+        
+    def checkInput(self, overlays):
+        meth = self.parent.project.dataMgr.module["Unsupervised_Decomposition"].unsupervisedMethod
+        
+        numFeatures = 0
+        for overlay in overlays:
+            numFeatures += overlay.shape[4]
+            
+        if numFeatures < 2:
+            return "Too few channels. Please select data with more spectral channels." 
+        
+        if meth.shortname == "pLSA":
+            for overlay in overlays:
+                if (overlay[:] < 0).any():
+                    return "Negative pixel values not supported by pLSA."  
+        return True
 
     def start(self, overlays):
         self.parent.ribbon.getTab('Unsupervised Decomposition').btnDecompose.setEnabled(False)
