@@ -652,7 +652,7 @@ class InteractiveSegmentationModuleMgr(BaseModuleMgr):
         s = dataItemImage.Interactive_Segmentation
         s.init()
         self.seedOverlay = overlayMgr.OverlayItem(s.seedLabelsVolume._data, color = 0, alpha = 1.0, colorTable = s.seedLabelsVolume.getColorTab(), autoAdd = True, autoVisible = True,  linkColorTable = True)
-        dataItemImage.overlayMgr["Segmentation/Seeds"] = self.seedOverlay
+        dataItemImage.overlayMgr["Interactive Segmentation/Seeds"] = self.seedOverlay
         
         
         

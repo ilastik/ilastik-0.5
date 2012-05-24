@@ -104,7 +104,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
     
     def onImageSceneContext(self, imageScene, pos):
         overlayMgr = self.volumeEditor.ilastik._activeImage.overlayMgr
-        doneOverlay = overlayMgr["Segmentation/Done"]
+        doneOverlay = overlayMgr["Interactive Segmentation/Done"]
         if not doneOverlay: return
         c = imageScene.coordinateUnderCursor()
         label = doneOverlay._data[0,c[0],c[1],c[2],0]
@@ -131,7 +131,7 @@ class SeedListWidget(BaseLabelWidget,  QtGui.QGroupBox):
         menu.exec_(QtGui.QCursor.pos())
     
     def displaySegmentation3D(self, label):
-        segmentationOverlay = self.ilastik._activeImage.overlayMgr["Segmentation/Done"]
+        segmentationOverlay = self.ilastik._activeImage.overlayMgr["Interactive Segmentation/Done"]
         s = self.ilastik._activeImage.Interactive_Segmentation
         
         seg = s.segmentation

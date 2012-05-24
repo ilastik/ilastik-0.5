@@ -79,7 +79,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         self.connect(s, QtCore.SIGNAL('seedsAvailable(bool)'), self.on_seedsAvailable)
         self.btnSegment.clicked.connect(s.segment)
         self.shortcutSegment = QtGui.QShortcut(QtGui.QKeySequence("s"), self, s.segment, s.segment)
-        self.seedOverlay = self.ilastik._activeImage.overlayMgr["Segmentation/Seeds"]
+        self.seedOverlay = self.ilastik._activeImage.overlayMgr["Interactive Segmentation/Seeds"]
         self.maybeEnableSegmentButton()
     
     def on_doneOverlaysAvailable(self):
@@ -92,9 +92,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         randomColorTable[0] = long(0) #transparency
         
         self.doneBinaryOverlay = OverlayItem(s.done, color = 0, colorTable=bluetable, alpha = 0.5, autoAdd = True, autoVisible = True, min = 0, max = 255)
-        self.ilastik._activeImage.overlayMgr["Segmentation/Done"] = self.doneBinaryOverlay
+        self.ilastik._activeImage.overlayMgr["Interactive Segmentation/Done"] = self.doneBinaryOverlay
         self.doneObjectsOverlay = OverlayItem(s.done, color=0, colorTable=randomColorTable, alpha=0.7, autoAdd=False, autoVisible=False, min = 0, max = 255)
-        self.ilastik._activeImage.overlayMgr["Segmentation/Objects"] = self.doneObjectsOverlay
+        self.ilastik._activeImage.overlayMgr["Interactive Segmentation/Objects"] = self.doneObjectsOverlay
         
         self.overlayWidget.addOverlayRef(self.doneBinaryOverlay.getRef())
         
@@ -268,7 +268,7 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
         #the label 0 never occurs, label 1 is assigned to the background  class
         self.segmentationItemMgr.segmentationOverlay.displayable3D = True
         self.segmentationItemMgr.segmentationOverlay.backgroundClasses = set([1])
-        self.ilastik._activeImage.overlayMgr["Segmentation/Segmentation"] =  self.segmentationItemMgr.segmentationOverlay
+        self.ilastik._activeImage.overlayMgr["Interactive Segmentation/Segmentation"] =  self.segmentationItemMgr.segmentationOverlay
 
         #create Overlay for segmentation:
         res = self.localMgr.segmentation
@@ -279,9 +279,9 @@ class InteractiveSegmentationTab(IlastikTabBase, QtGui.QWidget):
             
         if hasattr(self.localMgr, 'borders') and self.localMgr.borders is not None:
             ov = OverlayItem(self.localMgr.borders, color = QtGui.QColor(), alpha = 0.50, autoAdd = True, autoVisible = False, min = 0, max = 1.0)
-            self.activeImage.overlayMgr["Segmentation/Supervoxels"] = ov
+            self.activeImage.overlayMgr["Interactive Segmentation/Supervoxels"] = ov
         else:
-            self.activeImage.overlayMgr.remove("Segmentation/Supervoxels")
+            self.activeImage.overlayMgr.remove("Interactive Segmentation/Supervoxels")
     
         self.parent.labelWidget.repaint()   
         
