@@ -47,7 +47,7 @@ class FileLoader(QtGui.QDialog):
         self.multiChannelFrame = QtGui.QFrame()
              
         tempLayout = QtGui.QFormLayout()
-        self.addChannelButton = QtGui.QPushButton("  Append more spectral channels")
+        self.addChannelButton = QtGui.QPushButton("Append more spectral channels")
         self.connect(self.addChannelButton, QtCore.SIGNAL('clicked()'), self.slotAddChannel)
         tempLayout.addRow(QtGui.QLabel(" "), self.addChannelButton)
         
@@ -57,6 +57,7 @@ class FileLoader(QtGui.QDialog):
 
         tempLayout = QtGui.QHBoxLayout()
         self.optionCheck = QtGui.QCheckBox("Additional options")
+        self.optionCheck.setVisible(False)
         self.connect(self.optionCheck, QtCore.SIGNAL("stateChanged(int)"), self.toggleOptions)
         tempLayout.addWidget(self.optionCheck)
         self.layout.addLayout(tempLayout)
