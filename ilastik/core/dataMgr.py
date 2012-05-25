@@ -450,7 +450,6 @@ class DataMgr():
         self._currentModuleName = oldModuleName
     
     def append(self, dataItem, alreadyLoaded=False):
-
         dataItem.dataMgr = self
         
         if alreadyLoaded == False:
@@ -465,15 +464,25 @@ class DataMgr():
             alreadyLoaded = True
             
         if self.channels == -1 or dataItem.shape[-1] == self.channels:
+        # check for same number of channels
             self.channels = dataItem.shape[-1]
-            
-            self.selectedChannels = range(self.channels)
-            
-            self._dataItems.append(dataItem)
-            self._dataItemsLoaded.append(alreadyLoaded)
-            self.onNewImage(dataItem)
         else:
             raise TypeError('DataMgr.append: DataItem has wrong number of channels, a project can contain only images that have the same number of channels !')
+        
+        if len(self) > 0:
+        # check for 3D / 2D consitency
+            last_item = self[-1]
+            a = last_item.shape[1] == 1 
+            b = dataItem.shape[1] == 1
+            if a != b:
+                raise TypeError('DataMgr.append: DataItem has wrong z-dimension, a project can contain only images that have the same dimensionality!')
+            
+        # append item
+        self.selectedChannels = range(self.channels)  
+        self._dataItems.append(dataItem)
+        self._dataItemsLoaded.append(alreadyLoaded)
+        self.onNewImage(dataItem)
+                
         
     def clearAll(self):
         self._dataItems = []
