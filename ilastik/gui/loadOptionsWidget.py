@@ -13,53 +13,38 @@ from PyQt4 import QtCore, QtGui
 class LoadOptionsWidget(QtGui.QWidget):
     def __init__(self):
         QtGui.QWidget.__init__(self)
-        #self.setMinimumWidth(400)
         self.layout = QtGui.QVBoxLayout()
         self.setLayout(self.layout)
         self.rgb = 1
         
-    
         self.layout.addWidget(QtGui.QLabel("Select a subvolume:"))
-        #tempGrid = QtGui.QGridLayout()
-        #tempForm = QtGui.QFormLayout()
         tempLayoutRight = QtGui.QVBoxLayout()        
         tempLayout = QtGui.QHBoxLayout()        
         self.offsetX = QtGui.QSpinBox()
         self.offsetX.setRange(0,9999)
-        self.connect(self.offsetX, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
         self.offsetY = QtGui.QSpinBox()
         self.offsetY.setRange(0,9999)
-        self.connect(self.offsetY, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
         self.offsetZ = QtGui.QSpinBox()
         self.offsetZ.setRange(0,9999)
-        self.connect(self.offsetZ, QtCore.SIGNAL("textChanged(QString)"), self.off1Changed)
+
         tempLayout.addWidget(QtGui.QLabel("X"))
-        tempLayout.addWidget( self.offsetX)
+        tempLayout.addWidget(self.offsetX)
         tempLayout.addWidget(QtGui.QLabel("Y"))
         tempLayout.addWidget( self.offsetY)
         tempLayout.addWidget(QtGui.QLabel("Z"))
         tempLayout.addWidget( self.offsetZ)
         tempLayoutRight.addLayout(tempLayout)
-        #self.layout.addLayout(tempLayout)
-        #tempForm.addRow(QtGui.QLabel("From:"), tempLayout)
-#        tempGrid.addWidget(QtGui.QLabel("From:"), 0, 0)
-#        tempGrid.addWidget(QtGui.QLabel("X"), 0, 1)
-#        tempGrid.addWidget(self.offsetX, 0, 2)
-#        tempGrid.addWidget(QtGui.QLabel("Y"), 0, 3)
-#        tempGrid.addWidget(self.offsetY, 0, 4)
-#        tempGrid.addWidget(QtGui.QLabel("Z"), 0, 5)
-#        tempGrid.addWidget(self.offsetZ, 0, 6)
         
         tempLayout = QtGui.QHBoxLayout()
         self.sizeX = QtGui.QSpinBox()
         self.sizeX.setRange(0,9999)
-        self.connect(self.sizeX, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
+        self.connect(self.sizeX, QtCore.SIGNAL("valueChanged(int)"), self.sizeXChanged)
         self.sizeY = QtGui.QSpinBox()
         self.sizeY.setRange(0,9999)
-        self.connect(self.sizeY, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
+        self.connect(self.sizeY, QtCore.SIGNAL("valueChanged(int)"), self.sizeYChanged)
         self.sizeZ = QtGui.QSpinBox()
         self.sizeZ.setRange(0,9999)
-        self.connect(self.sizeZ, QtCore.SIGNAL("textChanged(QString)"), self.off2Changed)
+        self.connect(self.sizeZ, QtCore.SIGNAL("valueChanged(int)"), self.sizeZChanged)
         tempLayout.addWidget(QtGui.QLabel("X"))
         tempLayout.addWidget( self.sizeX)
         tempLayout.addWidget(QtGui.QLabel("Y"))
@@ -77,20 +62,7 @@ class LoadOptionsWidget(QtGui.QWidget):
         tempLayout.addLayout(tempLayoutLeft)
         tempLayout.addLayout(tempLayoutRight)
         tempLayout.addStretch()
-        self.layout.addLayout(tempLayout)
-#        tempForm.addRow(QtGui.QLabel("To:"), tempLayout)
-#        self.layout.addLayout(tempForm)
-#        tempGrid.addWidget(QtGui.QLabel("To:"), 1, 0)
-#        x = QtGui.QLabel("X")
-#        x.setAlignment(QtCore.Qt.AlignCenter)
-#        tempGrid.addWidget(x, 1, 1)
-#        tempGrid.addWidget(self.sizeX, 1, 2)
-#        tempGrid.addWidget(QtGui.QLabel("Y"), 1, 3)
-#        tempGrid.addWidget(self.sizeY, 1, 4)
-#        tempGrid.addWidget(QtGui.QLabel("Z"), 1, 5)
-#        tempGrid.addWidget(self.sizeZ, 1, 6)
-#        self.layout.addLayout(tempGrid)
-        
+        self.layout.addLayout(tempLayout)        
         
         tempLayout = QtGui.QHBoxLayout()
         self.resCheck = QtGui.QCheckBox("Data with varying resolution:")
@@ -208,29 +180,16 @@ class LoadOptionsWidget(QtGui.QWidget):
         except Exception as e:
             self.resolution = [1,1,1]
 
+    def sizeXChanged(self, value):
+        self.offsetX.setMaximum(max(0, value-1))
+        
+    def sizeYChanged(self, value):
+        self.offsetY.setMaximum(max(0, value-1))
+        
+    def sizeZChanged(self, value):
+        self.offsetZ.setMaximum(max(0, value-1))
+            
 
-    def off2Changed(self):
-        try:
-            if self.offsetX.value() >= self.sizeX.value():
-                self.offsetX.setValue(self.sizeX.value()-1)               
-            if self.offsetY.value() >= self.sizeY.value():
-                self.offsetY.setValue(self.sizeY.value()-1)               
-            if self.offsetZ.value() >= self.sizeZ.value():
-                self.offsetZ.setValue(self.sizeZ.value()+1)               
-        except Exception as e:
-            pass
-
-
-    def off1Changed(self):
-        try:
-            if self.offsetX.value() >= self.sizeX.value():
-                self.sizeX.setValue(self.offsetX.value()+1)               
-            if self.offsetY.value() >= self.sizeY.value():
-                self.sizeY.setValue(self.offsetY.value()+1)               
-            if self.offsetZ.value() >= self.sizeZ.value():
-                self.sizeZ.setValue(self.offsetZ.value()+1)               
-        except Exception as e:
-            pass
 
 
 
@@ -239,7 +198,7 @@ class LoadOptionsWidget(QtGui.QWidget):
         self.file.setText(filename)
 
     def fillOptions(self, options):
-        options.offsets = (self.offsetX.value(),self.offsetY.value(),self.offsetZ.value())
+        options.offsets = (self.offsetX.value(), self.offsetY.value(), self.offsetZ.value())
         options.shape = (self.sizeX.value() - self.offsetX.value(),self.sizeY.value() - self.offsetY.value(),self.sizeZ.value() - self.offsetZ.value())
         options.resolution = (int(str(self.resX.text())), int(str(self.resY.text())), int(str(self.resZ.text())))
         options.destShape = None
@@ -275,10 +234,12 @@ class LoadOptionsWidget(QtGui.QWidget):
             self.sizeX.setValue(shape[0])
             self.downX.setValue(shape[0])
             self.sizeX.setMaximum(shape[0])
+            self.offsetX.setMaximum(shape[0]-1)
             
             self.sizeY.setValue(shape[1])
             self.downY.setValue(shape[1])
             self.sizeY.setMaximum(shape[1])
+            self.offsetY.setMaximum(shape[0]-1)
             if shape[2] == 1: 
                 #2d data (1, 1, x, y, c)
                 self.sizeZ.setValue(len(fileList[channel]))
@@ -288,6 +249,7 @@ class LoadOptionsWidget(QtGui.QWidget):
                 self.sizeZ.setValue(shape[2])
                 self.downZ.setValue(shape[2])
                 self.sizeZ.setMaximum(shape[2])
+                self.offsetZ.setMaximum(shape[0]-1)
         except Exception as e:
             print "Pre-reading data shape failed"
             print e
@@ -343,22 +305,3 @@ class previewTable(QtGui.QDialog):
                     filename = os.path.basename(self.fileList[i][j])
                     self.fileListTable.setItem(j, i, QtGui.QTableWidgetItem(QtCore.QString(filename)))
         
-                    
-            
-        
-        '''
-        if (len(self.fileList)==3):
-            #multichannel data
-            nfiles = max([len(self.fileList[0]), len(self.fileList[1]), len(self.fileList[2])])
-            self.fileListTable.setRowCount(nfiles)
-            self.fileListTable.setColumnCount(3)
-            for i in range(0, len(self.fileList[0])):
-                filename = os.path.basename(self.fileList[0][i])
-                self.fileListTable.setItem(i, 0, QtGui.QTableWidgetItem(QtCore.QString(filename)))
-            for i in range(0, len(self.fileList[1])):
-                filename = os.path.basename(self.fileList[1][i])
-                self.fileListTable.setItem(i, 1, QtGui.QTableWidgetItem(QtCore.QString(filename)))
-            for i in range(0, len(self.fileList[2])):
-                filename = os.path.basename(self.fileList[2][i])
-                self.fileListTable.setItem(i, 2, QtGui.QTableWidgetItem(QtCore.QString(filename)))
-        '''

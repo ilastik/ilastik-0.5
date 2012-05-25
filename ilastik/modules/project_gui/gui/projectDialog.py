@@ -100,6 +100,8 @@ class ProjectDlg(QtGui.QDialog):
     def on_loadStack_clicked(self):
         sl = stackloader.StackLoader(self)
         path, fileList, options = sl.exec_()
+        if fileList is None:
+            return
         len0 = len(fileList[0])
         diff = 0
         for f in fileList:
