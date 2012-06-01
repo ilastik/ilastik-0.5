@@ -240,18 +240,27 @@ class DataImpex(object):
                         else:
                             image[:, :, z-options.offsets[2], ich] = img_data[options.offsets[0]:options.offsets[0]+options.shape[0],
                                                                                options.offsets[1]:options.offsets[1]+options.shape[1]]
+                            
+                        
                         if logger is not None:                           
                             logger.insertPlainText(".")
                     except Exception, e:
                         allok = False
-                        print e 
+                        print e
+                        raise e 
                         s = "Error loading file " + filename + "as Slice " + str(z-options.offsets[2])
                         if logger is not None:
                             logger.appendPlainText(s)
                             logger.appendPlainText("")
                     if logger is not None:        
                         logger.repaint()
-                z = z + 1           
+                z = z + 1   
+                
+        print '+++ channels', image.shape[-1]
+        if image.shape[-1] >1:
+            image = image.swapaxes(0, 1)
+            options.shape = image.shape[:-1]
+            options.offsets = options.offsets[1], options.offsets[0], options.offsets[2]        
                  
         if options.destShape is not None:
             result = numpy.zeros(options.destShape + (nch,), 'float32')
