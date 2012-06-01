@@ -108,7 +108,7 @@ class DataImpex(object):
             data = DataImpex.vigraReadImageWrapper(fileName)
             if options is not None:
                 data = data[options.offsets[1]:options.offsets[1]+options.shape[1], 
-                            options.offsets[0]: options.offsets[0]+options.shape[0], :]
+                            options.offsets[0]: options.offsets[0]+options.shape[0], ...]
                 if options.destShape is not None:
                     options.destShape = (options.destShape[2], options.destShape[1], options.destShape[0],)
                 options.shape = (options.shape[2], options.shape[1], options.shape[0],)
@@ -127,9 +127,6 @@ class DataImpex(object):
                 image = image.astype(numpy.float32)
             
             nch = options.rgb
-            if image.dtype in [numpy.uint16, numpy.float64]:
-                raise RuntimeError('Image is 16 bit. Cannot apply the selected option. Please use the option normalize')
-            
             
             if options.destShape is not None:
                 if is3D:
