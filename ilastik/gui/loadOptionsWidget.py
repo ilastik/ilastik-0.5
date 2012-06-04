@@ -250,6 +250,7 @@ class LoadOptionsWidget(QtGui.QWidget):
                 self.downZ.setValue(shape[2])
                 self.sizeZ.setMaximum(shape[2])
                 self.offsetZ.setMaximum(shape[0]-1)
+            return True
         except Exception as e:
             print "Pre-reading data shape failed"
             print e
@@ -257,7 +258,7 @@ class LoadOptionsWidget(QtGui.QWidget):
             self.sizeZ.setValue(0)
             self.sizeX.setValue(0)
             self.sizeY.setValue(0)
-
+            return False
 #*******************************************************************************
 # p r e v i e w T a b l e                                                      *
 #*******************************************************************************

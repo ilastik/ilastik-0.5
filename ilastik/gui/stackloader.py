@@ -67,7 +67,7 @@ class StackLoader(QtGui.QDialog):
         self.connect(self.pathButton, QtCore.SIGNAL('clicked()'), self.slotDir)
         tempLayout.addWidget(self.path)
         tempLayout.addWidget(self.pathButton)
-        tempLayout_.addWidget(QtGui.QLabel("Path to Image Stack:"))
+        tempLayout_.addWidget(QtGui.QLabel("Images (e.g.: <path to image stack>%s*.tif)" % os.path.sep))
         tempLayout_.addLayout(tempLayout)
 
         tempLayout = QtGui.QHBoxLayout()
@@ -95,6 +95,7 @@ class StackLoader(QtGui.QDialog):
 
         tempLayout = QtGui.QHBoxLayout()
         self.loadButton = QtGui.QPushButton("Load")
+        self.loadButton.setEnabled(False)
         self.connect(self.loadButton, QtCore.SIGNAL('clicked()'), self.slotLoad)
         self.cancelButton = QtGui.QPushButton("Cancel")
         self.connect(self.cancelButton, QtCore.SIGNAL('clicked()'), self.reject)
@@ -159,7 +160,10 @@ class StackLoader(QtGui.QDialog):
                 chfiles = temp + "*" + str(self.channelIDs[ich].text()) + "*"
                 self.fileList[ich] = sorted(glob.glob(chfiles), key=str.lower)
                 self.options.channels.append(ich)                
-        self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
+        if self.optionsWidget.setShapeInfo(self.fileList, self.options.channels):
+            self.loadButton.setEnabled(True)
+        else:
+            self.loadButton.setEnabled(False)
 
     def slotDir(self):
         path = ilastik.gui.LAST_DIRECTORY
