@@ -213,7 +213,8 @@ def main():
                                        = "create ilastik sources tar file")
     cmd_line.add_argument('-m', '--make-head-release', action = "store_true",
                           help = "write remote HEAD git ids to release control "
-                                 + "file ('release.json')")
+                                 + "file (default: '" + release_default_name +
+                                 "')")
     cmd_line.add_argument('-a', '--repositories', default =
                                 '/export/home/users/mip/ilastik/build/repos',
                                 help = "directory for the repository archives")
