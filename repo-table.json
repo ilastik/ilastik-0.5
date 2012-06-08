@@ -1,7 +1,8 @@
 [
     {
         "pkg":             "zlib",
-        "uri_all":         "http://zlib.net/zlib-1.2.6.tar.gz",
+        "uri_all":         "http://zlib.net/zlib-1.2.7.tar.gz",
+        "sha1_all":        "4aa358a95d1e5774603e6fa149c926a80df43559",
         "archive":         "zlib.tar.gz",
         "license":         "zlib",
         "license_uri":     "http://zlib.net/zlib_license.html",
@@ -10,6 +11,7 @@
     {
         "pkg":             "szip",
         "uri_all":         "http://www.hdfgroup.org/ftp/lib-external/szip/2.1/src/szip-2.1.tar.gz",
+        "sha1_all":        "d241c9acc26426a831765d660b683b853b83c131",
         "archive":         "szip.tar.gz",
         "license":         "proprietary",
         "license_uri":     "http://www.hdfgroup.org/doc_resource/SZIP/Commercial_szip.html",
@@ -18,6 +20,7 @@
     {
         "pkg":             "python",
         "uri_all":         "http://www.python.org/ftp/python/2.7.3/Python-2.7.3.tgz",
+        "sha1_all":        "dbe486dd15022ed32ebbac4e67225e280ba93c3b",
         "archive":         "python.tar.gz",
         "license":         "psf",
         "license_uri":     "http://docs.python.org/license.html",
@@ -25,7 +28,8 @@
     },
     {
         "pkg":             "fftw",
-        "uri_all":         "http://www.fftw.org/fftw-3.3.1.tar.gz",
+        "uri_all":         "http://www.fftw.org/fftw-3.3.2.tar.gz",
+        "sha1_all":        "11a8c31186ff5a7d686a79a3f21b2530888e0dc2",
         "archive":         "fftw.tar.gz",
         "license":         "gpl2+",
         "license_uri":     "http://fftw.org/doc/License-and-Copyright.html",
@@ -34,6 +38,7 @@
     {
         "pkg":             "jpegsrc",
         "uri_all":         "http://www.ijg.org/files/jpegsrc.v8d.tar.gz",
+        "sha1_all":        "f080b2fffc7581f7d19b968092ba9ebc234556ff",
         "archive":         "jpegsrc.tar.gz",
         "license":         "jpeg",
         "license_uri":     "https://repositorium.googlecode.com/svn/tags/libjpeg-8d/readme.txt",
@@ -42,6 +47,7 @@
     {
         "pkg":             "tiff",
         "uri_all":         "http://download.osgeo.org/libtiff/tiff-4.0.1.tar.gz",
+        "sha1_all":        "8baf382231c9051a1b3eb294581289aa21447171",
         "archive":         "tiff.tar.gz",
         "license":         "3-clause bsd",
         "license_uri":     "http://www.remotesensing.org/libtiff/misc.html",
@@ -50,6 +56,7 @@
     {
         "pkg":             "libpng",
         "uri_all":         "http://prdownloads.sourceforge.net/libpng/libpng-1.5.10.tar.gz",
+        "sha1_all":        "af53f6990f937327e8bc3367c48b3968aede593f",
         "archive":         "libpng.tar.gz",
         "archive_windows": "libpng_windows.zip",
         "license":         "zlib",
@@ -60,6 +67,7 @@
     {
         "pkg":             "setuptools",
         "uri_all":         "http://pypi.python.org/packages/source/s/setuptools/setuptools-0.6c11.tar.gz",
+        "sha1_all":        "8d1ad6384d358c547c50c60f1bfdb3362c6c4a7d",
         "archive":         "setuptools.tar.gz",
         "license":         "psf|zpl",
         "license_uri":     "http://www.zope.org/manage_copyright/index.html",
@@ -68,6 +76,7 @@
     {
         "pkg":             "nose",
         "uri_all":         "http://pypi.python.org/packages/source/n/nose/nose-1.1.2.tar.gz",
+        "sha1_all":        "7525f7ef056af66cdbada010d4a8b96e63a193e8",
         "archive":         "nose.tar.gz",
         "license":         "lgpl2.1",
         "license_uri":     "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
@@ -75,7 +84,8 @@
     },
     {
         "pkg":             "hdf5",
-        "uri_all":         "http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.8.tar.gz",
+        "uri_all":         "http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.9.tar.gz",
+        "sha1_all":        "4ba3ede947b1571e9586fdeb8351d6585a56133c",
         "archive":         "hdf5.tar.gz",
         "license":         "3-clause bsd",
         "license_uri":     "http://www.hdfgroup.org/HDF5/doc/Copyright.html",
@@ -84,6 +94,7 @@
     {
         "pkg":             "numpy",
         "uri_all":         "http://downloads.sourceforge.net/project/numpy/NumPy/1.6.1/numpy-1.6.1.tar.gz",
+        "sha1_all":        "3f73ff9231a1c15e28e6e259ef5cc35a72b34059",
         "archive":         "numpy.tar.gz",
         "license":         "3-clause bsd",
         "license_uri":     "http://numpy.scipy.org/license.html",
@@ -92,6 +103,7 @@
     {
         "pkg":             "h5py",
         "uri_all":         "http://h5py.googlecode.com/files/h5py-2.0.1.tar.gz",
+        "sha1_all":        "beddbfadb6f9fab651aeb8bede40b74fc2aeb889",
         "archive":         "h5py.tar.gz",
         "license":         "3-clause bsd",
         "license_uri":     "http://h5py.googlecode.com/svn/trunk/lzf/LICENSE.txt",
@@ -100,6 +112,7 @@
     {
         "pkg":             "boost",
         "uri_all":         "http://sourceforge.net/projects/boost/files/boost/1.49.0/boost_1_49_0.tar.gz",
+        "sha1_all":        "fce1a7d8d9866e39e4797975b5132d33ad919511",
         "archive":         "boost.tar.gz",
         "archive_windows": "boost_windows.zip",
         "license":         "mit",
@@ -111,23 +124,26 @@
         "pkg":             "vigra",
         "uri_all":         "git://github.com/ukoethe/vigra.git",
         "archive":         "vigra.tar",
+        "external_repo":   true,
         "license":         "mit",
         "license_uri":     "http://hci.iwr.uni-heidelberg.de/vigra/LICENSE.txt",
         "upstream":        "https://github.com/ukoethe/vigra"
     },
     {
         "pkg":             "qt",
-        "uri_all":         "http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.1.tar.gz",
+        "uri_all":         "http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.0.tar.gz",
+        "sha1_all":        "2ba35adca8fb9c66a58eca61a15b21df6213f22e",
         "archive":         "qt.tar.gz",
         "archive_windows": "qt_windows.zip",
         "license":         "lgpl2.1",
         "license_uri":     "http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html",
         "upstream":        "http://qt.nokia.com/downloads/",
-        "uri_windows":     "http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.1.zip"
+        "uri_windows":     "http://get.qt.nokia.com/qt/source/qt-everywhere-opensource-src-4.8.0.zip"
     },
     {
         "pkg":             "sip",
         "uri_all":         "http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.2.tar.gz",
+        "sha1_all":        "1c5df9182e8046f1c0d01603a2474fa2418bcea0",
         "archive":         "sip.tar.gz",
         "archive_windows": "sip_windows.zip",
         "license":         "gpl2|gpl3|proprietary",
@@ -137,19 +153,21 @@
     },
     {
         "pkg":             "pyqt",
-        "uri_all":         "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-x11-gpl-4.9.1.tar.gz",
+        "uri_all":          "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-x11-gpl-snapshot-4.9.2-fa0ccc58c397.tar.gz",
+        "sha1_all":        "456acdaa295d0438ff5bc0168b933ac6e40c26d7",
         "archive":         "pyqt.tar.gz",
         "archive_darwin":  "pyqt_darwin.tar.gz",
         "archive_windows": "pyqt_windows.zip",
         "license":         "gpl2|gpl3|commercial",
         "license_uri":     "http://www.riverbankcomputing.co.uk/software/pyqt/license/index.html",
         "upstream":        "http://www.riverbankcomputing.co.uk/software/pyqt/download",
-        "uri_darwin":      "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-4.9.1.tar.gz",
-        "uri_windows":     "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-win-gpl-4.9.1.zip"
+        "uri_darwin":      "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-snapshot-4.9.2-fa0ccc58c397.tar.gz",
+        "uri_windows":     "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-win-gpl-snapshot-4.9.2-fa0ccc58c397.zip"
     },
     {
         "pkg":             "qimage2ndarray",
         "uri_all":         "http://pypi.python.org/packages/source/q/qimage2ndarray/qimage2ndarray-1.0.tar.gz",
+        "sha1_all":        "8809d437677da1392d04e4969ec6c08a8c4756ce",
         "archive":         "qimage2ndarray.tar.gz",
         "archive_windows": "qimage2ndarray_windows.zip",
         "license":         "3-clause bsd",
@@ -160,6 +178,7 @@
     {
         "pkg":             "greenlet",
         "uri_all":         "http://pypi.python.org/packages/source/g/greenlet/greenlet-0.3.4.zip",
+        "sha1_all":        "1bff62c43e179d3f4866f31a8258a259c82b4803",
         "archive":         "greenlet.zip",
         "license":         "psf&mit",
         "license_uri":     "https://raw.github.com/python-greenlet/greenlet/master/LICENSE",
@@ -168,6 +187,7 @@
     {
         "pkg":             "blist",
         "uri_all":         "http://pypi.python.org/packages/source/b/blist/blist-1.3.4.tar.gz",
+        "sha1_all":        "a8a7401c6c3f12f27a79757b4d5f7ebc996aeb76",
         "archive":         "blist.tar.gz",
         "license":         "3-clause bsd",
         "license_uri":     "https://raw.github.com/DanielStutzbach/blist/master/LICENSE",
@@ -176,6 +196,7 @@
     {
         "pkg":             "psutil",
         "uri_all":         "http://psutil.googlecode.com/files/psutil-0.4.1.tar.gz",
+        "sha1_all":        "2705862e00280a7fa76cfb687dbd61623d5e236e",
         "archive":         "psutil.tar.gz",
         "license":         "3-clause bsd",
         "license_uri":     "http://psutil.googlecode.com/svn/trunk/LICENSE",
@@ -183,13 +204,18 @@
     },
     {
         "pkg":             "vtk",
-        "uri_all":         "http://www.vtk.org/files/release/5.8/vtk-5.8.0.tar.gz",
+        "uri_all":         "http://www.vtk.org/files/release/5.10/vtk-5.10.0.tar.gz",
+        "sha1_all":        "0c9a17e2f446dc78b0500dc5bbd1c6a2864a0191",
         "archive":         "vtk.tar.gz",
         "archive_windows": "vtk_windows.zip",
         "license":         "3-clause bsd",
         "license_uri":     "http://www.vtk.org/VTK/project/license.html",
         "upstream":        "http://www.vtk.org/VTK/resources/software.html",
-        "uri_windows":     "http://www.vtk.org/files/release/5.8/vtk-5.8.0.zip",
+        "uri_windows":     "http://www.vtk.org/files/release/5.10/vtk-5.10.0.zip",
+        "comments":        [
+                               "spp",
+                               "http://paulgrenning.com/VTK-projects/install-vtk-for-windows"
+                           ]
     },
     {
         "pkg":             "lazyflow",
@@ -216,11 +242,11 @@
         "upstream":        "https://github.com/Ilastik/widgets"
     },
     {
-        "pkg":             "techpreview",
-        "uri_all":         "git://github.com/Ilastik/techpreview.git",
-        "archive":         "techpreview.tar",
+        "pkg":             "applet-workflows",
+        "uri_all":         "git://github.com/Ilastik/applet-workflows.git",
+        "archive":         "applet-workflows.tar",
         "license":         "2-clause bsd",
         "license_uri":     "http://hci.iwr.uni-heidelberg.de/MIP/Software/ilastik/license.txt",
-        "upstream":        "https://github.com/Ilastik/techpreview"
+        "upstream":        "https://github.com/Ilastik/applet-workflows"
     }
 ]

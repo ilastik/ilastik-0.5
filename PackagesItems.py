@@ -5,10 +5,7 @@ import __builtin__
 from PackagesBase import Package
 import os, platform
 import urllib2, os, tarfile, shutil
-import multiprocessing
-
-
-
+import multiprocessing, stat
 
 #===============================================================================
 # CmakePackage
@@ -74,8 +71,8 @@ class PythonPackage(Package):
 
     def configure_all(self):
         return ['./configure',
-                '--prefix="($prefix)"',
-                '--enable-framework="($prefix)/Frameworks"']
+                '--prefix="($prefix)"'
+               ]
 
     def configure_linux(self):
         return [' --enable-shared']
@@ -309,12 +306,22 @@ class VigraPackage(Package):
                 '-DBOOST_ROOT=($prefix)',
                 '-DWITH_VIGRANUMPY=1',
                 '-DCMAKE_BUILD_TYPE=Release',
-                ###'-DPYTHON_EXECUTABLE=****',
-                '-DPYTHON_INCLUDE_DIR=($pythonHeaders)',
+                '-DPYTHON_INCLUDE_DIR=($pythonHeadersPath)',
                 '-DPYTHON_LIBRARY=($pythonlib)',
-                ###'-DPYTHON_LIBRARIES:FILEPATH=****',
-                ###'-DPYTHON_INCLUDE_PATH:PATH=***',
                ]
+
+    def configure_linux(self):
+        return [
+                '-DPYTHON_EXECUTABLE=($pythonExecutable)',
+                '-DPYTHON_LIBRARIES:FILEPATH=($pythonlib)', #new PYTHON_LIBRARY?
+                '-DPYTHON_INCLUDE_PATH:PATH=($pythonIncludePath)'
+               ]
+
+   # configure_darwin probably missing.
+
+   ##     -DLIS_INCLUDE_DIR=%s/include \\
+   ##     -DLIS_LIBRARY=%s/lib/liblis.%s\\
+   ###     """ % (......, dylibext)
 
 #===============================================================================
 # QtPackage
@@ -332,14 +339,20 @@ class QtPackage(Package):
                 '-nomake demos',
                 '-nomake docs',
                 '-nomake translations',
-                ####'-nomake tools',
+                ####'-nomake tools',  #$#
                 '-no-multimedia',
-                ####'-no-xmlpatterns',
+                '-no-xmlpatterns',####  #$#
                 '-no-svg',
                 '-no-audio-backend',
                 '-no-phonon',
                 '-no-phonon-backend',
-                '-no-svg',
+                '-no-webkit', #$#
+                '-no-openssl', #$# # inconclusive for pyqt491 problems
+                '-no-declarative', #$#
+                '-no-declarative-debug', #$#
+                '-no-script', #$#
+                '-no-scripttools', #$#
+                '-no-javascript-jit', #$#
                 '-no-sql-sqlite',
                 '-no-sql-sqlite2',
                 '-no-sql-psql',
@@ -355,27 +368,85 @@ class QtPackage(Package):
                 '-no-cups',
                 '-no-nis',
                 '-qt-libpng',
+                #'-no-qt3support',
+                '-no-3dnow',
+                #'-no-sse2', for 32 bit builds only
+                '-no-ssse3',
+                '-no-sse4.1',
+                '-no-sse4.2',
+                '-no-avx',
                 '-release',
+                #$# '-fast',
                 '-shared',
                 '-no-accessibility',
-                '-L/usr/X11/lib',
-                '-I/usr/X11/include',
+                #__#'-L/usr/X11/lib',      ### for Darwin?
+                #__#'-I/usr/X11/include',  ### for Darwin?
                ]
+
+    def configure_rc(self):
+        return ['echo', "'yes'", '| ./configure',
+                #'-opensource',
+                #'-arch x86_64',
+                #'-optimized-qmake',
+                #'-nomake examples',
+                #'-nomake demos',
+                #'-nomake docs',
+                #'-nomake translations',
+                #_#'-nomake tools',
+                #'-no-multimedia',
+                #_#'-no-xmlpatterns',
+                #'-no-svg',
+                #'-no-audio-backend',
+                #'-no-phonon',
+                #'-no-phonon-backend',
+                #$#'-no-webkit',
+                #$#'-no-openssl',
+                #$#'-no-declarative',
+                #$#'-no-declarative-debug',
+                #$#'-no-script',
+                #$#'-no-scripttools',
+                #$#'-no-javascript-jit',
+                #'-no-sql-sqlite',
+                #'-no-sql-sqlite2',
+                #'-no-sql-psql',
+                #'-no-sql-db2',
+                #'-no-sql-ibase',
+                #'-no-sql-mysql',
+                #'-no-sql-oci',
+                #'-no-sql-odbc',
+                #'-no-sql-sqlite_symbian',
+                #'-no-sql-tds',
+                #'-no-pch',
+                #'-no-dbus',
+                #'-no-cups',
+                #'-no-nis',
+                #'-qt-libpng',
+                '-fast',
+                #'-release',
+                #'-shared',
+                #'-no-accessibility'
+               ]
+
 
     def configure_linux(self):
         return ['-no-script -no-scripttools -no-javascript-jit',
                 '-fast',
+                '-no-sse3',
                 ' --enable-shared'
                ]
 
     def configure_darwin(self):
         return ['-no-framework',
                 '-cocoa'
-                ####, '-no-sse3 -no-sse4.1 -no-sse4.2 -no-ssse3',
                 ####, '-no-dwarf2'
                ]
         
-    def make(self, parallel = multiprocessing.cpu_count()):
+    def configure_windows(self):
+        return [
+                '-no-sse3'
+               ]
+
+    def old_make(self, parallel = multiprocessing.cpu_count()):
         self.system(make + " -j" + str(parallel))
         
         #Also install Designer, which is needed by VTK
@@ -384,6 +455,7 @@ class QtPackage(Package):
                     % (make, make))
         
     def fixOrTest(self):
+        pass
 #        os.system('cp -rv work/%s/src/gui/mac/qt_menu.nib %s/lib'
 #                   % (self.workdir, installDir))
 #        #^Mac...
@@ -420,8 +492,8 @@ class PyQtPackage(Package):
                 '"($prefix)/bin/qmake"'
                ]
 
-    def configure_linux(self):
-        return ['--no-designer-plugin']
+##    def configure_linux(self):
+##        return ['--no-designer-plugin']
 
     def configure_darwin(self):
         return ['--use-arch=x86_64']
@@ -471,7 +543,7 @@ class Qimage2ndarrayPackage(Package):
 # GreenletPackage
 #===============================================================================
 class GreenletPackage(Package):
-    src_file = 'greenlet.tar.gz'
+    src_file = 'greenlet.zip'
 
     def configure(self):
         pass
@@ -550,7 +622,8 @@ class VTKPackage(Package):
 
     replaceDarwin = ['Wrapping/Python/CMakeLists.txt',
                      ('SET(VTK_PYTHON_SETUP_ARGS',
-                      '      SET(VTK_PYTHON_SETUP_ARGS --prefix=' + installDir
+                      '      SET(VTK_PYTHON_SETUP_ARGS --prefix='
+                      + installDir
                       + '/Frameworks/Python.framework/Versions/2.7 \n')
                     ]
 
@@ -573,8 +646,7 @@ class VTKPackage(Package):
                 '-DVTK_WRAP_CPP=ON',
                 '-DVTK_WRAP_UI=ON',
                 '-DDESIRED_QT_VERSION=4',
-                '-DVTK_USE_SYSTEM_HDF5:BOOL=ON',
-                '-DCMAKE_INSTALL_PREFIX=%s',
+                '-DCMAKE_INSTALL_PREFIX=($prefix)',
                 '-DVTK_INSTALL_LIB_DIR=lib',
                 '-DVTK_INSTALL_INCLUDE_DIR=include',
                 '-DVTK_INSTALL_PACKAGE_DIR=lib/vtk',
@@ -585,28 +657,33 @@ class VTKPackage(Package):
                 '-DVTK_USE_INFOVIS=ON',
                 '-DVTK_USE_CHARTS=ON',
                 '-DBUILD_SHARED_LIBS=ON',
-                '-DVTK_USE_SYSTEM_EXPAT=ON',
+                '-DVTK_USE_SYSTEM_HDF5=ON',
+                '-DVTK_USE_SYSTEM_EXPAT=ON', ###?
                 '-DVTK_USE_SYSTEM_FREETYPE=OFF',
                 '-DVTK_USE_SYSTEM_JPEG=ON',
                 '-DVTK_USE_SYSTEM_LIBXML2=OFF',
                 '-DVTK_USE_SYSTEM_PNG=ON',
                 '-DVTK_USE_SYSTEM_TIFF=ON',
                 '-DVTK_USE_SYSTEM_ZLIB=ON',
-                '-DVTK_USE_SYSTEM_HDF5=ON',
                 '-DVTK_USE_HYBRID=ON',
                 '-DVTK_USE_GL2PS=ON',
                 '-DVTK_USE_RENDERING=ON',
                 '-DVTK_USE_TK:BOOL=OFF',
                 '-DJPEG_INCLUDE_DIR=($prefix)/include',
-                '-DJPEG_LIBRARY=($prefix)/lib/libjpeg.dylib',
-                '-DPNG_LIBRARY=($prefix)/lib/libpng.dylib',
+                '-DJPEG_LIBRARY=($prefix)/lib/libjpeg($dll_suffix)',
+                '-DPNG_LIBRARY=($prefix)/lib/libpng($dll_suffix)',
                 '-DPNG_PNG_INCLUDE_DIR=($prefix)/include',
                 '-DTIFF_INCLUDE_DIR=($prefix)/include',
-                '-DTIFF_LIBRARY=($prefix)/lib/libtiff.dylib',
+                '-DTIFF_LIBRARY=($prefix)/lib/libtiff($dll_suffix)',
                 '-DZLIB_INCLUDE_DIR=($prefix)/include',
-                '-DZLIB_LIBRARY=($prefix)/lib/libz.dylib',
-                '-DHDF5_HL_INCLUDE_DIR=($prefix)/include',
-                '-DCMAKE_INSTALL_PREFIX=($prefix)',
+                '-DZLIB_LIBRARY=($prefix)/lib/libz($dll_suffix)',
+                '-DHDF5_ROOT=($prefix)',
+                '-DHDF5_INCLUDE_DIRS=($prefix)/include',
+                '-DHDF5_INCLUDE_DIR=($prefix)/include',
+                '-DHDF5_LIBRARIES=($prefix)/lib',
+                '-DHDF5_LIBRARY=($prefix)/lib',
+                ##'-DHDF5_INSTALL=($prefix)',
+                ##'-DCMAKE_INSTALL_PREFIX=($prefix)',
                 '../../work/($packageWorkDir)'
                ]
 
@@ -616,19 +693,21 @@ class VTKPackage(Package):
 class LazyflowPackage(Package):
     src_file = 'lazyflow.tar'
     
-    def configure_darwin(self):
+    def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
                 ' && cd ($prefix)/%s/lazyflow/drtile' % (self.workdir),
                 ' && pwd',
                 ' && cmake .',
+                '-DPYTHON_EXECUTABLE=($pythonExecutable)',
                 '-DBoost_INCLUDE_DIR=($prefix)/include',
                 '-DBoost_PYTHON_LIBRARY_DEBUG=($prefix)/lib/'
-                + 'libboost_python.dylib',
+                + 'libboost_python($dll_suffix)',
                 '-DBoost_PYTHON_LIBRARY_RELEASE=($prefix)/lib/'
-                +'libboost_python.dylib',
+                + 'libboost_python($dll_suffix)',
                 '-DPYTHON_INCLUDE_DIR=($pythonHeadersPath)',
                 '-DPYTHON_LIBRARY=($pythonlib)',
-                '-DVIGRA_IMPEX_LIBRARY=($prefix)/lib/libvigraimpex.dylib',
+                '-DVIGRA_IMPEX_LIBRARY=($prefix)/lib/'
+                + 'libvigraimpex($dll_suffix)',
                 '-DVIGRA_IMPEX_LIBRARY_DIR=($prefix)/lib',
                 '-DVIGRA_INCLUDE_DIR=($prefix)/include',
                 ' && make',
@@ -645,7 +724,7 @@ class LazyflowPackage(Package):
 class VoluminaPackage(Package):
     src_file = 'volumina.tar'
     
-    def configure_darwin(self):
+    def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
                 ]
             
@@ -660,7 +739,7 @@ class VoluminaPackage(Package):
 class WidgetsPackage(Package):
     src_file = 'widgets.tar'
     
-    def configure_darwin(self):
+    def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
                 ]
             
@@ -670,12 +749,12 @@ class WidgetsPackage(Package):
         pass
 
 #===============================================================================
-# TechpreviewPackage
+# AppletWorkflowsPackage
 #===============================================================================
-class TechpreviewPackage(Package):
-    src_file = 'techpreview.tar'
+class AppletWorkflowsPackage(Package):
+    src_file = 'applet-workflows.tar'
     
-    def configure_darwin(self):
+    def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
                 ]
             
@@ -688,22 +767,52 @@ class TechpreviewPackage(Package):
 # EnvironmentScript
 #===============================================================================
 class EnvironmentScript(object):
-    def __init__(self):
-        self.createFile()
-    
-    def createFile(self):
+    def __init__(self, name):        
+        self.package_name = name
+        if platform.system() == "Linux":
+            self.createFileLinux()
+        if platform.system() == "Darwin":
+            self.createFileDarwin()
+
+    def createFileLinux(self):
+        file_name = installDir + "/ilastik"
+        file = open(file_name % (installDir), "w")
+        script_name = "ILASTIK_SCRIPT"
+        script = "$" + script_name
+        path_name = "ILASTIK_PATH"
+        path = "$" + path_name
+        file.write("#!/bin/bash")
+        file.write(script_name + "=$(readlink -f $0)")
+        file.write(path_name + "=$(dirname " + script + ")")
+        file.write("export PATH=" + path + "/bin:$PATH")
+        file.write("export LD_LIBRARY_PATH=" + path + "/lib:" + path +
+                   "/lib/python" + pythonVersion + "/site-packages/vigra")
+        file.write("export PYTHONPATH=" + path + "/volumina:" + path +
+                   "/applet-workflows/ilastik-shell:" + path + "/widgets:" +
+                   path + "/widgets/igms:" + path + "/lazyflow:" + path +
+                   "/lazyflow/drtile:" + path + "/lib/python" + pythonVersion +
+                   "/site-packages")
+        file.write("python" + pythonVersion + " " + path +
+                   "/applet-workflows/ilastik-shell/workflows/" +
+                   "pixelClassificationWorkflowMain.py")
+        file.close()
+        os.chmod(file_name, stat.S_IRUSR | stat.S_IXUSR | stat.S_IWUSR |
+                            stat.S_IRGRP | stat.S_IXGRP |
+                            stat.S_IROTH | stat.S_IXOTH)
+
+    def createFileDarwin(self):
         file = open('%s/activate.sh' % (installDir), "w")
-        file.write("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions/"
-                   + "2.7/bin:$PATH\n" % (installDir, installDir))
-        file.write("export DYLD_FALLBACK_LIBRARY_PATH=%s/lib:%s/Frameworks/"
+        file.write(("export PATH=%s/bin:%s/Frameworks/Python.framework/Versions"
+                   + "/2.7/bin:$PATH\n") % (installDir, installDir))
+        file.write(("export DYLD_FALLBACK_LIBRARY_PATH=%s/lib:%s/Frameworks/"
                    + "Python.framework/Versions/2.7/lib/python2.7/"
-                   + "site-packages/vigra\n" % (installDir, installDir))
-        file.write("export PYTHONPATH=%s/volumina:%s/widgets:%s/lazyflow:%s/"
+                   + "site-packages/vigra\n") % (installDir, installDir))
+        file.write(("export PYTHONPATH=%s/volumina:%s/widgets:%s/lazyflow:%s/"
                    + "lazyflow/lazyflow/drtile:%s/Frameworks/Python.framework/"
-                   + "Versions/2.7/lib/python2.7/site-packages\n" % (installDir,
-                                installDir, installDir, installDir, installDir))
-        file.write("alias classificationWorkflow='python %s/techpreview/"
-                   + "classification/classificationWorkflow.py'\n"
+                   + "Versions/2.7/lib/python2.7/site-packages\n") % (
+                    installDir, installDir, installDir, installDir, installDir))
+        file.write(("alias classificationWorkflow='python %s/techpreview/"
+                   + "classification/classificationWorkflow.py'\n")
                    % (installDir))
         file.write("txtred='\e[0;31m' # Red\n")
         file.write("bldgrn='\e[1;32m' # Green\n")

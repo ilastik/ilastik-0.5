@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import __builtin__
-import os, sys, tarfile, shutil, fileinput
+import os, sys, tarfile, zipfile, shutil, fileinput
 from hashlib import md5
 import platform
 import multiprocessing
@@ -10,15 +10,15 @@ import multiprocessing
 from PackagesAux import md5sum, download
  
 class Package:
-    src_uri = ''
+    src_file = ''
     workdir = ''
     prefix = installDir
     patches = []
     patch_commands = []
     replaceDarwin = []
     
-    def __init__(self):        
-        self.download()
+    def __init__(self, name):        
+        self.package_name = name
         self.unpack()
         if self.replaceDarwin and platform.system() == "Darwin":
             self.replaceALinesInFile(self.replaceDarwin)
@@ -34,36 +34,30 @@ class Package:
     def system(self, cmd):
         cmd = 'cd work/' + self.workdir + ' && ' + cmd
         print "Package.system('%s')" % cmd
+        sys.stdout.flush()
         ret = os.system(cmd)
         if ret != 0:
             raise RuntimeError("Failed to execute '%s'" % cmd)
     
-    def download(self):
-        self.filename = download(self.src_uri)
-
     def unpack(self):
-        if  self.src_uri.endswith('.git'):
-            self.workdir = self.filename
-            if os.path.exists('work' + '/' + self.workdir): 
-                shutil.rmtree('work' + '/' + self.workdir)
-            cmd = "cp -r distfiles/"+self.workdir+" work/"+self.workdir
-            print "* Copying to work directory via '%s'" % cmd,
-            os.system(cmd)
-            print " ... done"
+        archive = None
+        if self.src_file.endswith('.zip'):
+            archive = zipfile.ZipFile(self.src_file)
+            self.workdir = archive.namelist()[0]
         else:
-            t = tarfile.open(self.filename, 'r')
-            self.workdir = t.getnames()[0]
-            if '/' in self.workdir:
-                self.workdir = self.workdir.split('/')
-                self.workdir = self.workdir[0]
-            print ("* unpacking ", self.filename, "to",
-                   'work' + '/' + self.workdir)
-            if os.path.exists('work' + '/' + self.workdir): 
-                shutil.rmtree('work' + '/' + self.workdir)
-            if (self.filename.find('.tar') > -1 or
-                self.filename.find('.tgz') > -1):
-                tar = tarfile.open(self.filename)
-                tar.extractall('work')
+            archive = tarfile.open(self.src_file)
+            self.workdir = archive.getnames()[0]
+
+        if '/' in self.workdir:
+            self.workdir = self.workdir.split('/')
+            self.workdir = self.workdir[0]
+        archive_dir = 'work' + '/' + self.workdir
+        print "* unpacking ", self.src_file, "to", archive_dir
+        if os.path.exists(archive_dir):
+            shutil.rmtree(archive_dir)
+
+        archive.extractall('work')
+        archive.close()
             
         for patch in self.patches:
             print "* applying patch", patch
@@ -74,6 +68,7 @@ class Package:
             self.system(cmd)
             
     def replaceALinesInFile(self, data):
+        sys.stdout.flush()
         os.system('pwd')
         for line in fileinput.input('work/' + self.workdir + '/' + data[0],
                                     inplace=1):
@@ -83,33 +78,57 @@ class Package:
             sys.stdout.write(line)
             
     def configure(self):
-        print "* Configuring the Package"
+        print "* Configuring package", self.package_name
         cmd = self.configure_all()
         try:
+            if platform.system() == "Linux":
+                cmd += self.configure_linux()
             if platform.system() == "Darwin":
                 cmd += self.configure_darwin()
-            else:
-                cmd += self.configure_linux()
         except AttributeError:
             pass
 
+        if platform.system() == "Linux":
+            pythonVersionPath = (self.prefix + '/')
+            dll_suffix = '.so'
+        if platform.system() == "Darwin":
+            pythonVersionPath = (self.prefix
+                                 + '/Frameworks/Python.framework/Versions/'
+                                 + pythonVersion + '/')
+            dll_suffix = '.dylib'
 
-        py_path = (self.prefix + '/Frameworks/Python.framework/Versions/2.7/')
+        replace_list_all = [
+            ('($prefix)',        self.prefix),
+            ('($pythonBinaryPath)', pythonVersionPath + 'bin'),
+            ('($pythonIncludePath)', pythonVersionPath + 'include/python'
+                                                       + pythonVersion),
+            ('($pythonSharePath)', pythonVersionPath + 'share'),
+            ('($pythonExecutable)', pythonVersionPath + 'bin/python'),
+            ('($packageWorkDir)', self.workdir),
+            ('($pythonSitePackages)', pythonVersionPath + 'lib/python'
+                                      + pythonVersion  + "/site-packages"),
+            ('($dll_suffix)', dll_suffix),
+            ('($pythonlib)', pythonVersionPath + 'lib/libpython' + pythonVersion
+                                                                 + dll_suffix)]
+
+        replace_list_linux = [
+            ('($pythonHeadersPath)', pythonVersionPath + 'include/python'
+                                                       + pythonVersion),
+            ('($pythonVersionPath)', pythonVersionPath[:-1])]
+
+        replace_list_darwin = [
+            ('($pythonHeadersPath)', self.prefix
+                         + '/Frameworks/Python.framework/Headers'),
+            ('($pythonVersionPath)', self.prefix
+                    + '/Frameworks/Python.framework/Versions/' + pythonVersion)]
+                         
+        if platform.system() == "Linux":
+            replace_list_all.extend(replace_list_linux)
+        if platform.system() == "Darwin":
+            replace_list_all.extend(replace_list_darwin)
+
         for index, item in enumerate(cmd):
-            for ch in [('($prefix)',        self.prefix),
-                       ('($pythonHeaders)', self.prefix
-                        + '/Frameworks/Python.framework/Headers'),
-                       ('($pythonVersionPath)', self.prefix
-                        + '/Frameworks/Python.framework/Versions/2.7'),
-                       ('($pythonlib)', py_path + 'lib/libpython2.7.dylib'),
-                       ('($pythonBinaryPath)', py_path + 'bin'),
-                       ('($pythonIncludePath)', py_path + 'include/python2.7'),
-                       ('($pythonHeadersPath)', self.prefix
-                                     + '/Frameworks/Python.framework/Headers'),
-                       ('($pythonSharePath)', py_path + 'share'),
-                       ('($pythonExecutable)', py_path + 'bin/python'),
-                       ('($packageWorkDir)', self.workdir),
-                       ]:
+            for ch in replace_list_all:
                 if ch[0] in item:
                     item = item.replace(ch[0], ch[1])
                     cmd[index] = item

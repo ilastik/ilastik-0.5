@@ -22,11 +22,9 @@ qemu_master=/export/home/users/mip/ilastik/build/vm_masters/vm_fedora8_0.sparse.
 # convert source-dir to absolute path:
 src_dir=`readlink -m $1`  # requires GNU readlink.
 
-echo building in $tmp_dir :
-mkdir -p $tmp_dir
+echo hacking in $tmp_dir :
 cd  $tmp_dir
 export PATH=$PATH:/export/home/users/mip/ilastik/build/local/bin
-qemu-img create -b $qemu_master -f qcow2 vm_fedora8_user.qcow2 >/dev/null
-echo ilastik-build $src_dir $2 vm_fedora8_user.qcow2 $4 $5 $6
+echo ilastik-hack $src_dir $2 vm_fedora8_user.qcow2 $4 $5 $6
 ####/export/home/users/mip/ilastik/build/local/bin/
-/export/home/mnullmei/x/ilastik/bin/ilastik-build $src_dir $2 vm_fedora8_user.qcow2 $4 $5 $6
+/var/tmp/mnullmei/home/x/06_vm_a/bin/ilastik-hack $src_dir $2 vm_fedora8_user.qcow2 $4 $5 $6

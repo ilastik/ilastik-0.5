@@ -47,18 +47,21 @@ cat >>build-cmd <<EOF
 EOF
 
 # uncomment the following for master virtual machine image maintenance with ssh:
-#### echo 'sleep 1d' >build-cmd
+#### 
+echo 'sleep 1d' >build-cmd
 
-echo building input files:
-(cd $1; tar cf - .) > tree.tar
-tar cvf input_blocked.tar -b 64 build-cmd tree.tar
-rm -f tree.tar
+##echo building input files:
+##(cd $1; tar cf - .) > tree.tar
+##tar cvf input_blocked.tar -b 64 build-cmd tree.tar
+##rm -f tree.tar
+
+tar cvf input_blocked.tar -b 64 build-cmd
 
 # sparse file...
-rm -f output.tar
-dd oflag=append if=/dev/zero of=output.tar bs=1 count=0 seek=1G 2>/dev/null
+###rm -f output.tar
+###dd oflag=append if=/dev/zero of=output.tar bs=1 count=0 seek=1G 2>/dev/null
 
-echo starting virtual machine, logging to build.log:
+echo starting virtual machine, logging to maint.log:
 
 env kvm -version 2>/dev/null
 if test $? -eq 126 -o  $? -eq 127  -o $? -eq 1 -o ! -w /dev/kvm -o ! -r /dev/kvm ; then
@@ -91,7 +94,7 @@ $Qemu_command \
     $Qemu_img -m $Qemu_mem -smp $Qemu_cpus \
     -net nic -net user,hostfwd=tcp:127.0.0.1:${Qemu_ssh_port}-:22 \
     -vnc none \
-    -serial file:build.log -hdb input_blocked.tar -hdc output.tar
+    -serial file:maint.log -hdb input_blocked.tar -hdc output.tar
 
 echo 'virtual machine is shut down, unpacking output (if any):'
 tar xvf output.tar

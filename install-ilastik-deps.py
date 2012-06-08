@@ -3,22 +3,29 @@
 
 import __builtin__
 import platform
-import urllib2, os, sys, tarfile, shutil
-from hashlib import md5
+import os, sys
+
+import PackagesGlobals
 
 c = sys.argv
+c.pop(0) # remove program name
+if c == []:
+    c = [ "all" ]
 
 #===============================================================================
 # set install directory
 #===============================================================================
 for index, item in enumerate(c):
-    if "prefix" in item:
+    if "--prefix=" in item:
         item = item.replace("--prefix=", "")
         __builtin__.installDir = item
         del c[index]
         break
     else:
         __builtin__.installDir = os.environ["HOME"] + "/ilastik-build"
+
+if c == []:
+    c = [ "all" ]
 
 import PackagesItems
 
@@ -35,26 +42,50 @@ mkdir(installDir)
 mkdir(installDir + '/lib')
 mkdir(installDir + '/bin')
 mkdir(installDir + '/include')
-mkdir(installDir + '/Frameworks')
+if platform.system() == "Darwin":
+    mkdir(installDir + '/Frameworks')
+
 
 #===============================================================================
 # set environment variables 
 #===============================================================================
-os.environ["PATH"]                   = installDir + "/bin:" + os.environ["PATH"]
-if '10.6' in platform.mac_ver()[0]:
-    os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.6"
-elif '10.7' in platform.mac_ver()[0]:
-    os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.7"
-os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = installDir + "/lib"
-os.environ["CC"]                         = "llvm-gcc"
-os.environ["CXX"]                        = "llvm-g++"
-#no space between "-L" and directory path!!! It will causes a compiler error 
-os.environ["LDFLAGS"]                    = "-L" + installDir + "/lib -F"
-                                           + installDir + "/Frameworks"
-os.environ["CPPFLAGS"]                   = "-I " + installDir + "/include"
-os.environ["PYTHONPATH"] = (installDir + "/Frameworks/Python.framework/"
-                            + "Versions/2.7/lib/python2.7/site-packages")
-os.environ["FRAMEWORK_PATH"]             = installDir + "/Frameworks"
+
+__builtin__.pythonVersion = PackagesGlobals.python_version()
+
+if platform.system() == "Linux":
+    os.environ["CMAKE_PREFIX_PATH"]    = installDir
+    os.environ["CMAKE_INSTALL_PREFIX"] = installDir
+    os.environ["CMAKE_INCLUDE_PATH"]   = installDir + "/include"
+    os.environ["CMAKE_LIBRARY_PATH"]   = installDir + "/lib"
+    os.environ["PATH"]               = installDir + "/bin:" + os.environ["PATH"]
+    os.environ["LD_LIBRARY_PATH"]      = installDir + "/lib"
+    os.environ["C_INCLUDE_PATH"]       = installDir + "/include"
+    os.environ["CPLUS_INCLUDE_PATH"]   = installDir + "/include"
+    os.environ["PREFIX"]               = installDir
+    os.environ['QTDIR']                = installDir
+    os.environ['PYTHONAPPSDIR']        = installDir + '/Applications/'
+    os.environ["PYTHONPATH"]          = (installDir + "/lib/python"
+                                         + pythonVersion + "/site-packages")
+    # ^ PYTHONPATH == pythonSitePackagess
+    
+if platform.system() == "Darwin":
+    os.environ["PATH"]               = installDir + "/bin:" + os.environ["PATH"]
+    if '10.6' in platform.mac_ver()[0]:
+        os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.6"
+    elif '10.7' in platform.mac_ver()[0]:
+        os.environ["MACOSX_DEPLOYMENT_TARGET"]   = "10.7"
+    os.environ["DYLD_FALLBACK_LIBRARY_PATH"] = installDir + "/lib"
+    os.environ["CC"]                         = "llvm-gcc"
+    os.environ["CXX"]                        = "llvm-g++"
+    #no space between "-L" and directory path!!! It will causes a compiler error
+    os.environ["LDFLAGS"]                    = ("-L" + installDir + "/lib -F"
+                                                + installDir + "/Frameworks")
+    os.environ["CPPFLAGS"]                   = "-I " + installDir + "/include"
+    os.environ["PYTHONPATH"] = (installDir + '/Frameworks/Python.framework/'
+                                + 'Versions/' + pythonVersion + '/lib/python'
+                                + pythonVersion + '/site-packages')
+    os.environ["FRAMEWORK_PATH"]             = installDir + "/Frameworks"
+
 
 #===============================================================================
 # available packages
@@ -91,7 +122,7 @@ all = [
        ('lazyflow', 'LazyflowPackage'),
        ('volumina', 'VoluminaPackage'),
        ('widgets', 'WidgetsPackage'),
-       ('techpreview', 'TechpreviewPackage'),
+       ('applet-workflows', 'AppletWorkflowsPackage'),
        ('envscript', 'EnvironmentScript'),
        #'fixes'
      ]
@@ -124,6 +155,8 @@ if not packages:
 #===============================================================================
 # install packages
 #===============================================================================
+
 for item in packages:
+    print item[1]
     package = getattr(PackagesItems, item[1])
-    package()
+    package(item[0])

@@ -28,4 +28,5 @@ cd  $tmp_dir
 export PATH=$PATH:/export/home/users/mip/ilastik/build/local/bin
 qemu-img create -b $qemu_master -f qcow2 vm_fedora12_user.qcow2 >/dev/null
 echo ilastik-build $src_dir $2 vm_fedora12_user.qcow2 $4 $5 $6
-/export/home/users/mip/ilastik/build/local/bin/ilastik-build $src_dir $2 vm_fedora12_user.qcow2 $4 $5 $6
+####/export/home/users/mip/ilastik/build/local/bin/ilastik-build $src_dir $2 vm_fedora12_user.qcow2 $4 $5 $6
+/export/home/mnullmei/x/ilastik/bin/ilastik-build $src_dir $2 vm_fedora12_user.qcow2 $4 $5 $6
