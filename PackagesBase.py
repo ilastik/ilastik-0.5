@@ -7,8 +7,6 @@ from hashlib import md5
 import platform
 import multiprocessing
 
-from PackagesAux import md5sum, download
- 
 class Package:
     src_file = ''
     workdir = ''
