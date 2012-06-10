@@ -141,9 +141,9 @@ class ZlibPackage(Package):
 ###################################################################################################
 
 class Hdf5Package(Package):
-    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.8.tar.gz'
+    src_uri = 'http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.9.tar.gz'
     #correctMD5sum = 'df131d156634608e4a7bf26baeafc940'
-    workdir ='hdf5-1.8.8'
+    workdir ='hdf5-1.8.9'
     
     def unpack(self):
         Package.unpack(self)
