@@ -776,25 +776,25 @@ class EnvironmentScript(object):
 
     def createFileLinux(self):
         file_name = installDir + "/ilastik"
-        file = open(file_name % (installDir), "w")
+        file = open(file_name, "w")
         script_name = "ILASTIK_SCRIPT"
         script = "$" + script_name
         path_name = "ILASTIK_PATH"
         path = "$" + path_name
-        file.write("#!/bin/bash")
-        file.write(script_name + "=$(readlink -f $0)")
-        file.write(path_name + "=$(dirname " + script + ")")
-        file.write("export PATH=" + path + "/bin:$PATH")
-        file.write("export LD_LIBRARY_PATH=" + path + "/lib:" + path +
-                   "/lib/python" + pythonVersion + "/site-packages/vigra")
-        file.write("export PYTHONPATH=" + path + "/volumina:" + path +
-                   "/applet-workflows/ilastik-shell:" + path + "/widgets:" +
-                   path + "/widgets/igms:" + path + "/lazyflow:" + path +
-                   "/lazyflow/drtile:" + path + "/lib/python" + pythonVersion +
-                   "/site-packages")
-        file.write("python" + pythonVersion + " " + path +
-                   "/applet-workflows/ilastik-shell/workflows/" +
-                   "pixelClassificationWorkflowMain.py")
+        print >>file, "#!/bin/bash"
+        print >>file, script_name + "=$(readlink -f $0)"
+        print >>file, path_name + "=$(dirname " + script + ")"
+        print >>file, "export PATH=" + path + "/bin:$PATH"
+        print >>file, ("export LD_LIBRARY_PATH=" + path + "/lib:" + path +
+                       "/lib/python" + pythonVersion + "/site-packages/vigra")
+        print >>file, ("export PYTHONPATH=" + path + "/volumina:" + path +
+                       "/applet-workflows/ilastik-shell:" + path + "/widgets:" +
+                       path + "/widgets/igms:" + path + "/lazyflow:" + path +
+                      "/lazyflow/drtile:" + path + "/lib/python" +
+                      pythonVersion + "/site-packages")
+        print >>file, ("python" + pythonVersion + " " + path +
+                       "/applet-workflows/ilastik-shell/workflows/" +
+                       "pixelClassificationWorkflowMain.py")
         file.close()
         os.chmod(file_name, stat.S_IRUSR | stat.S_IXUSR | stat.S_IWUSR |
                             stat.S_IRGRP | stat.S_IXGRP |
