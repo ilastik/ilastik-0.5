@@ -68,8 +68,8 @@ def git_archive(directory, tree_ish, output_file):
         raise NameError("in an ilastik build, relative commit names ('" + suffix
                         + "') are disallowed for checkouts from git "
                         "repositories ('" + past_last_slash(directory) + "')")
-    os.system('git archive -o ' + output_file + ' --remote='
-              + directory + ' --prefix=' + directory + '/ ' + tree_ish)
+    os.system('cd ' + directory + ' && git archive -o ' + output_file +
+              ' --prefix=' + directory + '/ ' + tree_ish)
 
 # 3 things: a)  the JSON entry "archive": the canonical name of the build script
 #           b)  the name of the downloaded file, usually versioned a la 'x.y.z'

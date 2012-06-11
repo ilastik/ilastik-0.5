@@ -1,0 +1,49 @@
+#!/bin/bash
+
+BUILD_SCRIPT=$(readlink -f $0)
+BUILD_PATH=$(dirname $(dirname $BUILD_SCRIPT))
+
+if [ -z "$2" ]; then
+	echo ' ' 
+	echo "usage: $0" '<common-directory> <package-tag> [ <build-directory> ' \
+                     '[ <number-of-cpus> [ <memory-in-GB> [ <ssh-port> ] ] ] ]'
+	echo ' ' 
+	echo 'defaults: <build-directory> =' "/tmp/ilastik-build-$USER"
+	echo '          <number-of-cpus> = number of host cores / 2;'
+	echo '          <memory-in-GB> = 2 * <number-of-cpus>'
+	echo '          <ssh-port> = 2222'
+	exit 1
+fi
+
+if [ -z "$3" ]; then
+	build_dir="/tmp/ilastik-build-$USER"
+else
+	build_dir="$3"
+fi
+
+# convert common directory to absolute path:
+common_dir=$(readlink -f $1)  # requires GNU readlink.
+
+# possibly updated versions of qemu, git, python
+############export PATH=$common_dir/local/bin:$PATH
+echo xxx $PATH xxx
+
+echo building in $build_dir :
+mkdir -p $build_dir
+
+cd $BUILD_PATH # use JSON data and build commands corresponding to this file
+echo python $BUILD_PATH/PackagesAux.py --repositories $common_dir/repos $build_dir
+python $BUILD_PATH/PackagesAux.py --repositories $common_dir/repos $build_dir
+
+qemu_master=$common_dir/vm_masters/vm_fedora12_0.sparse.qcow2
+
+cd $build_dir
+
+user_img=vm_fedora12_user.qcow2
+qemu-img create -b $qemu_master -f qcow2 $user_img >/dev/null
+
+pkg_tar=$build_dir/ilastik_packages.tar
+
+build_cmd="$BUILD_PATH/bin/ilastik-build $pkg_tar $2 $user_img $4 $5 $6"
+echo $build_cmd
+$build_cmd
