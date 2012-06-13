@@ -124,6 +124,7 @@ all = [
        ('widgets', 'WidgetsPackage'),
        ('applet-workflows', 'AppletWorkflowsPackage'),
        ('envscript', 'EnvironmentScript'),
+       ('repo-table', 'RepoTable'),
        #'fixes'
      ]
 #===============================================================================

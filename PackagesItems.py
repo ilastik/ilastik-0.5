@@ -7,6 +7,8 @@ import os, platform
 import urllib2, os, tarfile, shutil
 import multiprocessing, stat
 
+import PackagesGlobals
+
 #===============================================================================
 # CmakePackage
 #===============================================================================
@@ -695,6 +697,7 @@ class LazyflowPackage(Package):
     
     def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+                ' && echo %s >> ($prefix)/directory.list' % self.workdir,
                 ' && cd ($prefix)/%s/lazyflow/drtile' % (self.workdir),
                 ' && pwd',
                 ' && cmake .',
@@ -726,6 +729,7 @@ class VoluminaPackage(Package):
     
     def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+                ' && echo %s >> ($prefix)/directory.list' % self.workdir
                 ]
             
     def make(self):
@@ -741,6 +745,7 @@ class WidgetsPackage(Package):
     
     def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+                ' && echo %s >> ($prefix)/directory.list' % self.workdir
                 ]
             
     def make(self):
@@ -756,6 +761,7 @@ class AppletWorkflowsPackage(Package):
     
     def configure_all(self):
         return ['cd .. && cp -r %s ($prefix)/%s' % (self.workdir, self.workdir),
+                ' && echo %s >> ($prefix)/directory.list' % self.workdir
                 ]
             
     def make(self):
@@ -825,3 +831,10 @@ class EnvironmentScript(object):
         file.write("PS1='-> '")
         file.close()
 
+
+#===============================================================================
+# RepoTable
+#===============================================================================
+class RepoTable(object):
+    def __init__(self, name):        
+        shutil.copy(PackagesGlobals.release_default_name(), installDir)

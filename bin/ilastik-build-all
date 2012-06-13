@@ -28,21 +28,23 @@ common_dir=$(readlink -f $1)  # requires GNU readlink.
 ############export PATH=$common_dir/local/bin:$PATH
 echo xxx $PATH xxx
 
-echo building in $build_dir :
 mkdir -p $build_dir
+pkg_tar=$build_dir/ilastik_packages.tar
 
+echo combining source files into $pkg_tar :
 cd $BUILD_PATH # use JSON data and build commands corresponding to this file
-echo python $BUILD_PATH/PackagesAux.py --repositories $common_dir/repos $build_dir
-python $BUILD_PATH/PackagesAux.py --repositories $common_dir/repos $build_dir
+repo_cmd="python $BUILD_PATH/PackagesAux.py --repositories $common_dir/repos $build_dir"
+echo $repo_cmd
+$repo_cmd
 
 qemu_master=$common_dir/vm_masters/vm_fedora12_0.sparse.qcow2
 
+echo building in $build_dir :
 cd $build_dir
 
 user_img=vm_fedora12_user.qcow2
+rm $user_img
 qemu-img create -b $qemu_master -f qcow2 $user_img >/dev/null
-
-pkg_tar=$build_dir/ilastik_packages.tar
 
 build_cmd="$BUILD_PATH/bin/ilastik-build $pkg_tar $2 $user_img $4 $5 $6"
 echo $build_cmd

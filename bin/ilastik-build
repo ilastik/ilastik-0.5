@@ -63,7 +63,7 @@ rm -f tree.tar
 rm -f output.tar
 dd oflag=append if=/dev/zero of=output.tar bs=1 count=0 seek=1G 2>/dev/null
 
-echo starting virtual machine, logging to build.log:
+echo starting virtual machine, logging to $PWD/build.log:
 
 env kvm -version 2>/dev/null
 if test $? -eq 126 -o  $? -eq 127  -o $? -eq 1 -o ! -w /dev/kvm -o ! -r /dev/kvm ; then

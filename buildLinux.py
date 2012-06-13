@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, sys
+import os, sys, string
 
 import PackagesGlobals
 
@@ -10,18 +10,22 @@ def copy_files(build_dir, bin_dir, name_print):
     sys.stdout.flush()
     os.system(cmd)
 
-build_dir = "$HOME/ilastik-build"
+build_dir = os.environ["HOME"] + "/ilastik-build"
 bin_dir = "linux-bin"
 pythonVersion = PackagesGlobals.python_version()
 release_file  = PackagesGlobals.release_default_name()
 
 os.system("rm -Rf " + bin_dir + "/*")
 
+
+python_dirs = open(build_dir + "/directory.list").read().splitlines()
+
 copy_files(build_dir, bin_dir, "find"
                                + " include lib plugins share"
-                               + " lazyflow volumina widgets techpreview"
+                               + " " + string.join(python_dirs)
                                + " \( -name \*.so"
                                + " -o -name \*.so.\*"
+                               + " -o -name \*.ui"
                                + " -o -name \*.py"
                                + " -o -name \*.pth"
                                + " -o -name \*.png"
