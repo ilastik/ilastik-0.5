@@ -25,8 +25,8 @@ fi
 common_dir=$(readlink -f $1)  # requires GNU readlink.
 
 # possibly updated versions of qemu, git, python
-############export PATH=$common_dir/local/bin:$PATH
-echo xxx $PATH xxx
+export PATH=$common_dir/local/bin:$PATH # XXX add existence checks
+export LD_LIBRARY_PATH=$common_dir/local/lib # XXX add existence checks
 
 mkdir -p $build_dir
 pkg_tar=$build_dir/ilastik_packages.tar

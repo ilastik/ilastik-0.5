@@ -798,7 +798,7 @@ class EnvironmentScript(object):
                        path + "/widgets/igms:" + path + "/lazyflow:" + path +
                        "/lazyflow/drtile:" + path + "/lib/python" +
                        pythonVersion + "/site-packages")
-        print >>file, ("python" + pythonVersion + " " + path +
+        print >>file, ("exec python" + pythonVersion + " " + path +
                        "/applet-workflows/ilastik-shell/workflows/" +
                        "pixelClassificationWorkflowMain.py")
         file.close()
