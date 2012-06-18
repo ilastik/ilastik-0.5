@@ -142,14 +142,14 @@
     },
     {
         "pkg":             "sip",
-        "uri_all":         "http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.2.tar.gz",
-        "sha1_all":        "1c5df9182e8046f1c0d01603a2474fa2418bcea0",
+        "uri_all":         "http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.3-snapshot-377e9e4763f5.tar.gz",
+        "sha1_all":        "4f04ec822293d99feda745f18f2ba840c70a1ab8",
         "archive":         "sip.tar.gz",
         "archive_windows": "sip_windows.zip",
         "license":         "gpl2|gpl3|proprietary",
         "license_uri":     "http://www.riverbankcomputing.co.uk/hg/sip/raw-file/fbb9cdbad791/configure.py.in",
         "upstream":        "http://www.riverbankcomputing.co.uk/software/sip/download",
-        "uri_windows":     "http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.2.zip"
+        "uri_windows":     "http://www.riverbankcomputing.co.uk/static/Downloads/sip4/sip-4.13.3-snapshot-377e9e4763f5.zip"
     },
     {
         "pkg":             "pyqt",
