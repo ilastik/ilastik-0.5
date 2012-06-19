@@ -54,7 +54,7 @@ echo building input files:
 if [[ "$1" == *.tar ]]; then
     ln -sf $1 tree.tar
 else
-    (cd $1; tar cf - .) > tree.tar
+    (cd "$1"; tar cf - .) > tree.tar
 fi
 tar chvf input_blocked.tar -b 64 build-cmd tree.tar
 rm -f tree.tar

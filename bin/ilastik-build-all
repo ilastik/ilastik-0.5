@@ -32,7 +32,7 @@ mkdir -p $build_dir
 pkg_tar=$build_dir/ilastik_packages.tar
 
 echo combining source files into $pkg_tar :
-cd $BUILD_PATH # use JSON data and build commands corresponding to this file
+cd "$BUILD_PATH" # use JSON data and build commands corresponding to this file
 repo_cmd="python $BUILD_PATH/PackagesAux.py --repositories $common_dir/repos $build_dir"
 echo $repo_cmd
 $repo_cmd
@@ -40,7 +40,7 @@ $repo_cmd
 qemu_master=$common_dir/vm_masters/vm_fedora12_0.sparse.qcow2
 
 echo building in $build_dir :
-cd $build_dir
+cd "$build_dir"
 
 user_img=vm_fedora12_user.qcow2
 rm $user_img

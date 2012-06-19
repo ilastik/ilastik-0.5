@@ -158,7 +158,7 @@
         "archive":         "pyqt.tar.gz",
         "archive_darwin":  "pyqt_darwin.tar.gz",
         "archive_windows": "pyqt_windows.zip",
-        "license":         "gpl2|gpl3|commercial",
+        "license":         "gpl2|gpl3|proprietary",
         "license_uri":     "http://www.riverbankcomputing.co.uk/software/pyqt/license/index.html",
         "upstream":        "http://www.riverbankcomputing.co.uk/software/pyqt/download",
         "uri_darwin":      "http://www.riverbankcomputing.co.uk/static/Downloads/PyQt4/PyQt-mac-gpl-snapshot-4.9.2-93480e10d581.tar.gz",

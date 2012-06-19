@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo ' ' 
+    echo "usage: $0 <common-directory>"
+    exit 1
+fi
+
+# get path of build system source / repository checkout
+src_dir=$(dirname $0)
+
+local_bin=$1/local/bin
+mkdir -p $local_bin
+
+cp -f $src_dir/get-build-system $local_bin
+ln -sf get-build-system $local_bin/get-build-system-sha1
+ln -sf get-build-system $local_bin/pull-build-system
+cp -f $src_dir/ilastik-build-binaries $local_bin

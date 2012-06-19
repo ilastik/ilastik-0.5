@@ -1,0 +1,79 @@
+#!/bin/bash
+
+if [ "$1" = "-?" ]; then
+    echo ' ' 
+    echo "usage: $0" '[-n] [ <tag> [ <common-directory> ] ]'
+    echo ' ' 
+    echo "-n: do not force a 'git pull' of the build system's remote repository"
+    echo "defaults: <tag> = HEAD"
+    echo "defaults: <common-directory> = two levels above this file's location"
+    exit 1
+fi
+
+if [ "$1" = "-n" ]; then
+    $option = $1
+    shift
+fi
+
+if [ -z "$1" ]; then
+    tag=HEAD
+else
+    tag=$1
+fi
+
+# get absolute path of common directory (requires GNU readlink):
+if [ -z "$2" ]; then
+    common_dir=$(dirname $(dirname $(dirname $(readlink -f $0))))
+else
+    common_dir=$(readlink -f $2)
+fi
+
+build_dir=/tmp/ilastik-build-$USER
+
+work_dir=$build_dir/src
+rm -rf $work_dir
+mkdir -p $work_dir
+
+repo_dir=$common_dir/repos
+local_bin=$common_dir/local/bin
+
+ILASTIK_GIT=$local_bin/git
+if [ ! -a $ILASTIK_GIT ]; then
+    ILASTIK_GIT=git
+fi
+export ILASTIK_GIT
+
+if [ "$option" != "-n" ]; then
+    (cd "$work_dir"; $local_bin/pull-build-system $repo_dir)
+fi
+(cd "$work_dir"; $local_bin/get-build-system $repo_dir $tag)
+
+if [[ "$tag" = "HEAD" || "$tag" = "master" ]]; then
+    label=$($local_bin/get-build-system-sha1 $repo_dir "HEAD")
+else
+    label=$tag
+fi
+
+output_dir=$common_dir/snapshots
+mkdir -p $output_dir
+
+binaries=$build_dir/ilastik.$label.tar.bz2
+build_log=$build_dir/build.log
+error_log=$output_dir/build.$label.log
+rm -f $binaries
+rm -f $build_log
+
+$work_dir/build-system/bin/ilastik-build-all $common_dir .$label $build_dir
+
+if [[ ! -a $build_log ]]; then
+    echo "[build in virtual machine was not even started]" > $build_log
+fi
+cp $build_log $error_log
+
+if [ -a $binaries ]; then
+    cp $binaries $output_dir
+    echo "copied ilastik binary $binaries to directory $output_dir"
+    bzip2 $error_log
+else
+    echo "no ilastik binary was produced, copied build log file to $error_log"
+fi

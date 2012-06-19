@@ -1,0 +1,66 @@
+#!/bin/bash
+
+repo_name=build-system
+repo=git://github.com/Ilastik/${repo_name}.git
+old_dir="$PWD"
+
+if [ -z "$1" ]; then
+    echo ' ' 
+    echo "usage: $0" '<directory> [ <tag> ]'
+    echo ' ' 
+    echo 'defaults: <tag> = HEAD'
+    exit 1
+fi
+
+command=$(basename $0)
+
+if [ $command = "get-build-system-sha1" ]; then
+    cond_echo=true
+else
+    cond_echo=echo
+fi
+
+if [ -z "$2" ]; then
+    tag=HEAD
+else
+    tag=$2
+fi
+
+if [ -z "$ILASTIK_GIT" ]; then
+    ILASTIK_GIT=git
+fi
+
+if [ -a $1 ]; then
+    if [[ ! -d $1 ]]; then
+        $cond_echo $1 "is not a directory: please remove"
+        exit 2
+    fi
+else
+    mkdir -p $1
+fi
+
+cd "$1"
+
+if [[ ! -a $repo_name/.git ]]; then
+    $cond_echo "~ cloning from git repository $repo"
+    $ILASTIK_GIT clone $repo >/dev/null
+fi
+
+cd "$repo_name"
+
+# test if the commit <tag> is missing from the local git repo:
+if !($ILASTIK_GIT rev-parse --quiet --no-revs --symbolic-full-name --verify \
+                            $tag) || test $command = "pull-build-system";
+then
+    $cond_echo "~ getting $tag via update from git repository $repo"
+    $ILASTIK_GIT pull
+fi
+
+if [ $command = "get-build-system-sha1" ]; then
+    $ILASTIK_GIT rev-parse $tag
+fi
+
+if [ $command = "get-build-system" ]; then
+    echo "Using git repository $repo, commit $tag, for ilastik build system:"
+    $ILASTIK_GIT archive $tag | (cd "$old_dir"; tar xf -)
+fi
