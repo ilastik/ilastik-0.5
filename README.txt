@@ -28,46 +28,4 @@
 #    or implied, of their employers.
 
 
-#	The collection of scripts in this folderdownload and install all the dependencies required for
-# 	the master branch of ilastik starting from version 0.56 .
-#   These scripts have been tested on a clean machine running Mac Os X Snow Leopard 10.6.7
-#	
-#   
-#	GETTING STARTED	(Mac Os X)
-#
-#	There are some basic ingredients needed: 
-#	Install the Mac Os X Developers Enviroment with XCode from Mac Os X original Dvd
-#	Install  CMake
-#	Install  git
-#
-#	Create a folder called ilastik at the root of the computer and give to your user full rights to write into it. 
-#   
-#	sudo mkdir /ilastik
-#   sudo chown yourusername /ilastik 
-
-
-#	COMPILING 
-# 	To install all the dependencies:
-#	
-#	python install-ilastik-deps.py all
-#
-#   To resume the installation process from a certain package:
-#
-#	python install-ilastik-deps.py from packagename
-#
-#	To install a certain package:
-#  
-#	python install-ilastik-deps.py packagename
-
-
-# 	All the packages will be installed at:
-#	~/ilastik_deps_build
-
-
-#	RUN ILASTIK (Mac Os X)
-#	execute ../run-ilastik-mac.sh
-
-#   CREATE AN ILASTIK BOUNDLE (Mac Os X)
-#	
-#   execute ./make-osx-application-bundle.sh
-
+#	(instructions to follow)

@@ -30,7 +30,7 @@ fi
 
 build_dir=/tmp/ilastik-build-$USER
 
-work_dir=$build_dir/src
+work_dir=$build_dir/build-system
 rm -rf $work_dir
 mkdir -p $work_dir
 
@@ -63,7 +63,7 @@ error_log=$output_dir/build.$label.log
 rm -f $binaries
 rm -f $build_log
 
-$work_dir/build-system/bin/ilastik-build-all $common_dir .$label $build_dir
+$work_dir/bin/ilastik-build-all $common_dir .$label $build_dir
 
 if [[ ! -a $build_log ]]; then
     echo "[build in virtual machine was not even started]" > $build_log
