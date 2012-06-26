@@ -551,9 +551,8 @@ class SetuptoolsPackage(Package):
 ###############################################################################################################
 
 class EnthoughtBasePackage(Package):
-    src_uri = "http://enthought.com/repo/ets/EnthoughtBase-3.1.0.tar.gz"
-    workdir = "EnthoughtBase-3.1.0"
-    correctMD5sum = '1d8f6365d20dfd5c4232334e80b0cfdf'
+    src_uri = "http://enthought.com/repo/ets/EnthoughtBase-3.2.0.tar.gz"
+    workdir = "EnthoughtBase-3.2.0"
     patches = ['pyqt-correct-api-version.patch']
     
     def configure(self):
