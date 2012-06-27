@@ -38,13 +38,13 @@ class LoadOptionsWidget(QtGui.QWidget):
         tempLayout = QtGui.QHBoxLayout()
         self.sizeX = QtGui.QSpinBox()
         self.sizeX.setRange(0,9999)
-        self.connect(self.sizeX, QtCore.SIGNAL("valueChanged(int)"), self.sizeXChanged)
+        self.connect(self.sizeX, QtCore.SIGNAL("editingFinished()"), self.sizeXChanged)
         self.sizeY = QtGui.QSpinBox()
         self.sizeY.setRange(0,9999)
-        self.connect(self.sizeY, QtCore.SIGNAL("valueChanged(int)"), self.sizeYChanged)
+        self.connect(self.sizeY, QtCore.SIGNAL("editingFinished()"), self.sizeYChanged)
         self.sizeZ = QtGui.QSpinBox()
         self.sizeZ.setRange(0,9999)
-        self.connect(self.sizeZ, QtCore.SIGNAL("valueChanged(int)"), self.sizeZChanged)
+        self.connect(self.sizeZ, QtCore.SIGNAL("editingFinished()"), self.sizeZChanged)
         tempLayout.addWidget(QtGui.QLabel("X"))
         tempLayout.addWidget( self.sizeX)
         tempLayout.addWidget(QtGui.QLabel("Y"))
@@ -180,14 +180,14 @@ class LoadOptionsWidget(QtGui.QWidget):
         except Exception as e:
             self.resolution = [1,1,1]
 
-    def sizeXChanged(self, value):
-        self.offsetX.setMaximum(max(0, value-1))
+    def sizeXChanged(self):
+        self.offsetX.setMaximum(max(0, self.sizeX.value()-1))
         
-    def sizeYChanged(self, value):
-        self.offsetY.setMaximum(max(0, value-1))
+    def sizeYChanged(self):
+        self.offsetY.setMaximum(max(0, self.sizeY.value()-1))
         
-    def sizeZChanged(self, value):
-        self.offsetZ.setMaximum(max(0, value-1))
+    def sizeZChanged(self):
+        self.offsetZ.setMaximum(max(0, self.sizeZ.value()-1))
             
 
 
