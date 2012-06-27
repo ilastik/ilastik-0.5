@@ -553,7 +553,6 @@ class SetuptoolsPackage(Package):
 class EnthoughtBasePackage(Package):
     src_uri = "http://enthought.com/repo/ets/EnthoughtBase-3.1.0.tar.gz"
     workdir = "EnthoughtBase-3.1.0"
-    correctMD5sum = '1d8f6365d20dfd5c4232334e80b0cfdf'
     patches = ['pyqt-correct-api-version.patch']
     
     def configure(self):
@@ -568,7 +567,7 @@ class EnthoughtBasePackage(Package):
 ###############################################################################################################
 
 class TraitsPackage(Package):
-    src_uri = "http://www.enthought.com/repo/ETS/Traits-3.6.0.tar.gz"
+    src_uri = "http://www.enthought.com/repo/ets/Traits-3.6.0.tar.gz"
     workdir = "Traits-3.6.0"
     correctMD5sum = 'f20092b1de7c470f61cc95ff4f2090e2'
     
@@ -584,7 +583,7 @@ class TraitsPackage(Package):
 ###################################################################################################
 
 class TraitsBackendQtPackage(Package):
-    src_uri = "http://www.enthought.com/repo/ETS/TraitsBackendQt-3.6.0.tar.gz"
+    src_uri = "http://www.enthought.com/repo/ets/TraitsBackendQt-3.6.0.tar.gz"
     workdir = "TraitsBackendQt-3.6.0"
     correctMD5sum = 'a655ae137af4d8590739618926e21893'
     patches = ['enthought-no-webkit.patch', 'enthought-no-svg.patch']
@@ -601,7 +600,7 @@ class TraitsBackendQtPackage(Package):
 ###################################################################################################
 
 class TraitsGUIPackage(Package):
-    src_uri = "http://www.enthought.com/repo/ETS/TraitsGUI-3.6.0.tar.gz"
+    src_uri = "http://www.enthought.com/repo/ets/TraitsGUI-3.6.0.tar.gz"
     workdir = "TraitsGUI-3.6.0"
     #correctMD5sum = 'a655ae137af4d8590739618926e21893'
     
