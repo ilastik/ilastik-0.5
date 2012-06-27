@@ -177,7 +177,7 @@ class LoadOptionsWidget(QtGui.QWidget):
             self.resolution[0] = float(str(self.resX.text()))
             self.resolution[1] = float(str(self.resY.text()))
             self.resolution[2] = float(str(self.resZ.text()))
-        except Exception as e:
+        except:
             self.resolution = [1,1,1]
 
     def sizeXChanged(self):
@@ -188,10 +188,6 @@ class LoadOptionsWidget(QtGui.QWidget):
         
     def sizeZChanged(self):
         self.offsetZ.setMaximum(max(0, self.sizeZ.value()-1))
-            
-
-
-
 
     def slotFile(self):
         filename= QtGui.QFileDialog.getSaveFileName(self, "Save to File", "*.h5")
