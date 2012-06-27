@@ -68,10 +68,6 @@ class ProjectDlg(QtGui.QDialog):
         self.labeler.setText(project.labeler)
         self.description.setText(project.description)
         
-        theFlag = QtCore.Qt.ItemIsEnabled
-        flagON = ~theFlag | theFlag 
-        flagOFF = ~theFlag
-            
         for d in project.dataMgr:
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)
@@ -79,18 +75,10 @@ class ProjectDlg(QtGui.QDialog):
             # File _name
             r = QtGui.QTableWidgetItem(d.fileName)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-                       
-            # Here comes the cool python "checker" use it for if_than_else in lambdas
-            checker = lambda x: x and QtCore.Qt.Checked or QtCore.Qt.Unchecked
             
             # labels
             r = QtGui.QTableWidgetItem()
             r.data(QtCore.Qt.CheckStateRole)
-            #TODO: check for label availability
-            #r.setCheckState(checker(d._dataVol.labels._data != None))
-            
-            #r.setFlags(r.flags() & flagOFF);
-#            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
             
         self.oldFiles = rowCount+1
         self.exec_()
@@ -138,8 +126,6 @@ class ProjectDlg(QtGui.QDialog):
                 r.data(QtCore.Qt.CheckStateRole)
                 r.setCheckState(QtCore.Qt.Unchecked)
 
-#                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-                
             except Exception, e:
                 traceback.print_exc(file=sys.stdout)
                 print e
@@ -163,16 +149,8 @@ class ProjectDlg(QtGui.QDialog):
             rowCount = self.tableWidget.rowCount()
             self.tableWidget.insertRow(rowCount)
             
-            # file name
             r = QtGui.QTableWidgetItem(filename)
             self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-            # labels
-#            r = QtGui.QTableWidgetItem()
-#            r.data(QtCore.Qt.CheckStateRole)
-#            r.setCheckState(QtCore.Qt.Checked)
-#            self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
-
-
             self.initThumbnail(filename)
             self.tableWidget.setCurrentCell(0, 0)
 
@@ -196,13 +174,6 @@ class ProjectDlg(QtGui.QDialog):
                 # file name
                 r = QtGui.QTableWidgetItem(file_name)
                 self.tableWidget.setItem(rowCount, self.columnPos['File'], r)
-                # labels
-#                r = QtGui.QTableWidgetItem()
-#                r.data(QtCore.Qt.CheckStateRole)
-#                r.setCheckState(QtCore.Qt.Checked)
-
-
-#                self.tableWidget.setItem(rowCount, self.columnPos['Labels'], r)
 
                 self.initThumbnail(file_name)
                 self.tableWidget.setCurrentCell(0, 0)
@@ -212,8 +183,6 @@ class ProjectDlg(QtGui.QDialog):
         if self.tableWidget.rowCount() > 0:
             # Get row and fileName to remove
             row = self.tableWidget.currentRow()
-            fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
-            # print "remove Filename in row: ", fileName, " -- ", row
             self.project.removeFile(row)
             # Remove Row from display Table
             self.tableWidget.removeRow(row)
@@ -256,7 +225,6 @@ class ProjectDlg(QtGui.QDialog):
         rev_list = range(self.oldFiles, self.tableWidget.rowCount())
         rev_list.reverse()
         for row in rev_list:
-            fileName = str(self.tableWidget.item(row, self.columnPos['File']).text())
             self.project.removeFile(row)
         self.reject() 
 
