@@ -252,12 +252,13 @@ class LoadOptionsWidget(QtGui.QWidget):
                 self.offsetZ.setMaximum(shape[0]-1)
             return True
         except Exception as e:
-            print "Pre-reading data shape failed"
+            print "Pre-reading data shape failed. Please make sure all"
             print e
             print "Loading the full dataset"
             self.sizeZ.setValue(0)
             self.sizeX.setValue(0)
             self.sizeY.setValue(0)
+            raise IOError("Pre-reading data shape failed. Please make that the your file selection only contains valid image files, e.g. by adding <path>/*.tif")
             return False
 #*******************************************************************************
 # p r e v i e w T a b l e                                                      *

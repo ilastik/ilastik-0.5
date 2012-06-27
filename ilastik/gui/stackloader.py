@@ -141,7 +141,7 @@ class StackLoader(QtGui.QDialog):
             return
         temp = os.path.splitext(str(self.path.text()))[0]
         chfiles = temp + "*" + str(self.channelIDs[channel].text()) + "*"
-        self.fileList[channel] = sorted(glob.glob(chfiles), key=str.lower)
+        self.fileList[channel] = sorted([x for x in glob.glob(chfiles) if not os.path.isdir(x)], key=str.lower)
         self.optionsWidget.setShapeInfo(self.fileList, self.options.channels)
 
     def pathChanged(self, text):
@@ -150,7 +150,7 @@ class StackLoader(QtGui.QDialog):
         self.options.channels = []
         if self.multiChannel.checkState() == 0:
             pathone = str(self.path.text())
-            self.fileList.append(sorted(glob.glob(pathone), key=str.lower))
+            self.fileList.append(sorted([x for x in glob.glob(pathone) if not os.path.isdir(x)], key=str.lower))
             #self.fileList.append(glob.glob(str(self.path.text())))
             self.options.channels.append(0)
         else:
@@ -158,7 +158,7 @@ class StackLoader(QtGui.QDialog):
             temp = os.path.splitext(str(self.path.text()))[0]
             for ich in range(nch):
                 chfiles = temp + "*" + str(self.channelIDs[ich].text()) + "*"
-                self.fileList[ich] = sorted(glob.glob(chfiles), key=str.lower)
+                self.fileList[ich] = sorted([x for x in glob.glob(chfiles) if not os.path.isdir(x)], key=str.lower)
                 self.options.channels.append(ich)                
         if self.optionsWidget.setShapeInfo(self.fileList, self.options.channels):
             self.loadButton.setEnabled(True)

@@ -116,9 +116,13 @@ class ProjectDlg(QtGui.QDialog):
         loaded = False
         try:
             loaded = self.project.loadStack(path, fileList, options) 
-        except Exception, e:
+        except MemoryError, e:
             print e
             QtGui.QErrorMessage.qtHandler().showMessage("Not enough memory, please select a smaller sub-volume. Much smaller, since you may also want to calculate some features...")
+        except Exception, e:
+            print e
+            QtGui.QErrorMessage.qtHandler().showMessage(str(e))
+            
         if loaded:   
             # file name
             offsetstr =  '(' + str(options.offsets[0]) + ', ' + str(options.offsets[1]) + ', ' + str(options.offsets[2]) + ')' 
