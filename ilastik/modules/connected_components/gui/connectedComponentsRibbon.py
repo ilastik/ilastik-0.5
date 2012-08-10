@@ -73,7 +73,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
         self.btnCC           = TabButton('CC', ilastikIcons.System)
         self.btnCCBack       = TabButton('CC with background', ilastikIcons.System)
         self.btnFilter       = TabButton('Filter objects', ilastikIcons.System)
-        self.btnFilter.setVisible(False)
+        #self.btnFilter.setVisible(False)
         
         self.btnInputOverlay.setToolTip('Select an overlay for connected components (such as the segmentation after classification)')
         self.btnCC.setToolTip('Run connected components on the selected overlay')
@@ -130,7 +130,7 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
             return
         self.connComp.start(backgroundClassSet)
         self.btnFilter.setEnabled(True)
-        self.btnFilter.setVisible(False)
+        #self.btnFilter.setVisible(False)
         #self.parent.project.dataMgr[self.parent.project.dataMgr._activeImageNumber].Connected_Components.connect(background = True)
         
     def on_btnFilter_clicked(self):
@@ -141,7 +141,6 @@ class ConnectedComponentsTab(IlastikTabBase, QtGui.QWidget):
             desc_names.append(tempstr)
         dlg = LabelSelectionForm(self.ilastik, desc_names)
         label, minsize, maxsize = dlg.exec_()
-        print label, minsize, maxsize
         # call core function
         self.parent.project.dataMgr.Connected_Components.filterSynapses(self.inputOverlay, label, minsize, maxsize)
         self.ilastik.labelWidget.repaint()

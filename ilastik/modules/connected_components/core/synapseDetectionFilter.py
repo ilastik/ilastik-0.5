@@ -27,7 +27,6 @@ class SynapseFilterAndSegmentor(object):
         self.labels = activeImage.overlayMgr["Classification/Labels"]
         self.cc = cc_overlay
         self.thres = input_overlay
-        print self.cc.shape
         self.ndim = 3 if cc_overlay.shape[1]>1 else 2
         self.goodsizes = []
         
@@ -80,6 +79,7 @@ class SynapseFilterAndSegmentor(object):
         data = data.swapaxes(0, 2).view()
         cc = vigra.analysis.labelVolumeWithBackground(data, 6, 2)
         cc = cc.swapaxes(0, 2).view()
+        cc = numpy.asarray(cc)
         objs_ref = self.objectsSlow3d(cc)
         return objs_ref
     
